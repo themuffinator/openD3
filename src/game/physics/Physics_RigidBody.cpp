@@ -1,6 +1,33 @@
+/*
+===========================================================================
 
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+
+#include "../../idlib/precompiled.h"
+#pragma hdrstop
 
 #include "../Game_local.h"
 
@@ -95,18 +122,8 @@ bool idPhysics_RigidBody::CollisionImpulse( const trace_t &collision, idVec3 &im
 	ent = gameLocal.entities[collision.c.entityNum];
 	ent->GetImpactInfo( self, collision.c.id, collision.c.point, &info );
 
-// RAVEN BEGIN
-// bdube: once in water take out the water flag	and increase friction
-	if ( ent->GetPhysics()->GetContents() & CONTENTS_WATER ) {
-		clipMask &= ~CONTENTS_WATER;
-		linearFriction *= 20.0f;
-		angularFriction *= 20.0f;
-	}
-// RAVEN END
-
 	// collision point relative to the body center of mass
-	r = collision.c.point - (current.i.position + centerOfMass * current.i.orientation);
-
+	r = collision.c.point - ( current.i.position + centerOfMass * current.i.orientation );
 	// the velocity at the collision point
 	linearVelocity = inverseMass * current.i.linearMomentum;
 	inverseWorldInertiaTensor = current.i.orientation.Transpose() * inverseInertiaTensor * current.i.orientation;
@@ -160,10 +177,7 @@ bool idPhysics_RigidBody::CheckForCollisions( const float deltaTime, rigidBodyPS
 
 #ifdef TEST_COLLISION_DETECTION
 	bool startsolid;
-// RAVEN BEGIN
-// ddynerman: multiple collision worlds
-	if ( gameLocal.Contents( self, current.i.position, clipModel, current.i.orientation, clipMask, self ) ) {
-// RAVEN END
+	if ( gameLocal.clip.Contents( current.i.position, clipModel, current.i.orientation, clipMask, self ) ) {
 		startsolid = true;
 	}
 #endif
@@ -173,10 +187,7 @@ bool idPhysics_RigidBody::CheckForCollisions( const float deltaTime, rigidBodyPS
 	rotation.SetOrigin( current.i.position );
 
 	// if there was a collision
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	if ( gameLocal.Motion( self, collision, current.i.position, next.i.position, rotation, clipModel, current.i.orientation, clipMask, self ) ) {
-// RAVEN END
+	if ( gameLocal.clip.Motion( collision, current.i.position, next.i.position, rotation, clipModel, current.i.orientation, clipMask, self ) ) {
 		// set the next state to the state at the moment of impact
 		next.i.position = collision.endpos;
 		next.i.orientation = collision.endAxis;
@@ -186,10 +197,7 @@ bool idPhysics_RigidBody::CheckForCollisions( const float deltaTime, rigidBodyPS
 	}
 
 #ifdef TEST_COLLISION_DETECTION
-// RAVEN BEGIN
-// ddynerman: multiple collision worlds
-	if ( gameLocal.Contents( self, next.i.position, clipModel, next.i.orientation, clipMask, self ) ) {
-// RAVEN END
+	if ( gameLocal.clip.Contents( next.i.position, clipModel, next.i.orientation, clipMask, self ) ) {
 		if ( !startsolid ) {
 			int bah = 1;
 		}
@@ -356,10 +364,8 @@ void idPhysics_RigidBody::DropToFloorAndRest( void ) {
 	if ( testSolid ) {
 
 		testSolid = false;
-// RAVEN BEGIN
-// ddynerman: multiple collision worlds
-		if ( gameLocal.Contents( self, current.i.position, clipModel, current.i.orientation, clipMask, self ) ) {
-// RAVEN END
+
+		if ( gameLocal.clip.Contents( current.i.position, clipModel, current.i.orientation, clipMask, self ) ) {
 			gameLocal.DWarning( "rigid body in solid for entity '%s' type '%s' at (%s)",
 								self->name.c_str(), self->GetType()->classname, current.i.position.ToString(0) );
 			Rest();
@@ -370,15 +376,9 @@ void idPhysics_RigidBody::DropToFloorAndRest( void ) {
 
 	// put the body on the floor
 	down = current.i.position + gravityNormal * 128.0f;
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	gameLocal.Translation( self, tr, current.i.position, down, clipModel, current.i.orientation, clipMask, self );
-// RAVEN END
+	gameLocal.clip.Translation( tr, current.i.position, down, clipModel, current.i.orientation, clipMask, self );
 	current.i.position = tr.endpos;
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	clipModel->Link( self, clipModel->GetId(), tr.endpos, current.i.orientation );
-// RAVEN END
+	clipModel->Link( gameLocal.clip, self, clipModel->GetId(), tr.endpos, current.i.orientation );
 
 	// if on the floor already
 	if ( tr.fraction == 0.0f ) {
@@ -406,14 +406,11 @@ idPhysics_RigidBody::DebugDraw
 void idPhysics_RigidBody::DebugDraw( void ) {
 
 	if ( rb_showBodies.GetBool() || ( rb_showActive.GetBool() && current.atRest < 0 ) ) {
-		collisionModelManager->DrawModel( clipModel->GetCollisionModel(), clipModel->GetOrigin(), clipModel->GetAxis(), vec3_origin, mat3_identity, 0.0f );
+		collisionModelManager->DrawModel( clipModel->Handle(), clipModel->GetOrigin(), clipModel->GetAxis(), vec3_origin, 0.0f );
 	}
 
 	if ( rb_showMass.GetBool() ) {
-// RAVEN BEGIN
-// bdube: draw center of mass at the center of mass
-		gameRenderWorld->DrawText( va( "\n%1.2f", mass ), current.i.position + centerOfMass * current.i.orientation, 0.08f, colorCyan, gameLocal.GetLocalPlayer()->viewAngles.ToMat3(), 1 );
-// RAVEN END
+		gameRenderWorld->DrawText( va( "\n%1.2f", mass ), current.i.position, 0.08f, colorCyan, gameLocal.GetLocalPlayer()->viewAngles.ToMat3(), 1 );
 	}
 
 	if ( rb_showInertia.GetBool() ) {
@@ -428,20 +425,6 @@ void idPhysics_RigidBody::DebugDraw( void ) {
 	if ( rb_showVelocity.GetBool() ) {
 		DrawVelocity( clipModel->GetId(), 0.1f, 4.0f );
 	}
-	
-// RAVEN BEGIN
-// bdube: added more debug info
-	if ( rb_showContacts.GetBool() ) {
-		int i;
-		for ( i = 0; i < contacts.Num(); i ++ ) {
-			idVec3 x, y;
-			contacts[i].normal.NormalVectors( x, y );
-			gameRenderWorld->DebugLine( colorWhite, contacts[i].point, contacts[i].point + 6.0f * contacts[i].normal );
-			gameRenderWorld->DebugLine( colorWhite, contacts[i].point - 2.0f * x, contacts[i].point + 2.0f * x );
-			gameRenderWorld->DebugLine( colorWhite, contacts[i].point - 2.0f * y, contacts[i].point + 2.0f * y );
-		}		
-	}	
-// RAVEN END
 }
 
 /*
@@ -460,10 +443,7 @@ idPhysics_RigidBody::idPhysics_RigidBody( void ) {
 	memset( &current, 0, sizeof( current ) );
 
 	current.atRest = -1;
-// RAVEN BEGIN
-// bdube: use GetMSec access rather than USERCMD_TIME
-	current.lastTimeStep = gameLocal.GetMSec();
-// RAVEN END
+	current.lastTimeStep = USERCMD_MSEC;
 
 	current.i.position.Zero();
 	current.i.orientation.Identity();
@@ -517,7 +497,7 @@ void idPhysics_RigidBody_SavePState( idSaveGame *savefile, const rigidBodyPState
 	savefile->WriteFloat( state.lastTimeStep );
 	savefile->WriteVec3( state.localOrigin );
 	savefile->WriteMat3( state.localAxis );
-	savefile->Write( &state.pushVelocity, sizeof( state.pushVelocity ) );
+	savefile->WriteVec6( state.pushVelocity );
 	savefile->WriteVec3( state.externalForce );
 	savefile->WriteVec3( state.externalTorque );
 
@@ -537,7 +517,7 @@ void idPhysics_RigidBody_RestorePState( idRestoreGame *savefile, rigidBodyPState
 	savefile->ReadFloat( state.lastTimeStep );
 	savefile->ReadVec3( state.localOrigin );
 	savefile->ReadMat3( state.localAxis );
-	savefile->Read( &state.pushVelocity, sizeof( state.pushVelocity ) );
+	savefile->ReadVec6( state.pushVelocity );
 	savefile->ReadVec3( state.externalForce );
 	savefile->ReadVec3( state.externalTorque );
 
@@ -629,10 +609,7 @@ void idPhysics_RigidBody::SetClipModel( idClipModel *model, const float density,
 		delete clipModel;
 	}
 	clipModel = model;
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	clipModel->Link( self, 0, current.i.position, current.i.orientation );
-// RAVEN END
+	clipModel->Link( gameLocal.clip, self, 0, current.i.position, current.i.orientation );
 
 	// get mass properties from the trace model
 	clipModel->GetMassProperties( density, mass, centerOfMass, inertiaTensor );
@@ -708,19 +685,6 @@ idPhysics_RigidBody::GetMass
 float idPhysics_RigidBody::GetMass( int id ) const {
 	return mass;
 }
-
-// RAVEN BEGIN
-// bdube: means of getting center of mass
-/*
-================
-idPhysics_RigidBody::GetCenterMass
-================
-*/
-idVec3 idPhysics_RigidBody::GetCenterMass( int id ) const 
-{
-	return (current.i.position + centerOfMass * current.i.orientation);
-}
-// RAVEN END
 
 /*
 ================
@@ -890,10 +854,7 @@ bool idPhysics_RigidBody::Evaluate( int timeStepMSec, int endTimeMSec ) {
 		else {
 			current.i.orientation = current.localAxis;
 		}
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-		clipModel->Link( self, clipModel->GetId(), current.i.position, current.i.orientation );
-// RAVEN END
+		clipModel->Link( gameLocal.clip, self, clipModel->GetId(), current.i.position, current.i.orientation );
 		current.i.linearMomentum = mass * ( ( current.i.position - oldOrigin ) / timeStep );
 		current.i.angularMomentum = inertiaTensor * ( ( current.i.orientation * oldAxis.Transpose() ).ToAngularVelocity() / timeStep );
 		current.externalForce.Zero();
@@ -917,9 +878,7 @@ bool idPhysics_RigidBody::Evaluate( int timeStepMSec, int endTimeMSec ) {
 	}
 
 #ifdef RB_TIMINGS
-	if ( rb_showTimings->integer != 0 ) {
-		timer_total.Start();
-	}
+	timer_total.Start();
 #endif
 
 	// move the rigid body velocity into the frame of a pusher
@@ -934,27 +893,20 @@ bool idPhysics_RigidBody::Evaluate( int timeStepMSec, int endTimeMSec ) {
 	Integrate( timeStep, next );
 
 #ifdef RB_TIMINGS
-	if ( rb_showTimings->integer != 0 ) {
-		timer_collision.Start();
-	}
+	timer_collision.Start();
 #endif
 
 	// check for collisions from the current to the next state
 	collided = CheckForCollisions( timeStep, next, collision );
 
 #ifdef RB_TIMINGS
-	if ( rb_showTimings->integer != 0 ) {
-		timer_collision.Stop();
-	}
+	timer_collision.Stop();
 #endif
 
 	// set the new state
 	current = next;
 
-//	trace_t					pushResults;
-//	gameLocal.push.ClipPush( pushResults, self, PUSHFL_CRUSH | PUSHFL_CLIP, saved.localOrigin, saved.localAxis, current.localOrigin, current.localAxis );
-
-	if ( collided ) {	
+	if ( collided ) {
 		// apply collision impulse
 		if ( CollisionImpulse( collision, impulse ) ) {
 			current.atRest = gameLocal.time;
@@ -962,27 +914,20 @@ bool idPhysics_RigidBody::Evaluate( int timeStepMSec, int endTimeMSec ) {
 	}
 
 	// update the position of the clip model
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	clipModel->Link( self, clipModel->GetId(), current.i.position, current.i.orientation );
-// RAVEN END
+	clipModel->Link( gameLocal.clip, self, clipModel->GetId(), current.i.position, current.i.orientation );
 
 	DebugDraw();
 
 	if ( !noContact ) {
 
 #ifdef RB_TIMINGS
-		if ( rb_showTimings->integer != 0 ) {
-			timer_collision.Start();
-		}
+		timer_collision.Start();
 #endif
 		// get contacts
 		EvaluateContacts();
 
 #ifdef RB_TIMINGS
-		if ( rb_showTimings->integer != 0 ) {
-			timer_collision.Stop();
-		}
+		timer_collision.Stop();
 #endif
 
 		// check if the body has come to rest
@@ -1025,29 +970,27 @@ bool idPhysics_RigidBody::Evaluate( int timeStepMSec, int endTimeMSec ) {
 	}
 
 #ifdef RB_TIMINGS
-	if ( rb_showTimings->integer != 0 ) {
-		timer_total.Stop();
+	timer_total.Stop();
 
-		if ( rb_showTimings->integer == 1 ) {
-			gameLocal.Printf( "%12s: t %1.4f cd %1.4f\n",
-							self->name.c_str(),
-							timer_total.Milliseconds(), timer_collision.Milliseconds() );
-			lastTimerReset = 0;
-		}
-		else if ( rb_showTimings->integer == 2 ) {
-			numRigidBodies++;
-			if ( endTimeMSec > lastTimerReset ) {
-				gameLocal.Printf( "rb %d: t %1.4f cd %1.4f\n",
-								numRigidBodies,
-								timer_total.Milliseconds(), timer_collision.Milliseconds() );
-			}
-		}
+	if ( rb_showTimings->integer == 1 ) {
+		gameLocal.Printf( "%12s: t %1.4f cd %1.4f\n",
+						self->name.c_str(),
+						timer_total.Milliseconds(), timer_collision.Milliseconds() );
+		lastTimerReset = 0;
+	}
+	else if ( rb_showTimings->integer == 2 ) {
+		numRigidBodies++;
 		if ( endTimeMSec > lastTimerReset ) {
-			lastTimerReset = endTimeMSec;
-			numRigidBodies = 0;
-			timer_total.Clear();
-			timer_collision.Clear();
+			gameLocal.Printf( "rb %d: t %1.4f cd %1.4f\n",
+							numRigidBodies,
+							timer_total.Milliseconds(), timer_collision.Milliseconds() );
 		}
+	}
+	if ( endTimeMSec > lastTimerReset ) {
+		lastTimerReset = endTimeMSec;
+		numRigidBodies = 0;
+		timer_total.Clear();
+		timer_collision.Clear();
 	}
 #endif
 
@@ -1161,10 +1104,8 @@ idPhysics_RigidBody::RestoreState
 */
 void idPhysics_RigidBody::RestoreState( void ) {
 	current = saved;
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	clipModel->Link( self, clipModel->GetId(), current.i.position, current.i.orientation );
-// RAVEN END
+
+	clipModel->Link( gameLocal.clip, self, clipModel->GetId(), current.i.position, current.i.orientation );
 
 	EvaluateContacts();
 }
@@ -1186,10 +1127,8 @@ void idPhysics_RigidBody::SetOrigin( const idVec3 &newOrigin, int id ) {
 	else {
 		current.i.position = newOrigin;
 	}
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	clipModel->Link( self, clipModel->GetId(), current.i.position, clipModel->GetAxis() );
-// RAVEN END
+
+	clipModel->Link( gameLocal.clip, self, clipModel->GetId(), current.i.position, clipModel->GetAxis() );
 
 	Activate();
 }
@@ -1211,10 +1150,8 @@ void idPhysics_RigidBody::SetAxis( const idMat3 &newAxis, int id ) {
 	else {
 		current.i.orientation = newAxis;
 	}
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	clipModel->Link( self, clipModel->GetId(), clipModel->GetOrigin(), current.i.orientation );
-// RAVEN END
+
+	clipModel->Link( gameLocal.clip, self, clipModel->GetId(), clipModel->GetOrigin(), current.i.orientation );
 
 	Activate();
 }
@@ -1228,10 +1165,8 @@ void idPhysics_RigidBody::Translate( const idVec3 &translation, int id ) {
 
 	current.localOrigin += translation;
 	current.i.position += translation;
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	clipModel->Link( self, clipModel->GetId(), current.i.position, clipModel->GetAxis() );
-// RAVEN END
+
+	clipModel->Link( gameLocal.clip, self, clipModel->GetId(), current.i.position, clipModel->GetAxis() );
 
 	Activate();
 }
@@ -1257,10 +1192,8 @@ void idPhysics_RigidBody::Rotate( const idRotation &rotation, int id ) {
 		current.localAxis = current.i.orientation;
 		current.localOrigin = current.i.position;
 	}
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	clipModel->Link( self, clipModel->GetId(), current.i.position, current.i.orientation );
-// RAVEN END
+
+	clipModel->Link( gameLocal.clip, self, clipModel->GetId(), current.i.position, current.i.orientation );
 
 	Activate();
 }
@@ -1335,16 +1268,13 @@ idPhysics_RigidBody::ClipTranslation
 */
 void idPhysics_RigidBody::ClipTranslation( trace_t &results, const idVec3 &translation, const idClipModel *model ) const {
 	if ( model ) {
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-		gameLocal.TranslationModel( self, results, clipModel->GetOrigin(), clipModel->GetOrigin() + translation,
+		gameLocal.clip.TranslationModel( results, clipModel->GetOrigin(), clipModel->GetOrigin() + translation,
 											clipModel, clipModel->GetAxis(), clipMask,
-											model->GetCollisionModel(), model->GetOrigin(), model->GetAxis() );
+											model->Handle(), model->GetOrigin(), model->GetAxis() );
 	}
 	else {
-		gameLocal.Translation( self, results, clipModel->GetOrigin(), clipModel->GetOrigin() + translation,
+		gameLocal.clip.Translation( results, clipModel->GetOrigin(), clipModel->GetOrigin() + translation,
 											clipModel, clipModel->GetAxis(), clipMask, self );
-// RAVEN END
 	}
 }
 
@@ -1355,16 +1285,13 @@ idPhysics_RigidBody::ClipRotation
 */
 void idPhysics_RigidBody::ClipRotation( trace_t &results, const idRotation &rotation, const idClipModel *model ) const {
 	if ( model ) {
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-		gameLocal.RotationModel( self, results, clipModel->GetOrigin(), rotation,
+		gameLocal.clip.RotationModel( results, clipModel->GetOrigin(), rotation,
 											clipModel, clipModel->GetAxis(), clipMask,
-											model->GetCollisionModel(), model->GetOrigin(), model->GetAxis() );
+											model->Handle(), model->GetOrigin(), model->GetAxis() );
 	}
 	else {
-		gameLocal.Rotation( self, results, clipModel->GetOrigin(), rotation,
+		gameLocal.clip.Rotation( results, clipModel->GetOrigin(), rotation,
 											clipModel, clipModel->GetAxis(), clipMask, self );
-// RAVEN END
 	}
 }
 
@@ -1375,14 +1302,11 @@ idPhysics_RigidBody::ClipContents
 */
 int idPhysics_RigidBody::ClipContents( const idClipModel *model ) const {
 	if ( model ) {
-// RAVEN BEGIN
-// ddynerman: multiple collision worlds
-		return gameLocal.ContentsModel( self, clipModel->GetOrigin(), clipModel, clipModel->GetAxis(), -1,
-									model->GetCollisionModel(), model->GetOrigin(), model->GetAxis() );
+		return gameLocal.clip.ContentsModel( clipModel->GetOrigin(), clipModel, clipModel->GetAxis(), -1,
+									model->Handle(), model->GetOrigin(), model->GetAxis() );
 	}
 	else {
-		return gameLocal.Contents( self, clipModel->GetOrigin(), clipModel, clipModel->GetAxis(), -1, NULL );
-// RAVEN END
+		return gameLocal.clip.Contents( clipModel->GetOrigin(), clipModel, clipModel->GetAxis(), -1, NULL );
 	}
 }
 
@@ -1419,10 +1343,7 @@ idPhysics_RigidBody::LinkClip
 ================
 */
 void idPhysics_RigidBody::LinkClip( void ) {
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	clipModel->Link( self, clipModel->GetId(), current.i.position, current.i.orientation );
-// RAVEN END
+	clipModel->Link( gameLocal.clip, self, clipModel->GetId(), current.i.position, current.i.orientation );
 }
 
 /*
@@ -1442,11 +1363,8 @@ bool idPhysics_RigidBody::EvaluateContacts( void ) {
 	dir.SubVec3(1) = current.i.angularMomentum;
 	dir.SubVec3(0).Normalize();
 	dir.SubVec3(1).Normalize();
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	num = gameLocal.Contacts( self, &contacts[0], 10, clipModel->GetOrigin(),
+	num = gameLocal.clip.Contacts( &contacts[0], 10, clipModel->GetOrigin(),
 					dir, CONTACT_EPSILON, clipModel, clipModel->GetAxis(), clipMask, self );
-// RAVEN END
 	contacts.SetNum( num, false );
 
 	AddContactEntitiesForContacts();
@@ -1615,9 +1533,6 @@ void idPhysics_RigidBody::ReadFromSnapshot( const idBitMsgDelta &msg ) {
 	current.localAxis = localQuat.ToMat3();
 
 	if ( clipModel ) {
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-		clipModel->Link( self, clipModel->GetId(), current.i.position, current.i.orientation );
-// RAVEN END
+		clipModel->Link( gameLocal.clip, self, clipModel->GetId(), current.i.position, current.i.orientation );
 	}
 }

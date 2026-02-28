@@ -1,55 +1,56 @@
-# Official Quake 4 PK4 Checksums (q4base)
+# Official Doom 3 PK4 Checksum Notes
 
-This table captures the PK4 checksums loaded from the installed game directory:
+This document tracks official Doom 3 PK4 checksum validation inputs for OpenD3.
 
-- Install path: `C:\Program Files (x86)\Steam\steamapps\common\Quake 4\q4base`
-- Source: `logs/openq4.log` startup lines (`Loaded pk4 ... with checksum ...`) under `fs_savepath\<gameDir>\`
-- Checksum format: engine PK4 checksum (`MD4` of zip-entry CRC list, as computed in `src/framework/FileSystem.cpp`)
+## Scope
 
-## Required official baseline
+- Base game install path (typical Steam): `C:\Program Files (x86)\Steam\steamapps\common\Doom 3\base`
+- Optional expansion path: `C:\Program Files (x86)\Steam\steamapps\common\Doom 3\d3xp`
+- Log source: startup lines in `fs_savepath\<gameDir>\logs\opend3.log`
 
-These are required by OpenQ4 startup validation (`fs_validateOfficialPaks 1`, default):
+## Current Status
 
-| PK4 | Checksum |
-|---|---|
-| `game000.pk4` | `0xb3abe28c` |
-| `game100.pk4` | `0x74b379d9` |
-| `game200.pk4` | `0xa3c810d9` |
-| `game300.pk4` | `0x68fb90b1` |
-| `pak001.pk4` | `0xf2cbc998` |
-| `pak002.pk4` | `0x7f8d80d1` |
-| `pak003.pk4` | `0x1b57b207` |
-| `pak004.pk4` | `0x385aa578` |
-| `pak005.pk4` | `0x60d50a1d` |
-| `pak006.pk4` | `0x9099ed11` |
-| `pak007.pk4` | `0xaf301fff` |
-| `pak008.pk4` | `0x4ac6f6d9` |
-| `pak009.pk4` | `0x36030c7d` |
-| `pak010.pk4` | `0x4b80fbda` |
-| `pak011.pk4` | `0x8acf4cfa` |
-| `pak012.pk4` | `0xbe4120b0` |
-| `pak013.pk4` | `0x6ad67f40` |
-| `pak014.pk4` | `0xee51cd59` |
-| `pak015.pk4` | `0xf5bf4e0c` |
-| `pak016.pk4` | `0x2196f58c` |
-| `pak017.pk4` | `0x91118a35` |
-| `pak018.pk4` | `0x98a14f03` |
-| `pak019.pk4` | `0xbc82ac79` |
-| `pak020.pk4` | `0xce74cda5` |
-| `pak021.pk4` | `0x2ba6e70c` |
-| `pak022.pk4` | `0x4e390eec` |
-| `pak023.pk4` | `0x7c1fd3a5` |
-| `pak024.pk4` | `0x5546d551` |
-| `pak025.pk4` | `0xcaeec1fd` |
+- OpenD3 validates required Doom 3 base media PK4 files on startup (`fs_validateOfficialPaks=1`).
+- Quake 4-era required pack rules are removed from `src/framework/FileSystem.cpp`.
+- Validation now targets Doom 3 `base/pak000.pk4` through `base/pak004.pk4`.
 
-## Additional official PK4s detected
+## Required Base PK4 Set
 
-| PK4 | Checksum |
-|---|---|
-| `q4cmp_pak001.pk4` | `0xd0813943` |
-| `zpak_english.pk4` | `0x5868f530` |
-| `zpak_english_01.pk4` | `0xd9f04b8b` |
-| `zpak_english_02.pk4` | `0x9dbd91fd` |
-| `zpak_english_03.pk4` | `0x02eb6ad8` |
-| `zpak_english_04.pk4` | `0xd3fefaa1` |
-| `zpak_english_05.pk4` | `0x8596af60` |
+These are the required packs validated by OpenD3:
+
+- `pak000.pk4`: `0x28d208f1`
+- `pak001.pk4`: `0x40244be0`
+- `pak002.pk4`: `0xc51ecdcd`
+- `pak003.pk4`: `0xcd79d028`
+- `pak004.pk4`: `0x765e4f8b`
+
+## Optional Official Packs
+
+These are recognized official packs but not required for startup validation:
+
+Base updates:
+
+- `pak005.pk4`: `0x8ffc3621`
+- `pak006.pk4`: `0x095b65ab`
+- `pak007.pk4`: `0x666bdb3c`
+- `pak008.pk4`: `0x23ae5993`
+
+Legacy game-code packs:
+
+- `game00.pk4`: `0x29cdb978`
+- `game01.pk4`: `0x51c6981f`
+- `game02.pk4`: `0x0f3ec6f7`
+- `game03.pk4`: `0x5d4230ea`
+
+## Capture Procedure (Reference)
+
+1. Launch OpenD3 against a clean retail Doom 3 install.
+2. Exit after initialization.
+3. Open `fs_savepath\<gameDir>\logs\opend3.log`.
+4. Collect `Loaded pk4 ... with checksum ...` lines for `base` (and `d3xp` when relevant).
+5. Record required set in this document.
+
+## Notes
+
+- Base path validation now checks for Doom 3 retail media (`base/pak000.pk4` + `base/pak001.pk4`) instead of Quake 4-era pack names.
+- Auto-discovery candidates now target Doom 3 install paths (Steam/GOG).

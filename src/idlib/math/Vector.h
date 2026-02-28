@@ -560,7 +560,7 @@ public:
 // RAVEN BEGIN
 // jscott: Ensures second element greater than first
 	void			EnsureIncremental( void );
-// jscott: for BSE
+// jscott: for FX runtime
 	int				GetLargestAxis( void ) const;
 // jscott: for rvAngles
 	rvAngles		ToRadians( void ) const;
@@ -2448,3 +2448,4 @@ ID_INLINE idVec3 idPolar3::ToVec3( void ) const {
 
 
 #endif /* !__MATH_VECTOR_H__ */
+

@@ -33,7 +33,7 @@ public:
 	virtual void			FreeData( void );
 
 // RAVEN BEGIN
-// jscott: for BSE
+// jscott: for FX runtime
 			float			GetMaxValue( void ) const { return( maxValue ); }
 			float			GetMinValue( void ) const { return( minValue ); }
 // bdube: made virtual so it can be accessed in game
@@ -48,7 +48,7 @@ private:
 	bool					clamp;
 	bool					snap;
 // RAVEN BEGIN
-// jscott: for BSE
+// jscott: for FX runtime
 	float					minValue;
 	float					maxValue;
 // RAVEN END
@@ -56,3 +56,4 @@ private:
 };
 
 #endif /* !__DECLTABLE_H__ */
+

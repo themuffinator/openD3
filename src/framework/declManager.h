@@ -53,8 +53,8 @@ typedef enum {
 // rjohnson: camera is now contained in a def for frame commands
 	DECL_CAMERADEF,
 // jscott: don't use these
-//	DECL_FX,
-//	DECL_PARTICLE,
+	DECL_FX,
+	DECL_PARTICLE,
 // RAVEN END
 	DECL_AF,
 	DECL_PDA,

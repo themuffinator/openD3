@@ -132,6 +132,8 @@ public:
 	virtual void				WritePrecacheCommands( idFile *f );
 	virtual void				SetSize( float width, float height );
 	void						SetAspectCorrection( bool enabled );
+	virtual void				SetInWorldGuiRender( bool enabled ) override;
+	bool						IsInWorldGuiRender() const { return inWorldGuiRenderDepth > 0; }
 	virtual void				BeginLevelLoad();
 	virtual void				EndLevelLoad();
 	virtual void				Reload( bool all );
@@ -147,6 +149,7 @@ public:
 private:
 	idRectangle					screenRect;
 	idDeviceContext				dc;
+	int							inWorldGuiRenderDepth;
 
 	idList<idUserInterfaceLocal*> guis;
 	idList<idUserInterfaceLocal*> demoGuis;

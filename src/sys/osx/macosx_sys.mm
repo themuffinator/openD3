@@ -165,7 +165,7 @@ void Sys_Error(const char *error, ...)
     va_end(argptr);
 
     NSLog(@"Sys_Error: %@", formattedString);
-    NSRunAlertPanel(@"OpenQ4 Error", formattedString, nil, nil, nil);
+    NSRunAlertPanel(@"OpenD3 Error", formattedString, nil, nil, nil);
 
     Sys_Quit();
 }
@@ -258,3 +258,4 @@ Return true if the proper CD is in the drive
 bool        Sys_CheckCD( void ) {
     return macosx_scanForLibraryDirectory() != NULL;
 }
+

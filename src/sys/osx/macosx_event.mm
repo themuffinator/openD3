@@ -59,7 +59,7 @@ static CGRect	inputRect;
 static const void *sKLuchrData	= NULL;
 static const void *sKLKCHRData	= NULL;
 
-int	vkeyToOpenQ4Key[256] = {
+int	vkeyToOpenD3Key[256] = {
 	/*0x00*/	'a', 's', 'd', 'f', 'h', 'g', 'z', 'x',
 	/*0x08*/	'c', 'v', '?', 'b', 'q', 'w', 'e', 'r',
 	/*0x10*/	'y', 't', '1', '2', '3', '4', '6', '5',
@@ -78,7 +78,7 @@ int	vkeyToOpenQ4Key[256] = {
 	/*0x78*/	K_F2, K_PGDN, K_F1, K_LEFTARROW, K_RIGHTARROW, K_DOWNARROW, K_UPARROW, K_POWER
 };
 
-int	vkeyToOpenQ4Key_French[256] = {
+int	vkeyToOpenD3Key_French[256] = {
 	/*0x00*/	'q',	's',		'd',	'f',		'h',		'g',		'w',		'x',
 	/*0x08*/	'c',	'v',		'?',	'b',		'a',		'z',		'e',		'r',
 	/*0x10*/	'y',	't',		'1',	'2',		'3',		'4',		'6',		'5',
@@ -97,7 +97,7 @@ int	vkeyToOpenQ4Key_French[256] = {
 	/*0x78*/	K_F2, K_PGDN, K_F1, K_LEFTARROW, K_RIGHTARROW, K_DOWNARROW, K_UPARROW, K_POWER
 };
 
-int	vkeyToOpenQ4Key_German[256] = {
+int	vkeyToOpenD3Key_German[256] = {
 	/*0x00*/	'a',	's',		'd',	'f',		'h',		'g',		'y',		'x',
 	/*0x08*/	'c',	'v',		'?',	'b',		'q',		'w',		'e',		'r',
 	/*0x10*/	'z',	't',		'1',	'2',		'3',		'4',		'6',		'5',
@@ -116,7 +116,7 @@ int	vkeyToOpenQ4Key_German[256] = {
 	/*0x78*/	K_F2, K_PGDN, K_F1, K_LEFTARROW, K_RIGHTARROW, K_DOWNARROW, K_UPARROW, K_POWER
 };
 
-static const int *vkeyTable = vkeyToOpenQ4Key;	
+static const int *vkeyTable = vkeyToOpenD3Key;	
 
 /*
  ===========
@@ -132,11 +132,11 @@ void Sys_InitScanTable( void ) {
 	}
 
 	if ( lang.Icmp( "english" ) == 0 ) {
-		vkeyTable = vkeyToOpenQ4Key;
+		vkeyTable = vkeyToOpenD3Key;
 	} else if ( lang.Icmp( "french" ) == 0 ) {
-		vkeyTable = vkeyToOpenQ4Key_French;
+		vkeyTable = vkeyToOpenD3Key_French;
 	} else if ( lang.Icmp( "german" ) == 0 ) {
-		vkeyTable = vkeyToOpenQ4Key_German;
+		vkeyTable = vkeyToOpenD3Key_German;
 	}
 
 	if ( KLGetCurrentKeyboardLayout( &kbLayout )  == 0 ) {
@@ -531,7 +531,7 @@ unsigned char Sys_MapCharForKey( int key ) {
  ===============
  */
 unsigned char Sys_GetConsoleKey( bool shifted ) {
-	if ( vkeyTable == vkeyToOpenQ4Key_French ) {
+	if ( vkeyTable == vkeyToOpenD3Key_French ) {
 		return shifted ? '>' : '<';
 	}
 	else {
@@ -539,4 +539,5 @@ unsigned char Sys_GetConsoleKey( bool shifted ) {
 	}
 
 }
+
 

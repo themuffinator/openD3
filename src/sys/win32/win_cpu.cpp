@@ -348,7 +348,7 @@ Sys_FPU_StackIsEmpty
 ===============
 */
 bool Sys_FPU_StackIsEmpty(void) {
-	return false;
+	return true;
 }
 
 /*

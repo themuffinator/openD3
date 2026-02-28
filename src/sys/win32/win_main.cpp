@@ -222,6 +222,12 @@ Sys_IsGameWindowFocused
 ================
 */
 bool Sys_IsGameWindowFocused(void) {
+#ifdef USE_SDL3
+	// SDL3 backend keeps focus state in win32.activeApp via SDL window events.
+	// Rely on that state so unfocused-audio muting doesn't false-trigger when
+	// foreground HWND checks are unreliable for the SDL-created window.
+	return win32.activeApp;
+#else
 	if (!IsWindowVisible(win32.hWnd))
 		return false;
 
@@ -229,6 +235,7 @@ bool Sys_IsGameWindowFocused(void) {
 		return false;
 
 	return true;
+#endif
 }
 
 #pragma optimize( "", on )
@@ -559,14 +566,14 @@ const char* Sys_DefaultSavePath(void) {
 
 	if ( localAppData && localAppData[0] ) {
 		savePath = localAppData;
-		savePath.AppendPath( "OpenQ4" );
+		savePath.AppendPath( "OpenD3" );
 		return savePath.c_str();
 	}
 
 	if ( userProfile && userProfile[0] ) {
 		savePath = userProfile;
 		savePath.AppendPath( "Saved Games" );
-		savePath.AppendPath( "OpenQ4" );
+		savePath.AppendPath( "OpenD3" );
 		return savePath.c_str();
 	}
 

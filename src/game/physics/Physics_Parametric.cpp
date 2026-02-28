@@ -1,6 +1,33 @@
+/*
+===========================================================================
 
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+
+#include "../../idlib/precompiled.h"
+#pragma hdrstop
 
 #include "../Game_local.h"
 
@@ -98,12 +125,6 @@ idPhysics_Parametric::idPhysics_Parametric( void ) {
 
 	hasMaster = false;
 	isOrientated = false;
-
-// RAVEN BEGIN
-// abahr:
-	useAxisOffset = false;
-	axisOffset.Identity();
-// RAVEN END
 }
 
 /*
@@ -262,9 +283,6 @@ void idPhysics_Parametric::Save( idSaveGame *savefile ) const {
 
 	savefile->WriteBool( hasMaster );
 	savefile->WriteBool( isOrientated );
-
-	savefile->WriteBool ( useAxisOffset );	// cnicholson: Added unsaved var
-	savefile->WriteMat3 ( axisOffset );		// cnicholson: Added unsaved var
 }
 
 /*
@@ -286,10 +304,6 @@ void idPhysics_Parametric::Restore( idRestoreGame *savefile ) {
 
 	savefile->ReadBool( hasMaster );
 	savefile->ReadBool( isOrientated );
-
-	savefile->ReadBool ( useAxisOffset );	// cnicholson: Added unrestored var
-	savefile->ReadMat3 ( axisOffset );		// cnicholson: Added unrestored var
-
 }
 
 /*
@@ -467,10 +481,7 @@ void idPhysics_Parametric::SetClipModel( idClipModel *model, float density, int 
 		delete clipModel;
 	}
 	clipModel = model;
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	clipModel->Link( self, 0, current.origin, current.axis );
-// RAVEN END
+	clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
 }
 
 /*
@@ -617,10 +628,7 @@ bool idPhysics_Parametric::Evaluate( int timeStepMSec, int endTimeMSec ) {
 
 		gameLocal.push.ClipPush( pushResults, self, pushFlags, oldOrigin, oldAxis, current.origin, current.axis );
 		if ( pushResults.fraction < 1.0f ) {
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-			clipModel->Link( self, 0, oldOrigin, oldAxis );
-// RAVEN END
+			clipModel->Link( gameLocal.clip, self, 0, oldOrigin, oldAxis );
 			current.localOrigin = oldLocalOrigin;
 			current.origin = oldOrigin;
 			current.localAngles = oldLocalAngles;
@@ -634,10 +642,7 @@ bool idPhysics_Parametric::Evaluate( int timeStepMSec, int endTimeMSec ) {
 	}
 
 	if ( clipModel ) {
-// RAVEN BEGIN
-// abahr: a hack way of hiding gimble lock from movers.
-		clipModel->Link( self, 0, current.origin, UseAxisOffset() ? GetAxisOffset() * current.axis : current.axis );
-// RAVEN END
+		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
 	}
 
 	current.time = endTimeMSec;
@@ -724,10 +729,7 @@ void idPhysics_Parametric::RestoreState( void ) {
 	current = saved;
 
 	if ( clipModel ) {
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-		clipModel->Link( self, 0, current.origin, current.axis );
-// RAVEN END
+		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
 	}
 }
 
@@ -752,10 +754,7 @@ void idPhysics_Parametric::SetOrigin( const idVec3 &newOrigin, int id ) {
 		current.origin = current.localOrigin;
 	}
 	if ( clipModel ) {
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-		clipModel->Link( self, 0, current.origin, current.axis );
-// RAVEN END
+		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
 	}
 	Activate();
 }
@@ -785,10 +784,7 @@ void idPhysics_Parametric::SetAxis( const idMat3 &newAxis, int id ) {
 		current.angles = current.localAngles;
 	}
 	if ( clipModel ) {
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-		clipModel->Link( self, 0, current.origin, current.axis );
-// RAVEN END
+		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
 	}
 	Activate();
 }
@@ -932,10 +928,7 @@ idPhysics_Parametric::LinkClip
 */
 void idPhysics_Parametric::LinkClip( void ) {
 	if ( clipModel ) {
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-		clipModel->Link( self, 0, current.origin, current.axis );
-// RAVEN END
+		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
 	}
 }
 
@@ -1183,9 +1176,6 @@ void idPhysics_Parametric::ReadFromSnapshot( const idBitMsgDelta &msg ) {
 	current.axis = current.angles.ToMat3();
 
 	if ( clipModel ) {
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-		clipModel->Link( self, 0, current.origin, current.axis );
-// RAVEN END
+		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
 	}
 }

@@ -1,6 +1,33 @@
+/*
+===========================================================================
 
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+
+#include "../../idlib/precompiled.h"
+#pragma hdrstop
 
 #include "../Game_local.h"
 
@@ -105,8 +132,6 @@ idMD5Anim::Reload
 ====================
 */
 bool idMD5Anim::Reload( void ) {
-	TIME_THIS_SCOPE( __FUNCLINE__);
-	
 	idStr filename;
 
 	filename = name;
@@ -132,11 +157,7 @@ idMD5Anim::LoadAnim
 */
 bool idMD5Anim::LoadAnim( const char *filename ) {
 	int		version;
-// RAVEN BEGIN
-// jsinger: done this way to minimize amount of code change
-	idAutoPtr<Lexer>	lexer( LexerFactory::MakeLexer(LEXFL_ALLOWPATHNAMES | LEXFL_NOSTRINGESCAPECHARS | LEXFL_NOSTRINGCONCAT) );
-	Lexer &parser(*lexer);
-// RAVEN END
+	idLexer	parser( LEXFL_ALLOWPATHNAMES | LEXFL_NOSTRINGESCAPECHARS | LEXFL_NOSTRINGCONCAT );
 	idToken	token;
 	int		i, j;
 	int		num;
@@ -194,10 +215,7 @@ bool idMD5Anim::LoadAnim( const char *filename ) {
 	parser.ExpectTokenString( "{" );
 	for( i = 0; i < numJoints; i++ ) {
 		parser.ReadToken( &token );
-// RAVEN BEGIN
-// jsinger: animationLib changed to a pointer
-		jointInfo[ i ].nameIndex = animationLib->JointIndex( token );
-// RAVEN END
+		jointInfo[ i ].nameIndex = animationLib.JointIndex( token );
 		
 		// parse parent num
 		jointInfo[ i ].parentNum = parser.ParseInt();
@@ -338,6 +356,28 @@ int idMD5Anim::NumRefs( void ) const {
 
 /*
 ====================
+idMD5Anim::GetFrameBlend
+====================
+*/
+void idMD5Anim::GetFrameBlend( int framenum, frameBlend_t &frame ) const {
+	frame.cycleCount	= 0;
+	frame.backlerp		= 0.0f;
+	frame.frontlerp		= 1.0f;
+
+	// frame 1 is first frame
+	framenum--;
+	if ( framenum < 0 ) {
+		framenum = 0;
+	} else if ( framenum >= numFrames ) {
+		framenum = numFrames - 1;
+	}
+
+	frame.frame1 = framenum;
+	frame.frame2 = framenum;
+}
+
+/*
+====================
 idMD5Anim::ConvertTimeToFrame
 ====================
 */
@@ -385,26 +425,6 @@ void idMD5Anim::ConvertTimeToFrame( int time, int cyclecount, frameBlend_t &fram
 	frame.backlerp	= ( frameTime % 1000 ) * 0.001f;
 	frame.frontlerp	= 1.0f - frame.backlerp;
 }
-
-// RAVEN BEGIN
-// jscott: added block
-/*
-====================
-idMD5Anim::ConvertFrameToTime
-
-MD5_FRAMERATE is always 24
-====================
-*/
-int idMD5Anim::ConvertFrameToTime( frameBlend_t &frame ) const {
-	int		time;
-
-	// Adjust the time so the lerping doesn't break the reverse calc
-	time = ( ( frame.frame1 % (numFrames - 1)) * 1000 ) / frameRate;
-	time += 500 / frameRate;
-
-	return( time );
-}
-// RAVEN END
 
 /*
 ====================
@@ -607,7 +627,7 @@ void idMD5Anim::GetBounds( idBounds &bnds, int time, int cyclecount ) const {
 idMD5Anim::GetInterpolatedFrame
 ====================
 */
-void idMD5Anim::GetInterpolatedFrame( const frameBlend_t &frame, idJointQuat *joints, const int *index, int numIndexes ) const {
+void idMD5Anim::GetInterpolatedFrame( frameBlend_t &frame, idJointQuat *joints, const int *index, int numIndexes ) const {
 	int						i, numLerpJoints;
 	const float				*frame1;
 	const float				*frame2;
@@ -622,12 +642,6 @@ void idMD5Anim::GetInterpolatedFrame( const frameBlend_t &frame, idJointQuat *jo
 
 	// copy the baseframe
 	SIMDProcessor->Memcpy( joints, baseFrame.Ptr(), baseFrame.Num() * sizeof( baseFrame[ 0 ] ) );
-
-#if 0
-	if ( !gameLocal.isLastPredictFrame ) {
-		return;
-	}
-#endif
 
 	if ( !numAnimatedComponents ) {
 		// just use the base frame
@@ -877,23 +891,13 @@ void idMD5Anim::CheckModelHierarchy( const idRenderModel *model ) const {
 	int	parent;
 
 	if ( jointInfo.Num() != model->NumJoints() ) {
-// RAVEN BEGIN
-// scork: reports the actual joint # mismatch as well
-		gameLocal.Error( "Model '%s' has different # of joints (%d) than anim '%s' (%d)", model->Name(), model->NumJoints(), name.c_str(), jointInfo.Num() );
-// scork: if we don't return here, we get dozens of other warnings generated by mismatching models below, one warning is sufficient...
-		//if (common->DoingDeclValidation()) {
-		//	return;
-		//}
-// RAVEN END
+		gameLocal.Error( "Model '%s' has different # of joints than anim '%s'", model->Name(), name.c_str() );
 	}
 
 	const idMD5Joint *modelJoints = model->GetJoints();
 	for( i = 0; i < jointInfo.Num(); i++ ) {
 		jointNum = jointInfo[ i ].nameIndex;
-// RAVEN BEGIN
-// jsinger: animationLib changed to a pointer
-		if ( modelJoints[ i ].name != animationLib->JointName( jointNum ) ) {
-// RAVEN END
+		if ( modelJoints[ i ].name != animationLib.JointName( jointNum ) ) {
 			gameLocal.Error( "Model '%s''s joint names don't match anim '%s''s", model->Name(), name.c_str() );
 		}
 		if ( modelJoints[ i ].parent ) {
@@ -919,12 +923,6 @@ idAnimManager::idAnimManager
 ====================
 */
 idAnimManager::idAnimManager() {
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-#if defined(_RV_MEM_SYS_SUPPORT)
-	insideLevelLoad=false;
-#endif
-// RAVEN END
 }
 
 /*
@@ -947,31 +945,6 @@ void idAnimManager::Shutdown( void ) {
 	jointnamesHash.Free();
 }
 
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-#if defined(_RV_MEM_SYS_SUPPORT)
-/*
-====================
-idAnimManager::BeginLevelLoad
-====================
-*/
-void idAnimManager::BeginLevelLoad( void )
-{
-	insideLevelLoad = true;
-}
-
-/*
-====================
-idAnimManager::EndLevelLoad
-====================
-*/
-void idAnimManager::EndLevelLoad( void )
-{
-	insideLevelLoad = false;
-}
-#endif
-// RAVEN END
-
 /*
 ====================
 idAnimManager::GetAnim
@@ -991,26 +964,10 @@ idMD5Anim *idAnimManager::GetAnim( const char *name ) {
 
 		filename.ExtractFileExtension( extension );
 		if ( extension != MD5_ANIM_EXT ) {
-// RAVEN BEGIN
-// nmckenzie: I'm not interested in debugging this blindly again.
-			gameLocal.Warning( "Animation '%s' doesn't have the correct extension for an animation file.", filename.c_str() );
-// RAVEN END
 			return NULL;
 		}
 
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-#if defined(_RV_MEM_SYS_SUPPORT)
-		RV_PUSH_SYS_HEAP_ID(insideLevelLoad?RV_HEAP_ID_LEVEL:RV_HEAP_ID_PERMANENT);
-#endif
-// RAVEN END
 		anim = new idMD5Anim();
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-#if defined(_RV_MEM_SYS_SUPPORT)
-		RV_POP_HEAP();
-#endif
-// RAVEN END
 		if ( !anim->LoadAnim( filename ) ) {
 			gameLocal.Warning( "Couldn't load anim: '%s'", filename.c_str() );
 			delete anim;
@@ -1028,8 +985,6 @@ idAnimManager::ReloadAnims
 ================
 */
 void idAnimManager::ReloadAnims( void ) {
-	TIME_THIS_SCOPE( __FUNCLINE__);
-	
 	int			i;
 	idMD5Anim	**animptr;
 
@@ -1106,62 +1061,12 @@ void idAnimManager::ListAnims( void ) const {
 	gameLocal.Printf( "%d memory used in %d joint names\n", namesize, jointnames.Num() );
 }
 
-// RAVEN BEGIN
-/*
-================
-idAnimManager::PrintMemInfo
-================
-*/
-void idAnimManager::PrintMemInfo( MemInfo *mi ) {
-
-	int			i;
-	idMD5Anim	**animptr;
-	idMD5Anim	*anim;
-	size_t		size;
-	size_t		namesize;
-	int			num;
-	idFile		*f;
-
-	f = fileSystem->OpenFileWrite( mi->filebase + "_anim.txt" );
-	if( !f ) {
-		return;
-	}
-
-	num = 0;
-	size = 0;
-	for( i = 0; i < animations.Num(); i++ ) {
-		animptr = animations.GetIndex( i );
-		if ( animptr && *animptr ) {
-			anim = *animptr;
-			size += anim->Size();
-			num++;
-
-			f->Printf( "%8d: %s\n", anim->Size(), anim->Name() );
-		}
-	}
-
-	namesize = jointnames.Size() + jointnamesHash.Size();
-	for( i = 0; i < jointnames.Num(); i++ ) {
-		namesize += jointnames[ i ].Size();
-	}
-
-	mi->animsAssetsCount = num;
-	mi->animsAssetsTotal = namesize + size;
-
-	f->Printf( "\nTotal anim bytes allocated: %s (%s items)\n", idStr::FormatNumber( mi->animsAssetsTotal ).c_str(), idStr::FormatNumber( mi->animsAssetsCount ).c_str() );
-	fileSystem->CloseFile( f );
-}
-// RAVEN END
-
 /*
 ================
 idAnimManager::FlushUnusedAnims
 ================
 */
 void idAnimManager::FlushUnusedAnims( void ) {
-
-	TIME_THIS_SCOPE( __FUNCLINE__);
-
 	int						i;
 	idMD5Anim				**animptr;
 	idList<idMD5Anim *>		removeAnims;

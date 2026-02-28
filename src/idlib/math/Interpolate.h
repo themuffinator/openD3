@@ -37,7 +37,7 @@ public:
 
 // RAVEN BEGIN
 // abahr: changed to protected
-protected:
+public:
 // RAVEN END
 	float				startTime;
 	float				duration;
@@ -198,7 +198,7 @@ public:
 	const type &		GetStartValue( void ) const { return startValue; }
 	const type &		GetEndValue( void ) const { return endValue; }
 
-private:
+public:
 	float				startTime;
 	float				accelTime;
 	float				linearTime;
@@ -347,7 +347,7 @@ public:
 	const type &		GetStartValue( void ) const { return startValue; }
 	const type &		GetEndValue( void ) const { return endValue; }
 
-private:
+public:
 	float				startTime;
 	float				accelTime;
 	float				linearTime;

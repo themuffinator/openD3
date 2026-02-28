@@ -1,3 +1,30 @@
+/*
+===========================================================================
+
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
 
 #ifndef __GAME_TRIGGER_H__
 #define __GAME_TRIGGER_H__
@@ -31,19 +58,12 @@ public:
 	virtual void		Disable( void );
 
 protected:
-// RAVEN BEGIN
-// abahr: removed const from function
-	void				CallScript( idEntity* scriptEntity );
-// RAVEN END
+	void				CallScript( void ) const;
 
 	void				Event_Enable( void );
 	void				Event_Disable( void );
 
-// RAVEN BEGIN
-// abahr: changed to allow parms to be passed
-	idList<rvScriptFuncUtility> scriptFunctions;
-	//const function_t *	scriptFunction;
-// RAVEN END
+	const function_t *	scriptFunction;
 };
 
 
@@ -65,7 +85,6 @@ public:
 
 	void				Save( idSaveGame *savefile ) const;
 	void				Restore( idRestoreGame *savefile );
-	virtual void		Think( void );
 
 private:
 	float				wait;
@@ -73,27 +92,14 @@ private:
 	float				delay;
 	float				random_delay;
 	int					nextTriggerTime;
-	idStr				requirement;
+	idStr				requiredItem;
 	int					removeItem;
 	bool				touchClient;
 	bool				touchOther;
-	bool				touchVehicle;
 	bool				triggerFirst;
 	bool				triggerWithSelf;
-	int					buyZoneTrigger;
-	int					controlZoneTrigger;
-	int					prevZoneController;
-
-	idList<idPlayer*>	playersInTrigger;
 
 	bool				CheckFacing( idEntity *activator );
-	void				HandleControlZoneTrigger();
-
-// RAVEN BEGIN
-// kfuller: want trigger_relays entities to be able to respond to earthquakes
-	void				Event_EarthQuake				(float requiresLOS);
-// RAVEN END
-
 	void				TriggerAction( idEntity *activator );
 	void				Event_TriggerAction( idEntity *activator );
 	void				Event_Trigger( idEntity *activator );
@@ -223,11 +229,6 @@ private:
 	float				delay;
 	int					nextTime;
 
-// RAVEN BEGIN
-// kfuller: added playeronly
-	bool				playerOnly;
-// RAVEN END
-
 	void				Event_Touch( idEntity *other, trace_t *trace );
 	void				Event_Toggle( idEntity *activator );
 };
@@ -265,7 +266,6 @@ public:
 	CLASS_PROTOTYPE( idTrigger_Touch );
 
 						idTrigger_Touch( void );
-						~idTrigger_Touch( );
 
 	void				Spawn( void );
 	virtual void		Think( void );
@@ -280,7 +280,6 @@ public:
 
 private:
 	idClipModel *		clipModel;
-	int					filterTeam;
 
 	void				Event_Trigger( idEntity *activator );
 };

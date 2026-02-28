@@ -126,15 +126,16 @@ void idSysLocal::DLL_GetFileName( const char *baseName, char *dllName, int maxLe
 	const bool explicitGameModuleName =
 		idStr::Icmpn( baseName, "game_", 5 ) == 0 ||
 		idStr::Icmpn( baseName, "game-", 5 ) == 0;
-	const bool explicitBSEModuleName = idStr::Icmp( baseName, "libbse-q4" ) == 0;
+	const bool explicitEffectsModuleName =
+		idStr::Icmp( baseName, "libeffects-d3" ) == 0;
 #ifdef _WIN32
-	if ( explicitGameModuleName || explicitBSEModuleName ) {
+	if ( explicitGameModuleName || explicitEffectsModuleName ) {
 		idStr::snPrintf( dllName, maxLength, "%s.dll", baseName );
 	} else {
 		idStr::snPrintf( dllName, maxLength, "%s" CPUSTRING ".dll", baseName );
 	}
 #elif defined( __linux__ )
-	if ( explicitGameModuleName || explicitBSEModuleName ) {
+	if ( explicitGameModuleName || explicitEffectsModuleName ) {
 		idStr::snPrintf( dllName, maxLength, "%s.so", baseName );
 	} else {
 		idStr::snPrintf( dllName, maxLength, "%s" CPUSTRING ".so", baseName );

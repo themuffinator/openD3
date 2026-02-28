@@ -144,13 +144,13 @@ public:
 	static float				ATan16( float y, float x );	// arc tangent with 16 bits precision, maximum absolute error is 1.3593e-08
 	static double				ATan64( float y, float x );	// arc tangent with 64 bits precision
 #else
-	static float				InvSqrt( float x ) { assert( x > 0.0f ); return( 1.0f / sqrtf( x ) ); }		// inverse square root with 32 bits precision, returns huge number when x == 0.0
-	static float				InvSqrt16( float x ) { assert( x > 0.0f ); return( 1.0f / sqrt( x ) ); }		// inverse square root with 16 bits precision, returns huge number when x == 0.0
-	static double				InvSqrt64( float x ) { assert( x > 0.0f ); return( 1.0f / sqrt( x ) ); }		// inverse square root with 64 bits precision, returns huge number when x == 0.0
+	static float				InvSqrt( float x ) { return ( x > 0.0f ) ? ( 1.0f / sqrtf( x ) ) : idMath::INFINITY; }		// inverse square root with 32 bits precision, returns huge number when x == 0.0
+	static float				InvSqrt16( float x ) { return ( x > 0.0f ) ? ( 1.0f / sqrtf( x ) ) : idMath::INFINITY; }		// inverse square root with 16 bits precision, returns huge number when x == 0.0
+	static double				InvSqrt64( float x ) { return ( x > 0.0f ) ? ( 1.0 / sqrt( x ) ) : idMath::INFINITY; }		// inverse square root with 64 bits precision, returns huge number when x == 0.0
 
-	static float				Sqrt( float x ) { assert( x >= 0.0f ); return( sqrtf( x ) ); }		// square root with 32 bits precision
-	static float				Sqrt16( float x ) { assert( x >= 0.0f ); return( sqrtf( x ) ); }	// square root with 16 bits precision
-	static double				Sqrt64( float x ) { assert( x >= 0.0f ); return( sqrt( x ) ); }		// square root with 64 bits precision
+	static float				Sqrt( float x ) { return ( x >= 0.0f ) ? sqrtf( x ) : 0.0f; }		// square root with 32 bits precision
+	static float				Sqrt16( float x ) { return ( x >= 0.0f ) ? sqrtf( x ) : 0.0f; }	// square root with 16 bits precision
+	static double				Sqrt64( float x ) { return ( x >= 0.0f ) ? sqrt( x ) : 0.0; }		// square root with 64 bits precision
 
 	static float				Sin( float a ) { return( sinf( a ) ); }								// sine with 32 bits precision
 	static float				Sin16( float a ) { return( sinf( a ) ); }							// sine with 16 bits precision, maximum absolute error is 2.3082e-09

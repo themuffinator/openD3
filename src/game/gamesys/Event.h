@@ -1,4 +1,31 @@
 /*
+===========================================================================
+
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+/*
 sys_event.h
 
 Event are used for scheduling tasks and for linking script commands.
@@ -17,14 +44,8 @@ Event are used for scheduling tasks and for linking script commands.
 #define D_EVENT_ENTITY				'e'
 #define	D_EVENT_ENTITY_NULL			'E'			// event can handle NULL entity pointers
 #define D_EVENT_TRACE				't'
-// jmarshall - 64bit
-#define D_EVENT_INTEGER64bit		'y'
-// jmarshall end
 
-#define MAX_EVENTS					8192		// Upped from 4096
-
-// stack size of idVec3, aligned to native pointer size
-#define E_EVENT_SIZEOF_VEC			((sizeof(idVec3) + (sizeof(intptr_t) - 1)) & ~(sizeof(intptr_t) - 1))
+#define MAX_EVENTS					4096
 
 class idClass;
 class idTypeInfo;
@@ -74,15 +95,14 @@ private:
 
 	idLinkList<idEvent>			eventNode;
 
-	static idDynamicBlockAlloc<byte, 16 * 1024, 256, MA_EVENT> eventDataAllocator;
+	static idDynamicBlockAlloc<byte, 16 * 1024, 256> eventDataAllocator;
 
 
 public:
 	static bool					initialized;
 
 								~idEvent();
-	
-	static void					WriteDebugInfo( void );
+
 	static idEvent				*Alloc( const idEventDef *evdef, int numargs, va_list args );
 	static void					CopyArgs( const idEventDef *evdef, int numargs, va_list args, intptr_t data[ D_EVENT_MAXARGS ]  );
 	
@@ -91,10 +111,6 @@ public:
 	byte						*GetData( void );
 
 	static void					CancelEvents( const idClass *obj, const idEventDef *evdef = NULL );
-// RAVEN BEGIN
-// abahr:
-	static bool					EventIsPosted( const idClass *obj, const idEventDef *evdef );
-// RAVEN END
 	static void					ClearEventList( void );
 	static void					ServiceEvents( void );
 	static void					Init( void );
@@ -103,6 +119,9 @@ public:
 	// save games
 	static void					Save( idSaveGame *savefile );					// archives object for save game file
 	static void					Restore( idRestoreGame *savefile );				// unarchives object from save game file
+	static void					SaveTrace( idSaveGame *savefile, const trace_t &trace );
+	static void					RestoreTrace( idRestoreGame *savefile, trace_t &trace );
+	
 };
 
 /*

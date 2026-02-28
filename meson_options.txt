@@ -9,7 +9,7 @@ option(
   'build_engine',
   type: 'boolean',
   value: true,
-  description: 'Build engine executables (OpenQ4-client_<arch>/OpenQ4-ded_<arch>).',
+  description: 'Build engine executables (OpenD3-client_<arch>/OpenD3-ded_<arch>).',
 )
 
 option(
@@ -31,13 +31,6 @@ option(
   type: 'boolean',
   value: true,
   description: 'Build the multiplayer game module (game-mp_<arch>).',
-)
-
-option(
-  'build_libbse',
-  type: 'boolean',
-  value: true,
-  description: 'Build the external BSE runtime module (libbse-q4) from OpenQ4-BSE.',
 )
 
 option(

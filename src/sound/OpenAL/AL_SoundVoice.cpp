@@ -33,23 +33,23 @@ extern idCVar s_warnOnMissingSamples;
 extern idCVar s_openALEfxDebugMode;
 
 #if defined( AL_AUXILIARY_SEND_FILTER ) && defined( AL_DIRECT_FILTER ) && defined( AL_FILTER_LOWPASS ) && defined( AL_EFFECTSLOT_NULL ) && defined( AL_FILTER_NULL )
-	#define OPENQ4_OPENAL_EFX_SUPPORTED 1
+	#define OPEND3_OPENAL_EFX_SUPPORTED 1
 #else
-	#define OPENQ4_OPENAL_EFX_SUPPORTED 0
+	#define OPEND3_OPENAL_EFX_SUPPORTED 0
 #endif
 
-#if OPENQ4_OPENAL_EFX_SUPPORTED
-typedef void ( AL_APIENTRY *openq4_alGenFilters_t )( ALsizei n, ALuint *filters );
-typedef void ( AL_APIENTRY *openq4_alDeleteFilters_t )( ALsizei n, const ALuint *filters );
-typedef void ( AL_APIENTRY *openq4_alFilteri_t )( ALuint filter, ALenum param, ALint iValue );
-typedef void ( AL_APIENTRY *openq4_alFilterf_t )( ALuint filter, ALenum param, ALfloat flValue );
+#if OPEND3_OPENAL_EFX_SUPPORTED
+typedef void ( AL_APIENTRY *opend3_alGenFilters_t )( ALsizei n, ALuint *filters );
+typedef void ( AL_APIENTRY *opend3_alDeleteFilters_t )( ALsizei n, const ALuint *filters );
+typedef void ( AL_APIENTRY *opend3_alFilteri_t )( ALuint filter, ALenum param, ALint iValue );
+typedef void ( AL_APIENTRY *opend3_alFilterf_t )( ALuint filter, ALenum param, ALfloat flValue );
 
-static openq4_alGenFilters_t qalGenFilters = NULL;
-static openq4_alDeleteFilters_t qalDeleteFilters = NULL;
-static openq4_alFilteri_t qalFilteri = NULL;
-static openq4_alFilterf_t qalFilterf = NULL;
+static opend3_alGenFilters_t qalGenFilters = NULL;
+static opend3_alDeleteFilters_t qalDeleteFilters = NULL;
+static opend3_alFilteri_t qalFilteri = NULL;
+static opend3_alFilterf_t qalFilterf = NULL;
 
-static bool OpenQ4_LoadVoiceEfxProcs() {
+static bool OpenD3_LoadVoiceEfxProcs() {
 	static bool initialized = false;
 	static bool available = false;
 
@@ -58,10 +58,10 @@ static bool OpenQ4_LoadVoiceEfxProcs() {
 	}
 	initialized = true;
 
-	qalGenFilters = reinterpret_cast<openq4_alGenFilters_t>( alGetProcAddress( "alGenFilters" ) );
-	qalDeleteFilters = reinterpret_cast<openq4_alDeleteFilters_t>( alGetProcAddress( "alDeleteFilters" ) );
-	qalFilteri = reinterpret_cast<openq4_alFilteri_t>( alGetProcAddress( "alFilteri" ) );
-	qalFilterf = reinterpret_cast<openq4_alFilterf_t>( alGetProcAddress( "alFilterf" ) );
+	qalGenFilters = reinterpret_cast<opend3_alGenFilters_t>( alGetProcAddress( "alGenFilters" ) );
+	qalDeleteFilters = reinterpret_cast<opend3_alDeleteFilters_t>( alGetProcAddress( "alDeleteFilters" ) );
+	qalFilteri = reinterpret_cast<opend3_alFilteri_t>( alGetProcAddress( "alFilteri" ) );
+	qalFilterf = reinterpret_cast<opend3_alFilterf_t>( alGetProcAddress( "alFilterf" ) );
 
 	available =
 		( qalGenFilters != NULL ) &&
@@ -830,8 +830,8 @@ idSoundVoice_OpenAL::CreateWetDryFilters
 */
 void idSoundVoice_OpenAL::CreateWetDryFilters()
 {
-#if OPENQ4_OPENAL_EFX_SUPPORTED
-	if( !soundSystemLocal.hardware.HasEFX() || !OpenQ4_LoadVoiceEfxProcs() || !alIsSource( openalSource ) )
+#if OPEND3_OPENAL_EFX_SUPPORTED
+	if( !soundSystemLocal.hardware.HasEFX() || !OpenD3_LoadVoiceEfxProcs() || !alIsSource( openalSource ) )
 	{
 		return;
 	}
@@ -875,7 +875,7 @@ idSoundVoice_OpenAL::DestroyWetDryFilters
 */
 void idSoundVoice_OpenAL::DestroyWetDryFilters()
 {
-#if OPENQ4_OPENAL_EFX_SUPPORTED
+#if OPEND3_OPENAL_EFX_SUPPORTED
 	if( openalDirectFilter != 0 )
 	{
 		if( qalDeleteFilters != NULL )
@@ -928,8 +928,8 @@ void idSoundVoice_OpenAL::ApplyWetDryRouting()
 	effectiveWet = idMath::ClampFloat( 0.0f, 1.0f, effectiveWet );
 	const float effectiveGain = Max( 0.0f, gain );
 
-#if OPENQ4_OPENAL_EFX_SUPPORTED
-	const bool hasEfx = soundSystemLocal.hardware.HasEFX() && OpenQ4_LoadVoiceEfxProcs();
+#if OPEND3_OPENAL_EFX_SUPPORTED
+	const bool hasEfx = soundSystemLocal.hardware.HasEFX() && OpenD3_LoadVoiceEfxProcs();
 	if( hasEfx )
 	{
 		CreateWetDryFilters();

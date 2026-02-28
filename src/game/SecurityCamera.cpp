@@ -1,4 +1,31 @@
 /*
+===========================================================================
+
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+/*
 
   SecurityCamera.cpp
 
@@ -6,8 +33,8 @@
 
 */
 
-
-
+#include "../idlib/precompiled.h"
+#pragma hdrstop
 
 #include "Game_local.h"
 
@@ -31,11 +58,6 @@ CLASS_DECLARATION( idEntity, idSecurityCamera )
 	EVENT( EV_SecurityCam_Alert,			idSecurityCamera::Event_Alert )
 	EVENT( EV_SecurityCam_AddLight,			idSecurityCamera::Event_AddLight )
 END_CLASS
-
-
-idSecurityCamera::~idSecurityCamera() {
-	SetPhysics( NULL );
-}
 
 /*
 ================
@@ -62,7 +84,7 @@ void idSecurityCamera::Save( idSaveGame *savefile ) const {
 							
 	savefile->WriteInt( pvsArea );
 	savefile->WriteStaticObject( physicsObj );
-	savefile->Write( &trm, sizeof( trm ) );
+	savefile->WriteTraceModel( trm );
 }
 
 /*
@@ -90,7 +112,7 @@ void idSecurityCamera::Restore( idRestoreGame *savefile ) {
 							
 	savefile->ReadInt( pvsArea );
 	savefile->ReadStaticObject( physicsObj );
-	savefile->Read( &trm, sizeof( trm ) );
+	savefile->ReadTraceModel( trm );
 }
 
 /*
@@ -121,7 +143,7 @@ void idSecurityCamera::Spawn( void ) {
 	negativeSweep = ( sweepAngle < 0 ) ? true : false;
 	sweepAngle = abs( sweepAngle );
 
-	scanFovCos = idMath::Cos( scanFov * idMath::PI / 360.0f );
+	scanFovCos = cos( scanFov * idMath::PI / 360.0f );
 
 	angle = GetPhysics()->GetAxis().ToAngles().yaw;
 	StartSweep();
@@ -145,7 +167,7 @@ void idSecurityCamera::Spawn( void ) {
 		str = spawnArgs.GetString( "model" );		// use the visual model
 	}
 
-	if ( !collisionModelManager->TrmFromModel( gameLocal.GetMapName(), str, trm ) ) {
+	if ( !collisionModelManager->TrmFromModel( str, trm ) ) {
 		gameLocal.Error( "idSecurityCamera '%s': cannot load collision model %s", name.c_str(), str.c_str() );
 		return;
 	}
@@ -173,7 +195,7 @@ void idSecurityCamera::Event_AddLight( void ) {
 	dir.NormalVectors( right, up );
 	target = GetPhysics()->GetOrigin() + dir * scanDist;
 		
-	radius = idMath::Tan( scanFov * idMath::PI / 360.0f );
+	radius = tan( scanFov * idMath::PI / 360.0f );
 	up = dir + up * radius;
 	up.Normalize();
 	up = GetPhysics()->GetOrigin() + up * scanDist;
@@ -192,10 +214,7 @@ void idSecurityCamera::Event_AddLight( void ) {
 	args.Set( "light_up", up.ToString() );
 	args.SetFloat( "angle", GetPhysics()->GetAxis()[0].ToYaw() );
 
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-	spotLight = static_cast<idLight *>( gameLocal.SpawnEntityType( idLight::GetClassType(), &args ) );
-// RAVEN END
+	spotLight = static_cast<idLight *>( gameLocal.SpawnEntityType( idLight::Type, &args ) );
 	spotLight->Bind( this, true );
 	spotLight->UpdateVisuals();
 }
@@ -215,7 +234,7 @@ void idSecurityCamera::DrawFov( void ) {
 	idVec3 dir = GetAxis();
 	dir.NormalVectors( right, up );
 
-	radius = idMath::Tan( scanFov * idMath::PI / 360.0f );
+	radius = tan( scanFov * idMath::PI / 360.0f );
 	halfRadius = radius * 0.5f;
 	lastPoint = dir + up * radius;
 	lastPoint.Normalize();
@@ -297,10 +316,11 @@ bool idSecurityCamera::CanSeePlayer( void ) {
 			continue;
 		}
 
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-		gameLocal.TracePoint( this, tr, GetPhysics()->GetOrigin(), ent->GetEyePosition(), MASK_OPAQUE, this );
-// RAVEN END
+		idVec3 eye;
+
+		eye = ent->EyeOffset();
+
+		gameLocal.clip.TracePoint( tr, GetPhysics()->GetOrigin(), ent->GetPhysics()->GetOrigin() + eye, MASK_OPAQUE, this );
 		if ( tr.fraction == 1.0 || ( gameLocal.GetTraceEntity( tr ) == ent ) ) {
 			gameLocal.pvs.FreeCurrentPVS( handle );
 			return true;
@@ -501,16 +521,11 @@ idSecurityCamera::Killed
 void idSecurityCamera::Killed( idEntity *inflictor, idEntity *attacker, int damage, const idVec3 &dir, int location ) {
 	sweeping = false;
 	StopSound( SND_CHANNEL_ANY, false );
-// RAVEN BEGIN
-// bdube: replaced fx call with raven call
-	gameLocal.PlayEffect ( spawnArgs, "fx_destroyed", GetPhysics()->GetOrigin(), GetPhysics()->GetAxis() );
-/*
 	const char *fx = spawnArgs.GetString( "fx_destroyed" );
 	if ( fx[0] != '\0' ) {
 		idEntityFx::StartFx( fx, NULL, NULL, this, true );
 	}
-*/
-// RAVEN END
+
 	physicsObj.SetSelf( this );
 	physicsObj.SetClipModel( new idClipModel( trm ), 0.02f );
 	physicsObj.SetOrigin( GetPhysics()->GetOrigin() );
@@ -531,16 +546,10 @@ idSecurityCamera::Pain
 ============
 */
 bool idSecurityCamera::Pain( idEntity *inflictor, idEntity *attacker, int damage, const idVec3 &dir, int location ) {
-// RAVEN BEGIN
-// bdube: replaced fx call with raven call
-	PlayEffect ( "fx_damage", renderEntity.origin, renderEntity.axis );
-/*
 	const char *fx = spawnArgs.GetString( "fx_damage" );
 	if ( fx[0] != '\0' ) {
 		idEntityFx::StartFx( fx, NULL, NULL, this, true );
 	}
-*/
-// RAVEN END
 	return true;
 }
 

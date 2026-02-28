@@ -1,3 +1,30 @@
+/*
+===========================================================================
+
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
 
 #ifndef __PHYSICS_PARAMETRIC_H__
 #define __PHYSICS_PARAMETRIC_H__
@@ -64,14 +91,6 @@ public:
 	void					GetLocalAngles( idAngles &curAngles ) const;
 
 	void					GetAngles( idAngles &curAngles ) const;
-
-// RAVEN BEGIN
-// abahr: a method for hiding gimblelock
-	void					SetAxisOffset( const idMat3& offset ) { axisOffset = offset; useAxisOffset = true; }
-	const idMat3&			GetAxisOffset() const { return axisOffset; }
-	idMat3&					GetAxisOffset() { return axisOffset; }
-	bool					UseAxisOffset() const { return useAxisOffset; }
-// RAVEN END
 
 public:	// common physics interface
 	void					SetClipModel( idClipModel *model, float density, int id = 0, bool freeOld = true );
@@ -148,12 +167,6 @@ private:
 	// master
 	bool					hasMaster;
 	bool					isOrientated;
-
-// RAVEN BEGIN
-// abahr: a method for hiding gimblelock
-	bool					useAxisOffset;
-	idMat3					axisOffset;
-// RAVEN END
 
 private:
 	bool					TestIfAtRest( void ) const;

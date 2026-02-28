@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create curated nightly distributable archives for OpenQ4."""
+"""Create curated nightly distributable archives for OpenD3."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pathlib import Path
 from zipfile import ZIP_DEFLATED, ZipFile
 
 
-PRODUCT_NAME = "OpenQ4"
+PRODUCT_NAME = "OpenD3"
 SUPPORTED_ARCHES = ("x64", "x86", "arm64")
 
 PLATFORM_EXECUTABLE_EXT = {
@@ -19,24 +19,18 @@ PLATFORM_EXECUTABLE_EXT = {
     "macos": "",
 }
 
-PLATFORM_BSE_BINARY = {
-    "windows": "libbse-q4.dll",
-    "linux": "libbse-q4.so",
-    "macos": "libbse-q4.dylib",
-}
-
-OPENBASE_EXCLUDED_DIRS = {"logs", "screenshots"}
-OPENBASE_EXCLUDED_SUFFIXES = {".pdb", ".lib", ".exp", ".ilk"}
+OPEND3_EXCLUDED_DIRS = {"logs", "screenshots"}
+OPEND3_EXCLUDED_SUFFIXES = {".pdb", ".lib", ".exp", ".ilk"}
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Package OpenQ4 nightly artifacts into a release zip."
+        description="Package OpenD3 nightly artifacts into a release zip."
     )
     parser.add_argument(
         "--platform",
         required=True,
-        choices=sorted(PLATFORM_BSE_BINARY.keys()),
+        choices=sorted(PLATFORM_EXECUTABLE_EXT.keys()),
         help="Target runner platform (windows/linux/macos).",
     )
     parser.add_argument(
@@ -58,7 +52,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--source-root",
         default=".",
-        help="OpenQ4 repository root.",
+        help="OpenD3 repository root.",
     )
     parser.add_argument(
         "--install-dir",
@@ -73,12 +67,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     return parser.parse_args(argv[1:])
 
 
-def get_root_binaries(platform: str, arch: str) -> tuple[str, str, str]:
+def get_root_binaries(platform: str, arch: str) -> tuple[str, str]:
     exe_ext = PLATFORM_EXECUTABLE_EXT[platform]
     return (
         f"{PRODUCT_NAME}-client_{arch}{exe_ext}",
         f"{PRODUCT_NAME}-ded_{arch}{exe_ext}",
-        PLATFORM_BSE_BINARY[platform],
     )
 
 
@@ -90,26 +83,26 @@ def copy_required_binaries(platform: str, arch: str, install_dir: Path, package_
         shutil.copy2(source, package_root / filename)
 
 
-def create_openbase_pk4(
-    install_openbase_dir: Path, destination_pk4: Path
+def create_opend3_pk4(
+    install_opend3_dir: Path, destination_pk4: Path
 ) -> tuple[int, list[str]]:
     added_files = 0
     skipped_samples: list[str] = []
 
     with ZipFile(destination_pk4, "w", compression=ZIP_DEFLATED, compresslevel=9) as pk4:
-        for path in sorted(install_openbase_dir.rglob("*")):
+        for path in sorted(install_opend3_dir.rglob("*")):
             if not path.is_file():
                 continue
 
-            rel = path.relative_to(install_openbase_dir)
+            rel = path.relative_to(install_opend3_dir)
             rel_parts_lower = {part.lower() for part in rel.parts}
 
-            if rel_parts_lower & OPENBASE_EXCLUDED_DIRS:
+            if rel_parts_lower & OPEND3_EXCLUDED_DIRS:
                 if len(skipped_samples) < 5:
                     skipped_samples.append(rel.as_posix())
                 continue
 
-            if path.suffix.lower() in OPENBASE_EXCLUDED_SUFFIXES:
+            if path.suffix.lower() in OPEND3_EXCLUDED_SUFFIXES:
                 if len(skipped_samples) < 5:
                     skipped_samples.append(rel.as_posix())
                 continue
@@ -151,14 +144,14 @@ def main(argv: list[str]) -> int:
         print(f"error: README.md not found at {readme_path}", file=sys.stderr)
         return 1
 
-    install_openbase_dir = install_dir / "openbase"
-    if not install_openbase_dir.is_dir():
-        print(f"error: openbase directory not found: {install_openbase_dir}", file=sys.stderr)
+    install_opend3_dir = install_dir / "opend3"
+    if not install_opend3_dir.is_dir():
+        print(f"error: opend3 directory not found: {install_opend3_dir}", file=sys.stderr)
         return 1
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    package_stem = f"openq4-{args.version_tag}-{args.platform}"
+    package_stem = f"opend3-{args.version_tag}-{args.platform}"
     package_root = output_dir / package_stem
     if package_root.exists():
         shutil.rmtree(package_root)
@@ -167,17 +160,17 @@ def main(argv: list[str]) -> int:
     shutil.copy2(readme_path, package_root / "README.md")
     copy_required_binaries(args.platform, args.arch, install_dir, package_root)
 
-    openbase_package_dir = package_root / "openbase"
-    openbase_package_dir.mkdir(parents=True, exist_ok=True)
-    openbase_pk4_name = f"openq4-openbase-{args.version_tag}.pk4"
-    openbase_pk4_path = openbase_package_dir / openbase_pk4_name
+    opend3_package_dir = package_root / "opend3"
+    opend3_package_dir.mkdir(parents=True, exist_ok=True)
+    opend3_pk4_name = f"opend3-opend3-{args.version_tag}.pk4"
+    opend3_pk4_path = opend3_package_dir / opend3_pk4_name
 
-    added_files, skipped_samples = create_openbase_pk4(
-        install_openbase_dir, openbase_pk4_path
+    added_files, skipped_samples = create_opend3_pk4(
+        install_opend3_dir, opend3_pk4_path
     )
     if added_files == 0:
         print(
-            "error: openbase pk4 packaging found no eligible files after filtering",
+            "error: opend3 pk4 packaging found no eligible files after filtering",
             file=sys.stderr,
         )
         return 1
@@ -185,10 +178,10 @@ def main(argv: list[str]) -> int:
     zip_path = output_dir / f"{package_stem}.zip"
     create_release_zip(package_root, zip_path)
 
-    print(f"Packaged OpenQ4 nightly {args.version} for {args.platform}")
+    print(f"Packaged OpenD3 nightly {args.version} for {args.platform}")
     print(f"Package directory: {package_root}")
     print(f"Release archive: {zip_path}")
-    print(f"Openbase pk4: {openbase_pk4_path} ({added_files} files)")
+    print(f"opend3 pk4: {opend3_pk4_path} ({added_files} files)")
     if skipped_samples:
         print("Filtered sample paths:")
         for rel in skipped_samples:

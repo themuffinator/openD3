@@ -22,7 +22,7 @@ function Get-VsDevCmdPath {
         $installPathRaw = & $vswhere -latest -prerelease -products * -requires $component -property installationPath
         $installPath = if ($null -eq $installPathRaw) { "" } else { "$installPathRaw".Trim() }
         if (-not [string]::IsNullOrWhiteSpace($installPath)) {
-            Write-Warning "Visual Studio 2026+ was not found. Falling back to latest available toolchain at '$installPath'."
+            Write-Host "Visual Studio 2026+ was not found. Falling back to latest available toolchain at '$installPath'."
         }
     }
 
@@ -99,6 +99,23 @@ function Test-MesonBuildDirectory {
     return (Test-Path $coreData) -and (Test-Path $ninjaFile)
 }
 
+function Ensure-InstallTree {
+    param(
+        [string]$RepoRoot
+    )
+
+    $installRoot = Join-Path $RepoRoot ".install"
+    $installGameDir = Join-Path $installRoot "opend3"
+
+    if (-not (Test-Path $installRoot)) {
+        New-Item -ItemType Directory -Path $installRoot -Force | Out-Null
+    }
+
+    if (-not (Test-Path $installGameDir)) {
+        New-Item -ItemType Directory -Path $installGameDir -Force | Out-Null
+    }
+}
+
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $scriptDir "..\.."))
 $defaultBuildDir = Join-Path $repoRoot "builddir"
@@ -121,11 +138,17 @@ if ($effectiveArgs.Count -eq 0) {
 }
 
 $commandName = $effectiveArgs[0].ToLowerInvariant()
-$gameLibsRepo = if ([string]::IsNullOrWhiteSpace($env:OPENQ4_GAMELIBS_REPO)) { "" } else { $env:OPENQ4_GAMELIBS_REPO }
+$gameLibsRepo = ""
+if (-not [string]::IsNullOrWhiteSpace($env:OPEND3_GAMELIBS_REPO)) {
+    $gameLibsRepo = $env:OPEND3_GAMELIBS_REPO
+} elseif (-not [string]::IsNullOrWhiteSpace($env:OPENQ4_GAMELIBS_REPO)) {
+    $gameLibsRepo = $env:OPENQ4_GAMELIBS_REPO
+}
 $syncGameLibsScript = Join-Path $scriptDir "sync_gamelibs.ps1"
 $buildGameLibsScript = Join-Path $scriptDir "build_gamelibs.ps1"
 
-if (@("setup", "compile", "install").Contains($commandName) -and $env:OPENQ4_SKIP_GAMELIBS_SYNC -ne "1") {
+$skipGameLibsSync = $env:OPEND3_SKIP_GAMELIBS_SYNC -eq "1" -or $env:OPENQ4_SKIP_GAMELIBS_SYNC -eq "1"
+if (@("setup", "compile", "install").Contains($commandName) -and -not $skipGameLibsSync) {
     if (-not (Test-Path $syncGameLibsScript)) {
         throw "GameLibs sync script not found: '$syncGameLibsScript'."
     }
@@ -142,8 +165,9 @@ if (@("setup", "compile", "install").Contains($commandName) -and $env:OPENQ4_SKI
     }
 }
 
-$buildGameLibs = $env:OPENQ4_BUILD_GAMELIBS -eq "1"
-if ($commandName -eq "compile" -and $buildGameLibs -and $env:OPENQ4_SKIP_GAMELIBS_BUILD -ne "1") {
+$buildGameLibs = $env:OPEND3_BUILD_GAMELIBS -eq "1" -or $env:OPENQ4_BUILD_GAMELIBS -eq "1"
+$skipGameLibsBuild = $env:OPEND3_SKIP_GAMELIBS_BUILD -eq "1" -or $env:OPENQ4_SKIP_GAMELIBS_BUILD -eq "1"
+if ($commandName -eq "compile" -and $buildGameLibs -and -not $skipGameLibsBuild) {
     if (-not (Test-Path $buildGameLibsScript)) {
         throw "GameLibs build script not found: '$buildGameLibsScript'."
     }
@@ -196,6 +220,10 @@ if ($effectiveArgs.Length -gt 0 -and ($effectiveArgs[0] -eq "compile" -or $effec
     if ($isInstall -and -not ($effectiveArgs -contains "--skip-subprojects")) {
         $effectiveArgs += "--skip-subprojects"
     }
+}
+
+if ($commandName -eq "install") {
+    Ensure-InstallTree -RepoRoot $repoRoot
 }
 
 Invoke-Meson -MesonArgs $effectiveArgs -VsDevCmdPath $vsDevCmd

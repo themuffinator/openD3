@@ -153,12 +153,22 @@ void idRenderWindow::Draw(int time, float x, float y) {
 	refdef.shaderParms[2] = 1;
 	refdef.shaderParms[3] = 1;
 
-	refdef.x = drawRect.x;
-	refdef.y = drawRect.y;
-	refdef.width = drawRect.w;
-	refdef.height = drawRect.h;
-	refdef.fov_x = 90;
-	refdef.fov_y = 2 * atan((float)drawRect.h / drawRect.w) * idMath::M_RAD2DEG;
+	float renderX = drawRect.x;
+	float renderY = drawRect.y;
+	float renderW = drawRect.w;
+	float renderH = drawRect.h;
+	dc->AdjustCoords( &renderX, &renderY, &renderW, &renderH );
+
+	refdef.x = idMath::Ftoi( renderX );
+	refdef.y = idMath::Ftoi( renderY );
+	refdef.width = idMath::Ftoi( renderW );
+	refdef.height = idMath::Ftoi( renderH );
+	if ( refdef.width <= 0 || refdef.height <= 0 ) {
+		return;
+	}
+
+	refdef.fov_x = 90.0f;
+	refdef.fov_y = 2.0f * atanf( drawRect.h / drawRect.w ) * idMath::M_RAD2DEG;
 
 	refdef.time = time;
 	world->RenderScene(&refdef);

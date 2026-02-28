@@ -43,7 +43,7 @@ static idCVar r_stretched( "r_stretched", "0", CVAR_ARCHIVE | CVAR_BOOL, "Used s
 #endif
 
 const UInt32 kRes_Stretched 				= (1 << 0);		// set if the resolution is a stretched mode (kCGDisplayModeIsStretched)
-const UInt32 kRes_Safe		 				= (1 << 1);		// ¥¥¥Ê(currently unused) set if the resolution is safe (kCGDisplayModeIsSafeForHardware)
+const UInt32 kRes_Safe		 				= (1 << 1);		// ï¿½ï¿½ï¿½ï¿½(currently unused) set if the resolution is safe (kCGDisplayModeIsSafeForHardware)
 
 // Data to be presented and edited in the prefs dialog
 struct PrefInfo
@@ -173,14 +173,7 @@ void Sys_DoPreferences( void ) {
 					cvarSystem->SetCVarInteger( "r_customHeight", info.height );
 				}
 
-				float r = (float) info.width / (float) info.height;
-				if ( r > 1.7f )
-					cvarSystem->SetCVarInteger( "r_aspectRatio", 1 );	// 16:9
-				else if ( r > 1.55f )
-					cvarSystem->SetCVarInteger( "r_aspectRatio", 2 );	// 16:10
-				else
-					cvarSystem->SetCVarInteger( "r_aspectRatio", 0 );	// 4:3
-				
+								
 				r_stretched.SetBool( info.resFlags & kRes_Stretched );
 				cvarSystem->SetCVarInteger( "r_screen", GetScreenIndexForDisplayID( info.displayID ) );
 				cvarSystem->SetCVarInteger( "r_minDisplayRefresh", (int)FixedToFloat( info.frequency ) );
@@ -800,7 +793,7 @@ OSStatus CreateGameDisplayPreferencesDialog(const GameDisplayInfo *inGDInfo,
 
 
 //------------------------------------------------------------------------------------
-// ¥ RunGameDisplayPreferencesDialog
+// ï¿½ RunGameDisplayPreferencesDialog
 //------------------------------------------------------------------------------------
 // Runs the Mac-specific preferences dialog.
 
@@ -835,6 +828,7 @@ OSStatus RunGameDisplayPreferencesDialog(GameDisplayInfo *outGDInfo, WindowRef i
 	
 	return prefInfo->okPressed ? noErr : userCanceledErr;
 }
+
 
 
 

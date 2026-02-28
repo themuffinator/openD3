@@ -48,7 +48,6 @@ idCVar	idSessionLocal::com_aviDemoHeight( "com_aviDemoHeight", "256", CVAR_SYSTE
 idCVar	idSessionLocal::com_aviDemoTics( "com_aviDemoTics", "2", CVAR_SYSTEM | CVAR_INTEGER, "", 1, 60 );
 idCVar	idSessionLocal::com_wipeSeconds( "com_wipeSeconds", "1", CVAR_SYSTEM, "" );
 idCVar	idSessionLocal::com_guid( "com_guid", "", CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_ROM, "" );
-idCVar	com_skipLoadingContinue( "com_skipLoadingContinue", "0", CVAR_SYSTEM | CVAR_BOOL, "skip the single-player loading-screen continue gate (testing)" );
 idCVar	s_muteUnfocused( "s_muteUnfocused", "1", CVAR_ARCHIVE | CVAR_BOOL, "mute all audio when the application is out of focus" );
 
 #if defined( _WIN32 )
@@ -176,7 +175,7 @@ static void Session_DrawFallbackLoadingScreen() {
 	renderSystem->SetColor( colorBlack );
 	renderSystem->DrawStretchPic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 1, 1, declManager->FindMaterial( "_white" ) );
 
-	const idMaterial *splashMaterial = declManager->FindMaterial( "gfx/splashScreen", false );
+	const idMaterial *splashMaterial = declManager->FindMaterial( "splashScreen", false );
 	if ( splashMaterial ) {
 		renderSystem->SetColor( colorWhite );
 		renderSystem->DrawStretchPic( splashX, splashY, splashW, splashH, 0, 0, 1, 1, splashMaterial );
@@ -233,19 +232,6 @@ static idStr Session_GetMPLoadLimitString( const idDict &serverInfo ) {
 
 	const char *label = common->GetLocalizedString( useCaptureLimit ? "#str_107661" : "#str_107660" );
 	return va( "%s %d", label, limit );
-}
-
-static bool Session_IsLoadingContinueKey( int key ) {
-	if ( key == K_MOUSE1 || key == K_MOUSE2 || key == K_ESCAPE || key == K_ENTER || key == K_KP_ENTER || key == K_SPACE ) {
-		return true;
-	}
-	if ( key >= K_JOY1 && key <= K_JOY32 ) {
-		return true;
-	}
-	if ( key >= K_AUX1 && key <= K_AUX16 ) {
-		return true;
-	}
-	return false;
 }
 
 static bool Session_ShouldSilenceAudioWhenUnfocused() {
@@ -393,12 +379,12 @@ static void Session_TestMap_f( const idCmdArgs &args ) {
 
 /*
 ==================
-Session_OpenQ4StartSingleplayer_f
+Session_OpenD3StartSingleplayer_f
 ==================
 */
-static void Session_OpenQ4StartSingleplayer_f( const idCmdArgs &args ) {
+static void Session_OpenD3StartSingleplayer_f( const idCmdArgs &args ) {
 	if ( args.Argc() < 2 ) {
-		common->Printf( "USAGE: openq4_startSingleplayer <map> [devmap]\n" );
+		common->Printf( "USAGE: opend3_startSingleplayer <map> [devmap]\n" );
 		return;
 	}
 
@@ -1418,7 +1404,7 @@ void idSessionLocal::StartNewGame( const char *mapName, bool devmap ) {
 		cvarSystem->SetCVarString( "si_gameType", "singleplayer" );
 		cvarSystem->SetCVarString( "com_nextGameModule", "game_sp" );
 		idCmdArgs reloadArgs;
-		reloadArgs.AppendArg( "openq4_startSingleplayer" );
+		reloadArgs.AppendArg( "opend3_startSingleplayer" );
 		reloadArgs.AppendArg( mapName );
 		reloadArgs.AppendArg( devmap ? "1" : "0" );
 		cmdSystem->SetupReloadEngine( reloadArgs );
@@ -1693,7 +1679,7 @@ void idSessionLocal::LoadLoadingGui( const char *mapName ) {
 	const char *loadingLevelName = mapName;
 	const char *loadingObjectives = "";
 	const char *loadingAuthor = "";
-	const char *loadingBackground = "gfx/guis/loadscreens/generic";
+	const char *loadingBackground = "guis/assets/splash/pdtempa";
 	const char *loadGuiOverride = "";
 	const char *spawnGameType = mapSpawnData.serverInfo.GetString( "si_gameType", cvarSystem->GetCVarString( "si_gameType" ) );
 	const char *spawnMapPath = mapSpawnData.serverInfo.GetString( "si_map", mapName );
@@ -1916,8 +1902,8 @@ void idSessionLocal::ExecuteMapChange( bool noFadeWipe ) {
 		declManager->BeginLevelLoad();
 		renderSystem->BeginLevelLoad();
 		soundSystem->BeginLevelLoad();
-		if ( bse ) {
-			bse->BeginLevelLoad();
+		if ( effectsManager ) {
+			effectsManager->BeginLevelLoad();
 		}
 	}
 
@@ -1980,18 +1966,18 @@ void idSessionLocal::ExecuteMapChange( bool noFadeWipe ) {
 
 	// load and spawn all other entities ( from a savegame possibly )
 	if ( loadingSaveGame && savegameFile ) {
-		if ( game->InitFromSaveGame( fullMapName, rw, savegameFile ) == false ) {
+		if ( game->InitFromSaveGame( fullMapName, rw, sw, savegameFile ) == false ) {
 			// If the loadgame failed, restart the map with the player persistent data
 			loadingSaveGame = false;
 			fileSystem->CloseFile( savegameFile );
 			savegameFile = NULL;
 
 			game->SetServerInfo( mapSpawnData.serverInfo );
-			game->InitFromNewMap( fullMapName, rw, idAsyncNetwork::server.IsActive(), idAsyncNetwork::client.IsActive(), Sys_Milliseconds() );
+			game->InitFromNewMap( fullMapName, rw, sw, idAsyncNetwork::server.IsActive(), idAsyncNetwork::client.IsActive(), Sys_Milliseconds() );
 		}
 	} else {
 		game->SetServerInfo( mapSpawnData.serverInfo );
-		game->InitFromNewMap( fullMapName, rw, idAsyncNetwork::server.IsActive(), idAsyncNetwork::client.IsActive(), Sys_Milliseconds() );
+		game->InitFromNewMap( fullMapName, rw, sw, idAsyncNetwork::server.IsActive(), idAsyncNetwork::client.IsActive(), Sys_Milliseconds() );
 	}
 
 	if ( !idAsyncNetwork::IsActive() && !loadingSaveGame ) {
@@ -2006,8 +1992,8 @@ void idSessionLocal::ExecuteMapChange( bool noFadeWipe ) {
 		renderSystem->EndLevelLoad();
 		soundSystem->EndLevelLoad();
 		declManager->EndLevelLoad();
-		if ( bse ) {
-			bse->EndLevelLoad();
+		if ( effectsManager ) {
+			effectsManager->EndLevelLoad();
 		}
 		SetBytesNeededForMapLoad( mapString.c_str(), fileSystem->GetReadCount() );
 	}
@@ -2043,56 +2029,6 @@ void idSessionLocal::ExecuteMapChange( bool noFadeWipe ) {
 			Sys_GenerateEvents();
 			UpdateScreen();
 		}
-	}
-
-	const bool waitForSPContinue =
-		guiLoading &&
-		!IsMultiplayer() &&
-		!idAsyncNetwork::IsActive() &&
-		!loadingSaveGame &&
-		!com_skipLoadingContinue.GetBool();
-	if ( waitForSPContinue ) {
-		guiLoading->HandleNamedEvent( "FinishedLoading" );
-		guiLoading->StateChanged( com_frameTime );
-		UpdateScreen();
-
-		bool waitingForContinue = true;
-		bool acceptContinueInput = false;
-		while ( waitingForContinue ) {
-			Sys_GenerateEvents();
-
-			while ( waitingForContinue ) {
-				sysEvent_t ev = eventLoop->GetEvent();
-				if ( ev.evType == SE_NONE ) {
-					break;
-				}
-
-				if ( ev.evType == SE_KEY ) {
-					idKeyInput::PreliminaryKeyEvent( ev.evValue, ( ev.evValue2 != 0 ) );
-				}
-
-				if ( ev.evType == SE_CONSOLE ) {
-					cmdSystem->BufferCommandText( CMD_EXEC_APPEND, (char *)ev.evPtr );
-					cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "\n" );
-				} else if ( waitingForContinue && acceptContinueInput && ev.evType == SE_KEY && ev.evValue2 && Session_IsLoadingContinueKey( ev.evValue ) ) {
-					waitingForContinue = false;
-				}
-
-				if ( ev.evPtr ) {
-					Mem_Free( ev.evPtr );
-				}
-			}
-
-			if ( waitingForContinue ) {
-				UpdateScreen();
-				Sys_Sleep( 16 );
-				acceptContinueInput = true;
-			}
-		}
-
-		// The same key/button used to continue would otherwise remain latched into
-		// the first gameplay frame and can immediately trigger cinematic skip.
-		idKeyInput::ClearStates();
 	}
 
 	// capture the current screen and start a wipe
@@ -3376,7 +3312,7 @@ void idSessionLocal::Init() {
 	cmdSystem->AddCommand( "writePrecache", Sess_WritePrecache_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "writes precache commands" );
 
 #ifndef	ID_DEDICATED
-	cmdSystem->AddCommand( "openq4_startSingleplayer", Session_OpenQ4StartSingleplayer_f, CMD_FL_SYSTEM, "internal helper to start singleplayer after game-module switches" );
+	cmdSystem->AddCommand( "opend3_startSingleplayer", Session_OpenD3StartSingleplayer_f, CMD_FL_SYSTEM, "internal helper to start singleplayer after game-module switches" );
 	cmdSystem->AddCommand( "map", Session_Map_f, CMD_FL_SYSTEM, "loads a map", idCmdSystem::ArgCompletion_MapName );
 	cmdSystem->AddCommand( "devmap", Session_DevMap_f, CMD_FL_SYSTEM, "loads a map in developer mode", idCmdSystem::ArgCompletion_MapName );
 	cmdSystem->AddCommand( "testmap", Session_TestMap_f, CMD_FL_SYSTEM, "tests a map", idCmdSystem::ArgCompletion_MapName );
@@ -3804,3 +3740,4 @@ idSessionLocal::GetAuthMsg
 const char *idSessionLocal::GetAuthMsg( void ) {
 	return authMsg.c_str();
 }
+

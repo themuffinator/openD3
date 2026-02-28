@@ -46,7 +46,7 @@ static const int tabBorder = 4;
 // Time in milliseconds between clicks to register as a double-click
 static const int doubleClickSpeed = 300;
 
-static const idMaterial *OpenQ4_ListMaterial( const char *name ) {
+static const idMaterial *OpenD3_ListMaterial( const char *name ) {
 	if ( name == NULL || name[ 0 ] == '\0' ) {
 		return NULL;
 	}
@@ -495,12 +495,12 @@ This is the same as in idEditWindow
 */
 void idListWindow::InitScroller( bool horizontal )
 {
-	const char *thumbImage = "gfx/guis/scrollbar_thumb";
-	const char *barImage = "gfx/guis/scrollbarv";
+	const char *thumbImage = "ui/assets/scrollbar_thumb.tga";
+	const char *barImage = "ui/assets/scrollbarv.tga";
 	const char *scrollerName = "_scrollerWinV";
 
 	if (horizontal) {
-		barImage = "gfx/guis/scrollbarh";
+		barImage = "ui/assets/scrollbarh.tga";
 		scrollerName = "_scrollerWinH";
 	}
 
@@ -550,10 +550,10 @@ void idListWindow::Draw(int time, float x, float y) {
 		}
 	}
 
-	const idMaterial *matFocus = OpenQ4_ListMaterial( backgroundFocus.c_str() );
-	const idMaterial *matLine = OpenQ4_ListMaterial( backgroundLine.c_str() );
-	const idMaterial *matHover = OpenQ4_ListMaterial( backgroundHover.c_str() );
-	const idMaterial *matGreyed = OpenQ4_ListMaterial( backgroundGreyed.c_str() );
+	const idMaterial *matFocus = OpenD3_ListMaterial( backgroundFocus.c_str() );
+	const idMaterial *matLine = OpenD3_ListMaterial( backgroundLine.c_str() );
+	const idMaterial *matHover = OpenD3_ListMaterial( backgroundHover.c_str() );
+	const idMaterial *matGreyed = OpenD3_ListMaterial( backgroundGreyed.c_str() );
 	gui->SetStateInt( va( "%s_hover", listName.c_str() ), -1 );
 	const bool listContainsCursor = !noEvents && Contains( gui->CursorX(), gui->CursorY() );
 	hover = listContainsCursor;

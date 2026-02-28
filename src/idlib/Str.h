@@ -179,6 +179,7 @@ public:
 // RAVEN BEGIN
 // bdube: changed to escapes
 	int					IcmpNoEscape( const char *text ) const;
+	int					IcmpNoColor( const char *text ) const;
 // RAVEN END
 
 						// compares paths and makes sure folders come first
@@ -309,6 +310,7 @@ public:
 // RAVEN BEGIN
 // bdube: escapes
 	static int			IcmpNoEscape( const char *s1, const char *s2 );
+	static int			IcmpNoColor( const char *s1, const char *s2 ) { return IcmpNoEscape( s1, s2 ); }
 // RAVEN END
 	static int			IcmpPath( const char *s1, const char *s2 );			// compares paths and makes sure folders come first
 	static int			IcmpnPath( const char *s1, const char *s2, int n );	// compares paths and makes sure folders come first
@@ -773,6 +775,11 @@ ID_INLINE int idStr::IcmpPrefix( const char *text ) const {
 ID_INLINE int idStr::IcmpNoEscape( const char *text ) const {
 	assert( text );
 	return idStr::IcmpNoEscape( data, text );
+}
+
+ID_INLINE int idStr::IcmpNoColor( const char *text ) const {
+	assert( text );
+	return idStr::IcmpNoColor( data, text );
 }
 // RAVEN END
 

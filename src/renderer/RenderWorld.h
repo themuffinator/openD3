@@ -13,14 +13,15 @@
 */
 
 class idDemoFile;
+class idSoundEmitter;
 
-// RAVEN BEGIN
-// jscott: new proc format
-//#define	PROC_FILE_ID					"mapProcFile003"
-#define PROC_FILE_ID					"PROC"
+// Doom 3 .proc format
+#define PROC_FILE_ID					"mapProcFile003"
 #define PROC_FILE_EXT					"proc"
-#define PROC_FILEVERSION				"4" // jmarshall: changed to string. 
-// RAVEN END
+
+// Quake 4 compatibility (.proc) header accepted by loader, but not the default.
+#define PROC_FILE_ID_Q4					"PROC"
+#define PROC_FILEVERSION_Q4				"4"
 
 // RAVEN BEGIN
 // dluetscher: new MD5RProc file format
@@ -202,7 +203,10 @@ typedef struct renderEntity_s {
 													// all the lights in the moving monorail don't touch the meshes
 
 // RAVEN BEGIN
-	bool					forceUpdate;			// force an update
+	int						forceUpdate;			// force an update
+
+	// Doom 3 game code still toggles this directly.
+	bool					weaponDepthHack;
 
 // bdube: weapon depth hack only in a given view id
 	int						weaponDepthHackInViewID;// squash depth range so view weapons don't poke into walls
@@ -215,9 +219,8 @@ typedef struct renderEntity_s {
 	int						suppressLOD;
 // RAVEN END
 
-// jmarshall
-	int						referenceSound;
-// jmarshall end
+// Doom 3 compatibility pointer used by game-side sound emitters.
+	idSoundEmitter *		referenceSound;
 } renderEntity_t;
 
 typedef struct renderLight_s {
@@ -283,9 +286,8 @@ typedef struct renderLight_s {
 #endif
 // RAVEN END
 
-// jmarshall
-	int						referenceSound;
-// jmarshall end
+// Doom 3 compatibility pointer used by game-side sound emitters.
+	idSoundEmitter *		referenceSound;
 } renderLight_t;
 
 // RAVEN BEGIN
@@ -447,7 +449,7 @@ public:
 	int serviceTime;
 	bool newEffect;
 	bool expired;
-	class rvBSE* effect;
+	class rvEffect* effect;
 	idBounds referenceBounds;
 	float modelMatrix[16];
 	class idRenderWorldLocal* world;
@@ -647,6 +649,8 @@ public:
 
 	// Line drawing for debug visualization
 	virtual void			DebugClear(int time) = 0;		// a time of 0 will clear all lines and text
+	virtual void			DebugClearLines( int time ) { DebugClear( time ); }
+	virtual void			DebugClearPolygons( int time ) { DebugClear( time ); }
 	virtual void			DebugLine(const idVec4& color, const idVec3& start, const idVec3& end, const int lifetime = 0, const bool depthTest = false) { }
 	virtual void			DebugArrow( const idVec4 &color, const idVec3 &start, const idVec3 &end, int size, const int lifetime = 0 ) = 0;
 	virtual void			DebugWinding( const idVec4 &color, const idWinding &w, const idVec3 &origin, const idMat3 &axis, const int lifetime = 0, const bool depthTest = false ) = 0;

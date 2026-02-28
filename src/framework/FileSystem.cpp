@@ -66,8 +66,8 @@ usually the executable. It defaults to the current directory, but can be overrid
 with "+set fs_basepath c:\doom" on the command line. The base path cannot be modified
 at all after startup.
 
-The "home path" is the user-writable root path for OpenQ4 data. It can be overridden
-with "+set fs_homepath c:\users\you\saved games\openq4" on the command line.
+The "home path" is the user-writable root path for OpenD3 data. It can be overridden
+with "+set fs_homepath c:\users\you\saved games\opend3" on the command line.
 
 The "save path" is the path to the directory where game files will be saved. It defaults
 to the home path, but can be overridden with a "+set fs_savepath c:\doom" on the
@@ -169,7 +169,7 @@ for instance to base a mod of D3 + D3XP assets, fs_game mymod, fs_game_base d3xp
 
 
 // define to fix special-cases for GetPackStatus so that files that shipped in 
-// the wrong place for OpenQ4 don't break pure servers.
+// the wrong place for OpenD3 don't break pure servers.
 #define DOOM3_PURE_SPECIAL_CASES	
 
 typedef bool (*pureExclusionFunc_t)( const struct pureExclusion_s &excl, int l, const idStr &name );
@@ -259,47 +259,24 @@ typedef struct {
 } officialPk4Info_t;
 
 static officialPk4Info_t officialPk4s[] = {
-	// game binaries
-	{ "game000.pk4",			0xb3abe28c,	true,	false },
-	{ "game100.pk4",			0x74b379d9,	true,	false },
-	{ "game200.pk4",			0xa3c810d9,	true,	false },
-	{ "game300.pk4",			0x68fb90b1,	true,	false },
+	// required Doom 3 retail base media
+	{ "pak000.pk4",				0x28d208f1,	true,	true },
+	{ "pak001.pk4",				0x40244be0,	true,	true },
+	{ "pak002.pk4",				0xc51ecdcd,	true,	true },
+	{ "pak003.pk4",				0xcd79d028,	true,	true },
+	{ "pak004.pk4",				0x765e4f8b,	true,	true },
 
-	// core media baseline for Quake 4
-	{ "pak001.pk4",				0xf2cbc998,	true,	true },
-	{ "pak002.pk4",				0x7f8d80d1,	true,	true },
-	{ "pak003.pk4",				0x1b57b207,	true,	true },
-	{ "pak004.pk4",				0x385aa578,	true,	true },
-	{ "pak005.pk4",				0x60d50a1d,	true,	true },
-	{ "pak006.pk4",				0x9099ed11,	true,	true },
-	{ "pak007.pk4",				0xaf301fff,	true,	true },
-	{ "pak008.pk4",				0x4ac6f6d9,	true,	true },
-	{ "pak009.pk4",				0x36030c7d,	true,	true },
-	{ "pak010.pk4",				0x4b80fbda,	true,	true },
-	{ "pak011.pk4",				0x8acf4cfa,	true,	true },
-	{ "pak012.pk4",				0xbe4120b0,	true,	true },
-	{ "pak013.pk4",				0x6ad67f40,	true,	true },
-	{ "pak014.pk4",				0xee51cd59,	true,	true },
-	{ "pak015.pk4",				0xf5bf4e0c,	true,	true },
-	{ "pak016.pk4",				0x2196f58c,	true,	true },
-	{ "pak017.pk4",				0x91118a35,	true,	true },
-	{ "pak018.pk4",				0x98a14f03,	true,	true },
-	{ "pak019.pk4",				0xbc82ac79,	true,	true },
-	{ "pak020.pk4",				0xce74cda5,	true,	true },
-	{ "pak021.pk4",				0x2ba6e70c,	true,	true },
-	{ "pak022.pk4",				0x4e390eec,	true,	true },
-	{ "pak023.pk4",				0x7c1fd3a5,	true,	true },
-	{ "pak024.pk4",				0x5546d551,	true,	true },
-	{ "pak025.pk4",				0xcaeec1fd,	true,	true },
+	// official Doom 3 updates seen on modern distributions (optional)
+	{ "pak005.pk4",				0x8ffc3621,	false,	true },
+	{ "pak006.pk4",				0x095b65ab,	false,	true },
+	{ "pak007.pk4",				0x666bdb3c,	false,	true },
+	{ "pak008.pk4",				0x23ae5993,	false,	true },
 
-	// official but optional
-	{ "q4cmp_pak001.pk4",		0xd0813943,	false,	false },
-	{ "zpak_english.pk4",		0x5868f530,	false,	false },
-	{ "zpak_english_01.pk4",	0xd9f04b8b,	false,	false },
-	{ "zpak_english_02.pk4",	0x9dbd91fd,	false,	false },
-	{ "zpak_english_03.pk4",	0x02eb6ad8,	false,	false },
-	{ "zpak_english_04.pk4",	0xd3fefaa1,	false,	false },
-	{ "zpak_english_05.pk4",	0x8596af60,	false,	false },
+	// legacy retail game-code packs (optional, OpenD3 ships its own game modules)
+	{ "game00.pk4",				0x29cdb978,	false,	false },
+	{ "game01.pk4",				0x51c6981f,	false,	false },
+	{ "game02.pk4",				0x0f3ec6f7,	false,	false },
+	{ "game03.pk4",				0x5d4230ea,	false,	false },
 
 	{ NULL,						0,			false,	false }
 };
@@ -353,20 +330,20 @@ static void FS_AddUniquePath( idStrList &paths, const char *path ) {
 }
 
 static bool FS_HasGameFilesAtBasePath( const char *basePath ) {
-	idStr pakPath;
-	idStr gamePath;
+	idStr pakPath0;
+	idStr pakPath1;
 
 	if ( !basePath || !basePath[ 0 ] ) {
 		return false;
 	}
 
-	pakPath = basePath;
-	pakPath.AppendPath( BASE_GAMEDIR );
-	pakPath.AppendPath( "pak001.pk4" );
-	gamePath = basePath;
-	gamePath.AppendPath( BASE_GAMEDIR );
-	gamePath.AppendPath( "game000.pk4" );
-	return ( FS_FileExists( pakPath.c_str() ) && FS_FileExists( gamePath.c_str() ) );
+	pakPath0 = basePath;
+	pakPath0.AppendPath( BASE_GAMEDIR );
+	pakPath0.AppendPath( "pak000.pk4" );
+	pakPath1 = basePath;
+	pakPath1.AppendPath( BASE_GAMEDIR );
+	pakPath1.AppendPath( "pak001.pk4" );
+	return ( FS_FileExists( pakPath0.c_str() ) && FS_FileExists( pakPath1.c_str() ) );
 }
 
 static bool FS_GetCurrentWorkingDirectory( idStr &cwd ) {
@@ -539,7 +516,12 @@ static void FS_BuildSteamInstallCandidates( idStrList &candidates ) {
 			path = libraryRoots[ j ];
 			path.AppendPath( "steamapps" );
 			path.AppendPath( "common" );
-			path.AppendPath( "Quake 4" );
+			path.AppendPath( "Doom 3" );
+			FS_AddUniquePath( candidates, path.c_str() );
+			path = libraryRoots[ j ];
+			path.AppendPath( "steamapps" );
+			path.AppendPath( "common" );
+			path.AppendPath( "DOOM 3" );
 			FS_AddUniquePath( candidates, path.c_str() );
 		}
 	}
@@ -552,16 +534,16 @@ static void FS_BuildGogInstallCandidates( idStrList &candidates ) {
 	candidates.Clear();
 
 #ifdef WIN32
-	FS_AddUniquePath( candidates, "C:/Program Files (x86)/GOG Galaxy/Games/Quake 4" );
-	FS_AddUniquePath( candidates, "C:/Program Files/GOG Galaxy/Games/Quake 4" );
-	FS_AddUniquePath( candidates, "C:/GOG Games/Quake 4" );
+	FS_AddUniquePath( candidates, "C:/Program Files (x86)/GOG Galaxy/Games/Doom 3" );
+	FS_AddUniquePath( candidates, "C:/Program Files/GOG Galaxy/Games/Doom 3" );
+	FS_AddUniquePath( candidates, "C:/GOG Games/Doom 3" );
 
 	envPath = getenv( "ProgramFiles(x86)" );
 	if ( envPath && envPath[ 0 ] ) {
 		path = envPath;
 		path.AppendPath( "GOG Galaxy" );
 		path.AppendPath( "Games" );
-		path.AppendPath( "Quake 4" );
+		path.AppendPath( "Doom 3" );
 		FS_AddUniquePath( candidates, path.c_str() );
 	}
 	envPath = getenv( "ProgramFiles" );
@@ -569,14 +551,14 @@ static void FS_BuildGogInstallCandidates( idStrList &candidates ) {
 		path = envPath;
 		path.AppendPath( "GOG Galaxy" );
 		path.AppendPath( "Games" );
-		path.AppendPath( "Quake 4" );
+		path.AppendPath( "Doom 3" );
 		FS_AddUniquePath( candidates, path.c_str() );
 	}
 	envPath = getenv( "SystemDrive" );
 	if ( envPath && envPath[ 0 ] ) {
 		path = envPath;
 		path.AppendPath( "GOG Games" );
-		path.AppendPath( "Quake 4" );
+		path.AppendPath( "Doom 3" );
 		FS_AddUniquePath( candidates, path.c_str() );
 	}
 #else
@@ -584,13 +566,13 @@ static void FS_BuildGogInstallCandidates( idStrList &candidates ) {
 	if ( envPath && envPath[ 0 ] ) {
 		path = envPath;
 		path.AppendPath( "GOG Games" );
-		path.AppendPath( "Quake 4" );
+		path.AppendPath( "Doom 3" );
 		FS_AddUniquePath( candidates, path.c_str() );
 
 		path = envPath;
 		path.AppendPath( "Games" );
 		path.AppendPath( "GOG Games" );
-		path.AppendPath( "Quake 4" );
+		path.AppendPath( "Doom 3" );
 		FS_AddUniquePath( candidates, path.c_str() );
 	}
 #endif
@@ -878,7 +860,7 @@ idCVar	idFileSystemLocal::fs_basepath( "fs_basepath", "", CVAR_SYSTEM | CVAR_INI
 idCVar	idFileSystemLocal::fs_homepath( "fs_homepath", "", CVAR_SYSTEM | CVAR_INIT, "" );
 idCVar	idFileSystemLocal::fs_savepath( "fs_savepath", "", CVAR_SYSTEM | CVAR_INIT, "" );
 idCVar	idFileSystemLocal::fs_cdpath( "fs_cdpath", "", CVAR_SYSTEM | CVAR_INIT, "" );
-idCVar	idFileSystemLocal::fs_game( "fs_game", OPENQ4_GAMEDIR, CVAR_SYSTEM | CVAR_INIT | CVAR_SERVERINFO, "mod path" );
+idCVar	idFileSystemLocal::fs_game( "fs_game", OPEND3_GAMEDIR, CVAR_SYSTEM | CVAR_INIT | CVAR_SERVERINFO, "mod path" );
 idCVar  idFileSystemLocal::fs_game_base( "fs_game_base", "", CVAR_SYSTEM | CVAR_INIT | CVAR_SERVERINFO, "alternate mod path, searched after the main fs_game path, before the basedir" );
 #ifdef WIN32
 idCVar	idFileSystemLocal::fs_caseSensitiveOS( "fs_caseSensitiveOS", "0", CVAR_SYSTEM | CVAR_BOOL, "" );
@@ -886,7 +868,7 @@ idCVar	idFileSystemLocal::fs_caseSensitiveOS( "fs_caseSensitiveOS", "0", CVAR_SY
 idCVar	idFileSystemLocal::fs_caseSensitiveOS( "fs_caseSensitiveOS", "1", CVAR_SYSTEM | CVAR_BOOL, "" );
 #endif
 idCVar	idFileSystemLocal::fs_searchAddons( "fs_searchAddons", "0", CVAR_SYSTEM | CVAR_BOOL, "search all addon pk4s ( disables addon functionality )" );
-idCVar	idFileSystemLocal::fs_validateOfficialPaks( "fs_validateOfficialPaks", "1", CVAR_SYSTEM | CVAR_INIT | CVAR_BOOL, "verify required official q4base pk4 checksums on startup" );
+idCVar	idFileSystemLocal::fs_validateOfficialPaks( "fs_validateOfficialPaks", "1", CVAR_SYSTEM | CVAR_INIT | CVAR_BOOL, "verify required official base pk4 checksums on startup" );
 
 idFileSystemLocal	fileSystemLocal;
 idFileSystem *		fileSystem = &fileSystemLocal;
@@ -2196,7 +2178,7 @@ idModList *idFileSystemLocal::ListMods( void ) {
 	}
 
 	list->mods.Insert( "" );
-	list->descriptions.Insert( "OpenQ4" );
+	list->descriptions.Insert( "OpenD3" );
 
 	assert( list->mods.Num() == list->descriptions.Num() );
 
@@ -2741,8 +2723,8 @@ void idFileSystemLocal::Startup( void ) {
 		idStr validationErrors;
 		if ( !ValidateRequiredOfficialPaks( validationErrors ) ) {
 			common->FatalError(
-				"Required official Quake 4 pk4 files are missing or modified.\n\n%s\n"
-				"Install/verify the original q4base assets and remove overrides from fs_savepath/fs_cdpath.",
+				"Required official Doom 3 pk4 files are missing or modified.\n\n%s\n"
+				"Install/verify the original base assets and remove overrides from fs_savepath/fs_cdpath.",
 				validationErrors.c_str() );
 		}
 	}
@@ -3556,7 +3538,7 @@ pureStatus_t idFileSystemLocal::GetPackStatus( pack_t *pak ) {
 		return pak->pureStatus;
 	}
 
-	// Keep the stock Quake 4 base media in the pure list no matter their contents.
+	// Keep stock Doom 3 base media in the pure list no matter their contents.
 	pak->pakFilename.ExtractFileName( name );
 	officialInfo = FindOfficialPk4Info( name.c_str() );
 	if ( officialInfo && officialInfo->pureBase ) {
@@ -4377,9 +4359,10 @@ void idFileSystemLocal::FindDLL( const char *name, char _dllPath[ MAX_OSPATH ], 
 		idStr exeDir = Sys_EXEPath();
 		exeDir.StripFilename();
 
-		const bool preferExeDirFirst = idStr::Icmp( name, "libbse-q4" ) == 0;
+		const bool preferExeDirFirst =
+			idStr::Icmp( name, "libeffects-d3" ) == 0;
 		if ( preferExeDirFirst ) {
-			// Keep libbse-q4 next to the engine executable.
+			// Keep the effects runtime next to the engine executable.
 			dllPath = exeDir;
 			dllPath.AppendPath( dllName );
 			dllFile = OpenExplicitFileRead( dllPath );
@@ -4389,7 +4372,7 @@ void idFileSystemLocal::FindDLL( const char *name, char _dllPath[ MAX_OSPATH ], 
 		// without requiring copies into the executable root.
 		const char *moduleGameDir = fs_game.GetString();
 		if ( !moduleGameDir[0] ) {
-			moduleGameDir = OPENQ4_GAMEDIR;
+			moduleGameDir = OPEND3_GAMEDIR;
 		}
 		if ( !dllFile && moduleGameDir[0] ) {
 			dllPath = exeDir;
@@ -4720,7 +4703,7 @@ void idFileSystemLocal::FindMapScreenshot( const char *path, char *buf, int len 
 	mapname.StripPath();
 	mapname.StripFileExtension();
 	
-	idStr::snPrintf( buf, len, "gfx/guis/loadscreens/%s.tga", mapname.c_str() );
+	idStr::snPrintf( buf, len, "guis/assets/splash/%s.tga", mapname.c_str() );
 	if ( ReadFile( buf, NULL, NULL ) == -1 ) {
 		// try to extract from an addon
 		file = OpenFileReadFlags( buf, FSFLAG_SEARCH_ADDONS );
@@ -4734,7 +4717,7 @@ void idFileSystemLocal::FindMapScreenshot( const char *path, char *buf, int len 
 			WriteFile( buf, data, dlen );
 			delete[] data;
 		} else {
-			idStr::Copynz( buf, "gfx/guis/loadscreens/generic.tga", len );
+			idStr::Copynz( buf, "guis/assets/splash/pdtempa", len );
 		}
 	}
 }

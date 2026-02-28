@@ -32,21 +32,21 @@ If you have questions concerning this license or the applicable additional terms
 #include "tr_local.h"
 
 static const float CHECK_BOUNDS_EPSILON = 1.0f;
-idCVar bse_frameCounters(
-	"bse_frameCounters",
+idCVar fx_frameCounters(
+	"fx_frameCounters",
 	"0",
 	CVAR_RENDERER | CVAR_INTEGER,
-	"temporary BSE counters: 0=off, 1=spawn/service/render summary, 2=include drop-stage counts");
-idCVar bse_respectConnectedArea(
-	"bse_respectConnectedArea",
+	"temporary FX counters: 0=off, 1=spawn/service/render summary, 2=include drop-stage counts");
+idCVar fx_respectConnectedArea(
+	"fx_respectConnectedArea",
 	"0",
 	CVAR_RENDERER | CVAR_BOOL,
 	"if 1, cull effect defs when parms.inConnectedArea is false (legacy portal gating)");
-idCVar bse_useFrustumCull(
-	"bse_useFrustumCull",
+idCVar fx_useFrustumCull(
+	"fx_useFrustumCull",
 	"0",
 	CVAR_RENDERER | CVAR_BOOL,
-	"if 1, apply renderer frustum culling to BSE effect defs/surfaces");
+	"if 1, apply renderer frustum culling to FX effect defs/surfaces");
 
 
 /*
@@ -1488,7 +1488,7 @@ R_AddEffectSurfaces
 */
 void R_AddEffectSurfaces(void) {
 	idRenderWorldLocal* world = tr.viewDef->renderWorld;
-	const int counterMode = bse_frameCounters.GetInteger();
+	const int counterMode = fx_frameCounters.GetInteger();
 	int totalDefs = 0;
 	int spawned = 0;
 	int serviced = 0;
@@ -1544,7 +1544,7 @@ void R_AddEffectSurfaces(void) {
 		// Keep simulation/sound state moving even when the effect isn't rendered this frame.
 		++serviced;
 		const float serviceTimeSeconds = static_cast<float>(def->gameTime) * 0.001f;
-		if (bse->ServiceEffect(def, serviceTimeSeconds)) {
+		if (effectsManager->ServiceEffect(def, serviceTimeSeconds)) {
 			++expired;
 			if (def->dynamicModel) {
 				delete def->dynamicModel;
@@ -1561,7 +1561,7 @@ void R_AddEffectSurfaces(void) {
 
 		// Some game-lib paths don't keep inConnectedArea up-to-date for renderEffect_t.
 		// Keep this gate optional so view/world effects are not silently culled.
-		if (bse_respectConnectedArea.GetBool()) {
+		if (fx_respectConnectedArea.GetBool()) {
 			if (!def->parms.inConnectedArea &&
 				def->parms.allowSurfaceInViewID == 0 &&
 				def->parms.weaponDepthHackInViewID == 0) {
@@ -1581,7 +1581,7 @@ void R_AddEffectSurfaces(void) {
 			}
 		}
 
-		def->dynamicModel = bse->RenderEffect(def, tr.viewDef);
+		def->dynamicModel = effectsManager->RenderEffect(def, tr.viewDef);
 		if (!def->dynamicModel) {
 			++dropNoModel;
 			def->dynamicModelFrameCount = 0;
@@ -1609,7 +1609,7 @@ void R_AddEffectSurfaces(void) {
 		R_AxisToModelMatrix(def->parms.axis, def->parms.origin, vEffect->modelMatrix);
 		myGlMultMatrix(vEffect->modelMatrix, tr.viewDef->worldSpace.modelViewMatrix, vEffect->modelViewMatrix);
 
-		if (bse_useFrustumCull.GetBool()) {
+		if (fx_useFrustumCull.GetBool()) {
 			if (R_CullLocalBox(localBounds, vEffect->modelMatrix, 5, tr.viewDef->frustum)) {
 				++dropFrustumCull;
 				continue;
@@ -1664,7 +1664,7 @@ void R_AddEffectSurfaces(void) {
 			}
 
 			srfTriangles_t* tri = surf->geometry;
-			if (bse_useFrustumCull.GetBool()) {
+			if (fx_useFrustumCull.GetBool()) {
 				if (R_CullLocalBox(tri->bounds, vEffect->modelMatrix, 5, tr.viewDef->frustum)) {
 					++surfaceFrustumCull;
 					continue;
@@ -1688,7 +1688,7 @@ void R_AddEffectSurfaces(void) {
 			}
 			vertexCache.Touch(tri->ambientCache);
 
-			// BSE dynamic surfaces rebuild index data every frame; keep them on the CPU index path.
+			// FX dynamic surfaces rebuild index data every frame; keep them on the CPU index path.
 			tri->indexCache = NULL;
 
 			R_AddDrawSurf(tri, vEffect, &renderParms, shader, vEffect->scissorRect);
@@ -1710,7 +1710,7 @@ void R_AddEffectSurfaces(void) {
 
 	if (counterMode > 0) {
 		common->Printf(
-			"BSE frame %d view %d mode=%d: spawned=%d serviced=%d rendered=%d defs=%d alive=%d expired=%d surfaces=%d\n",
+			"FX frame %d view %d mode=%d: spawned=%d serviced=%d rendered=%d defs=%d alive=%d expired=%d surfaces=%d\n",
 			tr.frameCount,
 			tr.viewDef->renderView.viewID,
 			counterMode,
@@ -1722,7 +1722,7 @@ void R_AddEffectSurfaces(void) {
 			expired,
 			renderedSurfaces);
 		common->Printf(
-			"BSE drops: notConnected=%d viewSuppress=%d noModel=%d noSurfaces=%d clearedBounds=%d frustum=%d scissor=%d\n",
+			"FX drops: notConnected=%d viewSuppress=%d noModel=%d noSurfaces=%d clearedBounds=%d frustum=%d scissor=%d\n",
 			dropNotConnected,
 			dropViewSuppress,
 			dropNoModel,
@@ -1731,7 +1731,7 @@ void R_AddEffectSurfaces(void) {
 			dropFrustumCull,
 			dropScissor);
 		common->Printf(
-			"BSE surf: visited=%d noGeom=%d noIndexes=%d noIdxWithVerts=%d frustum=%d noShader=%d notDrawn=%d cacheFail=%d added=%d\n",
+			"FX surf: visited=%d noGeom=%d noIndexes=%d noIdxWithVerts=%d frustum=%d noShader=%d notDrawn=%d cacheFail=%d added=%d\n",
 			surfaceVisited,
 			surfaceNoGeom,
 			surfaceNoIndexes,
@@ -1742,12 +1742,12 @@ void R_AddEffectSurfaces(void) {
 			surfaceCacheFail,
 			renderedSurfaces);
 		common->Printf(
-			"BSE effect geom: noIndexed=%d noIndexedWithVerts=%d rendered=%d\n",
+			"FX effect geom: noIndexed=%d noIndexedWithVerts=%d rendered=%d\n",
 			effectsNoIndexedSurfaces,
 			effectsNoIndexedButHasVerts,
 			renderedEffects);
 		common->Printf(
-			"BSE service gate: true=%d false=%d lagMin=%d lagMax=%d\n",
+			"FX service gate: true=%d false=%d lagMin=%d lagMax=%d\n",
 			serviceSpawnGateTrue,
 			serviceSpawnGateFalse,
 			(serviceGateLagMin == 0x7fffffff) ? 0 : serviceGateLagMin,
@@ -1931,3 +1931,5 @@ void R_RemoveUnecessaryViewLights( void ) {
 		}
 	}
 }
+
+

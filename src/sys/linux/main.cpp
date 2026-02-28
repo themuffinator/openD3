@@ -120,9 +120,9 @@ const char *Sys_DefaultSavePath(void) {
 	const char *home = getenv( "HOME" );
 	if ( home && home[0] ) {
 #if defined( ID_DEMO_BUILD )
-		sprintf( savepath, "%s/.local/share/openq4-demo", home );
+		sprintf( savepath, "%s/.local/share/opend3-demo", home );
 #else
-		sprintf( savepath, "%s/.local/share/openq4", home );
+		sprintf( savepath, "%s/.local/share/opend3", home );
 #endif
 	} else {
 		savepath = Posix_Cwd();

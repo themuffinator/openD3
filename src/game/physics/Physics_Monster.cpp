@@ -1,6 +1,33 @@
+/*
+===========================================================================
 
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+
+#include "../../idlib/precompiled.h"
+#pragma hdrstop
 
 #include "../Game_local.h"
 
@@ -25,10 +52,7 @@ void idPhysics_Monster::CheckGround( monsterPState_t &state ) {
 	}
 
 	down = state.origin + gravityNormal * CONTACT_EPSILON;
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	gameLocal.Translation( self, groundTrace, state.origin, down, clipModel, clipModel->GetAxis(), clipMask, self );
-// RAVEN END
+	gameLocal.clip.Translation( groundTrace, state.origin, down, clipModel, clipModel->GetAxis(), clipMask, self );
 
 	if ( groundTrace.fraction == 1.0f ) {
 		state.onGround = false;
@@ -71,10 +95,7 @@ monsterMoveResult_t idPhysics_Monster::SlideMove( idVec3 &start, idVec3 &velocit
 	blockingEntity = NULL;
 	move = delta;
 	for( i = 0; i < 3; i++ ) {
-// RAVEN BEGIN
-// ddynerman: multiple collision worlds
-		gameLocal.Translation( self, tr, start, start + move, clipModel, clipModel->GetAxis(), clipMask, self );
-// RAVEN END
+		gameLocal.clip.Translation( tr, start, start + move, clipModel, clipModel->GetAxis(), clipMask, self );
 
 		start = tr.endpos;
 
@@ -122,20 +143,14 @@ monsterMoveResult_t idPhysics_Monster::StepMove( idVec3 &start, idVec3 &velocity
 	result1 = SlideMove( noStepPos, noStepVel, delta );
 	if ( result1 == MM_OK ) {
 		velocity = noStepVel;
-// RAVEN BEGIN
-// bdube: dont step when there is no gravity
-		if ( gravityNormal == vec3_zero || forceDeltaMove ) {
-// RAVEN END		
+		if ( gravityNormal == vec3_zero ) {
 			start = noStepPos;
 			return MM_OK;
 		}
 
 		// try to step down so that we walk down slopes and stairs at a normal rate
 		down = noStepPos + gravityNormal * maxStepHeight;
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-		gameLocal.Translation( self, tr, noStepPos, down, clipModel, clipModel->GetAxis(), clipMask, self );
-// RAVEN END
+		gameLocal.clip.Translation( tr, noStepPos, down, clipModel, clipModel->GetAxis(), clipMask, self );
 		if ( tr.fraction < 1.0f ) {
 			start = tr.endpos;
 			return MM_STEPPED;
@@ -145,16 +160,10 @@ monsterMoveResult_t idPhysics_Monster::StepMove( idVec3 &start, idVec3 &velocity
 		}
 	}
 
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-	if ( blockingEntity && blockingEntity->IsType( idActor::GetClassType() ) ) {
-// RAVEN END
+	if ( blockingEntity && blockingEntity->IsType( idActor::Type ) ) {
 		// try to step down in case walking into an actor while going down steps
 		down = noStepPos + gravityNormal * maxStepHeight;
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-		gameLocal.Translation( self, tr, noStepPos, down, clipModel, clipModel->GetAxis(), clipMask, self );
-// RAVEN END
+		gameLocal.clip.Translation( tr, noStepPos, down, clipModel, clipModel->GetAxis(), clipMask, self );
 		start = tr.endpos;
 		velocity = noStepVel;
 		return MM_BLOCKED;
@@ -166,10 +175,7 @@ monsterMoveResult_t idPhysics_Monster::StepMove( idVec3 &start, idVec3 &velocity
 
 	// try to step up
 	up = start - gravityNormal * maxStepHeight;
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	gameLocal.Translation( self, tr, start, up, clipModel, clipModel->GetAxis(), clipMask, self );
-// RAVEN END	
+	gameLocal.clip.Translation( tr, start, up, clipModel, clipModel->GetAxis(), clipMask, self );
 	if ( tr.fraction == 0.0f ) {
 		start = noStepPos;
 		velocity = noStepVel;
@@ -188,10 +194,7 @@ monsterMoveResult_t idPhysics_Monster::StepMove( idVec3 &start, idVec3 &velocity
 
 	// step down again
 	down = stepPos + gravityNormal * maxStepHeight;
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	gameLocal.Translation( self, tr, stepPos, down, clipModel, clipModel->GetAxis(), clipMask, self );
-// RAVEN END
+	gameLocal.clip.Translation( tr, stepPos, down, clipModel, clipModel->GetAxis(), clipMask, self );
 	stepPos = tr.endpos;
 
 	// if the move is further without stepping up, or the slope is too steap, don't step up
@@ -267,14 +270,12 @@ idPhysics_Monster_SavePState
 ================
 */
 void idPhysics_Monster_SavePState( idSaveGame *savefile, const monsterPState_t &state ) {
-	savefile->WriteInt( state.atRest );
-	savefile->WriteBool( state.onGround );
 	savefile->WriteVec3( state.origin );
 	savefile->WriteVec3( state.velocity );
 	savefile->WriteVec3( state.localOrigin );
 	savefile->WriteVec3( state.pushVelocity );
-
-	savefile->WriteVec3( state.lastPushVelocity );	// cnicholson: Added unsaved var
+	savefile->WriteBool( state.onGround );
+	savefile->WriteInt( state.atRest );
 }
 
 /*
@@ -283,14 +284,12 @@ idPhysics_Monster_RestorePState
 ================
 */
 void idPhysics_Monster_RestorePState( idRestoreGame *savefile, monsterPState_t &state ) {
-	savefile->ReadInt( state.atRest );
-	savefile->ReadBool( state.onGround );
 	savefile->ReadVec3( state.origin );
 	savefile->ReadVec3( state.velocity );
 	savefile->ReadVec3( state.localOrigin );
 	savefile->ReadVec3( state.pushVelocity );
-
-	savefile->ReadVec3( state.lastPushVelocity );	// cnicholson: Added unrestored var
+	savefile->ReadBool( state.onGround );
+	savefile->ReadInt( state.atRest );
 }
 
 /*
@@ -461,10 +460,7 @@ bool idPhysics_Monster::Evaluate( int timeStepMSec, int endTimeMSec ) {
 	if ( masterEntity ) {
 		self->GetMasterPosition( masterOrigin, masterAxis );
 		current.origin = masterOrigin + current.localOrigin * masterAxis;
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-		clipModel->Link( self, 0, current.origin, clipModel->GetAxis() );
-// RAVEN END
+		clipModel->Link( gameLocal.clip, self, 0, current.origin, clipModel->GetAxis() );
 		current.velocity = ( current.origin - oldOrigin ) / timeStep;
 		masterDeltaYaw = masterYaw;
 		masterYaw = masterAxis[0].ToYaw();
@@ -474,7 +470,7 @@ bool idPhysics_Monster::Evaluate( int timeStepMSec, int endTimeMSec ) {
 
 	// if the monster is at rest
 	if ( current.atRest >= 0 ) {
-		return true;
+		return false;
 	}
 
 	ActivateContactEntities();
@@ -524,40 +520,26 @@ bool idPhysics_Monster::Evaluate( int timeStepMSec, int endTimeMSec ) {
 			Rest();
 		} else {
 			// try moving into the desired direction
-// RAVEN BEGIN
-// jshepard: flying creatures, even if not using fly move, shouldn't use step move
-			if( self->IsType( idAI::GetClassType() ) && ((idAI*)self)->move.moveType == MOVETYPE_FLY ) {
-				moveResult = idPhysics_Monster::SlideMove( current.origin, current.velocity, delta );
-			} else {
-				moveResult = idPhysics_Monster::StepMove( current.origin, current.velocity, delta );
-			}
+			moveResult = idPhysics_Monster::StepMove( current.origin, current.velocity, delta );
 			delta.Zero();
-// RAVEN END
-			current.velocity -= ( current.velocity * gravityNormal ) * gravityNormal;
 		}
 	}
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	clipModel->Link( self, 0, current.origin, clipModel->GetAxis() );
-// RAVEN END
+
+	clipModel->Link( gameLocal.clip, self, 0, current.origin, clipModel->GetAxis() );
 
 	// get all the ground contacts
 	EvaluateContacts();
 
 	// move the monster velocity back into the world frame
 	current.velocity += current.pushVelocity;
-	current.lastPushVelocity = current.pushVelocity;
 	current.pushVelocity.Zero();
-	
+
 	if ( IsOutsideWorld() ) {
 		gameLocal.Warning( "clip model outside world bounds for entity '%s' at (%s)", self->name.c_str(), current.origin.ToString(0) );
 		Rest();
 	}
 
-// RAVEN BEGIN
-// bdube: determine if we moved this frame
-	return true;
-// RAVEN END
+	return ( current.origin != oldOrigin );
 }
 
 /*
@@ -636,10 +618,8 @@ idPhysics_Monster::RestoreState
 */
 void idPhysics_Monster::RestoreState( void ) {
 	current = saved;
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	clipModel->Link( self, 0, current.origin, clipModel->GetAxis() );
-// RAVEN END
+
+	clipModel->Link( gameLocal.clip, self, 0, current.origin, clipModel->GetAxis() );
 
 	EvaluateContacts();
 }
@@ -661,10 +641,7 @@ void idPhysics_Monster::SetOrigin( const idVec3 &newOrigin, int id ) {
 	else {
 		current.origin = newOrigin;
 	}
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	clipModel->Link( self, 0, newOrigin, clipModel->GetAxis() );
-// RAVEN END
+	clipModel->Link( gameLocal.clip, self, 0, newOrigin, clipModel->GetAxis() );
 	Activate();
 }
 
@@ -674,10 +651,7 @@ idPhysics_Player::SetAxis
 ================
 */
 void idPhysics_Monster::SetAxis( const idMat3 &newAxis, int id ) {
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	clipModel->Link( self, 0, clipModel->GetOrigin(), newAxis );
-// RAVEN END
+	clipModel->Link( gameLocal.clip, self, 0, clipModel->GetOrigin(), newAxis );
 	Activate();
 }
 
@@ -690,10 +664,7 @@ void idPhysics_Monster::Translate( const idVec3 &translation, int id ) {
 
 	current.localOrigin += translation;
 	current.origin += translation;
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	clipModel->Link( self, 0, current.origin, clipModel->GetAxis() );
-// RAVEN END
+	clipModel->Link( gameLocal.clip, self, 0, current.origin, clipModel->GetAxis() );
 	Activate();
 }
 
@@ -714,10 +685,7 @@ void idPhysics_Monster::Rotate( const idRotation &rotation, int id ) {
 	else {
 		current.localOrigin = current.origin;
 	}
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	clipModel->Link( self, 0, current.origin, clipModel->GetAxis() * rotation.ToMat3() );
-// RAVEN END
+	clipModel->Link( gameLocal.clip, self, 0, current.origin, clipModel->GetAxis() * rotation.ToMat3() );
 	Activate();
 }
 
@@ -756,7 +724,7 @@ idPhysics_Monster::GetPushedLinearVelocity
 ================
 */
 const idVec3 &idPhysics_Monster::GetPushedLinearVelocity( const int id ) const {
-	return current.lastPushVelocity;
+	return current.pushVelocity;
 }
 
 /*

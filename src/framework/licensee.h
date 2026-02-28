@@ -9,12 +9,12 @@
 
 // RAVEN BEGIN
 // rjohnson: this is the name of the game we are making
-#define PROJECT_NAME					"OpenQ4"
+#define PROJECT_NAME					"OpenD3"
 #define PROJECT_AUTHOR					"themuffinator"
 #define PROJECT_COMPANY				"DarkMatter Productions"
 #define PROJECT_VERSION				"0.0.1"
 #define PROJECT_WEBSITE				"www.darkmatter-quake.com"
-#define PROJECT_REPO					"https://github.com/themuffinator/OpenQ4"
+#define PROJECT_REPO					"https://github.com/themuffinator/OpenD3"
 
 #define GAME_NAME						PROJECT_NAME			// appears on window titles and errors
 #define GAME_ICON						"q4icon.bmp"
@@ -38,28 +38,28 @@
 #endif
 
 // paths
-#define	CD_BASEDIR						"OpenQ4"
-#define	BASE_GAMEDIR					"q4base"
-#define	BASE_MPGAMEDIR					"q4mp"
-#define OPENQ4_GAMEDIR					"openbase"
+#define	CD_BASEDIR						"OpenD3"
+#define	BASE_GAMEDIR					"base"
+#define	BASE_MPGAMEDIR					"base"
+#define OPEND3_GAMEDIR					"opend3"
 #define	DEMO_GAMEDIR					"demo"
 
 // filenames
 #if defined( _M_X64 ) || defined( __x86_64__ )
-	#define OPENQ4_BINARY_ARCH			"x64"
+	#define OPEND3_BINARY_ARCH			"x64"
 #elif defined( _M_IX86 ) || defined( __i386__ )
-	#define OPENQ4_BINARY_ARCH			"x86"
+	#define OPEND3_BINARY_ARCH			"x86"
 #elif defined( _M_ARM64 ) || defined( __aarch64__ )
-	#define OPENQ4_BINARY_ARCH			"arm64"
+	#define OPEND3_BINARY_ARCH			"arm64"
 #else
-	#define OPENQ4_BINARY_ARCH			"unknown"
+	#define OPEND3_BINARY_ARCH			"unknown"
 #endif
-#define	CD_EXE							PROJECT_NAME "-client_" OPENQ4_BINARY_ARCH ".exe"
+#define	CD_EXE							PROJECT_NAME "-client_" OPEND3_BINARY_ARCH ".exe"
 
 #ifdef _XENON
-#define CONFIG_FILE						"save:/OpenQ4Config.cfg"
+#define CONFIG_FILE						"save:/OpenD3Config.cfg"
 #else
-#define CONFIG_FILE						"OpenQ4Config.cfg"
+#define CONFIG_FILE						"OpenD3Config.cfg"
 #endif
 
 // base folder where the source code lives
@@ -125,15 +125,15 @@
 #define EDITOR_WINDOWTEXT				"QuakeEdit"
 
 // win32 info
-#define WIN32_CONSOLE_CLASS				"OpenQ4 WinConsole"
-#define WIN32_SPLASH_CLASS				"OpenQ4 Splash"
-#define	WIN32_WINDOW_CLASS_NAME			"OpenQ4"
-#define	WIN32_FAKE_WINDOW_CLASS_NAME	"OPENQ4_WGL_FAKE"
+#define WIN32_CONSOLE_CLASS				"OpenD3 WinConsole"
+#define WIN32_SPLASH_CLASS				"OpenD3 Splash"
+#define	WIN32_WINDOW_CLASS_NAME			"OpenD3"
+#define	WIN32_FAKE_WINDOW_CLASS_NAME	"OPEND3_WGL_FAKE"
 
 #ifdef __linux__
-	#define DEFAULT_BASE_PATH				"/usr/local/games/openq4"
+	#define DEFAULT_BASE_PATH				"/usr/local/games/opend3"
 #elif defined( MACOS_X )
-	#define DEFAULT_BASE_PATH				"/Applications/OpenQ4"
+	#define DEFAULT_BASE_PATH				"/Applications/OpenD3"
 #endif
 
 // CD Key file info

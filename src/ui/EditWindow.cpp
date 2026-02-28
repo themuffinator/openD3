@@ -458,12 +458,12 @@ This is the same as in idListWindow
 */
 void idEditWindow::InitScroller( bool horizontal )
 {
-	const char *thumbImage = "gfx/guis/scrollbar_thumb";
-	const char *barImage = "gfx/guis/scrollbarv";
+	const char *thumbImage = "ui/assets/scrollbar_thumb.tga";
+	const char *barImage = "ui/assets/scrollbarv.tga";
 	const char *scrollerName = "_scrollerWinV";
 
 	if (horizontal) {
-		barImage = "gfx/guis/scrollbarh";
+		barImage = "ui/assets/scrollbarh.tga";
 		scrollerName = "_scrollerWinH";
 	}
 

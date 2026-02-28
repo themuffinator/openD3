@@ -1,8 +1,109 @@
+/*
+===========================================================================
 
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+
+#include "../../idlib/precompiled.h"
+#pragma hdrstop
 
 #include "../Game_local.h"
+
+static ID_INLINE byte *ScriptFieldDataPtr( idScriptObject *obj, const idVarDef *fieldDef, int fallbackFieldSize ) {
+	if ( !obj || !obj->data || !fieldDef ) {
+		return NULL;
+	}
+
+	const idTypeDef *objectType = obj->GetTypeDef();
+	if ( !objectType ) {
+		return NULL;
+	}
+
+	const int fieldOffset = fieldDef->value.ptrOffset;
+	if ( fieldOffset < 0 ) {
+		return NULL;
+	}
+
+	int fieldSize = fallbackFieldSize;
+	if ( fieldDef->Type() == ev_field ) {
+		const idTypeDef *fieldType = fieldDef->TypeDef() ? fieldDef->TypeDef()->FieldType() : NULL;
+		if ( fieldType && fieldType->Size() > 0 ) {
+			fieldSize = fieldType->Size();
+		}
+	}
+
+	if ( fieldSize <= 0 ) {
+		return NULL;
+	}
+
+	const size_t objectSize = objectType->Size();
+	const size_t offset = static_cast<size_t>( fieldOffset );
+	const size_t size = static_cast<size_t>( fieldSize );
+
+	if ( offset > objectSize || size > objectSize - offset ) {
+		return NULL;
+	}
+
+	return &obj->data[ offset ];
+}
+
+static ID_INLINE bool ScriptObjectWritePtrInRange( const void *ptr, size_t writeSize ) {
+	if ( !ptr || writeSize == 0 ) {
+		return false;
+	}
+
+	const uintptr_t writeAddress = reinterpret_cast<uintptr_t>( ptr );
+	for ( int i = 0; i < gameLocal.num_entities; i++ ) {
+		idEntity *ent = gameLocal.entities[ i ];
+		if ( !ent || !ent->scriptObject.data ) {
+			continue;
+		}
+
+		const idTypeDef *objType = ent->scriptObject.GetTypeDef();
+		if ( !objType ) {
+			continue;
+		}
+
+		const size_t objectSize = objType->Size();
+		const uintptr_t objectAddress = reinterpret_cast<uintptr_t>( ent->scriptObject.data );
+		if ( objectSize > ( UINTPTR_MAX - objectAddress ) ) {
+			continue;
+		}
+
+		const uintptr_t objectEnd = objectAddress + objectSize;
+		if ( writeAddress < objectAddress || writeAddress > objectEnd ) {
+			continue;
+		}
+
+		if ( writeSize <= static_cast<size_t>( objectEnd - writeAddress ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
 
 /*
 ================
@@ -13,7 +114,6 @@ idInterpreter::idInterpreter() {
 	localstackUsed = 0;
 	terminateOnExit = true;
 	debug = 0;
-	LastScriptVariable = 0;
 	memset( localstack, 0, sizeof( localstack ) );
 	memset( callStack, 0, sizeof( callStack ) );
 	Reset();
@@ -54,7 +154,6 @@ void idInterpreter::Save( idSaveGame *savefile ) const {
 
 	savefile->WriteInt( popParms );
 
-	// TOSAVE: idVarDef			*LastScriptVariable;
 	if ( multiFrameEvent ) {
 		savefile->WriteString( multiFrameEvent->GetName() );
 	} else {
@@ -111,8 +210,6 @@ void idInterpreter::Restore( idRestoreGame *savefile ) {
 
 	savefile->ReadInt( popParms );
 
-	// TORESTORE: idVarDef			*LastScriptVariable;
-
 	savefile->ReadString( funcname );
 	if ( funcname.Length() ) {
 		multiFrameEvent = idEventDef::FindEvent( funcname );
@@ -161,16 +258,14 @@ used primarily for the debugger and debugging
 //FIXME:  This is pretty much wrong.  won't access data in most situations.
 ================
 */
-// RAVEN BEGIN
-// bdube: took this over again
 bool idInterpreter::GetRegisterValue( const char *name, idStr &out, int scopeDepth ) {
 	varEval_t		reg;
 	idVarDef		*d;
 	char			funcObject[ 1024 ];
 	char			*funcName;
-	const idVarDef	*scope = NULL;
-	const idVarDef	*scopeObj;
+	const idVarDef	*scope;
 	const idTypeDef	*field;
+	const idScriptObject *obj;
 	const function_t *func;
 
 	out.Empty();
@@ -192,44 +287,35 @@ bool idInterpreter::GetRegisterValue( const char *name, idStr &out, int scopeDep
 	funcName = strstr( funcObject, "::" );
 	if ( funcName ) {
 		*funcName = '\0';
-		scopeObj = gameLocal.program.GetDef( NULL, funcObject, &def_namespace );
-		funcName += 2;				
-		if ( scopeObj )
-		{
-			scope = gameLocal.program.GetDef( NULL, funcName, scopeObj );
-		}
+		scope = gameLocal.program.GetDef( NULL, funcObject, &def_namespace );
+		funcName += 2;
 	} else {
 		funcName = funcObject;
-		scope = gameLocal.program.GetDef( NULL, func->Name(), &def_namespace );
-		scopeObj = NULL;
+		scope = &def_namespace;
 	}
 
-	if ( !scope )
-	{
+	// Get the function from the object
+	d = gameLocal.program.GetDef( NULL, funcName, scope );
+	if ( !d ) {
 		return false;
 	}
-
-	d = gameLocal.program.GetDef( NULL, name, scope );
 	
-	// Check the objects for it if it wasnt local to the function
-	if ( !d )
-	{
-		for ( ; scopeObj && scopeObj->TypeDef()->SuperClass(); scopeObj = scopeObj->TypeDef()->SuperClass()->def )
-		{
-			d = gameLocal.program.GetDef( NULL, name, scopeObj );
-			if ( d )
-			{
-				break;
+	// Get the variable itself and check various namespaces
+	d = gameLocal.program.GetDef( NULL, name, d );
+	if ( !d ) {
+		if ( scope == &def_namespace ) {
+			return false;
+		}
+		
+		d = gameLocal.program.GetDef( NULL, name, scope );
+		if ( !d ) {
+			d = gameLocal.program.GetDef( NULL, name, &def_namespace );
+			if ( !d ) {
+				return false;
 			}
 		}
-	}	
-
-	if ( !d )
-	{
-		out = "???";
-		return false;
 	}
-	
+		
 	reg = GetVariable( d );
 	switch( d->Type() ) {
 	case ev_float:
@@ -260,55 +346,30 @@ bool idInterpreter::GetRegisterValue( const char *name, idStr &out, int scopeDep
 		break;
 
 	case ev_field:
-	{
-		idEntity*		entity;			
-		idScriptObject*	obj;
-		
 		if ( scope == &def_namespace ) {
 			// should never happen, but handle it safely anyway
 			return false;
 		}
 
-		field  = d->TypeDef()->FieldType();
-		entity = GetEntity ( *((int*)&localstack[ localstackBase ]) );
-		if ( !entity || !field )
-		{
+		field = scope->TypeDef()->GetParmType( reg.ptrOffset )->FieldType();
+		obj   = *reinterpret_cast<const idScriptObject **>( &localstack[ callStack[ callStackDepth ].stackbase ] );
+		if ( !field || !obj ) {
 			return false;
 		}
-
-		obj = &entity->scriptObject;
-		if ( !obj ) {
-			return false;
-		}
-		
+								
 		switch ( field->Type() ) {
-			case ev_boolean:
-				out = va( "%d", *( reinterpret_cast<int *>( &obj->data[ reg.ptrOffset ] ) ) );
-				return true;
+		case ev_boolean:
+			out = va( "%d", *( reinterpret_cast<int *>( &obj->data[ reg.ptrOffset ] ) ) );
+			return true;
 
-			case ev_float:
-				out = va( "%g", *( reinterpret_cast<float *>( &obj->data[ reg.ptrOffset ] ) ) );
-				return true;
-				
-			case ev_string:	{
-				const char* str;
-				str = reinterpret_cast<const char*>( &obj->data[ reg.ptrOffset ] );
-				if ( !str ) {
-					out = "\"\"";
-				} else {
-					out  = "\"";
-					out += str;			
-					out += "\"";
-				}
-				return true;
-			}
+		case ev_float:
+			out = va( "%g", *( reinterpret_cast<float *>( &obj->data[ reg.ptrOffset ] ) ) );
+			return true;
 
-			default:
-				return false;
+		default:
+			return false;
 		}
-		
 		break;
-	}
 
 	case ev_string:
 		if ( reg.stringPtr ) {
@@ -324,7 +385,6 @@ bool idInterpreter::GetRegisterValue( const char *name, idStr &out, int scopeDep
 		return false;
 	}
 }
-// RAVEN END
 
 /*
 ================
@@ -439,7 +499,7 @@ idInterpreter::Error
 Aborts the currently executing function
 ============
 */
-void idInterpreter::Error( const char *fmt, ... ) const {
+void idInterpreter::Error( char *fmt, ... ) const {
 	va_list argptr;
 	char	text[ 1024 ];
 
@@ -464,7 +524,7 @@ idInterpreter::Warning
 Prints file and line number information with warning.
 ============
 */
-void idInterpreter::Warning( const char *fmt, ... ) const {
+void idInterpreter::Warning( char *fmt, ... ) const {
 	va_list argptr;
 	char	text[ 1024 ];
 
@@ -524,10 +584,7 @@ Copys the args from the calling thread's stack
 void idInterpreter::ThreadCall( idInterpreter *source, const function_t *func, int args ) {
 	Reset();
 
-// RAVEN BEGIN
-// JSinger: Changed to call optimized memcpy
-	SIMDProcessor->Memcpy( localstack, &source->localstack[ source->localstackUsed - args ], args );
-// RAVEN END
+	memcpy( localstack, &source->localstack[ source->localstackUsed - args ], args );
 
 	localstackUsed = args;
 	localstackBase = 0;
@@ -719,23 +776,10 @@ void idInterpreter::CallEvent( const function_t *func, int argsize ) {
 	eventEntity = GetEntity( *var.entityNumberPtr );
 
 	if ( !eventEntity || !eventEntity->RespondsTo( *evdef ) ) {
-// RAVEN BEGIN
-// jshepard: added catch for entities that don't exist 
 		if ( eventEntity && developer.GetBool() ) {
 			// give a warning in developer mode
 			Warning( "Function '%s' not supported on entity '%s'", evdef->GetName(), eventEntity->name.c_str() );
-		} else if( !eventEntity )	{
-			//check the last script variable.
-			if(!!LastScriptVariable)	{
-				//if it's $null_entity, then we should ignore this.
-				if(idStr::Cmp( "$null_entity", LastScriptVariable->Name()) ) {
-					Warning( "Entity '%s' is a null entity", LastScriptVariable->Name() );
-				}
-			} else {
-				Warning( "Null entity referenced -- check entity name spelling.");
-			}		
 		}
-// RAVEN END
 		// always return a safe value when an object doesn't exist
 		switch( evdef->GetReturnType() ) {
 		case D_EVENT_INTEGER :
@@ -821,7 +865,8 @@ void idInterpreter::CallEvent( const function_t *func, int argsize ) {
 	}
 
 	popParms = argsize;
-	eventEntity->ProcessEventArgPtr( evdef, data );	
+	eventEntity->ProcessEventArgPtr( evdef, data );
+
 	if ( !multiFrameEvent ) {
 		if ( popParms ) {
 			PopParms( popParms );
@@ -904,7 +949,7 @@ void idInterpreter::CallSysEvent( const function_t *func, int argsize ) {
 		switch( format[ i ] ) {
 		case D_EVENT_INTEGER :
 			source.intPtr = ( int * )&localstack[ start + pos ];
-			*( int * )&data[ i ] = int( *source.floatPtr );
+			data[ i ] = int( *source.floatPtr );
 			break;
 
 		case D_EVENT_FLOAT :
@@ -967,16 +1012,14 @@ bool idInterpreter::Execute( void ) {
 	varEval_t	var_b;
 	varEval_t	var_c;
 	varEval_t	var;
+	int			*destEntityNumberPtr;
 	statement_t	*st;
 	int 		runaway;
 	idThread	*newThread;
 	float		floatVal;
+	byte		*fieldData;
 	idScriptObject *obj;
 	const function_t *func;
-// RAVEN BEGIN
-// jnewquist: Tag scope and callees to track allocations using "new".
-	MEM_SCOPED_TAG(tag,MA_SCRIPT);
-// RAVEN END
 
 	if ( threadDying || !currentFunction ) {
 		return true;
@@ -999,23 +1042,6 @@ bool idInterpreter::Execute( void ) {
 
 		// next statement
 		st = &gameLocal.program.GetStatement( instructionPointer );
-
-// RAVEN BEGIN
-// bdube: if the debugger is running then we need to check to see if any breakpoints have beeng hit
-// jmarshall - reval
-		//if ( gameLocal.editors & EDITOR_DEBUGGER ) {
-		//	common->DebuggerCheckBreakpoint ( this, &gameLocal.program, instructionPointer );
-		//} else if ( g_debugScript.GetBool ( ) ) {
-		//	static int lastLineNumber = -1;
-		//	if ( lastLineNumber != gameLocal.program.GetStatement ( instructionPointer ).linenumber ) {				
-		//		gameLocal.Printf ( "%s (%d)\n", 
-		//			gameLocal.program.GetFilename ( gameLocal.program.GetStatement ( instructionPointer ).file ),
-		//			gameLocal.program.GetStatement ( instructionPointer ).linenumber
-		//			);
-		//		lastLineNumber = gameLocal.program.GetStatement ( instructionPointer ).linenumber;
-		//	}
-		//}
-// RAVEN END
 
 		switch( st->op ) {
 		case OP_RETURN:
@@ -1501,8 +1527,9 @@ bool idInterpreter::Execute( void ) {
 		case OP_UINCP_F:
 			var_a = GetVariable( st->a );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			if ( obj ) {
-				var.bytePtr = &obj->data[ st->b->value.ptrOffset ];
+			fieldData = ScriptFieldDataPtr( obj, st->b, type_float.Size() );
+			if ( fieldData ) {
+				var.bytePtr = fieldData;
 				( *var.floatPtr )++;
 			}
 			break;
@@ -1515,8 +1542,9 @@ bool idInterpreter::Execute( void ) {
 		case OP_UDECP_F:
 			var_a = GetVariable( st->a );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			if ( obj ) {
-				var.bytePtr = &obj->data[ st->b->value.ptrOffset ];
+			fieldData = ScriptFieldDataPtr( obj, st->b, type_float.Size() );
+			if ( fieldData ) {
+				var.bytePtr = fieldData;
 				( *var.floatPtr )--;
 			}
 			break;
@@ -1609,7 +1637,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_F:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->floatPtr ) {
+			if ( var_b.evalPtr && var_b.evalPtr->floatPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->floatPtr, type_float.Size() ) ) {
 				var_a = GetVariable( st->a );
 				*var_b.evalPtr->floatPtr = *var_a.floatPtr;
 			}
@@ -1617,7 +1645,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_ENT:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->entityNumberPtr ) {
+			if ( var_b.evalPtr && var_b.evalPtr->entityNumberPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->entityNumberPtr, type_entity.Size() ) ) {
 				var_a = GetVariable( st->a );
 				*var_b.evalPtr->entityNumberPtr = *var_a.entityNumberPtr;
 			}
@@ -1625,7 +1653,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_FLD:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->intPtr ) {
+			if ( var_b.evalPtr && var_b.evalPtr->intPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->intPtr, type_field.Size() ) ) {
 				var_a = GetVariable( st->a );
 				*var_b.evalPtr->intPtr = *var_a.intPtr;
 			}
@@ -1633,7 +1661,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_BOOL:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->intPtr ) {
+			if ( var_b.evalPtr && var_b.evalPtr->intPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->intPtr, type_boolean.Size() ) ) {
 				var_a = GetVariable( st->a );
 				*var_b.evalPtr->intPtr = *var_a.intPtr;
 			}
@@ -1641,14 +1669,14 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_S:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->stringPtr ) {
+			if ( var_b.evalPtr && var_b.evalPtr->stringPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->stringPtr, MAX_STRING_LEN ) ) {
 				idStr::Copynz( var_b.evalPtr->stringPtr, GetString( st->a ), MAX_STRING_LEN );
 			}
 			break;
 
 		case OP_STOREP_V:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->vectorPtr ) {
+			if ( var_b.evalPtr && var_b.evalPtr->vectorPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->vectorPtr, type_vector.Size() ) ) {
 				var_a = GetVariable( st->a );
 				*var_b.evalPtr->vectorPtr = *var_a.vectorPtr;
 			}
@@ -1656,7 +1684,7 @@ bool idInterpreter::Execute( void ) {
 		
 		case OP_STOREP_FTOS:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->stringPtr ) {
+			if ( var_b.evalPtr && var_b.evalPtr->stringPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->stringPtr, MAX_STRING_LEN ) ) {
 				var_a = GetVariable( st->a );
 				idStr::Copynz( var_b.evalPtr->stringPtr, FloatToString( *var_a.floatPtr ), MAX_STRING_LEN );
 			}
@@ -1664,7 +1692,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_BTOS:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->stringPtr ) {
+			if ( var_b.evalPtr && var_b.evalPtr->stringPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->stringPtr, MAX_STRING_LEN ) ) {
 				var_a = GetVariable( st->a );
 				if ( *var_a.floatPtr != 0.0f ) {
 					idStr::Copynz( var_b.evalPtr->stringPtr, "true", MAX_STRING_LEN );
@@ -1676,7 +1704,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_VTOS:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->stringPtr ) {
+			if ( var_b.evalPtr && var_b.evalPtr->stringPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->stringPtr, MAX_STRING_LEN ) ) {
 				var_a = GetVariable( st->a );
 				idStr::Copynz( var_b.evalPtr->stringPtr, var_a.vectorPtr->ToString(), MAX_STRING_LEN );
 			}
@@ -1684,7 +1712,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_FTOBOOL:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->intPtr ) {
+			if ( var_b.evalPtr && var_b.evalPtr->intPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->intPtr, type_boolean.Size() ) ) {
 				var_a = GetVariable( st->a );
 				if ( *var_a.floatPtr != 0.0f ) {
 					*var_b.evalPtr->intPtr = 1;
@@ -1696,7 +1724,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_BOOLTOF:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->floatPtr ) {
+			if ( var_b.evalPtr && var_b.evalPtr->floatPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->floatPtr, type_float.Size() ) ) {
 				var_a = GetVariable( st->a );
 				*var_b.evalPtr->floatPtr = static_cast<float>( *var_a.intPtr );
 			}
@@ -1704,7 +1732,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_OBJ:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->entityNumberPtr ) {
+			if ( var_b.evalPtr && var_b.evalPtr->entityNumberPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->entityNumberPtr, type_object.Size() ) ) {
 				var_a = GetVariable( st->a );
 				*var_b.evalPtr->entityNumberPtr = *var_a.entityNumberPtr;
 			}
@@ -1712,20 +1740,24 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_OBJENT:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->entityNumberPtr ) {
+			destEntityNumberPtr = NULL;
+			if ( var_b.evalPtr ) {
+				destEntityNumberPtr = var_b.evalPtr->entityNumberPtr;
+			}
+			if ( destEntityNumberPtr && ScriptObjectWritePtrInRange( destEntityNumberPtr, type_object.Size() ) ) {
 				var_a = GetVariable( st->a );
 				obj = GetScriptObject( *var_a.entityNumberPtr );
 				if ( !obj ) {
-					*var_b.evalPtr->entityNumberPtr = 0;
+					*destEntityNumberPtr = 0;
 
 				// st->b points to type_pointer, which is just a temporary that gets its type reassigned, so we store the real type in st->c
 				// so that we can do a type check during run time since we don't know what type the script object is at compile time because it
 				// comes from an entity
 				} else if ( !obj->GetTypeDef()->Inherits( st->c->TypeDef() ) ) {
 					//Warning( "object '%s' cannot be converted to '%s'", obj->GetTypeName(), st->c->TypeDef()->Name() );
-					*var_b.evalPtr->entityNumberPtr = 0;
+					*destEntityNumberPtr = 0;
 				} else {
-					*var_b.evalPtr->entityNumberPtr = *var_a.entityNumberPtr;
+					*destEntityNumberPtr = *var_a.entityNumberPtr;
 				}
 			}
 			break;
@@ -1734,10 +1766,13 @@ bool idInterpreter::Execute( void ) {
 			var_a = GetVariable( st->a );
 			var_c = GetVariable( st->c );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			if ( obj ) {
-				var_c.evalPtr->bytePtr = &obj->data[ st->b->value.ptrOffset ];
-			} else {
-				var_c.evalPtr->bytePtr = NULL;
+			if ( var_c.evalPtr ) {
+				fieldData = ScriptFieldDataPtr( obj, st->b, 1 );
+				if ( fieldData ) {
+					var_c.evalPtr->bytePtr = fieldData;
+				} else {
+					var_c.evalPtr->bytePtr = NULL;
+				}
 			}
 			break;
 
@@ -1745,8 +1780,9 @@ bool idInterpreter::Execute( void ) {
 			var_a = GetVariable( st->a );
 			var_c = GetVariable( st->c );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			if ( obj ) {
-				var.bytePtr = &obj->data[ st->b->value.ptrOffset ];
+			fieldData = ScriptFieldDataPtr( obj, st->b, type_float.Size() );
+			if ( fieldData ) {
+				var.bytePtr = fieldData;
 				*var_c.floatPtr = *var.floatPtr;
 			} else {
 				*var_c.floatPtr = 0.0f;
@@ -1757,8 +1793,9 @@ bool idInterpreter::Execute( void ) {
 			var_a = GetVariable( st->a );
 			var_c = GetVariable( st->c );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			if ( obj ) {
-				var.bytePtr = &obj->data[ st->b->value.ptrOffset ];
+			fieldData = ScriptFieldDataPtr( obj, st->b, type_entity.Size() );
+			if ( fieldData ) {
+				var.bytePtr = fieldData;
 				*var_c.entityNumberPtr = *var.entityNumberPtr;
 			} else {
 				*var_c.entityNumberPtr = 0;
@@ -1769,8 +1806,9 @@ bool idInterpreter::Execute( void ) {
 			var_a = GetVariable( st->a );
 			var_c = GetVariable( st->c );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			if ( obj ) {
-				var.bytePtr = &obj->data[ st->b->value.ptrOffset ];
+			fieldData = ScriptFieldDataPtr( obj, st->b, type_boolean.Size() );
+			if ( fieldData ) {
+				var.bytePtr = fieldData;
 				*var_c.intPtr = *var.intPtr;
 			} else {
 				*var_c.intPtr = 0;
@@ -1780,8 +1818,9 @@ bool idInterpreter::Execute( void ) {
 		case OP_INDIRECT_S:
 			var_a = GetVariable( st->a );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			if ( obj ) {
-				var.bytePtr = &obj->data[ st->b->value.ptrOffset ];
+			fieldData = ScriptFieldDataPtr( obj, st->b, type_string.Size() );
+			if ( fieldData ) {
+				var.bytePtr = fieldData;
 				SetString( st->c, var.stringPtr );
 			} else {
 				SetString( st->c, "" );
@@ -1792,8 +1831,9 @@ bool idInterpreter::Execute( void ) {
 			var_a = GetVariable( st->a );
 			var_c = GetVariable( st->c );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			if ( obj ) {
-				var.bytePtr = &obj->data[ st->b->value.ptrOffset ];
+			fieldData = ScriptFieldDataPtr( obj, st->b, type_vector.Size() );
+			if ( fieldData ) {
+				var.bytePtr = fieldData;
 				*var_c.vectorPtr = *var.vectorPtr;
 			} else {
 				var_c.vectorPtr->Zero();
@@ -1804,10 +1844,11 @@ bool idInterpreter::Execute( void ) {
 			var_a = GetVariable( st->a );
 			var_c = GetVariable( st->c );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			if ( !obj ) {
+			fieldData = ScriptFieldDataPtr( obj, st->b, type_object.Size() );
+			if ( !fieldData ) {
 				*var_c.entityNumberPtr = 0;
 			} else {
-				var.bytePtr = &obj->data[ st->b->value.ptrOffset ];
+				var.bytePtr = fieldData;
 				*var_c.entityNumberPtr = *var.entityNumberPtr;
 			}
 			break;
@@ -1849,13 +1890,6 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_PUSH_ENT:
 			var_a = GetVariable( st->a );
-// RAVEN BEGIN
-// jshepard: keep tabs on this guy, he's the last referenced script variable.
-			assert(st->a);
-			LastScriptVariable = st->a;
-			//This line leads to memory corruption, I need to come up with a better way of keeping track.
-			//LastScriptVariable->initialized = idVarDef::stackVariable;
-// RAVEN END
 			Push( *var_a.entityNumberPtr );
 			break;
 
@@ -1865,7 +1899,9 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_PUSH_V:
 			var_a = GetVariable( st->a );
-			PushVector(*var_a.vectorPtr);
+			Push( *reinterpret_cast<int *>( &var_a.vectorPtr->x ) );
+			Push( *reinterpret_cast<int *>( &var_a.vectorPtr->y ) );
+			Push( *reinterpret_cast<int *>( &var_a.vectorPtr->z ) );
 			break;
 
 		case OP_PUSH_OBJ:

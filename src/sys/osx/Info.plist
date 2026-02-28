@@ -5,11 +5,11 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>OpenQ4</string>
+	<string>OpenD3</string>
 	<key>CFBundleIconFile</key>
-	<string>OpenQ4.icns</string>
+	<string>OpenD3.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.darkmatter.openq4</string>
+	<string>com.darkmatter.opend3</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>
@@ -24,3 +24,4 @@
 	<string>NSApplication</string>
 </dict>
 </plist>
+

@@ -44,13 +44,10 @@ If you have questions concerning this license or the applicable additional terms
 ===============================================================================
 */
 
-// unfortunately, our minDistance / maxDistance is specified in meters, and
-// we have far too many of them to change at this time.
-// 
-// jmarshall - quake 4 doesn't use these
-const float DOOM_TO_METERS = 1.0f;					// doom to meters
-const float METERS_TO_DOOM = 1.0f;	// meters to doom
-// jmarshall end
+// Sound shader minDistance/maxDistance values are authored in meters.
+// Doom 3 world space uses inch-like units, so keep the original conversion.
+const float DOOM_TO_METERS = 0.0254f;					// doom units to meters
+const float METERS_TO_DOOM = ( 1.0f / DOOM_TO_METERS );	// meters to doom units
 
 const float DB_SILENCE = -60.0f;
 
@@ -246,10 +243,16 @@ public:
 
 	// query sound samples from all emitters reaching a given listener
 	virtual float			CurrentShakeAmplitude() = 0;
+	virtual	float			CurrentShakeAmplitudeForPosition( const int time, const idVec3& listenerPosition ) {
+		return CurrentShakeAmplitude();
+	}
 
 	// where is the camera/microphone
 	// listenerId allows listener-private and antiPrivate sounds to be filtered
 	virtual void			PlaceListener( const idVec3& origin, const idMat3& axis, const int listenerId ) = 0;
+	virtual void			PlaceListener( const idVec3& origin, const idMat3& axis, const int listenerId, const int gameTime, const idStr& areaName ) {
+		PlaceListener( origin, axis, listenerId );
+	}
 
 	// fade all sounds in the world with a given shader soundClass
 	// to is in Db, over is in seconds

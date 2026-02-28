@@ -1,3 +1,30 @@
+/*
+===========================================================================
+
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
 
 #ifndef __PHYSICS_H__
 #define __PHYSICS_H__
@@ -69,13 +96,6 @@ public:	// common physics interface
 								// get/set the mass of a specific clip model or the whole physics object
 	virtual void				SetMass( float mass, int id = -1 ) = 0;
 	virtual float				GetMass( int id = -1 ) const = 0;
-
-// RAVEN BEGIN
-// bdube: added center mass	
-								// get the center of mass origin
-	virtual idVec3				GetCenterMass ( int id = -1 ) const = 0;
-// RAVEN END
-
 								// get/set the contents of a specific clip model or the whole physics object
 	virtual void				SetContents( int contents, int id = -1 ) = 0;
 	virtual int					GetContents( int id = -1 ) const = 0;
@@ -100,10 +120,6 @@ public:	// common physics interface
 	virtual bool				IsAtRest( void ) const = 0;
 	virtual int					GetRestStartTime( void ) const = 0;
 	virtual bool				IsPushable( void ) const = 0;
-// RAVEN BEGIN
-// bdube: water interraction
-	virtual bool				IsInWater ( void ) const = 0;
-// RAVEN END	
 								// save and restore the physics state
 	virtual void				SaveState( void ) = 0;
 	virtual void				RestoreState( void ) = 0;
@@ -147,12 +163,6 @@ public:	// common physics interface
 	virtual bool				HasGroundContacts( void ) const = 0;
 	virtual bool				IsGroundEntity( int entityNum ) const = 0;
 	virtual bool				IsGroundClipModel( int entityNum, int id ) const = 0;
-// RAVEN BEGIN
-// abahr
-	virtual const idVec3		GetContactNormal() const { return vec3_zero; }
-	virtual const idVec3		GetGroundContactNormal() const { return vec3_zero; }
-	virtual idEntity*			GetSelf() const = 0;
-// RAVEN END
 								// set the master entity for objects bound to a master
 	virtual void				SetMaster( idEntity *master, const bool orientated = true ) = 0;
 								// set pushed state
@@ -168,12 +178,6 @@ public:	// common physics interface
 								// networking
 	virtual void				WriteToSnapshot( idBitMsgDelta &msg ) const = 0;
 	virtual void				ReadFromSnapshot( const idBitMsgDelta &msg ) = 0;
-
-// RAVEN BEGIN
-// kfuller: we want to debug draw the bbox
-	virtual void				DebugDraw() {}
-// RAVEN END
-
 };
 
 #endif /* !__PHYSICS_H__ */

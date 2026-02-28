@@ -42,27 +42,27 @@ extern idCVar s_volume;
 extern idCVar s_useEAXReverb;
 
 #if defined( AL_EFFECTSLOT_EFFECT ) && defined( AL_EFFECT_NULL ) && defined( AL_AUXILIARY_SEND_FILTER )
-	#define OPENQ4_OPENAL_EFX_SUPPORTED 1
+	#define OPEND3_OPENAL_EFX_SUPPORTED 1
 #else
-	#define OPENQ4_OPENAL_EFX_SUPPORTED 0
+	#define OPEND3_OPENAL_EFX_SUPPORTED 0
 #endif
 
-#if OPENQ4_OPENAL_EFX_SUPPORTED
-typedef void ( AL_APIENTRY *openq4_alGenEffects_t )( ALsizei n, ALuint *effects );
-typedef void ( AL_APIENTRY *openq4_alDeleteEffects_t )( ALsizei n, const ALuint *effects );
-typedef void ( AL_APIENTRY *openq4_alEffecti_t )( ALuint effect, ALenum param, ALint iValue );
-typedef void ( AL_APIENTRY *openq4_alGenAuxiliaryEffectSlots_t )( ALsizei n, ALuint *effectslots );
-typedef void ( AL_APIENTRY *openq4_alDeleteAuxiliaryEffectSlots_t )( ALsizei n, const ALuint *effectslots );
-typedef void ( AL_APIENTRY *openq4_alAuxiliaryEffectSloti_t )( ALuint effectslot, ALenum param, ALint iValue );
+#if OPEND3_OPENAL_EFX_SUPPORTED
+typedef void ( AL_APIENTRY *opend3_alGenEffects_t )( ALsizei n, ALuint *effects );
+typedef void ( AL_APIENTRY *opend3_alDeleteEffects_t )( ALsizei n, const ALuint *effects );
+typedef void ( AL_APIENTRY *opend3_alEffecti_t )( ALuint effect, ALenum param, ALint iValue );
+typedef void ( AL_APIENTRY *opend3_alGenAuxiliaryEffectSlots_t )( ALsizei n, ALuint *effectslots );
+typedef void ( AL_APIENTRY *opend3_alDeleteAuxiliaryEffectSlots_t )( ALsizei n, const ALuint *effectslots );
+typedef void ( AL_APIENTRY *opend3_alAuxiliaryEffectSloti_t )( ALuint effectslot, ALenum param, ALint iValue );
 
-static openq4_alGenEffects_t qalGenEffects = NULL;
-static openq4_alDeleteEffects_t qalDeleteEffects = NULL;
-static openq4_alEffecti_t qalEffecti = NULL;
-static openq4_alGenAuxiliaryEffectSlots_t qalGenAuxiliaryEffectSlots = NULL;
-static openq4_alDeleteAuxiliaryEffectSlots_t qalDeleteAuxiliaryEffectSlots = NULL;
-static openq4_alAuxiliaryEffectSloti_t qalAuxiliaryEffectSloti = NULL;
+static opend3_alGenEffects_t qalGenEffects = NULL;
+static opend3_alDeleteEffects_t qalDeleteEffects = NULL;
+static opend3_alEffecti_t qalEffecti = NULL;
+static opend3_alGenAuxiliaryEffectSlots_t qalGenAuxiliaryEffectSlots = NULL;
+static opend3_alDeleteAuxiliaryEffectSlots_t qalDeleteAuxiliaryEffectSlots = NULL;
+static opend3_alAuxiliaryEffectSloti_t qalAuxiliaryEffectSloti = NULL;
 
-static bool OpenQ4_LoadHardwareEfxProcs() {
+static bool OpenD3_LoadHardwareEfxProcs() {
 	static bool initialized = false;
 	static bool available = false;
 
@@ -71,12 +71,12 @@ static bool OpenQ4_LoadHardwareEfxProcs() {
 	}
 	initialized = true;
 
-	qalGenEffects = reinterpret_cast<openq4_alGenEffects_t>( alGetProcAddress( "alGenEffects" ) );
-	qalDeleteEffects = reinterpret_cast<openq4_alDeleteEffects_t>( alGetProcAddress( "alDeleteEffects" ) );
-	qalEffecti = reinterpret_cast<openq4_alEffecti_t>( alGetProcAddress( "alEffecti" ) );
-	qalGenAuxiliaryEffectSlots = reinterpret_cast<openq4_alGenAuxiliaryEffectSlots_t>( alGetProcAddress( "alGenAuxiliaryEffectSlots" ) );
-	qalDeleteAuxiliaryEffectSlots = reinterpret_cast<openq4_alDeleteAuxiliaryEffectSlots_t>( alGetProcAddress( "alDeleteAuxiliaryEffectSlots" ) );
-	qalAuxiliaryEffectSloti = reinterpret_cast<openq4_alAuxiliaryEffectSloti_t>( alGetProcAddress( "alAuxiliaryEffectSloti" ) );
+	qalGenEffects = reinterpret_cast<opend3_alGenEffects_t>( alGetProcAddress( "alGenEffects" ) );
+	qalDeleteEffects = reinterpret_cast<opend3_alDeleteEffects_t>( alGetProcAddress( "alDeleteEffects" ) );
+	qalEffecti = reinterpret_cast<opend3_alEffecti_t>( alGetProcAddress( "alEffecti" ) );
+	qalGenAuxiliaryEffectSlots = reinterpret_cast<opend3_alGenAuxiliaryEffectSlots_t>( alGetProcAddress( "alGenAuxiliaryEffectSlots" ) );
+	qalDeleteAuxiliaryEffectSlots = reinterpret_cast<opend3_alDeleteAuxiliaryEffectSlots_t>( alGetProcAddress( "alDeleteAuxiliaryEffectSlots" ) );
+	qalAuxiliaryEffectSloti = reinterpret_cast<opend3_alAuxiliaryEffectSloti_t>( alGetProcAddress( "alAuxiliaryEffectSloti" ) );
 
 	available =
 		( qalGenEffects != NULL ) &&
@@ -247,8 +247,8 @@ void idSoundHardware_OpenAL::Init()
 	efxEnabled = false;
 	auxEffectSlot = 0;
 	auxReverbEffect = 0;
-#if OPENQ4_OPENAL_EFX_SUPPORTED
-	if( s_useEAXReverb.GetBool() && alcIsExtensionPresent( openalDevice, "ALC_EXT_EFX" ) == AL_TRUE && OpenQ4_LoadHardwareEfxProcs() )
+	#if OPEND3_OPENAL_EFX_SUPPORTED
+	if( s_useEAXReverb.GetBool() && alcIsExtensionPresent( openalDevice, "ALC_EXT_EFX" ) == AL_TRUE && OpenD3_LoadHardwareEfxProcs() )
 	{
 		qalGenEffects( 1, &auxReverbEffect );
 		if( CheckALErrors() == AL_NO_ERROR && auxReverbEffect != 0 )
@@ -398,7 +398,7 @@ void idSoundHardware_OpenAL::Shutdown()
 	freeVoices.Clear();
 	zombieVoices.Clear();
 
-	#if OPENQ4_OPENAL_EFX_SUPPORTED
+	#if OPEND3_OPENAL_EFX_SUPPORTED
 		if( auxEffectSlot != 0 )
 		{
 			if ( qalAuxiliaryEffectSloti != NULL ) {

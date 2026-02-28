@@ -1,0 +1,62 @@
+Syncing game sources:
+  From: E:\Repositories\OpenD3-GameLibs\src\game
+    To: E:\Repositories\OpenD3\src\game
+
+GameLibs sync complete (changes applied).
+ninja: Entering directory `E:/Repositories/OpenD3/builddir'
+[1/637] Scanning target "OpenD3-client_x64" for modules
+[2/637] Scanning target "OpenD3-ded_x64" for modules
+[3/637] Generating dynamic dependency information for target "OpenD3-client_x64"
+[4/637] Generating dynamic dependency information for target "OpenD3-ded_x64"
+[5/637] Precompiling header OpenD3-ded_x64.exe.p/meson_pch-cpp.cpp
+[6/637] Precompiling header OpenD3-client_x64.exe.p/meson_pch-cpp.cpp
+[7/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_cm_CollisionModel.cpp.obj
+[8/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_cm_CollisionModel_contents.cpp.obj
+[9/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_aas_AASFile_sample.cpp.obj
+[10/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_cm_CollisionModel_debug.cpp.obj
+[11/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_cm_CollisionModel_trace.cpp.obj
+[12/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_aas_AASFile_optimize.cpp.obj
+[13/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_framework_Console.cpp.obj
+[14/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_aas_AASFileManager.cpp.obj
+[15/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_cm_CollisionModel_contacts.cpp.obj
+[16/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_cm_CollisionModel_rotate.cpp.obj
+[17/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_cm_CollisionModel_files.cpp.obj
+[18/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_aas_AASFile.cpp.obj
+[19/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_framework_CVarSystem.cpp.obj
+[20/637] Compiling C++ object OpenD3-client_x64.exe.p/src_aas_AASFile.cpp.obj
+[21/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_framework_CmdSystem.cpp.obj
+[22/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_framework_Compressor.cpp.obj
+[23/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_cm_CollisionModel_translate.cpp.obj
+[24/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_cm_CollisionModel_load.cpp.obj
+FAILED: [code=2] OpenD3-ded_x64.exe.p/src_cm_CollisionModel_load.cpp.obj 
+"cl" "-IOpenD3-ded_x64.exe.p" "-I." "-I.." "-I..\src" "-I..\subprojects\glew\include" "-I..\subprojects\openal-soft-prebuilt\include" "-Isubprojects\stb_vorbis" "-I..\subprojects\stb_vorbis" "-I..\subprojects\SDL3-3.4.0\include" "/MDd" "/FIprecompiled.h" "/Yuprecompiled.h" "/FpOpenD3-ded_x64.exe.p\precompiled.pch" "/nologo" "/showIncludes" "/Zc:__cplusplus" "/W2" "/EHsc" "/std:c++latest" "/Od" "/Zi" "-DUSE_OPENAL" "-D_WINDOWS" "-DWIN32" "-DUSE_SDL3=1" "/J" "/FS" "/source-charset:windows-1252" "/execution-charset:windows-1252" "/Zc:strictStrings-" "/wd4091" "/wd4302" "/wd4311" "/wd4312" "/wd5033" "/wd5055" "-D__DOOM_DLL__" "-DID_DEDICATED" "/FS" "/FdE:\Repositories\OpenD3\builddir\OpenD3-ded_x64.pdb" /FoOpenD3-ded_x64.exe.p/src_cm_CollisionModel_load.cpp.obj "/c" ../src/cm/CollisionModel_load.cpp
+../src/cm/CollisionModel_load.cpp(309): error C2065: 'PROC_FILEVERSION': undeclared identifier
+../src/cm/CollisionModel_load.cpp(310): error C2065: 'PROC_FILEVERSION': undeclared identifier
+[25/637] Compiling C++ object OpenD3-ded_x64.exe.p/src_framework_Common.cpp.obj
+[26/637] Compiling C++ object OpenD3-client_x64.exe.p/src_cm_CollisionModel.cpp.obj
+[27/637] Compiling C++ object OpenD3-client_x64.exe.p/src_cm_CollisionModel_files.cpp.obj
+[28/637] Compiling C++ object OpenD3-client_x64.exe.p/src_aas_AASFile_sample.cpp.obj
+[29/637] Compiling C++ object OpenD3-client_x64.exe.p/src_aas_AASFile_optimize.cpp.obj
+[30/637] Compiling C++ object OpenD3-client_x64.exe.p/src_cm_CollisionModel_contents.cpp.obj
+[31/637] Compiling C++ object OpenD3-client_x64.exe.p/src_cm_CollisionModel_contacts.cpp.obj
+[32/637] Compiling C++ object OpenD3-client_x64.exe.p/src_cm_CollisionModel_trace.cpp.obj
+[33/637] Compiling C++ object OpenD3-client_x64.exe.p/src_aas_AASFileManager.cpp.obj
+[34/637] Compiling C++ object OpenD3-client_x64.exe.p/src_cm_CollisionModel_translate.cpp.obj
+[35/637] Compiling C++ object OpenD3-client_x64.exe.p/src_framework_Console.cpp.obj
+[36/637] Compiling C++ object OpenD3-client_x64.exe.p/src_cm_CollisionModel_load.cpp.obj
+FAILED: [code=2] OpenD3-client_x64.exe.p/src_cm_CollisionModel_load.cpp.obj 
+"cl" "-IOpenD3-client_x64.exe.p" "-I." "-I.." "-I..\src" "-I..\subprojects\glew\include" "-I..\subprojects\openal-soft-prebuilt\include" "-Isubprojects\stb_vorbis" "-I..\subprojects\stb_vorbis" "-I..\subprojects\SDL3-3.4.0\include" "/MDd" "/FIprecompiled.h" "/Yuprecompiled.h" "/FpOpenD3-client_x64.exe.p\precompiled.pch" "/nologo" "/showIncludes" "/Zc:__cplusplus" "/W2" "/EHsc" "/std:c++latest" "/Od" "/Zi" "-DUSE_OPENAL" "-D_WINDOWS" "-DWIN32" "-DUSE_SDL3=1" "/J" "/FS" "/source-charset:windows-1252" "/execution-charset:windows-1252" "/Zc:strictStrings-" "/wd4091" "/wd4302" "/wd4311" "/wd4312" "/wd5033" "/wd5055" "-D__DOOM_DLL__" "/FS" "/FdE:\Repositories\OpenD3\builddir\OpenD3-client_x64.pdb" /FoOpenD3-client_x64.exe.p/src_cm_CollisionModel_load.cpp.obj "/c" ../src/cm/CollisionModel_load.cpp
+../src/cm/CollisionModel_load.cpp(309): error C2065: 'PROC_FILEVERSION': undeclared identifier
+../src/cm/CollisionModel_load.cpp(310): error C2065: 'PROC_FILEVERSION': undeclared identifier
+[37/637] Compiling C++ object OpenD3-client_x64.exe.p/src_cm_CollisionModel_debug.cpp.obj
+[38/637] Compiling C++ object OpenD3-client_x64.exe.p/src_cm_CollisionModel_rotate.cpp.obj
+[39/637] Compiling C++ object OpenD3-client_x64.exe.p/src_framework_Compressor.cpp.obj
+[40/637] Compiling C++ object OpenD3-client_x64.exe.p/src_framework_CVarSystem.cpp.obj
+[41/637] Compiling C++ object OpenD3-client_x64.exe.p/src_framework_CmdSystem.cpp.obj
+[42/637] Precompiling header openbase/game-sp_x64.dll.p/meson_pch-cpp.cpp
+[43/637] Compiling C++ object OpenD3-client_x64.exe.p/src_framework_Common.cpp.obj
+[44/637] Precompiling header libopend3_game_idlib.a.p/meson_pch-cpp.cpp
+[45/637] Precompiling header openbase/game-mp_x64.dll.p/meson_pch-cpp.cpp
+ninja: build stopped: subcommand failed.
+INFO: autodetecting backend as ninja
+INFO: calculating backend command to run: C:\Users\djdac\AppData\Roaming\Python\Python311\Scripts\ninja.EXE -C E:/Repositories/OpenD3/builddir

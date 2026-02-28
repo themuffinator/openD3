@@ -433,7 +433,7 @@ void idSessionLocal::SetMainMenuGuiVars( void ) {
 #else
 	guiMainMenu->SetStateString( "nightmare", cvarSystem->GetCVarBool( "g_nightmare" ) ? "1" : "0" );
 #endif
-	guiMainMenu->SetStateString( "browser_levelshot", "gfx/guis/loadscreens/generic" );
+	guiMainMenu->SetStateString( "browser_levelshot", "guis/assets/splash/pdtempa" );
 
 	SetMainMenuSkin();
 	// Mods Menu

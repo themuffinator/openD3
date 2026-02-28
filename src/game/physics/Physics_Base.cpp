@@ -1,6 +1,33 @@
+/*
+===========================================================================
 
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+
+#include "../../idlib/precompiled.h"
+#pragma hdrstop
 
 #include "../Game_local.h"
 
@@ -134,20 +161,6 @@ idPhysics_Base::GetMass
 float idPhysics_Base::GetMass( int id ) const {
 	return 0.0f;
 }
-
-// RAVEN BEGIN
-// bdube: Added center mass call
-/*
-================
-idPhysics_Base::GetCenterMass
-
-default center of mass is origin
-================
-*/
-idVec3 idPhysics_Base::GetCenterMass ( int id ) const {
-	return GetOrigin();
-}
-// RAVEN END
 
 /*
 ================
@@ -295,13 +308,6 @@ idPhysics_Base::IsPushable
 bool idPhysics_Base::IsPushable( void ) const {
 	return true;
 }
-
-// RAVEN BEGIN
-// bdube: water interraction
-bool idPhysics_Base::IsInWater ( void ) const {
-	return false;
-}
-// RAVEN END	
 
 /*
 ================
@@ -582,41 +588,6 @@ void idPhysics_Base::RemoveContactEntity( idEntity *e ) {
 	}
 }
 
-// RAVEN BEGIN
-// abahr:
-/*
-================
-idPhysics_Base::GetContactNormal
-================
-*/
-const idVec3 idPhysics_Base::GetContactNormal() const {
-	idVec3 normal( vec3_zero );
-
-	for( int ix = 0; ix < GetNumContacts(); ++ix ) {
-		normal += GetContact( ix ).normal;
-	}
-
-	return normal.ToNormal();
-}
-
-/*
-================
-idPhysics_Base::GetContactNormal
-================
-*/
-const idVec3 idPhysics_Base::GetGroundContactNormal() const {
-	idVec3 normal( vec3_zero );
-
-	for( int ix = 0; ix < GetNumContacts(); ++ix ) {
-		if ( GetContact(ix).normal * -gravityNormal > 0.0f ) {
-			normal += GetContact( ix ).normal;
-		}
-	}
-
-	return normal.ToNormal();
-}
-// RAVEN END
-
 /*
 ================
 idPhysics_Base::HasGroundContacts
@@ -749,11 +720,8 @@ void idPhysics_Base::AddGroundContacts( const idClipModel *clipModel ) {
 
 	dir.SubVec3(0) = gravityNormal;
 	dir.SubVec3(1) = vec3_origin;
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	num = gameLocal.Contacts( self, &contacts[index], 10, clipModel->GetOrigin(),
+	num = gameLocal.clip.Contacts( &contacts[index], 10, clipModel->GetOrigin(),
 					dir, CONTACT_EPSILON, clipModel, clipModel->GetAxis(), clipMask, self );
-// RAVEN END
 	contacts.SetNum( index + num, false );
 }
 
@@ -799,10 +767,7 @@ idPhysics_Base::IsOutsideWorld
 ================
 */
 bool idPhysics_Base::IsOutsideWorld( void ) const {
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	if ( !gameLocal.GetWorldBounds( self ).Expand( 128.0f ).IntersectsBounds( GetAbsBounds() ) ) {
-// RAVEN END
+	if ( !gameLocal.clip.GetWorldBounds().Expand( 128.0f ).IntersectsBounds( GetAbsBounds() ) ) {
 		return true;
 	}
 	return false;

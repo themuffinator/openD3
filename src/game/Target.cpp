@@ -1,14 +1,40 @@
 /*
+===========================================================================
+
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+/*
 
 Invisible entities that affect other entities or the world when activated.
 
 */
 
-
-
+#include "../idlib/precompiled.h"
+#pragma hdrstop
 
 #include "Game_local.h"
-#include "Projectile.h"
 
 /*
 ===============================================================================
@@ -172,7 +198,7 @@ void idTarget_EndLevel::Event_Activate( idEntity *activator ) {
 #else
 	if ( spawnArgs.GetBool( "endOfGame" ) ) {
 		cvarSystem->SetCVarBool( "g_nightmare", true );
-		gameLocal.sessionCommand = "endOfGame";
+		gameLocal.sessionCommand = "disconnect";
 		return;
 	}
 #endif
@@ -188,15 +214,6 @@ void idTarget_EndLevel::Event_Activate( idEntity *activator ) {
 	}
 
 	gameLocal.sessionCommand += nextMap;
-
-// RAVEN BEGIN
-// jscott: additional info for multiple maps
-	const char* entityFilter;
-	if( spawnArgs.GetString( "entityFilter", "", &entityFilter ) && *entityFilter ) {
-		gameLocal.sessionCommand += " ";
-		gameLocal.sessionCommand += entityFilter;
-	}	
-// RAVEN END
 }
 
 
@@ -354,10 +371,7 @@ void idTarget_SetShaderTime::Event_Activate( idEntity *activator ) {
 		ent = targets[ i ].GetEntity();
 		if ( ent ) {
 			ent->SetShaderParm( SHADERPARM_TIMEOFFSET, time );
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-			if ( ent->IsType( idLight::GetClassType() ) ) {
-// RAVEN END
+			if ( ent->IsType( idLight::Type ) ) {
 				static_cast<idLight *>(ent)->SetLightParm( SHADERPARM_TIMEOFFSET, time );
 			}
 		}
@@ -507,10 +521,7 @@ void idTarget_LightFadeIn::Event_Activate( idEntity *activator ) {
 		if ( !ent ) {
 			continue;
 		}
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-		if ( ent->IsType( idLight::GetClassType() ) ) {
-// RAVEN END
+		if ( ent->IsType( idLight::Type ) ) {
 			light = static_cast<idLight *>( ent );
 			light->FadeIn( time );
 		} else {
@@ -553,10 +564,7 @@ void idTarget_LightFadeOut::Event_Activate( idEntity *activator ) {
 		if ( !ent ) {
 			continue;
 		}
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-		if ( ent->IsType( idLight::GetClassType() ) ) {
-// RAVEN END
+		if ( ent->IsType( idLight::Type ) ) {
 			light = static_cast<idLight *>( ent );
 			light->FadeOut( time );
 		} else {
@@ -575,10 +583,6 @@ idTarget_Give
 
 CLASS_DECLARATION( idTarget, idTarget_Give )
 	EVENT( EV_Activate,				idTarget_Give::Event_Activate )
-// RAVEN BEGIN
-// abahr:
-	EVENT( EV_PostSpawn,			idTarget_Give::Event_PostSpawn )
-// RAVEN END
 END_CLASS
 
 /*
@@ -587,41 +591,10 @@ idTarget_Give::Spawn
 ================
 */
 void idTarget_Give::Spawn( void ) {
-// RAVEN BEGIN
-// abahr: fixing issue with EV_Activate not taking NULL ptrs
 	if ( spawnArgs.GetBool( "onSpawn" ) ) {
-		PostEventMS( &EV_PostSpawn, 50 );
-
-// mwhitlock: Dynamic memory consolidation
-#if defined(_RV_MEM_SYS_SUPPORT)
-		const idKeyValue *kv = spawnArgs.MatchPrefix( "item", NULL );
-		while ( kv ) {
-			const idDict *dict = gameLocal.FindEntityDefDict( kv->GetValue(), false );
-			kv = spawnArgs.MatchPrefix( "item", kv );
-		}
-#endif
-	}
-// RAVEN END
-
-	// precache decls
-	const idKeyValue *kv = spawnArgs.MatchPrefix( "item", NULL );
-	while ( kv ) {
-		declManager->FindType( DECL_ENTITYDEF, kv->GetValue(), false, false );
-		kv = spawnArgs.MatchPrefix( "item", kv );
+		PostEventMS( &EV_Activate, 50 );
 	}
 }
-
-// RAVEN BEGIN
-// abahr: fixing issue with EV_Activate not taking NULL ptrs
-/*
-================
-idTarget_Give::Event_PostSpawn
-================
-*/
-void idTarget_Give::Event_PostSpawn() {
-	ProcessEvent( &EV_Activate, gameLocal.GetLocalPlayer() );
-}
-// RAVEN END
 
 /*
 ================
@@ -645,29 +618,9 @@ void idTarget_Give::Event_Activate( idEntity *activator ) {
 				d2.Copy( *dict );
 				d2.Set( "name", va( "givenitem_%i", giveNum++ ) );
 				idEntity *ent = NULL;
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-				if ( gameLocal.SpawnEntityDef( d2, &ent ) && ent && ent->IsType( idItem::GetClassType() ) ) {
-// RAVEN END
+				if ( gameLocal.SpawnEntityDef( d2, &ent ) && ent && ent->IsType( idItem::Type ) ) {
 					idItem *item = static_cast<idItem*>(ent);
 					item->GiveToPlayer( gameLocal.GetLocalPlayer() );
-					item->PostEventMS ( &EV_Remove, 0 );
-
-					// rules are that if we are given a weapon by a character, we are supposed to switch to it regardless of
-					//	whether auto-switch is on or not.
-					if ( !gameLocal.isMultiplayer && !player->GetUserInfo()->GetBool( "ui_autoSwitch" ) && !spawnArgs.GetBool( "onSpawn" )) {
-						const idKeyValue *kv = ent->spawnArgs.FindKey( "weaponclass" );
-						if ( kv ) {
-							// does player already have this weapon selected?
-							if ( player->weapon && idStr::Icmp(player->weapon->GetClassname(), kv->GetValue())) {
-								kv = ent->spawnArgs.FindKey( "inv_weapon" );
-								if ( kv ) {
-									// nope, so attempt to switch to this weapon
-									player->SelectWeapon(kv->GetValue());
-								}
-							}
-						}
-					}
 				}
 			}
 			kv = spawnArgs.MatchPrefix( "item", kv );
@@ -701,9 +654,6 @@ idTarget_GiveEmail::Event_Activate
 ================
 */
 void idTarget_GiveEmail::Event_Activate( idEntity *activator ) {
-// RAVEN BEGIN
-// bdube: not using email	
-/*
 	idPlayer *player = gameLocal.GetLocalPlayer();
 	const idDeclPDA *pda = player->GetPDA();
 	if ( pda ) {
@@ -711,8 +661,6 @@ void idTarget_GiveEmail::Event_Activate( idEntity *activator ) {
 	} else {
 		player->ShowTip( spawnArgs.GetString( "text_infoTitle" ), spawnArgs.GetString( "text_PDANeeded" ), true );
 	}
-*/
-// RAVEN END
 }
 
 
@@ -741,10 +689,7 @@ void idTarget_SetModel::Spawn( void ) {
 		// precache the render model
 		renderModelManager->FindModel( model );
 		// precache .cm files only
-// jmarshall: precache code is different in doom 3.
-		//collisionModelManager->PreCacheModel( gameLocal.GetMapName(), model );
-		collisionModelManager->LoadModel(gameLocal.GetMapName(), model, true);
-// jmarshall end
+		collisionModelManager->LoadModel( model, true );
 	}
 }
 
@@ -959,6 +904,7 @@ void idTarget_SetInfluence::Event_GatherEntities() {
 	int i, listedEntities;
 	idEntity *entityList[ MAX_GENTITIES ];
 
+	bool demonicOnly = spawnArgs.GetBool( "effect_demonic" );
 	bool lights = spawnArgs.GetBool( "effect_lights" );
 	bool sounds = spawnArgs.GetBool( "effect_sounds" );
 	bool guis = spawnArgs.GetBool( "effect_guis" );
@@ -987,17 +933,11 @@ void idTarget_SetInfluence::Event_GatherEntities() {
 	for( i = 0; i < listedEntities; i++ ) {
 		idEntity *ent = entityList[ i ];
 		if ( ent ) {
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-			if ( lights && ent->IsType( idLight::GetClassType() ) && ent->spawnArgs.FindKey( "color_demonic" ) ) {
-// RAVEN END
+			if ( lights && ent->IsType( idLight::Type ) && ent->spawnArgs.FindKey( "color_demonic" ) ) {
 				lightList.Append( ent->entityNumber );
 				continue;
 			}
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-			if ( sounds && ent->IsType( idSound::GetClassType() ) && ent->spawnArgs.FindKey( "snd_demonic" ) ) {
-// RAVEN END
+			if ( sounds && ent->IsType( idSound::Type ) && ent->spawnArgs.FindKey( "snd_demonic" ) ) {
 				soundList.Append( ent->entityNumber );
 				continue;
 			}
@@ -1005,10 +945,7 @@ void idTarget_SetInfluence::Event_GatherEntities() {
 				guiList.Append( ent->entityNumber );
 				continue;
 			}
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-			if ( ent->IsType( idStaticEntity::GetClassType() ) && ent->spawnArgs.FindKey( "color_demonic" ) ) {
-// RAVEN END
+			if ( ent->IsType( idStaticEntity::Type ) && ent->spawnArgs.FindKey( "color_demonic" ) ) {
 				genericList.Append( ent->entityNumber );
 				continue;
 			}
@@ -1056,12 +993,12 @@ void idTarget_SetInfluence::Event_Activate( idEntity *activator ) {
 		delay = 0.0f;
 		// start any sound fading now
 		if ( fadeTime ) {
-			soundSystem->FadeSoundClasses( SOUNDWORLD_GAME, 0, -40.0f, fadeTime );
+			gameSoundWorld->FadeSoundClasses( 0, -40.0f, fadeTime );
 			soundFaded = true;
 		}
 		return;
 	} else if ( fadeTime && !soundFaded ) {
-		soundSystem->FadeSoundClasses( SOUNDWORLD_GAME, 0, -40.0f, fadeTime );
+		gameSoundWorld->FadeSoundClasses( 0, -40.0f, fadeTime );
 		soundFaded = true;
 	}
 
@@ -1082,21 +1019,11 @@ void idTarget_SetInfluence::Event_Activate( idEntity *activator ) {
 		switchToCamera->PostEventSec( &EV_Activate, flashIn + 0.05f, this );
 	}
 
-// RAVEN BEGIN
-// mekberg: allow for initial fov and both fovs.
 	int fov = spawnArgs.GetInt( "fov" );
-	int fovInitial = spawnArgs.GetInt( "fov_initial" );
-	if ( fov && fovInitial) {
-		fovSetting.Init( gameLocal.time, SEC2MS( spawnArgs.GetFloat( "fovTime" ) ), fovInitial, fov );
-		BecomeActive( TH_THINK );
-	} else if ( fov ) {
+	if ( fov ) {
 		fovSetting.Init( gameLocal.time, SEC2MS( spawnArgs.GetFloat( "fovTime" ) ), player->DefaultFov(), fov );
 		BecomeActive( TH_THINK );
-	} else if ( fovInitial ) {
-		fovSetting.Init( gameLocal.time, SEC2MS( spawnArgs.GetFloat( "fovTime" ) ), fovInitial, player->DefaultFov() );
-		BecomeActive( TH_THINK );
 	}
-// RAVEN END
 
 	for ( i = 0; i < genericList.Num(); i++ ) {
 		ent = gameLocal.entities[genericList[i]];
@@ -1111,10 +1038,7 @@ void idTarget_SetInfluence::Event_Activate( idEntity *activator ) {
 
 	for ( i = 0; i < lightList.Num(); i++ ) {
 		ent = gameLocal.entities[lightList[i]];
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-		if ( ent == NULL || !ent->IsType( idLight::GetClassType() ) ) {
-// RAVEN END
+		if ( ent == NULL || !ent->IsType( idLight::Type ) ) {
 			continue;
 		}
 		light = static_cast<idLight *>(ent);
@@ -1131,10 +1055,7 @@ void idTarget_SetInfluence::Event_Activate( idEntity *activator ) {
 
 	for ( i = 0; i < soundList.Num(); i++ ) {
 		ent = gameLocal.entities[soundList[i]];
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-		if ( ent == NULL || !ent->IsType( idSound::GetClassType() ) ) {
-// RAVEN END
+		if ( ent == NULL || !ent->IsType( idSound::Type ) ) {
 			continue;
 		}
 		sound = static_cast<idSound *>(ent);
@@ -1161,11 +1082,11 @@ void idTarget_SetInfluence::Event_Activate( idEntity *activator ) {
 				update = true;
 			}
 		}
+
 		if ( update ) {
 			ent->UpdateVisuals();
 			ent->Present();
 		}
-	
 	}
 
 	player->SetInfluenceLevel( spawnArgs.GetInt( "influenceLevel" ) );
@@ -1249,10 +1170,7 @@ void idTarget_SetInfluence::Event_RestoreInfluence() {
 
 	for ( i = 0; i < lightList.Num(); i++ ) {
 		ent = gameLocal.entities[lightList[i]];
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-		if ( ent == NULL || !ent->IsType( idLight::GetClassType() ) ) {
-// RAVEN END
+		if ( ent == NULL || !ent->IsType( idLight::Type ) ) {
 			continue;
 		}
 		light = static_cast<idLight *>(ent);
@@ -1267,10 +1185,7 @@ void idTarget_SetInfluence::Event_RestoreInfluence() {
 
 	for ( i = 0; i < soundList.Num(); i++ ) {
 		ent = gameLocal.entities[soundList[i]];
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-		if ( ent == NULL || !ent->IsType( idSound::GetClassType() ) ) {
-// RAVEN END
+		if ( ent == NULL || !ent->IsType( idSound::Type ) ) {
 			continue;
 		}
 		sound = static_cast<idSound *>(ent);
@@ -1303,7 +1218,7 @@ void idTarget_SetInfluence::Event_RestoreInfluence() {
 	gameLocal.SetGlobalMaterial( NULL );
 	float fadeTime = spawnArgs.GetFloat( "fadeWorldSounds" );
 	if ( fadeTime ) {
-		soundSystem->FadeSoundClasses( SOUNDWORLD_GAME, 0, 0.0f, fadeTime / 2.0f );
+		gameSoundWorld->FadeSoundClasses( 0, 0.0f, fadeTime / 2.0f );
 	}
 
 }
@@ -1459,464 +1374,9 @@ idTarget_SetPrimaryObjective::Event_Activate
 void idTarget_SetPrimaryObjective::Event_Activate( idEntity *activator ) {
 	idPlayer *player = gameLocal.GetLocalPlayer();
 	if ( player && player->objectiveSystem ) {
-		player->objectiveSystem->SetStateString( "missionobjective", spawnArgs.GetString( "text", common->GetLocalizedString( "#str_104253" ) ) );
+		player->objectiveSystem->SetStateString( "missionobjective", spawnArgs.GetString( "text", common->GetLanguageDict()->GetString( "#str_04253" ) ) );
 	}
 }
-
-// RAVEN BEGIN
-// bdube: added database entry trigger
-// twhitaker: removed database entry trigger
-/*
-===============================================================================
-
-rvTarget_AddDatabaseEntry
-
-===============================================================================
-*/
-/*
-CLASS_DECLARATION( idTarget, rvTarget_AddDatabaseEntry )
-	EVENT( EV_Activate,	rvTarget_AddDatabaseEntry::Event_Activate )
-END_CLASS
-*/
-/*
-================
-rvTarget_AddDatabaseEntry::Event_Activate
-================
-*/
-/*void rvTarget_AddDatabaseEntry::Event_Activate( idEntity *activator ) {
-	idPlayer *player = gameLocal.GetLocalPlayer();
-	if ( player ) { 
-		player->GiveDatabaseEntry ( gameLocal.FindEntityDefDict ( spawnArgs.GetString ( "def_db", "" ) ) );
-	}
-}
-*/
-// jshepard: secret area trigger
-/*
-===============================================================================
-
-rvTarget_SecretArea
-
-===============================================================================
-*/
-
-CLASS_DECLARATION( idTarget, rvTarget_SecretArea )
-	EVENT( EV_Activate,	rvTarget_SecretArea::Event_Activate )
-END_CLASS
-
-/*
-================
-rvTarget_SecretArea::Event_Activate
-================
-*/
-void rvTarget_SecretArea::Event_Activate( idEntity *activator ) {
-	idPlayer *player = gameLocal.GetLocalPlayer();
-	if ( player ) { 
-		player->DiscoverSecretArea( spawnArgs.GetString ( "description" ));
-	}
-}
-
-/*
-===============================================================================
-
-rvTarget_BossBattle
-
-===============================================================================
-*/
-
-const idEventDef EV_SetShieldPercent( "setShieldPercent", "f" );
-const idEventDef EV_SetBossMaxHealth( "setMaxBossHealth", "f" );
-const idEventDef EV_AllowShieldBar( "allowShieldBar", "f" );
-const idEventDef EV_AllowShieldWarningBar( "allowShieldWarnBar", "f" );
-
-
-CLASS_DECLARATION( idTarget, rvTarget_BossBattle )
-	EVENT( EV_Activate,	rvTarget_BossBattle::Event_Activate )
-	EVENT( EV_SetShieldPercent, rvTarget_BossBattle::Event_SetShieldPercent )
-	EVENT( EV_SetBossMaxHealth, rvTarget_BossBattle::Event_SetBossMaxHealth )
-	EVENT( EV_AllowShieldBar, rvTarget_BossBattle::Event_AllowShieldBar )
-	EVENT( EV_AllowShieldWarningBar, rvTarget_BossBattle::Event_AllowShieldWarningBar )
-END_CLASS
-
-/*
-================
-rvTarget_BossBattle::Event_Activate
-================
-*/
-void rvTarget_BossBattle::Event_Activate( idEntity *activator ) {
-	idPlayer* player = gameLocal.GetLocalPlayer();
-	idEntity* enemy  = gameLocal.FindEntity ( spawnArgs.GetString ( "target" ) );
-	if ( player && enemy ) { 
-		player->StartBossBattle ( enemy );
-	}
-	
-	StartSound ( "snd_activate", SND_CHANNEL_ANY, 0, false, NULL );
-}
-
-
-/*
-================
-rvTarget_BossBattle::Event_AllowShieldBar
-================
-*/
-void rvTarget_BossBattle::Event_AllowShieldBar( float activate )
-{
-	idUserInterface *hud = gameLocal.GetLocalPlayer()->GetHud();
-	if ( hud ) 
-	{
-		if( activate )	{
-			hud->HandleNamedEvent( "showBossShieldBar" );
-			hud->HandleNamedEvent( "updateBossShield" );
-		} else {
-			hud->HandleNamedEvent( "hideBossShieldBar" );
-		}
-	}
-}
-
-/*
-================
-rvTarget_BossBattle::Event_AllowShieldWarningBar
-================
-*/
-void rvTarget_BossBattle::Event_AllowShieldWarningBar( float activate )
-{
-	idUserInterface *hud = gameLocal.GetLocalPlayer()->GetHud();
-	if ( hud ) 
-	{
-		if( activate )	{
-			hud->HandleNamedEvent( "showBossShieldWarn" );
-			hud->HandleNamedEvent( "updateBossShield" );
-		} else {
-			hud->HandleNamedEvent( "hideBossShieldWarn" );
-		}
-	}
-}
-
-/*
-================
-rvTarget_BossBattle::Event_SetShieldPercent
-================
-*/
-void rvTarget_BossBattle::Event_SetShieldPercent( float percent ) {
-
-	idUserInterface *hud = gameLocal.GetLocalPlayer()->GetHud();
-	if ( hud ) 
-	{
-		hud->SetStateFloat( "boss_shield_percent", percent );
-		hud->HandleNamedEvent( "updateBossShield" );
-	}
-}
-
-/*
-================
-rvTarget_BossBattle::Event_SetMaxBossHealth
-================
-*/
-void rvTarget_BossBattle::Event_SetBossMaxHealth( float f ) {
-
-	idUserInterface *hud = gameLocal.GetLocalPlayer()->GetHud();
-	if ( hud ) 
-	{
-
-		hud->SetStateInt ( "boss_maxhealth",f );
-	}
-}
-
-/*
-===============================================================================
-
-rvTarget_LaunchProjectile
-
-===============================================================================
-*/
-
-const idEventDef EV_LaunchProjectile( "launchProjectile", "e" );
-CLASS_DECLARATION( idTarget, rvTarget_LaunchProjectile )
-	EVENT( EV_Activate,	rvTarget_LaunchProjectile::Event_Activate )
-	EVENT( EV_LaunchProjectile,	rvTarget_LaunchProjectile::Event_LaunchProjectile )
-END_CLASS
-
-/*
-================
-rvTarget_LaunchProjectile::Spawn
-================
-*/
-void rvTarget_LaunchProjectile::Spawn( void ) {
-	if ( spawnArgs.GetBool( "start_on" ) ) {
-		PostEventMS( &EV_Activate, 0, this );
-	}
-}
-
-/*
-================
-rvTarget_LaunchProjectile::Event_LaunchProjectile
-================
-*/
-void rvTarget_LaunchProjectile::Event_LaunchProjectile( idEntity *activator ) {
-	const idDict*	projectileDict;
-	idEntity*		ent;
-
-	projectileDict = gameLocal.FindEntityDefDict ( spawnArgs.GetString ( "def_projectile" ), false );
-	if ( !projectileDict ) {
-		gameLocal.Error ( "Could not find entityDef '%s' for launch projectile target '%s'", spawnArgs.GetString ( "def_projectile" ), GetName() );
-	}
-	
-	gameLocal.SpawnEntityDef( *projectileDict, &ent, false );
-	if ( !ent ) {
-		gameLocal.Error( "Could not spawn entityDef '%s'", projectileDict->GetString( "classname" ) );
-	}
-			
-	if ( !ent->IsType( idProjectile::GetClassType() ) ) {
-		gameLocal.Error( "'%s' is not an idProjectile", ent->GetClassname() );
-	}	
-	
-	idVec3 dir;
-	if ( targets.Num ( ) && targets[0] ) {
-		dir = targets[0]->GetPhysics()->GetOrigin() - GetPhysics()->GetOrigin();
-		dir.Normalize();
-	} else {
-		dir = GetPhysics()->GetAxis()[0];
-	}
-
-	idProjectile* proj = static_cast<idProjectile*>(ent);
-
-	proj->Create( this, GetPhysics()->GetOrigin(), dir, this );
-	proj->Launch( GetPhysics()->GetOrigin(), dir, GetPhysics()->GetLinearVelocity(), 0.0f, 1.0f );
-	
-	
-	if ( targets.Num() && proj->IsType ( idGuidedProjectile::GetClassType ( ) ) ) {
-		static_cast<idGuidedProjectile*>(proj)->GuideTo ( targets[0] );
-	}
-
-	if ( spawnArgs.GetFloat( "loop_interval" ) )
-	{
-		PostEventSec( &EV_Activate, spawnArgs.GetFloat( "loop_interval" ), activator );
-	}
-}
-
-/*
-================
-rvTarget_LaunchProjectile::Event_Activate
-================
-*/
-void rvTarget_LaunchProjectile::Event_Activate( idEntity *activator ) {
-	
-	idVec3 dir;
-	if ( targets.Num ( ) && targets[0] ) {
-		dir = targets[0]->GetPhysics()->GetOrigin() - GetPhysics()->GetOrigin();
-		dir.Normalize();
-	} else {
-		dir = GetPhysics()->GetAxis()[0];
-	}
-
-	if ( spawnArgs.GetString( "fx_launch", NULL ) )
-	{
-		gameLocal.PlayEffect( gameLocal.GetEffect( spawnArgs, "fx_launch" ), GetPhysics()->GetOrigin(), dir.ToMat3() );
-	}
-
-	if ( spawnArgs.GetFloat( "delay" ) )
-	{
-		PostEventSec( &EV_LaunchProjectile, spawnArgs.GetFloat( "delay" ), activator );
-		return;
-	}
-	ProcessEvent( &EV_LaunchProjectile, activator );
-}
-
-/*
-===============================================================================
-
-rvTarget_ExitArea
-
-===============================================================================
-*/
-
-CLASS_DECLARATION( idTarget, rvTarget_ExitAreaAlert )
-	EVENT( EV_Activate,	rvTarget_ExitAreaAlert::Event_Activate )
-END_CLASS
-
-void rvTarget_ExitAreaAlert::Event_Activate( idEntity *activator )	{
-	gameLocal.UpdateEndLevel();
-}
-
-/*
-===============================================================================
-
-rvTarget_AmmoStash
-
-===============================================================================
-*/
-
-int CompareAmmoData( const void* ammo1, const void* ammo2)	{
-	if ((( ammodata_t *)ammo2)->percentFull > (( ammodata_t *)ammo1)->percentFull )	{
-		return -1;
-	} else	{
-		return 1;
-	}
-}
-
-CLASS_DECLARATION( idTarget, rvTarget_AmmoStash )
-	EVENT( EV_Activate,	rvTarget_AmmoStash::Event_Activate )
-END_CLASS
-
-void rvTarget_AmmoStash::Event_Activate( idEntity *activator )	{
-
-	const idKeyValue*	kv;
-	idPlayer*			player;
-	int					typeCount;
-	idEntity*			entAmmo;
-	idItem*				item;
-	idDict				args;
-
-
-	player = gameLocal.GetLocalPlayer();
-
-	//set up the array
-	memset( AmmoArray, 0, sizeof( ammodata_t) * AMMO_ARRAY_SIZE);
-	for( int t= 0; t < AMMO_ARRAY_SIZE; t++)	{
-		AmmoArray[ t ].percentFull = 2.0f;
-	}
-
-	// we only check for certain types of ammo.
-	kv = spawnArgs.MatchPrefix ( "def_ammo", NULL );
-	if ( kv ) {
-		kv->GetValue();
-		for ( typeCount = 0; typeCount < AMMO_ARRAY_SIZE && kv; kv = spawnArgs.MatchPrefix ( "def_ammo", kv ) ) {
-
-			AmmoArray[ typeCount ].ammoName = kv->GetValue();
-			AmmoArray[ typeCount ].ammoIndex = player->inventory.AmmoIndexForAmmoClass( AmmoArray[ typeCount ].ammoName.c_str() );
-
-			//check and see how much ammo this weapon can hold...
-			AmmoArray[ typeCount ].ammoMax = player->inventory.MaxAmmoForAmmoClass( player, AmmoArray[ typeCount ].ammoName.c_str() );
-		
-			//and the current amount
-			AmmoArray[ typeCount ].ammoCount = player->inventory.HasAmmo( AmmoArray[ typeCount ].ammoIndex, 1);
-
-			if( AmmoArray[ typeCount ].ammoMax > 0)	{
-				AmmoArray[ typeCount ].percentFull = float( AmmoArray[ typeCount ].ammoCount / AmmoArray[ typeCount ].ammoMax );
-			} else	{
-				AmmoArray[ typeCount ].percentFull = 2.0f;
-			}
-			
-			//increment
-			typeCount++;
-		}
-		
-	} else {
-		gameLocal.Warning("Bad ammo data on rvTarget_AmmoStash '%s'", this->GetName());
-		return;
-	}
-
-	//TEMP: print out the ammo counts
-	//for( int t= 0; t < AMMO_ARRAY_SIZE; t++)	{
-	//	gameLocal.Printf("Ammo %d is %s and %f full\n", t, AmmoArray[ t ].ammoName.c_str(), AmmoArray[ t].percentFull);
-	//}
-	
-	//sort the types of ammo by need. The most-needed ammo will be placed.
-	qsort( ( void * )AmmoArray, AMMO_ARRAY_SIZE ,sizeof( ammodata_t), CompareAmmoData );						
-
-	//TEMP: print out the ammo counts
-	//gameLocal.Printf("--------------------------------\nresorting\n--------------------------------\n" );
-	//for( int t= 0; t < AMMO_ARRAY_SIZE; t++)	{
-	//	gameLocal.Printf("Ammo %d is %s and %f full\n", t, AmmoArray[ t ].ammoName.c_str(), AmmoArray[ t].percentFull);
-	//}	
-
-	int i;
-	//run through our targets until we have no more targets.
-	for ( i = targets.Num() - 1; i >= 0; i -- ) {
-		idEntity* ent;
-		ent = targets[i];
-		if ( idStr::Icmp ( ent->spawnArgs.GetString ( "classname" ), "target_null" ) ) {
-			continue;
-		}
-	
-		//drop the most needed ammo at ent's location.
-		args.Set	   ( "origin",			ent->GetPhysics()->GetOrigin().ToString() );
-		args.SetFloat  ( "angle",			ent->GetPhysics()->GetAxis().ToAngles()[YAW] );
-		args.Set	   ( "classname",		AmmoArray[ 0 ].ammoName );	
-
-		gameLocal.SpawnEntityDef ( args, &entAmmo );
-		
-		//now assume that the item was picked up.
-		item = static_cast< idItem* >(entAmmo);		
-		kv = entAmmo->spawnArgs.MatchPrefix ( "inv_ammo", NULL );
-		
-		if( kv )	{
-			
-			//add the ammo as if the player picked it up
-			AmmoArray[ 0 ].ammoCount +=  atoi(kv->GetValue().c_str());
-			AmmoArray[ 0 ].percentFull = (float)AmmoArray[ 0 ].ammoCount / (float)AmmoArray[ 0 ].ammoMax;
-
-			//resort the ammo.
-			qsort( ( void * )AmmoArray, AMMO_ARRAY_SIZE ,sizeof( ammodata_t), CompareAmmoData );		
-
-			
-			//TEMP: print out the ammo counts
-			//gameLocal.Printf("--------------------------------\nresorting\n--------------------------------\n" );
-			//for( int t= 0; t < AMMO_ARRAY_SIZE; t++)	{
-			//	gameLocal.Printf("Ammo %d is %s and %f full\n", t, AmmoArray[ t ].ammoName.c_str(), AmmoArray[ t].percentFull);
-			//}				
-		} else {
-			gameLocal.Warning("Bad ammo data on target_ammostash '%s'", this->GetName());
-			return;
-		}
-	}	
-
-}
-
-/*
-===============================================================================
-
-rvTarget_TetherAI
-
-===============================================================================
-*/
-
-CLASS_DECLARATION( idTarget, rvTarget_TetherAI )
-	EVENT( EV_Activate,	rvTarget_TetherAI::Event_Activate )
-END_CLASS
-
-/*
-================
-rvTarget_TetherAI::Event_Activate
-================
-*/
-void rvTarget_TetherAI::Event_Activate( idEntity *activator ) {
-	int i;
-	if ( activator->IsType ( idAI::GetClassType() ) ) {
-		activator->ProcessEvent ( &EV_Activate, this );
-	}
-	
-	// All targetted AI will be activated with the tether AI entity
-	for ( i = 0; i < targets.Num(); i ++ ) {
-		if ( !targets[i] ) {
-			continue;
-		}
-		if ( targets[i]->IsType ( idAI::GetClassType() ) ) {
-			targets[i]->ProcessEvent ( &EV_Activate, this );
-		}
-	}			
-}
-/*
-===============================================================================
-
-rvTarget_Nailable
-
-===============================================================================
-*/
-
-CLASS_DECLARATION( idTarget, rvTarget_Nailable )
-END_CLASS
-void rvTarget_Nailable::Spawn() {
-
-	//InitDefaultPhysics( origin, axis );
-
-//	int contents = GetPhysics()->GetContents();
-//	contents &= CONTENTS_BODY;
-//	contents &= CONTENTS_SOLID;
-	GetPhysics()->SetContents( MASK_SHOT_BOUNDINGBOX );
-
-}
-
-// RAVEN END
 
 /*
 ===============================================================================
@@ -1943,10 +1403,7 @@ void idTarget_LockDoor::Event_Activate( idEntity *activator ) {
 	lock = spawnArgs.GetInt( "locked", "1" );
 	for( i = 0; i < targets.Num(); i++ ) {
 		ent = targets[ i ].GetEntity();
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-		if ( ent && ent->IsType( idDoor::GetClassType() ) ) {
-// RAVEN END
+		if ( ent && ent->IsType( idDoor::Type ) ) {
 			if ( static_cast<idDoor *>( ent )->IsLocked() ) {
 				static_cast<idDoor *>( ent )->Lock( 0 );
 			} else {
@@ -1995,15 +1452,7 @@ void idTarget_CallObjectFunction::Event_Activate( idEntity *activator ) {
 				gameLocal.Error( "Function '%s' on entity '%s' is the wrong type for function call from '%s'", funcName, ent->name.c_str(), name.c_str() );
 			}
 			// create a thread and call the function
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-			RV_PUSH_HEAP_MEM(this);
-// RAVEN END
 			thread = new idThread();
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-			RV_POP_HEAP();
-// RAVEN END
 			thread->CallFunction( ent, func, true );
 			thread->Start();
 		}
@@ -2172,15 +1621,10 @@ idTarget_GiveEmail::Event_Activate
 ================
 */
 void idTarget_GiveSecurity::Event_Activate( idEntity *activator ) {
-// RAVEN BEGIN
-// bdube: not using security
-/*
 	idPlayer *player = gameLocal.GetLocalPlayer();
 	if ( player ) {
 		player->GiveSecurity( spawnArgs.GetString( "text_security" ) );
 	}
-*/
-// RAVEN END
 }
 
 
@@ -2210,10 +1654,7 @@ void idTarget_RemoveWeapons::Event_Activate( idEntity *activator ) {
 				player->RemoveWeapon( kv->GetValue() );
 				kv = spawnArgs.MatchPrefix( "weapon", kv );
 			}
-// RAVEN BEGIN
-// bdube: default to initial weapon
-			player->SelectWeapon( 0, true );
-// RAVEN END
+			player->SelectWeapon( player->weapon_fists, true );
 		}
 	}
 }
@@ -2302,7 +1743,7 @@ void idTarget_FadeSoundClass::Event_Activate( idEntity *activator ) {
 	int fadeClass = spawnArgs.GetInt( "fadeClass" );
 	// start any sound fading now
 	if ( fadeTime ) {
-		soundSystem->FadeSoundClasses( SOUNDWORLD_GAME, fadeClass, spawnArgs.GetBool( "fadeIn" ) ? fadeDB : 0.0f - fadeDB, fadeTime );
+		gameSoundWorld->FadeSoundClasses( fadeClass, spawnArgs.GetBool( "fadeIn" ) ? fadeDB : 0.0f - fadeDB, fadeTime );
 		if ( fadeDuration ) {
 			PostEventSec( &EV_RestoreVolume, fadeDuration );
 		}
@@ -2317,8 +1758,8 @@ idTarget_FadeSoundClass::Event_RestoreVolume
 void idTarget_FadeSoundClass::Event_RestoreVolume() {
 	float fadeTime = spawnArgs.GetFloat( "fadeTime" );
 	float fadeDB = spawnArgs.GetFloat( "fadeDB" );
-//	int fadeClass = spawnArgs.GetInt( "fadeClass" );
+	int fadeClass = spawnArgs.GetInt( "fadeClass" );
 	// restore volume
-	soundSystem->FadeSoundClasses( SOUNDWORLD_GAME, 0, fadeDB, fadeTime );
+	gameSoundWorld->FadeSoundClasses( 0, fadeDB, fadeTime );
 }
 

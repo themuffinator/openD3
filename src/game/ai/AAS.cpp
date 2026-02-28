@@ -1,9 +1,34 @@
+/*
+===========================================================================
 
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
-// RAVEN BEGIN
-#include "../Game_local.h"
-// RAVEN END
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+
+#include "../../idlib/precompiled.h"
+#pragma hdrstop
+
 #include "AAS_local.h"
 
 /*
@@ -12,10 +37,6 @@ idAAS::Alloc
 ============
 */
 idAAS *idAAS::Alloc( void ) {
-// RAVEN BEGIN
-// jnewquist: Tag scope and callees to track allocations using "new".
-	MEM_SCOPED_TAG(tag,MA_AAS);
-// RAVEN END
 	return new idAASLocal;
 }
 
@@ -52,7 +73,7 @@ idAASLocal::Init
 */
 bool idAASLocal::Init( const idStr &mapName, unsigned int mapFileCRC ) {
 	if ( file && mapName.Icmp( file->GetName() ) == 0 && mapFileCRC == file->GetCRC() ) {
-		gameLocal.Printf( "Keeping %s\n", file->GetName() );
+		common->Printf( "Keeping %s\n", file->GetName() );
 		RemoveAllObstacles();
 	}
 	else {
@@ -63,14 +84,6 @@ bool idAASLocal::Init( const idStr &mapName, unsigned int mapFileCRC ) {
 			common->DWarning( "Couldn't load AAS file: '%s'", mapName.c_str() );
 			return false;
 		}
-// RAVEN BEGIN
-// rhummer: Check if this is a dummy file, since it really has no valid data dump it.
-		//else if ( file->IsDummyFile( mapFileCRC ) ) {
-		//	AASFileManager->FreeAAS( file );
-		//	file = NULL;
-		//	return false;
-		//}
-// RAVEN END
 		SetupRouting();
 	}
 	return true;
@@ -103,30 +116,6 @@ void idAASLocal::Stats( void ) const {
 	file->PrintInfo();
 	RoutingStats();
 }
-
-// RAVEN BEGIN
-// jscott: added
-/*
-============
-idAASLocal::StatsSummary
-============
-*/
-size_t idAASLocal::StatsSummary( void ) const {
-
-	int		size;
-
-	if( !file ) {
-
-		return( 0 );
-	}
-
-	size = ( numAreaTravelTimes * sizeof( unsigned short ) ) 
-			+ ( areaCacheIndexSize * sizeof( idRoutingCache * ) ) 
-			+ ( portalCacheIndexSize * sizeof( idRoutingCache * ) );
-
-	return(  size );
-}
-// RAVEN END
 
 /*
 ============
@@ -201,38 +190,6 @@ idVec3 idAASLocal::AreaCenter( int areaNum ) const {
 	}
 	return file->GetArea( areaNum ).center;
 }
-
-// RAVEN BEGIN
-// bdube: added
-/*
-============
-idAASLocal::AreaRadius
-============
-*/
-float idAASLocal::AreaRadius( int areaNum ) const {
-	if ( !file ) {
-		return 0;
-	}
-	return file->GetArea( areaNum ).bounds.GetRadius();
-}
-// mcg: added
-/*
-============
-idAASLocal::AreaBounds
-============
-*/
-const idBounds & idAASLocal::AreaBounds( int areaNum ) const {
-	return file->GetArea( areaNum ).bounds;
-}
-/*
-============
-idAASLocal::AreaCeiling
-============
-*/
-float idAASLocal::AreaCeiling( int areaNum ) const {
-	return file->GetArea( areaNum ).ceiling;
-}
-// RAVEN END
 
 /*
 ============
@@ -316,162 +273,3 @@ void idAASLocal::GetEdge( int edgeNum, idVec3 &start, idVec3 &end ) const {
 	start = file->GetVertex( v[INTSIGNBITSET(edgeNum)] );
 	end = file->GetVertex( v[INTSIGNBITNOTSET(edgeNum)] );
 }
-
-
-/*
-===============================================================================
-
-	idAASCallback
-
-===============================================================================
-*/
-
-/*
-============
-idAASCallback::~idAASCallback
-============
-*/
-idAASCallback::~idAASCallback ( void ) {
-}
-
-/*
-============
-idAASCallback::Test
-============
-*/
-idAASCallback::testResult_t idAASCallback::Test ( class idAAS *aas, int areaNum, const idVec3& origin, float minDistance, float maxDistance, const idVec3* point, aasGoal_t& goal ) {
-	// Get AAS file
-	idAASFile* file = ((idAAS&)*aas).GetFile ( );
-	if ( !file ) {
-		return TEST_BADAREA;
-	}
-	
-	// Get area for edges
-	const aasArea_t& area = file->GetArea ( areaNum );
-
-	if ( ai_debugTactical.GetInteger ( ) > 1 ) {
-		gameRenderWorld->DebugLine ( colorYellow, area.center, area.center + idVec3(0,0,80.0f), 10000 );
-	}
-	
-	// Make sure the area itself is valid
-	if ( !TestArea ( aas, areaNum, area ) ) {
-		return TEST_BADAREA;
-	}
-
-	if ( ai_debugTactical.GetInteger ( ) > 1 && point ) {
-		gameRenderWorld->DebugLine ( colorMagenta, *point, *point + idVec3(0,0,64.0f), 10000 );
-	}
-	
-	// Test the original origin first
-	if ( point && TestPointDistance ( origin, *point, minDistance, maxDistance) && TestPoint ( aas, *point ) ) {
-		goal.areaNum = areaNum;
-		goal.origin  = *point;
-		return TEST_OK;
-	}
-
-	if ( ai_debugTactical.GetInteger ( ) > 1 ) {
-		gameRenderWorld->DebugLine ( colorCyan, area.center, area.center + idVec3(0,0,64.0f), 10000 );
-	}
-	
-	// Test the center of the area
-	if ( TestPointDistance ( origin, area.center, minDistance, maxDistance) && TestPoint ( aas, area.center, area.ceiling ) ) {
-		goal.areaNum = areaNum;
-		goal.origin  = area.center;
-		return TEST_OK;
-	}
-	
-	// For each face test all available edges
-	int	f;
-	int	e;
-	for ( f = 0; f < area.numFaces; f ++ ) {
-		const aasFace_t& face = file->GetFace ( abs ( file->GetFaceIndex (area.firstFace + f ) ) );
-		
-		// for each edge test a point between the center of the edge and the center
-		for ( e = 0; e < face.numEdges; e ++ ) {
-			idVec3 edgeCenter = file->EdgeCenter ( abs( file->GetEdgeIndex( face.firstEdge + e ) ) ); 	
-			idVec3 dir        = area.center - edgeCenter;
-			float  dist;
-			for ( dist = dir.Normalize() - 64.0f; dist > 0.0f; dist -= 64.0f ) {				
-				idVec3 testPoint = edgeCenter + dir * dist;
-				if ( ai_debugTactical.GetInteger ( ) > 1 ) {
-					gameRenderWorld->DebugLine ( colorPurple, testPoint, testPoint + idVec3(0,0,64.0f), 10000 );
-				}
-
-				if ( TestPointDistance ( origin, testPoint, minDistance, maxDistance) && TestPoint ( aas, testPoint, area.ceiling ) ) {
-					goal.areaNum = areaNum;
-					goal.origin  = testPoint;
-					return TEST_OK;
-				}
-			}
-		}
-	}
-	
-	return TEST_BADPOINT;
-}
-
-/*
-============
-idAASCallback::Init
-============
-*/
-bool idAASCallback::TestPointDistance ( const idVec3& origin, const idVec3& point, float minDistance, float maxDistance ) {
-	float dist = (origin - point).LengthFast ( );
-	if ( minDistance > 0.0f && dist < minDistance ) {
-		return false;
-	}
-	if ( maxDistance > 0.0f && dist > maxDistance ) {
-		return false;
-	}
-	return true;
-}
-
-/*
-============
-idAASCallback::Init
-============
-*/
-void idAASCallback::Init ( void ) {
-}
-
-/*
-============
-idAASCallback::Finish
-============
-*/
-void idAASCallback::Finish ( void ) {
-}
-
-/*
-============
-idAASCallback::TestArea
-============
-*/
-bool idAASCallback::TestArea ( class idAAS *aas, int areaNum, const aasArea_t& area ) {
-	return true;
-}
-
-/*
-============
-idAASCallback::TestPoint
-============
-*/
-bool idAASCallback::TestPoint ( class idAAS *aas, const idVec3& pos, const float zAllow ) {
-	return true;
-}
-
-// RAVEN END
-
-
-// jmarshall
-/*
-============
-idAASLocal::AdjustPositionAndGetArea
-============
-*/
-int idAASLocal::AdjustPositionAndGetArea(idVec3& origin)
-{
-	int area = PointReachableAreaNum(origin, DefaultSearchBounds(), AREA_REACHABLE_WALK);
-	PushPointIntoAreaNum(area, origin);
-	return area;
-}
-// jmarshall end

@@ -1,25 +1,23 @@
-# OpenQ4 TODO
+# OpenD3 TODO
 
-This file tracks current known issues and upcoming features.
+This file tracks migration and stabilization work for the OpenD3 transition.
 
-## Known Issues
+## High Priority
 
-- [ ] Viewport sometimes remains black when changing between SP and MP; investigate update/refresh logic during module transitions.
-- [ ] Menu cursor handling needs improvement (focus, capture, and consistency across input modes and resolutions).
-- [ ] The locked door bug inherited from Quake4Doom still persists and needs a root-cause fix.
-- [ ] Machinegun zoom projection yaw differs from viewangles yaw.
+- [ ] Reconcile filesystem/game-dir defaults with Doom 3 expectations (`base`/`d3xp`) while preserving current staged workflow.
+- [ ] Review `src/game` against `../OpenD3-GameLibs` and eliminate sync drift.
+- [ ] Audit remaining OpenQ4 naming strings in user-facing output and tools.
+- [ ] Complete launch + log validation loops on stock Doom 3 assets.
 
-## Upcoming Features and Improvements
+## Compatibility Work
 
-- [ ] Add an optional shadow mapping setting/path.
-- [ ] Review and port relevant features and improvements implemented in the last 5 years of RBDOOM3-BFG commits.
-- [ ] Merge shared code between MP/SP and streamline the process of switching between each.
-- [ ] Find and implement ways to improve loading times.
-- [ ] Expand multiplayer controls and port relevant WORR functionality/logic.
-- [ ] Improve menu and loading screen horizontal expansion behavior.
-- [ ] Machinegun and railgun zoom images need to suit all screen aspect ratios.
-- [ ] CPMA-esque rainbow a-z color escapes implementation, disable black
+- [ ] Compare renderer/material behavior with `E:\_SOURCE\_CODE\dhewm3-master` and document required reversions.
+- [ ] Validate savegame/config path behavior on Windows/Linux/macOS defaults.
+- [ ] Confirm multiplayer map/bootstrap flow with Doom 3 MP maps.
+- [ ] Verify asset validation paths/checksums for retail Doom 3 (`base`) and expansion content (`d3xp`).
 
-## Potential change in project scope
+## Modernization
 
-Project may benefit from catering towards multiple idTech4 titles, to include: Doom 3, Doom 3: BFG, Prey, ETQW
+- [ ] Continue SDL3 parity improvements for non-English layouts and UTF-8 text input.
+- [ ] Bring Linux/macOS Meson host support from staged to validated.
+- [ ] Remove temporary migration compatibility shims (`OPENQ4_*` env variable aliases) after downstream tooling updates.

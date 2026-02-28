@@ -1,0 +1,10 @@
+Syncing game sources:
+  From: E:\Repositories\OpenD3-GameLibs\src\game
+    To: E:\Repositories\OpenD3\src\game
+
+GameLibs sync complete (changes applied).
+OpenD3-GameLibs has no standalone Meson build wrapper; skipping optional companion build.
+ninja: Entering directory `E:/Repositories/OpenD3/builddir'
+ninja: no work to do.
+INFO: autodetecting backend as ninja
+INFO: calculating backend command to run: C:\Users\djdac\AppData\Roaming\Python\Python311\Scripts\ninja.EXE -C E:/Repositories/OpenD3/builddir

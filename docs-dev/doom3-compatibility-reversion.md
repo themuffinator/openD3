@@ -1,0 +1,39 @@
+# Doom 3 Compatibility Reversion Guide
+
+Use this note to drive incremental reversion from OpenQ4-era behavior back toward Doom 3 compatibility.
+
+## Primary Local Reference
+
+- `E:\_SOURCE\_CODE\dhewm3-master`
+
+This is the authoritative local behavior/code reference for what to restore where current OpenD3 behavior is Quake 4-biased.
+
+## Companion Repo
+
+- `E:\Repositories\OpenD3-GameLibs`
+
+Game-library changes should be made canonically in `OpenD3-GameLibs` and synchronized into this repository.
+
+## Reversion Workflow
+
+1. Reproduce mismatch in OpenD3 (startup/map/runtime behavior).
+2. Locate equivalent path in `dhewm3-master`.
+3. Document divergence and intended direction in a short task note.
+4. Apply minimal code change in OpenD3 (or OpenD3-GameLibs where appropriate).
+5. Run the launch/log loop and verify improvement without introducing new regressions.
+
+## Priority Areas
+
+- Filesystem/game-dir assumptions (`base`, `d3xp`, save/config paths).
+- Effects paths and declarations (Doom 3-native FX behavior, no external Quake 4 legacy-effects companion dependency).
+- Material/parser behavior where Quake 4-specific extensions diverge from Doom 3 expectations.
+- Session/startup commands and map bootstrapping defaults.
+- Platform/runtime paths (logs, crash dumps, executable naming).
+
+## Validation Loop
+
+1. Launch OpenD3 (SP/MP mode as needed).
+2. Let startup reach map/session initialization.
+3. Exit and inspect `${workspaceFolder}\.home\openbase\logs\opend3.log`.
+4. Resolve errors/warnings in code, not with compatibility-breaking content hacks.
+5. Repeat until clean for the changed scenario.

@@ -62,6 +62,10 @@ public:
 	void			WriteAngle16( float f );
 	void			WriteDir( const idVec3 &dir, int numBits );
 	void			WriteString( const char *s, int maxLength = -1 );
+	void			WriteString( const char *s, int maxLength, bool make7Bit ) {
+		(void)make7Bit;
+		WriteString( s, maxLength );
+	}
 	void			WriteData( const void *data, int length );
 	void			WriteNetadr( const netadr_t adr );
 
@@ -422,9 +426,11 @@ ID_INLINE float idBitMsg::ReadDeltaFloat( float oldValue, int exponentBits, int 
 
 class idBitMsgDelta {
 public:
-					idBitMsgDelta();
-					~idBitMsgDelta() {}
+	idBitMsgDelta();
+	~idBitMsgDelta() {}
 
+	void			Init( const idBitMsg *base, idBitMsg *newBase, idBitMsg *delta );
+	void			Init( const idBitMsg *base, idBitMsg *newBase, const idBitMsg *delta );
 	void			InitWriting( const idBitMsg *base, idBitMsg *newBase, idBitMsg *delta );
 	void			InitReading( const idBitMsg *base, idBitMsg *newBase, const idBitMsg *delta );
 	bool			HasChanged( void ) const;
@@ -535,6 +541,14 @@ ID_INLINE void idBitMsgDelta::InitReading( const idBitMsg *base, idBitMsg *newBa
 	this->writeDelta = NULL;
 	this->readDelta = delta;
 	this->changed = false;
+}
+
+ID_INLINE void idBitMsgDelta::Init( const idBitMsg *base, idBitMsg *newBase, idBitMsg *delta ) {
+	InitWriting( base, newBase, delta );
+}
+
+ID_INLINE void idBitMsgDelta::Init( const idBitMsg *base, idBitMsg *newBase, const idBitMsg *delta ) {
+	InitReading( base, newBase, delta );
 }
 
 ID_INLINE bool idBitMsgDelta::HasChanged( void ) const {

@@ -1617,8 +1617,15 @@ void idCollisionModelManagerLocal::Rotation( trace_t *results, const idVec3 &sta
 	memset( results, 0, sizeof( *results ) );
 
 	// If the model is NULL then assume we are checking the world model.
-	if (model == NULL) {
-		common->FatalError("%s model passed was nullptr", __FUNCTION__);
+	if ( model == NULL ) {
+		model = collisionModelManager ? collisionModelManager->GetCollisionModel( 0 ) : NULL;
+		if ( model == NULL ) {
+			common->Warning( "%s: world model unavailable for nullptr model handle", __FUNCTION__ );
+			results->fraction = 1.0f;
+			results->endpos = start;
+			results->endAxis = trmAxis;
+			return;
+		}
 	}
 
 	// if special position test

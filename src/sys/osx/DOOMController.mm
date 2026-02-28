@@ -270,13 +270,13 @@ extern void CL_Quit_f(void);
             NSString *message;
 
             if (!cddir || *cddir == '\0') {
-                message = [NSString stringWithFormat:@"Could not find OpenQ4 levels."];
+                message = [NSString stringWithFormat:@"Could not find OpenD3 levels."];
             } else if (![defaultManager fileExistsAtPath:[NSString stringWithFormat:@"%s", cddir]]) {
-                message = [NSString stringWithFormat:@"Could not find OpenQ4 levels:  '%s' does not exist.", cddir];
+                message = [NSString stringWithFormat:@"Could not find OpenD3 levels:  '%s' does not exist.", cddir];
             } else {
-                message = [NSString stringWithFormat:@"Could not find OpenQ4 levels:  '%s' is not a complete OpenQ4 installation.", cddir];
+                message = [NSString stringWithFormat:@"Could not find OpenD3 levels:  '%s' is not a complete OpenD3 installation.", cddir];
             }
-            switch (NSRunAlertPanel(@"OpenQ4", @"%@", @"Quit", @"Find...", nil, message)) {
+            switch (NSRunAlertPanel(@"OpenD3", @"%@", @"Quit", @"Find...", nil, message)) {
                 case NSAlertDefaultReturn:
                 default:
                     Sys_Quit();
@@ -428,9 +428,9 @@ const char *Sys_EXEPath( void ) {
  */
 const char *Sys_DefaultSavePath(void) {
 #if defined( ID_DEMO_BUILD )
-	sprintf( savepath, "%s/Library/Application Support/OpenQ4 Demo", [NSHomeDirectory() cString] );
+	sprintf( savepath, "%s/Library/Application Support/OpenD3 Demo", [NSHomeDirectory() cString] );
 #else
-	sprintf( savepath, "%s/Library/Application Support/OpenQ4", [NSHomeDirectory() cString] );
+	sprintf( savepath, "%s/Library/Application Support/OpenD3", [NSHomeDirectory() cString] );
 #endif
 	return savepath.c_str();
 }
@@ -1052,3 +1052,4 @@ void Sys_FPU_SetFTZ( bool enable ) {
 }
 
 #endif
+

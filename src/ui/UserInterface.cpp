@@ -52,6 +52,7 @@ idUserInterfaceManager *	uiManager = &uiManagerLocal;
 
 void idUserInterfaceManagerLocal::Init() {
 	screenRect = idRectangle(0, 0, 640, 480);
+	inWorldGuiRenderDepth = 0;
 	dc.Init();
 }
 
@@ -87,6 +88,14 @@ void idUserInterfaceManagerLocal::SetSize( float width, float height ) {
 
 void idUserInterfaceManagerLocal::SetAspectCorrection( bool enabled ) {
 	dc.SetAspectCorrection( enabled );
+}
+
+void idUserInterfaceManagerLocal::SetInWorldGuiRender( bool enabled ) {
+	if ( enabled ) {
+		inWorldGuiRenderDepth++;
+	} else if ( inWorldGuiRenderDepth > 0 ) {
+		inWorldGuiRenderDepth--;
+	}
 }
 
 void idUserInterfaceManagerLocal::BeginLevelLoad() {
@@ -399,7 +408,7 @@ void idUserInterfaceLocal::Redraw( int _time ) {
 			desktop->Init();
 		}
 
-		const bool aspectCorrect = ui_aspectCorrection.GetBool();
+		const bool aspectCorrect = ui_aspectCorrection.GetBool() && !uiManagerLocal.IsInWorldGuiRender();
 		uiManagerLocal.SetAspectCorrection( aspectCorrect );
 		uiManagerLocal.SetSize( desktop->forceAspectWidth, desktop->forceAspectHeight );
 		if ( gui_debugScript.GetInteger() > 4 ) {

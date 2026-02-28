@@ -1,3 +1,30 @@
+/*
+===========================================================================
+
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
 
 #ifndef __PHYSICS_PLAYER_H__
 #define __PHYSICS_PLAYER_H__
@@ -35,19 +62,11 @@ typedef struct playerPState_s {
 	idVec3					origin;
 	idVec3					velocity;
 	idVec3					localOrigin;
-	idVec3					pushVelocity;	
-// RAVEN BEGIN
-// bdube: added
-	idVec3					lastPushVelocity;
-// RAVEN END	
+	idVec3					pushVelocity;
 	float					stepUp;
 	int						movementType;
 	int						movementFlags;
 	int						movementTime;
-// RAVEN BEGIN
-// bdube: crouch slide 
-	int						crouchSlideTime;
-// RAVEN END
 } playerPState_t;
 
 class idPhysics_Player : public idPhysics_Actor {
@@ -111,14 +130,6 @@ public:	// common physics interface
 	void					WriteToSnapshot( idBitMsgDelta &msg ) const;
 	void					ReadFromSnapshot( const idBitMsgDelta &msg );
 
-// RAVEN BEGIN
-// kfuller: Added
-	bool					IsNoclip( void ) const;
-	bool					IsDead( void ) const;
-// RAVEN END
-
-	void					SetClipModelNoLink( idClipModel *clip );
-
 private:
 	// player physics state
 	playerPState_t			current;
@@ -171,10 +182,7 @@ private:
 	void					SpectatorMove( void );
 	void					LadderMove( void );
 	void					CorrectAllSolid( trace_t &trace, int contents );
-// RAVEN BEGIN
-// MrE: check stuck
-	void					CheckGround( bool checkStuck );
-// RAVEN END
+	void					CheckGround( void );
 	void					CheckDuck( void );
 	void					CheckLadder( void );
 	bool					CheckJump( void );
@@ -182,17 +190,6 @@ private:
 	void					SetWaterLevel( void );
 	void					DropTimers( void );
 	void					MovePlayer( int msec );
-
-	float					Pm_Accelerate( void );
-	float					Pm_AirAccelerate( void );
 };
-
-ID_INLINE bool idPhysics_Player::IsNoclip( void ) const {
-	return current.movementType == PM_NOCLIP;
-}
-
-ID_INLINE bool idPhysics_Player::IsDead( void ) const {
-	return current.movementType == PM_DEAD;
-}
 
 #endif /* !__PHYSICS_PLAYER_H__ */

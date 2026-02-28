@@ -6,10 +6,21 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$openQ4Root = [System.IO.Path]::GetFullPath((Join-Path $scriptDir "..\.."))
+$openD3Root = [System.IO.Path]::GetFullPath((Join-Path $scriptDir "..\.."))
+
+$gameLibsRepoOverride = ""
+if (-not [string]::IsNullOrWhiteSpace($env:OPEND3_GAMELIBS_REPO)) {
+    $gameLibsRepoOverride = $env:OPEND3_GAMELIBS_REPO
+} elseif (-not [string]::IsNullOrWhiteSpace($env:OPENQ4_GAMELIBS_REPO)) {
+    $gameLibsRepoOverride = $env:OPENQ4_GAMELIBS_REPO
+}
 
 if ([string]::IsNullOrWhiteSpace($GameLibsRepo)) {
-    $GameLibsRepo = Join-Path $openQ4Root "..\OpenQ4-GameLibs"
+    if (-not [string]::IsNullOrWhiteSpace($gameLibsRepoOverride)) {
+        $GameLibsRepo = $gameLibsRepoOverride
+    } else {
+        $GameLibsRepo = Join-Path $openD3Root "..\OpenD3-GameLibs"
+    }
 }
 
 $gameLibsRoot = [System.IO.Path]::GetFullPath($GameLibsRepo)
@@ -17,13 +28,13 @@ $syncMappings = @(
     @{
         Name = "game sources"
         Source = Join-Path $gameLibsRoot "src\game"
-        Destination = Join-Path $openQ4Root "src\game"
-        Excludes = @("Callbacks.cpp", "gamesys\Callbacks.cpp")
+        Destination = Join-Path $openD3Root "src\game"
+        Excludes = @("Callbacks.cpp")
     }
 )
 
 if (-not (Test-Path $gameLibsRoot)) {
-    throw "OpenQ4-GameLibs repository not found at '$gameLibsRoot'. Set OPENQ4_GAMELIBS_REPO or pass -GameLibsRepo."
+    throw "OpenD3-GameLibs repository not found at '$gameLibsRoot'. Set OPEND3_GAMELIBS_REPO (or OPENQ4_GAMELIBS_REPO for compatibility) or pass -GameLibsRepo."
 }
 
 $hasChanges = $false

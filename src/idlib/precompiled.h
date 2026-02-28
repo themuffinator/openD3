@@ -237,7 +237,10 @@ public:
 #include "../framework/DeclTable.h"
 #include "../framework/DeclSkin.h"
 #include "../framework/DeclEntityDef.h"
+#include "../framework/DeclFX.h"
+#include "../framework/DeclParticle.h"
 #include "../framework/DeclAF.h"
+#include "../framework/DeclPDA.h"
 // RAVEN BEGIN
 // jscott: new decl types
 #include "../framework/DeclPlayerModel.h"
@@ -268,7 +271,7 @@ const float MAX_BOUND_SIZE = 65536.0f;
 
 // RAVEN BEGIN
 // jscott: Effects system interface
-#include "../bse_api/BSEInterface.h"
+#include "../effects_api/EffectsInterface.h"
 // RAVEN END
 
 // asynchronous networking

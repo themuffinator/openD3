@@ -30,7 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 
 
 //#include "../renderer/Image.h"
-#include "../bse_api/BSE_API.h"
+#include "../effects_api/Effects_API.h"
 
 #define	MAX_PRINT_MSG_SIZE	4096
 #define MAX_WARNING_LIST	256
@@ -88,6 +88,7 @@ idCVar com_updateLoadSize( "com_updateLoadSize", "0", CVAR_BOOL | CVAR_SYSTEM | 
 idCVar com_videoRam( "com_videoRam", "64", CVAR_INTEGER | CVAR_SYSTEM | CVAR_NOCHEAT | CVAR_ARCHIVE, "holds the last amount of detected video ram" );
 idCVar com_activeGameModule( "com_activeGameModule", "", CVAR_SYSTEM, "active game module (game_sp/game_mp)" );
 idCVar com_nextGameModule( "com_nextGameModule", "", CVAR_SYSTEM, "internal one-shot game module override for reloadEngine" );
+idCVar com_externalEffectsRuntime( "com_externalEffectsRuntime", "0", CVAR_SYSTEM | CVAR_BOOL, "enable optional external effects runtime integration (off = Doom 3 built-in effects only)" );
 
 idCVar com_product_lang_ext( "com_product_lang_ext", "1", CVAR_INTEGER | CVAR_SYSTEM | CVAR_ARCHIVE, "Extension to use when creating language files." );
 
@@ -116,7 +117,7 @@ idGame *		game = NULL;
 idGameEdit *	gameEdit = NULL;
 #endif
 
-class rvBSEManagerDisabled : public rvBSEManager {
+class rvEffectsManagerDisabled : public rvEffectsManager {
 public:
 	virtual bool				Init( void ) { return true; }
 	virtual bool				Shutdown( void ) {
@@ -170,10 +171,10 @@ private:
 	idList<idTraceModel *>		traceModels;
 };
 
-static rvBSEManagerDisabled	bseDisabledLocal;
-rvBSEManager *	bse = &bseDisabledLocal;
+static rvEffectsManagerDisabled	effectsManagerDisabledLocal;
+rvEffectsManager *	effectsManager = &effectsManagerDisabledLocal;
 rvDeclEffectEdit *declEffectEdit = NULL;
-BSE_AllocDeclEffect_t bseAllocDeclEffect = NULL;
+Effects_AllocDeclEffect_t effectsAllocDeclEffect = NULL;
 
 // writes si_version to the config file - in a kinda obfuscated way
 //#define ID_WRITE_VERSION
@@ -238,9 +239,9 @@ private:
 	void						WriteConfiguration( void );
 	void						DumpWarnings( void );
 	void						SingleAsyncTic( void );
-	void						LoadBSEDLL( void );
-	void						UnloadBSEDLL( void );
-	void						RefreshBSEBindings( void );
+	void						LoadEffectsRuntimeDLL( void );
+	void						UnloadEffectsRuntimeDLL( void );
+	void						RefreshEffectsRuntimeBindings( void );
 	void						LoadGameDLL( void );
 	void						UnloadGameDLL( void );
 	void						PrintLoadingMessage( const char *msg );
@@ -264,8 +265,8 @@ private:
 	idStrList					errorList;
 
 	INT_PTR						gameDLL;
-	INT_PTR						bseDLL;
-	BSE_SetRuntimePointers_t	bseSetRuntimePointers;
+	INT_PTR						effectsDLL;
+	Effects_SetRuntimePointers_t	effectsSetRuntimePointers;
 
 	idLangDict					languageDict;
 
@@ -298,8 +299,8 @@ idCommonLocal::idCommonLocal( void ) {
 	rd_flush = NULL;
 
 	gameDLL = 0;
-	bseDLL = 0;
-	bseSetRuntimePointers = NULL;
+	effectsDLL = 0;
+	effectsSetRuntimePointers = NULL;
 
 #ifdef ID_WRITE_VERSION
 	config_compressor = NULL;
@@ -464,7 +465,7 @@ void idCommonLocal::VPrintf( const char *fmt, va_list args ) {
 			ID_TIME_T aclock;
 			idStr fileName = com_logFileName.GetString()[0] ? com_logFileName.GetString() : "qconsole.log";
 			if ( fileName.Icmp( "auto" ) == 0 ) {
-				fileName = "logs/openq4_%Y%m%d_%H%M%S.log";
+				fileName = "logs/opend3_%Y%m%d_%H%M%S.log";
 			}
 
 			char resolvedFileName[MAX_OSPATH];
@@ -2613,7 +2614,7 @@ void idCommonLocal::PrintLoadingMessage( const char *msg ) {
 	renderSystem->SetColor( idVec4( 0.0f, 0.0f, 0.0f, 1.0f ) );
 	renderSystem->DrawStretchPic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 1, 1, declManager->FindMaterial( "_white" ) );
 	renderSystem->SetColor( idVec4( 1.0f, 1.0f, 1.0f, 1.0f ) );
-	renderSystem->DrawStretchPic( splashX, splashY, splashW, splashH, 0, 0, 1, 1, declManager->FindMaterial( "gfx/splashScreen" ) );
+	renderSystem->DrawStretchPic( splashX, splashY, splashW, splashH, 0, 0, 1, 1, declManager->FindMaterial( "splashScreen" ) );
 
 	const int charCount = Common_CountVisibleSmallChars( msg );
 	const float charWidth = SMALLCHAR_WIDTH * textScaleX;
@@ -2622,7 +2623,7 @@ void idCommonLocal::PrintLoadingMessage( const char *msg ) {
 	const float textX = correctedX + ( correctedW - textWidth ) * 0.5f;
 	const float textY = correctedY + 410.0f * textScaleY;
 	Common_DrawScaledSmallString( textX, textY, charWidth, charHeight, msg,
-		idVec4( 0.94f, 0.62f, 0.05f, 1.0f ), true, declManager->FindMaterial( "fonts/english/bigchars", false ) );
+		idVec4( 0.94f, 0.62f, 0.05f, 1.0f ), true, declManager->FindMaterial( "textures/bigchars", false ) );
 	renderSystem->SetColor( idVec4( 1.0f, 1.0f, 1.0f, 1.0f ) );
 	renderSystem->EndFrame( NULL, NULL );
 }
@@ -2830,176 +2831,170 @@ void idCommonLocal::Async( void ) {
 	}
 }
 
-static bool OpenQ4_IsMultiplayerGameType( const char *gameType ) {
+static bool OpenD3_IsMultiplayerGameType( const char *gameType ) {
 	return gameType && gameType[0] && idStr::Icmp( gameType, "singleplayer" ) != 0;
 }
 
-static bool OpenQ4_IsValidGameModuleName( const char *moduleName ) {
+static bool OpenD3_IsValidGameModuleName( const char *moduleName ) {
 	return moduleName
 		&& ( idStr::Icmp( moduleName, "game_sp" ) == 0 || idStr::Icmp( moduleName, "game_mp" ) == 0 );
 }
 
-static const char *OpenQ4_SelectGameModuleBaseName( void ) {
+static const char *OpenD3_SelectGameModuleBaseName( void ) {
 	const char *nextModule = cvarSystem->GetCVarString( "com_nextGameModule" );
-	if ( OpenQ4_IsValidGameModuleName( nextModule ) ) {
+	if ( OpenD3_IsValidGameModuleName( nextModule ) ) {
 		return idStr::Icmp( nextModule, "game_mp" ) == 0 ? "game_mp" : "game_sp";
 	}
 
 	const char *gameType = cvarSystem->GetCVarString( "si_gameType" );
-	return OpenQ4_IsMultiplayerGameType( gameType ) ? "game_mp" : "game_sp";
+	return OpenD3_IsMultiplayerGameType( gameType ) ? "game_mp" : "game_sp";
 }
 
 #if defined( _M_X64 ) || defined( __x86_64__ )
-	#define OPENQ4_MODULE_ARCH_TAG "x64"
+	#define OPEND3_MODULE_ARCH_TAG "x64"
 #elif defined( _M_IX86 ) || defined( __i386__ )
-	#define OPENQ4_MODULE_ARCH_TAG "x86"
+	#define OPEND3_MODULE_ARCH_TAG "x86"
 #elif defined( _M_ARM64 ) || defined( __aarch64__ )
-	#define OPENQ4_MODULE_ARCH_TAG "arm64"
+	#define OPEND3_MODULE_ARCH_TAG "arm64"
 #else
-	#define OPENQ4_MODULE_ARCH_TAG "unknown"
+	#define OPEND3_MODULE_ARCH_TAG "unknown"
 #endif
 
-static void OpenQ4_BuildGameModuleBinaryName( const char *moduleName, char outName[ MAX_OSPATH ] ) {
+static void OpenD3_BuildGameModuleBinaryName( const char *moduleName, char outName[ MAX_OSPATH ] ) {
 	const char *variant = ( moduleName && idStr::Icmp( moduleName, "game_mp" ) == 0 ) ? "mp" : "sp";
-	idStr::snPrintf( outName, MAX_OSPATH, "game-%s_%s", variant, OPENQ4_MODULE_ARCH_TAG );
+	idStr::snPrintf( outName, MAX_OSPATH, "game-%s_%s", variant, OPEND3_MODULE_ARCH_TAG );
 }
 
-static void OpenQ4_DisableBSEWithWarning( const char *reason ) {
+static const char *OPEND3_EFFECTS_MODULE_NAME = "libeffects-d3";
+
+static void OpenD3_DisableEffectsRuntimeWithWarning( const char *reason ) {
 	static bool warnedConsole = false;
 	if ( !warnedConsole ) {
 		warnedConsole = true;
-		common->Warning( "BSE unavailable (%s). Effects will be disabled.", reason ? reason : "unknown reason" );
+		common->Warning( "External effects runtime unavailable (%s). Effects will be disabled.", reason ? reason : "unknown reason" );
 	}
-
-#if defined( _WIN32 ) && !defined( ID_DEDICATED )
-	static bool warnedDialog = false;
-	if ( !warnedDialog ) {
-		warnedDialog = true;
-
-		char message[1024];
-		idStr::snPrintf(
-			message,
-			sizeof( message ),
-			"Could not load BSE runtime library (libbse-q4).\n\nReason: %s\n\nEffects will be disabled.",
-			reason ? reason : "unknown reason"
-		);
-		::MessageBoxA( NULL, message, "OpenQ4 Warning", MB_OK | MB_ICONWARNING | MB_SYSTEMMODAL );
-	}
-#endif
 
 	::declEffectEdit = NULL;
-	::bse = &bseDisabledLocal;
+	::effectsManager = &effectsManagerDisabledLocal;
 }
 
 /*
 =================
-idCommonLocal::RefreshBSEBindings
+idCommonLocal::RefreshEffectsRuntimeBindings
 =================
 */
-void idCommonLocal::RefreshBSEBindings( void ) {
+void idCommonLocal::RefreshEffectsRuntimeBindings( void ) {
 #ifdef __DOOM_DLL__
-	if ( bseSetRuntimePointers ) {
-		bseSetRuntimePointers( ::game, ::gameEdit, ::session );
+	if ( effectsSetRuntimePointers ) {
+		effectsSetRuntimePointers( ::game, ::gameEdit, ::session );
 	}
 #endif
 }
 
 /*
 =================
-idCommonLocal::LoadBSEDLL
+idCommonLocal::LoadEffectsRuntimeDLL
 =================
 */
-void idCommonLocal::LoadBSEDLL( void ) {
+void idCommonLocal::LoadEffectsRuntimeDLL( void ) {
 #ifdef __DOOM_DLL__
 	char			dllPath[ MAX_OSPATH ];
+	const char *	effectsModuleBaseName;
 
-	bseImport_t		bseImport;
-	bseExport_t		bseExport;
-	GetBSEAPI_t		GetBSEAPI;
+	effectsImport_t		effectsImport;
+	effectsExport_t		effectsExport;
+	GetEffectsAPI_t		getEffectsAPI;
 
 	// Default to the disabled fallback unless a valid external module is loaded.
-	bseSetRuntimePointers = NULL;
-	::bse = &bseDisabledLocal;
+	effectsSetRuntimePointers = NULL;
+	::effectsManager = &effectsManagerDisabledLocal;
 	::declEffectEdit = NULL;
-	::bseAllocDeclEffect = NULL;
+	::effectsAllocDeclEffect = NULL;
 
-	fileSystem->FindDLL( "libbse-q4", dllPath, false );
+	if ( !com_externalEffectsRuntime.GetBool() ) {
+		common->DPrintf( "External effects runtime disabled (com_externalEffectsRuntime=0). Using built-in Doom 3 effects path.\n" );
+		return;
+	}
+
+	effectsModuleBaseName = OPEND3_EFFECTS_MODULE_NAME;
+	fileSystem->FindDLL( effectsModuleBaseName, dllPath, false );
+
 	if ( !dllPath[ 0 ] ) {
-		OpenQ4_DisableBSEWithWarning( "couldn't find dynamic library 'libbse-q4'" );
+		OpenD3_DisableEffectsRuntimeWithWarning( "couldn't find external effects runtime dynamic library" );
 		return;
 	}
 
-	common->DPrintf( "Loading BSE DLL: '%s'\n", dllPath );
-	bseDLL = sys->DLL_Load( dllPath );
-	if ( !bseDLL ) {
-		OpenQ4_DisableBSEWithWarning( "couldn't load dynamic library 'libbse-q4'" );
+	common->DPrintf( "Loading external effects runtime DLL '%s': '%s'\n", effectsModuleBaseName, dllPath );
+	effectsDLL = sys->DLL_Load( dllPath );
+	if ( !effectsDLL ) {
+		OpenD3_DisableEffectsRuntimeWithWarning( "couldn't load external effects runtime dynamic library" );
 		return;
 	}
 
-	GetBSEAPI = (GetBSEAPI_t) Sys_DLL_GetProcAddress( bseDLL, "GetBSEAPI" );
-	if ( !GetBSEAPI ) {
-		Sys_DLL_Unload( bseDLL );
-		bseDLL = NULL;
-		OpenQ4_DisableBSEWithWarning( "couldn't find BSE DLL API entry point" );
+	getEffectsAPI = (GetEffectsAPI_t) Sys_DLL_GetProcAddress( effectsDLL, "GetEffectsAPI" );
+	if ( !getEffectsAPI ) {
+		Sys_DLL_Unload( effectsDLL );
+		effectsDLL = NULL;
+		OpenD3_DisableEffectsRuntimeWithWarning( "couldn't find external effects runtime API entry point" );
 		return;
 	}
 
-	bseImport.version					= BSE_API_VERSION;
-	bseImport.sys						= ::sys;
-	bseImport.common					= ::common;
-	bseImport.cmdSystem					= ::cmdSystem;
-	bseImport.cvarSystem				= ::cvarSystem;
-	bseImport.fileSystem				= ::fileSystem;
-	bseImport.networkSystem				= ::networkSystem;
-	bseImport.renderSystem				= ::renderSystem;
-	bseImport.soundSystem				= ::soundSystem;
-	bseImport.renderModelManager		= ::renderModelManager;
-	bseImport.uiManager					= ::uiManager;
-	bseImport.declManager				= ::declManager;
-	bseImport.AASFileManager			= ::AASFileManager;
-	bseImport.collisionModelManager		= ::collisionModelManager;
-	bseImport.game						= ::game;
-	bseImport.gameEdit					= ::gameEdit;
-	bseImport.session					= ::session;
+	effectsImport.version					= EFFECTS_API_VERSION;
+	effectsImport.sys						= ::sys;
+	effectsImport.common					= ::common;
+	effectsImport.cmdSystem					= ::cmdSystem;
+	effectsImport.cvarSystem				= ::cvarSystem;
+	effectsImport.fileSystem				= ::fileSystem;
+	effectsImport.networkSystem				= ::networkSystem;
+	effectsImport.renderSystem				= ::renderSystem;
+	effectsImport.soundSystem				= ::soundSystem;
+	effectsImport.renderModelManager		= ::renderModelManager;
+	effectsImport.uiManager					= ::uiManager;
+	effectsImport.declManager				= ::declManager;
+	effectsImport.AASFileManager			= ::AASFileManager;
+	effectsImport.collisionModelManager		= ::collisionModelManager;
+	effectsImport.game						= ::game;
+	effectsImport.gameEdit					= ::gameEdit;
+	effectsImport.session					= ::session;
 
-	bseExport_t *bseExportPtr = GetBSEAPI( &bseImport );
-	if ( !bseExportPtr ) {
-		Sys_DLL_Unload( bseDLL );
-		bseDLL = NULL;
-		OpenQ4_DisableBSEWithWarning( "BSE DLL API handshake failed" );
+	effectsExport_t *effectsExportPtr = getEffectsAPI( &effectsImport );
+	if ( !effectsExportPtr ) {
+		Sys_DLL_Unload( effectsDLL );
+		effectsDLL = NULL;
+		OpenD3_DisableEffectsRuntimeWithWarning( "external effects runtime API handshake failed" );
 		return;
 	}
-	bseExport = *bseExportPtr;
-	if ( bseExport.version != BSE_API_VERSION || !bseExport.bse || !bseExport.AllocDeclEffect ) {
-		Sys_DLL_Unload( bseDLL );
-		bseDLL = NULL;
-		OpenQ4_DisableBSEWithWarning( "BSE DLL API version mismatch" );
+	effectsExport = *effectsExportPtr;
+	if ( effectsExport.version != EFFECTS_API_VERSION || !effectsExport.effects || !effectsExport.AllocDeclEffect ) {
+		Sys_DLL_Unload( effectsDLL );
+		effectsDLL = NULL;
+		OpenD3_DisableEffectsRuntimeWithWarning( "external effects runtime API version mismatch" );
 		return;
 	}
 
-	::bse = bseExport.bse;
-	::declEffectEdit = bseExport.declEffectEdit;
-	::bseAllocDeclEffect = bseExport.AllocDeclEffect;
-	bseSetRuntimePointers = bseExport.SetRuntimePointers;
-	RefreshBSEBindings();
+	::effectsManager = effectsExport.effects;
+	::declEffectEdit = effectsExport.declEffectEdit;
+	::effectsAllocDeclEffect = effectsExport.AllocDeclEffect;
+	effectsSetRuntimePointers = effectsExport.SetRuntimePointers;
+	RefreshEffectsRuntimeBindings();
 #endif
 }
 
 /*
 =================
-idCommonLocal::UnloadBSEDLL
+idCommonLocal::UnloadEffectsRuntimeDLL
 =================
 */
-void idCommonLocal::UnloadBSEDLL( void ) {
+void idCommonLocal::UnloadEffectsRuntimeDLL( void ) {
 #ifdef __DOOM_DLL__
-	if ( bseDLL ) {
-		Sys_DLL_Unload( bseDLL );
-		bseDLL = NULL;
+	if ( effectsDLL ) {
+		Sys_DLL_Unload( effectsDLL );
+		effectsDLL = NULL;
 	}
-	bseSetRuntimePointers = NULL;
-	::bse = &bseDisabledLocal;
+	effectsSetRuntimePointers = NULL;
+	::effectsManager = &effectsManagerDisabledLocal;
 	::declEffectEdit = NULL;
-	::bseAllocDeclEffect = NULL;
+	::effectsAllocDeclEffect = NULL;
 #endif
 }
 
@@ -3018,8 +3013,8 @@ void idCommonLocal::LoadGameDLL( void ) {
 	gameExport_t	gameExport;
 	GetGameAPI_t	GetGameAPI;
 
-	const char *gameModuleBaseName = OpenQ4_SelectGameModuleBaseName();
-	OpenQ4_BuildGameModuleBinaryName( gameModuleBaseName, preferredGameModuleBinary );
+	const char *gameModuleBaseName = OpenD3_SelectGameModuleBaseName();
+	OpenD3_BuildGameModuleBinaryName( gameModuleBaseName, preferredGameModuleBinary );
 	selectedModuleBinary = preferredGameModuleBinary;
 	fileSystem->FindDLL( selectedModuleBinary, dllPath, true );
 
@@ -3066,7 +3061,6 @@ void idCommonLocal::LoadGameDLL( void ) {
 	gameImport.declManager				= ::declManager;
 	gameImport.AASFileManager			= ::AASFileManager;
 	gameImport.collisionModelManager	= ::collisionModelManager;
-	gameImport.bse						= ::bse;
 
 	gameExport							= *GetGameAPI( &gameImport );
 
@@ -3081,7 +3075,7 @@ void idCommonLocal::LoadGameDLL( void ) {
 	gameEdit							= gameExport.gameEdit;
 	com_activeGameModule.SetString( gameModuleBaseName );
 	com_nextGameModule.SetString( "" );
-	RefreshBSEBindings();
+	RefreshEffectsRuntimeBindings();
 
 #endif
 
@@ -3112,7 +3106,7 @@ void idCommonLocal::UnloadGameDLL( void ) {
 	game = NULL;
 	gameEdit = NULL;
 	com_activeGameModule.SetString( "" );
-	RefreshBSEBindings();
+	RefreshEffectsRuntimeBindings();
 
 #endif
 }
@@ -3345,9 +3339,9 @@ void idCommonLocal::InitGame( void ) {
 	// initialize the file system
 	fileSystem->Init();
 
-	// load the external BSE module before decl initialization so DECL_EFFECT
+	// load the external effects-runtime module before decl initialization so DECL_EFFECT
 	// allocation can be provided by the runtime DLL.
-	LoadBSEDLL();
+	LoadEffectsRuntimeDLL();
 
 	// initialize the declaration manager
 	declManager->Init();
@@ -3449,9 +3443,9 @@ void idCommonLocal::InitGame( void ) {
 	// initialize the user interfaces
 	uiManager->Init();
 
-	// initialize the BSE system before the game DLL starts creating effects
-	if ( bse && !bse->Init() ) {
-		OpenQ4_DisableBSEWithWarning( "BSE initialization failed" );
+	// initialize the external effects runtime before the game DLL starts creating effects
+	if ( effectsManager && !effectsManager->Init() ) {
+		OpenD3_DisableEffectsRuntimeWithWarning( "external effects runtime initialization failed" );
 	}
 
 	// startup the script debugger
@@ -3526,11 +3520,11 @@ void idCommonLocal::ShutdownGame( bool reloading ) {
 	// unload the game dll after game-owned decl instances are released
 	UnloadGameDLL();
 
-	// shut down the BSE manager after game/decl data has been released
-	if ( bse ) {
-		bse->Shutdown();
+	// shut down the external effects runtime manager after game/decl data has been released
+	if ( effectsManager ) {
+		effectsManager->Shutdown();
 	}
-	UnloadBSEDLL();
+	UnloadEffectsRuntimeDLL();
 
 	// dump warnings to "warnings.txt"
 #ifdef DEBUG
@@ -3542,3 +3536,5 @@ void idCommonLocal::ShutdownGame( bool reloading ) {
 	// shut down the file system
 	fileSystem->Shutdown( reloading );
 }
+
+

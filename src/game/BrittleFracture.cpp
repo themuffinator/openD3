@@ -1,16 +1,36 @@
+/*
+===========================================================================
 
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+
+#include "../idlib/precompiled.h"
+#pragma hdrstop
 
 #include "Game_local.h"
 
-// RAVEN BEGIN
-// dluetscher: added support for MD5R meshes
-#ifdef _MD5R_SUPPORT
-#include "../renderer/tr_local.h"
-#include "../renderer/Model_local.h"
-#endif
-// RAVEN END
 
 CLASS_DECLARATION( idEntity, idBrittleFracture )
 	EVENT( EV_Activate, idBrittleFracture::Event_Activate )
@@ -78,8 +98,10 @@ void idBrittleFracture::Save( idSaveGame *savefile ) const {
 	int i, j;
 
 	savefile->WriteInt( health );
-	savefile->Write( &fl, sizeof( fl ) );
-
+	entityFlags_s flags = fl;
+	LittleBitField( &flags, sizeof( flags ) );
+	savefile->Write( &flags, sizeof( flags ) );
+	
 	// setttings
 	savefile->WriteMaterial( material );
 	savefile->WriteMaterial( decalMaterial );
@@ -149,6 +171,7 @@ void idBrittleFracture::Restore( idRestoreGame *savefile ) {
 
 	savefile->ReadInt( health );
 	savefile->Read( &fl, sizeof( fl ) );
+	LittleBitField( &fl, sizeof( fl ) );
 
 	// setttings
 	savefile->ReadMaterial( material );
@@ -177,17 +200,9 @@ void idBrittleFracture::Restore( idRestoreGame *savefile ) {
 
 	savefile->ReadInt( num );
 	shards.SetNum( num );
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-	RV_PUSH_HEAP_MEM(this);
-// RAVEN END
 	for ( i = 0; i < num; i++ ) {
 		shards[i] = new shard_t;
 	}
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-	RV_POP_HEAP();
-// RAVEN END
 
 	for ( i = 0; i < num; i++ ) {
 		savefile->ReadWinding( shards[i]->winding );
@@ -195,15 +210,7 @@ void idBrittleFracture::Restore( idRestoreGame *savefile ) {
 		savefile->ReadInt( j );
 		shards[i]->decals.SetNum( j );
 		for ( j = 0; j < shards[i]->decals.Num(); j++ ) {
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-			RV_PUSH_HEAP_MEM(this);
-// RAVEN END
 			shards[i]->decals[j] = new idFixedWinding;
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-			RV_POP_HEAP();
-// RAVEN END
 			savefile->ReadWinding( *shards[i]->decals[j] );
 		}
 
@@ -287,15 +294,7 @@ idBrittleFracture::AddShard
 ================
 */
 void idBrittleFracture::AddShard( idClipModel *clipModel, idFixedWinding &w ) {
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-	RV_PUSH_HEAP_MEM(this);
-// RAVEN END
 	shard_t *shard = new shard_t;
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-	RV_POP_HEAP();
-// RAVEN END
 	shard->clipModel = clipModel;
 	shard->droppedTime = -1;
 	shard->winding = w;
@@ -371,12 +370,8 @@ bool idBrittleFracture::UpdateRenderEntity( renderEntity_s *renderEntity, const 
 	renderEntity->hModel->InitEmpty( brittleFracture_SnapshotName );
 
 	// allocate triangle surfaces for the fractures and decals
-	{
-		ConditionalAutoCrit<ThreadedAlloc> crit;
-
-		tris = renderEntity->hModel->AllocSurfaceTriangles( numTris * 3, material->ShouldCreateBackSides() ? numTris * 6 : numTris * 3 );
-		decalTris = renderEntity->hModel->AllocSurfaceTriangles( numDecalTris * 3, decalMaterial->ShouldCreateBackSides() ? numDecalTris * 6 : numDecalTris * 3 );
-	}
+	tris = renderEntity->hModel->AllocSurfaceTriangles( numTris * 3, material->ShouldCreateBackSides() ? numTris * 6 : numTris * 3 );
+	decalTris = renderEntity->hModel->AllocSurfaceTriangles( numDecalTris * 3, decalMaterial->ShouldCreateBackSides() ? numDecalTris * 6 : numDecalTris * 3 );
 
 	for ( i = 0; i < shards.Num(); i++ ) {
 		const idVec3 &origin = shards[i]->clipModel->GetOrigin();
@@ -502,19 +497,13 @@ bool idBrittleFracture::UpdateRenderEntity( renderEntity_s *renderEntity, const 
 	surface.shader = material;
 	surface.id = 0;
 	surface.geometry = tris;
-	{
-		ConditionalAutoCrit<ThreadedAlloc> crit;
-		renderEntity->hModel->AddSurface( surface );
-	}
+	renderEntity->hModel->AddSurface( surface );
 
 	memset( &surface, 0, sizeof( surface ) );
 	surface.shader = decalMaterial;
 	surface.id = 1;
 	surface.geometry = decalTris;
-	{
-		ConditionalAutoCrit<ThreadedAlloc> crit;
-		renderEntity->hModel->AddSurface( surface );
-	}
+	renderEntity->hModel->AddSurface( surface );
 
 	return true;
 }
@@ -642,7 +631,7 @@ void idBrittleFracture::Think( void ) {
 idBrittleFracture::ApplyImpulse
 ================
 */
-void idBrittleFracture::ApplyImpulse( idEntity *ent, int id, const idVec3 &point, const idVec3 &impulse, bool splash ) {
+void idBrittleFracture::ApplyImpulse( idEntity *ent, int id, const idVec3 &point, const idVec3 &impulse ) {
 
 	if ( id < 0 || id >= shards.Num() ) {
 		return;
@@ -698,13 +687,7 @@ void idBrittleFracture::ProjectDecal( const idVec3 &point, const idVec3 &dir, co
 		msg.WriteFloat( dir[0] );
 		msg.WriteFloat( dir[1] );
 		msg.WriteFloat( dir[2] );
-		ServerSendInstanceEvent( EVENT_PROJECT_DECAL, &msg, true, -1 );
-	}
-
-	if ( gameLocal.isListenServer && gameLocal.GetLocalPlayer() ) {
-		if ( GetInstance() != gameLocal.GetLocalPlayer()->GetInstance() ) {
-			return;
-		}
+		ServerSendEvent( EVENT_PROJECT_DECAL, &msg, true, -1 );
 	}
 
 	if ( time >= gameLocal.time ) {
@@ -726,8 +709,8 @@ void idBrittleFracture::ProjectDecal( const idVec3 &point, const idVec3 &dir, co
 	}
 
 	a = gameLocal.random.RandomFloat() * idMath::TWO_PI;
-	c = idMath::Cos( a );
-	s = -idMath::Sin( a );
+	c = cos( a );
+	s = -sin( a );
 
 	axis[2] = -dir;
 	axis[2].Normalize();
@@ -767,15 +750,8 @@ void idBrittleFracture::ProjectDecal( const idVec3 &point, const idVec3 &dir, co
 		if ( clipBits ) {
 			continue;
 		}
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-		RV_PUSH_HEAP_MEM(this);
-// RAVEN END
+
 		idFixedWinding *decal = new idFixedWinding;
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-		RV_POP_HEAP();
-// RAVEN END
 		shards[i]->decals.Append( decal );
 
 		decal->SetNumPoints( winding.GetNumPoints() );
@@ -830,16 +806,7 @@ void idBrittleFracture::DropShard( shard_t *shard, const idVec3 &point, const id
 
 	dir2 = origin - point;
 	dist = dir2.Normalize();
-// RAVEN BEGIN
-// jscott: changed to avoid negative sqrt call which propagated into badness
-	if( dist > maxShatterRadius ) {
-		f = 1.0f;
-	} else if( dist < minShatterRadius ) {
-		f = 0.0f;
-	} else {
-		f = idMath::Sqrt( dist - minShatterRadius ) * idMath::InvSqrt( maxShatterRadius - minShatterRadius );
-	}
-// RAVEN END
+	f = dist > maxShatterRadius ? 1.0f : idMath::Sqrt( dist - minShatterRadius ) * ( 1.0f / idMath::Sqrt( maxShatterRadius - minShatterRadius ) );
 
 	// setup the physics
 	shard->physicsObj.SetSelf( this );
@@ -883,7 +850,7 @@ void idBrittleFracture::Shatter( const idVec3 &point, const idVec3 &impulse, con
 		msg.WriteFloat( impulse[0] );
 		msg.WriteFloat( impulse[1] );
 		msg.WriteFloat( impulse[2] );
-		ServerSendInstanceEvent( EVENT_SHATTER, &msg, true, -1 );
+		ServerSendEvent( EVENT_SHATTER, &msg, true, -1 );
 	}
 
 	if ( time > ( gameLocal.time - SHARD_ALIVE_TIME ) ) {
@@ -894,10 +861,9 @@ void idBrittleFracture::Shatter( const idVec3 &point, const idVec3 &impulse, con
 		Break();
 	}
 
-// RAVEN BEGIN
-// bdube: raven effect system
-	PlayEffect ( "fx_shatter", point, GetPhysics()->GetAxis() );
-// RAVEN END
+	if ( fxFracture.Length() ) {
+		idEntityFx::StartFx( fxFracture, &point, &GetPhysics()->GetAxis(), this, true );
+	}
 
 	dir = impulse;
 	m = dir.Normalize();
@@ -1029,7 +995,7 @@ void idBrittleFracture::Killed( idEntity *inflictor, idEntity *attacker, int dam
 idBrittleFracture::AddDamageEffect
 ================
 */
-void idBrittleFracture::AddDamageEffect( const trace_t &collision, const idVec3 &velocity, const char *damageDefName, idEntity* inflictor ) {
+void idBrittleFracture::AddDamageEffect( const trace_t &collision, const idVec3 &velocity, const char *damageDefName ) {
 	if ( !disableFracture ) {
 		ProjectDecal( collision.c.point, collision.c.normal, gameLocal.time, damageDefName );
 	}
@@ -1060,8 +1026,8 @@ void idBrittleFracture::Fracture_r( idFixedWinding &w ) {
 
 		// randomly create a split plane
 		a = gameLocal.random.RandomFloat() * idMath::TWO_PI;
-		c = idMath::Cos( a );
-		s = -idMath::Sin( a );
+		c = cos( a );
+		s = -sin( a );
 		axis[2] = windingPlane.Normal();
 		axis[2].NormalVectors( axistemp[0], axistemp[1] );
 		axis[0] = axistemp[ 0 ] * c + axistemp[ 1 ] * s;
@@ -1100,15 +1066,8 @@ void idBrittleFracture::Fracture_r( idFixedWinding &w ) {
 
 	trm.SetupPolygon( w );
 	trm.Shrink( CM_CLIP_EPSILON );
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-	RV_PUSH_HEAP_MEM(this);
-// RAVEN END
 	clipModel = new idClipModel( trm );
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-	RV_POP_HEAP();
-// RAVEN END
+
 	physicsObj.SetClipModel( clipModel, 1.0f, shards.Num() );
 	physicsObj.SetOrigin( GetPhysics()->GetOrigin() + origin, shards.Num() );
 	physicsObj.SetAxis( GetPhysics()->GetAxis(), shards.Num() );
@@ -1139,37 +1098,10 @@ void idBrittleFracture::CreateFractures( const idRenderModel *renderModel ) {
 		surf = renderModel->Surface( i );
 		material = surf->shader;
 
-// RAVEN BEGIN
-// dluetscher: added support for MD5R meshes
-		srfTriangles_t * tri = surf->geometry;
-#ifdef _MD5R_SUPPORT
-		if ( tri->primBatchMesh != NULL ) {
-
-			srfTriangles_t *tempTri = (srfTriangles_t *) _alloca16( sizeof(srfTriangles_t) );
-			memset( tempTri, 0, sizeof( srfTriangles_t ) );
-
-			assert( tri->silTraceVerts != NULL );
-
-			tempTri->numVerts = tri->primBatchMesh->GetNumDrawVertices();
-			tempTri->numIndexes = tri->primBatchMesh->GetNumDrawIndices();
-
-			tempTri->indexes = (glIndex_t *) _alloca16( tempTri->numIndexes * sizeof( tempTri->indexes[0] ) );
-			tempTri->verts = (idDrawVert *) _alloca16( tempTri->numVerts * sizeof( idDrawVert ) );
-
-			renderSystem->CopyPrimBatchTriangles(tempTri->verts, tempTri->indexes, tri->primBatchMesh, tri->silTraceVerts );
-
-			tri = tempTri;
-		}
-#endif
-// RAVEN END
-
 		for ( j = 0; j < surf->geometry->numIndexes; j += 3 ) {
 			w.Clear();
 			for ( k = 0; k < 3; k++ ) {
-// RAVEN BEGIN
-// dluetscher: added support for MD5R meshes (referred to surf->geometry as tri)
-				v = &tri->verts[ tri->indexes[ j + 2 - k ] ];
-// RAVEN END
+				v = &surf->geometry->verts[ surf->geometry->indexes[ j + 2 - k ] ];
 				w.AddPoint( v->xyz );
 				w[k].s = v->st[0];
 				w[k].t = v->st[1];
@@ -1350,6 +1282,5 @@ bool idBrittleFracture::ClientReceiveEvent( int event, int time, const idBitMsg 
 			return idEntity::ClientReceiveEvent( event, time, msg );
 		}
 	}
-//unreachable
-//	return false;
+	return false;
 }

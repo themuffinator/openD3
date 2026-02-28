@@ -1,10 +1,33 @@
-// RAVEN BEGIN
-// bdube: note that this file is no longer merged with legacy engine updates
-//
-// MERGE_DATE 09/30/2004
+/*
+===========================================================================
 
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+
+#include "../idlib/precompiled.h"
+#pragma hdrstop
 
 #include "Game_local.h"
 
@@ -24,22 +47,12 @@ const idEventDef EV_GetPlayerPos( "<getplayerpos>" );
 const idEventDef EV_HideObjective( "<hideobjective>", "e" );
 const idEventDef EV_CamShot( "<camshot>" );
 
-// RAVEN BEGIN
-// abahr:
-const idEventDef EV_SetGravity( "<setGravity>" );
-// RAVEN END
-
 CLASS_DECLARATION( idEntity, idItem )
 	EVENT( EV_DropToFloor,		idItem::Event_DropToFloor )
 	EVENT( EV_Touch,			idItem::Event_Touch )
 	EVENT( EV_Activate,			idItem::Event_Trigger )
 	EVENT( EV_RespawnItem,		idItem::Event_Respawn )
 	EVENT( EV_RespawnFx,		idItem::Event_RespawnFx )
-// RAVEN BEGIN
-// abahr
-	EVENT( EV_SetGravity,		idItem::Event_SetGravity )
-// RAVEN END
-
 END_CLASS
 
 
@@ -51,8 +64,6 @@ idItem::idItem
 idItem::idItem() {
 	spin = false;
 	inView = false;
-	skin = NULL;
-	pickupSkin = NULL;
 	inViewTime = 0;
 	lastCycle = 0;
 	lastRenderViewTime = -1;
@@ -61,15 +72,6 @@ idItem::idItem() {
 	orgOrigin.Zero();
 	canPickUp = true;
 	fl.networkSync = true;
-	trigger = NULL;
-	syncPhysics = false;
-	srvReady = -1;
-	clReady = -1;
-	effectIdle = NULL;
-	itemPVSArea = 0;
-	effectIdle = NULL;
-	simpleItem = false;
-	pickedUp = false;
 }
 
 /*
@@ -82,11 +84,6 @@ idItem::~idItem() {
 	if ( itemShellHandle != -1 ) {
 		gameRenderWorld->FreeEntityDef( itemShellHandle );
 	}
-	if ( trigger ) {
-		delete trigger;
-	}
-	
-	SetPhysics( NULL );
 }
 
 /*
@@ -95,20 +92,12 @@ idItem::Save
 ================
 */
 void idItem::Save( idSaveGame *savefile ) const {
-   	savefile->WriteClipModel( trigger );
-	savefile->WriteBool( spin );
-
-	savefile->WriteSkin( skin );
-	savefile->WriteSkin( pickupSkin );
 
 	savefile->WriteVec3( orgOrigin );
-
+	savefile->WriteBool( spin );
 	savefile->WriteBool( pulse );
 	savefile->WriteBool( canPickUp );
 
-	savefile->WriteStaticObject( physicsObj );
-
-//	savefile->WriteInt(itemShellHandle);	// cnicholson: Set at end of Restore, do not save
 	savefile->WriteMaterial( shellMaterial );
 
 	savefile->WriteBool( inView );
@@ -123,20 +112,12 @@ idItem::Restore
 ================
 */
 void idItem::Restore( idRestoreGame *savefile ) {
-	savefile->ReadClipModel( trigger );
-	savefile->ReadBool( spin );
-
-	savefile->ReadSkin( skin );
-	savefile->ReadSkin( pickupSkin );
 
 	savefile->ReadVec3( orgOrigin );
-
+	savefile->ReadBool( spin );
 	savefile->ReadBool( pulse );
 	savefile->ReadBool( canPickUp );
 
-	savefile->ReadStaticObject ( physicsObj );
-
-//	savefile->ReadInt(itemShellHandle);	// cnicholson: Set at end of function, do not restore
 	savefile->ReadMaterial( shellMaterial );
 
 	savefile->ReadBool( inView );
@@ -144,10 +125,6 @@ void idItem::Restore( idRestoreGame *savefile ) {
 	savefile->ReadInt( lastCycle );
 	savefile->ReadInt( lastRenderViewTime );
 
-	RestorePhysics( &physicsObj );
-	
-	physicsObj.SetSelf( this );
-	
 	itemShellHandle = -1;
 }
 
@@ -157,9 +134,6 @@ idItem::UpdateRenderEntity
 ================
 */
 bool idItem::UpdateRenderEntity( renderEntity_s *renderEntity, const renderView_t *renderView ) const {
-	if( simpleItem ) {
-		return false;
-	}
 
 	if ( lastRenderViewTime == renderView->time ) {
 		return false;
@@ -215,19 +189,6 @@ bool idItem::UpdateRenderEntity( renderEntity_s *renderEntity, const renderView_
 
 /*
 ================
-idItem::UpdateTrigger
-================
-*/
-void idItem::UpdateTrigger ( void ) {
-	// update trigger position
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	trigger->Link( this, 0, GetPhysics()->GetOrigin(), mat3_identity );
-// RAVEN END
-}
-
-/*
-================
 idItem::ModelCallback
 ================
 */
@@ -247,87 +208,30 @@ bool idItem::ModelCallback( renderEntity_t *renderEntity, const renderView_t *re
 	return ent->UpdateRenderEntity( renderEntity, renderView );
 }
 
-
-/*
-================
-idItem::GetPhysicsToVisualTransform
-================
-*/
-bool idItem::GetPhysicsToVisualTransform( idVec3 &origin, idMat3 &axis ) {
-	if( simpleItem ) {
-		if ( gameLocal.GetLocalPlayer() && gameLocal.GetLocalPlayer()->GetRenderView() ) {
-			if( gameLocal.GetLocalPlayer()->spectating ) {
-				idPlayer* spec = (idPlayer*)gameLocal.entities[ gameLocal.GetLocalPlayer()->spectator ];
-				if( spec && spec->GetRenderView() ) {
-					axis = spec->GetRenderView()->viewaxis;
-				}
-			} else {
-				axis = gameLocal.GetLocalPlayer()->GetRenderView()->viewaxis;	
-			}
-		} else {
-			// dedicated server for instance
-			axis = mat3_identity;
-		}
-		origin = idVec3( 0.0f, 0.0f, 32.0f );
-		return true;
-	}
-
-	if( !spin || (gameLocal.isServer && !gameLocal.isListenServer) ) {
-		return false;
-	}
-
-	idAngles ang;
-	ang.pitch = ang.roll = 0.0f;
-	ang.yaw = ( gameLocal.time & 4095 ) * 360.0f / -4096.0f;
-	axis = ang.ToMat3() * GetPhysics()->GetAxis();
-
-	float scale = 0.005f;
-	float offset = entityNumber * 0.685145f;		// rjohnson: just a random number here to shift the cos curve
-
-	origin.Zero();
-
-	origin += GetPhysics()->GetAxis()[2] * (4.0f + idMath::Cos( ( ( gameLocal.time + 1000 ) * scale ) + offset ) * 4.0f);
-
-	return true;
-}
-
-// RAVEN BEGIN
-// mekberg: added
-/*
-================
-idItem::Collide
-================
-*/
-bool idItem::Collide( const trace_t &collision, const idVec3 &velocity ) {
-	idEntity* lol = gameLocal.entities[ collision.c.entityNum ];
-	if ( gameLocal.isMultiplayer && collision.c.contents & CONTENTS_ITEMCLIP && lol && !lol->IsType( idItem::GetClassType() ) ) {
-		PostEventMS( &EV_Remove, 0 );
-	}
-	return false;
-}
-// RAVEN END
-
 /*
 ================
 idItem::Think
 ================
 */
 void idItem::Think( void ) {
-	if ( thinkFlags & TH_PHYSICS ) {
-		RunPhysics();		
-		UpdateTrigger();
+	if ( thinkFlags & TH_THINK ) {
+		if ( spin ) {
+			idAngles	ang;
+			idVec3		org;
+
+			ang.pitch = ang.roll = 0.0f;
+			ang.yaw = ( gameLocal.time & 4095 ) * 360.0f / -4096.0f;
+			SetAngles( ang );
+
+			float scale = 0.005f + entityNumber * 0.00001f;
+			
+			org = orgOrigin;
+			org.z += 4.0f + cos( ( gameLocal.time + 2000 ) * scale ) * 4.0f;
+			SetOrigin( org );
+		}
 	}
 
-	if ( gameLocal.IsMultiplayer() && g_skipItemShadowsMP.GetBool() ) {
-		renderEntity.suppressShadowInViewID = gameLocal.localClientNum + 1;
-	} else {
-		renderEntity.suppressShadowInViewID = 0;
-	}
-
-	if( !(simpleItem && pickedUp) ) {
-		UpdateVisuals();
-		Present();
-	}
+	Present();
 }
 
 /*
@@ -354,32 +258,8 @@ void idItem::Present( void ) {
 		} else {
 			gameRenderWorld->UpdateEntityDef( itemShellHandle, &shell );
 		}
+
 	}
-}
-
-/*
-================
-idItem::InstanceJoin
-================
-*/
-void idItem::InstanceJoin( void ) {
-	idEntity::InstanceJoin();
-
-	UpdateModelTransform();
-	if ( !simpleItem && spawnArgs.GetString( "fx_idle" ) ) {
-		PlayEffect( "fx_idle", renderEntity.origin, renderEntity.axis, true );
-	}
-}
-
-/*
-================
-idItem::InstanceLeave
-================
-*/
-void idItem::InstanceLeave( void ) {
-	idEntity::InstanceLeave();
-
-	StopEffect( "fx_idle", true );
 }
 
 /*
@@ -390,64 +270,22 @@ idItem::Spawn
 void idItem::Spawn( void ) {
 	idStr		giveTo;
 	idEntity *	ent;
-	idVec3		vSize;
-	idBounds	bounds(vec3_origin);
+	float		tsize;
 
-	// check for triggerbounds, which allows for non-square triggers (useful for, say, a CTF flag)	
-	if ( spawnArgs.GetVector( "triggerbounds", "16 16 16", vSize )) {
-		bounds.AddPoint(idVec3( vSize.x*0.5f,  vSize.y*0.5f, 0.0f));
-		bounds.AddPoint(idVec3(-vSize.x*0.5f, -vSize.y*0.5f, vSize.z));
-	}
-	else {
-		// create a square trigger for item pickup
-		float tsize;
-		spawnArgs.GetFloat( "triggersize", "16.0", tsize );
-		bounds.ExpandSelf( tsize );
+	if ( spawnArgs.GetBool( "dropToFloor" ) ) {
+		PostEventMS( &EV_DropToFloor, 0 );
 	}
 
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-	RV_PUSH_HEAP_MEM(this);
-// RAVEN END
-	trigger = new idClipModel( idTraceModel( bounds ));
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-	RV_POP_HEAP();
-// RAVEN END
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-	trigger->Link( this, 0, GetPhysics()->GetOrigin(), GetPhysics()->GetAxis() );
-// RAVEN END
-
-	physicsObj.SetSelf ( this );
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-	RV_PUSH_HEAP_MEM(this);
-// RAVEN END
-
-// jmarshall
-	modelindex = gameLocal.GetBotItemEntry(spawnArgs.GetString("modelindex"));
-// jmarshall end
-
-	physicsObj.SetClipModel( new idClipModel( GetPhysics()->GetClipModel() ), 1.0f );
-
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-	RV_POP_HEAP();
-// RAVEN END
-	physicsObj.SetOrigin( GetPhysics()->GetOrigin() );
-	physicsObj.SetAxis( GetPhysics()->GetAxis() );
-	physicsObj.SetGravity( gameLocal.GetGravity() );
-	physicsObj.SetContents( 0 );
-	physicsObj.SetClipMask( MASK_SOLID );
-	physicsObj.SetFriction( 0.0f, 0.0f, 6.0f );
-	SetPhysics( &physicsObj );
+	if ( spawnArgs.GetFloat( "triggersize", "0", tsize ) ) {
+		GetPhysics()->GetClipModel()->LoadModel( idTraceModel( idBounds( vec3_origin ).Expand( tsize ) ) );
+		GetPhysics()->GetClipModel()->Link( gameLocal.clip );
+	}
 
 	if ( spawnArgs.GetBool( "start_off" ) ) {
-		trigger->SetContents( 0 );
+		GetPhysics()->SetContents( 0 );
 		Hide();
 	} else {
-		trigger->SetContents( CONTENTS_TRIGGER );
+		GetPhysics()->SetContents( CONTENTS_TRIGGER );
 	}
 
 	giveTo = spawnArgs.GetString( "owner" );
@@ -464,8 +302,8 @@ void idItem::Spawn( void ) {
 		BecomeActive( TH_THINK );
 	}
 
-	// pulse ( and therefore itemShellHandle ) was taken out and shot. do not sync
 	//pulse = !spawnArgs.GetBool( "nopulse" );
+	//temp hack for tim
 	pulse = false;
 	orgOrigin = GetPhysics()->GetOrigin();
 
@@ -474,96 +312,8 @@ void idItem::Spawn( void ) {
 	inViewTime = -1000;
 	lastCycle = -1;
 	itemShellHandle = -1;
-// RAVEN BEGIN
-// abahr: move texture to def file for precaching
-	shellMaterial = declManager->FindMaterial( spawnArgs.GetString("mtr_highlight", "_default") );
-	PostEventMS( &EV_SetGravity, 0 );
-// RAVEN END
-	if ( spawnArgs.GetString( "skin", NULL ) ) {
-		skin = declManager->FindSkin( spawnArgs.GetString( "skin" ), false );
-		if( skin ) {
-			SetSkin( skin );
-			srvReady = 1;
-		}
-	} else {
-		skin = NULL;
-	}
-
-	if ( spawnArgs.GetString( "skin_pickup", NULL ) ) {
-		pickupSkin = declManager->FindSkin( spawnArgs.GetString( "skin_pickup" ), false );
-	} else {
-		pickupSkin = NULL;
-	}
-
-	syncPhysics = spawnArgs.GetBool( "net_syncPhysics", "0" );
-
-	if ( srvReady == -1 ) {
-		srvReady = IsHidden() ? 0 : 1;
-	}
-
-// RAVEN BEGIN
-// mekberg: added for removing pickups in mp in pits
-	if ( gameLocal.isMultiplayer ) {
-		trigger->SetContents( trigger->GetContents() | CONTENTS_ITEMCLIP );
-	}
-// RAVEN END
-
-	if( gameLocal.isMultiplayer ) {
-		itemPVSArea = gameLocal.pvs.GetPVSArea( GetPhysics()->GetOrigin() );
-	} else {
-		itemPVSArea = 0;
-	}
-
-	simpleItem = g_simpleItems.GetBool() && gameLocal.isMultiplayer && !IsType( rvItemCTFFlag::GetClassType() );
-	if( simpleItem ) {
-		memset( &renderEntity, 0, sizeof( renderEntity ) );
-		renderEntity.axis		= mat3_identity;
-		renderEntity.shaderParms[ SHADERPARM_RED ]				= 1.0f;
-		renderEntity.shaderParms[ SHADERPARM_GREEN ]			= 1.0f;
-		renderEntity.shaderParms[ SHADERPARM_BLUE ]				= 1.0f;
-		renderEntity.shaderParms[ SHADERPARM_ALPHA ]			= 1.0f;
-		renderEntity.shaderParms[ SHADERPARM_SPRITE_WIDTH ]		= 32.0f;
-		renderEntity.shaderParms[ SHADERPARM_SPRITE_HEIGHT ]	= 32.0f;
-		renderEntity.hModel = renderModelManager->FindModel( "_sprite" );
-		renderEntity.callback = NULL;
-		renderEntity.numJoints = 0;
-		renderEntity.joints = NULL;
-		renderEntity.customSkin = 0;
-		renderEntity.noShadow = true;
-		renderEntity.noSelfShadow = true;
-		renderEntity.customShader = declManager->FindMaterial( spawnArgs.GetString( "mtr_simple_icon" ) );
-
-		renderEntity.referenceShader = 0;
-		renderEntity.bounds = renderEntity.hModel->Bounds( &renderEntity );
-		SetAxis( mat3_identity );
-	} else {
-		if ( spawnArgs.GetString( "fx_idle" ) ) {
-			UpdateModelTransform();
-			effectIdle = PlayEffect( "fx_idle", renderEntity.origin, renderEntity.axis, true );
-		}
-	}
-	
-	GetPhysics( )->SetClipMask( GetPhysics( )->GetClipMask( ) | CONTENTS_ITEMCLIP );
-	pickedUp = false;
+	shellMaterial = declManager->FindMaterial( "itemHighlightShell" );
 }
-
-/*
-================
-idItem::Event_SetGravity
-================
-*/
-void idItem::Event_SetGravity() {
-	// If the item isnt a dropped item then see if it should settle itself
-	// to the floor or not
-	if ( !spawnArgs.GetBool( "dropped" ) ) {
-		if ( spawnArgs.GetBool( "nodrop" ) ) {
-			physicsObj.PutToRest();
-		} else {
-	 		PostEventMS( &EV_DropToFloor, 0 );
-		}
-	}
-}
-// RAVEN END
 
 /*
 ================
@@ -596,37 +346,7 @@ bool idItem::GiveToPlayer( idPlayer *player ) {
 		return player->GiveInventoryItem( &spawnArgs );
 	} 
 	
-	// Handle the special ammo pickup that gives ammo for the weapon the player currently has
-	if ( spawnArgs.GetBool( "item_currentWeaponAmmo" ) ) {
-		const char *ammoName = player->weapon->GetAmmoNameForIndex(player->weapon->GetAmmoType());
-		if ( player->weapon->TotalAmmoCount() != player->weapon->maxAmmo && player->weapon->AmmoRequired() ) {
-			player->GiveItem(ammoName);
-			player->GiveInventoryItem( &spawnArgs );
-			return true;
-		}
-		return false;
-	} 
-
 	return player->GiveItem( this );
-}
-
-/*
-===============
-idItem::SendPickupMsg
-===============
-*/
-void idItem::SendPickupMsg( int clientNum ) {
-	idBitMsg	msg;
-	byte		msgBuf[MAX_GAME_MESSAGE_SIZE];
-
-	msg.Init( msgBuf, sizeof( msgBuf ) );
-	msg.WriteByte( GAME_UNRELIABLE_MESSAGE_EVENT );
-	msg.WriteBits( gameLocal.GetSpawnId( this ), 32 );
-	msg.WriteByte( EVENT_PICKUP );
-	msg.WriteByte( clientNum );
-
-	// send as unreliable to client picking up the item, so it can play HUD things
-	gameLocal.SendUnreliableMessagePVS( msg, this, itemPVSArea );	
 }
 
 /*
@@ -635,113 +355,46 @@ idItem::Pickup
 ================
 */
 bool idItem::Pickup( idPlayer *player ) {
-	//dropped weapon?
-	bool dropped = spawnArgs.GetBool( "dropped" );
-
-	if ( gameLocal.isMultiplayer && !dropped && spawnArgs.FindKey( "weaponclass" ) 
-		&& gameLocal.IsWeaponsStayOn() && gameLocal.time > player->lastPickupTime + 1000 ) {
-		
-		idDict attr;
-		GetAttributes( attr );
-		const idKeyValue* arg = attr.FindKey( "weapon" );
-
-		if ( arg ) {
-			if ( !player->inventory.Give( player, player->spawnArgs, arg->GetKey(), arg->GetValue(), NULL, false, dropped, true ) ) {
-				StartSound( "snd_noacquire", SND_CHANNEL_ITEM, 0, false, NULL );
-			}
-		}
-	}
-
-	// only predict noacquire on client
-	if ( gameLocal.isClient ) {
-		return false;
-	}
-
-	int givenToPlayer = spawnArgs.GetInt( "givenToPlayer", "-1" );
-	if ( player == NULL || ( givenToPlayer != -1 && givenToPlayer != player->entityNumber ) ) {
-		// idPlayer::GiveItem spawns an idItem for pickup, which appears at the origin before being picked
-		// and could sometimes be picked by someone else, particularly in buy mode when there is a play spawn sitting on the origin ;-)
-		return false;
-	}
-
+	
 	if ( !GiveToPlayer( player ) ) {
 		return false;
 	}
 
 	if ( gameLocal.isServer ) {
-		SendPickupMsg( player->entityNumber );
+		ServerSendEvent( EVENT_PICKUP, NULL, false, -1 );
 	}
 
-	// Check for global acquire sounds in multiplayer
- 	if ( gameLocal.isMultiplayer && spawnArgs.GetBool( "globalAcquireSound" ) ) {
-		gameLocal.mpGame.PlayGlobalItemAcquireSound( entityDefNumber );
-	} else {
-		StartSound( "snd_acquire", SND_CHANNEL_ITEM, 0, false, NULL );
-	}
-		
+	// play pickup sound
+	StartSound( "snd_acquire", SND_CHANNEL_ITEM, 0, false, NULL );
+
 	// trigger our targets
 	ActivateTargets( player );
-
-	player->lastPickupTime = gameLocal.time;
-
-	//if a placed item and si_weaponStay is on and we're a weapon, don't remove and respawn
-	if ( gameLocal.IsMultiplayer() ) {
-		if ( !dropped )	{
-			if ( spawnArgs.FindKey( "weaponclass" ) ) { 
-				if ( gameLocal.IsWeaponsStayOn() ) {
-					return true;
-				}
-			}
-		}
-	}
 
 	// clear our contents so the object isn't picked up twice
 	GetPhysics()->SetContents( 0 );
 
-	// hide the model, or switch to the pickup skin
-	if ( pickupSkin ) {
-		SetSkin( pickupSkin );
-		srvReady = 0;
-	} else {
-		Hide();
-		BecomeInactive( TH_THINK );
-	}
+	// hide the model
+	Hide();
 
-	pickedUp = true;
-
-	// allow SetSkin or Hide() to get called regardless of simpleitem mode
-	if( simpleItem ) {
-		FreeModelDef();
-		UpdateVisuals();
-	}
-
-	// remove the highlight shell
+	// add the highlight shell
 	if ( itemShellHandle != -1 ) {
 		gameRenderWorld->FreeEntityDef( itemShellHandle );
 		itemShellHandle = -1;
 	}
 
-	// asalmon: Added option for a differnt respawn rate based on gametype.
-	float respawn = spawnArgs.GetFloat(va("respawn_%s",gameLocal.serverInfo.GetString( "si_gameType" )), "-1.0");
-	if( respawn == -1.0f ) {
-		respawn = spawnArgs.GetFloat( "respawn", "5.0" );
-	}
-
+	float respawn = spawnArgs.GetFloat( "respawn" );
+	bool dropped = spawnArgs.GetBool( "dropped" );
 	bool no_respawn = spawnArgs.GetBool( "no_respawn" );
 
-	if ( !gameLocal.isMultiplayer ) {
-		respawn = 0.0f;
-	} else if ( gameLocal.mpGame.IsBuyingAllowedInTheCurrentGameMode() ) {
-		if ( givenToPlayer != -1 ) {
-			respawn = 0.0f;
-		}
+	if ( gameLocal.isMultiplayer && respawn == 0.0f ) {
+		respawn = 20.0f;
 	}
 
 	if ( respawn && !dropped && !no_respawn ) {
-		const char *sfx = spawnArgs.GetString( "fx_Respawn" );
+		const char *sfx = spawnArgs.GetString( "fxRespawn" );
 		if ( sfx && *sfx ) {
 			PostEventSec( &EV_RespawnFx, respawn - 0.5f );
-		}
+		} 
 		PostEventSec( &EV_RespawnItem, respawn );
 	} else if ( !spawnArgs.GetBool( "inv_objective" ) && !no_respawn ) {
 		// give some time for the pickup sound to play
@@ -750,60 +403,9 @@ bool idItem::Pickup( idPlayer *player ) {
 			PostEventMS( &EV_Remove, 5000 );
 		}
 	}
-	
-	trigger->SetContents( 0 );	
-	
-	StopEffect( "fx_idle" );
 
+	BecomeInactive( TH_THINK );
 	return true;
-}
-
-/*
-================
-idItem::Hide
-================
-*/
-void idItem::Hide( void ) {
-	srvReady = 0;
-	idEntity::Hide( );	
-	trigger->SetContents( 0 );
-}
-
-/*
-================
-idItem::Show
-================
-*/
-void idItem::Show( void ) {
-	srvReady = 1;
-	idEntity::Show( );
-	trigger->SetContents( CONTENTS_TRIGGER );
-}
-
-/*
-================
-idItem::ClientStale
-================
-*/
-bool idItem::ClientStale( void ) {
-	idEntity::ClientStale();
-
-	StopEffect( "fx_idle" );
-	return false;
-}
-
-/*
-================
-idItem::ClientUnstale
-================
-*/
-void idItem::ClientUnstale( void ) {
-	idEntity::ClientUnstale();
-
-	UpdateModelTransform();
-	if ( !simpleItem && spawnArgs.GetString( "fx_idle" ) ) {
-		PlayEffect( "fx_idle", renderEntity.origin, renderEntity.axis, true );
-	}
 }
 
 /*
@@ -825,11 +427,7 @@ idItem::WriteFromSnapshot
 ================
 */
 void idItem::WriteToSnapshot( idBitMsgDelta &msg ) const {
-	if ( syncPhysics ) {
-		physicsObj.WriteToSnapshot( msg );
-	}
-	assert( srvReady != -1 );
-	msg.WriteBits( ( srvReady == 1 ), 1 );
+	msg.WriteBits( IsHidden(), 1 );
 }
 
 /*
@@ -838,76 +436,10 @@ idItem::ReadFromSnapshot
 ================
 */
 void idItem::ReadFromSnapshot( const idBitMsgDelta &msg ) {
-	if ( syncPhysics ) {
-		physicsObj.ReadFromSnapshot( msg );
-	}
-	int newReady = ( msg.ReadBits( 1 ) != 0 );
-	idVec3 resetOrigin( 0, 0, 0 );
-	// client spawns the ent with ready == -1 so the state set happens at least once
-	if ( newReady != clReady ) {
-		if ( newReady ) {
-			// g_simpleItems might force a hide even with a pickup skin
-			if ( pickupSkin ) {
-				SetSkin( skin );
-			} else {
-				SetSkin( skin );
-				Show();
-			}
-
-			if( simpleItem ) {
-				UpdateVisuals();			
-			}
-			pickedUp = false;
-
-			if ( effectIdle.GetEntity( ) ) {
-				UpdateModelTransform();
-				effectIdle->SetOrigin( resetOrigin );
-			} else if ( spawnArgs.GetString( "fx_idle" ) && !simpleItem ) {
-				UpdateModelTransform();
-				effectIdle = PlayEffect( "fx_idle", renderEntity.origin, renderEntity.axis, true );
-			}
-		} else {
-			if ( pickupSkin ) {
-				SetSkin( pickupSkin );
-			} else {
-				Hide();
-			}
-
-			if( simpleItem ) {
-				FreeModelDef();
-				UpdateVisuals();
-			}
-			
-			pickedUp = true;
-
-			StopEffect( "fx_idle" );
-			effectIdle = NULL;
-		}
-	}
-	clReady = newReady;
-}
-
-/*
-================
-idItem::Event_Pickup
-================
-*/
-void idItem::Event_Pickup( int clientNum ) {
-	idPlayer *player;
-
-	assert( gameLocal.isClient );
-	
-	// play pickup sound
-	if ( !spawnArgs.GetBool( "globalAcquireSound" ) ) {
-		StartSound( "snd_acquire", SND_CHANNEL_ITEM, 0, false, NULL );
-	}
-	
-	if( clientNum == gameLocal.localClientNum ) {
-		player = (idPlayer*)gameLocal.entities[ clientNum ];
-		player->lastPickupTime = gameLocal.time;
-		if ( player ) {
-			player->GiveItem( this );
-		}
+	if ( msg.ReadBits( 1 ) ) {
+		Hide();
+	} else {
+		Show();
 	}
 }
 
@@ -917,12 +449,25 @@ idItem::ClientReceiveEvent
 ================
 */
 bool idItem::ClientReceiveEvent( int event, int time, const idBitMsg &msg ) {
+
 	switch( event ) {
 		case EVENT_PICKUP: {
-			int clientNum = msg.ReadByte();
-			if( clientNum >= 0 && clientNum < MAX_CLIENTS ) {
-				Event_Pickup( clientNum );
+
+			// play pickup sound
+			StartSound( "snd_acquire", SND_CHANNEL_ITEM, 0, false, NULL );
+
+			// hide the model
+			Hide();
+
+			// remove the highlight shell
+			if ( itemShellHandle != -1 ) {
+				gameRenderWorld->FreeEntityDef( itemShellHandle );
+				itemShellHandle = -1;
 			}
+			return true;
+		}
+		case EVENT_RESPAWN: {
+			Event_Respawn();
 			return true;
 		}
 		case EVENT_RESPAWNFX: {
@@ -933,8 +478,7 @@ bool idItem::ClientReceiveEvent( int event, int time, const idBitMsg &msg ) {
 			return idEntity::ClientReceiveEvent( event, time, msg );
 		}
 	}
-//unreachable
-//	return false;
+	return false;
 }
 
 /*
@@ -943,12 +487,15 @@ idItem::Event_DropToFloor
 ================
 */
 void idItem::Event_DropToFloor( void ) {
- 	// don't drop the floor if bound to another entity
- 	if ( GetBindMaster() != NULL && GetBindMaster() != this ) {
- 		return;
- 	}
- 	
- 	physicsObj.DropToFloor( );
+	trace_t trace;
+
+	// don't drop the floor if bound to another entity
+	if ( GetBindMaster() != NULL && GetBindMaster() != this ) {
+		return;
+	}
+
+	gameLocal.clip.TraceBounds( trace, renderEntity.origin, renderEntity.origin - idVec3( 0, 0, 64 ), renderEntity.bounds, MASK_SOLID | CONTENTS_CORPSE, this );
+	SetOrigin( trace.endpos );
 }
 
 /*
@@ -957,10 +504,7 @@ idItem::Event_Touch
 ================
 */
 void idItem::Event_Touch( idEntity *other, trace_t *trace ) {
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-	if ( !other->IsType( idPlayer::GetClassType() ) ) {
-// RAVEN END
+	if ( !other->IsType( idPlayer::Type ) ) {
 		return;
 	}
 
@@ -977,15 +521,13 @@ idItem::Event_Trigger
 ================
 */
 void idItem::Event_Trigger( idEntity *activator ) {
+
 	if ( !canPickUp && spawnArgs.GetBool( "triggerFirst" ) ) {
 		canPickUp = true;
 		return;
 	}
 
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-	if ( activator && activator->IsType( idPlayer::GetClassType() ) ) {
-// RAVEN END
+	if ( activator && activator->IsType( idPlayer::Type ) ) {
 		Pickup( static_cast<idPlayer *>( activator ) );
 	}
 }
@@ -996,39 +538,17 @@ idItem::Event_Respawn
 ================
 */
 void idItem::Event_Respawn( void ) {
-
-	// with simple items, re-show the item, but still set srvReady to true to let clients
-	// know how to deal
-	if ( pickupSkin ) {
-		srvReady = true;
-		if( !simpleItem ) {
-			SetSkin( skin );
-		}
-	} 
-	
-	if( !pickupSkin ) {
-		BecomeActive( TH_THINK );	
-		Show();
+	if ( gameLocal.isServer ) {
+		ServerSendEvent( EVENT_RESPAWN, NULL, false, -1 );
 	}
-
-	if( simpleItem ) {
-		Show();
-	}
-
-	pickedUp = false;
-
+	BecomeActive( TH_THINK );
+	Show();
 	inViewTime = -1000;
 	lastCycle = -1;
-	trigger->SetContents ( CONTENTS_TRIGGER );
+	GetPhysics()->SetContents( CONTENTS_TRIGGER );
 	SetOrigin( orgOrigin );
 	StartSound( "snd_respawn", SND_CHANNEL_ITEM, 0, false, NULL );
-	PostEventMS( &EV_SetGravity, 0 );
 	CancelEvents( &EV_RespawnItem ); // don't double respawn
-
-	if ( !simpleItem && spawnArgs.GetString( "fx_idle" ) ) {
-		UpdateModelTransform();
-		PlayEffect( "fx_idle", renderEntity.origin, renderEntity.axis, true );
-	}
 }
 
 /*
@@ -1037,20 +557,12 @@ idItem::Event_RespawnFx
 ================
 */
 void idItem::Event_RespawnFx( void ) {
-	idBitMsg	msg;
-	byte		msgBuf[MAX_GAME_MESSAGE_SIZE];
-
 	if ( gameLocal.isServer ) {
-		msg.Init( msgBuf, sizeof( msgBuf ) );
-		msg.WriteByte( GAME_UNRELIABLE_MESSAGE_EVENT );
-		msg.WriteBits( gameLocal.GetSpawnId( this ), 32 );
-		msg.WriteByte( EVENT_RESPAWNFX );
-		// send unreliable PVS-sensitive
-		gameLocal.SendUnreliableMessagePVS( msg, this, gameLocal.pvs.GetPVSArea( GetPhysics()->GetOrigin() ) );
+		ServerSendEvent( EVENT_RESPAWNFX, NULL, false, -1 );
 	}
-
-	if( !simpleItem ) {
-		gameLocal.PlayEffect( spawnArgs, "fx_respawn", GetPhysics()->GetOrigin(), idVec3(0,0,1).ToMat3(), false, vec3_origin );
+	const char *sfx = spawnArgs.GetString( "fxRespawn" );
+	if ( sfx && *sfx ) {
+		idEntityFx::StartFx( sfx, NULL, NULL, this, true );
 	}
 }
 
@@ -1079,8 +591,6 @@ idItemPowerup::idItemPowerup
 idItemPowerup::idItemPowerup() {
 	time = 0;
 	type = 0;
-	droppedTime = 0;
-	unique = false;
 }
 
 /*
@@ -1091,7 +601,6 @@ idItemPowerup::Save
 void idItemPowerup::Save( idSaveGame *savefile ) const {
 	savefile->WriteInt( time );
 	savefile->WriteInt( type );
-	savefile->WriteInt( droppedTime );	// cnicholson: Added unsaved var
 }
 
 /*
@@ -1102,7 +611,6 @@ idItemPowerup::Restore
 void idItemPowerup::Restore( idRestoreGame *savefile ) {
 	savefile->ReadInt( time );
 	savefile->ReadInt( type );
-	savefile->ReadInt( droppedTime );	// cnicholson: Added unrestored var
 }
 
 /*
@@ -1111,33 +619,8 @@ idItemPowerup::Spawn
 ================
 */
 void idItemPowerup::Spawn( void ) {
-	time = SEC2MS( spawnArgs.GetInt( "time", "30" ) );
-	// SEC2MS screws up when we want -1 time (no expiration)
-	if( spawnArgs.GetInt( "time" ) == -1 ) {
-		time = -1;
-	}
-
+	time = spawnArgs.GetInt( "time", "30" );
 	type = spawnArgs.GetInt( "type", "0" );
-	
-	// If the powerup was dropped then make it dissapear using its remaining time.
-	if ( spawnArgs.GetBool( "dropped" ) && time != -1 ) {
-		droppedTime = gameLocal.time + time;
-		PostEventMS( &EV_Remove, time );
-	}
-
-	// unique powerpus won't respawn while a player has them
-	unique = spawnArgs.GetBool( "unique", "0" );
-	if( unique ) {
-		spawnArgs.SetBool( "no_respawn", true );
-	}
-
-	if ( !idStr::Icmp( spawnArgs.GetString( "team" ), "strogg" ) ) {
-		team = TEAM_STROGG;
-	} else if( !idStr::Icmp( spawnArgs.GetString( "team" ), "marine" ) ) {
-		team = TEAM_MARINE;
-	} else {
-		team = -1;
-	}
 }
 
 /*
@@ -1146,94 +629,11 @@ idItemPowerup::GiveToPlayer
 ================
 */
 bool idItemPowerup::GiveToPlayer( idPlayer *player ) {
-	if ( player == NULL || player->spectating ) {
+	if ( player->spectating ) {
 		return false;
 	}
-
-	// only one arena CTF powerup at a time
-	if ( type >= POWERUP_AMMOREGEN && type <= POWERUP_SCOUT ) {
-		if ( ( player->inventory.powerups & ARENA_POWERUP_MASK ) != 0 ) {
-			return false;
-		} 
-	}
-
-	// in flavours of arena CTF (or are idItemPowerups only used in Arena? or even, are idItemPowerups MP only?), 
-	//	ensure that items with a team can only be picked up by members of that team
-	if ( gameLocal.IsMultiplayer() && gameLocal.IsTeamGame() && team >= 0 ) {
-		if( team != player->team ) {
-			return false;
-		}
-	}
-
-	if ( droppedTime > 0 ) {
-		player->GivePowerUp( type, droppedTime - gameLocal.time );
-	} else {
-		player->GivePowerUp( type, time );
-	}
-
-	// also call idItem::GiveToPlayer so any inv_* keywords get applied
-	idItem::GiveToPlayer( player );
-
+	player->GivePowerUp( type, time * 1000 );
 	return true;
-}
-
-/*
-================
-idItemPowerup::Think
-================
-*/
-void idItemPowerup::Think( void ) {
-	int i;
-
-	// idItem::Think() only needs to be called if we're spawned in
-	if( !IsHidden() || (pickupSkin && GetSkin() != pickupSkin ) ) {
-		// only get here if spawned in
-		idItem::Think();
-		return;
-	}
-
-	if( !unique ) {
-		// non-unique despawned powerups don't need to think
-		return;
-	}
-
-	for( i = 0; i < gameLocal.numClients; i++ ) {
-		idPlayer* p = (idPlayer*)gameLocal.entities[ i ];
-		if( p == NULL ) {
-			continue;
-		}
-
-		// only spawn back in if noone on your team has the powerup
-		if( p->PowerUpActive( type ) && p->team == team ) {
-			break;
-		}
-	}
-
-	if( i >= gameLocal.numClients ) {
-		PostEventMS( &EV_RespawnItem, 0 );
-	}
-}
-
-/*
-================
-idItemPowerup::Pickup
-================
-*/
-bool idItemPowerup::Pickup( idPlayer* player ) {
-	// regular pickup routine, but unique items need to think to know when to respawn
-	bool pickup;
-	
-	if( gameLocal.isClient ) {
-		// no client-side powerup prediction
-		return false;
-	}
-
-	pickup = idItem::Pickup( player );
-	if( unique ) {
-		BecomeActive( TH_THINK );
-	}
-
-	return pickup;
 }
 
 /*
@@ -1248,7 +648,7 @@ CLASS_DECLARATION( idItem, idObjective )
 	EVENT( EV_Activate,			idObjective::Event_Trigger )
 	EVENT( EV_HideObjective,	idObjective::Event_HideObjective )
 	EVENT( EV_GetPlayerPos,		idObjective::Event_GetPlayerPos )
- 	EVENT( EV_CamShot,			idObjective::Event_CamShot )
+	EVENT( EV_CamShot,			idObjective::Event_CamShot )
 END_CLASS
 
 /*
@@ -1258,11 +658,6 @@ idObjective::idObjective
 */
 idObjective::idObjective() {
 	playerPos.Zero();
-
-// RAVEN BEGIN
-// mekberg: store triggered time for timed removal.
-	triggerTime = 0;
-// RAVEN END
 }
 
 /*
@@ -1281,12 +676,7 @@ idObjective::Restore
 */
 void idObjective::Restore( idRestoreGame *savefile ) {
 	savefile->ReadVec3( playerPos );
-// RAVEN BEGIN
-// jnewquist: Don't do this on Xenon, we want prebuilt textures
-#ifndef _XENON
- 	PostEventMS( &EV_CamShot, 250 );
-#endif
-// RAVEN END
+	PostEventMS( &EV_CamShot, 250 );
 }
 
 /*
@@ -1296,16 +686,7 @@ idObjective::Spawn
 */
 void idObjective::Spawn( void ) {
 	Hide();
-// RAVEN BEGIN
-// jnewquist: Only post a camshot event if the spawn args request it
-#ifndef _XENON
-	const char *camName;
-	if ( spawnArgs.GetString( "camShot", "", &camName ) ) {
-		common->Warning( "SpawnArg camShot on %s is not recommended.", spawnArgs.GetString( "name" ) );
- 		PostEventMS( &EV_CamShot, 250 );
-	}
-#endif
-// RAVEN END
+	PostEventMS( &EV_CamShot, 250 );
 }
 
 /*
@@ -1315,12 +696,11 @@ idObjective::Event_Screenshot
 */
 void idObjective::Event_CamShot( ) {
 	const char *camName;
-// RAVEN BEGIN
-// bdube: changed screenshot location
- 	idStr shotName = "gfx/objectives/";
- 	shotName += spawnArgs.GetString( "screenshot" );
- 	shotName.SetFileExtension( ".tga" );
- // RAVEN END
+	idStr shotName = gameLocal.GetMapName();
+	shotName.StripFileExtension();
+	shotName += "/";
+	shotName += spawnArgs.GetString( "screenshot" );
+	shotName.SetFileExtension( ".tga" );
 	if ( spawnArgs.GetString( "camShot", "", &camName ) ) {
 		idEntity *ent = gameLocal.FindEntity( camName );
 		if ( ent && ent->cameraTarget ) {
@@ -1328,16 +708,14 @@ void idObjective::Event_CamShot( ) {
 			renderView_t fullView = *view;
 			fullView.width = SCREEN_WIDTH;
 			fullView.height = SCREEN_HEIGHT;
-
 			// draw a view to a texture
 			renderSystem->CropRenderSize( 256, 256, true );
 			gameRenderWorld->RenderScene( &fullView );
-			// TTimo: I don't think this jives with SMP code, but I grepped through the final maps and didn't see any using it
- 			renderSystem->CaptureRenderToFile( shotName );
+			renderSystem->CaptureRenderToFile( shotName );
 			renderSystem->UnCrop();
 		}
 	}
-}  
+}
 
 /*
 ================
@@ -1347,27 +725,25 @@ idObjective::Event_Trigger
 void idObjective::Event_Trigger( idEntity *activator ) {
 	idPlayer *player = gameLocal.GetLocalPlayer();
 	if ( player ) {
-		if ( spawnArgs.GetString( "inv_objective", NULL ) ) {
-// RAVEN BEGIN
-// abahr: changed player->hud to player->GetHud so when in a vehicle we update the vehicle hud
-// twhitaker: changed player->hud to player->GetObjectiveHud(), to resolve all issues
-	 		if ( player && player->GetObjectiveHud() ) {
-// bdube: changed screenshot location
-				idStr shotName = spawnArgs.GetString( "screenshot" );
 
-				player->GetObjectiveHud()->SetStateString( "screenshot", shotName );
-				player->GetObjectiveHud()->SetStateString( "objective", "1" );
-				player->GetObjectiveHud()->SetStateString( "objectivetext", common->GetLocalizedString( spawnArgs.GetString( "objectivetext" ) ) );
-				player->GetObjectiveHud()->SetStateString( "objectivetitle", common->GetLocalizedString( spawnArgs.GetString( "objectivetitle" ) ) );
-// RAVEN END
- 				player->GiveObjective( spawnArgs.GetString( "objectivetitle" ), spawnArgs.GetString( "objectivetext" ), shotName );
+		//Pickup( player );
+
+		if ( spawnArgs.GetString( "inv_objective", NULL ) ) {
+	 		if ( player && player->hud ) {
+				idStr shotName = gameLocal.GetMapName();
+				shotName.StripFileExtension();
+				shotName += "/";
+				shotName += spawnArgs.GetString( "screenshot" );
+				shotName.SetFileExtension( ".tga" );
+				player->hud->SetStateString( "screenshot", shotName );
+				player->hud->SetStateString( "objective", "1" );
+				player->hud->SetStateString( "objectivetext", spawnArgs.GetString( "objectivetext" ) );
+				player->hud->SetStateString( "objectivetitle", spawnArgs.GetString( "objectivetitle" ) );
+				player->GiveObjective( spawnArgs.GetString( "objectivetitle" ), spawnArgs.GetString( "objectivetext" ), shotName );
 
 				// a tad slow but keeps from having to update all objectives in all maps with a name ptr
 				for( int i = 0; i < gameLocal.num_entities; i++ ) {
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-					if ( gameLocal.entities[ i ] && gameLocal.entities[ i ]->IsType( idObjectiveComplete::GetClassType() ) ) {
-// RAVEN END
+					if ( gameLocal.entities[ i ] && gameLocal.entities[ i ]->IsType( idObjectiveComplete::Type ) ) {
 						if ( idStr::Icmp( spawnArgs.GetString( "objectivetitle" ), gameLocal.entities[ i ]->spawnArgs.GetString( "objectivetitle" ) ) == 0 ){
 							gameLocal.entities[ i ]->spawnArgs.SetBool( "objEnabled", true );
 							break;
@@ -1376,10 +752,6 @@ void idObjective::Event_Trigger( idEntity *activator ) {
 				}
 
 				PostEventMS( &EV_GetPlayerPos, 2000 );
-// RAVEN BEGIN
-// mekberg: store triggered time for timed removal.
-				triggerTime = gameLocal.time;
-// RAVEN END
 			}
 		}
 	}
@@ -1407,16 +779,69 @@ void idObjective::Event_HideObjective(idEntity *e) {
 	idPlayer *player = gameLocal.GetLocalPlayer();
 	if ( player ) {
 		idVec3 v = player->GetPhysics()->GetOrigin() - playerPos;
-// RAVEN BEGIN
-// mekberg: hide time done internally now
-		if ( v.Length() > 64.0f || gameLocal.time > triggerTime + 5000 ) {
-// RAVEN END
-			player->HideObjective ( );
+		if ( v.Length() > 64.0f ) {
+			player->HideObjective();
 			PostEventMS( &EV_Remove, 0 );
 		} else {
 			PostEventMS( &EV_HideObjective, 100, player );
 		}
 	}
+}
+
+/*
+===============================================================================
+
+  idVideoCDItem
+
+===============================================================================
+*/
+
+CLASS_DECLARATION( idItem, idVideoCDItem )
+END_CLASS
+
+/*
+================
+idVideoCDItem::Spawn
+================
+*/
+void idVideoCDItem::Spawn( void ) {
+}
+
+/*
+================
+idVideoCDItem::GiveToPlayer
+================
+*/
+bool idVideoCDItem::GiveToPlayer( idPlayer *player ) {
+	idStr str = spawnArgs.GetString( "video" );
+	if ( player && str.Length() ) {
+		player->GiveVideo( str, &spawnArgs );
+	}
+	return true;
+}
+
+/*
+===============================================================================
+
+  idPDAItem
+
+===============================================================================
+*/
+
+CLASS_DECLARATION( idItem, idPDAItem )
+END_CLASS
+
+/*
+================
+idPDAItem::GiveToPlayer
+================
+*/
+bool idPDAItem::GiveToPlayer(idPlayer *player) {
+	const char *str = spawnArgs.GetString( "pda_name" );
+	if ( player ) {
+		player->GivePDA( str, &spawnArgs );
+	}
+	return true;
 }
 
 /*
@@ -1428,7 +853,8 @@ void idObjective::Event_HideObjective(idEntity *e) {
 */
 
 CLASS_DECLARATION( idItem, idMoveableItem )
- 	EVENT( EV_Gib,			idMoveableItem::Event_Gib )
+	EVENT( EV_DropToFloor,	idMoveableItem::Event_DropToFloor )
+	EVENT( EV_Gib,			idMoveableItem::Event_Gib )
 END_CLASS
 
 /*
@@ -1437,6 +863,9 @@ idMoveableItem::idMoveableItem
 ================
 */
 idMoveableItem::idMoveableItem() {
+	trigger = NULL;
+	smoke = NULL;
+	smokeTime = 0;
 }
 
 /*
@@ -1445,9 +874,9 @@ idMoveableItem::~idMoveableItem
 ================
 */
 idMoveableItem::~idMoveableItem() {
-	// If this entity has been allocated, but not spawned, the physics object will
-	// not have a self pointer, and will not unregister itself from the entity.
-	SetPhysics( NULL );
+	if ( trigger ) {
+		delete trigger;
+	}
 }
 
 /*
@@ -1457,6 +886,11 @@ idMoveableItem::Save
 */
 void idMoveableItem::Save( idSaveGame *savefile ) const {
    	savefile->WriteStaticObject( physicsObj );
+
+	savefile->WriteClipModel( trigger );
+
+	savefile->WriteParticle( smoke );
+	savefile->WriteInt( smokeTime );
 }
 
 /*
@@ -1465,8 +899,13 @@ idMoveableItem::Restore
 ================
 */
 void idMoveableItem::Restore( idRestoreGame *savefile ) {
-	savefile->ReadStaticObject ( physicsObj );
-	RestorePhysics ( &physicsObj );
+	savefile->ReadStaticObject( physicsObj );
+	RestorePhysics( &physicsObj );
+
+	savefile->ReadClipModel( trigger );
+
+	savefile->ReadParticle( smoke );
+	savefile->ReadInt( smokeTime );
 }
 
 /*
@@ -1476,9 +915,27 @@ idMoveableItem::Spawn
 */
 void idMoveableItem::Spawn( void ) {
 	idTraceModel trm;
-	float density, friction, bouncyness;
+	float density, friction, bouncyness, tsize;
 	idStr clipModelName;
 	idBounds bounds;
+
+	// create a trigger for item pickup
+	spawnArgs.GetFloat( "triggersize", "16.0", tsize );
+	trigger = new idClipModel( idTraceModel( idBounds( vec3_origin ).Expand( tsize ) ) );
+	trigger->Link( gameLocal.clip, this, 0, GetPhysics()->GetOrigin(), GetPhysics()->GetAxis() );
+	trigger->SetContents( CONTENTS_TRIGGER );
+
+	// check if a clip model is set
+	spawnArgs.GetString( "clipmodel", "", clipModelName );
+	if ( !clipModelName[0] ) {
+		clipModelName = spawnArgs.GetString( "model" );		// use the visual model
+	}
+
+	// load the trace model
+	if ( !collisionModelManager->TrmFromModel( clipModelName, trm ) ) {
+		gameLocal.Error( "idMoveableItem '%s': cannot load collision model %s", name.c_str(), clipModelName.c_str() );
+		return;
+	}
 
 	// if the model should be shrinked
 	if ( spawnArgs.GetBool( "clipshrink" ) ) {
@@ -1495,27 +952,7 @@ void idMoveableItem::Spawn( void ) {
 
 	// setup the physics
 	physicsObj.SetSelf( this );
-
-// RAVEN BEGIN
-// mwhitlock: Dynamic memory consolidation
-	RV_PUSH_HEAP_MEM(this);
-	// check if a clip model is set
-	spawnArgs.GetString( "itemclipmodel", "", clipModelName );
-	if ( clipModelName[0] ) {
-		if ( collisionModelManager->TrmFromModel( gameLocal.GetMapName(), clipModelName, trm ) ) {
-			physicsObj.SetClipModel( new idClipModel( trm ), density );
-		} else {
-			// fallback
-			physicsObj.SetClipModel( new idClipModel( GetPhysics()->GetClipModel() ), density );
-		}
-	} else {
-		// fallback
-		physicsObj.SetClipModel( new idClipModel( GetPhysics()->GetClipModel() ), density );
-	}
-
-// mwhitlock: Dynamic memory consolidation
-	RV_POP_HEAP();
-// RAVEN END
+	physicsObj.SetClipModel( new idClipModel( trm ), density );
 	physicsObj.SetOrigin( GetPhysics()->GetOrigin() );
 	physicsObj.SetAxis( GetPhysics()->GetAxis() );
 	physicsObj.SetBouncyness( bouncyness );
@@ -1525,12 +962,14 @@ void idMoveableItem::Spawn( void ) {
 	physicsObj.SetClipMask( MASK_SOLID | CONTENTS_MOVEABLECLIP );
 	SetPhysics( &physicsObj );
 
-// RAVEN BEGIN
-// mekberg: added
-	if ( spawnArgs.GetBool( "noimpact" ) || spawnArgs.GetBool( "notPushable" ) ) {
-		physicsObj.DisableImpact();
+	smoke = NULL;
+	smokeTime = 0;
+	const char *smokeName = spawnArgs.GetString( "smoke_trail" );
+	if ( *smokeName != '\0' ) {
+		smoke = static_cast<const idDeclParticle *>( declManager->FindType( DECL_PARTICLE, smokeName ) );
+		smokeTime = gameLocal.time;
+		BecomeActive( TH_UPDATEPARTICLES );
 	}
-// RAVEN END
 }
 
 /*
@@ -1539,9 +978,35 @@ idMoveableItem::Think
 ================
 */
 void idMoveableItem::Think( void ) {
+
 	RunPhysics();
-	UpdateTrigger( );
+
+	if ( thinkFlags & TH_PHYSICS ) {
+		// update trigger position
+		trigger->Link( gameLocal.clip, this, 0, GetPhysics()->GetOrigin(), mat3_identity );
+	}
+	
+	if ( thinkFlags & TH_UPDATEPARTICLES ) {
+		if ( !gameLocal.smokeParticles->EmitSmoke( smoke, smokeTime, gameLocal.random.CRandomFloat(), GetPhysics()->GetOrigin(), GetPhysics()->GetAxis() ) ) {
+			smokeTime = 0;
+			BecomeInactive( TH_UPDATEPARTICLES );
+		}
+	}
+
 	Present();
+}
+
+/*
+================
+idMoveableItem::Pickup
+================
+*/
+bool idMoveableItem::Pickup( idPlayer *player ) {
+	bool ret = idItem::Pickup( player );
+	if ( ret ) {
+		trigger->SetContents( 0 );
+	} 
+	return ret;
 }
 
 /*
@@ -1556,8 +1021,8 @@ idEntity *idMoveableItem::DropItem( const char *classname, const idVec3 &origin,
 	args.Set( "classname", classname );
 	args.Set( "dropped", "1" );
 
- 	// we sometimes drop idMoveables here, so set 'nodrop' to 1 so that it doesn't get put on the floor
- 	args.Set( "nodrop", "1" ); 
+	// we sometimes drop idMoveables here, so set 'nodrop' to 1 so that it doesn't get put on the floor
+	args.Set( "nodrop", "1" );
 
 	if ( activateDelay ) {
 		args.SetBool( "triggerFirst", true );
@@ -1569,7 +1034,7 @@ idEntity *idMoveableItem::DropItem( const char *classname, const idVec3 &origin,
 		item->GetPhysics()->SetOrigin( origin );
 		item->GetPhysics()->SetAxis( axis );
 		item->GetPhysics()->SetLinearVelocity( velocity );
- 		item->UpdateVisuals();
+		item->UpdateVisuals();
 		if ( activateDelay ) {
 			item->PostEventMS( &EV_Activate, activateDelay, item );
 		}
@@ -1579,8 +1044,7 @@ idEntity *idMoveableItem::DropItem( const char *classname, const idVec3 &origin,
 		// always remove a dropped item after 5 minutes in case it dropped to an unreachable location
 		item->PostEventMS( &EV_Remove, removeDelay );
 	}
-
- 	return item;
+	return item;
 }
 
 /*
@@ -1588,16 +1052,16 @@ idEntity *idMoveableItem::DropItem( const char *classname, const idVec3 &origin,
 idMoveableItem::DropItems
 
   The entity should have the following key/value pairs set:
- 	"def_drop<type>Item"			"item def"
- 	"drop<type>ItemJoint"			"joint name"
- 	"drop<type>ItemRotation"		"pitch yaw roll"
- 	"drop<type>ItemOffset"			"x y z"
- 	"skin_drop<type>"				"skin name"
+	"def_drop<type>Item"			"item def"
+	"drop<type>ItemJoint"			"joint name"
+	"drop<type>ItemRotation"		"pitch yaw roll"
+	"drop<type>ItemOffset"			"x y z"
+	"skin_drop<type>"				"skin name"
   To drop multiple items the following key/value pairs can be used:
- 	"def_drop<type>Item<X>"			"item def"
- 	"drop<type>Item<X>Joint"		"joint name"
- 	"drop<type>Item<X>Rotation"		"pitch yaw roll"
- 	"drop<type>Item<X>Offset"		"x y z"
+	"def_drop<type>Item<X>"			"item def"
+	"drop<type>Item<X>Joint"		"joint name"
+	"drop<type>Item<X>Rotation"		"pitch yaw roll"
+	"drop<type>Item<X>Offset"		"x y z"
   where <X> is an aribtrary string.
 ================
 */
@@ -1638,7 +1102,7 @@ void idMoveableItem::DropItems( idAnimatedEntity  *ent, const char *type, idList
 				key += "Rotation";
 				ent->spawnArgs.GetAngles( key, "0 0 0", angles );
 			}
-			axis *= angles.ToMat3() * axis;
+			axis = angles.ToMat3() * axis;
 
 			origin += ent->spawnArgs.GetVector( key2, "0 0 0" );
 
@@ -1652,7 +1116,7 @@ void idMoveableItem::DropItems( idAnimatedEntity  *ent, const char *type, idList
 	}
 
 	// change the skin to hide all items
- 	skinName = ent->spawnArgs.GetString( va( "skin_drop%s", type ) );
+	skinName = ent->spawnArgs.GetString( va( "skin_drop%s", type ) );
 	if ( skinName[0] ) {
 		skin = declManager->FindSkin( skinName );
 		ent->SetSkin( skin );
@@ -1675,9 +1139,9 @@ idMoveableItem::ReadFromSnapshot
 */
 void idMoveableItem::ReadFromSnapshot( const idBitMsgDelta &msg ) {
 	physicsObj.ReadFromSnapshot( msg );
- 	if ( msg.HasChanged() ) {
+	if ( msg.HasChanged() ) {
 		UpdateVisuals();
- 	}
+	}
 }
 
 /*
@@ -1686,8 +1150,23 @@ idMoveableItem::Gib
 ============
 */
 void idMoveableItem::Gib( const idVec3 &dir, const char *damageDefName ) {
+	// spawn smoke puff
+	const char *smokeName = spawnArgs.GetString( "smoke_gib" );
+	if ( *smokeName != '\0' ) {
+		const idDeclParticle *smoke = static_cast<const idDeclParticle *>( declManager->FindType( DECL_PARTICLE, smokeName ) );
+		gameLocal.smokeParticles->EmitSmoke( smoke, gameLocal.time, gameLocal.random.CRandomFloat(), renderEntity.origin, renderEntity.axis );
+	}
 	// remove the entity
 	PostEventMS( &EV_Remove, 0 );
+}
+
+/*
+================
+idMoveableItem::Event_DropToFloor
+================
+*/
+void idMoveableItem::Event_DropToFloor( void ) {
+	// the physics will drop the moveable to the floor
 }
 
 /*
@@ -1697,6 +1176,30 @@ idMoveableItem::Event_Gib
 */
 void idMoveableItem::Event_Gib( const char *damageDefName ) {
 	Gib( idVec3( 0, 0, 1 ), damageDefName );
+}
+
+/*
+===============================================================================
+
+  idMoveablePDAItem
+
+===============================================================================
+*/
+
+CLASS_DECLARATION( idMoveableItem, idMoveablePDAItem )
+END_CLASS
+
+/*
+================
+idMoveablePDAItem::GiveToPlayer
+================
+*/
+bool idMoveablePDAItem::GiveToPlayer(idPlayer *player) {
+	const char *str = spawnArgs.GetString( "pda_name" );
+	if ( player ) {
+		player->GivePDA( str, &spawnArgs );
+	}
+	return true;
 }
 
 /*
@@ -1737,10 +1240,7 @@ idItemRemover::Event_Trigger
 ================
 */
 void idItemRemover::Event_Trigger( idEntity *activator ) {
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-	if ( activator->IsType( idPlayer::GetClassType() ) ) {
-// RAVEN END
+	if ( activator->IsType( idPlayer::Type ) ) {
 		RemoveItem( static_cast<idPlayer *>(activator) );
 	}
 }
@@ -1766,11 +1266,6 @@ idObjectiveComplete::idObjectiveComplete
 */
 idObjectiveComplete::idObjectiveComplete() {
 	playerPos.Zero();
-
-// RAVEN BEGIN
-// mekberg: store triggered time for timed removal.
-	triggerTime = 0;
-// RAVEN END
 }
 
 /*
@@ -1797,7 +1292,7 @@ idObjectiveComplete::Spawn
 ================
 */
 void idObjectiveComplete::Spawn( void ) {
- 	spawnArgs.SetBool( "objEnabled", false );
+	spawnArgs.SetBool( "objEnabled", false );
 	Hide();
 }
 
@@ -1807,28 +1302,20 @@ idObjectiveComplete::Event_Trigger
 ================
 */
 void idObjectiveComplete::Event_Trigger( idEntity *activator ) {
- 	if ( !spawnArgs.GetBool( "objEnabled" ) ) {
- 		return;
- 	}
+	if ( !spawnArgs.GetBool( "objEnabled" ) ) {
+		return;
+	}
 	idPlayer *player = gameLocal.GetLocalPlayer();
 	if ( player ) {
 		RemoveItem( player );
 
 		if ( spawnArgs.GetString( "inv_objective", NULL ) ) {
-// RAVEN BEGIN
-// abahr: changed player->hud to player->GetHud so if in a vehicle we update that hud
-// twhitaker: moved objective system to it's own hud, to solve vehicle hud issues.
-	 		if ( player->GetObjectiveHud() ) {
-				player->GetObjectiveHud()->SetStateString( "objective", "2" );
-				player->GetObjectiveHud()->SetStateString( "objectivetext", common->GetLocalizedString( spawnArgs.GetString( "objectivetext" ) ) );
-				player->GetObjectiveHud()->SetStateString( "objectivetitle", common->GetLocalizedString( spawnArgs.GetString( "objectivetitle" ) ) );
-// RAVEN END
+	 		if ( player->hud ) {
+				player->hud->SetStateString( "objective", "2" );
+				player->hud->SetStateString( "objectivetext", spawnArgs.GetString( "objectivetext" ) );
+				player->hud->SetStateString( "objectivetitle", spawnArgs.GetString( "objectivetitle" ) );
 				player->CompleteObjective( spawnArgs.GetString( "objectivetitle" ) );
 				PostEventMS( &EV_GetPlayerPos, 2000 );
-// RAVEN BEGIN
-// mekberg: store triggered time for timed removal.
-				triggerTime = gameLocal.time;
-// RAVEN END
 			}
 		}
 	}
@@ -1854,526 +1341,14 @@ idObjectiveComplete::Event_HideObjective
 */
 void idObjectiveComplete::Event_HideObjective( idEntity *e ) {
 	idPlayer *player = gameLocal.GetLocalPlayer();
-	if ( player && player->GetObjectiveHud() ) {
+	if ( player ) {
 		idVec3 v = player->GetPhysics()->GetOrigin();
 		v -= playerPos;
-// RAVEN BEGIN
-// mekberg: hide time done internally now
-		if ( v.Length() > 64.0f || gameLocal.time > triggerTime + 5000 ) {
-// RAVEN END
-			player->HideObjective ( );
+		if ( v.Length() > 64.0f ) {
+			player->hud->HandleNamedEvent( "closeObjective" );
 			PostEventMS( &EV_Remove, 0 );
 		} else {
 			PostEventMS( &EV_HideObjective, 100, player );
 		}
 	}
-}
-
-/*
-===============================================================================
-
-  rvObjectiveFailed
-
-===============================================================================
-*/
-CLASS_DECLARATION( idItemRemover, rvObjectiveFailed )
-	EVENT( EV_Activate,			rvObjectiveFailed::Event_Trigger )
-END_CLASS
-
-rvObjectiveFailed::rvObjectiveFailed ( void ) {
-}
-
-/*
-================
-rvObjectiveFailed::Event_Trigger
-================
-*/
-void rvObjectiveFailed::Event_Trigger( idEntity *activator ) {
-	idPlayer *player = gameLocal.GetLocalPlayer();
-	if ( !player || !player->GetObjectiveHud() ) {
-		return;
-	}
-	if ( !spawnArgs.GetString( "inv_objective", NULL ) ) {
-		return;
-	}	
-
-	player->GetObjectiveHud()->SetStateString( "objective", "2" );
-	player->GetObjectiveHud()->SetStateString( "objectivetext", common->GetLocalizedString( spawnArgs.GetString( "objectivetext" ) ) );
-	player->GetObjectiveHud()->SetStateString( "objectivetitle", common->GetLocalizedString( spawnArgs.GetString( "objectivetitle" ) ) );
-	player->FailObjective( spawnArgs.GetString( "objectivetitle" ) );
-}
-
-/*
-===============================================================================
-
-  rvItemCTFFlag
-
-===============================================================================
-*/
-
-const idEventDef EV_ResetFlag ( "<resetflag>" );
-const idEventDef EV_LinkTrigger( "<linktrigger>" );
-CLASS_DECLARATION( idItem, rvItemCTFFlag )
-	EVENT( EV_ResetFlag,		rvItemCTFFlag::Event_ResetFlag )
-	EVENT( EV_LinkTrigger,		rvItemCTFFlag::Event_LinkTrigger )
-END_CLASS
-
-/*
-================
-rvItemCTFFlag::rvItemCTFFlag
-================
-*/
-rvItemCTFFlag::rvItemCTFFlag() {
-}
-
-
-/*
-================
-rvItemCTFFlag::Spawn
-================
-*/
-void rvItemCTFFlag::Spawn () {
-/* rjohnson: I fixed the crash so we don't need to remove them...
-	//don't spawn outside of CTF games
-	if( (gameLocal.gameType != GAME_CTF) && (gameLocal.gameType != GAME_1F_CTF) &&
-		(gameLocal.gameType != GAME_ARENA_CTF) && (gameLocal.gameType != GAME_ARENA_1F_CTF) ){
-		//don't spawn!
-		gameLocal.Error("Flag spawn on in non-CTF gametype.");
-		PostEventMS ( &EV_Remove, 0 );
-		return;
-	}
-*/
-	spawnArgs.GetBool ( "dropped", "0", dropped );
-	spawnArgs.GetInt ( "team", "0", team );
-
-	bool reset = false;
-	spawnArgs.GetBool ( "reset", "0", reset );
-
-	switch ( team ) {
-		case TEAM_MARINE: {
-			powerup = POWERUP_CTF_MARINEFLAG;
-			gameLocal.mpGame.SetFlagEntity( this, TEAM_MARINE );
-			break;
-		}
-		case TEAM_STROGG: {
-			powerup = POWERUP_CTF_STROGGFLAG;	
-			gameLocal.mpGame.SetFlagEntity( this, TEAM_STROGG );
-			break;
-		}
-		case TEAM_MAX: {
-			powerup = POWERUP_CTF_ONEFLAG;
-			break;
-		}
-		default:
-			gameLocal.Warning ( "Unknown ctf flag team '%d' on entity '%s'", team, name.c_str() );
-			PostEventMS ( &EV_Remove, 0 );
-			return;
-	}
-	
-	if ( dropped ) {
-		if ( !gameLocal.isClient ) {
-			((rvCTFGameState*)gameLocal.mpGame.GetGameState())->SetFlagState( team, FS_DROPPED );
-		}	
-		if ( reset ) {
-			//PostEventSec( &EV_ResetFlag, 1 );
-		} else {
-			PostEventSec( &EV_ResetFlag, 30 );
-		}
-
-		// Let powerups settle for a frame before allowing them to be picked up - we need to
-		// make sure we hit the dropped state for VO, etc to work properly
-		trigger->SetContents( 0 );
-		PostEventSec( &EV_LinkTrigger, 0 );
-	} else {
-		if ( !gameLocal.isClient ) {
-			((rvCTFGameState*)gameLocal.mpGame.GetGameState())->SetFlagState( team, FS_AT_BASE );
-		}	
-	}
-
-	GetPhysics( )->SetClipMask( GetPhysics( )->GetClipMask( ) | CONTENTS_ITEMCLIP );
-
-	spin = false;
-}
-
-/*
-================
-rvItemCTFFlag::Event_LinkTrigger
-================
-*/
-void rvItemCTFFlag::Event_LinkTrigger( void ) {
-	trigger->SetContents( CONTENTS_TRIGGER | CONTENTS_ITEMCLIP );
-}
-
-/*
-================
-rvItemCTFFlag::GiveToPlayer
-================
-*/
-bool rvItemCTFFlag::GiveToPlayer( idPlayer* player ) {
-	if ( !gameLocal.IsMultiplayer() ) {
-		return false;
-	}
-
-	if ( player->spectating || ((gameLocal.mpGame.GetGameState())->GetMPGameState() != GAMEON && (gameLocal.mpGame.GetGameState())->GetMPGameState() != SUDDENDEATH && !cvarSystem->GetCVarBool( "g_testCTF" )) ) {
-		return false;
-	}
-
-	int teamPowerup;
-	int enemyPowerup;
-
-	bool canPickup = ( team == player->team );
-	
-	switch ( player->team ) {
-		default:
-		case TEAM_MARINE:
-			teamPowerup  = POWERUP_CTF_MARINEFLAG;
-			enemyPowerup = POWERUP_CTF_STROGGFLAG;
-			break;
-			
-		case TEAM_STROGG:
-			teamPowerup  = POWERUP_CTF_STROGGFLAG;
-			enemyPowerup = POWERUP_CTF_MARINEFLAG;
-			break;
-	}
-
-	if( gameLocal.gameType == GAME_1F_CTF || gameLocal.gameType == GAME_ARENA_1F_CTF ) {
-		// in one flag CTF, we score touching the enemy's flag
-		canPickup = ( team == gameLocal.mpGame.OpposingTeam( player->team ) );
-		enemyPowerup = POWERUP_CTF_ONEFLAG;
-	}
-	
-	// If the player runs over their own flag the only thing they
-	// can do is score or return it.
-
-	// when the player touches the one flag, he always gets it
-	if ( canPickup ) {
-		// If the flag was dropped, return it		
-		if ( dropped ) {
-			gameLocal.mpGame.AddPlayerTeamScore( player, 2 );
-			statManager->FlagReturned( player );
-			ResetFlag ( teamPowerup );
-// RITUAL BEGIN
-// squirrel: Mode-agnostic buymenus
-			player->GiveCash( (float)gameLocal.mpGame.mpBuyingManager.GetIntValueForKey( "playerCashAward_flagReturned", 0 ) );
-// RITUAL END
-		} else if ( player->PowerUpActive ( enemyPowerup ) ) {
-			// If they have the enemy flag then they score
-			if ( !gameLocal.mpGame.CanCapture ( player->team ) ) {
-				return false;
-			}
-			
-			ResetFlag( enemyPowerup );
-			
-			gameLocal.mpGame.FlagCaptured( player );
-		}
-		return false;
-	} 
-
-	// only pickup one flag in arena CTF
-	if( ( gameLocal.gameType == GAME_1F_CTF || gameLocal.gameType == GAME_ARENA_1F_CTF ) && team != TEAM_MAX ) {
-		return false;
-	}
-
-	player->GivePowerUp( enemyPowerup, -1 );
-// RITUAL BEGIN
-// squirrel: Mode-agnostic buymenus
-	player->GiveCash( (float)gameLocal.mpGame.mpBuyingManager.GetIntValueForKey( "playerCashAward_flagStolen", 0 ) );
-// RITUAL END
-	return true;
-}
-
-/*
-================
-rvItemCTFFlag::Pickup
-================
-*/
-bool rvItemCTFFlag::Pickup( idPlayer *player ) {
-	if( gameLocal.isClient ) {
-		// no client-side CTF flag prediction
-		return false;
-	}
-
-	if ( !GiveToPlayer( player ) ) {
-		return false;
-	}
-
-	//	ServerSendEvent( EVENT_PICKUP, NULL, false, -1 );
-	if ( gameLocal.isServer ) {
-		SendPickupMsg( player->entityNumber );
-	}
-
-	// Check for global acquire sounds in multiplayer
-	if ( gameLocal.isMultiplayer && spawnArgs.GetBool( "globalAcquireSound" ) ) {
-		gameLocal.mpGame.PlayGlobalItemAcquireSound( entityDefNumber );
-	} else {
-		StartSound( "snd_acquire", SND_CHANNEL_ITEM, 0, false, NULL );
-	}
-
-	// trigger our targets
-	ActivateTargets( player );
-
-	// clear our contents so the object isn't picked up twice
-	GetPhysics()->SetContents( 0 );
-
-	// hide the model
-	Hide();
-
-	gameLocal.mpGame.SetFlagEntity( NULL, team );
-
-	gameLocal.mpGame.AddPlayerTeamScore( player, 1 );
-
-	if( gameLocal.gameType == GAME_CTF || gameLocal.gameType == GAME_ARENA_CTF ) { 
-		((rvCTFGameState*)gameLocal.mpGame.GetGameState())->SetFlagState( team, FS_TAKEN );
-	} else if( gameLocal.gameType == GAME_1F_CTF || gameLocal.gameType == GAME_ARENA_1F_CTF ) {
-		((rvCTFGameState*)gameLocal.mpGame.GetGameState())->SetFlagState( team, (player->team == TEAM_MARINE ? FS_TAKEN_MARINE : FS_TAKEN_STROGG) );
-	}
-	
-	((rvCTFGameState*)gameLocal.mpGame.GetGameState())->SetFlagCarrier( team, player->entityNumber );
-
-	if ( spawnArgs.GetBool( "dropped" ) ) {
-		PostEventMS( &EV_Remove, 0 );
-	}
-
-	BecomeInactive( TH_THINK );
-	
-	return true;
-}
-
-/*
-================
-rvItemCTFFlag::ResetFlag
-================
-*/
-void rvItemCTFFlag::ResetFlag( int powerup ) {
-	idEntity* ent;
-	for ( ent = gameLocal.spawnedEntities.Next(); ent != NULL; ent = ent->spawnNode.Next() ) {
-		// Make sure no players have the flag anymore
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-		if ( ent->IsType ( idPlayer::GetClassType() ) ) {
-// RAVEN END
-			static_cast<idPlayer*>(ent)->ClearPowerup ( powerup );
-			continue;
-		}
-	
-		// If its not a CTF flag item then skip it
-		if ( !ent->IsType( rvItemCTFFlag::Type ) ) {
-			continue;			
-		}
-		
-		// Make sure its the right type first
-		rvItemCTFFlag* flag;
-		flag = static_cast<rvItemCTFFlag*>(ent);
-		if ( flag->powerup != powerup ) {
-			continue;
-		}
-		
-		if ( flag->dropped ) {			
-			flag->PostEventMS( &EV_Remove, 0 );
-		} else {
-			flag->PostEventMS( &EV_RespawnItem, 0 );
-			gameLocal.mpGame.SetFlagEntity( flag, flag->team );
-		}
-	}
-
-	if ( !gameLocal.isClient ) {
-		int team = -1;
-		if ( powerup == POWERUP_CTF_MARINEFLAG ) {
-			team = TEAM_MARINE;
-		} else if ( powerup == POWERUP_CTF_STROGGFLAG ) {
-			team = TEAM_STROGG;
-		} else if ( powerup == POWERUP_CTF_ONEFLAG ) {
-			team = TEAM_MAX;
-		}
-		
-		((rvCTFGameState*)gameLocal.mpGame.GetGameState())->SetFlagState( team, FS_AT_BASE );
-	}	
-
-}
-  
-/*
-================
-rvItemCTFFlag::Event_ResetFlag
-================
-*/
-void rvItemCTFFlag::Event_ResetFlag( void ) {
-	ResetFlag( powerup );
-}
-
-void rvItemCTFFlag::Think( void ) {
-	idItem::Think();
-}
-
-/*
-================
-rvItemCTFFlag::Collide
-================
-*/
-bool rvItemCTFFlag::Collide( const trace_t &collision, const idVec3 &velocity ) {
-	idEntity* lol = gameLocal.entities[ collision.c.entityNum ];
-	
-	if ( collision.c.contents & CONTENTS_ITEMCLIP && lol && !lol->IsType( idItem::GetClassType() ) ) {
-		ResetFlag( powerup );
-	}
-	return false;
-}
-// RAVEN END
-
-
-
-
-const idEventDef EV_ResetSpawn ( "<resetspawn>" );
-CLASS_DECLARATION( idItemPowerup, riDeadZonePowerup )
-	EVENT( EV_ResetSpawn,		riDeadZonePowerup::Event_ResetSpawn )
-END_CLASS
-
-/*
-================
-riDeadZonePowerup::idItemPowerup
-================
-*/
-riDeadZonePowerup::riDeadZonePowerup() {
-}
-
-/*
-================
-riDeadZonePowerup::Save
-================
-*/
-void riDeadZonePowerup::Save( idSaveGame *savefile ) const {
-}
-
-/*
-================
-riDeadZonePowerup::Restore
-================
-*/
-void riDeadZonePowerup::Restore( idRestoreGame *savefile ) {
-}
-
-
-/*
-================
-riDeadZonePowerup::Show
-================
-*/
-void riDeadZonePowerup::Show()
-{
-	idItem::Show();
-}
-
-
-/*
-================
-riDeadZonePowerup::Spawn
-================
-*/
-void riDeadZonePowerup::Spawn( void ) {
-	powerup = POWERUP_DEADZONE;
-
-	time = SEC2MS( gameLocal.serverInfo.GetInt("si_deadZonePowerupTime") );
-
-	if ( spawnArgs.GetBool( "dropped" ) ) {
-		time = SEC2MS( spawnArgs.GetInt( "time", "10" ) );
-		if ( time > SEC2MS(10) )
-			time = SEC2MS(10);
-
-		Show();
-		CancelEvents(&EV_Remove);
-		PostEventSec( &EV_ResetSpawn, MS2SEC(time) );
-	}
-	else
-		Hide();
-}
-
-
-/*
-================
-riDeadZonePowerup::Pickup
-================
-*/
-bool riDeadZonePowerup::Pickup( idPlayer* player ) {
-	// regular pickup routine, but unique items need to think to know when to respawn
-	bool pickup;
-	if ( player->PowerUpActive(POWERUP_DEADZONE) )
-		return false;
-
-	pickup = idItemPowerup::Pickup( player );
-
-	if ( spawnArgs.GetBool( "dropped" ) ) {
-		// Cancel the respawn so the powerup doesn't get removed 
-		// from the player that just picked it up.
-		PostEventMS( &EV_Remove, 0 );
-		CancelEvents( &EV_ResetSpawn );
-	}
-
-	return pickup;
-}
-
-/*
-================
-riDeadZonePowerup::ResetSpawn
-================
-*/
-void riDeadZonePowerup::ResetSpawn( int powerup ) {
-	int count = 1;
-	idEntity* ent;
-	riDeadZonePowerup* spawnSpot = 0;
-	for ( ent = gameLocal.spawnedEntities.Next(); ent != NULL; ent = ent->spawnNode.Next() ) {
-
-		// If its not a DeadZone powerup then skip it
-		if ( !ent->IsType( riDeadZonePowerup::Type ) ) {
-			continue;			
-		}
-		
-		// Make sure its the right type first
-		riDeadZonePowerup* flag;
-		flag = static_cast<riDeadZonePowerup*>(ent);
-		if ( flag->powerup != powerup ) {
-			continue;
-		}
-		
-		if ( flag->spawnArgs.GetBool("dropped", "0") && flag == this ) {			
-			flag->PostEventMS( &EV_Remove, 0 );
-		} else {
-			if ( !flag->IsVisible() ) {
-				if ( !(rand()%count)  ) {
-					spawnSpot = flag;
-					if ( flag->spawnArgs.GetBool("dropped", "0") )
-						gameLocal.DPrintf("WARNING: Trying to spawn a powerup at a DROPPED location!");
-				}
-				count++;
-			}		
-		}
-	}	
-	
-	if ( spawnSpot ) {
-		spawnSpot->Show();
-		spawnSpot->PostEventMS( &EV_RespawnItem, 0 );			
-	}
-	else {
-		gameLocal.DPrintf("WARNING: Failed to find a valid spawn spot!");
-	}
-}
-  
-/*
-================
-riDeadZonePowerup::Collide
-================
-*/
-bool riDeadZonePowerup::Collide( const trace_t &collision, const idVec3 &velocity ) {
-	idEntity* lol = gameLocal.entities[ collision.c.entityNum ];
-	if ( gameLocal.isMultiplayer && collision.c.contents & CONTENTS_ITEMCLIP && lol && !lol->IsType( idItem::GetClassType() ) ) {
-		PostEventMS( &EV_ResetSpawn, 0 ); // Just respawn it.
-	}
-	return false;
-}
-
-/*
-================
-riDeadZonePowerup::Event_ResetFlag
-================
-*/
-void riDeadZonePowerup::Event_ResetSpawn( void ) {
-	ResetSpawn( POWERUP_DEADZONE );
 }

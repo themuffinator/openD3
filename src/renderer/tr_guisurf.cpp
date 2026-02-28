@@ -30,6 +30,16 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "tr_local.h"
 
+class idInWorldGuiRenderScope {
+public:
+	ID_INLINE idInWorldGuiRenderScope() {
+		uiManager->SetInWorldGuiRender( true );
+	}
+	ID_INLINE ~idInWorldGuiRenderScope() {
+		uiManager->SetInWorldGuiRender( false );
+	}
+};
+
 /*
 ==========================================================================================
 
@@ -173,6 +183,7 @@ void R_RenderGuiSurf( idUserInterface *gui, drawSurf_t *drawSurf ) {
 
 	// call the gui, which will call the 2D drawing functions
 	tr.guiModel->Clear();
+	idInWorldGuiRenderScope inWorldGuiRenderScope;
 	gui->Redraw( tr.viewDef->renderView.time );
 	tr.guiModel->EmitToCurrentView( modelMatrix, drawSurf->space->weaponDepthHack );
 	tr.guiModel->Clear();

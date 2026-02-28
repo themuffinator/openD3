@@ -174,9 +174,9 @@ bool idSoundShader::ParseShader( idLexer& src )
 {
 	idToken		token;
 
-	// Quake 4 shaders author these distances in world units; keep stock defaults.
-	parms.minDistance = 40.0f;
-	parms.maxDistance = 400.0f;
+	// Doom 3 shader defaults: distances are authored in meters.
+	parms.minDistance = 1.0f;
+	parms.maxDistance = 10.0f;
 	parms.volume = 1;
 	parms.shakes = 0;
 	parms.soundShaderFlags = 0;
@@ -298,12 +298,14 @@ bool idSoundShader::ParseShader( idLexer& src )
 		// volume
 		else if( !token.Icmp( "volume" ) )
 		{
-			parms.volume = src.ParseFloat();
+			// Doom 3 shaders author volume in dB; runtime expects linear scale.
+			parms.volume = idMath::dBToScale( src.ParseFloat() );
 		}
 		// leadinVolume is used to allow light breaking leadin sounds to be much louder than the broken loop
 		else if( !token.Icmp( "leadinVolume" ) )
 		{
-			leadinVolume = src.ParseFloat();
+			// Doom 3 shaders author leadinVolume in dB; runtime expects linear scale.
+			leadinVolume = idMath::dBToScale( src.ParseFloat() );
 		}
 		// speaker mask
 		else if( !token.Icmp( "mask_center" ) )

@@ -298,23 +298,38 @@ void idCollisionModelManagerLocal::LoadProcBSP( const char *name ) {
 		return;
 	}
 
-	if (token.Icmp(PROC_FILE_ID))
-	{
-		common->Printf("idRenderWorldLocal::InitFromMap: bad id '%s' instead of '%s'\n", token.c_str(), PROC_FILE_ID);
-		delete src;
-		return;
+	if ( token.Icmp( PROC_FILE_ID ) != 0 ) {
+		if ( token.Icmp( PROC_FILE_ID_Q4 ) == 0 ) {
+			isLegacyWorldFile = true;
+		} else {
+			common->Printf(
+				"idRenderWorldLocal::InitFromMap: bad id '%s' instead of '%s' or '%s'\n",
+				token.c_str(),
+				PROC_FILE_ID,
+				PROC_FILE_ID_Q4 );
+			delete src;
+			return;
+		}
 	}
 
-// jmarshall: quake 4 proc format
-	if (!src->ReadToken(&token) || token.Icmp(PROC_FILEVERSION)) {
-		common->Printf("idRenderWorldLocal::InitFromMap: bad version '%s' instead of '%s'\n", token.c_str(), PROC_FILEVERSION);
-		delete src;
-		return;
-	}
+	// Quake 4 .proc includes an explicit version token and map CRC after the header.
+	if ( isLegacyWorldFile ) {
+		if ( !src->ReadToken( &token ) || token.Icmp( PROC_FILEVERSION_Q4 ) ) {
+			common->Printf(
+				"idRenderWorldLocal::InitFromMap: bad version '%s' instead of '%s'\n",
+				token.c_str(),
+				PROC_FILEVERSION_Q4 );
+			delete src;
+			return;
+		}
 
-	// Map CRC, we aren't going to use it.
-	src->ReadToken(&token);
-// jmarshall end
+		// Map CRC (ignored by runtime loader).
+		if ( !src->ReadToken( &token ) ) {
+			common->Printf( "idRenderWorldLocal::InitFromMap: missing map CRC token in Quake 4 proc file\n" );
+			delete src;
+			return;
+		}
+	}
 
 	// parse the file
 	while ( 1 ) {

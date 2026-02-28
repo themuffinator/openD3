@@ -47,10 +47,10 @@ idCVar bearTurretForce( "bearTurretForce", "200", CVAR_FLOAT, "" );
 
 /*
 *****************************************************************************
-* BSEntity	
+* BearShootEntity	
 ****************************************************************************
 */
-BSEntity::BSEntity(idGameBearShootWindow* _game) {
+BearShootEntity::BearShootEntity(idGameBearShootWindow* _game) {
 	game = _game;
 	visible = true;
 
@@ -67,15 +67,15 @@ BSEntity::BSEntity(idGameBearShootWindow* _game) {
 	velocity.Zero();
 }
 
-BSEntity::~BSEntity() {
+BearShootEntity::~BearShootEntity() {
 }
 
 /*
 ======================
-BSEntity::WriteToSaveGame
+BearShootEntity::WriteToSaveGame
 ======================
 */
-void BSEntity::WriteToSaveGame( idFile *savefile ) {
+void BearShootEntity::WriteToSaveGame( idFile *savefile ) {
 
 	game->WriteSaveGameString( materialName, savefile );
 
@@ -95,10 +95,10 @@ void BSEntity::WriteToSaveGame( idFile *savefile ) {
 
 /*
 ======================
-BSEntity::ReadFromSaveGame
+BearShootEntity::ReadFromSaveGame
 ======================
 */
-void BSEntity::ReadFromSaveGame( idFile *savefile, idGameBearShootWindow* _game ) {
+void BearShootEntity::ReadFromSaveGame( idFile *savefile, idGameBearShootWindow* _game ) {
 	game = _game;
 
 	game->ReadSaveGameString( materialName, savefile );
@@ -120,10 +120,10 @@ void BSEntity::ReadFromSaveGame( idFile *savefile, idGameBearShootWindow* _game 
 
 /*
 ======================
-BSEntity::SetMaterial
+BearShootEntity::SetMaterial
 ======================
 */
-void BSEntity::SetMaterial(const char* name) {
+void BearShootEntity::SetMaterial(const char* name) {
 	materialName = name;
 	material = declManager->FindMaterial( name );
 	material->SetSort( SS_GUI );
@@ -131,29 +131,29 @@ void BSEntity::SetMaterial(const char* name) {
 
 /*
 ======================
-BSEntity::SetSize
+BearShootEntity::SetSize
 ======================
 */
-void BSEntity::SetSize( float _width, float _height ) {
+void BearShootEntity::SetSize( float _width, float _height ) {
 	width = _width;
 	height = _height;
 }
 
 /*
 ======================
-BSEntity::SetVisible
+BearShootEntity::SetVisible
 ======================
 */
-void BSEntity::SetVisible( bool isVisible ) {
+void BearShootEntity::SetVisible( bool isVisible ) {
 	visible = isVisible;
 }
 
 /*
 ======================
-BSEntity::Update
+BearShootEntity::Update
 ======================
 */
-void BSEntity::Update( float timeslice ) {
+void BearShootEntity::Update( float timeslice ) {
 	
 	if ( !visible ) {
 		return;
@@ -184,10 +184,10 @@ void BSEntity::Update( float timeslice ) {
 
 /*
 ======================
-BSEntity::Draw
+BearShootEntity::Draw
 ======================
 */
-void BSEntity::Draw(idDeviceContext *dc) {
+void BearShootEntity::Draw(idDeviceContext *dc) {
 	if ( visible ) {
 		dc->DrawMaterialRotated( position.x, position.y, width, height, material, entColor, 1.0f, 1.0f, DEG2RAD(rotation) );
 	}
@@ -306,9 +306,9 @@ void idGameBearShootWindow::ReadFromSaveGame( idFile *savefile ) {
 	savefile->Read( &numberOfEnts, sizeof(numberOfEnts) );
 
 	for ( int i=0; i<numberOfEnts; i++ ) {
-		BSEntity *ent;
+		BearShootEntity *ent;
 
-		ent = new BSEntity( this );
+		ent = new BearShootEntity( this );
 		ent->ReadFromSaveGame( savefile, this );
 		entities.Append( ent );
 	}
@@ -363,7 +363,7 @@ idGameBearShootWindow::CommonInit
 =============================
 */
 void idGameBearShootWindow::CommonInit() {
-	BSEntity *			ent;
+	BearShootEntity *			ent;
 
 	// Precache sounds
 	declManager->FindSound( "arcade_beargroan" );
@@ -378,7 +378,7 @@ void idGameBearShootWindow::CommonInit() {
 
 	ResetGameState();
 
-	ent = new BSEntity( this );
+	ent = new BearShootEntity( this );
 	turret = ent;
 	ent->SetMaterial( "game/bearshoot/turret" );
 	ent->SetSize( 272, 144 );
@@ -386,14 +386,14 @@ void idGameBearShootWindow::CommonInit() {
 	ent->position.y = 260;
 	entities.Append( ent );
 
-	ent = new BSEntity( this );
+	ent = new BearShootEntity( this );
 	ent->SetMaterial( "game/bearshoot/turret_base" );
 	ent->SetSize( 144, 160 );
 	ent->position.x = 16;
 	ent->position.y = 280;
 	entities.Append( ent );
 
-	ent = new BSEntity( this );
+	ent = new BearShootEntity( this );
 	bear = ent;
 	ent->SetMaterial( "game/bearshoot/bear" );
 	ent->SetSize( BEAR_SIZE, BEAR_SIZE );
@@ -402,7 +402,7 @@ void idGameBearShootWindow::CommonInit() {
 	ent->position.y = 0;
 	entities.Append( ent );
 
-	ent = new BSEntity( this );
+	ent = new BearShootEntity( this );
 	helicopter = ent;
 	ent->SetMaterial( "game/bearshoot/helicopter" );
 	ent->SetSize( 64, 64 );
@@ -410,7 +410,7 @@ void idGameBearShootWindow::CommonInit() {
 	ent->position.y = 100;
 	entities.Append( ent );
 
-	ent = new BSEntity( this );
+	ent = new BearShootEntity( this );
 	goal = ent;
 	ent->SetMaterial( "game/bearshoot/goal" );
 	ent->SetSize( 64, 64 );
@@ -418,7 +418,7 @@ void idGameBearShootWindow::CommonInit() {
 	ent->position.y = 164;
 	entities.Append( ent );
 
-	ent = new BSEntity( this );
+	ent = new BearShootEntity( this );
 	wind = ent;
 	ent->SetMaterial( "game/bearshoot/wind" );
 	ent->SetSize( 100, 40 );
@@ -426,7 +426,7 @@ void idGameBearShootWindow::CommonInit() {
 	ent->position.y = 430;
 	entities.Append( ent );
 
-	ent = new BSEntity( this );
+	ent = new BearShootEntity( this );
 	gunblast = ent;
 	ent->SetMaterial( "game/bearshoot/gun_blast" );
 	ent->SetSize( 64, 64 );
@@ -893,3 +893,4 @@ void idGameBearShootWindow::UpdateGame() {
 		}
 	}
 }
+

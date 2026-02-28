@@ -1,9 +1,35 @@
+/*
+===========================================================================
 
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+
+#include "../../idlib/precompiled.h"
+#pragma hdrstop
 
 #include "../Game_local.h"
-
 #include "../../MayaImport/maya_main.h"
 
 /***********************************************************************
@@ -19,28 +45,6 @@ static exporterShutdown_t	Maya_Shutdown = NULL;
 static int					importDLL = 0;
 
 bool idModelExport::initialized = false;
-
-
-// RAVEN BEGIN
-// scork: now needed to cleanup after last Maya model conversion since I cache them for speed during "exportmodels"
-bool g_bMayaConversionCleanerRunning = false;	// so we can check all calls to Maya_ConvertModel have been updated to include this ;-)
-struct MayaConversionCleaner
-{
-	MayaConversionCleaner()
-	{
-		g_bMayaConversionCleanerRunning = true;
-	}
-	~MayaConversionCleaner()
-	{
-		if ( Maya_ConvertModel )
-		{
-			Maya_ConvertModel( NULL, NULL, NULL );
-		}
-		g_bMayaConversionCleanerRunning = false;
-	}
-};
-// RAVEN END
-
 
 /*
 ====================
@@ -80,10 +84,7 @@ Determines if Maya is installed on the user's machine
 =====================
 */
 bool idModelExport::CheckMayaInstall( void ) {
-// RAVEN BEGIN
-// jscott:revisit - this should go into the exe
-//#ifdef _WIN32
-#ifndef _WINDOWS
+#ifndef _WIN32
 	return false;
 #elif 0
 	HKEY	hKey;
@@ -152,14 +153,7 @@ void idModelExport::LoadMayaDll( void ) {
 	}
 
 	// initialize the DLL
-// RAVEN BEGIN
-// rhummer: unify allocation strategy to try to fix some of our crashes
-#ifdef RV_UNIFIED_ALLOCATOR
-	if ( !dllEntry( MD5_VERSION, common, sys, Memory::Allocate, Memory::Free, Memory::MSize ) ) {
-#else
 	if ( !dllEntry( MD5_VERSION, common, sys ) ) {
-#endif
-// RAVEN END
 		// init failed
 		Maya_ConvertModel = NULL;
 		Maya_Shutdown = NULL;
@@ -168,10 +162,6 @@ void idModelExport::LoadMayaDll( void ) {
 		gameLocal.Error( "Export DLL init failed." );
 		return;
 	}
-// RAVEN BEGIN
-// jscott: maya needs the source control in the tools dll
-	//common->LoadToolsDLL();
-// RAVEN END
 }
 
 /*
@@ -183,8 +173,9 @@ version number has changed.
 =====================
 */
 bool idModelExport::ConvertMayaToMD5( void ) {
-	ID_TIME_T	sourceTime;
-	ID_TIME_T	destTime;
+	ID_TIME_T		
+		sourceTime;
+	ID_TIME_T		destTime;
 	int			version;
 	idToken		cmdLine;
 	idStr		path;
@@ -200,30 +191,11 @@ bool idModelExport::ConvertMayaToMD5( void ) {
 		force = true;
 	}
 
-// RAVEN BEGIN
-// bdube: fs_import path
-
-	// we need to make sure we have a full path, so convert the filename to an OS path
-	path.AppendPath( cvarSystem->GetCVarString ("fs_importpath"));
-	path.AppendPath(src);
-
-	idFile* f = fileSystem->OpenExplicitFileRead ( path );
-	if ( !f ) {
-		Maya_Error = "could not open source file";
-		return false;
-	}
-	sourceTime = f->Timestamp ( );
-	fileSystem->CloseFile ( f );
-
-/*
 	// get the source file's time
 	if ( fileSystem->ReadFile( src, NULL, &sourceTime ) < 0 ) {
 		// source file doesn't exist
 		return true;
 	}
-*/
-   
-// RAVEN END
 
 	// get the destination file's time
 	if ( !force && ( fileSystem->ReadFile( dest, NULL, &destTime ) >= 0 ) ) {
@@ -275,16 +247,8 @@ bool idModelExport::ConvertMayaToMD5( void ) {
 		fileSystem->CreateOSPath( path );
 	}
 
-	// get the os path in case it needs to create one
-	path = fileSystem->RelativePathToOSPath( "" );
-
 	common->SetRefreshOnPrint( true );
-// RAVEN BEGIN
-// scork: if this assert ever triggers it means there's a call to ConvertMayaToMD5() that doesn't have a 'MayaConversionCleaner' object above it. Go and put one in. Now.
-	assert( g_bMayaConversionCleanerRunning );
-// bdube: support src and dest ospath
-	Maya_Error = Maya_ConvertModel( cvarSystem->GetCVarString ( "fs_importpath" ), path, commandLine );
-// RAVEN END
+	Maya_Error = Maya_ConvertModel( src, dest, commandLine );
 	common->SetRefreshOnPrint( false );
 	if ( Maya_Error != "Ok" ) {
 		return false;
@@ -312,14 +276,7 @@ idModelExport::ExportModel
 ====================
 */
 bool idModelExport::ExportModel( const char *model ) {
-
-// RAVEN BEGIN
-// scork:
-	MayaConversionCleaner _any_old_name;
-// RAVEN END
-
 	const char *game = cvarSystem->GetCVarString( "fs_game" );
-
 	if ( strlen(game) == 0 ) {
 		game = BASE_GAMEDIR;
 	}
@@ -344,18 +301,17 @@ idModelExport::ExportAnim
 ====================
 */
 bool idModelExport::ExportAnim( const char *anim ) {
-
-// RAVEN BEGIN
-// scork:
-	MayaConversionCleaner _any_old_name;
-// RAVEN END
+	const char *game = cvarSystem->GetCVarString( "fs_game" );
+	if ( strlen(game) == 0 ) {
+		game = BASE_GAMEDIR;
+	}
 
 	Reset();
 	src  = anim;
 	dest = anim;
 	dest.SetFileExtension( MD5_ANIM_EXT );
 
-	sprintf( commandLine, "anim %s -dest %s -game %s", src.c_str(), dest.c_str(), CD_BASEDIR );
+	sprintf( commandLine, "anim %s -dest %s -game %s", src.c_str(), dest.c_str(), game );
 	if ( !ConvertMayaToMD5() ) {
 		gameLocal.Printf( "Failed to export '%s' : %s", src.c_str(), Maya_Error.c_str() );
 		return false;
@@ -435,12 +391,6 @@ idModelExport::ParseExportSection
 ====================
 */
 int idModelExport::ParseExportSection( idParser &parser ) {
-
-// RAVEN BEGIN
-// scork:
-	MayaConversionCleaner _any_old_name;
-// RAVEN END
-
 	idToken	command;
 	idToken	token;
 	idStr	defaultCommands;
@@ -509,6 +459,11 @@ int idModelExport::ParseExportSection( idParser &parser ) {
 
 			Reset();
 			if ( ParseOptions( lex ) ) {
+				const char *game = cvarSystem->GetCVarString( "fs_game" );
+				if ( strlen(game) == 0 ) {
+					game = BASE_GAMEDIR;
+				}
+
 				if ( command == "mesh" ) {
 					dest.SetFileExtension( MD5_MESH_EXT );
 				} else if ( command == "anim" ) {
@@ -519,7 +474,7 @@ int idModelExport::ParseExportSection( idParser &parser ) {
 					dest.SetFileExtension( command );
 				}
 				idStr back = commandLine;
-				sprintf( commandLine, "%s %s -dest %s -game %s%s", command.c_str(), src.c_str(), dest.c_str(), CD_BASEDIR, commandLine.c_str() );
+				sprintf( commandLine, "%s %s -dest %s -game %s%s", command.c_str(), src.c_str(), dest.c_str(), game, commandLine.c_str() );
 				if ( ConvertMayaToMD5() ) {
 					count++;
 				} else {

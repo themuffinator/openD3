@@ -660,11 +660,7 @@ void WriteOutputFile( void ) {
 	if ( !procFile ) {
 		common->Error( "Error opening %s", qpath.c_str() );
 	}
-// jmarshall - Quake 4 proc support
-	procFile->WriteFloatString( "%s \"%s\"\n\n", PROC_FILE_ID, PROC_FILEVERSION);
-
-	procFile->WriteFloatString("%d\n", 1105723392); // Fake CRC
-// jmarshall end
+	procFile->WriteFloatString( "%s\n\n", PROC_FILE_ID );
 
 	// write the entity models and information, writing entities first
 	for ( i=dmapGlobals.num_entities - 1 ; i >= 0 ; i-- ) {

@@ -150,8 +150,10 @@ const char *idLangDict::GetString( const char *str ) const {
 	// request Doom 3-era "#str_xxxxx" ids. If the legacy id misses, retry with
 	// a Quake 4-style remap before reporting an unknown string.
 	const int legacyDigits = 5;
+	const int q4Digits = 6;
 	const int legacyLength = STRTABLE_ID_LENGTH + legacyDigits;
-	bool triedLegacyRemap = false;
+	const int q4Length = STRTABLE_ID_LENGTH + q4Digits;
+	bool triedCompatRemap = false;
 	if ( idStr::Length( str ) == legacyLength ) {
 		bool hasOnlyDigits = true;
 		for ( int i = STRTABLE_ID_LENGTH; i < legacyLength; ++i ) {
@@ -162,7 +164,7 @@ const char *idLangDict::GetString( const char *str ) const {
 		}
 
 		if ( hasOnlyDigits ) {
-			triedLegacyRemap = true;
+			triedCompatRemap = true;
 			char remapped[STRTABLE_ID_LENGTH + legacyDigits + 2];
 			idStr::snPrintf( remapped, sizeof( remapped ), "%s1%s", STRTABLE_ID, str + STRTABLE_ID_LENGTH );
 			hashKey = GetHashKey( remapped );
@@ -174,9 +176,32 @@ const char *idLangDict::GetString( const char *str ) const {
 		}
 	}
 
-	// Keep compatibility paths quiet for stale Doom 3 id requests that don't
-	// have a Quake 4 remap in the active language dictionary.
-	if ( triedLegacyRemap ) {
+	// If a Quake 4-era key misses, retry Doom 3-style "#str_xxxxx".
+	if ( idStr::Length( str ) == q4Length && str[STRTABLE_ID_LENGTH] == '1' ) {
+		bool hasOnlyDigits = true;
+		for ( int i = STRTABLE_ID_LENGTH; i < q4Length; ++i ) {
+			if ( str[i] < '0' || str[i] > '9' ) {
+				hasOnlyDigits = false;
+				break;
+			}
+		}
+
+		if ( hasOnlyDigits ) {
+			triedCompatRemap = true;
+			char remapped[STRTABLE_ID_LENGTH + legacyDigits + 1];
+			idStr::snPrintf( remapped, sizeof( remapped ), "%s%s", STRTABLE_ID, str + STRTABLE_ID_LENGTH + 1 );
+			hashKey = GetHashKey( remapped );
+			for ( int i = hash.First( hashKey ); i != -1; i = hash.Next( i ) ) {
+				if ( args[i].key.Cmp( remapped ) == 0 ) {
+					return args[i].value;
+				}
+			}
+		}
+	}
+
+	// Keep compatibility paths quiet for stale Doom 3/Quake 4 remaps that
+	// don't exist in the active language dictionary.
+	if ( triedCompatRemap ) {
 		return str;
 	}
 

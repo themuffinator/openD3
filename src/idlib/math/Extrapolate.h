@@ -39,7 +39,7 @@ public:
 	const type &		GetSpeed( void ) const { return speed; }
 	extrapolation_t		GetExtrapolationType( void ) const { return extrapolationType; }
 
-private:
+public:
 	extrapolation_t		extrapolationType;
 	float				startTime;
 	float				duration;

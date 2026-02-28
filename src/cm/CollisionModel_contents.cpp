@@ -424,8 +424,12 @@ int idCollisionModelManagerLocal::PointContents( const idVec3 p, idCollisionMode
 	idPlane *plane;
 
 	// If model is NULL, assume we are wanting the world model.
-	if (model == NULL) {
-		common->FatalError("%s model passed was nullptr", __FUNCTION__);
+	if ( model == NULL ) {
+		model = collisionModelManager ? static_cast<idCollisionModelLocal *>( collisionModelManager->GetCollisionModel( 0 ) ) : NULL;
+		if ( model == NULL ) {
+			common->Warning( "%s: world model unavailable for nullptr model handle", __FUNCTION__ );
+			return 0;
+		}
 	}
 
 	node = idCollisionModelManagerLocal::PointNode( p, (idCollisionModelLocal *)model );
@@ -489,8 +493,12 @@ int idCollisionModelManagerLocal::ContentsTrm( trace_t *results, const idVec3 &s
 	idVec3 dir;
 	ALIGN16( cm_traceWork_t tw );
 
-	if (model == NULL) {
-		common->FatalError("%s model passed was nullptr", __FUNCTION__);
+	if ( model == NULL ) {
+		model = collisionModelManager ? static_cast<idCollisionModelLocal *>( collisionModelManager->GetCollisionModel( 0 ) ) : NULL;
+		if ( model == NULL ) {
+			common->Warning( "%s: world model unavailable for nullptr model handle", __FUNCTION__ );
+			return 0;
+		}
 	}
 
 	// fast point case
@@ -638,8 +646,12 @@ int idCollisionModelManagerLocal::Contents( const idVec3 &start,
 	trace_t results;
 
 	// If the model is NULL then assume we are checking the world model.
-	if (model == NULL) {
-		common->FatalError("%s model passed was nullptr", __FUNCTION__);
+	if ( model == NULL ) {
+		model = collisionModelManager ? collisionModelManager->GetCollisionModel( 0 ) : NULL;
+		if ( model == NULL ) {
+			common->Warning( "%s: world model unavailable for nullptr model handle", __FUNCTION__ );
+			return 0;
+		}
 	}
 
 	return ContentsTrm( &results, start, trm, trmAxis, contentMask, (idCollisionModelLocal *)model, modelOrigin, modelAxis );

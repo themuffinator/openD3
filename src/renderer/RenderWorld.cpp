@@ -205,7 +205,7 @@ qhandle_t idRenderWorldLocal::AddEffectDef(const renderEffect_t* reffect, int ti
 	const float startTimeSeconds = (reffect && reffect->startTime > 0.0f)
 		? reffect->startTime
 		: (static_cast<float>(time) * 0.001f);
-	if (!bse->PlayEffect(def, startTimeSeconds)) {
+	if (!effectsManager->PlayEffect(def, startTimeSeconds)) {
 		def->expired = true;
 	}
 
@@ -247,7 +247,7 @@ void idRenderWorldLocal::FreeEffectDef(qhandle_t effectHandle) {
 		effectsDef[effectHandle]->dynamicModelFrameCount = 0;
 	}
 
-	bse->FreeEffect(effectsDef[effectHandle]);
+	effectsManager->FreeEffect(effectsDef[effectHandle]);
 
 	if (effectsDef[effectHandle] != NULL)
 		delete effectsDef[effectHandle];
@@ -262,7 +262,7 @@ void idRenderWorldLocal::StopEffectDef(qhandle_t effectHandle) {
 	if (effectsDef[effectHandle] == NULL)
 		return;
 
-	bse->StopEffect(effectsDef[effectHandle]);
+	effectsManager->StopEffect(effectsDef[effectHandle]);
 }
 
 const class rvRenderEffectLocal* idRenderWorldLocal::GetEffectDef(qhandle_t effectHandle) const { 
@@ -273,7 +273,7 @@ const class rvRenderEffectLocal* idRenderWorldLocal::GetEffectDef(qhandle_t effe
 }
 
 bool idRenderWorldLocal::EffectDefHasSound(const renderEffect_s* reffect) { 
-	return bse->CheckDefForSound(reffect); 
+	return effectsManager->CheckDefForSound(reffect); 
 }
 
 /*
@@ -2257,3 +2257,4 @@ const idMaterial *R_RemapShaderBySkin( const idMaterial *shader, const idDeclSki
 
 	return skin->RemapShaderBySkin( shader );
 }
+

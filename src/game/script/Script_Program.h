@@ -1,3 +1,30 @@
+/*
+===========================================================================
+
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
 
 #ifndef __SCRIPT_PROGRAM_H__
 #define __SCRIPT_PROGRAM_H__
@@ -12,16 +39,11 @@ class idSaveGame;
 class idRestoreGame;
 
 #define MAX_STRING_LEN		128
-// RAVEN BEGIN
-// ddynerman: higher max limit, initially 196608
-// jshepard: ... then 393216
-#define MAX_GLOBALS			589824			// in bytes
+#define MAX_GLOBALS			196608			// in bytes
+#define MAX_STRINGS			1024
+#define MAX_FUNCS			3072
+#define MAX_STATEMENTS		81920			// statement_t - 18 bytes last I checked
 
-// jshepard: raise the limits. Formerly 1024, 3072 and 81920. 
-#define MAX_STRINGS			2048
-#define MAX_FUNCS			6144
-#define MAX_STATEMENTS		163840			// statement_t - 18 bytes last I checked
-// RAVEN END
 typedef enum {
 	ev_error = -1, ev_void, ev_scriptevent, ev_namespace, ev_string, ev_float, ev_vector, ev_entity, ev_field, ev_function, ev_virtualfunction, ev_pointer, ev_object, ev_jumpoffset, ev_argsize, ev_boolean
 } etype_t;
@@ -83,7 +105,6 @@ public:
 
 						idTypeDef( const idTypeDef &other );
 						idTypeDef( etype_t etype, idVarDef *edef, const char *ename, int esize, idTypeDef *aux );
-						virtual ~idTypeDef( void ) { }
 	void				operator=( const idTypeDef& other );
 	size_t				Allocated( void ) const;
 
@@ -118,132 +139,7 @@ public:
 	int					GetFunctionNumber( const function_t *func ) const;
 	const function_t	*GetFunction( int funcNumber ) const;
 	void				AddFunction( const function_t *func );
-
-// RAVEN BEGIN
-	// abahr
-	virtual const char*	GetReturnedValAsString( idProgram& program ) { return ""; }
-	virtual void		PushOntoStack( idThread* thread, const char* source ) { assert(0); }
-	virtual bool		IsValid( const char* source ) const { return true; }
-	virtual const char*	Format() const { return ""; }
-// RAVEN END
 };
-
-// RAVEN BEGIN
-// abahr: subclasses for overwritting helper functions
-
-/***********************************************************************
-
-rvTypeDefInt
-
-***********************************************************************/
-class rvTypeDefInt : public idTypeDef {
-public:
-				rvTypeDefInt( const idTypeDef &other ) : idTypeDef( other ) {}
-				rvTypeDefInt( etype_t etype, idVarDef *edef, const char *ename, int esize, idTypeDef *aux ) : idTypeDef( etype, edef, ename, esize, aux ) {}
-
-	const char*	GetReturnedValAsString( idProgram& program );
-	void		PushOntoStack( idThread* thread, const char* source );
-	bool		IsValid( const char* source ) const;
-
-protected:
-	const char*	Format() const { return "%d"; }
-	int			Parse( const char* source ) const;
-
-};
-
-/***********************************************************************
-
-rvTypeDefFloat
-
-***********************************************************************/
-class rvTypeDefFloat : public idTypeDef {
-public:
-				rvTypeDefFloat( const idTypeDef &other ) : idTypeDef( other ) {}
-				rvTypeDefFloat( etype_t etype, idVarDef *edef, const char *ename, int esize, idTypeDef *aux ) : idTypeDef( etype, edef, ename, esize, aux ) {}
-
-	const char*	GetReturnedValAsString( idProgram& program );
-	void		PushOntoStack( idThread* thread, const char* source );
-	bool		IsValid( const char* source ) const;
-
-protected:
-	const char*	Format() const { return "%f"; }
-	float		Parse( const char* source ) const;
-};
-
-/***********************************************************************
-
-rvTypeDefVec3
-
-***********************************************************************/
-class rvTypeDefVec3 : public idTypeDef {
-public:
-				rvTypeDefVec3( const idTypeDef &other ) : idTypeDef( other ) {}
-				rvTypeDefVec3( etype_t etype, idVarDef *edef, const char *ename, int esize, idTypeDef *aux ) : idTypeDef( etype, edef, ename, esize, aux ) {}
-
-	const char*	GetReturnedValAsString( idProgram& program );
-	void		PushOntoStack( idThread* thread, const char* source );
-	bool		IsValid( const char* source ) const;
-
-protected:
-	const char*	Format() const { return "%f %f %f"; }
-	idVec3		Parse( const char* source ) const;
-};
-
-/***********************************************************************
-
-rvTypeDefEntity
-
-***********************************************************************/
-class rvTypeDefEntity : public idTypeDef {
-public:
-				rvTypeDefEntity( const idTypeDef &other ) : idTypeDef( other ) {}
-				rvTypeDefEntity( etype_t etype, idVarDef *edef, const char *ename, int esize, idTypeDef *aux ) : idTypeDef( etype, edef, ename, esize, aux ) {}
-
-	const char*	GetReturnedValAsString( idProgram& program );
-	void		PushOntoStack( idThread* thread, const char* source );
-	bool		IsValid( const char* source ) const;
-
-protected:
-	idEntity*	Parse( const char* source ) const;
-};
-
-/***********************************************************************
-
-rvTypeDefString
-
-***********************************************************************/
-class rvTypeDefString : public idTypeDef {
-public:
-				rvTypeDefString( const idTypeDef &other ) : idTypeDef( other ) {}
-				rvTypeDefString( etype_t etype, idVarDef *edef, const char *ename, int esize, idTypeDef *aux ) : idTypeDef( etype, edef, ename, esize, aux ) {}
-
-	const char*	GetReturnedValAsString( idProgram& program );
-	void		PushOntoStack( idThread* thread, const char* source );
-	bool		IsValid( const char* source ) const;
-
-protected:
-	const char*	Parse( const char* source ) const;
-};
-
-/***********************************************************************
-
-rvTypeDefBool
-
-***********************************************************************/
-class rvTypeDefBool : public idTypeDef {
-public:
-				rvTypeDefBool( const idTypeDef &other ) : idTypeDef( other ) {}
-				rvTypeDefBool( etype_t etype, idVarDef *edef, const char *ename, int esize, idTypeDef *aux ) : idTypeDef( etype, edef, ename, esize, aux ) {}
-
-	const char*	GetReturnedValAsString( idProgram& program );
-	void		PushOntoStack( idThread* thread, const char* source );
-	bool		IsValid( const char* source ) const;
-
-protected:
-	const char*	Format() const { return "%u"; }
-	bool		Parse( const char* source ) const;
-};
-// RAVEN END
 
 /***********************************************************************
 
@@ -364,7 +260,7 @@ sample the data for non-dynamic values.
 
 ***********************************************************************/
 
-typedef idScriptVariable<bool, ev_boolean, bool>			idScriptBool;
+typedef idScriptVariable<int, ev_boolean, int>				idScriptBool;
 typedef idScriptVariable<float, ev_float, float>			idScriptFloat;
 typedef idScriptVariable<float, ev_float, int>				idScriptInt;
 typedef idScriptVariable<idVec3, ev_vector, idVec3>			idScriptVector;
@@ -486,13 +382,10 @@ private:
 extern	idTypeDef	type_void;
 extern	idTypeDef	type_scriptevent;
 extern	idTypeDef	type_namespace;
-// RAVEN BEGIN
-// abahr
-extern	rvTypeDefString	type_string;
-extern	rvTypeDefFloat	type_float;
-extern	rvTypeDefVec3	type_vector;
-extern	rvTypeDefEntity	type_entity;
-// RAVEN END
+extern	idTypeDef	type_string;
+extern	idTypeDef	type_float;
+extern	idTypeDef	type_vector;
+extern	idTypeDef	type_entity;
 extern  idTypeDef	type_field;
 extern	idTypeDef	type_function;
 extern	idTypeDef	type_virtualfunction;
@@ -500,10 +393,7 @@ extern  idTypeDef	type_pointer;
 extern	idTypeDef	type_object;
 extern	idTypeDef	type_jumpoffset;	// only used for jump opcodes
 extern	idTypeDef	type_argsize;		// only used for function call and thread opcodes
-// RAVEN BEGIN
-// abahr
-extern	rvTypeDefBool	type_boolean;
-// RAVEN END
+extern	idTypeDef	type_boolean;
 
 extern	idVarDef	def_void;
 extern	idVarDef	def_scriptevent;
@@ -622,35 +512,13 @@ public:
 
 	int 										GetReturnedInteger( void );
 
-// RAVEN BEGIN
-// abahr: adding helper functions for other types
-	float										GetReturnedFloat();
-	idVec3										GetReturnedVec3();
-	idEntity*									GetReturnedEntity();
-	const char*									GetReturnedString();
-	bool										GetReturnedBool();
-// RAVEN END
-
 	void										ReturnFloat( float value );
 	void										ReturnInteger( int value );
 	void										ReturnVector( idVec3 const &vec );
 	void										ReturnString( const char *string );
-// RAVEN BEGIN
-// abahr: added const
-	void										ReturnEntity( const idEntity *ent );
-// RAVEN END
+	void										ReturnEntity( idEntity *ent );
 	
 	int											NumFilenames( void ) { return fileList.Num( ); }
-	
-// RAVEN BEGIN
-// bdube: added
-	void										ListStates( void );
-// jscott: added for debug with inlines and memory log
-	void										Shutdown( void );
-// jscott: added for stats
-	size_t										ScriptSummary( const idCmdArgs &args );
-	size_t										ClassSummary( const idCmdArgs &args );
-// RAVEN END
 };
 
 /*
@@ -686,50 +554,8 @@ idProgram::GetReturnedInteger
 ================
 */
 ID_INLINE int idProgram::GetReturnedInteger( void ) {
-// RAVEN BEGIN
-// abahr: because we only return floats in idThread we need to only get floats
-	return (int)GetReturnedFloat();
-// RAVEN END
+	return *returnDef->value.intPtr;
 }
-
-// RAVEN BEGIN
-// abahr: adding helper functions for other types
-/*
-================
-idProgram::GetReturnedFloat
-================
-*/
-ID_INLINE float idProgram::GetReturnedFloat() {
-	return *returnDef->value.floatPtr;
-}
-
-/*
-================
-idProgram::GetReturnedVec3
-================
-*/
-ID_INLINE idVec3 idProgram::GetReturnedVec3() {
-	return *returnDef->value.vectorPtr;
-}
-
-/*
-================
-idProgram::GetReturnedString
-================
-*/
-ID_INLINE const char* idProgram::GetReturnedString() {
-	return returnDef->value.stringPtr;
-}
-
-/*
-================
-idProgram::GetReturnedBool
-================
-*/
-ID_INLINE bool idProgram::GetReturnedBool() {
-	return GetReturnedInteger() != 0;
-}
-// RAVEN END
 
 /*
 ================

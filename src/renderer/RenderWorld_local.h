@@ -177,7 +177,7 @@ public:
 
 	idList<idRenderEntityLocal*>	entityDefs;
 	idList<idRenderLightLocal*>		lightDefs;
-// jmarshall: BSE
+// jmarshall: FX runtime
 	idList<rvRenderEffectLocal*>	effectsDef;
 // jmarshll end
 
@@ -287,3 +287,4 @@ public:
 };
 
 #endif /* !__RENDERWORLDLOCAL_H__ */
+

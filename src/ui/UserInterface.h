@@ -128,6 +128,7 @@ public:
 
 								// Sets the size for 640x480 adjustment.
 	virtual void				SetSize( float width, float height ) = 0;
+	virtual void				SetInWorldGuiRender( bool enabled ) {}
 
 	virtual void				BeginLevelLoad( void ) = 0;
 	virtual void				EndLevelLoad( void ) = 0;

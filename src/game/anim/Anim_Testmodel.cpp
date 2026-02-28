@@ -1,4 +1,31 @@
 /*
+===========================================================================
+
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+/*
 =============================================================================
 
   MODEL TESTING
@@ -21,8 +48,8 @@ move around it to view it from different angles.
 =============================================================================
 */
 
-
-
+#include "../../idlib/precompiled.h"
+#pragma hdrstop
 
 #include "../Game_local.h"
 
@@ -80,10 +107,6 @@ void idTestModel::Spawn( void ) {
 	idMat3				axis;
 	const idKeyValue	*kv;
 	copyJoints_t		copyJoint;
-// RAVEN BEGIN
-// ddynerman: new heads
-	idAFAttachment		*headEnt;
-// RAVEN END
 
 	if ( renderEntity.hModel && renderEntity.hModel->IsDefaultModel() && !animator.ModelDef() ) {
 		gameLocal.Warning( "Unable to create testmodel for '%s' : model defaulted", spawnArgs.GetString( "model" ) );
@@ -114,12 +137,10 @@ void idTestModel::Spawn( void ) {
 	// add the head model if it has one
 	headModel = spawnArgs.GetString( "def_head", "" );
 	if ( headModel[ 0 ] ) {
-// RAVEN BEGIN
-// ddynerman: new heads
-		jointName = spawnArgs.GetString( "joint_head" );
+		jointName = spawnArgs.GetString( "head_joint" );
 		joint = animator.GetJointHandle( jointName );
 		if ( joint == INVALID_JOINT ) {
-			gameLocal.Warning( "Joint '%s' not found for 'joint_head'", jointName.c_str() );
+			gameLocal.Warning( "Joint '%s' not found for 'head_joint'", jointName.c_str() );
 		} else {
 			// copy any sounds in case we have frame commands on the head
 			idDict				args;
@@ -129,23 +150,13 @@ void idTestModel::Spawn( void ) {
 				sndKV = spawnArgs.MatchPrefix( "snd_", sndKV );
 			}
 
-			args.Set( "classname", headModel );
-			if( !gameLocal.SpawnEntityDef( args, ( idEntity ** )&headEnt ) ) {
-				gameLocal.Warning( "idTestModel::Spawn() - Unknown head model '%s'\n", headModel );
-				return;
-			}
-			headEnt->spawnArgs.Set( "classname", headModel );
-
-			headEnt->SetName( va( "%s_head", name.c_str() ) );
-			headEnt->SetBody ( this, headEnt->spawnArgs.GetString ( "model" ), joint );
-
-			headEnt->BindToJoint( this, joint, true );
-			headEnt->SetOrigin( vec3_origin );		
-			headEnt->SetAxis( mat3_identity );
-			headEnt->InitCopyJoints ( );
-
-			head = headEnt;
-// RAVEN END			
+			head = gameLocal.SpawnEntityType( idAnimatedEntity::Type, &args );
+			animator.GetJointTransform( joint, gameLocal.time, origin, axis );
+			origin = GetPhysics()->GetOrigin() + ( origin + modelOffset ) * GetPhysics()->GetAxis();
+			head.GetEntity()->SetModel( headModel );
+			head.GetEntity()->SetOrigin( origin );
+			head.GetEntity()->SetAxis( GetPhysics()->GetAxis() );
+			head.GetEntity()->BindToJoint( this, animator.GetJointName( joint ), true );
 		
 			headAnimator = head.GetEntity()->GetAnimator();
 
@@ -182,9 +193,6 @@ void idTestModel::Spawn( void ) {
 
 	SetPhysics( &physicsObj );
 
-	// always keep updating so we can see the skeleton for the default pose
-	fl.forcePhysicsUpdate = true;
-
 	gameLocal.Printf( "Added testmodel at origin = '%s',  angles = '%s'\n", GetPhysics()->GetOrigin().ToString(), GetPhysics()->GetAxis().ToAngles().ToString()  );
 	BecomeActive( TH_THINK );
 }
@@ -201,20 +209,13 @@ idTestModel::~idTestModel() {
 	} else {
 		gameLocal.Printf( "Removing testmodel\n" );
 	}
-
 	if ( gameLocal.testmodel == this ) {
 		gameLocal.testmodel = NULL;
 	}
 	if ( head.GetEntity() ) {
-// RAVEN BEGIN
-// ddynerman: allow instant respawning of head
-		head.GetEntity()->SetName( va( "%s_oldhead", head.GetEntity()->name.c_str() ) );
-// RAVEN END
 		head.GetEntity()->StopSound( SND_CHANNEL_ANY, false );
 		head.GetEntity()->PostEventMS( &EV_Remove, 0 );
 	}
-	
-	SetPhysics( NULL );
 }
 
 /*
@@ -248,7 +249,6 @@ void idTestModel::Think( void ) {
 	idMat3 axis;
 	idAngles ang;
 	int	i;
-	frameBlend_t frameBlend = { 0 };
 
 	if ( thinkFlags & TH_THINK ) {
 		if ( anim && ( gameLocal.testmodel == this ) && ( mode != g_testModelAnimate.GetInteger() ) ) {
@@ -298,17 +298,12 @@ void idTestModel::Think( void ) {
 				break;
 
 			case 3:
-// RAVEN BEGIN
 				// frame by frame with continuous origin
-				frameBlend.frame1 = frame;
-				frameBlend.frame2 = frame;
-				frameBlend.frontlerp = 1.0f;
-				animator.SetFrame( ANIMCHANNEL_ALL, anim, frameBlend );
+				animator.SetFrame( ANIMCHANNEL_ALL, anim, frame, gameLocal.time, FRAME2MS( g_testModelBlend.GetInteger() ) );
 				animator.RemoveOriginOffset( false );
 				if ( headAnim ) {
-					headAnimator->SetFrame( ANIMCHANNEL_ALL, headAnim, frameBlend );
+					headAnimator->SetFrame( ANIMCHANNEL_ALL, headAnim, frame, gameLocal.time, FRAME2MS( g_testModelBlend.GetInteger() ) );
 				}
-// RAVEN END
 				break;
 
 			case 4:
@@ -321,17 +316,12 @@ void idTestModel::Think( void ) {
 				break;
 
 			case 5:
-// RAVEN BEGIN
 				// frame by frame with fixed origin
-				frameBlend.frame1 = frame;
-				frameBlend.frame2 = frame;
-				frameBlend.frontlerp = 1.0f;
-				animator.SetFrame( ANIMCHANNEL_ALL, anim, frameBlend );
+				animator.SetFrame( ANIMCHANNEL_ALL, anim, frame, gameLocal.time, FRAME2MS( g_testModelBlend.GetInteger() ) );
 				animator.RemoveOriginOffset( true );
 				if ( headAnim ) {
-					headAnimator->SetFrame( ANIMCHANNEL_ALL, headAnim, frameBlend );
+					headAnimator->SetFrame( ANIMCHANNEL_ALL, headAnim, frame, gameLocal.time, FRAME2MS( g_testModelBlend.GetInteger() ) );
 				}
-// RAVEN END
 				break;
 			}
 			
@@ -383,10 +373,7 @@ void idTestModel::Think( void ) {
 			joint = animator.GetJointHandle( "origin" );
 			animator.GetJointTransform( joint, gameLocal.time, neworigin, axis );
 			neworigin = ( ( neworigin - animator.ModelDef()->GetVisualOffset() ) * physicsObj.GetAxis() ) + GetPhysics()->GetOrigin();
-// RAVEN BEGIN
-// ddynerman: multiple clip worlds
-			clip->Link( this, 0, neworigin, clip->GetAxis() );
-// RAVEN END
+			clip->Link( gameLocal.clip, this, 0, neworigin, clip->GetAxis() );
 		}
 	}
 
@@ -652,7 +639,7 @@ void idTestModel::KeepTestModel_f( const idCmdArgs &args ) {
 		return;
 	}
 
-	gameLocal.Printf( "modelDef %i kept\n", gameLocal.testmodel->renderEntity.hModel );
+	gameLocal.Printf( "modelDef %p kept\n", gameLocal.testmodel->renderEntity.hModel );
 
 	gameLocal.testmodel = NULL;
 }
@@ -677,12 +664,12 @@ void idTestModel::TestSkin_f( const idCmdArgs &args ) {
 
 	// delete the testModel if active
 	if ( !gameLocal.testmodel ) {
-		gameLocal.Printf( "No active testModel\n" );
+		common->Printf( "No active testModel\n" );
 		return;
 	}
 
 	if ( args.Argc() < 2 ) {
-		gameLocal.Printf( "removing testSkin.\n" );
+		common->Printf( "removing testSkin.\n" );
 		gameLocal.testmodel->SetSkin( NULL );
 		return;
 	}
@@ -711,23 +698,23 @@ void idTestModel::TestShaderParm_f( const idCmdArgs &args ) {
 
 	// delete the testModel if active
 	if ( !gameLocal.testmodel ) {
-		gameLocal.Printf( "No active testModel\n" );
+		common->Printf( "No active testModel\n" );
 		return;
 	}
 
 	if ( args.Argc() != 3 ) {
-		gameLocal.Printf( "USAGE: testShaderParm <parmNum> <float | \"time\">\n" );
+		common->Printf( "USAGE: testShaderParm <parmNum> <float | \"time\">\n" );
 		return;
 	}
 
 	int	parm = atoi( args.Argv( 1 ) );
 	if ( parm < 0 || parm >= MAX_ENTITY_SHADER_PARMS ) {
-		gameLocal.Printf( "parmNum %i out of range\n", parm );
+		common->Printf( "parmNum %i out of range\n", parm );
 		return;
 	}
 
 	float	value;
-	if ( !stricmp( args.Argv( 2 ), "time" ) ) {
+	if ( !idStr::Icmp( args.Argv( 2 ), "time" ) ) {
 		value = gameLocal.time * -0.001;
 	} else {
 		value = atof( args.Argv( 2 ) );
@@ -799,10 +786,7 @@ void idTestModel::TestModel_f( const idCmdArgs &args ) {
 
 	dict.Set( "origin", offset.ToString() );
 	dict.Set( "angle", va( "%f", player->viewAngles.yaw + 180.0f ) );
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-	gameLocal.testmodel = ( idTestModel * )gameLocal.SpawnEntityType( idTestModel::GetClassType(), &dict );
-// RAVEN END
+	gameLocal.testmodel = ( idTestModel * )gameLocal.SpawnEntityType( idTestModel::Type, &dict );
 	gameLocal.testmodel->renderEntity.shaderParms[SHADERPARM_TIMEOFFSET] = -MS2SEC( gameLocal.time );
 }
 

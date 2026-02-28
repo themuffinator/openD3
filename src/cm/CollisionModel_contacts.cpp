@@ -59,8 +59,12 @@ int idCollisionModelManagerLocal::Contacts( contactInfo_t *contacts, const int m
 	idVec3 end;
 
 	// If the model is NULL then assume we are checking the world model.
-	if (model == NULL) {
-		common->FatalError("%s model passed was nullptr", __FUNCTION__);
+	if ( model == NULL ) {
+		model = collisionModelManager ? collisionModelManager->GetCollisionModel( 0 ) : NULL;
+		if ( model == NULL ) {
+			common->Warning( "%s: world model unavailable for nullptr model handle", __FUNCTION__ );
+			return 0;
+		}
 	}
 
 	// same as Translation but instead of storing the first collision we store all collisions as contacts

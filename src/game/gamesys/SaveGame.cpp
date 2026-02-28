@@ -1,10 +1,37 @@
+/*
+===========================================================================
 
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+
+#include "../../idlib/precompiled.h"
+#pragma hdrstop
 
 #include "../Game_local.h"
 
-#include "NoGameTypeInfo.h"
+#include "TypeInfo.h"
 
 /*
 Save game related helper classes.
@@ -33,11 +60,6 @@ At the head of the save game is enough information to restore the player to the 
 file be unloadable in some way (for example, due to script changes).
 */
 
-// RAVEN BEGIN
-// jscott: sanity length check for strings
-#define MAX_PRINT_MSG		4096
-// RAVEN END
-
 /*
 ================
 idSaveGame::idSaveGame()
@@ -57,7 +79,7 @@ idSaveGame::idSaveGame( idFile *savefile ) {
 idSaveGame::~idSaveGame()
 ================
 */
-idSaveGame::~idSaveGame( void ) {
+idSaveGame::~idSaveGame() {
 	if ( objects.Num() ) {
 		Close();
 	}
@@ -77,21 +99,15 @@ void idSaveGame::Close( void ) {
 	idClipModel::SaveTraceModels( this );
 
 	for( i = 1; i < objects.Num(); i++ ) {
-// RAVEN BEGIN
-		WriteSyncId();
-// RAVEN END
 		CallSave_r( objects[ i ]->GetType(), objects[ i ] );
 	}
 
 	objects.Clear();
 
 #ifdef ID_DEBUG_MEMORY
-// RAVEN BEGIN
-// jscott: don't use type info
-//	idStr gameState = file->GetName();
-//	gameState.StripFileExtension();
-//	WriteGameState_f( idCmdArgs( va( "test %s_save", gameState.c_str() ), false ) );
-// RAVEN END
+	idStr gameState = file->GetName();
+	gameState.StripFileExtension();
+	WriteGameState_f( idCmdArgs( va( "test %s_save", gameState.c_str() ), false ) );
 #endif
 }
 
@@ -122,10 +138,8 @@ void idSaveGame::CallSave_r( const idTypeInfo *cls, const idClass *obj ) {
 			return;
 		}
 	}
-
-	WriteSyncId();
+	
 	( obj->*cls->Save )( this );
-	WriteSyncId();
 }
 
 /*
@@ -135,15 +149,6 @@ idSaveGame::AddObject
 */
 void idSaveGame::AddObject( const idClass *obj ) {
 	objects.AddUnique( obj );
-}
-
-/*
-================
-idSaveGame::WriteSyncId
-================
-*/
-void idSaveGame::WriteSyncId( void ) {
-	file->WriteSyncId();
 }
 
 /*
@@ -170,7 +175,7 @@ idSaveGame::WriteJoint
 ================
 */
 void idSaveGame::WriteJoint( const jointHandle_t value ) {
-	file->WriteInt( value );
+	file->WriteInt( (int&)value );
 }
 
 /*
@@ -188,7 +193,7 @@ idSaveGame::WriteByte
 ================
 */
 void idSaveGame::WriteByte( const byte value ) {
-	file->WriteUnsignedChar( value );
+	file->Write( &value, sizeof( value ) );
 }
 
 /*
@@ -197,7 +202,7 @@ idSaveGame::WriteSignedChar
 ================
 */
 void idSaveGame::WriteSignedChar( const signed char value ) {
-	file->WriteChar( value );
+	file->Write( &value, sizeof( value ) );
 }
 
 /*
@@ -222,21 +227,13 @@ void idSaveGame::WriteBool( const bool value ) {
 ================
 idSaveGame::WriteString
 ================
-*/
+*/  
 void idSaveGame::WriteString( const char *string ) {
 	int len;
 
 	len = strlen( string );
-
-// RAVEN BEGIN
-// jscott: added safety check for silly length strings
-	if( len < 0 || len >= MAX_PRINT_MSG ) {
-
-		common->Error( "idSaveGame::WriteString invalid string length (%d)", len );
-	}
-// RAVEN END
-
-	file->WriteString( string );
+	WriteInt( len );
+    file->Write( string, len );
 }
 
 /*
@@ -268,15 +265,6 @@ void idSaveGame::WriteVec4( const idVec4 &vec ) {
 
 /*
 ================
-idSaveGame::WriteVec5
-================
-*/
-void idSaveGame::WriteVec5( const idVec5 &vec ) {
-	file->WriteVec5( vec );
-}
-
-/*
-================
 idSaveGame::WriteVec6
 ================
 */
@@ -290,7 +278,9 @@ idSaveGame::WriteBounds
 ================
 */
 void idSaveGame::WriteBounds( const idBounds &bounds ) {
-	file->Write( &bounds, sizeof( bounds ) );
+	idBounds b = bounds;
+	LittleRevBytes( &b, sizeof(float), sizeof(b)/sizeof(float) );
+	file->Write( &b, sizeof( b ) );
 }
 
 /*
@@ -302,9 +292,11 @@ void idSaveGame::WriteWinding( const idWinding &w )
 {
 	int i, num;
 	num = w.GetNumPoints();
-	WriteInt( num );
+	file->WriteInt( num );
 	for ( i = 0; i < num; i++ ) {
-		WriteVec5( w[i] );
+		idVec5 v = w[i];
+		LittleRevBytes(&v, sizeof(float), sizeof(v)/sizeof(float) );
+		file->Write( &v, sizeof(v) );
 	}
 }
 
@@ -324,7 +316,9 @@ idSaveGame::WriteAngles
 ================
 */
 void idSaveGame::WriteAngles( const idAngles &angles ) {
-	file->Write( &angles, sizeof( angles ) );
+	idAngles v = angles;
+	LittleRevBytes(&v, sizeof(float), sizeof(v)/sizeof(float) );
+	file->Write( &v, sizeof( v ) );
 }
 
 /*
@@ -352,9 +346,6 @@ idSaveGame::WriteStaticObject
 ================
 */
 void idSaveGame::WriteStaticObject( const idClass &obj ) {
-// RAVEN BEGIN
-	WriteSyncId();
-// RAVEN END
 	CallSave_r( obj.GetType(), &obj );
 }
 
@@ -367,10 +358,6 @@ void idSaveGame::WriteDict( const idDict *dict ) {
 	int num;
 	int i;
 	const idKeyValue *kv;
-
-// RAVEN BEGIN
-	WriteSyncId();
-// RAVEN END
 
 	if ( !dict ) {
 		WriteInt( -1 );
@@ -398,35 +385,6 @@ void idSaveGame::WriteMaterial( const idMaterial *material ) {
 	}
 }
 
-// RAVEN BEGIN
-// bdube: material type
-/*
-================
-idSaveGame::WriteMaterial
-================
-*/
-void idSaveGame::WriteMaterialType ( const rvDeclMatType* materialType ) {
-	if ( !materialType ) {
-		WriteString( "" );
-	} else {
-		WriteString( materialType->GetName() );
-	}
-}
-
-/*
-================
-idSaveGame::WriteTable
-================
-*/
-void idSaveGame::WriteTable ( const idDeclTable* table ) {
-	if ( !table ) {
-		WriteString( "" );
-	} else {
-		WriteString( table->GetName() );
-	}
-}
-// RAVEN END
-
 /*
 ================
 idSaveGame::WriteSkin
@@ -437,6 +395,32 @@ void idSaveGame::WriteSkin( const idDeclSkin *skin ) {
 		WriteString( "" );
 	} else {
 		WriteString( skin->GetName() );
+	}
+}
+
+/*
+================
+idSaveGame::WriteParticle
+================
+*/
+void idSaveGame::WriteParticle( const idDeclParticle *particle ) {
+	if ( !particle ) {
+		WriteString( "" );
+	} else {
+		WriteString( particle->GetName() );
+	}
+}
+
+/*
+================
+idSaveGame::WriteFX
+================
+*/
+void idSaveGame::WriteFX( const idDeclFX *fx ) {
+	if ( !fx ) {
+		WriteString( "" );
+	} else {
+		WriteString( fx->GetName() );
 	}
 }
 
@@ -493,10 +477,6 @@ idSaveGame::WriteUserInterface
 void idSaveGame::WriteUserInterface( const idUserInterface *ui, bool unique ) {
 	const char *name;
 
-// RAVEN BEGIN
-	WriteSyncId();
-// RAVEN END
-
 	if ( !ui ) {
 		WriteString( "" );
 	} else {
@@ -509,194 +489,6 @@ void idSaveGame::WriteUserInterface( const idUserInterface *ui, bool unique ) {
 	}
 }
 
-// RAVEN BEGIN
-// abahr
-/*
-================
-idSaveGame::WriteExtrapolate
-================
-*/
-void idSaveGame::WriteExtrapolate( const idExtrapolate<int>& extrap ) {
-	WriteInt( (int)extrap.GetExtrapolationType() );
-	WriteFloat(	extrap.GetStartTime() );
-	WriteFloat(	extrap.GetDuration() );
-
-	WriteInt( extrap.GetStartValue() );
-	WriteInt( extrap.GetBaseSpeed() );
-	WriteInt( extrap.GetSpeed() );
-}
-
-/*
-================
-idSaveGame::WriteExtrapolate
-================
-*/
-void idSaveGame::WriteExtrapolate( const idExtrapolate<float>& extrap ) {
-	WriteInt( (int)extrap.GetExtrapolationType() );
-	WriteFloat(	extrap.GetStartTime() );
-	WriteFloat(	extrap.GetDuration() );
-
-	WriteFloat( extrap.GetStartValue() );
-	WriteFloat( extrap.GetBaseSpeed() );
-	WriteFloat( extrap.GetSpeed() );
-}
-
-/*
-================
-idSaveGame::WriteExtrapolate
-================
-*/
-void idSaveGame::WriteExtrapolate( const idExtrapolate<idVec3>& extrap ) {
-	WriteInt( (int)extrap.GetExtrapolationType() );
-	WriteFloat(	extrap.GetStartTime() );
-	WriteFloat(	extrap.GetDuration() );
-
-	WriteVec3( extrap.GetStartValue() );
-	WriteVec3( extrap.GetBaseSpeed() );
-	WriteVec3( extrap.GetSpeed() );
-}
-
-/*
-================
-idSaveGame::WriteInterpolate
-================
-*/
-void idSaveGame::WriteInterpolate( const idInterpolateAccelDecelLinear<int>& lerp ) {
-	WriteFloat( lerp.GetStartTime() );
-	WriteFloat( lerp.GetDuration() );
-	WriteFloat( lerp.GetAcceleration() );
-	WriteFloat( lerp.GetDeceleration() );
-	
-	WriteInt( lerp.GetStartValue() );
-	WriteInt( lerp.GetEndValue() );
-}
-
-/*
-================
-idSaveGame::WriteInterpolate
-================
-*/
-void idSaveGame::WriteInterpolate( const idInterpolateAccelDecelLinear<float>& lerp ) {
-	WriteFloat( lerp.GetStartTime() );
-	WriteFloat( lerp.GetDuration() );
-	WriteFloat( lerp.GetAcceleration() );
-	WriteFloat( lerp.GetDeceleration() );
-	
-	WriteFloat( lerp.GetStartValue() );
-	WriteFloat( lerp.GetEndValue() );
-}
-
-/*
-================
-idSaveGame::WriteInterpolate
-================
-*/
-void idSaveGame::WriteInterpolate( const idInterpolateAccelDecelLinear<idVec3>& lerp ) {
-	WriteFloat( lerp.GetStartTime() );
-	WriteFloat( lerp.GetDuration() );
-	WriteFloat( lerp.GetAcceleration() );
-	WriteFloat( lerp.GetDeceleration() );
-	
-	WriteVec3( lerp.GetStartValue() );
-	WriteVec3( lerp.GetEndValue() );
-}
-
-/*
-================
-idSaveGame::WriteInterpolate
-================
-*/
-void idSaveGame::WriteInterpolate( const idInterpolate<int>& lerp ) {
-	WriteFloat( lerp.GetStartTime() );
-	WriteFloat( lerp.GetDuration() );
-
-	WriteInt( lerp.GetStartValue() );
-	WriteInt( lerp.GetEndValue() );
-}
-
-/*
-================
-idSaveGame::WriteInterpolate
-================
-*/
-void idSaveGame::WriteInterpolate( const idInterpolate<float>& lerp ) {
-	WriteFloat( lerp.GetStartTime() );
-	WriteFloat( lerp.GetDuration() );
-
-	WriteFloat( lerp.GetStartValue() );
-	WriteFloat( lerp.GetEndValue() );
-}
-
-/*
-================
-idSaveGame::WriteInterpolate
-================
-*/
-void idSaveGame::WriteInterpolate( const idInterpolate<idVec3>& lerp ) {
-	WriteFloat( lerp.GetStartTime() );
-	WriteFloat( lerp.GetDuration() );
-
-	WriteVec3( lerp.GetStartValue() );
-	WriteVec3( lerp.GetEndValue() );
-}
-
-/*
-================
-idSaveGame::WriteRenderEffect
-================
-*/
-void idSaveGame::WriteRenderEffect( const renderEffect_t &renderEffect ) {
-	WriteSyncId();
-
-	WriteFloat( renderEffect.startTime );
-	WriteInt( renderEffect.suppressSurfaceInViewID );
-	WriteInt( renderEffect.allowSurfaceInViewID );
-	WriteInt( renderEffect.groupID );
-
-	WriteVec3( renderEffect.origin );
-	WriteMat3( renderEffect.axis );
-
-	WriteVec3( renderEffect.gravity );
-	WriteVec3( renderEffect.endOrigin );
-
-	WriteFloat( renderEffect.attenuation );
-	WriteBool( renderEffect.hasEndOrigin );
-	WriteBool( renderEffect.loop );
-	WriteBool( renderEffect.ambient );
-	WriteBool( renderEffect.inConnectedArea );
-	WriteInt( renderEffect.weaponDepthHackInViewID );
-	WriteFloat( renderEffect.modelDepthHack );
-
-	WriteInt( renderEffect.referenceSoundHandle );
-
-	for( int ix = 0; ix < MAX_ENTITY_SHADER_PARMS; ++ix ) {
-		WriteFloat( renderEffect.shaderParms[ ix ] );
-	}
-
-	if( renderEffect.declEffect ) {
-		WriteString( renderEffect.declEffect->GetName() );
-	} else {
-		WriteString( "" );
-	}
-}
-
-/*
-================
-idSaveGame::WriteFrustum
-================
-*/
-void idSaveGame::WriteFrustum( const idFrustum& frustum ) {
-// RAVEN BEGIN
-	WriteSyncId();
-// RAVEN END
-	WriteVec3( frustum.GetOrigin() );
-	WriteMat3( frustum.GetAxis() );
-	WriteFloat( frustum.GetNearDistance() );
-	WriteFloat( frustum.GetFarDistance() );
-	WriteFloat( frustum.GetLeft() );
-	WriteFloat( frustum.GetUp() );
-}
-
 /*
 ================
 idSaveGame::WriteRenderEntity
@@ -705,20 +497,10 @@ idSaveGame::WriteRenderEntity
 void idSaveGame::WriteRenderEntity( const renderEntity_t &renderEntity ) {
 	int i;
 
-	WriteSyncId();
-
 	WriteModel( renderEntity.hModel );
 
 	WriteInt( renderEntity.entityNum );
 	WriteInt( renderEntity.bodyId );
-
-	assert( renderEntity.bounds[0][0] <= renderEntity.bounds[1][0] ); 
-	assert( renderEntity.bounds[0][1] <= renderEntity.bounds[1][1] );
-	assert( renderEntity.bounds[0][2] <= renderEntity.bounds[1][2] );
-
-	assert( renderEntity.bounds[1][0] - renderEntity.bounds[0][0] < MAX_BOUND_SIZE );
-	assert( renderEntity.bounds[1][1] - renderEntity.bounds[0][1] < MAX_BOUND_SIZE );
-	assert( renderEntity.bounds[1][2] - renderEntity.bounds[0][2] < MAX_BOUND_SIZE );
 
 	WriteBounds( renderEntity.bounds );
 
@@ -729,17 +511,18 @@ void idSaveGame::WriteRenderEntity( const renderEntity_t &renderEntity ) {
 	WriteInt( renderEntity.suppressShadowInLightID );
 	WriteInt( renderEntity.allowSurfaceInViewID );
 
-	WriteInt( renderEntity.suppressSurfaceMask );
-
 	WriteVec3( renderEntity.origin );
 	WriteMat3( renderEntity.axis );
 
 	WriteMaterial( renderEntity.customShader );
 	WriteMaterial( renderEntity.referenceShader );
-	WriteMaterial( renderEntity.overlayShader );
 	WriteSkin( renderEntity.customSkin );
 
-	WriteInt( renderEntity.referenceSoundHandle );
+	if ( renderEntity.referenceSound != NULL ) {
+		WriteInt( renderEntity.referenceSound->Index() );
+	} else {
+		WriteInt( 0 );
+	}
 
 	for( i = 0; i < MAX_ENTITY_SHADER_PARMS; i++ ) {
 		WriteFloat( renderEntity.shaderParms[ i ] );
@@ -754,13 +537,10 @@ void idSaveGame::WriteRenderEntity( const renderEntity_t &renderEntity ) {
 	WriteBool( renderEntity.noSelfShadow );
 	WriteBool( renderEntity.noShadow );
 	WriteBool( renderEntity.noDynamicInteractions );
-	WriteBool( renderEntity.forceUpdate );
+	WriteBool( renderEntity.weaponDepthHack );
 
-	WriteInt( renderEntity.weaponDepthHackInViewID );
-	WriteFloat( renderEntity.shadowLODDistance );
-	WriteInt( renderEntity.suppressLOD );
+	WriteInt( renderEntity.forceUpdate );
 }
-// RAVEN END
 
 /*
 ================
@@ -770,10 +550,6 @@ idSaveGame::WriteRenderLight
 void idSaveGame::WriteRenderLight( const renderLight_t &renderLight ) {
 	int i;
 
-// RAVEN BEGIN
-	WriteSyncId();
-// RAVEN END
-
 	WriteMat3( renderLight.axis );
 	WriteVec3( renderLight.origin );
 
@@ -781,15 +557,8 @@ void idSaveGame::WriteRenderLight( const renderLight_t &renderLight ) {
 	WriteInt( renderLight.allowLightInViewID );
 	WriteBool( renderLight.noShadows );
 	WriteBool( renderLight.noSpecular );
-	WriteBool( renderLight.noDynamicShadows );
 	WriteBool( renderLight.pointLight );
 	WriteBool( renderLight.parallel );
-	WriteBool( renderLight.globalLight );
-
-// RAVEN BEGIN
-// dluetscher: added detail levels to render lights
-	WriteFloat( renderLight.detailLevel );
-// RAVEN END
 
 	WriteVec3( renderLight.lightRadius );
 	WriteVec3( renderLight.lightCenter );
@@ -811,9 +580,11 @@ void idSaveGame::WriteRenderLight( const renderLight_t &renderLight ) {
 		WriteFloat( renderLight.shaderParms[ i ] );
 	}
 
-// RAVEN BEGIN
-	WriteInt( renderLight.referenceSoundHandle );
-// RAVEN END
+	if ( renderLight.referenceSound != NULL ) {
+		WriteInt( renderLight.referenceSound->Index() );
+	} else {
+		WriteInt( 0 );
+	}
 }
 
 /*
@@ -822,15 +593,12 @@ idSaveGame::WriteRefSound
 ================
 */
 void idSaveGame::WriteRefSound( const refSound_t &refSound ) {
-// RAVEN BEGIN
-	WriteSyncId();
-
-	WriteInt( refSound.referenceSoundHandle );
-// RAVEN END
+	if ( refSound.referenceSound ) {
+		WriteInt( refSound.referenceSound->Index() );
+	} else {
+		WriteInt( 0 );
+	}
 	WriteVec3( refSound.origin );
-// RAVEN BEGIN
-	WriteVec3( refSound.velocity );
-// RAVEN END
 	WriteInt( refSound.listenerId );
 	WriteSoundShader( refSound.shader );
 	WriteFloat( refSound.diversity );
@@ -851,10 +619,6 @@ idSaveGame::WriteRenderView
 */
 void idSaveGame::WriteRenderView( const renderView_t &view ) {
 	int i;
-
-// RAVEN BEGIN
-	WriteSyncId();
-// RAVEN END
 
 	WriteInt( view.viewID );
 	WriteInt( view.x );
@@ -882,16 +646,10 @@ idSaveGame::WriteUsercmd
 ===================
 */
 void idSaveGame::WriteUsercmd( const usercmd_t &usercmd ) {
-// RAVEN BEGIN
-	WriteSyncId();
-// RAVEN END
 	WriteInt( usercmd.gameFrame );
 	WriteInt( usercmd.gameTime );
 	WriteInt( usercmd.duplicateCount );
-// RAVEN BEGIN
-// ddynerman: larger button bitfield
-	WriteShort( usercmd.buttons );
-// RAVEN END
+	WriteByte( usercmd.buttons );
 	WriteSignedChar( usercmd.forwardmove );
 	WriteSignedChar( usercmd.rightmove );
 	WriteSignedChar( usercmd.upmove );
@@ -921,7 +679,6 @@ void idSaveGame::WriteContactInfo( const contactInfo_t &contactInfo ) {
 	WriteInt( contactInfo.trmFeature );
 	WriteInt( contactInfo.entityNum );
 	WriteInt( contactInfo.id );
-	WriteMaterialType( contactInfo.materialType );
 }
 
 /*
@@ -930,13 +687,48 @@ idSaveGame::WriteTrace
 ===================
 */
 void idSaveGame::WriteTrace( const trace_t &trace ) {
-// RAVEN BEGIN
-	WriteSyncId();
-// RAVEN END
 	WriteFloat( trace.fraction );
 	WriteVec3( trace.endpos );
 	WriteMat3( trace.endAxis );
 	WriteContactInfo( trace.c );
+}
+
+/*
+ ===================
+ idRestoreGame::WriteTraceModel
+ ===================
+ */
+void idSaveGame::WriteTraceModel( const idTraceModel &trace ) {
+	int j, k;
+	
+	WriteInt( (int&)trace.type );
+	WriteInt( trace.numVerts );
+	for ( j = 0; j < MAX_TRACEMODEL_VERTS; j++ ) {
+		WriteVec3( trace.verts[j] );
+	}
+	WriteInt( trace.numEdges );
+	for ( j = 0; j < (MAX_TRACEMODEL_EDGES+1); j++ ) {
+		WriteInt( trace.edges[j].v[0] );
+		WriteInt( trace.edges[j].v[1] );
+		WriteVec3( trace.edges[j].normal );
+	}
+	WriteInt( trace.numPolys );
+	for ( j = 0; j < MAX_TRACEMODEL_POLYS; j++ ) {
+		WriteVec3( trace.polys[j].normal );
+		WriteFloat( trace.polys[j].dist );
+		WriteBounds( trace.polys[j].bounds );
+		WriteInt( trace.polys[j].numEdges );
+		for ( k = 0; k < MAX_TRACEMODEL_POLYEDGES; k++ ) {
+			WriteInt( trace.polys[j].edges[k] );
+		}
+	}
+	WriteVec3( trace.offset );
+	WriteBounds( trace.bounds );
+	WriteBool( trace.isConvex );
+	// padding win32 native structs
+	char tmp[3];
+	memset( tmp, 0, sizeof( tmp ) );
+	file->Write( tmp, 3 );
 }
 
 /*
@@ -959,7 +751,7 @@ idSaveGame::WriteSoundCommands
 ===================
 */
 void idSaveGame::WriteSoundCommands( void ) {
-	soundSystem->WriteToSaveGame( SOUNDWORLD_GAME, file );
+	gameSoundWorld->WriteToSaveGame( file );
 }
 
 /*
@@ -968,13 +760,8 @@ idSaveGame::WriteBuildNumber
 ======================
 */
 void idSaveGame::WriteBuildNumber( const int value ) {
-	WriteInt( value );
+	file->WriteInt( BUILD_NUMBER );
 }
-
-
-
-
-
 
 /***********************************************************************
 
@@ -999,7 +786,6 @@ idRestoreGame::~idRestoreGame()
 idRestoreGame::~idRestoreGame() {
 }
 
-// RAVEN BEGIN
 /*
 ================
 void idRestoreGame::CreateObjects
@@ -1016,14 +802,17 @@ void idRestoreGame::CreateObjects( void ) {
 	objects.SetNum( num + 1 );
 	memset( objects.Ptr(), 0, sizeof( objects[ 0 ] ) * objects.Num() );
 
-	for ( i = 1; i < objects.Num(); i++ ) {
+	for( i = 1; i < objects.Num(); i++ ) {
 		ReadString( classname );
 		type = idClass::GetClass( classname );
 		if ( !type ) {
 			Error( "idRestoreGame::CreateObjects: Unknown class '%s'", classname.c_str() );
 		}
 		objects[ i ] = type->CreateInstance();
-		assert( objects[ i ] != NULL );
+
+#ifdef ID_DEBUG_MEMORY
+		InitTypeVariables( objects[i], type->classname, 0xce );
+#endif
 	}
 }
 
@@ -1042,20 +831,26 @@ void idRestoreGame::RestoreObjects( void ) {
 
 	// restore all the objects
 	for( i = 1; i < objects.Num(); i++ ) {
-		file->ReadSyncId( "Restore objects", objects[ i ]->GetClassname() );
 		CallRestore_r( objects[ i ]->GetType(), objects[ i ] );
 	}
 
 	// regenerate render entities and render lights because are not saved
 	for( i = 1; i < objects.Num(); i++ ) {
-		if ( objects[ i ]->IsType( idEntity::GetClassType() ) ) {
+		if ( objects[ i ]->IsType( idEntity::Type ) ) {
 			idEntity *ent = static_cast<idEntity *>( objects[ i ] );
 			ent->UpdateVisuals();
 			ent->Present();
 		}
 	}
+
+#ifdef ID_DEBUG_MEMORY
+	idStr gameState = file->GetName();
+	gameState.StripFileExtension();
+	WriteGameState_f( idCmdArgs( va( "test %s_restore", gameState.c_str() ), false ) );
+	//CompareGameState_f( idCmdArgs( va( "test %s_save", gameState.c_str() ) ) );
+	gameLocal.Error( "dumped game states" );
+#endif
 }
-// RAVEN END
 
 /*
 ====================
@@ -1083,12 +878,7 @@ void idRestoreGame::Error( const char *fmt, ... ) {
 	vsprintf( text, fmt, argptr );
 	va_end( argptr );
 
-// RAVEN BEGIN
-	// FIXME: this crashes. It now leaks, but that's better than crashing.
-	// The problem is that some entities delete attached ents that are also in this list. When this call gets to them
-	// it tries to delete an already deleted object
-//	objects.DeleteContents( true );
-// RAVEN END
+	objects.DeleteContents( true );
 
 	gameLocal.Error( "%s", text );
 }
@@ -1107,9 +897,7 @@ void idRestoreGame::CallRestore_r( const idTypeInfo *cls, idClass *obj ) {
 		}
 	}
 	
-	file->ReadSyncId( "Callrestore_r start ", cls->classname );
 	( obj->*cls->Restore )( this );
-	file->ReadSyncId( "Callrestore_r end ", cls->classname );
 }
 
 /*
@@ -1136,7 +924,7 @@ idRestoreGame::ReadJoint
 ================
 */
 void idRestoreGame::ReadJoint( jointHandle_t &value ) {
-	file->ReadInt( ( int &)value );
+	file->ReadInt( (int&)value );
 }
 
 /*
@@ -1154,7 +942,7 @@ idRestoreGame::ReadByte
 ================
 */
 void idRestoreGame::ReadByte( byte &value ) {
-	file->ReadUnsignedChar( value );
+	file->Read( &value, sizeof( value ) );
 }
 
 /*
@@ -1163,7 +951,7 @@ idRestoreGame::ReadSignedChar
 ================
 */
 void idRestoreGame::ReadSignedChar( signed char &value ) {
-	file->ReadChar( ( char & )value );
+	file->Read( &value, sizeof( value ) );
 }
 
 /*
@@ -1190,18 +978,15 @@ idRestoreGame::ReadString
 ================
 */
 void idRestoreGame::ReadString( idStr &string ) {
-/*	int len;
+	int len;
 
 	ReadInt( len );
-// RAVEN BEGIN
-// jscott: added max check - should be big enough
-	if ( len < 0 || len > MAX_PRINT_MSG ) {
-		Error( "idRestoreGame::ReadString: invalid length (%d)", len );
-// RAVEN END
+	if ( len < 0 ) {
+		Error( "idRestoreGame::ReadString: invalid length" );
 	}
 
-	string.Fill( ' ', len );*/
-	file->ReadString( string );
+	string.Fill( ' ', len );
+	file->Read( &string[ 0 ], len );
 }
 
 /*
@@ -1233,15 +1018,6 @@ void idRestoreGame::ReadVec4( idVec4 &vec ) {
 
 /*
 ================
-idRestoreGame::ReadVec5
-================
-*/
-void idRestoreGame::ReadVec5( idVec5 &vec ) {
-	file->ReadVec5( vec );
-}
-
-/*
-================
 idRestoreGame::ReadVec6
 ================
 */
@@ -1256,6 +1032,7 @@ idRestoreGame::ReadBounds
 */
 void idRestoreGame::ReadBounds( idBounds &bounds ) {
 	file->Read( &bounds, sizeof( bounds ) );
+	LittleRevBytes( &bounds, sizeof(float), sizeof(bounds)/sizeof(float) );
 }
 
 /*
@@ -1269,7 +1046,8 @@ void idRestoreGame::ReadWinding( idWinding &w )
 	file->ReadInt( num );
 	w.SetNumPoints( num );
 	for ( i = 0; i < num; i++ ) {
-		file->ReadVec5( w[i] );
+		file->Read( &w[i], sizeof(idVec5) );
+		LittleRevBytes(&w[i], sizeof(float), sizeof(idVec5)/sizeof(float) );
 	}
 }
 
@@ -1289,6 +1067,7 @@ idRestoreGame::ReadAngles
 */
 void idRestoreGame::ReadAngles( idAngles &angles ) {
 	file->Read( &angles, sizeof( angles ) );
+	LittleRevBytes(&angles, sizeof(float), sizeof(idAngles)/sizeof(float) );
 }
 
 /*
@@ -1312,15 +1091,7 @@ idRestoreGame::ReadStaticObject
 ================
 */
 void idRestoreGame::ReadStaticObject( idClass &obj ) {
-// RAVEN BEGIN
-	file->ReadSyncId( "ReadStaticObject", obj.GetClassname() );
-// RAVEN END
-
 	CallRestore_r( obj.GetType(), &obj );
-
-// RAVEN BEGIN
-	obj.PostEventMS( &EV_PostRestore, 0 );
-// RAVEN END
 }
 
 /*
@@ -1333,10 +1104,6 @@ void idRestoreGame::ReadDict( idDict *dict ) {
 	int i;
 	idStr key;
 	idStr value;
-
-// RAVEN BEGIN
-	file->ReadSyncId( "ReadDict" );
-// RAVEN END
 
 	ReadInt( num );
 
@@ -1368,42 +1135,6 @@ void idRestoreGame::ReadMaterial( const idMaterial *&material ) {
 	}
 }
 
-// RAVEN BEGIN
-// bdube: material type
-/*
-================
-idRestoreGame::ReadMaterialType
-================
-*/
-void idRestoreGame::ReadMaterialType ( const rvDeclMatType* &materialType ) {
-	idStr name;
-
-	ReadString( name );
-	if ( !name.Length() ) {
-		materialType = NULL;
-	} else {
-		materialType = declManager->FindMaterialType ( name );
-	}
-}
-
-/*
-================
-idRestoreGame::ReadTable
-================
-*/
-void idRestoreGame::ReadTable  ( const idDeclTable* &table ) {
-	idStr name;
-
-	ReadString( name );
-	if ( !name.Length() ) {
-		table = NULL;
-	} else {
-		table = declManager->FindTable( name );
-	}
-}
-
-// RAVEN END
-
 /*
 ================
 idRestoreGame::ReadSkin
@@ -1417,6 +1148,38 @@ void idRestoreGame::ReadSkin( const idDeclSkin *&skin ) {
 		skin = NULL;
 	} else {
 		skin = declManager->FindSkin( name );
+	}
+}
+
+/*
+================
+idRestoreGame::ReadParticle
+================
+*/
+void idRestoreGame::ReadParticle( const idDeclParticle *&particle ) {
+	idStr name;
+
+	ReadString( name );
+	if ( !name.Length() ) {
+		particle = NULL;
+	} else {
+		particle = static_cast<const idDeclParticle *>( declManager->FindType( DECL_PARTICLE, name ) );
+	}
+}
+
+/*
+================
+idRestoreGame::ReadFX
+================
+*/
+void idRestoreGame::ReadFX( const idDeclFX *&fx ) {
+	idStr name;
+
+	ReadString( name );
+	if ( !name.Length() ) {
+		fx = NULL;
+	} else {
+		fx = static_cast<const idDeclFX *>( declManager->FindType( DECL_FX, name ) );
 	}
 }
 
@@ -1473,14 +1236,8 @@ void idRestoreGame::ReadModel( idRenderModel *&model ) {
 idRestoreGame::ReadUserInterface
 ================
 */
-// RAVEN BEGIN
-void idRestoreGame::ReadUserInterface( idUserInterface *&ui, const idDict *args ) {
-// RAVEN END
+void idRestoreGame::ReadUserInterface( idUserInterface *&ui ) {
 	idStr name;
-
-// RAVEN BEGIN
-	file->ReadSyncId( "ReadUserInterface" );
-// RAVEN END
 
 	ReadString( name );
 	if ( !name.Length() ) {
@@ -1493,291 +1250,10 @@ void idRestoreGame::ReadUserInterface( idUserInterface *&ui, const idDict *args 
 			if ( ui->ReadFromSaveGame( file ) == false ) {
 				Error( "idSaveGame::ReadUserInterface: ui failed to read properly\n" );
 			} else {
-// RAVEN BEGIN
-				UpdateGuiParms( ui, args );
-// RAVEN END
+				ui->StateChanged( gameLocal.time );
 			}
 		}
 	}
-}
-
-// RAVEN BEGIN
-// abahr
-/*
-================
-idRestoreGame::ReadExtrapolate
-================
-*/
-void idRestoreGame::ReadExtrapolate( idExtrapolate<int>& extrap ) {
-	int		extrapType;
-	float	startTime;
-	float	duration;
-	int		startValue;
-	int		baseSpeed;
-	int		speed;
-
-	ReadInt( extrapType );
-	ReadFloat( startTime );
-	ReadFloat( duration );
-
-	ReadInt( startValue );
-	ReadInt( baseSpeed );
-	ReadInt( speed );
-
-	extrap.Init( startTime, duration, startValue, baseSpeed, speed, (extrapolation_t)extrapType );
-}
-
-/*
-================
-idRestoreGame::ReadExtrapolate
-================
-*/
-void idRestoreGame::ReadExtrapolate( idExtrapolate<float>& extrap ) {
-	int		extrapType;
-	float	startTime;
-	float	duration;
-	float	startValue;
-	float	baseSpeed;
-	float	speed;
-
-	ReadInt( extrapType );
-	ReadFloat( startTime );
-	ReadFloat( duration );
-
-	ReadFloat( startValue );
-	ReadFloat( baseSpeed );
-	ReadFloat( speed );
-
-	extrap.Init( startTime, duration, startValue, baseSpeed, speed, (extrapolation_t)extrapType );
-}
-
-/*
-================
-idRestoreGame::ReadExtrapolate
-================
-*/
-void idRestoreGame::ReadExtrapolate( idExtrapolate<idVec3>& extrap ) {
-	int		extrapType;
-	float	startTime;
-	float	duration;
-	idVec3	startValue;
-	idVec3	baseSpeed;
-	idVec3	speed;
-
-	ReadInt( extrapType );
-	ReadFloat( startTime );
-	ReadFloat( duration );
-
-	ReadVec3( startValue );
-	ReadVec3( baseSpeed );
-	ReadVec3( speed );
-
-	extrap.Init( startTime, duration, startValue, baseSpeed, speed, (extrapolation_t)extrapType );
-}
-
-/*
-================
-idRestoreGame::ReadInterpolate
-================
-*/
-void idRestoreGame::ReadInterpolate( idInterpolateAccelDecelLinear<int>& lerp ) {
-	float	startTime;
-	float	duration;
-	float	accelTime;
-	float	decelTime;
-	
-	int		startValue;
-	int		endValue;
-	
-	ReadFloat( startTime );
-	ReadFloat( duration );
-	ReadFloat( accelTime );
-	ReadFloat( decelTime );
-
-	ReadInt( startValue );
-	ReadInt( endValue );
-
-	lerp.Init( startTime, accelTime, decelTime, duration, startValue, endValue );
-}
-
-/*
-================
-idRestoreGame::ReadInterpolate
-================
-*/
-void idRestoreGame::ReadInterpolate( idInterpolateAccelDecelLinear<float>& lerp ) {
-	float	startTime;
-	float	duration;
-	float	accelTime;
-	float	decelTime;
-	
-	float	startValue;
-	float	endValue;
-	
-	ReadFloat( startTime );
-	ReadFloat( duration );
-	ReadFloat( accelTime );
-	ReadFloat( decelTime );
-
-	ReadFloat( startValue );
-	ReadFloat( endValue );
-
-	lerp.Init( startTime, accelTime, decelTime, duration, startValue, endValue );
-}
-
-/*
-================
-idRestoreGame::ReadInterpolate
-================
-*/
-void idRestoreGame::ReadInterpolate( idInterpolateAccelDecelLinear<idVec3>& lerp ) {
-	float	startTime;
-	float	duration;
-	float	accelTime;
-	float	decelTime;
-	
-	idVec3	startValue;
-	idVec3	endValue;
-	
-	ReadFloat( startTime );
-	ReadFloat( duration );
-	ReadFloat( accelTime );
-	ReadFloat( decelTime );
-
-	ReadVec3( startValue );
-	ReadVec3( endValue );
-
-	lerp.Init( startTime, accelTime, decelTime, duration, startValue, endValue );
-}
-
-/*
-================
-idRestoreGame::ReadInterpolate
-================
-*/
-void idRestoreGame::ReadInterpolate( idInterpolate<int>& lerp ) {
-	float	startTime;
-	float	duration;
-
-	int		startValue;
-	int		endValue;
-
-	ReadFloat( startTime );
-	ReadFloat( duration );
-
-	ReadInt( startValue );
-	ReadInt( endValue );
-
-	lerp.Init( startTime, duration, startValue, endValue );
-}
-
-/*
-================
-idRestoreGame::ReadInterpolate
-================
-*/
-void idRestoreGame::ReadInterpolate( idInterpolate<float>& lerp ) {
-	float	startTime;
-	float	duration;
-
-	float	startValue;
-	float	endValue;
-
-	ReadFloat( startTime );
-	ReadFloat( duration );
-
-	ReadFloat( startValue );
-	ReadFloat( endValue );
-
-	lerp.Init( startTime, duration, startValue, endValue );
-}
-
-/*
-================
-idRestoreGame::ReadInterpolate
-================
-*/
-void idRestoreGame::ReadInterpolate( idInterpolate<idVec3>& lerp ) {
-	float	startTime;
-	float	duration;
-
-	idVec3	startValue;
-	idVec3	endValue;
-
-	ReadFloat( startTime );
-	ReadFloat( duration );
-
-	ReadVec3( startValue );
-	ReadVec3( endValue );
-
-	lerp.Init( startTime, duration, startValue, endValue );
-}
-/*
-================
-idRestoreGame::ReadRenderEffect
-================
-*/
-void idRestoreGame::ReadRenderEffect( renderEffect_t &renderEffect ) {
-	idStr	name;
-
-	file->ReadSyncId( "ReadRenderEffect" );
-
-	renderEffect.declEffect = NULL;
-
-	ReadFloat( renderEffect.startTime );
-	ReadInt( renderEffect.suppressSurfaceInViewID );
-	ReadInt( renderEffect.allowSurfaceInViewID );
-	ReadInt( renderEffect.groupID );
-
-	ReadVec3( renderEffect.origin );
-	ReadMat3( renderEffect.axis );
-
-	ReadVec3( renderEffect.gravity );
-	ReadVec3( renderEffect.endOrigin );
-
-	ReadFloat( renderEffect.attenuation );
-	ReadBool( renderEffect.hasEndOrigin );
-	ReadBool( renderEffect.loop );
-	ReadBool( renderEffect.ambient );
-	ReadBool( renderEffect.inConnectedArea );
-	ReadInt( renderEffect.weaponDepthHackInViewID );
-	ReadFloat( renderEffect.modelDepthHack );
-
-	ReadInt( renderEffect.referenceSoundHandle );
-
-	for( int ix = 0; ix < MAX_ENTITY_SHADER_PARMS; ++ix ) {
-		ReadFloat( renderEffect.shaderParms[ ix ] );
-	}
-
-	ReadString( name );
-	if( name.Length() ) {
-		renderEffect.declEffect = declManager->FindType( DECL_EFFECT, name );
-	}
-}
-
-/*
-================
-idRestoreGame::ReadFrustum
-================
-*/
-void idRestoreGame::ReadFrustum( idFrustum& frustum ) {
-	idVec3 origin;
-	idMat3 axis;
-	float dNear = 0.0f, dFar = 0.0f, dLeft = 0.0f, dUp = 0.0f;
-// RAVEN BEGIN
-	file->ReadSyncId( "ReadFrustum" );
-// RAVEN END
-	ReadVec3( origin );
-	frustum.SetOrigin( origin );
-
-	ReadMat3( axis );
-	frustum.SetAxis( axis );
-
-	ReadFloat( dNear );
-	ReadFloat( dFar );
-	ReadFloat( dLeft );
-	ReadFloat( dUp );
-	frustum.SetSize( dNear, dFar, dLeft, dUp ); 
 }
 
 /*
@@ -1785,12 +1261,9 @@ void idRestoreGame::ReadFrustum( idFrustum& frustum ) {
 idRestoreGame::ReadRenderEntity
 ================
 */
-// RAVEN BEGIN
-void idRestoreGame::ReadRenderEntity( renderEntity_t &renderEntity, const idDict *args ) {
-// RAVEN END
+void idRestoreGame::ReadRenderEntity( renderEntity_t &renderEntity ) {
 	int i;
-
-	file->ReadSyncId( "ReadRenderEntity" );
+	int index;
 
 	ReadModel( renderEntity.hModel );
 
@@ -1798,14 +1271,6 @@ void idRestoreGame::ReadRenderEntity( renderEntity_t &renderEntity, const idDict
 	ReadInt( renderEntity.bodyId );
 
 	ReadBounds( renderEntity.bounds );
-
-	assert( renderEntity.bounds[0][0] <= renderEntity.bounds[1][0] ); 
-	assert( renderEntity.bounds[0][1] <= renderEntity.bounds[1][1] );
-	assert( renderEntity.bounds[0][2] <= renderEntity.bounds[1][2] );
-
-	assert( renderEntity.bounds[1][0] - renderEntity.bounds[0][0] < MAX_BOUND_SIZE );
-	assert( renderEntity.bounds[1][1] - renderEntity.bounds[0][1] < MAX_BOUND_SIZE );
-	assert( renderEntity.bounds[1][2] - renderEntity.bounds[0][2] < MAX_BOUND_SIZE );
 
 	// callback is set by class's Restore function
 	renderEntity.callback = NULL;
@@ -1816,46 +1281,39 @@ void idRestoreGame::ReadRenderEntity( renderEntity_t &renderEntity, const idDict
 	ReadInt( renderEntity.suppressShadowInLightID );
 	ReadInt( renderEntity.allowSurfaceInViewID );
 
-	ReadInt( renderEntity.suppressSurfaceMask );
-
 	ReadVec3( renderEntity.origin );
 	ReadMat3( renderEntity.axis );
 
 	ReadMaterial( renderEntity.customShader );
 	ReadMaterial( renderEntity.referenceShader );
-	ReadMaterial( renderEntity.overlayShader );
 	ReadSkin( renderEntity.customSkin );
 
-	ReadInt( renderEntity.referenceSoundHandle );
+	ReadInt( index );
+	renderEntity.referenceSound = gameSoundWorld->EmitterForIndex( index );
 
 	for( i = 0; i < MAX_ENTITY_SHADER_PARMS; i++ ) {
 		ReadFloat( renderEntity.shaderParms[ i ] );
 	}
 
 	for( i = 0; i < MAX_RENDERENTITY_GUI; i++ ) {
-// RAVEN BEGIN
-		ReadUserInterface( renderEntity.gui[ i ], args );
-// RAVEN END
+		ReadUserInterface( renderEntity.gui[ i ] );
 	}
 
 	// idEntity will restore "cameraTarget", which will be used in idEntity::Present to restore the remoteRenderView
 	renderEntity.remoteRenderView = NULL;
 
-	renderEntity.numJoints = 0;
 	renderEntity.joints = NULL;
+	renderEntity.numJoints = 0;
 
 	ReadFloat( renderEntity.modelDepthHack );
 
 	ReadBool( renderEntity.noSelfShadow );
 	ReadBool( renderEntity.noShadow );
 	ReadBool( renderEntity.noDynamicInteractions );
-	ReadBool( renderEntity.forceUpdate );
+	ReadBool( renderEntity.weaponDepthHack );
 
-	ReadInt( renderEntity.weaponDepthHackInViewID );
-	ReadFloat( renderEntity.shadowLODDistance );
-	ReadInt( renderEntity.suppressLOD );
+	ReadInt( renderEntity.forceUpdate );
 }
-// RAVEN END
 
 /*
 ================
@@ -1863,9 +1321,8 @@ idRestoreGame::ReadRenderLight
 ================
 */
 void idRestoreGame::ReadRenderLight( renderLight_t &renderLight ) {
+	int index;
 	int i;
-
-	file->ReadSyncId( "ReadRenderLight" );
 
 	ReadMat3( renderLight.axis );
 	ReadVec3( renderLight.origin );
@@ -1874,15 +1331,8 @@ void idRestoreGame::ReadRenderLight( renderLight_t &renderLight ) {
 	ReadInt( renderLight.allowLightInViewID );
 	ReadBool( renderLight.noShadows );
 	ReadBool( renderLight.noSpecular );
-	ReadBool( renderLight.noDynamicShadows );
 	ReadBool( renderLight.pointLight );
 	ReadBool( renderLight.parallel );
-	ReadBool( renderLight.globalLight );
-
-// RAVEN BEGIN
-// dluetscher: added detail levels to render lights
-	ReadFloat( renderLight.detailLevel );
-// RAVEN END
 
 	ReadVec3( renderLight.lightRadius );
 	ReadVec3( renderLight.lightCenter );
@@ -1905,9 +1355,8 @@ void idRestoreGame::ReadRenderLight( renderLight_t &renderLight ) {
 		ReadFloat( renderLight.shaderParms[ i ] );
 	}
 
-// RAVEN BEGIN
-	ReadInt( renderLight.referenceSoundHandle );
-// RAVEN END
+	ReadInt( index );
+	renderLight.referenceSound = gameSoundWorld->EmitterForIndex( index );
 }
 
 /*
@@ -1916,15 +1365,11 @@ idRestoreGame::ReadRefSound
 ================
 */
 void idRestoreGame::ReadRefSound( refSound_t &refSound ) {
-// RAVEN BEGIN
-	file->ReadSyncId( "ReadRefSound" );
-// RAVEN END
+	int		index;
+	ReadInt( index );
 
-	ReadInt( refSound.referenceSoundHandle );
+	refSound.referenceSound = gameSoundWorld->EmitterForIndex( index );
 	ReadVec3( refSound.origin );
-// RAVEN BEGIN
-	ReadVec3( refSound.velocity );
-// RAVEN END
 	ReadInt( refSound.listenerId );
 	ReadSoundShader( refSound.shader );
 	ReadFloat( refSound.diversity );
@@ -1945,10 +1390,6 @@ idRestoreGame::ReadRenderView
 */
 void idRestoreGame::ReadRenderView( renderView_t &view ) {
 	int i;
-
-// RAVEN BEGIN
-	file->ReadSyncId( "ReadRenderView" );
-// RAVEN END
 
 	ReadInt( view.viewID );
 	ReadInt( view.x );
@@ -1976,18 +1417,10 @@ idRestoreGame::ReadUsercmd
 =================
 */
 void idRestoreGame::ReadUsercmd( usercmd_t &usercmd ) {
-// RAVEN BEGIN
-	file->ReadSyncId( "ReadUsercmd" );
-// RAVEN END
 	ReadInt( usercmd.gameFrame );
 	ReadInt( usercmd.gameTime );
 	ReadInt( usercmd.duplicateCount );
-// RAVEN BEGIN
-// ddynerman: larger button bitfield
-	short savedButtons;
-	ReadShort( savedButtons );
-	usercmd.buttons = static_cast<byte>( savedButtons );
-// RAVEN END
+	ReadByte( usercmd.buttons );
 	ReadSignedChar( usercmd.forwardmove );
 	ReadSignedChar( usercmd.rightmove );
 	ReadSignedChar( usercmd.upmove );
@@ -2017,7 +1450,6 @@ void idRestoreGame::ReadContactInfo( contactInfo_t &contactInfo ) {
 	ReadInt( contactInfo.trmFeature );
 	ReadInt( contactInfo.entityNum );
 	ReadInt( contactInfo.id );
-	ReadMaterialType( contactInfo.materialType );
 }
 
 /*
@@ -2026,13 +1458,47 @@ idRestoreGame::ReadTrace
 ===================
 */
 void idRestoreGame::ReadTrace( trace_t &trace ) {
-// RAVEN BEGIN
-	file->ReadSyncId( "ReadTrace" );
-// RAVEN END
 	ReadFloat( trace.fraction );
 	ReadVec3( trace.endpos );
 	ReadMat3( trace.endAxis );
 	ReadContactInfo( trace.c );
+}
+
+/*
+ ===================
+ idRestoreGame::ReadTraceModel
+ ===================
+ */
+void idRestoreGame::ReadTraceModel( idTraceModel &trace ) {
+	int j, k;
+	
+	ReadInt( (int&)trace.type );
+	ReadInt( trace.numVerts );
+	for ( j = 0; j < MAX_TRACEMODEL_VERTS; j++ ) {
+		ReadVec3( trace.verts[j] );
+	}
+	ReadInt( trace.numEdges );
+	for ( j = 0; j < (MAX_TRACEMODEL_EDGES+1); j++ ) {
+		ReadInt( trace.edges[j].v[0] );
+		ReadInt( trace.edges[j].v[1] );
+		ReadVec3( trace.edges[j].normal );
+	}
+	ReadInt( trace.numPolys );
+	for ( j = 0; j < MAX_TRACEMODEL_POLYS; j++ ) {
+		ReadVec3( trace.polys[j].normal );
+		ReadFloat( trace.polys[j].dist );
+		ReadBounds( trace.polys[j].bounds );
+		ReadInt( trace.polys[j].numEdges );
+		for ( k = 0; k < MAX_TRACEMODEL_POLYEDGES; k++ ) {
+			ReadInt( trace.polys[j].edges[k] );
+		}
+	}
+	ReadVec3( trace.offset );
+	ReadBounds( trace.bounds );
+	ReadBool( trace.isConvex );
+	// padding win32 native structs
+	char tmp[3];
+	file->Read( tmp, 3 );
 }
 
 /*
@@ -2058,8 +1524,8 @@ idRestoreGame::ReadSoundCommands
 =====================
 */
 void idRestoreGame::ReadSoundCommands( void ) {
-	soundSystem->StopAllSounds( SOUNDWORLD_GAME );
-	soundSystem->ReadFromSaveGame( SOUNDWORLD_GAME, file );
+	gameSoundWorld->StopAllSounds();
+	gameSoundWorld->ReadFromSaveGame( file );
 }
 
 /*
@@ -2068,7 +1534,7 @@ idRestoreGame::ReadBuildNumber
 =====================
 */
 void idRestoreGame::ReadBuildNumber( void ) {
-	ReadInt( buildNumber );
+	file->ReadInt( buildNumber );
 }
 
 /*
@@ -2079,22 +1545,3 @@ idRestoreGame::GetBuildNumber
 int idRestoreGame::GetBuildNumber( void ) {
 	return buildNumber;
 }
-
-
-
-void Cmd_CheckSave_f( const idCmdArgs &args )
-{
-	//idPlayer	*lp = gameLocal.GetLocalPlayer();
-	//idFile		*mp = fileSystem->GetNewFileMemory();
-	//idSaveGame	sg( mp );
-	//
-	//sg.CallSave_r( lp->GetType(), lp );
-	//
-	//
-	//mp->Rewind();
-	//idPlayer		test;
-	//idRestoreGame	rg( mp );
-	//
-	//rg.CallRestore_r( test.GetType(), &test );
-}
-

@@ -371,6 +371,27 @@ void	BigRevBytes( void *bp, int elsize, int elcount ) {}
 
 void	SixtetsForInt( byte *out, int src) { _SixtetsForInt( out, src ); }
 int		IntForSixtets( byte *in ) { return _IntForSixtets( in ); }
+void	LittleBitField( void *bp, int elsize ) {
+	if ( !Swap_IsBigEndian() ) {
+		return;
+	}
+
+	byte *bits = reinterpret_cast<byte *>( bp );
+
+	for ( int i = 0; i < elsize / 2; i++ ) {
+		byte t = bits[i];
+		bits[i] = bits[elsize - 1 - i];
+		bits[elsize - 1 - i] = t;
+	}
+
+	for ( int i = 0; i < elsize; i++ ) {
+		byte b = bits[i];
+		b = ( ( b & 0xF0 ) >> 4 ) | ( ( b & 0x0F ) << 4 );
+		b = ( ( b & 0xCC ) >> 2 ) | ( ( b & 0x33 ) << 2 );
+		b = ( ( b & 0xAA ) >> 1 ) | ( ( b & 0x55 ) << 1 );
+		bits[i] = b;
+	}
+}
 
 /*
 ================

@@ -29,6 +29,11 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef __COLLISIONMODELMANAGER_H__
 #define __COLLISIONMODELMANAGER_H__
 
+#include <stdint.h>
+
+class idCollisionModelManager;
+extern idCollisionModelManager *collisionModelManager;
+
 /*
 ===============================================================================
 
@@ -118,6 +123,9 @@ public:
 	virtual void			ModelInfo(void) = 0;
 };
 
+// Doom 3 game code historically references collision models via an integer-like handle.
+typedef intptr_t cmHandle_t;
+
 #define PROC_CLIPMODEL_INDEX_START		1
 #define PROC_CLIPMODEL_STRING_PRFX		"inlined_proc_clip_"
 
@@ -125,39 +133,140 @@ class idCollisionModelManager {
 public:
 	virtual					~idCollisionModelManager( void ) {}
 
+	static idCollisionModel *ModelForHandle( const cmHandle_t model ) {
+		if ( model == 0 ) {
+			return collisionModelManager ? collisionModelManager->GetCollisionModel( 0 ) : nullptr;
+		}
+		if ( model == -1 ) {
+			return nullptr;
+		}
+		return reinterpret_cast<idCollisionModel *>( model );
+	}
+	static cmHandle_t		HandleForModel( idCollisionModel *model ) {
+		if ( model == nullptr ) {
+			return 0;
+		}
+		if ( collisionModelManager != nullptr && model == collisionModelManager->GetCollisionModel( 0 ) ) {
+			return 0;
+		}
+		return reinterpret_cast<cmHandle_t>( model );
+	}
+
 	// Loads collision models from a map file.
 	virtual void			LoadMap( const idMapFile *mapFile, bool forceCreateMap = false ) = 0;
 	// Frees all the collision models.
 	virtual void			FreeMap(const char* mapName) = 0;
+	void					FreeMap( void ) {
+		FreeMap( "" );
+	}
 
 	// Gets the clip handle for a model.
 	virtual idCollisionModel *LoadModel(const char* mapName, const char *modelName, const bool precache ) = 0;
+	cmHandle_t				LoadModel( const char *modelName, const bool precache ) {
+		return HandleForModel( LoadModel( "", modelName, precache ) );
+	}
 
 	// Free the given model.
 	virtual void				FreeModel(idCollisionModel* model) = 0;
+	void						FreeModel( const cmHandle_t model ) {
+		FreeModel( ModelForHandle( model ) );
+	}
 	
 	// Sets up a trace model for collision with other trace models.
 	virtual idCollisionModel *ModelFromTrm(const char* mapName, const char* modelName, const idTraceModel &trm, const idMaterial *material ) = 0;
+	cmHandle_t				ModelFromTrm( const char *modelName, const idTraceModel &trm, const idMaterial *material ) {
+		return HandleForModel( ModelFromTrm( "", modelName, trm, material ) );
+	}
+	cmHandle_t				SetupTrmModel( const idTraceModel &trm, const idMaterial *material ) {
+		return HandleForModel( ModelFromTrm( "", "_trm_tmp_", trm, material ) );
+	}
+	const char *			GetModelName( const cmHandle_t model ) const {
+		idCollisionModel *cm = ModelForHandle( model );
+		return cm ? cm->GetName() : "";
+	}
+	bool					GetModelBounds( const cmHandle_t model, idBounds &bounds ) const {
+		idCollisionModel *cm = ModelForHandle( model );
+		return cm ? cm->GetBounds( bounds ) : false;
+	}
+	bool					GetModelContents( const cmHandle_t model, int &contents ) const {
+		idCollisionModel *cm = ModelForHandle( model );
+		return cm ? cm->GetContents( contents ) : false;
+	}
+	bool					GetModelVertex( const cmHandle_t model, const int vertexNum, idVec3 &vertex ) const {
+		idCollisionModel *cm = ModelForHandle( model );
+		return cm ? cm->GetVertex( vertexNum, vertex ) : false;
+	}
+	bool					GetModelEdge( const cmHandle_t model, const int edgeNum, idVec3 &start, idVec3 &end ) const {
+		idCollisionModel *cm = ModelForHandle( model );
+		return cm ? cm->GetEdge( edgeNum, start, end ) : false;
+	}
+	bool					GetModelPolygon( const cmHandle_t model, const int polygonNum, idFixedWinding &winding ) const {
+		idCollisionModel *cm = ModelForHandle( model );
+		return cm ? cm->GetPolygon( polygonNum, winding ) : false;
+	}
 
 	// Creates a trace model from a collision model, returns true if succesfull.
 	virtual bool			TrmFromModel(const char* mapName, const char *modelName, idTraceModel &trm ) = 0;
+	bool					TrmFromModel( const char *modelName, idTraceModel &trm ) {
+		return TrmFromModel( "", modelName, trm );
+	}
 
 	// Translates a trace model and reports the first collision if any.
 	virtual void			Translation( trace_t *results, const idVec3 &start, const idVec3 &end,
 								const idTraceModel *trm, const idMat3 &trmAxis, int contentMask,
 							idCollisionModel *model, const idVec3 &modelOrigin, const idMat3 &modelAxis ) = 0;
+	void					Translation( trace_t *results, const idVec3 &start, const idVec3 &end,
+								const idTraceModel *trm, const idMat3 &trmAxis, int contentMask,
+							const cmHandle_t model, const idVec3 &modelOrigin, const idMat3 &modelAxis ) {
+		Translation( results, start, end, trm, trmAxis, contentMask, ModelForHandle( model ), modelOrigin, modelAxis );
+	}
+	void					Translation( trace_t *results, const idVec3 &start, const idVec3 &end,
+								const idTraceModel *trm, const idMat3 &trmAxis, int contentMask,
+							const int model, const idVec3 &modelOrigin, const idMat3 &modelAxis ) {
+		Translation( results, start, end, trm, trmAxis, contentMask, static_cast<cmHandle_t>( model ), modelOrigin, modelAxis );
+	}
 	// Rotates a trace model and reports the first collision if any.
 	virtual void			Rotation( trace_t *results, const idVec3 &start, const idRotation &rotation,
 									const idTraceModel *trm, const idMat3 &trmAxis, int contentMask,
 									idCollisionModel *model, const idVec3 &modelOrigin, const idMat3 &modelAxis ) = 0;
+	void					Rotation( trace_t *results, const idVec3 &start, const idRotation &rotation,
+									const idTraceModel *trm, const idMat3 &trmAxis, int contentMask,
+									const cmHandle_t model, const idVec3 &modelOrigin, const idMat3 &modelAxis ) {
+		Rotation( results, start, rotation, trm, trmAxis, contentMask, ModelForHandle( model ), modelOrigin, modelAxis );
+	}
+	void					Rotation( trace_t *results, const idVec3 &start, const idRotation &rotation,
+									const idTraceModel *trm, const idMat3 &trmAxis, int contentMask,
+									const int model, const idVec3 &modelOrigin, const idMat3 &modelAxis ) {
+		Rotation( results, start, rotation, trm, trmAxis, contentMask, static_cast<cmHandle_t>( model ), modelOrigin, modelAxis );
+	}
 	// Returns the contents touched by the trace model or 0 if the trace model is in free space.
 	virtual int				Contents( const idVec3 &start,
 									const idTraceModel *trm, const idMat3 &trmAxis, int contentMask,
 									idCollisionModel *model, const idVec3 &modelOrigin, const idMat3 &modelAxis ) = 0;
+	int						Contents( const idVec3 &start,
+									const idTraceModel *trm, const idMat3 &trmAxis, int contentMask,
+									const cmHandle_t model, const idVec3 &modelOrigin, const idMat3 &modelAxis ) {
+		return Contents( start, trm, trmAxis, contentMask, ModelForHandle( model ), modelOrigin, modelAxis );
+	}
+	int						Contents( const idVec3 &start,
+									const idTraceModel *trm, const idMat3 &trmAxis, int contentMask,
+									const int model, const idVec3 &modelOrigin, const idMat3 &modelAxis ) {
+		return Contents( start, trm, trmAxis, contentMask, static_cast<cmHandle_t>( model ), modelOrigin, modelAxis );
+	}
 	// Stores all contact points of the trace model with the model, returns the number of contacts.
 	virtual int				Contacts( contactInfo_t *contacts, const int maxContacts, const idVec3 &start, const idVec6 &dir, const float depth,
 									const idTraceModel *trm, const idMat3 &trmAxis, int contentMask,
 									idCollisionModel *model, const idVec3 &modelOrigin, const idMat3 &modelAxis ) = 0;
+	int						Contacts( contactInfo_t *contacts, const int maxContacts, const idVec3 &start, const idVec6 &dir, const float depth,
+									const idTraceModel *trm, const idMat3 &trmAxis, int contentMask,
+									const cmHandle_t model, const idVec3 &modelOrigin, const idMat3 &modelAxis ) {
+		return Contacts( contacts, maxContacts, start, dir, depth, trm, trmAxis, contentMask, ModelForHandle( model ), modelOrigin, modelAxis );
+	}
+	int						Contacts( contactInfo_t *contacts, const int maxContacts, const idVec3 &start, const idVec6 &dir, const float depth,
+									const idTraceModel *trm, const idMat3 &trmAxis, int contentMask,
+									const int model, const idVec3 &modelOrigin, const idMat3 &modelAxis ) {
+		return Contacts( contacts, maxContacts, start, dir, depth, trm, trmAxis, contentMask, static_cast<cmHandle_t>( model ), modelOrigin, modelAxis );
+	}
 
 	// Tests collision detection.
 	virtual void			DebugOutput( const idVec3 &origin ) = 0;
@@ -168,6 +277,24 @@ public:
 	virtual bool			WriteCollisionModelForMapEntity( const idMapEntity *mapEnt, const char *filename, const bool testTraceModel = true ) = 0;
 
 	virtual void				DrawModel(idCollisionModel* model, const idVec3& modelOrigin, const idMat3& modelAxis,const idVec3& viewOrigin, const idMat3& viewAxis, const float radius) = 0;
+	void						DrawModel( const cmHandle_t model, const idVec3 &modelOrigin, const idMat3 &modelAxis, const idVec3 &viewOrigin, const idMat3 &viewAxis, const float radius ) {
+		DrawModel( ModelForHandle( model ), modelOrigin, modelAxis, viewOrigin, viewAxis, radius );
+	}
+	void						DrawModel( cmHandle_t model, const idVec3 &modelOrigin, const idMat3 &modelAxis, const idVec3 &viewOrigin, const float radius ) {
+		idMat3 viewAxis;
+		viewAxis.Identity();
+		DrawModel( ModelForHandle( model ), modelOrigin, modelAxis, viewOrigin, viewAxis, radius );
+	}
+	void						ModelInfo( const cmHandle_t model ) {
+		if ( model == -1 ) {
+			ListModels();
+			return;
+		}
+		idCollisionModel *cm = ModelForHandle( model );
+		if ( cm ) {
+			cm->ModelInfo();
+		}
+	}
 
 // jmarshall
 	virtual int				GetNumInlinedProcClipModels(void) = 0;
@@ -175,6 +302,9 @@ public:
 	virtual idCollisionModel* GetCollisionModel(int index) = 0;
 
 	virtual int				PointContents(const idVec3 p, idCollisionModel *model) = 0;
+	int						PointContents( const idVec3 p, const cmHandle_t model ) {
+		return PointContents( p, ModelForHandle( model ) );
+	}
 // jmarshall end
 };
 

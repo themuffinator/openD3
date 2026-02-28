@@ -310,12 +310,12 @@ void idAsyncServer::ExecuteMapChange( void ) {
 
 	serverTime = 0;
 
-	// OpenQ4 dev/staging runs from directory overrides (fs_cdpath). Keep
+	// OpenD3 dev/staging runs from directory overrides (fs_cdpath). Keep
 	// multiplayer server startup non-pure to avoid pure-lockdown failures.
 	if ( sessLocal.mapSpawnData.serverInfo.GetInt( "si_pure" ) ) {
 		sessLocal.mapSpawnData.serverInfo.SetInt( "si_pure", 0 );
 		cvarSystem->SetCVarBool( "si_pure", false );
-		common->Printf( "OpenQ4: forcing si_pure 0 for local server startup\n" );
+		common->Printf( "OpenD3: forcing si_pure 0 for local server startup\n" );
 	}
 
 	// initialize game id and time

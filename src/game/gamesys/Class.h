@@ -1,4 +1,31 @@
 /*
+===========================================================================
+
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
+/*
 
 Base class for all game objects.  Provides fast run-time type checking and run-time
 instancing of objects.
@@ -11,9 +38,6 @@ instancing of objects.
 class idClass;
 class idTypeInfo;
 
-// RAVEN BEGIN
-extern const idEventDef EV_PostRestore;
-// RAVEN END
 extern const idEventDef EV_Remove;
 extern const idEventDef EV_SafeRemove;
 
@@ -29,27 +53,20 @@ struct idEventFunc {
 #define EVENT( event, function )	{ &( event ), ( void ( idClass::* )( void ) )( &function ) },
 #define END_CLASS					{ NULL, NULL } };
 
+
 class idEventArg {
 public:
 	int			type;
 	intptr_t	value;
 
-	idEventArg() { type = D_EVENT_INTEGER; value = 0; };
-	idEventArg(int data) { type = D_EVENT_INTEGER; value = data; };
-	idEventArg(float data) { type = D_EVENT_FLOAT; value = *reinterpret_cast<int*>(&data); };
-	idEventArg(const idVec3& data) { type = D_EVENT_VECTOR; value = reinterpret_cast<intptr_t>(&data); };
-	idEventArg(const idStr& data) { type = D_EVENT_STRING; value = reinterpret_cast<intptr_t>(data.c_str()); };
-	idEventArg(const char* data) { type = D_EVENT_STRING; value = reinterpret_cast<intptr_t>(data); };
-	idEventArg(const class idEntity* data) { type = D_EVENT_ENTITY; value = reinterpret_cast<intptr_t>(data); };
-	idEventArg(const trace_t* data) { type = D_EVENT_TRACE; value = reinterpret_cast<intptr_t>(data); };
-
-// jmarshall - this can't be called from doomscript!
-#if defined(_WIN64) || defined(__x86_64__) || defined(__aarch64__)
-	idEventArg(intptr_t data) { type = D_EVENT_INTEGER64bit; value = data; };
-#else
-	idEventArg(long long data) { type = D_EVENT_INTEGER64bit; value = static_cast<intptr_t>(data); };
-#endif
-// jmarshall end
+	idEventArg()								{ type = D_EVENT_INTEGER; value = 0; };
+	idEventArg( int data )						{ type = D_EVENT_INTEGER; value = data; };
+	idEventArg( float data )					{ type = D_EVENT_FLOAT; value = *reinterpret_cast<int *>( &data ); };
+	idEventArg( idVec3 &data )					{ type = D_EVENT_VECTOR; value = reinterpret_cast<intptr_t>( &data ); };
+	idEventArg( const idStr &data )				{ type = D_EVENT_STRING; value = reinterpret_cast<intptr_t>( data.c_str() ); };
+	idEventArg( const char *data )				{ type = D_EVENT_STRING; value = reinterpret_cast<intptr_t>( data ); };
+	idEventArg( const class idEntity *data )	{ type = D_EVENT_ENTITY; value = reinterpret_cast<intptr_t>( data ); };
+	idEventArg( const struct trace_s *data )	{ type = D_EVENT_TRACE; value = reinterpret_cast<intptr_t>( data ); };
 };
 
 class idAllocError : public idException {
@@ -72,34 +89,12 @@ It prototypes variables used in class instanciation and type checking.
 Use this on single inheritance concrete classes only.
 ================
 */
-#ifdef USE_STATIC_CLASS_CONSTRUCTION
-
 #define CLASS_PROTOTYPE( nameofclass )									\
-private:																\
+public:																	\
 	static	idTypeInfo						Type;						\
-public:																	\
-	static	void							RegisterClass( void );		\
 	static	idClass							*CreateInstance( void );	\
-	static	idTypeInfo						&GetClassType( void );		\
 	virtual	idTypeInfo						*GetType( void ) const;		\
 	static	idEventFunc<nameofclass>		eventCallbacks[]
-
-#else
-
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-#define CLASS_PROTOTYPE( nameofclass )									\
-public:																\
-	static	idTypeInfo						*Type;						\
-public:																	\
-	static	void							RegisterClass( void );		\
-	static	idClass							*CreateInstance( void );	\
-	static	idTypeInfo						&GetClassType( void );		\
-	virtual	idTypeInfo						*GetType( void ) const;		\
-	static	idEventFunc<nameofclass>		eventCallbacks[]
-// RAVEN END
-
-#endif // USE_STATIC_CLASS_CONSTRUCTION
 
 /*
 ================
@@ -112,24 +107,13 @@ proper superclass is indicated or the run-time type information will be
 incorrect.  Use this on concrete classes only.
 ================
 */
-
-#ifdef USE_STATIC_CLASS_CONSTRUCTION
-
 #define CLASS_DECLARATION( nameofsuperclass, nameofclass )											\
-	idTypeInfo nameofclass::Type( #nameofclass, #nameofsuperclass,											\
-			( idEventFunc<idClass> * )nameofclass::eventCallbacks,	nameofclass::CreateInstance, ( void ( idClass::* )( void ) )&nameofclass::Spawn,	\
-			( rvStateFunc<idClass> * )nameofclass::stateCallbacks,																						\
-			( void ( idClass::* )( idSaveGame * ) const )&nameofclass::Save, ( void ( idClass::* )( idRestoreGame * ) )&nameofclass::Restore );	\
-	void nameofclass::RegisterClass( void ) {														\
-	}																								\
-	void Register_##nameofclass( void ) {															\
-		nameofclass::RegisterClass();																\
-	}																								\
+	idTypeInfo nameofclass::Type( #nameofclass, #nameofsuperclass,									\
+		( idEventFunc<idClass> * )nameofclass::eventCallbacks,	nameofclass::CreateInstance, ( void ( idClass::* )( void ) )&nameofclass::Spawn,	\
+		( void ( idClass::* )( idSaveGame * ) const )&nameofclass::Save, ( void ( idClass::* )( idRestoreGame * ) )&nameofclass::Restore );	\
 	idClass *nameofclass::CreateInstance( void ) {													\
 		try {																						\
-			RV_PUSH_SYS_HEAP_ID(RV_HEAP_ID_LEVEL);													\
 			nameofclass *ptr = new nameofclass;														\
-			RV_POP_HEAP();																			\
 			ptr->FindUninitializedMemory();															\
 			return ptr;																				\
 		}																							\
@@ -137,55 +121,10 @@ incorrect.  Use this on concrete classes only.
 			return NULL;																			\
 		}																							\
 	}																								\
-	idTypeInfo &nameofclass::GetClassType( void ) {													\
-		return nameofclass::Type;																	\
-	}																								\
 	idTypeInfo *nameofclass::GetType( void ) const {												\
-		return &nameofclass::Type;																	\
+		return &( nameofclass::Type );																\
 	}																								\
 idEventFunc<nameofclass> nameofclass::eventCallbacks[] = {
-
-#else
-
-// RAVEN BEGIN
-// bdube: Added states
-// jnewquist: Use accessor for static class type
-// mwhitlock: Dynamic memory consolidation
-#define CLASS_DECLARATION( nameofsuperclass, nameofclass )											\
-	idTypeInfo *nameofclass::Type = NULL;															\
-	void nameofclass::RegisterClass( void ) {														\
-		static idTypeInfo type( #nameofclass, #nameofsuperclass,											\
-			( idEventFunc<idClass> * )nameofclass::eventCallbacks,	nameofclass::CreateInstance, ( void ( idClass::* )( void ) )&nameofclass::Spawn,	\
-			( rvStateFunc<idClass> * )nameofclass::stateCallbacks,																						\
-			( void ( idClass::* )( idSaveGame * ) const )&nameofclass::Save, ( void ( idClass::* )( idRestoreGame * ) )&nameofclass::Restore );	\
-		nameofclass::Type = &type;																	\
-	}																								\
-	void Register_##nameofclass( void ) {															\
-		nameofclass::RegisterClass();																\
-	}																								\
-	idClass *nameofclass::CreateInstance( void ) {													\
-		try {																						\
-			RV_PUSH_SYS_HEAP_ID(RV_HEAP_ID_LEVEL);													\
-			nameofclass *ptr = new nameofclass;														\
-			RV_POP_HEAP();																			\
-			ptr->FindUninitializedMemory();															\
-			return ptr;																				\
-		}																							\
-		catch( idAllocError & ) {																	\
-			return NULL;																			\
-		}																							\
-	}																								\
-	idTypeInfo &nameofclass::GetClassType( void ) {													\
-		return *nameofclass::Type;																	\
-	}																								\
-	idTypeInfo *nameofclass::GetType( void ) const {												\
-		return nameofclass::Type;																	\
-	}																								\
-idEventFunc<nameofclass> nameofclass::eventCallbacks[] = {
-// RAVEN END
-
-#endif // USE_STATIC_CLASS_CONSTRUCTION
-
 
 /*
 ================
@@ -196,35 +135,12 @@ It prototypes variables used in class instanciation and type checking.
 Use this on single inheritance abstract classes only.
 ================
 */
-
-#ifdef USE_STATIC_CLASS_CONSTRUCTION
-
 #define ABSTRACT_PROTOTYPE( nameofclass )								\
-private:																\
+public:																	\
 	static	idTypeInfo						Type;						\
-public:																	\
-	static	void							RegisterClass( void );		\
 	static	idClass							*CreateInstance( void );	\
-	static	idTypeInfo						&GetClassType( void );		\
 	virtual	idTypeInfo						*GetType( void ) const;		\
 	static	idEventFunc<nameofclass>		eventCallbacks[]
-
-#else
-
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-#define ABSTRACT_PROTOTYPE( nameofclass )								\
-private:																\
-	static	idTypeInfo						*Type;						\
-public:																	\
-	static	void							RegisterClass( void );		\
-	static	idClass							*CreateInstance( void );	\
-	static	idTypeInfo						&GetClassType( void );		\
-	virtual	idTypeInfo						*GetType( void ) const;		\
-	static	idEventFunc<nameofclass>		eventCallbacks[]
-// RAVEN END
-
-#endif // USE_STATIC_CLASS_CONSTRUCTION
 
 /*
 ================
@@ -237,63 +153,18 @@ indicated or the run-time tyep information will be incorrect.  Use this
 on abstract classes only.
 ================
 */
-
-#ifdef USE_STATIC_CLASS_CONSTRUCTION
-
 #define ABSTRACT_DECLARATION( nameofsuperclass, nameofclass )										\
 	idTypeInfo nameofclass::Type( #nameofclass, #nameofsuperclass,									\
-			( idEventFunc<idClass> * )nameofclass::eventCallbacks, nameofclass::CreateInstance, ( void ( idClass::* )( void ) )&nameofclass::Spawn,	\
-			( rvStateFunc<idClass> * )nameofclass::stateCallbacks,																					\
-			( void ( idClass::* )( idSaveGame * ) const )&nameofclass::Save, ( void ( idClass::* )( idRestoreGame * ) )&nameofclass::Restore );		\
-	void nameofclass::RegisterClass( void ) {														\
-	}																								\
-	void Register_##nameofclass( void ) {															\
-		nameofclass::RegisterClass();																\
-	}																								\
+		( idEventFunc<idClass> * )nameofclass::eventCallbacks, nameofclass::CreateInstance, ( void ( idClass::* )( void ) )&nameofclass::Spawn,	\
+		( void ( idClass::* )( idSaveGame * ) const )&nameofclass::Save, ( void ( idClass::* )( idRestoreGame * ) )&nameofclass::Restore );	\
 	idClass *nameofclass::CreateInstance( void ) {													\
 		gameLocal.Error( "Cannot instanciate abstract class %s.", #nameofclass );					\
 		return NULL;																				\
 	}																								\
-	idTypeInfo &nameofclass::GetClassType( void ) {													\
-		return nameofclass::Type;																	\
-	}																								\
 	idTypeInfo *nameofclass::GetType( void ) const {												\
-		return &nameofclass::Type;																	\
+		return &( nameofclass::Type );																\
 	}																								\
 	idEventFunc<nameofclass> nameofclass::eventCallbacks[] = {
-
-#else CLASS_STATES_DECLARATION
-
-// RAVEN BEGIN
-// bdube: added states
-// jnewquist: Use accessor for static class type 
-#define ABSTRACT_DECLARATION( nameofsuperclass, nameofclass )										\
-	idTypeInfo *nameofclass::Type = NULL;															\
-	void nameofclass::RegisterClass( void ) {														\
-		static idTypeInfo type( #nameofclass, #nameofsuperclass,									\
-			( idEventFunc<idClass> * )nameofclass::eventCallbacks, nameofclass::CreateInstance, ( void ( idClass::* )( void ) )&nameofclass::Spawn,	\
-			( rvStateFunc<idClass> * )nameofclass::stateCallbacks,																					\
-			( void ( idClass::* )( idSaveGame * ) const )&nameofclass::Save, ( void ( idClass::* )( idRestoreGame * ) )&nameofclass::Restore );		\
-		nameofclass::Type = &type;																	\
-	}																								\
-	void Register_##nameofclass( void ) {															\
-		nameofclass::RegisterClass();																\
-	}																								\
-	idClass *nameofclass::CreateInstance( void ) {													\
-		gameLocal.Error( "Cannot instanciate abstract class %s.", #nameofclass );					\
-		return NULL;																				\
-	}																								\
-	idTypeInfo &nameofclass::GetClassType( void ) {													\
-		return *nameofclass::Type;																	\
-	}																								\
-	idTypeInfo *nameofclass::GetType( void ) const {												\
-		return nameofclass::Type;																	\
-	}																								\
-	idEventFunc<nameofclass> nameofclass::eventCallbacks[] = {
-
-// RAVEN END
-
-#endif // USE_STATIC_CLASS_CONSTRUCTION
 
 typedef void ( idClass::*classSpawnFunc_t )( void );
 
@@ -320,27 +191,6 @@ public:
 	void						Spawn( void );
 	void						CallSpawn( void );
 	bool						IsType( const idTypeInfo &c ) const;
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-	bool						IsType( const idTypeInfo *c ) const { return IsType(*c); }
-// RAVEN END
-
-// jmarshall
-	template< typename T >
-	T* Cast(void)
-	{
-		return this ? (IsType(T::Type) ? static_cast<T*>(this) : NULL) : NULL;
-	}
-
-	template< typename T >
-	const T* Cast(void) const
-	{
-		return this ? (IsType(T::Type) ? static_cast<const T*>(this) : NULL) : NULL;
-	}
-
-	virtual void			StateThreadChanged(void) { };
-// jmarshall end
-
 	const char *				GetClassname( void ) const;
 	const char *				GetSuperclass( void ) const;
 	void						FindUninitializedMemory( void );
@@ -349,19 +199,6 @@ public:
 	void						Restore( idRestoreGame *savefile ) {};
 
 	bool						RespondsTo( const idEventDef &ev ) const;
-
-// RAVEN BEGIN
-// bdube: states
-	stateResult_t				ProcessState			( const rvStateFunc<idClass>* state, const stateParms_t& parms );
-	stateResult_t				ProcessState			( const char* name, const stateParms_t& parms );
-	const rvStateFunc<idClass>*	FindState				( const char* name ) const;
-
-// bdube: client entities
-	virtual bool				IsClient ( void ) const;
-
-// jnewquist: Register subclasses explicitly so they aren't dead-stripped
-	static void					RegisterClasses( void );
-// RAVEN END
 
 	bool						PostEventMS( const idEventDef *ev, int time );
 	bool						PostEventMS( const idEventDef *ev, int time, idEventArg arg1 );
@@ -395,12 +232,7 @@ public:
 
 	bool						ProcessEventArgPtr( const idEventDef *ev, intptr_t *data );
 	void						CancelEvents( const idEventDef *ev );
-// RAVEN BEGIN
-// abahr:
-	bool						EventIsPosted( const idEventDef *ev ) const;
 
-	void						Event_PostRestore( void ) {}
-// RAVEN END
 	void						Event_Remove( void );
 
 	// Static functions
@@ -413,14 +245,6 @@ public:
 	static int					GetNumTypes( void ) { return types.Num(); }
 	static int					GetTypeNumBits( void ) { return typeNumBits; }
 	static idTypeInfo *			GetType( int num );
-
-// RAVEN BEGIN
-// jscott: for memory profiling
-	static size_t				GetUsedMemory( void ) { return( memused ); }
-
-// bdube: debug info
-	virtual void				GetDebugInfo		( debugInfoProc_t proc, void* userData );
-// RAVEN END
 
 private:
 	classSpawnFunc_t			CallSpawnFunc( idTypeInfo *cls );
@@ -436,11 +260,6 @@ private:
 	static int					typeNumBits;
 	static int					memused;
 	static int					numobjects;
-	
-// RAVEN BEGIN
-// bdube: states
-	CLASS_STATES_PROTOTYPE(idClass);
-// RAVEN END	
 };
 
 /***********************************************************************
@@ -458,11 +277,6 @@ public:
 	void						( idClass::*Save )( idSaveGame *savefile ) const;
 	void						( idClass::*Restore )( idRestoreGame *savefile );
 
-// RAVEN BEGIN
-// bdube: added
-	rvStateFunc<idClass> *		stateCallbacks;
-// RAVEN END
-
 	idEventFunc<idClass> *		eventCallbacks;
 	eventCallback_t *			eventMap;
 	idTypeInfo *				super;
@@ -475,10 +289,6 @@ public:
 
 								idTypeInfo( const char *classname, const char *superclass, 
 												idEventFunc<idClass> *eventCallbacks, idClass *( *CreateInstance )( void ), void ( idClass::*Spawn )( void ),
-// RAVEN BEGIN
-// bdube: added
-												rvStateFunc<idClass> *stateCallbacks,
-// RAVEN END												
 												void ( idClass::*Save )( idSaveGame *savefile ) const, void	( idClass::*Restore )( idRestoreGame *savefile ) );
 								~idTypeInfo();
 
@@ -486,10 +296,6 @@ public:
 	void						Shutdown( void );
 
 	bool						IsType( const idTypeInfo &superclass ) const;
-// RAVEN BEGIN
-// jnewquist: Use accessor for static class type 
-	bool						IsType( const idTypeInfo *superclass ) const { return IsType(*superclass); }
-// RAVEN END
 	bool						RespondsTo( const idEventDef &ev ) const;
 };
 

@@ -1,3 +1,30 @@
+/*
+===========================================================================
+
+Doom 3 GPL Source Code
+Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
+
+This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
+
+Doom 3 Source Code is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+Doom 3 Source Code is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+
+In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
+
+If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+
+===========================================================================
+*/
 
 #ifndef __SCRIPT_THREAD_H__
 #define __SCRIPT_THREAD_H__
@@ -46,13 +73,6 @@ extern const idEventDef EV_Thread_FadeIn;
 extern const idEventDef EV_Thread_FadeOut;
 extern const idEventDef EV_Thread_FadeTo;
 extern const idEventDef EV_Thread_Restart;
-extern const idEventDef EV_Thread_SetMatSort;
-
-// RAVEN BEGIN
-// rjohnson: new blur special effect
-extern const idEventDef EV_Thread_SetSpecialEffect;
-extern const idEventDef EV_Thread_SetSpecialEffectParm;
-// RAVEN END
 
 class idThread : public idClass {
 private:
@@ -164,45 +184,6 @@ private:
 	void						Event_DrawText( const char *text, const idVec3 &origin, float scale, const idVec3 &color, const int align, const float lifetime );
 	void						Event_InfluenceActive( void );
 
-// RAVEN BEGIN
-// kfuller: added
-	void						Event_SetSpawnVector( const char *key, idVec3 &vec );
-	void						Event_GetArcSine( float sinValue );
-	void						Event_GetArcCosine( float cosValue );
-	void						Event_ClearSignalAllThreads( int signal, idEntity *ent );
-	void						Event_VecRotate(idVec3 &vecToBeRotated, idVec3 &rotateHowMuch);
-	void						Event_IsStringEmpty( const char *checkString );
-	void						Event_AnnounceToAI( const char *announcement);
-	void						Event_ChangeCrossings(const char *originalType, const char *newType);
-
-// abahr: so we can fake having pure script objects
-	void						Event_ReferenceScriptObjectProxy( const char* scriptObjectName );
-	void						Event_ReleaseScriptObjectProxy( const char* proxyName );
-	void						Event_ClampFloat( float min, float max, float val );
-	void						Event_MinFloat( float val1, float val2 );
-	void						Event_MaxFloat( float val1, float val2 );
-	void						Event_StrFind( idStr& sourceStr, idStr& subStr );
-	void						Event_RandomInt( float range ) const;
-
-// rjohnson: new blur special effect
-	void						Event_SetSpecialEffect( int Effect, int Enabled );
-	void						Event_SetSpecialEffectParm( int Effect, int Parm, float Value );
-
-// nmckenzie: string signaling
-	void						Event_PlayWorldEffect( const char *effectName, idVec3 &org, idVec3 &angle );
-// asalmon: achievements for Xenon
-	void						Event_AwardAchievement( const char *name);
-// twhitaker: ceil, floor and intVal
-	void						Event_GetCeil( float val );
-	void						Event_GetFloor( float val );
-	void						Event_ToInt( float val );
-// jdischler: send named event string to specified gui
-	void						Event_SendNamedEvent( int guiEnum, const char *namedEvent );
-	void						Event_BeginManualStreaming( void );
-	void						Event_EndManualStreaming( void );
-	void						Event_SetMatSort( const char *name, const char *val ) const;
-// RAVEN END
-
 public:							
 								CLASS_PROTOTYPE( idThread );
 								
@@ -234,30 +215,16 @@ public:
 								// NOTE: If this is called from within a event called by this thread, the function arguments will be invalid after calling this function.
 	void						CallFunction( idEntity *obj, const function_t *func, bool clearStack );
 
-// RAVEN BEGIN
-// bgeisler: added way to list functions
-	void						ListStates( void );
-
-// abahr: added helper functions for pushing parms onto stack
-	void						ClearStack( void );
-	void						PushInt( int value );
-	void						PushFloat( float value );
-	void						PushVec3( const idVec3& value );
-	void						PushEntity( const idEntity* ent );
-	void						PushString( const char* str );
-	void						PushBool( bool value );
-// RAVEN END
-
-	void						DisplayInfo( void );
+	void						DisplayInfo();
 	static idThread				*GetThread( int num );
 	static void					ListThreads_f( const idCmdArgs &args );
 	static void					Restart( void );
 	static void					ObjectMoveDone( int threadnum, idEntity *obj );
-									
-	static idList<idThread*>&	GetThreads( void );
+								
+	static idList<idThread*>&	GetThreads ( void );
 	
-	bool						IsDoneProcessing( void );
-	bool						IsDying ( void );	
+	bool						IsDoneProcessing ( void );
+	bool						IsDying			 ( void );	
 								
 	void						End( void );
 	static void					KillThread( const char *name );
@@ -281,8 +248,8 @@ public:
 	void						SetThreadName( const char *name );
 	const char					*GetThreadName( void );
 
-	void						Error( const char *fmt, ... ) const;
-	void						Warning( const char *fmt, ... ) const;
+	void						Error( const char *fmt, ... ) const id_attribute((format(printf,2,3)));
+	void						Warning( const char *fmt, ... ) const id_attribute((format(printf,2,3)));
 								
 	static idThread				*CurrentThread( void );
 	static int					CurrentThreadNum( void );
@@ -293,10 +260,7 @@ public:
 	static void					ReturnFloat( float value );
 	static void					ReturnInt( int value );
 	static void					ReturnVector( idVec3 const &vec );
-// RAVEN BEGIN
-// abahr: added const
-	static void					ReturnEntity( const idEntity *ent );
-// RAVEN END
+	static void					ReturnEntity( idEntity *ent );
 };
 
 /*

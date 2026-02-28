@@ -31,7 +31,10 @@ If you have questions concerning this license or the applicable additional terms
 
 // jmarshall - Raven Decl Support
 #include "../renderer/tr_local.h"
-#include "../bse_api/BSE_API.h"
+#include "../effects_api/Effects_API.h"
+#include "DeclFX.h"
+#include "DeclParticle.h"
+#include "DeclPDA.h"
 // jmarshall end
 
 /*
@@ -69,9 +72,9 @@ missing reload over a previously explicit definition
 #define USE_COMPRESSED_DECLS
 //#define GET_HUFFMAN_FREQUENCIES
 
-static idDecl *OpenQ4_AllocEffectDecl( void ) {
-	if ( bseAllocDeclEffect ) {
-		idDecl *decl = bseAllocDeclEffect();
+static idDecl *OpenD3_AllocEffectDecl( void ) {
+	if ( effectsAllocDeclEffect ) {
+		idDecl *decl = effectsAllocDeclEffect();
 		if ( decl ) {
 			return decl;
 		}
@@ -1035,21 +1038,21 @@ void idDeclManagerLocal::Init( void ) {
 	RegisterDeclType(  "materialType",		DECL_MATERIALTYPE,  idDeclAllocator<rvDeclMatType>);
 	RegisterDeclType(  "lipSync",			DECL_LIPSYNC,		idDeclAllocator<rvDeclLipSync>);
 	RegisterDeclType(  "playback",			DECL_PLAYBACK,		idDeclAllocator<rvDeclPlayback>);
-	RegisterDeclType(	"effect",			DECL_EFFECT,		OpenQ4_AllocEffectDecl);
+	RegisterDeclType(	"effect",			DECL_EFFECT,		OpenD3_AllocEffectDecl);
 	RegisterDeclType(	"playerModel",		DECL_PLAYER_MODEL, idDeclAllocator<rvDeclPlayerModel>);
 // jmarshall end
 
 // jmarshall: Raven Decl Support
-	//RegisterDeclType( "fx",					DECL_FX,			idDeclAllocator<idDeclFX> );
-	//RegisterDeclType( "particle",			DECL_PARTICLE,		idDeclAllocator<idDeclParticle> );
+	RegisterDeclType( "fx",					DECL_FX,			idDeclAllocator<idDeclFX> );
+	RegisterDeclType( "particle",			DECL_PARTICLE,		idDeclAllocator<idDeclParticle> );
 // jmarshall end
 	RegisterDeclType( "articulatedFigure",	DECL_AF,			idDeclAllocator<idDeclAF> );
 
 // jmarshall: Raven Decl Support
-	//RegisterDeclType( "pda",				DECL_PDA,			idDeclAllocator<idDeclPDA> );
-	//RegisterDeclType( "email",				DECL_EMAIL,			idDeclAllocator<idDeclEmail> );
-	//RegisterDeclType( "video",				DECL_VIDEO,			idDeclAllocator<idDeclVideo> );
-	//RegisterDeclType( "audio",				DECL_AUDIO,			idDeclAllocator<idDeclAudio> );
+	RegisterDeclType( "pda",				DECL_PDA,			idDeclAllocator<idDeclPDA> );
+	RegisterDeclType( "email",				DECL_EMAIL,			idDeclAllocator<idDeclEmail> );
+	RegisterDeclType( "video",				DECL_VIDEO,			idDeclAllocator<idDeclVideo> );
+	RegisterDeclType( "audio",				DECL_AUDIO,			idDeclAllocator<idDeclAudio> );
 // jmarshall end
 
 	RegisterDeclFolder( "materials",		".mtr",				DECL_MATERIAL );
@@ -1075,8 +1078,8 @@ void idDeclManagerLocal::Init( void ) {
 	cmdSystem->AddCommand( "listSoundShaders", idListDecls_f<DECL_SOUND>, CMD_FL_SYSTEM, "lists sound shaders", idCmdSystem::ArgCompletion_String<listDeclStrings> );
 
 	cmdSystem->AddCommand( "listEntityDefs", idListDecls_f<DECL_ENTITYDEF>, CMD_FL_SYSTEM, "lists entity defs", idCmdSystem::ArgCompletion_String<listDeclStrings> );
-	//cmdSystem->AddCommand( "listFX", idListDecls_f<DECL_FX>, CMD_FL_SYSTEM, "lists FX systems", idCmdSystem::ArgCompletion_String<listDeclStrings> );
-	//cmdSystem->AddCommand( "listParticles", idListDecls_f<DECL_PARTICLE>, CMD_FL_SYSTEM, "lists particle systems", idCmdSystem::ArgCompletion_String<listDeclStrings> //);
+	cmdSystem->AddCommand( "listFX", idListDecls_f<DECL_FX>, CMD_FL_SYSTEM, "lists FX systems", idCmdSystem::ArgCompletion_String<listDeclStrings> );
+	cmdSystem->AddCommand( "listParticles", idListDecls_f<DECL_PARTICLE>, CMD_FL_SYSTEM, "lists particle systems", idCmdSystem::ArgCompletion_String<listDeclStrings> );
 	cmdSystem->AddCommand( "listAF", idListDecls_f<DECL_AF>, CMD_FL_SYSTEM, "lists articulated figures", idCmdSystem::ArgCompletion_String<listDeclStrings>);
 
 	//cmdSystem->AddCommand( "listPDAs", idListDecls_f<DECL_PDA>, CMD_FL_SYSTEM, "lists PDAs", idCmdSystem::ArgCompletion_String<listDeclStrings> );
@@ -1090,8 +1093,8 @@ void idDeclManagerLocal::Init( void ) {
 	cmdSystem->AddCommand( "printSoundShader", idPrintDecls_f<DECL_SOUND>, CMD_FL_SYSTEM, "prints a sound shader", idCmdSystem::ArgCompletion_Decl<DECL_SOUND> );
 
 	cmdSystem->AddCommand( "printEntityDef", idPrintDecls_f<DECL_ENTITYDEF>, CMD_FL_SYSTEM, "prints an entity def", idCmdSystem::ArgCompletion_Decl<DECL_ENTITYDEF> );
-	//cmdSystem->AddCommand( "printFX", idPrintDecls_f<DECL_FX>, CMD_FL_SYSTEM, "prints an FX system", idCmdSystem::ArgCompletion_Decl<DECL_FX> );
-//	cmdSystem->AddCommand( "printParticle", idPrintDecls_f<DECL_PARTICLE>, CMD_FL_SYSTEM, "prints a particle system", idCmdSystem::ArgCompletion_Decl<DECL_PARTICLE> );
+	cmdSystem->AddCommand( "printFX", idPrintDecls_f<DECL_FX>, CMD_FL_SYSTEM, "prints an FX system", idCmdSystem::ArgCompletion_Decl<DECL_FX> );
+	cmdSystem->AddCommand( "printParticle", idPrintDecls_f<DECL_PARTICLE>, CMD_FL_SYSTEM, "prints a particle system", idCmdSystem::ArgCompletion_Decl<DECL_PARTICLE> );
 	cmdSystem->AddCommand( "printAF", idPrintDecls_f<DECL_AF>, CMD_FL_SYSTEM, "prints an articulated figure", idCmdSystem::ArgCompletion_Decl<DECL_AF> );
 
 	cmdSystem->AddCommand( "printPDA", idPrintDecls_f<DECL_PDA>, CMD_FL_SYSTEM, "prints an PDA", idCmdSystem::ArgCompletion_Decl<DECL_PDA> );
