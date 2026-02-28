@@ -94,6 +94,9 @@ private:
 	int							AreaContentsTravelFlags( int areaNum ) const;
 	idVec3						AreaReachableGoal( int areaNum ) const;
 	int							NumReachabilities( void ) const;
+
+	// True when parsing legacy Doom 3/BFG AAS (1.07) without feature fields.
+	bool						legacyFileVersion07;
 };
 
 #endif /* !__AASFILELOCAL_H__ */

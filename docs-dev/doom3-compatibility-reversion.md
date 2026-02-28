@@ -27,8 +27,15 @@ Game-library changes should be made canonically in `OpenD3-GameLibs` and synchro
 - Filesystem/game-dir assumptions (`base`, `d3xp`, save/config paths).
 - Effects paths and declarations (Doom 3-native FX behavior, no external Quake 4 legacy-effects companion dependency).
 - Material/parser behavior where Quake 4-specific extensions diverge from Doom 3 expectations.
+- AAS parsing compatibility (`1.07` Doom 3/BFG navigation data vs OpenQ4-era `1.08` extensions).
 - Session/startup commands and map bootstrapping defaults.
 - Platform/runtime paths (logs, crash dumps, executable naming).
+
+## Known AAS Divergence
+
+- Doom 3 and Doom 3 BFG assets use AAS format `1.07`.
+- OpenQ4-era code introduced `1.08` area feature fields and strict version checks.
+- For Doom 3 compatibility, AAS loading must accept `1.07` and parse area records without `numFeatures/firstFeature`.
 
 ## Validation Loop
 

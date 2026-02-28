@@ -609,6 +609,7 @@ idAASFileLocal::idAASFileLocal( void ) {
 	portals.SetGranularity( AAS_LIST_GRANULARITY );
 	portalIndex.SetGranularity( AAS_INDEX_GRANULARITY );
 	clusters.SetGranularity( AAS_LIST_GRANULARITY );
+	legacyFileVersion07 = false;
 }
 
 /*
@@ -1004,10 +1005,13 @@ bool idAASFileLocal::ParseAreas( idLexer &src ) {
 		area.numFaces = src.ParseInt();
 		area.cluster = src.ParseInt();
 		area.clusterAreaNum = src.ParseInt();
-// jmarshall - AAS 1.08 
-		area.numFeatures = src.ParseInt();
-		area.firstFeature = src.ParseInt();
-// jmarshall end
+		if ( legacyFileVersion07 ) {
+			area.numFeatures = 0;
+			area.firstFeature = 0;
+		} else {
+			area.numFeatures = src.ParseInt();
+			area.firstFeature = src.ParseInt();
+		}
 		src.ExpectTokenString( ")" );
 		areas.Append( area );
 		ParseReachabilities( src, i );
@@ -1157,8 +1161,17 @@ bool idAASFileLocal::Load( const idStr &fileName, unsigned int mapFileCRC ) {
 		return false;
 	}
 
-	if ( !src.ReadToken( &token ) || token != AAS_FILEVERSION ) {
-		common->Warning( "AAS file '%s' has version %s instead of %s", name.c_str(), token.c_str(), AAS_FILEVERSION );
+	if ( !src.ReadToken( &token ) ) {
+		common->Warning( "AAS file '%s' has no version token", name.c_str() );
+		return false;
+	}
+
+	legacyFileVersion07 = false;
+	if ( token == AAS_FILEVERSION_LEGACY ) {
+		legacyFileVersion07 = true;
+	} else if ( token != AAS_FILEVERSION ) {
+		common->Warning( "AAS file '%s' has unsupported version %s (expected %s or %s)",
+			name.c_str(), token.c_str(), AAS_FILEVERSION, AAS_FILEVERSION_LEGACY );
 		return false;
 	}
 

@@ -12,6 +12,8 @@
 
 #define AAS_FILEID					"DewmAAS"
 #define AAS_FILEVERSION				"1.08"
+// Doom 3 retail/BFG ship AAS data using 1.07 layout.
+#define AAS_FILEVERSION_LEGACY		"1.07"
 
 // travel flags
 #define TFL_INVALID					BIT(0)		// not valid
