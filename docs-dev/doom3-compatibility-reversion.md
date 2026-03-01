@@ -28,14 +28,23 @@ Game-library changes should be made canonically in `OpenD3-GameLibs` and synchro
 - Effects paths and declarations (Doom 3-native FX behavior, no external Quake 4 legacy-effects companion dependency).
 - Material/parser behavior where Quake 4-specific extensions diverge from Doom 3 expectations.
 - AAS parsing compatibility (`1.07` Doom 3/BFG navigation data vs OpenQ4-era `1.08` extensions).
+- Map geometry CRC behavior used to validate AAS/CM data.
 - Session/startup commands and map bootstrapping defaults.
 - Platform/runtime paths (logs, crash dumps, executable naming).
 
-## Known AAS Divergence
+## Known AAS/Map CRC Divergence
 
 - Doom 3 and Doom 3 BFG assets use AAS format `1.07`.
 - OpenQ4-era code introduced `1.08` area feature fields and strict version checks.
 - For Doom 3 compatibility, AAS loading must accept `1.07` and parse area records without `numFeatures/firstFeature`.
+- Doom 3/BFG map geometry CRC for AAS validation does not hash entity `model` epairs for brush/patch primitives.
+- OpenQ4-era map CRC behavior added that `model` hashing, producing false AAS "out of date" failures on Doom 3 maps.
+
+## Intentional Runtime Divergence
+
+- Trigger touching now supports a swept check from the player's previous origin to current origin.
+- Rationale: this avoids missed `trigger_once`/progression touches when movement steps skip over narrow trigger volumes.
+- Scope: the sweep is only applied for player-trigger checks; existing overlap checks remain intact.
 
 ## Validation Loop
 

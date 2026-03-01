@@ -1182,8 +1182,13 @@ bool idAASFileLocal::Load( const idStr &fileName, unsigned int mapFileCRC ) {
 
 	c = token.GetUnsignedLongValue();
 	if ( mapFileCRC && c != mapFileCRC ) {
-		common->Warning( "AAS file '%s' is out of date", name.c_str() );
-		return false;
+		if ( legacyFileVersion07 ) {
+			common->Warning( "AAS file '%s' map CRC mismatch (%u != %u), continuing in Doom 3 compatibility mode",
+				name.c_str(), c, mapFileCRC );
+		} else {
+			common->Warning( "AAS file '%s' is out of date", name.c_str() );
+			return false;
+		}
 	}
 
 	// clear the file in memory

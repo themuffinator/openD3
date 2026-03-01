@@ -36,6 +36,16 @@ Various utility objects and functions.
 
 #include "Game_local.h"
 
+idCVar g_debugPathRandom(
+	"g_debugPathRandom",
+	"0",
+	CVAR_GAME | CVAR_INTEGER,
+	"debug idPathCorner randomPath resolution (0=off, 1=checkin nodes, 2=all)",
+	0,
+	2,
+	idCmdSystem::ArgCompletion_Integer<0, 2>
+);
+
 /*
 ===============================================================================
 
@@ -408,6 +418,25 @@ void idPathCorner::Event_RandomPath( void ) {
 	idPathCorner *path;
 
 	path = RandomPath( this, NULL );
+	if ( g_debugPathRandom.GetInteger() > 1 || ( g_debugPathRandom.GetInteger() == 1 && idStr::FindText( name.c_str(), "checkin", false ) >= 0 ) ) {
+		idStr targetsStr;
+		for ( int i = 0; i < targets.Num(); i++ ) {
+			idEntity *targetEnt = targets[ i ].GetEntity();
+			if ( targetsStr.Length() ) {
+				targetsStr += ", ";
+			}
+			targetsStr += targetEnt ? targetEnt->name.c_str() : "<null>";
+		}
+		gameLocal.Printf(
+			"DBG path randomPath source='%s' targets=%d choice='%s'\n",
+			name.c_str(),
+			targets.Num(),
+			path ? path->name.c_str() : "<null>"
+		);
+		if ( targetsStr.Length() ) {
+			gameLocal.Printf( "DBG path randomPath targets=[%s]\n", targetsStr.c_str() );
+		}
+	}
 	idThread::ReturnEntity( path );
 }
 

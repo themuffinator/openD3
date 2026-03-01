@@ -31,80 +31,6 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "../Game_local.h"
 
-static ID_INLINE byte *ScriptFieldDataPtr( idScriptObject *obj, const idVarDef *fieldDef, int fallbackFieldSize ) {
-	if ( !obj || !obj->data || !fieldDef ) {
-		return NULL;
-	}
-
-	const idTypeDef *objectType = obj->GetTypeDef();
-	if ( !objectType ) {
-		return NULL;
-	}
-
-	const int fieldOffset = fieldDef->value.ptrOffset;
-	if ( fieldOffset < 0 ) {
-		return NULL;
-	}
-
-	int fieldSize = fallbackFieldSize;
-	if ( fieldDef->Type() == ev_field ) {
-		const idTypeDef *fieldType = fieldDef->TypeDef() ? fieldDef->TypeDef()->FieldType() : NULL;
-		if ( fieldType && fieldType->Size() > 0 ) {
-			fieldSize = fieldType->Size();
-		}
-	}
-
-	if ( fieldSize <= 0 ) {
-		return NULL;
-	}
-
-	const size_t objectSize = objectType->Size();
-	const size_t offset = static_cast<size_t>( fieldOffset );
-	const size_t size = static_cast<size_t>( fieldSize );
-
-	if ( offset > objectSize || size > objectSize - offset ) {
-		return NULL;
-	}
-
-	return &obj->data[ offset ];
-}
-
-static ID_INLINE bool ScriptObjectWritePtrInRange( const void *ptr, size_t writeSize ) {
-	if ( !ptr || writeSize == 0 ) {
-		return false;
-	}
-
-	const uintptr_t writeAddress = reinterpret_cast<uintptr_t>( ptr );
-	for ( int i = 0; i < gameLocal.num_entities; i++ ) {
-		idEntity *ent = gameLocal.entities[ i ];
-		if ( !ent || !ent->scriptObject.data ) {
-			continue;
-		}
-
-		const idTypeDef *objType = ent->scriptObject.GetTypeDef();
-		if ( !objType ) {
-			continue;
-		}
-
-		const size_t objectSize = objType->Size();
-		const uintptr_t objectAddress = reinterpret_cast<uintptr_t>( ent->scriptObject.data );
-		if ( objectSize > ( UINTPTR_MAX - objectAddress ) ) {
-			continue;
-		}
-
-		const uintptr_t objectEnd = objectAddress + objectSize;
-		if ( writeAddress < objectAddress || writeAddress > objectEnd ) {
-			continue;
-		}
-
-		if ( writeSize <= static_cast<size_t>( objectEnd - writeAddress ) ) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
 /*
 ================
 idInterpreter::idInterpreter()
@@ -1012,12 +938,10 @@ bool idInterpreter::Execute( void ) {
 	varEval_t	var_b;
 	varEval_t	var_c;
 	varEval_t	var;
-	int			*destEntityNumberPtr;
 	statement_t	*st;
 	int 		runaway;
 	idThread	*newThread;
 	float		floatVal;
-	byte		*fieldData;
 	idScriptObject *obj;
 	const function_t *func;
 
@@ -1527,9 +1451,8 @@ bool idInterpreter::Execute( void ) {
 		case OP_UINCP_F:
 			var_a = GetVariable( st->a );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			fieldData = ScriptFieldDataPtr( obj, st->b, type_float.Size() );
-			if ( fieldData ) {
-				var.bytePtr = fieldData;
+			if ( obj ) {
+				var.bytePtr = &obj->data[ st->b->value.ptrOffset ];
 				( *var.floatPtr )++;
 			}
 			break;
@@ -1542,9 +1465,8 @@ bool idInterpreter::Execute( void ) {
 		case OP_UDECP_F:
 			var_a = GetVariable( st->a );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			fieldData = ScriptFieldDataPtr( obj, st->b, type_float.Size() );
-			if ( fieldData ) {
-				var.bytePtr = fieldData;
+			if ( obj ) {
+				var.bytePtr = &obj->data[ st->b->value.ptrOffset ];
 				( *var.floatPtr )--;
 			}
 			break;
@@ -1637,7 +1559,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_F:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->floatPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->floatPtr, type_float.Size() ) ) {
+			if ( var_b.evalPtr && var_b.evalPtr->floatPtr ) {
 				var_a = GetVariable( st->a );
 				*var_b.evalPtr->floatPtr = *var_a.floatPtr;
 			}
@@ -1645,7 +1567,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_ENT:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->entityNumberPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->entityNumberPtr, type_entity.Size() ) ) {
+			if ( var_b.evalPtr && var_b.evalPtr->entityNumberPtr ) {
 				var_a = GetVariable( st->a );
 				*var_b.evalPtr->entityNumberPtr = *var_a.entityNumberPtr;
 			}
@@ -1653,7 +1575,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_FLD:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->intPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->intPtr, type_field.Size() ) ) {
+			if ( var_b.evalPtr && var_b.evalPtr->intPtr ) {
 				var_a = GetVariable( st->a );
 				*var_b.evalPtr->intPtr = *var_a.intPtr;
 			}
@@ -1661,7 +1583,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_BOOL:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->intPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->intPtr, type_boolean.Size() ) ) {
+			if ( var_b.evalPtr && var_b.evalPtr->intPtr ) {
 				var_a = GetVariable( st->a );
 				*var_b.evalPtr->intPtr = *var_a.intPtr;
 			}
@@ -1669,14 +1591,14 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_S:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->stringPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->stringPtr, MAX_STRING_LEN ) ) {
+			if ( var_b.evalPtr && var_b.evalPtr->stringPtr ) {
 				idStr::Copynz( var_b.evalPtr->stringPtr, GetString( st->a ), MAX_STRING_LEN );
 			}
 			break;
 
 		case OP_STOREP_V:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->vectorPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->vectorPtr, type_vector.Size() ) ) {
+			if ( var_b.evalPtr && var_b.evalPtr->vectorPtr ) {
 				var_a = GetVariable( st->a );
 				*var_b.evalPtr->vectorPtr = *var_a.vectorPtr;
 			}
@@ -1684,7 +1606,7 @@ bool idInterpreter::Execute( void ) {
 		
 		case OP_STOREP_FTOS:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->stringPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->stringPtr, MAX_STRING_LEN ) ) {
+			if ( var_b.evalPtr && var_b.evalPtr->stringPtr ) {
 				var_a = GetVariable( st->a );
 				idStr::Copynz( var_b.evalPtr->stringPtr, FloatToString( *var_a.floatPtr ), MAX_STRING_LEN );
 			}
@@ -1692,7 +1614,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_BTOS:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->stringPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->stringPtr, MAX_STRING_LEN ) ) {
+			if ( var_b.evalPtr && var_b.evalPtr->stringPtr ) {
 				var_a = GetVariable( st->a );
 				if ( *var_a.floatPtr != 0.0f ) {
 					idStr::Copynz( var_b.evalPtr->stringPtr, "true", MAX_STRING_LEN );
@@ -1704,7 +1626,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_VTOS:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->stringPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->stringPtr, MAX_STRING_LEN ) ) {
+			if ( var_b.evalPtr && var_b.evalPtr->stringPtr ) {
 				var_a = GetVariable( st->a );
 				idStr::Copynz( var_b.evalPtr->stringPtr, var_a.vectorPtr->ToString(), MAX_STRING_LEN );
 			}
@@ -1712,7 +1634,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_FTOBOOL:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->intPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->intPtr, type_boolean.Size() ) ) {
+			if ( var_b.evalPtr && var_b.evalPtr->intPtr ) {
 				var_a = GetVariable( st->a );
 				if ( *var_a.floatPtr != 0.0f ) {
 					*var_b.evalPtr->intPtr = 1;
@@ -1724,7 +1646,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_BOOLTOF:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->floatPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->floatPtr, type_float.Size() ) ) {
+			if ( var_b.evalPtr && var_b.evalPtr->floatPtr ) {
 				var_a = GetVariable( st->a );
 				*var_b.evalPtr->floatPtr = static_cast<float>( *var_a.intPtr );
 			}
@@ -1732,7 +1654,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_OBJ:
 			var_b = GetVariable( st->b );
-			if ( var_b.evalPtr && var_b.evalPtr->entityNumberPtr && ScriptObjectWritePtrInRange( var_b.evalPtr->entityNumberPtr, type_object.Size() ) ) {
+			if ( var_b.evalPtr && var_b.evalPtr->entityNumberPtr ) {
 				var_a = GetVariable( st->a );
 				*var_b.evalPtr->entityNumberPtr = *var_a.entityNumberPtr;
 			}
@@ -1740,24 +1662,20 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_STOREP_OBJENT:
 			var_b = GetVariable( st->b );
-			destEntityNumberPtr = NULL;
-			if ( var_b.evalPtr ) {
-				destEntityNumberPtr = var_b.evalPtr->entityNumberPtr;
-			}
-			if ( destEntityNumberPtr && ScriptObjectWritePtrInRange( destEntityNumberPtr, type_object.Size() ) ) {
+			if ( var_b.evalPtr && var_b.evalPtr->entityNumberPtr ) {
 				var_a = GetVariable( st->a );
 				obj = GetScriptObject( *var_a.entityNumberPtr );
 				if ( !obj ) {
-					*destEntityNumberPtr = 0;
+					*var_b.evalPtr->entityNumberPtr = 0;
 
 				// st->b points to type_pointer, which is just a temporary that gets its type reassigned, so we store the real type in st->c
 				// so that we can do a type check during run time since we don't know what type the script object is at compile time because it
 				// comes from an entity
 				} else if ( !obj->GetTypeDef()->Inherits( st->c->TypeDef() ) ) {
 					//Warning( "object '%s' cannot be converted to '%s'", obj->GetTypeName(), st->c->TypeDef()->Name() );
-					*destEntityNumberPtr = 0;
+					*var_b.evalPtr->entityNumberPtr = 0;
 				} else {
-					*destEntityNumberPtr = *var_a.entityNumberPtr;
+					*var_b.evalPtr->entityNumberPtr = *var_a.entityNumberPtr;
 				}
 			}
 			break;
@@ -1767,9 +1685,8 @@ bool idInterpreter::Execute( void ) {
 			var_c = GetVariable( st->c );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
 			if ( var_c.evalPtr ) {
-				fieldData = ScriptFieldDataPtr( obj, st->b, 1 );
-				if ( fieldData ) {
-					var_c.evalPtr->bytePtr = fieldData;
+				if ( obj ) {
+					var_c.evalPtr->bytePtr = &obj->data[ st->b->value.ptrOffset ];
 				} else {
 					var_c.evalPtr->bytePtr = NULL;
 				}
@@ -1780,9 +1697,8 @@ bool idInterpreter::Execute( void ) {
 			var_a = GetVariable( st->a );
 			var_c = GetVariable( st->c );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			fieldData = ScriptFieldDataPtr( obj, st->b, type_float.Size() );
-			if ( fieldData ) {
-				var.bytePtr = fieldData;
+			if ( obj ) {
+				var.bytePtr = &obj->data[ st->b->value.ptrOffset ];
 				*var_c.floatPtr = *var.floatPtr;
 			} else {
 				*var_c.floatPtr = 0.0f;
@@ -1793,9 +1709,8 @@ bool idInterpreter::Execute( void ) {
 			var_a = GetVariable( st->a );
 			var_c = GetVariable( st->c );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			fieldData = ScriptFieldDataPtr( obj, st->b, type_entity.Size() );
-			if ( fieldData ) {
-				var.bytePtr = fieldData;
+			if ( obj ) {
+				var.bytePtr = &obj->data[ st->b->value.ptrOffset ];
 				*var_c.entityNumberPtr = *var.entityNumberPtr;
 			} else {
 				*var_c.entityNumberPtr = 0;
@@ -1806,9 +1721,8 @@ bool idInterpreter::Execute( void ) {
 			var_a = GetVariable( st->a );
 			var_c = GetVariable( st->c );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			fieldData = ScriptFieldDataPtr( obj, st->b, type_boolean.Size() );
-			if ( fieldData ) {
-				var.bytePtr = fieldData;
+			if ( obj ) {
+				var.bytePtr = &obj->data[ st->b->value.ptrOffset ];
 				*var_c.intPtr = *var.intPtr;
 			} else {
 				*var_c.intPtr = 0;
@@ -1818,9 +1732,8 @@ bool idInterpreter::Execute( void ) {
 		case OP_INDIRECT_S:
 			var_a = GetVariable( st->a );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			fieldData = ScriptFieldDataPtr( obj, st->b, type_string.Size() );
-			if ( fieldData ) {
-				var.bytePtr = fieldData;
+			if ( obj ) {
+				var.bytePtr = &obj->data[ st->b->value.ptrOffset ];
 				SetString( st->c, var.stringPtr );
 			} else {
 				SetString( st->c, "" );
@@ -1831,9 +1744,8 @@ bool idInterpreter::Execute( void ) {
 			var_a = GetVariable( st->a );
 			var_c = GetVariable( st->c );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			fieldData = ScriptFieldDataPtr( obj, st->b, type_vector.Size() );
-			if ( fieldData ) {
-				var.bytePtr = fieldData;
+			if ( obj ) {
+				var.bytePtr = &obj->data[ st->b->value.ptrOffset ];
 				*var_c.vectorPtr = *var.vectorPtr;
 			} else {
 				var_c.vectorPtr->Zero();
@@ -1844,11 +1756,10 @@ bool idInterpreter::Execute( void ) {
 			var_a = GetVariable( st->a );
 			var_c = GetVariable( st->c );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			fieldData = ScriptFieldDataPtr( obj, st->b, type_object.Size() );
-			if ( !fieldData ) {
+			if ( !obj ) {
 				*var_c.entityNumberPtr = 0;
 			} else {
-				var.bytePtr = fieldData;
+				var.bytePtr = &obj->data[ st->b->value.ptrOffset ];
 				*var_c.entityNumberPtr = *var.entityNumberPtr;
 			}
 			break;

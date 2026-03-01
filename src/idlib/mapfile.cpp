@@ -801,15 +801,9 @@ unsigned int idMapEntity::GetGeometryCRC( void ) const {
 		switch( mapPrim->GetType() ) {
 			case idMapPrimitive::TYPE_BRUSH:
 				crc ^= static_cast<idMapBrush*>(mapPrim)->GetGeometryCRC();
-				if ( epairs.GetString( "model" ) ) {
-					crc ^= StringCRC( epairs.GetString( "model" ) );
-				}
 				break;
 			case idMapPrimitive::TYPE_PATCH:
 				crc ^= static_cast<idMapPatch*>(mapPrim)->GetGeometryCRC();
-				if ( epairs.GetString( "model" ) ) {
-					crc ^= StringCRC( epairs.GetString( "model" ) );
-				}
 				break;
 		}
 	}
