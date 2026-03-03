@@ -3629,7 +3629,13 @@ bool idEntity::TouchTriggers( void ) const {
 			continue;
 		}
 
-		if ( !GetPhysics()->ClipContents( cm ) ) {
+		bool triggerHit = ( GetPhysics()->ClipContents( cm ) != 0 );
+		if ( !triggerHit && IsType( idPlayer::Type ) ) {
+			// Some x64 builds miss exact trigger contact for player hulls.
+			// Fall back to bounds overlap so scripted trigger chains still fire.
+			triggerHit = GetPhysics()->GetAbsBounds().IntersectsBounds( cm->GetAbsBounds() );
+		}
+		if ( !triggerHit ) {
 			continue;
 		}
 

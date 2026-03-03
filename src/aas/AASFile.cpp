@@ -1035,12 +1035,11 @@ bool idAASFileLocal::ParseNodes( idLexer &src ) {
 	aasNode_t node;
 
 	numNodes = src.ParseInt();
-// jmarshall - AAS 1.08
-	if (numNodes == 0)
-	{
-		return 0;
+	// Node 0 is always a sentinel leaf. If that is all we have,
+	// the file has no traversable BSP tree and should be rejected.
+	if ( numNodes <= 1 ) {
+		return false;
 	}
-// jmarshall end
 	if ( !src.ExpectTokenString( "{" ) ) {
 		return false;
 	}

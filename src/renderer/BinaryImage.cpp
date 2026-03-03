@@ -308,7 +308,9 @@ idBinaryImage::WriteGeneratedFile
 ID_TIME_T idBinaryImage::WriteGeneratedFile( ID_TIME_T sourceFileTime ) {
 	idStr binaryFileName;
 	MakeGeneratedFileName( binaryFileName );
-	idFileLocal file( fileSystem->OpenFileWrite( binaryFileName, "fs_basepath" ) );
+	// Write generated image cache to savepath so long generated names avoid
+	// Windows path-length issues under deeply nested install locations.
+	idFileLocal file( fileSystem->OpenFileWrite( binaryFileName, "fs_savepath" ) );
 	if ( file == NULL ) {
 		idLib::Warning( "idBinaryImage: Could not open file '%s'", binaryFileName.c_str() );
 		return FILE_NOT_FOUND_TIMESTAMP;

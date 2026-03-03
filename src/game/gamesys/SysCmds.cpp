@@ -697,6 +697,9 @@ void Cmd_SetViewpos_f( const idCmdArgs &args ) {
 	origin.z -= pm_normalviewheight.GetFloat() - 0.25f;
 
 	player->Teleport( origin, angles, NULL );
+	// Force an immediate trigger pass after cheat teleports so scripted
+	// interactions react at the new position in the same frame.
+	player->TouchTriggers();
 }
 
 /*

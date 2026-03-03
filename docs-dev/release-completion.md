@@ -16,6 +16,7 @@ Process:
 - [x] Nightly packaging updated to no longer require external legacy-effects runtime artifacts.
 - [x] VS Code tasks/launch profiles updated for OpenD3 executable naming and Doom 3 basepath defaults.
 - [x] AGENTS guidance rewritten for Doom 3 reinstatement and dhewm3 reference workflow.
+- [x] Ported OpenQ4 x64 robustness fixes relevant to Doom 3: player trigger overlap fallback, immediate post-teleport trigger sweep, AAS node/depth validation hardening, AI look_joint warning aggregation, bound rigid-body proxy push handling, generated image-cache writes to `fs_savepath`, DDS (`DXT1`/`DXT5`) image fallback loading, and optional missing-image warning suppression.
 
 ## Carry Forward
 
