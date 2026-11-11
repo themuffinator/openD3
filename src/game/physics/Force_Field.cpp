@@ -1,33 +1,6 @@
-/*
-===========================================================================
 
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
-
-#include "../../idlib/precompiled.h"
-#pragma hdrstop
 
 #include "../Game_local.h"
 
@@ -48,6 +21,11 @@ idForce_Field::idForce_Field( void ) {
 	playerOnly		= false;
 	monsterOnly		= false;
 	clipModel		= NULL;
+// RAVEN BEGIN
+// bdube: added last apply time
+	lastApplyTime   = -1;
+	owner			= NULL;
+// RAVEN END
 }
 
 /*
@@ -75,6 +53,9 @@ void idForce_Field::Save( idSaveGame *savefile ) const {
 	savefile->WriteBool( playerOnly );
 	savefile->WriteBool( monsterOnly );
 	savefile->WriteClipModel( clipModel );
+
+	savefile->WriteInt ( lastApplyTime );	// cnicholson: Added unsaved var
+	// TOSAVE: idEntity*			owner;
 }
 
 /*
@@ -91,6 +72,8 @@ void idForce_Field::Restore( idRestoreGame *savefile ) {
 	savefile->ReadBool( playerOnly );
 	savefile->ReadBool( monsterOnly );
 	savefile->ReadClipModel( clipModel );
+
+	savefile->ReadInt ( lastApplyTime );	// cnicholson: Added unrestored var
 }
 
 /*
@@ -159,7 +142,10 @@ void idForce_Field::Evaluate( int time ) {
 	assert( clipModel );
 
 	bounds.FromTransformedBounds( clipModel->GetBounds(), clipModel->GetOrigin(), clipModel->GetAxis() );
-	numClipModels = gameLocal.clip.ClipModelsTouchingBounds( bounds, -1, clipModelList, MAX_GENTITIES );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+	numClipModels = gameLocal.ClipModelsTouchingBounds( owner, bounds, -1, clipModelList, MAX_GENTITIES );
+// RAVEN END
 
 	for ( i = 0; i < numClipModels; i++ ) {
 		cm = clipModelList[ i ];
@@ -177,17 +163,41 @@ void idForce_Field::Evaluate( int time ) {
 		idPhysics *physics = entity->GetPhysics();
 
 		if ( playerOnly ) {
-			if ( !physics->IsType( idPhysics_Player::Type ) ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+			if ( !physics->IsType( idPhysics_Player::GetClassType() ) ) {
+// RAVEN END
 				continue;
 			}
 		} else if ( monsterOnly ) {
-			if ( !physics->IsType( idPhysics_Monster::Type ) ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+			if ( !physics->IsType( idPhysics_Monster::GetClassType() ) ) {
+
 				continue;
 			}
 		}
 
-		if ( !gameLocal.clip.ContentsModel( cm->GetOrigin(), cm, cm->GetAxis(), -1,
-									clipModel->Handle(), clipModel->GetOrigin(), clipModel->GetAxis() ) ) {
+// nrausch: It was undesireable to have gibs and discarded weapons bouncing on jump pads
+		if ( gameLocal.isMultiplayer ) {
+			if ( entity->IsType( idItem::GetClassType() ) ) {
+				continue;
+			}
+			if ( entity->IsType( rvClientPhysics::GetClassType() ) ) {
+				continue;
+			}
+			if ( entity->IsType( idPlayer::GetClassType() ) ) {
+				if ( ((idPlayer*)entity)->health <= 0 ) {
+					continue;
+				}
+			}			
+		
+		}
+
+// ddynerman: multiple clip worlds
+		if ( !gameLocal.ContentsModel( owner, cm->GetOrigin(), cm, cm->GetAxis(), -1,
+									clipModel->GetCollisionModel(), clipModel->GetOrigin(), clipModel->GetAxis() ) ) {
+// RAVEN END
 			continue;
 		}
 
@@ -253,5 +263,10 @@ void idForce_Field::Evaluate( int time ) {
 				break;
 			}
 		}
+
+// RAVEN BEGIN
+// bdube: added last apply time			
+		lastApplyTime = time;
+// RAVEN END
 	}
 }

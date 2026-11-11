@@ -50,9 +50,11 @@ public:
 	virtual idWinVar *	GetWinVarByName(const char *_name, bool winLookup = false, drawWin_t** owner = NULL);
 	virtual const char *HandleEvent(const sysEvent_t *event, bool *updateVisuals);
 	virtual void		PostParse();
+	virtual void RefreshForLevelLoad() override;
 	virtual void		Draw(int time, float x, float y);
 	virtual void		DrawBackground(const idRectangle &drawRect);
 	virtual const char *RouteMouseCoords(float xd, float yd);
+	virtual void		MouseEnter();
 	virtual void		Activate(bool activate, idStr &act);
 	virtual void		SetBuddy(idWindow *buddy);
 
@@ -62,6 +64,9 @@ private:
 	virtual bool		ParseInternalVar(const char *name, idParser *src);
 	void				CommonInit();
 	void				InitCvar();
+	float				ClampAndSnapValue( float newValue ) const;
+	float				GetPageStep( void ) const;
+	void				CommitValue( void );
 						// true: read the updated cvar from cvar system
 						// false: write to the cvar system
 						// force == true overrides liveUpdate 0
@@ -77,6 +82,10 @@ private:
 	idRectangle			thumbRect;
 	const idMaterial *	thumbMat;
 	bool				vertical;
+public:
+	// A slider that runs top to bottom: a page's scroll bar.
+	bool				IsVertical() const { return vertical; }
+private:
 	bool				verticalFlip;
 	bool				scrollbar;
 	idWindow *			buddyWin;

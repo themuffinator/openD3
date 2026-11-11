@@ -44,10 +44,13 @@ If you have questions concerning this license or the applicable additional terms
 ===============================================================================
 */
 
-// Sound shader minDistance/maxDistance values are authored in meters.
-// Doom 3 world space uses inch-like units, so keep the original conversion.
-const float DOOM_TO_METERS = 0.0254f;					// doom units to meters
-const float METERS_TO_DOOM = ( 1.0f / DOOM_TO_METERS );	// meters to doom units
+// unfortunately, our minDistance / maxDistance is specified in meters, and
+// we have far too many of them to change at this time.
+// 
+// jmarshall - quake 4 doesn't use these
+const float DOOM_TO_METERS = 1.0f;					// doom to meters
+const float METERS_TO_DOOM = 1.0f;	// meters to doom
+// jmarshall end
 
 const float DB_SILENCE = -60.0f;
 
@@ -64,18 +67,21 @@ static const int	SSF_PLAY_ONCE =			BIT( 6 );	// never restart if already playing
 static const int	SSF_UNCLAMPED =			BIT( 7 );	// don't clamp calculated volumes at 1.0
 static const int	SSF_NO_FLICKER =		BIT( 8 );	// always return 1.0 for volume queries
 static const int	SSF_NO_DUPS =			BIT( 9 );	// try not to play the same sound twice in a row
-static const int	SSF_VO =				BIT( 10 ); // VO - direct a portion of the sound through the center channel (set automatically on shaders that contain files that start with "sound/vo/")
-static const int	SSF_MUSIC =				BIT( 11 ); // Music - Muted when the player is playing his own music
 
 // RAVEN BEGIN
-	static const int	SSF_USEDOPPLER = BIT(17);	// allow doppler pitch shifting effects
-	static const int	SSF_NO_RANDOMSTART = BIT(18);	// don't offset the start position for looping sounds
-	static const int	SSF_VO_FOR_PLAYER = BIT(12);	// Notifies a funcRadioChatter that this shader is directed at the player
-	static const int	SSF_IS_VO = BIT(13);	// this sound is VO
-	static const int	SSF_CAUSE_RUMBLE = BIT(14);	// causes joystick rumble
+static const int	SSF_USEDOPPLER = BIT(10);	// allow doppler pitch shifting effects
+static const int	SSF_NO_RANDOMSTART = BIT(11);	// don't offset the start position for looping sounds
+static const int	SSF_VO_FOR_PLAYER = BIT(12);	// Notifies a funcRadioChatter that this shader is directed at the player
+static const int	SSF_IS_VO = BIT(13);	// this sound is VO
+static const int	SSF_CAUSE_RUMBLE = BIT(14);	// causes joystick rumble
 static const int	SSF_CENTER = BIT(15);	// sound through center channel only
 static const int	SSF_HILITE = BIT(16);	// display debug info for this emitter
 // RAVEN END
+
+// OpenQ4-only runtime classifications. Keep these out of the retail flag range
+// because game modules and shipped Q4 data use bits 10/11 for Doppler/no-random-start.
+static const int	SSF_VO =				BIT( 22 ); // VO - direct a portion of the sound through the center channel (set automatically on shaders that contain files that start with "sound/vo/")
+static const int	SSF_MUSIC =				BIT( 23 ); // Music - Muted when the player is playing his own music
 
 // these options can be overriden from sound shader defaults on a per-emitter and per-channel basis
 typedef struct
@@ -83,6 +89,7 @@ typedef struct
 	float					minDistance;
 	float					maxDistance;
 	float					volume;					// linear scale (1.0 = nominal)
+	float					attenuatedVolume;		// Quake 4 archived field; retained for retail ABI/save-demo layout
 	float					shakes;
 	int						soundShaderFlags;		// SSF_* bit flags
 	int						soundClass;				// for global fading of sounds
@@ -99,6 +106,7 @@ typedef struct
 // sound classes are used to fade most sounds down inside cinematics, leaving dialog
 // flagged with a non-zero class full volume
 const int		SOUND_MAX_CLASSES		= 4;
+const int		SOUND_CLASS_MUSICAL		= 3;
 
 // it is somewhat tempting to make this a virtual class to hide the private
 // details here, but that doesn't fit easily with the decl manager at the moment.
@@ -112,8 +120,12 @@ public:
 	virtual bool			SetDefaultText();
 	virtual const char* 	DefaultDefinition() const;
 	virtual bool			Parse( const char* text, const int textLength ) override;
+	virtual bool			Parse( const char* text, const int textLength, bool noCaching ) override;
 	virtual void			FreeData();
 	virtual void			List() const;
+	virtual void			SetReferencedThisLevel() override;
+	virtual bool			Validate( const char* psText, int iTextLength, idStr& strReportTo ) const override;
+	virtual bool			RebuildTextSource() override;
 
 // jmarshall: eval
 	virtual bool			IsVO_ForPlayer(void) const;
@@ -135,6 +147,24 @@ public:
 	virtual const char* 	GetSound( int index ) const;
 	virtual float			GetTimeLength() const;
 
+	float					GetLeadinVolume() const { return leadinVolume; }
+	int						GetNumEntries() const { return entries.Num(); }
+	idSoundSample*			GetLeadin( int index ) const { return ( index >= 0 && index < leadins.Num() ) ? leadins[index] : NULL; }
+	idSoundSample*			GetEntry( int index ) const { return ( index >= 0 && index < entries.Num() ) ? entries[index] : NULL; }
+	const char*				GetShakeData( int index ) const;
+	void					SetShakeData( int index, const char* ampData );
+	void					Purge( bool freeBaseBlocks );
+	void					LoadSampleData( int langIndex = -1 );
+
+	const char*				GetSampleName( int index ) const;
+	int						GetSamplesPerSec( int index ) const;
+	int						GetNumChannels( int index ) const;
+	int						GetNumSamples( int index ) const;
+	int						GetMemorySize( int index ) const;
+	const byte*				GetNonCacheData( int index ) const;
+
+	void					ExpandSmallOggs( bool force );
+
 private:
 	friend class idSoundWorldLocal;
 	friend class idSoundEmitterLocal;
@@ -152,10 +182,35 @@ private:
 	idList<idSoundSample*>	entries;
 	idStrList				shakes;
 
+	idStr					desc;
+	float					minFrequencyShift;
+	float					maxFrequencyShift;
+	bool					noShakes;
+	bool					frequentlyUsed;
+
 private:
 	void					Init();
 	bool					ParseShader( idLexer& src );
+	idSoundSample*			GetSampleByIndex( int index ) const;
 };
+
+class rvSoundShaderEdit {
+public:
+	virtual					~rvSoundShaderEdit() {}
+	virtual const char*		GetSampleName( const idSoundShader* sound, int index ) const = 0;
+	virtual int				GetSamplesPerSec( const idSoundShader* sound, int index ) const = 0;
+	virtual int				GetNumChannels( const idSoundShader* sound, int index ) const = 0;
+	virtual int				GetNumSamples( const idSoundShader* sound, int index ) const = 0;
+	virtual int				GetMemorySize( const idSoundShader* sound, int index ) const = 0;
+	virtual const byte*		GetNonCacheData( const idSoundShader* sound, int index ) const = 0;
+	virtual void			LoadSampleData( idSoundShader* sound, int langIndex = -1 ) = 0;
+	virtual void			ExpandSmallOggs( idSoundShader* sound, bool force ) = 0;
+	virtual const char*		GetShakeData( idSoundShader* sound, int index ) = 0;
+	virtual void			SetShakeData( idSoundShader* sound, int index, const char* ampData ) = 0;
+	virtual void			Purge( idSoundShader* sound, bool freeBaseBlocks ) = 0;
+};
+
+extern rvSoundShaderEdit* soundShaderEdit;
 
 /*
 ===============================================================================
@@ -184,13 +239,10 @@ public:
 
 	// the parms specified will be the default overrides for all sounds started on this emitter.
 	// NULL is acceptable for parms
-	virtual void			UpdateEmitter( const idVec3& origin, int listenerId, const soundShaderParms_t* parms ) = 0;
-
-// jmarshall - todo add velocity
-	virtual void			UpdateEmitter(const idVec3& origin, const idVec3& velocity, int listenerId, const soundShaderParms_t* parms) {
-		UpdateEmitter(origin, listenerId, parms);
+	virtual void			UpdateEmitter( const idVec3& origin, int listenerId, const soundShaderParms_t* parms ) {
+		UpdateEmitter( origin, vec3_zero, listenerId, parms );
 	}
-// jmarshalll end
+	virtual void			UpdateEmitter( const idVec3& origin, const idVec3& velocity, int listenerId, const soundShaderParms_t* parms ) = 0;
 
 	// returns the length of the started sound in msec
 	virtual int				StartSound( const idSoundShader* shader, const s_channelType channel, float diversity = 0, int shaderFlags = 0, bool allowSlow = true ) = 0;
@@ -211,6 +263,11 @@ public:
 	// just samples the raw wav file, it doesn't account for volume overrides in the
 	virtual	float			CurrentAmplitude() = 0;
 
+	// Actual decoded sample peaks, oldest to newest, at 60 Hz ending at the
+	// channel's playback cursor. Missing, stopped and silent audio is zero.
+	// Pre-volume metering; never uses authored shake data or no_flicker.
+	virtual void			AmplitudeHistory( s_channelType channel, float *peaks, int count ) = 0;
+
 	// for save games.  Index will always be > 0
 	virtual	int				Index() const = 0;
 };
@@ -225,6 +282,15 @@ independent render worlds.  The prime example is the editor sound preview
 option existing simultaniously with a live game.
 ===============================================================================
 */
+
+// A borrowed presentation snapshot, valid until the next decl/language reload.
+// Timing follows the sample clock, including pause and frequency/time shifts.
+struct soundSubtitle_t {
+	const char* text;
+	const char* shader;
+	int emitterIndex, speakerId, startTime, timeMsec, durationMsec;
+	bool radio;
+};
 
 class idSoundWorld
 {
@@ -243,16 +309,10 @@ public:
 
 	// query sound samples from all emitters reaching a given listener
 	virtual float			CurrentShakeAmplitude() = 0;
-	virtual	float			CurrentShakeAmplitudeForPosition( const int time, const idVec3& listenerPosition ) {
-		return CurrentShakeAmplitude();
-	}
 
 	// where is the camera/microphone
 	// listenerId allows listener-private and antiPrivate sounds to be filtered
 	virtual void			PlaceListener( const idVec3& origin, const idMat3& axis, const int listenerId ) = 0;
-	virtual void			PlaceListener( const idVec3& origin, const idMat3& axis, const int listenerId, const int gameTime, const idStr& areaName ) {
-		PlaceListener( origin, axis, listenerId );
-	}
 
 	// fade all sounds in the world with a given shader soundClass
 	// to is in Db, over is in seconds
@@ -266,7 +326,8 @@ public:
 	virtual void			StopWritingDemo() = 0;
 
 	// read a sound command from a demo file
-	virtual void			ProcessDemoCommand( idDemoFile* demo ) = 0;
+	// returns false when malformed or truncated input stops demo playback
+	virtual bool			ProcessDemoCommand( idDemoFile* demo ) = 0;
 
 	// when cinematics are skipped, we need to advance sound time this much
 	virtual void			Skip( int time ) = 0;
@@ -294,6 +355,18 @@ public:
 
 	virtual void			SetSlowmoSpeed( float speed ) = 0;
 	virtual void			SetEnviroSuit( bool active ) = 0;
+
+	// openQ4: muffles everything while the listener's head is under a liquid surface. Derived from
+	// the eye position every frame, so it is deliberately not part of the savegame.
+	virtual void			SetUnderwater( bool active ) = 0;
+
+	// openQ4: lets the sound world ask whether a point is inside a liquid, which only the game
+	// knows - liquid lives in the collision world, not the render world. Used to occlude sounds
+	// that have to cross the surface to reach the listener. Called from the same per-emitter
+	// spatialisation path that already does portal tracing, so it must be cheap and main-thread.
+	typedef bool ( *liquidTest_t )( const idVec3 &point );
+	virtual void			SetLiquidTest( liquidTest_t test ) = 0;
+	virtual int				GetSubtitles( soundSubtitle_t* cues, int capacity ) = 0;
 };
 
 
@@ -367,6 +440,7 @@ public:
 #if defined(USE_OPENAL)
 	virtual void*			GetOpenALDevice() const = 0;
 #endif
+	virtual int				IsEAXAvailable() const = 0;
 
 	// for the sound level meter window
 	virtual cinData_t		ImageForTime( const int milliseconds, const bool waveform ) = 0;
@@ -374,8 +448,9 @@ public:
 	// Free all sounds loaded during the last map load
 	virtual	void			BeginLevelLoad() = 0;
 
-	// Load all sounds marked as used this level
-	virtual	void			EndLevelLoad() = 0;
+	// Load all sounds marked as used this level. mapName is the session's
+	// "maps/<name>" path, which also selects the map's reverb tables.
+	virtual	void			EndLevelLoad( const char* mapName ) = 0;
 
 //	virtual void			Preload( idPreloadManifest& preload ) = 0;
 
@@ -387,50 +462,118 @@ public:
 	// get a new emitter that can play sounds in this world
 	virtual idSoundWorld* GetSoundWorldFromId(int worldId) = 0;
 
+	// The sound worlds these helpers reach through belong to the session, which
+	// allocates them in idSessionLocal::Init and drops them in Shutdown. Engine
+	// teardown runs outside that window: idCommonLocal::FatalError shuts the
+	// session down from anywhere in startup, so a renderer that fails to bring
+	// up its device tears down before any world exists. A missing world is
+	// therefore ordinary state, not a programming error, and matches the NULL
+	// check idSoundSystemLocal::FreeSoundEmitter already makes on the same
+	// accessor (issue #96).
 	idSoundEmitter* EmitterForIndex(int worldId, int index) {
-		return GetSoundWorldFromId(worldId)->EmitterForIndex(index);
+		idSoundWorld* soundWorld = GetSoundWorldFromId(worldId);
+		if (soundWorld == NULL) {
+			return NULL;
+		}
+		return soundWorld->EmitterForIndex(index);
 	}
 
 	void			FadeSoundClasses(int worldId, const int soundClass, const float to, const float over) {
-		GetSoundWorldFromId(worldId)->FadeSoundClasses(soundClass, to, over);
+		idSoundWorld* soundWorld = GetSoundWorldFromId(worldId);
+		if (soundWorld == NULL) {
+			return;
+		}
+		soundWorld->FadeSoundClasses(soundClass, to, over);
 	}
 
 	void			PlayShaderDirectly(int worldId, const char* name, int channel = -1) {
-		GetSoundWorldFromId(worldId)->PlayShaderDirectly(name, channel);
+		idSoundWorld* soundWorld = GetSoundWorldFromId(worldId);
+		if (soundWorld == NULL) {
+			return;
+		}
+		soundWorld->PlayShaderDirectly(name, channel);
 	}
 
 	virtual int				AllocSoundEmitter(int worldId) {
-		return GetSoundWorldFromId(worldId)->AllocSoundEmitter()->Index();
+		idSoundWorld* soundWorld = GetSoundWorldFromId(worldId);
+		if (soundWorld == NULL) {
+			// index 0 is the reserved "no emitter" handle; EmitterForIndex and
+			// FreeSoundEmitter both already treat it as invalid
+			return 0;
+		}
+		return soundWorld->AllocSoundEmitter()->Index();
 	}
 	virtual void			FreeSoundEmitter(int worldId, int handle, bool immediate) {
 
 	}
 
 	virtual void StopAllSounds(int worldId) {
-		GetSoundWorldFromId(worldId)->StopAllSounds();
+		idSoundWorld* soundWorld = GetSoundWorldFromId(worldId);
+		if (soundWorld == NULL) {
+			return;
+		}
+		soundWorld->StopAllSounds();
 	}
 
 	virtual void SetActiveSoundWorld(bool val) {  }
 
 	virtual void			WriteToSaveGame(int worldId, idFile* savefile) {
-		GetSoundWorldFromId(worldId)->WriteToSaveGame(savefile);
+		idSoundWorld* soundWorld = GetSoundWorldFromId(worldId);
+		if (soundWorld == NULL) {
+			return;
+		}
+		soundWorld->WriteToSaveGame(savefile);
 	}
 	virtual void			ReadFromSaveGame(int worldId, idFile* savefile) {
-		GetSoundWorldFromId(worldId)->ReadFromSaveGame(savefile);
+		idSoundWorld* soundWorld = GetSoundWorldFromId(worldId);
+		if (soundWorld == NULL) {
+			return;
+		}
+		soundWorld->ReadFromSaveGame(savefile);
 	}
 
 	void			PlaceListener(const idVec3& origin, const idMat3& axis, const int listenerId, const int gameTime, const idStr& areaName) {
-		GetSoundWorldFromId(SOUNDWORLD_GAME)->PlaceListener(origin, axis, listenerId);
+		idSoundWorld* soundWorld = GetSoundWorldFromId(SOUNDWORLD_GAME);
+		if (soundWorld == NULL) {
+			return;
+		}
+		soundWorld->PlaceListener(origin, axis, listenerId);
 	}
 
-	virtual	float			CurrentShakeAmplitudeForPosition(int worldId, const int time, const idVec3& listenerPosition) {
-		return 0.0f; // GetSoundWorldFromId(worldId)->CurrentShakeAmplitudeForPosition(time, listenerPosition);
-	}
+	// Query authored camera shake at this position, independently of the audio mix.
+	virtual	float			CurrentShakeAmplitudeForPosition( int worldId, const int time, const idVec3& listenerPosition ) = 0;
 
 	// RAVEN END
 // jmarshall end
+
+	// Quake 4 reverb editor interface: the map's portal areas and the efxs/*.efx
+	// reverb each one plays (see idSoundReverb).
+	virtual	const char*		GetReverbName( int reverb ) = 0;
+	virtual	int				GetNumAreas() = 0;
+	virtual	int				GetReverb( int area ) = 0;
+	virtual	bool			SetReverb( int area, const char* reverbName, const char* fileName ) = 0;
+
+	// Releases the audio device and every sample's audio data and sets s_noSound,
+	// for a client that turns into a dedicated server (SpawnServer_f). Unlike
+	// Shutdown() it keeps every sample object, because sound shaders keep
+	// pointers to them; samples loaded later become silent defaults, as on a
+	// dedicated server. Retail Quake4.exe 1.4.2 calls ShutdownHW there.
+	virtual void			ShutdownHW() = 0;
+
+	// Voice is session-owned, independent of map audio/time scale. Recording
+	// additionally requires explicit capture consent and push-to-talk (or a
+	// local microphone test); merely receiving never opens an input device.
+	virtual bool			UpdateVoiceChat( bool active, bool transmit, bool localTest ) = 0;
+	virtual int				GetVoiceData( byte* data, int capacity ) = 0;
+	virtual void			PlayVoiceData( int clientNum, unsigned int generation, const byte* data, int size ) = 0;
+	virtual void			StopVoiceData( int clientNum ) = 0;
+	virtual void			ResetVoiceChat() = 0;
+	virtual int				GetVoiceTalker() const = 0;
+	virtual float			GetVoiceLevel() const = 0;
 };
 
 extern idSoundSystem*	soundSystem;
+
+#define OPENQ4_SOUND_HAS_SOUNDWORLD_SKIP 1
 
 #endif /* !__SOUND__ */

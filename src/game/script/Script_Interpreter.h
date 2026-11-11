@@ -1,36 +1,12 @@
-/*
-===========================================================================
-
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
-
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
-
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
 
 #ifndef __SCRIPT_INTERPRETER_H__
 #define __SCRIPT_INTERPRETER_H__
 
 #define MAX_STACK_DEPTH 	64
-#define LOCALSTACK_SIZE 	6144
+
+// RB: doubled local stack size
+#define LOCALSTACK_SIZE 	(6144 * 2)
+// RB end
 
 typedef struct prstack_s {
 	int 				s;
@@ -59,8 +35,14 @@ private:
 	idThread			*thread;
 
 	void				PopParms( int numParms );
+// RAVEN BEGIN
+//	abahr: making Push public to allow parms to be put on stack
+public:
 	void				PushString( const char *string );
 	void				Push( int value );
+	void				PushVector( const idVec3 &vector );
+private:
+// RAVEN END
 	const char			*FloatToString( float value );
 	void				AppendString( idVarDef *def, const char *from );
 	void				SetString( idVarDef *def, const char *from );
@@ -73,6 +55,11 @@ private:
 	void				LeaveFunction( idVarDef *returnDef );
 	void				CallEvent( const function_t *func, int argsize );
 	void				CallSysEvent( const function_t *func, int argsize );
+// RAVEN BEGIN
+// jshepard: last variable referenced in the script-- keep tabs on it so we can print it for warnings.
+	idVarDef			*LastScriptVariable;
+// RAVEN END
+
 
 public:
 	bool				doneProcessing;
@@ -87,14 +74,15 @@ public:
 	void				Restore( idRestoreGame *savefile );				// unarchives object from save game file
 
 	void				SetThread( idThread *pThread );
+	void				RestoreThread( idRestoreGame *savefile );
 
 	void				StackTrace( void ) const;
 
 	int					CurrentLine( void ) const;
 	const char			*CurrentFile( void ) const;
 
-	void				Error( char *fmt, ... ) const id_attribute((format(printf,2,3)));
-	void				Warning( char *fmt, ... ) const id_attribute((format(printf,2,3)));
+	void				Error( const char *fmt, ... ) const;
+	void				Warning( const char *fmt, ... ) const;
 	void				DisplayInfo( void ) const;
 
 	bool				BeginMultiFrameEvent( idEntity *ent, const idEventDef *event );
@@ -141,6 +129,20 @@ ID_INLINE void idInterpreter::Push( int value ) {
 	}
 	*( int * )&localstack[ localstackUsed ]	= value;
 	localstackUsed += sizeof( int );
+}
+
+/*
+====================
+idInterpreter::PushVector
+====================
+*/
+ID_INLINE void idInterpreter::PushVector( const idVec3 &vector ) {
+	if ( localstackUsed + sizeof( idVec3 ) > LOCALSTACK_SIZE ) {
+		Error( "Push: locals stack overflow\n" );
+	}
+	Push( *reinterpret_cast<const int *>( &vector.x ) );
+	Push( *reinterpret_cast<const int *>( &vector.y ) );
+	Push( *reinterpret_cast<const int *>( &vector.z ) );
 }
 
 /*

@@ -49,7 +49,7 @@ public:
 	idBounds &		ExpandSelf( const float d );					// expand bounds in all directions with the given value
 
 // RAVEN BEGIN
-// jscott: for FX runtime
+// jscott: for BSE
 	idBounds &		ExpandSelf( const idVec3 &d );					// expand bounds in all directions by the given vector
 	const idVec3	Size( void ) const;
 	float			ShortestDistance( const idVec3 &point ) const;
@@ -318,7 +318,7 @@ ID_INLINE idBounds &idBounds::ExpandSelf( const float d ) {
 }
 
 // RAVEN BEGIN
-// jscott: for FX runtime
+// jscott: for BSE
 ID_INLINE idBounds &idBounds::ExpandSelf( const idVec3 &d ) 
 {
 	b[0][0] -= d[0];
@@ -447,4 +447,3 @@ ID_INLINE void idBounds::AxisProjection( const idVec3 &origin, const idMat3 &axi
 }
 
 #endif /* !__BV_BOUNDS_H__ */
-

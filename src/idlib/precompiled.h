@@ -49,6 +49,10 @@ typedef unsigned long long	uint64;
 class ThreadedAlloc;		// class that is only used to expand the AutoCrit template to tag allocs/frees called from inside the R_AddModelSurfaces call graph
 #define PC_CVAR_ARCHIVE CVAR_ARCHIVE
 
+#if defined( __APPLE__ ) && !defined( MACOS_X )
+#define MACOS_X 1
+#endif
+
 #ifdef _WINDOWS
 
 	// _WIN32 always defined
@@ -80,13 +84,13 @@ class ThreadedAlloc;		// class that is only used to expand the AutoCrit template
 		// to make things worse, only the windows version was compiled with _MD5R enabled, the Linux and Mac builds didn't
 		//#define Q4SDK_MD5R
 	#else	// Q4SDK
-		//#define Q4SDK_MD5R
+		#define Q4SDK_MD5R
 		//#define _MD5R_SUPPORT
 		//#define _MD5R_WRITE_SUPPORT
 	#endif	// !Q4SDK
 	#define _GLVAS_SUPPPORT
 	//#define RV_BINARYDECLS
-	//#define RV_SINGLE_DECL_FILE
+	#define RV_SINGLE_DECL_FILE
 	// this can't be used with _RV_MEM_SYS_SUPPORT and actually shouldn't be used at all on the Xenon at present
 	#if !defined(_RV_MEM_SYS_SUPPORT) && !defined(ID_REDIRECT_NEWDELETE)
 		//#define RV_UNIFIED_ALLOCATOR
@@ -116,15 +120,123 @@ class ThreadedAlloc;		// class that is only used to expand the AutoCrit template
 	#pragma warning( disable : 4458 )			//  hides class member
 // jmarshall end
 
-	class AlignmentChecker
-	{
-	public:
-		static void UpdateCount(void const * const ptr) {}
-		static void ClearCount() {}
-		static void Print() {}
-	};
+	#ifndef ID_ALIGNMENTCHECKER_DEFINED
+#define ID_ALIGNMENTCHECKER_DEFINED
+class AlignmentChecker
+{
+public:
+	static void UpdateCount(void const * const ptr) {}
+	static void ClearCount() {}
+	static void Print() {}
+};
+#endif
 
 #endif // _WINDOWS
+
+#ifdef __linux__
+
+// for offsetof
+#include <stddef.h>
+// FLT_MAX and such
+#include <limits.h>
+#include <float.h>
+
+	#define __WITH_PB__
+	#undef WIN32
+	#undef _XBOX
+	#undef _CONSOLE
+	#define _OPENGL
+	#define _LITTLE_ENDIAN
+	#define _CASE_SENSITIVE_FILESYSTEM
+	#define _USE_OPENAL
+	#ifndef Q4SDK
+		#define Q4SDK_MD5R
+	#endif
+
+	#define NEWLINE				"\n"
+
+	#define _GLVAS_SUPPPORT
+
+	#ifndef ID_ALIGNMENTCHECKER_DEFINED
+#define ID_ALIGNMENTCHECKER_DEFINED
+class AlignmentChecker
+{
+public:
+	static void UpdateCount(void const * const ptr) {}
+	static void ClearCount() {}
+	static void Print() {}
+};
+#endif
+
+	#define RESTRICT
+	#define TIME_THIS_SCOPE(x)
+
+	// Enables the batching of vertex cache request in SMP mode.
+	// Note (TTimo): is tied to ENABLE_INTEL_SMP
+	#ifdef ENABLE_INTEL_SMP
+	#define ENABLE_INTEL_VERTEXCACHE_OPT
+	#endif
+
+#endif
+
+#ifdef MACOS_X
+
+// for offsetof
+#include <stddef.h>
+#include <limits.h>
+#include <float.h>				// for FLT_MIN
+
+	// SMP support for running the backend on a 2nd thread
+	#ifndef ENABLE_INTEL_SMP
+	#define ENABLE_INTEL_SMP
+	#endif
+	// Enables the batching of vertex cache request in SMP mode.
+	// Note (TTimo): is tied to ENABLE_INTEL_SMP
+	#define ENABLE_INTEL_VERTEXCACHE_OPT
+
+	#define __WITH_PB__
+	#undef WIN32
+	#undef _XBOX
+	#undef _CONSOLE
+	#define _OPENGL
+	#ifdef __ppc__
+	#undef _LITTLE_ENDIAN
+	#else
+	#define _LITTLE_ENDIAN
+	#endif
+	#define _CASE_SENSITIVE_FILESYSTEM
+	#define _USE_OPENAL
+	#ifndef Q4SDK
+		#define Q4SDK_MD5R
+	#endif
+	#define ID_INLINE inline
+	#define NEWLINE				"\n"
+
+	#define _GLVAS_SUPPPORT
+
+	#ifndef ID_ALIGNMENTCHECKER_DEFINED
+#define ID_ALIGNMENTCHECKER_DEFINED
+class AlignmentChecker
+{
+public:
+	static void UpdateCount(void const * const ptr) {}
+	static void ClearCount() {}
+	static void Print() {}
+};
+#endif
+
+	#define RESTRICT
+	#define TIME_THIS_SCOPE(x)
+
+#endif
+
+#ifndef RESTRICT
+	#define RESTRICT
+#endif
+
+#ifndef TIME_THIS_SCOPE
+	#define TIME_THIS_SCOPE(x)
+#endif
 
 #ifndef BIT
 #define BIT( num )				BITT< num >::VALUE
@@ -210,6 +322,20 @@ public:
 #include <time.h>
 #include <ctype.h>
 #include <typeinfo>
+#include <atomic>
+#include <algorithm>
+#include <chrono>
+#include <condition_variable>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <limits>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <utility>
+#include <vector>
 #include <errno.h>
 #include <math.h>
 
@@ -224,7 +350,7 @@ public:
 // framework
 #include "../framework/BuildVersion.h"
 #include "../framework/BuildDefines.h"
-#include "../framework/Licensee.h"
+#include "../framework/licensee.h"
 #include "../framework/CmdSystem.h"
 #include "../framework/CVarSystem.h"
 #include "../framework/Common.h"
@@ -233,13 +359,11 @@ public:
 #include "../framework/UsercmdGen.h"
 
 // decls
-#include "../framework/DeclManager.h"
-#include "../framework/DeclTable.h"
-#include "../framework/DeclSkin.h"
-#include "../framework/DeclEntityDef.h"
-#include "../framework/DeclFX.h"
-#include "../framework/DeclParticle.h"
-#include "../framework/DeclAF.h"
+#include "../framework/declManager.h"
+#include "../framework/declTable.h"
+#include "../framework/declSkin.h"
+#include "../framework/declEntityDef.h"
+#include "../framework/declAF.h"
 #include "../framework/DeclPDA.h"
 // RAVEN BEGIN
 // jscott: new decl types
@@ -265,13 +389,14 @@ const float MAX_BOUND_SIZE = 65536.0f;
 #include "../renderer/ModelManager.h"
 #include "../renderer/RenderSystem.h"
 #include "../renderer/RenderWorld.h"
+#include "../framework/VRSystem.h"
 
 // sound engine
 #include "../sound/sound.h"
 
 // RAVEN BEGIN
 // jscott: Effects system interface
-#include "../effects_api/EffectsInterface.h"
+#include "../bse/BSEInterface.h"
 // RAVEN END
 
 // asynchronous networking
@@ -294,7 +419,11 @@ const float MAX_BOUND_SIZE = 65536.0f;
 //-----------------------------------------------------
 
 #ifdef GAME_DLL
+#ifdef GAME_MPAPI
+#include "../mpgame/Game_local.h"
+#else
 #include "../game/Game_local.h"
+#endif
 #endif
 
 #ifndef Q4SDK
@@ -338,3 +467,4 @@ const float MAX_BOUND_SIZE = 65536.0f;
 #endif	/* __cplusplus */
 
 #endif /* !__PRECOMPILED_H__ */
+

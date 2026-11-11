@@ -1,33 +1,9 @@
-/*
-===========================================================================
-
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
-
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
-
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
 
 #ifndef __GAME_TARGET_H__
 #define __GAME_TARGET_H__
+
+//Used to compare two ammoData structs and see who has more.
+int					CompareAmmoData( const void* ammo1, const void* ammo2);
 
 
 /*
@@ -42,7 +18,7 @@ class idTarget : public idEntity {
 public:
 	CLASS_PROTOTYPE( idTarget );
 };
-
+ 
 
 /*
 ===============================================================================
@@ -273,6 +249,10 @@ public:
 
 private:
 	void				Event_Activate( idEntity *activator );
+// RAVEN BEGIN
+// abahr: fixing issue with EV_Activate not taking NULL ptrs
+	void				Event_PostSpawn();
+// RAVEN END
 };
 
 
@@ -412,6 +392,99 @@ public:
 private:
 	void				Event_Activate( idEntity *activator );
 };
+
+// RAVEN BEGIN
+// bdube: added player database
+/*
+===============================================================================
+
+idTarget_AddDatabaseEntry
+
+===============================================================================
+*/
+
+class rvTarget_AddDatabaseEntry : public idTarget {
+public:
+	CLASS_PROTOTYPE( rvTarget_AddDatabaseEntry );
+
+private:
+	void				Event_Activate( idEntity *activator );
+};
+
+// jshepard: secret area discovery
+
+/*
+===============================================================================
+
+idTarget_SecretArea
+
+===============================================================================
+*/
+
+class rvTarget_SecretArea : public idTarget {
+public:
+	CLASS_PROTOTYPE( rvTarget_SecretArea );
+
+private:
+	void				Event_Activate( idEntity *activator );
+};
+
+/*
+===============================================================================
+
+rvTarget_BossBattle
+
+===============================================================================
+*/
+
+class rvTarget_BossBattle : public idTarget {
+public:
+	CLASS_PROTOTYPE( rvTarget_BossBattle );
+
+private:
+	void				Event_Activate( idEntity *activator );
+	void				Event_SetShieldPercent( float percent );
+	void				Event_SetBossMaxHealth( float f );
+	void				Event_AllowShieldBar( float activate );
+	void				Event_AllowShieldWarningBar( float activate );
+
+};
+
+/*
+===============================================================================
+
+rvTarget_TetherAI
+
+===============================================================================
+*/
+
+class rvTarget_TetherAI : public idTarget {
+public:
+	CLASS_PROTOTYPE( rvTarget_TetherAI );
+
+private:
+	void				Event_Activate( idEntity *activator );
+};
+
+
+/*
+===============================================================================
+
+rvTarget_Nailable
+
+===============================================================================
+*/
+
+class rvTarget_Nailable : public idTarget {
+public:
+	CLASS_PROTOTYPE( rvTarget_Nailable );
+
+private:
+	void				Spawn( void );
+};
+
+
+// RAVEN END
 
 /*
 ===============================================================================
@@ -564,4 +637,68 @@ private:
 };
 
 
+/*
+===============================================================================
+
+rvTarget_LaunchProjectile
+
+===============================================================================
+*/
+
+class rvTarget_LaunchProjectile : public idTarget {
+public:
+	CLASS_PROTOTYPE( rvTarget_LaunchProjectile );
+
+	void				Spawn( void );
+
+private:
+	void				Event_Activate( idEntity *activator );
+	void				Event_LaunchProjectile( idEntity *activator );
+};
+
+/*
+===============================================================================
+
+rvTarget_ExitAreaAlert
+
+===============================================================================
+*/
+
+class rvTarget_ExitAreaAlert : public idTarget {
+public:
+	CLASS_PROTOTYPE( rvTarget_ExitAreaAlert );
+
+private:
+	void				Event_Activate( idEntity *activator );
+};
+
+/*
+===============================================================================
+
+rvTarget_AmmoStash
+
+===============================================================================
+*/
+typedef struct	ammodata_s	{
+
+	int			ammoIndex;
+	idStr		ammoName;
+	int			ammoCount;
+	int			ammoMax;
+	float		percentFull;
+
+} ammodata_t;
+
+#define AMMO_ARRAY_SIZE 10
+
+class rvTarget_AmmoStash : public idTarget {
+public:
+	CLASS_PROTOTYPE( rvTarget_AmmoStash );
+
+	//used to detect which weapons need ammo. The values stored are 0 to 1, with -1 meaning don't check this out.
+	ammodata_t			AmmoArray[ AMMO_ARRAY_SIZE];
+
+private:
+	void				Event_Activate( idEntity *activator );
+};
 #endif /* !__GAME_TARGET_H__ */

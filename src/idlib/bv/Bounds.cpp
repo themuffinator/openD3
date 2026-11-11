@@ -74,7 +74,7 @@ float idBounds::PlaneDistance( const idPlane &plane ) const {
 }
 
 // RAVEN BEGIN
-// jscott: for FX runtime attenuation
+// jscott: for BSE attenuation
 /*
 ================
 idBounds::ShortestDistance
@@ -466,4 +466,3 @@ void idBounds::ToPoints( idVec3 points[8] ) const {
 		points[i][2] = b[(i>>2)&1][2];
 	}
 }
-

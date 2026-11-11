@@ -4,33 +4,13 @@
 Doom 3 GPL Source Code
 Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company.
 
-This file is part of the Doom 3 GPL Source Code ("Doom 3 Source Code").
-
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
+This file is part of the Doom 3 GPL Source Code.
 
 ===========================================================================
 */
 
 #ifndef __DECLPDA_H__
 #define __DECLPDA_H__
-
-#include "idlib/containers/StrList.h"
-#include "framework/DeclManager.h"
 
 /*
 ===============================================================================
@@ -40,17 +20,17 @@ If you have questions concerning this license or the applicable additional terms
 ===============================================================================
 */
 
-
 class idDeclEmail : public idDecl {
 public:
 							idDeclEmail() {}
 
 	virtual size_t			Size( void ) const;
 	virtual const char *	DefaultDefinition( void ) const;
-	virtual bool			Parse( const char *text, const int textLength );
-	virtual void			FreeData( void );
-	virtual void			Print( void ) const;
-	virtual void			List( void ) const;
+	virtual bool			Parse( const char *text, const int textLength ) override;
+	virtual bool			Parse( const char *text, const int textLength, bool noCaching ) override;
+	virtual void			FreeData( void ) override;
+	virtual void			Print( void ) const override;
+	virtual void			List( void ) const override;
 
 	const char *			GetFrom() const { return from; }
 	const char *			GetBody() const { return text; }
@@ -68,17 +48,17 @@ private:
 	idStr					image;
 };
 
-
 class idDeclVideo : public idDecl {
 public:
-							idDeclVideo() {};
+							idDeclVideo() {}
 
 	virtual size_t			Size( void ) const;
 	virtual const char *	DefaultDefinition( void ) const;
-	virtual bool			Parse( const char *text, const int textLength );
-	virtual void			FreeData( void );
-	virtual void			Print( void ) const;
-	virtual void			List( void ) const;
+	virtual bool			Parse( const char *text, const int textLength ) override;
+	virtual bool			Parse( const char *text, const int textLength, bool noCaching ) override;
+	virtual void			FreeData( void ) override;
+	virtual void			Print( void ) const override;
+	virtual void			List( void ) const override;
 
 	const char *			GetRoq() const { return video; }
 	const char *			GetWave() const { return audio; }
@@ -94,17 +74,17 @@ private:
 	idStr					audio;
 };
 
-
 class idDeclAudio : public idDecl {
 public:
-							idDeclAudio() {};
+							idDeclAudio() {}
 
 	virtual size_t			Size( void ) const;
 	virtual const char *	DefaultDefinition( void ) const;
-	virtual bool			Parse( const char *text, const int textLength );
-	virtual void			FreeData( void );
-	virtual void			Print( void ) const;
-	virtual void			List( void ) const;
+	virtual bool			Parse( const char *text, const int textLength ) override;
+	virtual bool			Parse( const char *text, const int textLength, bool noCaching ) override;
+	virtual void			FreeData( void ) override;
+	virtual void			Print( void ) const override;
+	virtual void			List( void ) const override;
 
 	const char *			GetAudioName() const { return audioName; }
 	const char *			GetWave() const { return audio; }
@@ -118,17 +98,17 @@ private:
 	idStr					preview;
 };
 
-
 class idDeclPDA : public idDecl {
 public:
-							idDeclPDA() { originalEmails = originalVideos = 0; };
+							idDeclPDA() { originalEmails = originalVideos = 0; }
 
 	virtual size_t			Size( void ) const;
 	virtual const char *	DefaultDefinition( void ) const;
-	virtual bool			Parse( const char *text, const int textLength );
-	virtual void			FreeData( void );
-	virtual void			Print( void ) const;
-	virtual void			List( void ) const;
+	virtual bool			Parse( const char *text, const int textLength ) override;
+	virtual bool			Parse( const char *text, const int textLength, bool noCaching ) override;
+	virtual void			FreeData( void ) override;
+	virtual void			Print( void ) const override;
+	virtual void			List( void ) const override;
 
 	virtual void			AddVideo( const char *name, bool unique = true ) const;
 	virtual void			AddAudio( const char *name, bool unique = true ) const;
@@ -145,7 +125,7 @@ public:
 	virtual void			SetSecurity( const char *sec ) const;
 
 	const char *			GetPdaName() const { return pdaName; }
-	const char *			GetSecurity() const {return security; }
+	const char *			GetSecurity() const { return security; }
 	const char *			GetFullName() const { return fullName; }
 	const char *			GetIcon() const { return icon; }
 	const char *			GetPost() const { return post; }
@@ -163,7 +143,7 @@ private:
 	idStr					post;
 	idStr					title;
 	mutable idStr			security;
-	mutable	int				originalEmails;
+	mutable int				originalEmails;
 	mutable int				originalVideos;
 };
 

@@ -1,30 +1,3 @@
-/*
-===========================================================================
-
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
-
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
-
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
 
 #ifndef __PHYSICS_RIGIDBODY_H__
 #define __PHYSICS_RIGIDBODY_H__
@@ -39,11 +12,6 @@ If you have questions concerning this license or the applicable additional terms
 
 ===================================================================================
 */
-
-extern const float	RB_VELOCITY_MAX;
-extern const int	RB_VELOCITY_TOTAL_BITS;
-extern const int	RB_VELOCITY_EXPONENT_BITS;
-extern const int	RB_VELOCITY_MANTISSA_BITS;
 
 typedef struct rididBodyIState_s {
 	idVec3					position;					// position of trace model
@@ -76,7 +44,11 @@ public:
 	void					Restore( idRestoreGame *savefile );
 
 							// initialisation
-	void					SetFriction( const float linear, const float angular, const float contact );
+// openQ4 BEGIN
+							// keeps all three only if each lies in 0..maxFriction: Quake 4's
+							// ceiling is 1, The Awakening's rigid bodies took up to 10
+	void					SetFriction( const float linear, const float angular, const float contact, const float maxFriction = 1.0f );
+// openQ4 END
 	void					SetBouncyness( const float b );
 							// same as above but drop to the floor first
 	void					DropToFloor( void );
@@ -93,6 +65,11 @@ public:	// common physics interface
 
 	void					SetMass( float mass, int id = -1 );
 	float					GetMass( int id = -1 ) const;
+
+// RAVEN BEGIN
+// bdube: means of getting center of mass
+	idVec3					GetCenterMass ( int id = -1 ) const;
+// RAVEN END
 
 	void					SetContents( int contents, int id = -1 );
 	int						GetContents( int id = -1 ) const;
@@ -112,6 +89,7 @@ public:	// common physics interface
 	bool					IsAtRest( void ) const;
 	int						GetRestStartTime( void ) const;
 	bool					IsPushable( void ) const;
+	bool					IsInWater( void ) const;
 
 	void					SaveState( void );
 	void					RestoreState( void );
@@ -152,10 +130,13 @@ public:	// common physics interface
 	void					WriteToSnapshot( idBitMsgDelta &msg ) const;
 	void					ReadFromSnapshot( const idBitMsgDelta &msg );
 
-private:
+protected:
+
 	// state of the rigid body
 	rigidBodyPState_t		current;
 	rigidBodyPState_t		saved;
+
+private:
 
 	// rigid body properties
 	float					linearFriction;				// translational friction

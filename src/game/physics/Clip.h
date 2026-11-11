@@ -1,33 +1,12 @@
-/*
-===========================================================================
-
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
-
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
-
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
 
 #ifndef __CLIP_H__
 #define __CLIP_H__
+
+// RAVEN BEGIN
+// ddynerman: SD's clip sector code
+const int CLIPSECTOR_DEPTH				= 6;
+const int CLIPSECTOR_WIDTH				= 1 << CLIPSECTOR_DEPTH;
+// RAVEN END
 
 /*
 ===============================================================================
@@ -58,28 +37,32 @@ class idClipModel {
 public:
 							idClipModel( void );
 							explicit idClipModel( const char *name );
-							explicit idClipModel( const idTraceModel &trm );
+							explicit idClipModel( const idTraceModel &trm, const idMaterial *material = NULL );
 							explicit idClipModel( const int renderModelHandle );
 							explicit idClipModel( const idClipModel *model );
 							~idClipModel( void );
+// RAVEN BEGIN
+// ddynerman: SD's clip sector code
+	void					UpdateDynamicContents( void );
+// RAVEN END
 
 	bool					LoadModel( const char *name );
-	void					LoadModel( const idTraceModel &trm );
+	void					LoadModel( const idTraceModel &trm, const idMaterial *material, bool notHashed = false );
 	void					LoadModel( const int renderModelHandle );
 
 	void					Save( idSaveGame *savefile ) const;
 	void					Restore( idRestoreGame *savefile );
-
-	void					Link( idClip &clp );				// must have been linked with an entity and id before
-	void					Link( idClip &clp, idEntity *ent, int newId, const idVec3 &newOrigin, const idMat3 &newAxis, int renderModelHandle = -1 );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+	void					Link( void );				// must have been linked with an entity and id before
+	void					Link( idEntity *ent, int newId, const idVec3 &newOrigin, const idMat3 &newAxis, int renderModelHandle = -1 );
+// RAVEN END
 	void					Unlink( void );						// unlink from sectors
 	void					SetPosition( const idVec3 &newOrigin, const idMat3 &newAxis );	// unlinks the clip model
 	void					Translate( const idVec3 &translation );							// unlinks the clip model
 	void					Rotate( const idRotation &rotation );							// unlinks the clip model
 	void					Enable( void );						// enable for clipping
 	void					Disable( void );					// keep linked but disable for clipping
-	void					SetMaterial( const idMaterial *m );
-	const idMaterial *		GetMaterial( void ) const;
 	void					SetContents( int newContents );		// override contents
 	int						GetContents( void ) const;
 	void					SetEntity( idEntity *newEntity );
@@ -97,29 +80,31 @@ public:
 	bool					IsLinked( void ) const;				// returns true if the clip model is linked
 	bool					IsEnabled( void ) const;			// returns true if enabled for collision detection
 	bool					IsEqual( const idTraceModel &trm ) const;
-	cmHandle_t				Handle( void ) const;				// returns handle used to collide vs this model
+	bool					HasCollisionModel( void ) const;	// true if this clip model can be tested by collisionModelManager
+	idCollisionModel *		GetCollisionModel( void ) const;	// returns handle used to collide vs this model
 	const idTraceModel *	GetTraceModel( void ) const;
 	void					GetMassProperties( const float density, float &mass, idVec3 &centerOfMass, idMat3 &inertiaTensor ) const;
 
-	static cmHandle_t		CheckModel( const char *name );
 	static void				ClearTraceModelCache( void );
 	static int				TraceModelCacheSize( void );
-
 	static void				SaveTraceModels( idSaveGame *savefile );
 	static void				RestoreTraceModels( idRestoreGame *savefile );
 
 private:
 	bool					enabled;				// true if this clip model is used for clipping
+// RAVEN BEGIN
+	bool					checked;				// Splash's clip model code
+// RAVEN END
 	idEntity *				entity;					// entity using this clip model
 	int						id;						// id for entities that use multiple clip models
 	idEntity *				owner;					// owner of the entity that owns this clip model
+	unsigned int			ownerSpawnId;			// runtime generation; existing saves store the owner object
 	idVec3					origin;					// origin of clip model
 	idMat3					axis;					// orientation of clip model
 	idBounds				bounds;					// bounds
 	idBounds				absBounds;				// absolute bounds
-	const idMaterial *		material;				// material for trace models
 	int						contents;				// all contents ored together
-	cmHandle_t				collisionModelHandle;	// handle to collision model
+	idCollisionModel *		collisionModel;			// handle to collision model
 	int						traceModelIndex;		// trace model used for collision detection
 	int						renderModelHandle;		// render model def handle
 
@@ -127,11 +112,16 @@ private:
 	int						touchCount;
 
 	void					Init( void );			// initialize
+	void					FreeModel( void );
 	void					Link_r( struct clipSector_s *node );
 
-	static int				AllocTraceModel( const idTraceModel &trm );
+	static void				CacheCollisionModels( void );
+	static int				AllocTraceModel( const idTraceModel &trm, const idMaterial *material, bool notHashed = false );
+	static void				ReplaceTraceModel( int index, const idTraceModel &trm, const idMaterial *material, bool notHashed = false );
 	static void				FreeTraceModel( int traceModelIndex );
+	static int				CopyTraceModel( const int traceModelIndex );
 	static idTraceModel *	GetCachedTraceModel( int traceModelIndex );
+	static idCollisionModel*GetCachedCollisionModel( int traceModelIndex );
 	static int				GetTraceModelHashKey( const idTraceModel &trm );
 };
 
@@ -155,16 +145,12 @@ ID_INLINE void idClipModel::Disable( void ) {
 	enabled = false;
 }
 
-ID_INLINE void idClipModel::SetMaterial( const idMaterial *m ) {
-	material = m;
-}
-
-ID_INLINE const idMaterial * idClipModel::GetMaterial( void ) const {
-	return material;
-}
-
 ID_INLINE void idClipModel::SetContents( int newContents ) {
 	contents = newContents;
+// RAVEN BEGIN
+// ddynerman: SD's clip sector code
+	UpdateDynamicContents();
+// RAVEN END
 }
 
 ID_INLINE int idClipModel::GetContents( void ) const {
@@ -185,14 +171,6 @@ ID_INLINE void idClipModel::SetId( int newId ) {
 
 ID_INLINE int idClipModel::GetId( void ) const {
 	return id;
-}
-
-ID_INLINE void idClipModel::SetOwner( idEntity *newOwner ) {
-	owner = newOwner;
-}
-
-ID_INLINE idEntity *idClipModel::GetOwner( void ) const {
-	return owner;
 }
 
 ID_INLINE const idBounds &idClipModel::GetBounds( void ) const {
@@ -231,6 +209,10 @@ ID_INLINE bool idClipModel::IsEqual( const idTraceModel &trm ) const {
 	return ( traceModelIndex != -1 && *GetCachedTraceModel( traceModelIndex ) == trm );
 }
 
+ID_INLINE bool idClipModel::HasCollisionModel( void ) const {
+	return ( collisionModel != NULL || traceModelIndex != -1 );
+}
+
 ID_INLINE const idTraceModel *idClipModel::GetTraceModel( void ) const {
 	if ( !IsTraceModel() ) {
 		return NULL;
@@ -255,17 +237,27 @@ public:
 	void					Init( void );
 	void					Shutdown( void );
 
+// jmarshall
+	int						PointContents(const idVec3 p);
+// jmarshall end
+
 	// clip versus the rest of the world
+// RAVEN BEGIN
+// nmckenzie: we have cases where both a guy and his target need to be ignored by a translation
 	bool					Translation( trace_t &results, const idVec3 &start, const idVec3 &end,
-								const idClipModel *mdl, const idMat3 &trmAxis, int contentMask, const idEntity *passEntity );
+								const idClipModel *mdl, const idMat3 &trmAxis, int contentMask, const idEntity *passEntity, const idEntity *passEntity2 = 0 );
+// RAVEN END
 	bool					Rotation( trace_t &results, const idVec3 &start, const idRotation &rotation,
 								const idClipModel *mdl, const idMat3 &trmAxis, int contentMask, const idEntity *passEntity );
 	bool					Motion( trace_t &results, const idVec3 &start, const idVec3 &end, const idRotation &rotation,
 								const idClipModel *mdl, const idMat3 &trmAxis, int contentMask, const idEntity *passEntity );
 	int						Contacts( contactInfo_t *contacts, const int maxContacts, const idVec3 &start, const idVec6 &dir, const float depth,
 								const idClipModel *mdl, const idMat3 &trmAxis, int contentMask, const idEntity *passEntity );
-	int						Contents( const idVec3 &start,
-								const idClipModel *mdl, const idMat3 &trmAxis, int contentMask, const idEntity *passEntity );
+// RAVEN BEGIN
+// AReis: Added ability to get the entity that was touched as well.
+	int						Contents( const idVec3 &start, 
+								const idClipModel *mdl, const idMat3 &trmAxis, int contentMask, const idEntity *passEntity, idEntity **touchedEntity = NULL );
+// RAVEN END
 
 	// special case translations versus the rest of the world
 	bool					TracePoint( trace_t &results, const idVec3 &start, const idVec3 &end,
@@ -276,20 +268,23 @@ public:
 	// clip versus a specific model
 	void					TranslationModel( trace_t &results, const idVec3 &start, const idVec3 &end,
 								const idClipModel *mdl, const idMat3 &trmAxis, int contentMask,
-								cmHandle_t model, const idVec3 &modelOrigin, const idMat3 &modelAxis );
+								idCollisionModel *model, const idVec3 &modelOrigin, const idMat3 &modelAxis );
 	void					RotationModel( trace_t &results, const idVec3 &start, const idRotation &rotation,
 								const idClipModel *mdl, const idMat3 &trmAxis, int contentMask,
-								cmHandle_t model, const idVec3 &modelOrigin, const idMat3 &modelAxis );
+								idCollisionModel *model, const idVec3 &modelOrigin, const idMat3 &modelAxis );
 	int						ContactsModel( contactInfo_t *contacts, const int maxContacts, const idVec3 &start, const idVec6 &dir, const float depth,
 								const idClipModel *mdl, const idMat3 &trmAxis, int contentMask,
-								cmHandle_t model, const idVec3 &modelOrigin, const idMat3 &modelAxis );
+								idCollisionModel *model, const idVec3 &modelOrigin, const idMat3 &modelAxis );
 	int						ContentsModel( const idVec3 &start,
 								const idClipModel *mdl, const idMat3 &trmAxis, int contentMask,
-								cmHandle_t model, const idVec3 &modelOrigin, const idMat3 &modelAxis );
+								idCollisionModel *model, const idVec3 &modelOrigin, const idMat3 &modelAxis );
 
 	// clip versus all entities but not the world
+// RAVEN BEGIN
+// nmckenzie: had to add a second pass entity so we can safely ignore both a guy and his target in some cases
 	void					TranslationEntities( trace_t &results, const idVec3 &start, const idVec3 &end,
-								const idClipModel *mdl, const idMat3 &trmAxis, int contentMask, const idEntity *passEntity );
+								const idClipModel *mdl, const idMat3 &trmAxis, int contentMask, const idEntity *passEntity, const idEntity *passEntity2 = 0 );
+// RAVEN END
 
 	// get a contact feature
 	bool					GetModelContactFeature( const contactInfo_t &contact, const idClipModel *clipModel, idFixedWinding &winding ) const;
@@ -298,20 +293,54 @@ public:
 	int						EntitiesTouchingBounds( const idBounds &bounds, int contentMask, idEntity **entityList, int maxCount ) const;
 	int						ClipModelsTouchingBounds( const idBounds &bounds, int contentMask, idClipModel **clipModelList, int maxCount ) const;
 
+// RAVEN BEGIN
+// ddynerman: another helper function, useful in MP
+	int						PlayersTouchingBounds( const idBounds &bounds, int contentMask, idPlayer **entityList, int maxCount ) const;
+// RAVEN END
+
 	const idBounds &		GetWorldBounds( void ) const;
-	idClipModel *			DefaultClipModel( void );
+	idCollisionModel *		GetWorldCollisionModel( void ) const { return world; }
+
+// RAVEN BEGIN
+// ddynerman: change to static
+	static idClipModel *	DefaultClipModel( void );
+	static void				FreeDefaultClipModel( void );
+// RAVEN END
 
 							// stats and debug drawing
 	void					PrintStatistics( void );
-	void					DrawClipModels( const idVec3 &eye, const float radius, const idEntity *passEntity );
+	void					DrawClipModels( const idVec3 &eye, const float radius, const idEntity *passEntity, const idTypeInfo* type = NULL );
 	bool					DrawModelContactFeature( const contactInfo_t &contact, const idClipModel *clipModel, int lifetime ) const;
 
+// RAVEN BEGIN
+// rjohnson: added debug hud support
+	void					DebugHudStatistics( void );
+	void					ClearStatistics( void );
+// RAVEN END
+
+// RAVEN BEGIN
+// ddynerman: SD's clip sector code
+	void					CoordsForBounds( int* coords, idBounds& bounds ) const;
+	void					DrawClipSectors( void ) const;
+	void					DrawAreaClipSectors( float range ) const;	
+	static void				UpdateDynamicContents( struct clipSector_s* sector );
+	static void				UpdateDynamicContents( idClipModel* clipModel );
+// RAVEN END
+
 private:
-	int						numClipSectors;
+// RAVEN BEGIN
+// ddynerman: SD's clip sector code
+	idVec3					nodeScale;
+	idVec3					nodeOffset;
+	idVec3					nodeOffsetVisual;
+// ddynerman: change to static
+	static idClipModel		defaultClipModel;
+// RAVEN END
 	struct clipSector_s *	clipSectors;
+	idCollisionModel *		world;
 	idBounds				worldBounds;
 	idClipModel				temporaryClipModel;
-	idClipModel				defaultClipModel;
+
 	mutable int				touchCount;
 							// statistics
 	int						numTranslations;
@@ -325,8 +354,15 @@ private:
 	struct clipSector_s *	CreateClipSectors_r( const int depth, const idBounds &bounds, idVec3 &maxSector );
 	void					ClipModelsTouchingBounds_r( const struct clipSector_s *node, struct listParms_s &parms ) const;
 	const idTraceModel *	TraceModelForClipModel( const idClipModel *mdl ) const;
-	int						GetTraceClipModels( const idBounds &bounds, int contentMask, const idEntity *passEntity, idClipModel **clipModelList ) const;
+// RAVEN BEGIN
+// nmckenzie: had to add a second pass entity so we can safely ignore both a guy and his target in some cases
+	int						GetTraceClipModels( const idBounds &bounds, int contentMask, const idEntity *passEntity, idClipModel **clipModelList, const idEntity *passEntity2 = 0 ) const;
+// RAVEN END
 	void					TraceRenderModel( trace_t &trace, const idVec3 &start, const idVec3 &end, const float radius, const idMat3 &axis, idClipModel *touch ) const;
+// RAVEN BEGIN
+// ddynerman: SD's clip sector code
+	void					GetClipSectorsStaticContents( void );
+// RAVEN END
 };
 
 
@@ -336,7 +372,7 @@ ID_INLINE bool idClip::TracePoint( trace_t &results, const idVec3 &start, const 
 }
 
 ID_INLINE bool idClip::TraceBounds( trace_t &results, const idVec3 &start, const idVec3 &end, const idBounds &bounds, int contentMask, const idEntity *passEntity ) {
-	temporaryClipModel.LoadModel( idTraceModel( bounds ) );
+	temporaryClipModel.LoadModel( idTraceModel( bounds ), NULL, true );
 	Translation( results, start, end, &temporaryClipModel, mat3_identity, contentMask, passEntity );
 	return ( results.fraction < 1.0f );
 }
@@ -345,8 +381,47 @@ ID_INLINE const idBounds & idClip::GetWorldBounds( void ) const {
 	return worldBounds;
 }
 
-ID_INLINE idClipModel *idClip::DefaultClipModel( void ) {
-	return &defaultClipModel;
+// RAVEN BEGIN
+// ddynerman: SD's clip sector code
+ID_INLINE void idClip::CoordsForBounds( int* coords, idBounds& bounds ) const {
+	float fCoords[ 4 ];
+
+	fCoords[ 0 ] = ( bounds[ 0 ].x - nodeOffset.x ) * nodeScale.x;
+	fCoords[ 1 ] = ( bounds[ 0 ].y - nodeOffset.y ) * nodeScale.y;
+	fCoords[ 2 ] = ( bounds[ 1 ].x - nodeOffset.x ) * nodeScale.x;
+	fCoords[ 3 ] = ( bounds[ 1 ].y - nodeOffset.y ) * nodeScale.y;
+
+	// Use explicit floor/ceil quantization for deterministic sector coverage
+	// across x86/x64. FtoiFast rounding differs by platform and can miss sectors.
+	coords[ 0 ] = idMath::Ftoi( idMath::Floor( fCoords[ 0 ] ) );
+	coords[ 1 ] = idMath::Ftoi( idMath::Floor( fCoords[ 1 ] ) );
+	coords[ 2 ] = idMath::Ftoi( idMath::Ceil( fCoords[ 2 ] ) );
+	coords[ 3 ] = idMath::Ftoi( idMath::Ceil( fCoords[ 3 ] ) );
+
+	if( coords[ 0 ] < 0 ) {
+		coords[ 0 ] = 0;
+	} else if( coords[ 0 ] > CLIPSECTOR_WIDTH - 1 ) {
+		coords[ 0 ] = CLIPSECTOR_WIDTH - 1;
+	}
+	if( coords[ 1 ] < 0 ) {
+		coords[ 1 ] = 0;
+	} else if( coords[ 1 ] > CLIPSECTOR_WIDTH - 1 ) {
+		coords[ 1 ] = CLIPSECTOR_WIDTH - 1;
+	}
+	if( coords[ 2 ] < 0 ) {
+		coords[ 2 ] = 0;
+	} else if( coords[ 2 ] > CLIPSECTOR_WIDTH - 1 ) {
+		coords[ 2 ] = CLIPSECTOR_WIDTH - 1;
+	}
+	if( coords[ 3 ] < 0 ) {
+		coords[ 3 ] = 0;
+	} else if( coords[ 3 ] > CLIPSECTOR_WIDTH - 1 ) {
+		coords[ 3 ] = CLIPSECTOR_WIDTH - 1;
+	}
+
+	coords[ 2 ]++;
+	coords[ 3 ]++;
 }
+// RAVEN END
 
 #endif /* !__CLIP_H__ */

@@ -30,7 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 
 class idGameBearShootWindow;
 
-class BearShootEntity {
+class BSEntity {
 public:
 	const idMaterial *		material;
 	idStr					materialName;
@@ -49,11 +49,11 @@ public:
 	idGameBearShootWindow *	game;
 	
 public:
-						BearShootEntity(idGameBearShootWindow* _game);
-	virtual				~BearShootEntity();
+						BSEntity(idGameBearShootWindow* _game);
+	virtual				~BSEntity();
 
 	virtual void		WriteToSaveGame( idFile *savefile );
-	virtual void		ReadFromSaveGame( idFile *savefile, idGameBearShootWindow* _game );
+	virtual void		ReadFromSaveGame( idFile *savefile, idGameBearShootWindow* _game, int saveVersion );
 
 	void				SetMaterial(const char* name);
 	void				SetSize( float _width, float _height );
@@ -120,15 +120,14 @@ private:
 	float				windForce;
 	int					windUpdateTime;
 
-	idList<BearShootEntity*>	entities;
+	idList<BSEntity*>	entities;
 
-	BearShootEntity			*turret;
-	BearShootEntity			*bear;
-	BearShootEntity			*helicopter;
-	BearShootEntity			*goal;
-	BearShootEntity			*wind;
-	BearShootEntity			*gunblast;
+	BSEntity			*turret;
+	BSEntity			*bear;
+	BSEntity			*helicopter;
+	BSEntity			*goal;
+	BSEntity			*wind;
+	BSEntity			*gunblast;
 };
 
 #endif //__GAME_BEARSHOOT_WINDOW_H__
-

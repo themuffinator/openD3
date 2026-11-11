@@ -6,75 +6,19 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$openD3Root = [System.IO.Path]::GetFullPath((Join-Path $scriptDir "..\.."))
-
-$gameLibsRepoOverride = ""
-if (-not [string]::IsNullOrWhiteSpace($env:OPEND3_GAMELIBS_REPO)) {
-    $gameLibsRepoOverride = $env:OPEND3_GAMELIBS_REPO
-} elseif (-not [string]::IsNullOrWhiteSpace($env:OPENQ4_GAMELIBS_REPO)) {
-    $gameLibsRepoOverride = $env:OPENQ4_GAMELIBS_REPO
-}
+$openQ4Root = [System.IO.Path]::GetFullPath((Join-Path $scriptDir "..\.."))
 
 if ([string]::IsNullOrWhiteSpace($GameLibsRepo)) {
-    if (-not [string]::IsNullOrWhiteSpace($gameLibsRepoOverride)) {
-        $GameLibsRepo = $gameLibsRepoOverride
-    } else {
-        $GameLibsRepo = Join-Path $openD3Root "..\OpenD3-GameLibs"
-    }
+    $GameLibsRepo = $openQ4Root
 }
 
 $gameLibsRoot = [System.IO.Path]::GetFullPath($GameLibsRepo)
-$syncMappings = @(
-    @{
-        Name = "game sources"
-        Source = Join-Path $gameLibsRoot "src\game"
-        Destination = Join-Path $openD3Root "src\game"
-        Excludes = @("Callbacks.cpp")
-    }
-)
-
-if (-not (Test-Path $gameLibsRoot)) {
-    throw "OpenD3-GameLibs repository not found at '$gameLibsRoot'. Set OPEND3_GAMELIBS_REPO (or OPENQ4_GAMELIBS_REPO for compatibility) or pass -GameLibsRepo."
+if ($gameLibsRoot -ne $openQ4Root) {
+    throw "Game sources are canonical in openQ4/src/game and src/mpgame. External source syncing has been retired."
 }
 
-$hasChanges = $false
-foreach ($mapping in $syncMappings) {
-    $sourceDir = [System.IO.Path]::GetFullPath($mapping.Source)
-    $destinationDir = [System.IO.Path]::GetFullPath($mapping.Destination)
-
-    if (-not (Test-Path $sourceDir)) {
-        throw "GameLibs source path not found: '$sourceDir'."
-    }
-
-    Write-Host "Syncing $($mapping.Name):"
-    Write-Host "  From: $sourceDir"
-    Write-Host "    To: $destinationDir"
-
-    $excludeArgs = @()
-    if ($mapping.ContainsKey("Excludes")) {
-        $excludeArgs = @($mapping.Excludes)
-    }
-
-    if ($excludeArgs.Count -gt 0) {
-        & robocopy $sourceDir $destinationDir /MIR /R:2 /W:1 /NFL /NDL /NP /NJH /NJS /NC /NS /XF @excludeArgs
-    } else {
-        & robocopy $sourceDir $destinationDir /MIR /R:2 /W:1 /NFL /NDL /NP /NJH /NJS /NC /NS
-    }
-    $robocopyExit = [int]$LASTEXITCODE
-    if ($robocopyExit -ge 8) {
-        throw "robocopy failed while syncing '$sourceDir' -> '$destinationDir' (exit code $robocopyExit)."
-    }
-
-    if ($robocopyExit -ne 0) {
-        $hasChanges = $true
-    }
-}
-
-if ($hasChanges) {
-    Write-Host "GameLibs sync complete (changes applied)."
-} else {
-    Write-Host "GameLibs sync complete (no changes)."
-}
+Write-Host "sync_gamelibs.ps1 is deprecated. No files were copied."
+Write-Host "Canonical game sources: $gameLibsRoot\src\game and src\mpgame"
 
 $global:LASTEXITCODE = 0
 exit 0

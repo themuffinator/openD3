@@ -1,33 +1,6 @@
-/*
-===========================================================================
 
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
-
-#include "../../idlib/precompiled.h"
-#pragma hdrstop
 
 #include "AAS_local.h"
 #include "../Game_local.h"		// for print and error
@@ -130,8 +103,10 @@ void idAASLocal::CalculateAreaTravelTimes(void) {
 		}
 		numAreaTravelTimes += numReach * numRevReach;
 	}
-
-	areaTravelTimes = (unsigned short *) Mem_Alloc( numAreaTravelTimes * sizeof( unsigned short ) );
+//RAVEN BEGIN
+//amccarthy: Added memory allocation tag
+	areaTravelTimes = (unsigned short *) Mem_Alloc( numAreaTravelTimes * sizeof( unsigned short ),MA_AAS );
+//RAVEN END
 	bytePtr = (byte *) areaTravelTimes;
 
 	for ( n = 0; n < file->GetNumAreas(); n++ ) {
@@ -145,7 +120,10 @@ void idAASLocal::CalculateAreaTravelTimes(void) {
 		for ( maxt = i = 0, reach = file->GetArea( n ).reach; reach; reach = reach->next, i++ ) {
 			assert( i < MAX_REACH_PER_AREA );
 			if ( i >= MAX_REACH_PER_AREA ) {
-				gameLocal.Error( "i >= MAX_REACH_PER_AREA" );
+// RAVEN BEGIN
+// bdube: better error message
+				gameLocal.Error( "i >= MAX_REACH_PER_AREA on area %d at %g,%g,%g", n, file->GetArea( n ).center.x, file->GetArea( n ).center.y, file->GetArea( n ).center.z );
+// RAVEN END
 			}
 			reach->number = i;
 			reach->disableCount = 0;
@@ -167,7 +145,8 @@ void idAASLocal::CalculateAreaTravelTimes(void) {
 		}
 	}
 
-	assert( ( bytePtr - reinterpret_cast<byte *>( areaTravelTimes ) ) <= numAreaTravelTimes * sizeof( unsigned short ) );
+	assert( bytePtr >= (byte *) areaTravelTimes );
+	assert( (uintptr_t) ( bytePtr - (byte *) areaTravelTimes ) <= numAreaTravelTimes * sizeof( unsigned short ) );
 }
 
 /*
@@ -194,8 +173,11 @@ void idAASLocal::SetupRoutingCache( void ) {
 	for ( i = 0; i < file->GetNumClusters(); i++ ) {
 		areaCacheIndexSize += file->GetCluster( i ).numReachableAreas;
 	}
+//RAVEN BEGIN
+//amccarthy: Added memory allocation tag
 	areaCacheIndex = (idRoutingCache ***) Mem_ClearedAlloc( file->GetNumClusters() * sizeof( idRoutingCache ** ) +
-													areaCacheIndexSize * sizeof( idRoutingCache *) );
+													areaCacheIndexSize * sizeof( idRoutingCache *), MA_AAS );
+//RAVEN END
 	bytePtr = ((byte *)areaCacheIndex) + file->GetNumClusters() * sizeof( idRoutingCache ** );
 	for ( i = 0; i < file->GetNumClusters(); i++ ) {
 		areaCacheIndex[i] = ( idRoutingCache ** ) bytePtr;
@@ -203,12 +185,15 @@ void idAASLocal::SetupRoutingCache( void ) {
 	}
 
 	portalCacheIndexSize = file->GetNumAreas();
-	portalCacheIndex = (idRoutingCache **) Mem_ClearedAlloc( portalCacheIndexSize * sizeof( idRoutingCache * ) );
+//RAVEN BEGIN
+//amccarthy: Added memory allocation tag
+	portalCacheIndex = (idRoutingCache **) Mem_ClearedAlloc( portalCacheIndexSize * sizeof( idRoutingCache * ), MA_AAS );
 
-	areaUpdate = (idRoutingUpdate *) Mem_ClearedAlloc( file->GetNumAreas() * sizeof( idRoutingUpdate ) );
-	portalUpdate = (idRoutingUpdate *) Mem_ClearedAlloc( (file->GetNumPortals()+1) * sizeof( idRoutingUpdate ) );
+	areaUpdate = (idRoutingUpdate *) Mem_ClearedAlloc( file->GetNumAreas() * sizeof( idRoutingUpdate ),MA_AAS );
+	portalUpdate = (idRoutingUpdate *) Mem_ClearedAlloc( (file->GetNumPortals()+1) * sizeof( idRoutingUpdate ),MA_AAS );
 
-	goalAreaTravelTimes = (unsigned short *) Mem_ClearedAlloc( file->GetNumAreas() * sizeof( unsigned short ) );
+	goalAreaTravelTimes = (unsigned short *) Mem_ClearedAlloc( file->GetNumAreas() * sizeof( unsigned short ),MA_AAS );
+//RAVEN END
 
 	cacheListStart = cacheListEnd = NULL;
 	totalCacheMemory = 0;
@@ -222,6 +207,13 @@ idAASLocal::DeleteClusterCache
 void idAASLocal::DeleteClusterCache( int clusterNum ) {
 	int i;
 	idRoutingCache *cache;
+
+// RAVEN BEGIN
+// rjohnson: init these variables for proper shutdown during init of aas
+	if ( !areaCacheIndex ) {
+		return;
+	}
+// RAVEN END
 
 	for ( i = 0; i < file->GetCluster( clusterNum ).numReachableAreas; i++ ) {
 		for ( cache = areaCacheIndex[clusterNum][i]; cache; cache = areaCacheIndex[clusterNum][i] ) {
@@ -240,6 +232,13 @@ idAASLocal::DeletePortalCache
 void idAASLocal::DeletePortalCache( void ) {
 	int i;
 	idRoutingCache *cache;
+
+// RAVEN BEGIN
+// rjohnson: init these variables for proper shutdown during init of aas
+	if ( !portalCacheIndex ) {
+		return;
+	}
+// RAVEN END
 
 	for ( i = 0; i < file->GetNumAreas(); i++ ) {
 		for ( cache = portalCacheIndex[i]; cache; cache = portalCacheIndex[i] ) {
@@ -270,12 +269,21 @@ void idAASLocal::ShutdownRoutingCache( void ) {
 	Mem_Free( portalCacheIndex );
 	portalCacheIndex = NULL;
 	portalCacheIndexSize = 0;
-	Mem_Free( areaUpdate );
-	areaUpdate = NULL;
-	Mem_Free( portalUpdate );
-	portalUpdate = NULL;
-	Mem_Free( goalAreaTravelTimes );
-	goalAreaTravelTimes = NULL;
+// RAVEN BEGIN
+// rjohnson: init these variables for proper shutdown during init of aas
+	if ( areaUpdate ) {
+		Mem_Free( areaUpdate );
+		areaUpdate = NULL;
+	}
+	if ( portalUpdate ) {
+		Mem_Free( portalUpdate );
+		portalUpdate = NULL;
+	}
+	if ( goalAreaTravelTimes ) {
+		Mem_Free( goalAreaTravelTimes );
+		goalAreaTravelTimes = NULL;
+	}
+// RAVEN END
 
 	cacheListStart = cacheListEnd = NULL;
 	totalCacheMemory = 0;
@@ -287,6 +295,15 @@ idAASLocal::SetupRouting
 ============
 */
 bool idAASLocal::SetupRouting( void ) {
+// RAVEN BEGIN
+// rjohnson: init these variables for proper shutdown during init of aas
+	areaCacheIndex = NULL;
+	portalCacheIndex = NULL;
+	areaUpdate = NULL;
+	portalUpdate = NULL;
+	goalAreaTravelTimes = NULL;
+// RAVEN END
+
 	CalculateAreaTravelTimes();
 	SetupRoutingCache();
 	return true;
@@ -327,9 +344,9 @@ void idAASLocal::RoutingStats( void ) const {
 	gameLocal.Printf( "%6d area cache (%d KB)\n", numAreaCache, totalAreaCacheMemory >> 10 );
 	gameLocal.Printf( "%6d portal cache (%d KB)\n", numPortalCache, totalPortalCacheMemory >> 10 );
 	gameLocal.Printf( "%6d total cache (%d KB)\n", numAreaCache + numPortalCache, totalCacheMemory >> 10 );
-	gameLocal.Printf( "%6d area travel times (%d KB)\n", numAreaTravelTimes, ( numAreaTravelTimes * sizeof( unsigned short ) ) >> 10 );
-	gameLocal.Printf( "%6d area cache entries (%d KB)\n", areaCacheIndexSize, ( areaCacheIndexSize * sizeof( idRoutingCache * ) ) >> 10 );
-	gameLocal.Printf( "%6d portal cache entries (%d KB)\n", portalCacheIndexSize, ( portalCacheIndexSize * sizeof( idRoutingCache * ) ) >> 10 );
+	gameLocal.Printf( "%6d area travel times (%zu KB)\n", numAreaTravelTimes, ( numAreaTravelTimes * sizeof( unsigned short ) ) >> 10 );
+	gameLocal.Printf( "%6d area cache entries (%zu KB)\n", areaCacheIndexSize, ( areaCacheIndexSize * sizeof( idRoutingCache * ) ) >> 10 );
+	gameLocal.Printf( "%6d portal cache entries (%zu KB)\n", portalCacheIndexSize, ( portalCacheIndexSize * sizeof( idRoutingCache * ) ) >> 10 );
 }
 
 /*
@@ -528,6 +545,31 @@ void idAASLocal::SetObstacleState( const idRoutingObstacle *obstacle, bool enabl
 		}
 	}
 }
+
+// RAVEN BEGIN
+// cdr: Alternate Routes Bug
+
+/*
+============
+idAASLocal::SetReachabilityState
+============
+*/
+void idAASLocal::SetReachabilityState( idReachability* reach, bool enable ) {
+ 	if ( enable &&  reach->travelType&TFL_INVALID) {
+ 		reach->disableCount--;
+ 		if ( reach->disableCount <= 0 ) {
+ 			reach->travelType &= ~TFL_INVALID;
+ 			reach->disableCount = 0;
+ 			RemoveRoutingCacheUsingArea( reach->fromAreaNum );
+ 		}
+ 	} else if (!enable && !(reach->travelType&TFL_INVALID)) {
+ 		reach->travelType |= TFL_INVALID;
+ 		reach->disableCount++;
+ 		RemoveRoutingCacheUsingArea( reach->fromAreaNum );
+ 	}
+}
+// RAVEN END
+
 
 /*
 ============
@@ -1011,11 +1053,17 @@ bool idAASLocal::RouteToGoalArea( int areaNum, const idVec3 origin, int goalArea
 	}
 
 	if ( areaNum <= 0 || areaNum >= file->GetNumAreas() ) {
-		gameLocal.Printf( "RouteToGoalArea: areaNum %d out of range\n", areaNum );
+// RAVEN BEGIN
+// bgeisler:
+//		gameLocal.Printf( "RouteToGoalArea: areaNum %d out of range\n", areaNum );
+// RAVEN END
 		return false;
 	}
 	if ( goalAreaNum <= 0 || goalAreaNum >= file->GetNumAreas() ) {
-		gameLocal.Printf( "RouteToGoalArea: goalAreaNum %d out of range\n", goalAreaNum );
+// RAVEN BEGIN
+// bgeisler:
+//		gameLocal.Printf( "RouteToGoalArea: goalAreaNum %d out of range\n", goalAreaNum );
+// RAVEN END
 		return false;
 	}
 
@@ -1166,26 +1214,20 @@ int idAASLocal::TravelTimeToGoalArea( int areaNum, const idVec3 &origin, int goa
 idAASLocal::FindNearestGoal
 ============
 */
-bool idAASLocal::FindNearestGoal( aasGoal_t &goal, int areaNum, const idVec3 origin, const idVec3 &target, int travelFlags, aasObstacle_t *obstacles, int numObstacles, idAASCallback &callback ) const {
-	int i, j, k, badTravelFlags, nextAreaNum, bestAreaNum;
+bool idAASLocal::FindNearestGoal( aasGoal_t &goal, int areaNum, const idVec3 origin, const idVec3 &target, int travelFlags, float minDistance, float maxDistance, aasObstacle_t *obstacles, int numObstacles, idAASCallback &callback ) const {
+	int i, j, k, badTravelFlags, nextAreaNum;
+	aasGoal_t			bestGoal;
 	unsigned short t, bestTravelTime;
 	idRoutingUpdate *updateListStart, *updateListEnd, *curUpdate, *nextUpdate;
 	idReachability *reach;
 	const aasArea_t *nextArea;
 	idVec3 v1, v2, p;
-	float targetDist, dist;
+	float targetDist, dist;	
 
 	if ( file == NULL || areaNum <= 0 ) {
 		goal.areaNum = areaNum;
 		goal.origin = origin;
 		return false;
-	}
-
-	// if the first area is valid goal, just return the origin
-	if ( callback.TestArea( this, areaNum ) ) {
-		goal.areaNum = areaNum;
-		goal.origin = origin;
-		return true;
 	}
 
 	// setup obstacles
@@ -1206,11 +1248,21 @@ bool idAASLocal::FindNearestGoal( aasGoal_t &goal, int areaNum, const idVec3 ori
 	curUpdate->start = origin;
 	curUpdate->next = NULL;
 	curUpdate->prev = NULL;
+
+	callback.Init ( );
+
+	// if the first area is valid goal, just return the origin
+	curUpdate->cluster = (int)callback.Test ( (idAASLocal*)this, areaNum, origin, minDistance, maxDistance, &origin, goal );
+	if ( curUpdate->cluster == idAASCallback::TEST_OK ) {
+		callback.Finish ( );
+		return true;
+	}
+
 	updateListStart = curUpdate;
 	updateListEnd = curUpdate;
 
-	bestTravelTime = 0;
-	bestAreaNum = 0;
+	bestTravelTime = 0;	
+	bestGoal.areaNum = 0;
 
 	// while there are updates in the list
 	while ( updateListStart ) {
@@ -1287,8 +1339,14 @@ bool idAASLocal::FindNearestGoal( aasGoal_t &goal, int areaNum, const idVec3 ori
 
 			// path may not go through any obstacles
 			for ( k = 0; k < numObstacles; k++ ) {
+				// If the start of the movement vector is inside the expanded bounds then we are already too
+				// close to the obstacle, so use its unexpanded bounds instead.
+				if ( obstacles[k].expAbsBounds.ContainsPoint ( curUpdate->start ) ) {
+					if ( obstacles[k].absBounds.LineIntersection( curUpdate->start, reach->end ) ) {
+						break;
+					}
 				// if the movement vector intersects the expanded obstacle bounds
-				if ( obstacles[k].expAbsBounds.LineIntersection( curUpdate->start, reach->end ) ) {
+				} else if ( obstacles[k].expAbsBounds.LineIntersection( curUpdate->start, reach->end ) ) {
 					break;
 				}
 			}
@@ -1310,6 +1368,38 @@ bool idAASLocal::FindNearestGoal( aasGoal_t &goal, int areaNum, const idVec3 ori
 				}
 			}
 
+			// If outside of max distance skip this area
+			idVec3 point = origin;
+			float  areaDist;
+			file->PushPointIntoAreaNum ( nextAreaNum, point );
+			areaDist = (origin-point).LengthFast();
+			if ( maxDistance > 0.0f && areaDist > maxDistance ) {
+				curUpdate->cluster = idAASCallback::TEST_BADAREA;
+				continue;
+			}				
+
+			// don't put goal near a ledge
+			if ( !( nextArea->flags & AREA_LEDGE ) ) {
+
+				// add travel time through the area
+				t += AreaTravelTime( reach->toAreaNum, reach->end, nextArea->center );
+	
+				if ( !bestTravelTime || t < bestTravelTime ) {
+					// if the area is not visible to the target
+					nextUpdate->cluster = (int)callback.Test ( (idAASLocal*)this, reach->toAreaNum, origin, minDistance, maxDistance, NULL, bestGoal );
+					switch ( nextUpdate->cluster ) {
+						case idAASCallback::TEST_OK:
+							bestTravelTime = t;
+							break;
+						case idAASCallback::TEST_BADAREA:
+							if ( curUpdate->cluster != idAASCallback::TEST_BADAREA ) {
+								continue;
+							}
+							break;
+					}
+				}
+			}
+
 			if ( !nextUpdate->isInList ) {
 				nextUpdate->next = NULL;
 				nextUpdate->prev = updateListEnd;
@@ -1321,27 +1411,13 @@ bool idAASLocal::FindNearestGoal( aasGoal_t &goal, int areaNum, const idVec3 ori
 				updateListEnd = nextUpdate;
 				nextUpdate->isInList = true;
 			}
-
-			// don't put goal near a ledge
-			if ( !( nextArea->flags & AREA_LEDGE ) ) {
-
-				// add travel time through the area
-				t += AreaTravelTime( reach->toAreaNum, reach->end, nextArea->center );
-	
-				if ( !bestTravelTime || t < bestTravelTime ) {
-					// if the area is not visible to the target
-					if ( callback.TestArea( this, reach->toAreaNum ) ) {
-						bestTravelTime = t;
-						bestAreaNum = reach->toAreaNum;
-					}
-				}
-			}
 		}
 	}
 
-	if ( bestAreaNum ) {
-		goal.areaNum = bestAreaNum;
-		goal.origin = AreaCenter( bestAreaNum );
+	callback.Finish ( );
+
+	if ( bestGoal.areaNum ) {
+		goal = bestGoal;
 		return true;
 	}
 

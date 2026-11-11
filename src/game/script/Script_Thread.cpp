@@ -1,35 +1,9 @@
-/*
-===========================================================================
 
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
-
-#include "../../idlib/precompiled.h"
-#pragma hdrstop
 
 #include "../Game_local.h"
+#include "../awakening/ScriptEvents.h"
 
 const idEventDef EV_Thread_Execute( "<execute>", NULL );
 const idEventDef EV_Thread_SetCallback( "<script_setcallback>", NULL );
@@ -111,6 +85,42 @@ const idEventDef EV_Thread_DebugBounds( "debugBounds", "vvvf" );
 const idEventDef EV_Thread_DrawText( "drawText", "svfvdf" );
 const idEventDef EV_Thread_InfluenceActive( "influenceActive", NULL, 'd' );
 
+// RAVEN BEGIN
+// kfuller: added everything below the above block
+const idEventDef EV_Thread_SetSpawnVector( "setSpawnVector", "sv" );
+const idEventDef EV_Thread_ArcSine( "asin", "f", 'f' );
+const idEventDef EV_Thread_ArcCosine( "acos", "f", 'f' );
+const idEventDef EV_Thread_VecRotate( "vecRotate", "vv", 'v');
+const idEventDef EV_Thread_ClearSignalAllThreads( "clearSignalAllThreads", "de" );
+// bgeisler: added everything below the added block that was added by keith
+const idEventDef EV_Thread_PlayWorldEffect( "playWorldEffect", "svv");
+// abahr:
+const idEventDef EV_Thread_ReferenceScriptObjectProxy( "refProxy", "s", 'e' );
+const idEventDef EV_Thread_ReleaseScriptObjectProxy( "releaseProxy", "s" );
+const idEventDef EV_Thread_ClampFloat( "clampFloat", "fff", 'f' );
+const idEventDef EV_Thread_MinFloat( "minFloat", "ff", 'f' );
+const idEventDef EV_Thread_MaxFloat( "maxFloat", "ff", 'f' );
+const idEventDef EV_Thread_StrFind( "strFind", "ss", 'f' );
+const idEventDef EV_Thread_RandomInt( "randomInt", "f", 'f' );
+// rjohnson: new blur special effect
+const idEventDef EV_Thread_SetSpecialEffect( "setSpecialEffect", "dd" );
+const idEventDef EV_Thread_SetSpecialEffectParm( "setSpecialEffectParm", "ddf" );
+// asalmon: award achievement
+const idEventDef EV_Thread_AwardAchievement( "awardAchievement", "s" );
+// twhitaker: ceil, floor and intVal
+const idEventDef EV_Thread_Ceil( "ceil", "f", 'f' );
+const idEventDef EV_Thread_Floor( "floor", "f", 'f' );
+const idEventDef EV_Thread_ToInt( "intVal", "f", 'f' );
+// jdischler: send named event string to specified gui
+const idEventDef EV_Thread_SendNamedEvent( "sendNamedEvent", "ds" );
+// material streaming
+const idEventDef EV_Thread_BeginManualStreaming( "beginManualStreaming" );
+const idEventDef EV_Thread_EndManualStreaming( "endManualStreaming" );
+
+// nrausch: change material sort order on the fly
+const idEventDef EV_Thread_SetMatSort( "setMatSort", "ss", 0 );
+// RAVEN END
+
 CLASS_DECLARATION( idClass, idThread )
 	EVENT( EV_Thread_Execute,				idThread::Event_Execute )
 	EVENT( EV_Thread_TerminateThread,		idThread::Event_TerminateThread )
@@ -190,6 +200,40 @@ CLASS_DECLARATION( idClass, idThread )
 	EVENT( EV_Thread_DebugBounds,			idThread::Event_DebugBounds )
 	EVENT( EV_Thread_DrawText,				idThread::Event_DrawText )
 	EVENT( EV_Thread_InfluenceActive,		idThread::Event_InfluenceActive )
+
+// RAVEN BEGIN 
+// kfuller: added events
+	EVENT( EV_Thread_SetSpawnVector,		idThread::Event_SetSpawnVector )
+	EVENT( EV_Thread_ArcSine,				idThread::Event_GetArcSine )
+	EVENT( EV_Thread_ArcCosine,				idThread::Event_GetArcCosine )
+	EVENT( EV_Thread_VecRotate,				idThread::Event_VecRotate )
+	EVENT( EV_Thread_ClearSignalAllThreads,	idThread::Event_ClearSignalAllThreads )
+// nmckenzie: added signal strings
+	EVENT( EV_Thread_PlayWorldEffect,		idThread::Event_PlayWorldEffect )
+// abahr:
+	EVENT( EV_Thread_ReferenceScriptObjectProxy,	idThread::Event_ReferenceScriptObjectProxy )
+	EVENT( EV_Thread_ReleaseScriptObjectProxy,		idThread::Event_ReleaseScriptObjectProxy )
+	EVENT( EV_Thread_ClampFloat,			idThread::Event_ClampFloat )
+	EVENT( EV_Thread_MinFloat,				idThread::Event_MinFloat )
+	EVENT( EV_Thread_MaxFloat,				idThread::Event_MaxFloat )
+	EVENT( EV_Thread_StrFind,				idThread::Event_StrFind )
+	EVENT( EV_Thread_RandomInt,				idThread::Event_RandomInt )
+// rjohnson: new blur special effect
+	EVENT( EV_Thread_SetSpecialEffect,		idThread::Event_SetSpecialEffect )
+	EVENT( EV_Thread_SetSpecialEffectParm,	idThread::Event_SetSpecialEffectParm )
+// asalmon: award a Xenon achievement
+	EVENT( EV_Thread_AwardAchievement,		idThread::Event_AwardAchievement )
+// twhitaker: ceil and floor
+	EVENT( EV_Thread_Ceil,					idThread::Event_GetCeil )
+	EVENT( EV_Thread_Floor,					idThread::Event_GetFloor )
+	EVENT( EV_Thread_ToInt,					idThread::Event_ToInt )
+// jdischler: send named event string to specified gui
+	EVENT( EV_Thread_SendNamedEvent,		idThread::Event_SendNamedEvent )
+// manual streaming
+	EVENT( EV_Thread_BeginManualStreaming,	idThread::Event_BeginManualStreaming )
+	EVENT( EV_Thread_EndManualStreaming,	idThread::Event_EndManualStreaming )	
+	EVENT( EV_Thread_SetMatSort,				idThread::Event_SetMatSort )
+// RAVEN END
 END_CLASS
 
 idThread			*idThread::currentThread = NULL;
@@ -359,24 +403,49 @@ idThread::Save
 ================
 */
 void idThread::Save( idSaveGame *savefile ) const {
-
-	// We will check on restore that threadNum is still the same,
-	//  threads should have been restored in the same order.
-	savefile->WriteInt( threadNum );
+	savefile->WriteObject( currentThread );
 
 	savefile->WriteObject( waitingForThread );
 	savefile->WriteInt( waitingFor );
 	savefile->WriteInt( waitingUntil );
-
 	interpreter.Save( savefile );
 
 	savefile->WriteDict( &spawnArgs );
+
+	savefile->WriteInt( threadNum );
 	savefile->WriteString( threadName );
 
 	savefile->WriteInt( lastExecuteTime );
 	savefile->WriteInt( creationTime );
 
 	savefile->WriteBool( manualControl );
+
+	savefile->WriteInt( threadIndex );
+}
+
+/*
+================
+idThread::RestoreOwnedThread
+================
+*/
+void idThread::RestoreOwnedThread( idRestoreGame *savefile, idThread *&owner ) {
+	idThread *restoredThread = NULL;
+	savefile->ReadObject( restoredThread );
+	if ( restoredThread != NULL ) {
+		if ( restoredThread->restoreOwnerClaimed ) {
+			savefile->Error( "idThread::Restore: duplicate owning reference to script thread" );
+		}
+		restoredThread->restoreOwnerClaimed = true;
+	}
+	owner = restoredThread;
+}
+
+void idThread::ValidateRestoreOwnership( idRestoreGame *savefile ) const {
+	// Owned threads are explicitly ManualDelete at creation. A saved automatic
+	// delete policy would leave their entity or frame-command owner dangling.
+	if ( restoreOwnerClaimed && interpreter.terminateOnExit ) {
+		savefile->Error( "idThread::Restore: owned script thread '%s' would delete itself", threadName.c_str() );
+	}
 }
 
 /*
@@ -385,21 +454,24 @@ idThread::Restore
 ================
 */
 void idThread::Restore( idRestoreGame *savefile ) {
-	savefile->ReadInt( threadNum );
+	savefile->ReadObject( currentThread );
 
-	savefile->ReadObject( reinterpret_cast<idClass *&>( waitingForThread ) );
+	savefile->ReadObject( waitingForThread );
 	savefile->ReadInt( waitingFor );
 	savefile->ReadInt( waitingUntil );
-
 	interpreter.Restore( savefile );
 
 	savefile->ReadDict( &spawnArgs );
+
+	savefile->ReadInt( threadNum );
 	savefile->ReadString( threadName );
 
 	savefile->ReadInt( lastExecuteTime );
 	savefile->ReadInt( creationTime );
 
 	savefile->ReadBool( manualControl );
+
+	savefile->ReadInt( threadIndex );
 }
 
 /*
@@ -422,6 +494,7 @@ void idThread::Init( void ) {
 	creationTime = gameLocal.time;
 	lastExecuteTime = 0;
 	manualControl = false;
+	restoreOwnerClaimed = false;
 
 	ClearWaitFor();
 
@@ -500,9 +573,11 @@ void idThread::ListThreads_f( const idCmdArgs &args ) {
 	n = threadList.Num();
 	for( i = 0; i < n; i++ ) {
 		//threadList[ i ]->DisplayInfo();
-		gameLocal.Printf( "%3i: %-20s : %s(%d)\n", threadList[ i ]->threadNum, threadList[ i ]->threadName.c_str(), threadList[ i ]->interpreter.CurrentFile(), threadList[ i ]->interpreter.CurrentLine() );
+		gameLocal.Printf( "%3i: %-20s : %s(%d) state=%s\n", threadList[ i ]->threadNum, threadList[ i ]->threadName.c_str(),
+			threadList[ i ]->interpreter.CurrentFile(), threadList[ i ]->interpreter.CurrentLine(),
+			threadList[ i ]->IsDying() ? "cancelled" : ( threadList[ i ]->IsWaiting() ? "waiting" : "ready" ) );
 	}
-	gameLocal.Printf( "%d active threads\n\n", n );
+	gameLocal.Printf( "%d registered threads\n\n", n );
 }
 
 /*
@@ -610,7 +685,7 @@ void idThread::KillThread( const char *name ) {
 	if ( ptr ) {
 		len = ptr - name;
 	} else {
-		len = strlen( name );
+		len = idLib::SizeToInt( strlen( name ), "idThread::KillThread" );
 	}
 
 	// kill only those threads whose name matches name
@@ -644,6 +719,7 @@ idThread::Execute
 ================
 */
 bool idThread::Execute( void ) {
+	gameLocal.NotePresentationGameplay( "idThread::Execute" );
 	idThread	*oldThread;
 	bool		done;
 
@@ -693,6 +769,87 @@ bool idThread::IsWaiting( void ) {
 
 	return false;
 }
+
+// RAVEN BEGIN
+// bgeisler: 
+/*
+================
+idThread::ListFunctions
+================
+*/
+void idThread::ListStates(void)
+{
+	gameLocal.program.ListStates();
+}
+
+// abahr: added helper functions
+/*
+================
+idThread::ClearStack
+================
+*/
+void idThread::ClearStack() {
+	interpreter.Reset();
+}
+
+/*
+================
+idThread::PushInt
+================
+*/
+void idThread::PushInt( int value ) {
+	interpreter.Push( value );
+}
+
+/*
+================
+idThread::PushFloat
+================
+*/
+void idThread::PushFloat( float value ) {
+	interpreter.Push( *(int*)&value );
+}
+
+/*
+================
+idThread::PushVec3
+================
+*/
+void idThread::PushVec3( const idVec3& value ) {
+	for( int ix = 0; ix < value.GetDimension(); ++ix ) {
+		PushFloat( value[ix] );
+	}
+}
+
+/*
+================
+idThread::PushEntity
+================
+*/
+void idThread::PushEntity( const idEntity* ent ) {
+	assert( ent );
+
+	PushInt( ent->entityNumber + 1 );
+}
+
+/*
+================
+idThread::PushString
+================
+*/
+void idThread::PushString( const char* string ) {
+	interpreter.PushString( string ); 
+}
+
+/*
+================
+idThread::PushBool
+================
+*/
+void idThread::PushBool( bool value ) {
+	PushInt( (int)value );
+}
+// RAVEN END
 
 /*
 ================
@@ -792,7 +949,9 @@ void idThread::Error( const char *fmt, ... ) const {
 	vsprintf( text, fmt, argptr );
 	va_end( argptr );
 
-	interpreter.Error( text );
+	// openQ4: the text is already formatted; as a format, a '%' in a script's
+	// own message or in an entity's name read arguments that were not there
+	interpreter.Error( "%s", text );
 }
 
 /*
@@ -808,7 +967,7 @@ void idThread::Warning( const char *fmt, ... ) const {
 	vsprintf( text, fmt, argptr );
 	va_end( argptr );
 
-	interpreter.Warning( text );
+	interpreter.Warning( "%s", text );
 }
 
 /*
@@ -854,7 +1013,9 @@ void idThread::ReturnVector( idVec3 const &vec ) {
 idThread::ReturnEntity
 ================
 */
-void idThread::ReturnEntity( idEntity *ent ) {
+// RAVEN BEGIN
+// abahr: added const
+void idThread::ReturnEntity( const idEntity *ent ) {
 	gameLocal.program.ReturnEntity( ent );
 }
 
@@ -884,7 +1045,10 @@ idThread::WaitMS
 */
 void idThread::WaitMS( int time ) {
 	Pause();
-	waitingUntil = gameLocal.time + time;
+// RAVEN BEGIN
+// bdube: add 1 ms to ensure a time of zero still works
+	waitingUntil = gameLocal.time + time + 1;
+// RAVEN END
 }
 
 /*
@@ -1024,7 +1188,14 @@ idThread::Event_Assert
 ================
 */
 void idThread::Event_Assert( float value ) {
-	assert( value );
+// RAVEN BEGIN
+// jnewquist: assert with a useful callstack, since this is script
+#ifdef _DEBUG
+	if ( !value ) {
+		Error("Script assert fired");
+	}
+#endif
+// RAVEN END
 }
 
 /*
@@ -1046,6 +1217,18 @@ idThread::Event_SetCvar
 ================
 */
 void idThread::Event_SetCvar( const char *name, const char *value ) const {
+	// openQ4: The Awakening's m03 narrows the view while the player mans the
+	// dropship's guns by writing g_fov (80 in a gun, 90 out of it), which threw
+	// away the player's own field of view for good. In single player a script's
+	// g_fov is an offset from the 90 those scripts assume, on top of the
+	// player's setting. No retail script writes g_fov.
+	if ( !gameLocal.isMultiplayer && !idStr::Icmp( name, "g_fov" ) ) {
+		idPlayer *player = gameLocal.GetLocalPlayer();
+		if ( player != NULL ) {
+			player->spawnArgs.SetFloat( "openq4_scriptFovOffset", atof( value ) - 90.0f );
+			return;
+		}
+	}
 	cvarSystem->SetCVarString( name, value );
 }
 
@@ -1069,6 +1252,29 @@ void idThread::Event_Random( float range ) const {
 	result = gameLocal.random.RandomFloat();
 	ReturnFloat( range * result );
 }
+
+// RAVEN BEGIN
+// abahr:
+/*
+================
+idThread::Event_RandomInt
+================
+*/
+void idThread::Event_RandomInt( float range ) const {
+	ReturnFloat( rvRandom::irand(0, range) );
+}
+
+
+// rjohnson: new blur special effect
+void idThread::Event_SetSpecialEffect( int Effect, int Enabled ) {
+	gameLocal.SetSpecialEffect( (ESpecialEffectType)Effect, Enabled != 0 );
+}
+
+void idThread::Event_SetSpecialEffectParm( int Effect, int Parm, float Value ) {
+	gameLocal.SetSpecialEffectParm( (ESpecialEffectType)Effect, Parm, Value );
+}
+
+// RAVEN END
 
 /*
 ================
@@ -1142,6 +1348,19 @@ idThread::Event_SetSpawnArg
 void idThread::Event_SetSpawnArg( const char *key, const char *value ) {
 	spawnArgs.Set( key, value );
 }
+
+// RAVEN BEGIN
+// kfuller: added events
+
+/*
+================
+idThread::Event_SetSpawnVector
+================
+*/
+void idThread::Event_SetSpawnVector( const char *key, idVec3 &vec) {
+	spawnArgs.SetVector(key, vec);
+}
+// RAVEN END
 
 /*
 ================
@@ -1267,6 +1486,27 @@ void idThread::Event_AngToUp( idAngles &ang ) {
 	ReturnVector( vec );
 }
 
+// RAVEN BEGIN
+// kfuller: added events
+/*
+================
+idThread::Event_GetArcSine
+================
+*/
+void idThread::Event_GetArcSine( float sinValue ) {
+	ReturnFloat( asinf( sinValue ) );
+}
+
+/*
+================
+idThread::Event_GetArcCosine
+================
+*/
+void idThread::Event_GetArcCosine( float cosValue ) {
+	ReturnFloat( acosf( cosValue ) );
+}
+// RAVEN END
+
 /*
 ================
 idThread::Event_GetSine
@@ -1344,6 +1584,20 @@ void idThread::Event_VecToAngles( idVec3 &vec ) {
 	ReturnVector( idVec3( ang[0], ang[1], ang[2] ) );
 }
 
+// RAVEN BEGIN
+// kef 12/2/02 -- made these into events
+
+void idThread::Event_VecRotate(idVec3 &vecToBeRotated, idVec3 &rotateHowMuch)
+{
+	idVec3 vecResult;
+
+//	VectorRotate3(vecToBeRotated, rotateHowMuch, vecResult);
+	gameLocal.Printf("'vecRotate' doesn't work -- I guess Keith should find a replacement for VectorRotate3 now...\n");
+	ReturnVector(vecResult);
+}
+
+// RAVEN END
+
 /*
 ================
 idThread::Event_OnSignal
@@ -1387,6 +1641,26 @@ void idThread::Event_ClearSignalThread( int signal, idEntity *ent ) {
 	ent->ClearSignalThread( ( signalNum_t )signal, this );
 }
 
+// RAVEN BEGIN
+// kfuller: added
+/*
+================
+idThread::Event_ClearSignalAllThreads
+================
+*/
+void idThread::Event_ClearSignalAllThreads( int signal, idEntity *ent ) {
+	if ( !ent ) {
+		Error( "Entity not found" );
+	}
+	
+	if ( ( signal < 0 ) || ( signal >= NUM_SIGNALS ) ) {
+		Error( "Signal out of range" );
+	}
+
+	ent->ClearSignal(this, ( signalNum_t )signal);
+}
+// RAVEN END
+
 /*
 ================
 idThread::Event_SetCamera
@@ -1398,7 +1672,10 @@ void idThread::Event_SetCamera( idEntity *ent ) {
 		return;
 	}
 
-	if ( !ent->IsType( idCamera::Type ) ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+	if ( !ent->IsType( idCamera::GetClassType() ) ) {
+// RAVEN END
 		Error( "Entity is not a camera" );
 		return;
 	}
@@ -1422,9 +1699,12 @@ idThread::Event_Trace
 */
 void idThread::Event_Trace( const idVec3 &start, const idVec3 &end, const idVec3 &mins, const idVec3 &maxs, int contents_mask, idEntity *passEntity ) {
 	if ( mins == vec3_origin && maxs == vec3_origin ) {
-		gameLocal.clip.TracePoint( trace, start, end, contents_mask, passEntity );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		gameLocal.TracePoint( NULL, trace, start, end, contents_mask, passEntity );
 	} else {
-		gameLocal.clip.TraceBounds( trace, start, end, idBounds( mins, maxs ), contents_mask, passEntity );
+		gameLocal.TraceBounds( NULL, trace, start, end, idBounds( mins, maxs ), contents_mask, passEntity );
+// RAVEN END
 	}
 	ReturnFloat( trace.fraction );
 }
@@ -1435,7 +1715,10 @@ idThread::Event_TracePoint
 ================
 */
 void idThread::Event_TracePoint( const idVec3 &start, const idVec3 &end, int contents_mask, idEntity *passEntity ) {
-	gameLocal.clip.TracePoint( trace, start, end, contents_mask, passEntity );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+	gameLocal.TracePoint( NULL, trace, start, end, contents_mask, passEntity );
+// RAVEN END
 	ReturnFloat( trace.fraction );
 }
 
@@ -1491,7 +1774,10 @@ idThread::Event_GetTraceJoint
 void idThread::Event_GetTraceJoint( void ) {
 	if ( trace.fraction < 1.0f && trace.c.id < 0 ) {
 		idAFEntity_Base *af = static_cast<idAFEntity_Base *>( gameLocal.entities[ trace.c.entityNum ] );
-		if ( af && af->IsType( idAFEntity_Base::Type ) && af->IsActiveAF() ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+		if ( af && af->IsType( idAFEntity_Base::GetClassType() ) && af->IsActiveAF() ) {
+// RAVEN END
 			ReturnString( af->GetAnimator()->GetJointName( CLIPMODEL_ID_TO_JOINT_HANDLE( trace.c.id ) ) );
 			return;
 		}
@@ -1507,7 +1793,10 @@ idThread::Event_GetTraceBody
 void idThread::Event_GetTraceBody( void ) {
 	if ( trace.fraction < 1.0f && trace.c.id < 0 ) {
 		idAFEntity_Base *af = static_cast<idAFEntity_Base *>( gameLocal.entities[ trace.c.entityNum ] );
-		if ( af && af->IsType( idAFEntity_Base::Type ) && af->IsActiveAF() ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+		if ( af && af->IsType( idAFEntity_Base::GetClassType() ) && af->IsActiveAF() ) {
+// RAVEN END
 			int bodyId = af->BodyForClipModelId( trace.c.id );
 			idAFBody *body = af->GetAFPhysics()->GetBody( bodyId );
 			if ( body ) {
@@ -1586,7 +1875,7 @@ idThread::Event_StartMusic
 ================
 */
 void idThread::Event_StartMusic( const char *text ) {
-	gameSoundWorld->PlayShaderDirectly( text );
+	soundSystem->PlayShaderDirectly( SOUNDWORLD_GAME, text );
 }
 
 /*
@@ -1615,7 +1904,7 @@ idThread::Event_StrLen
 void idThread::Event_StrLen( const char *string ) {
 	int len;
 
-	len = strlen( string );
+	len = idLib::SizeToInt( strlen( string ), "idThread::Event_StrLen" );
 	idThread::ReturnInt( len );
 }
 
@@ -1632,7 +1921,7 @@ void idThread::Event_StrLeft( const char *string, int num ) {
 		return;
 	}
 
-	len = strlen( string );
+	len = idLib::SizeToInt( strlen( string ), "idThread::Event_StrLeft" );
 	if ( len < num ) {
 		idThread::ReturnString( string );
 		return;
@@ -1655,7 +1944,7 @@ void idThread::Event_StrRight( const char *string, int num ) {
 		return;
 	}
 
-	len = strlen( string );
+	len = idLib::SizeToInt( strlen( string ), "idThread::Event_StrRight" );
 	if ( len < num ) {
 		idThread::ReturnString( string );
 		return;
@@ -1677,7 +1966,7 @@ void idThread::Event_StrSkip( const char *string, int num ) {
 		return;
 	}
 
-	len = strlen( string );
+	len = idLib::SizeToInt( strlen( string ), "idThread::Event_StrSkip" );
 	if ( len < num ) {
 		idThread::ReturnString( "" );
 		return;
@@ -1702,7 +1991,7 @@ void idThread::Event_StrMid( const char *string, int start, int num ) {
 	if ( start < 0 ) {
 		start = 0;
 	}
-	len = strlen( string );
+	len = idLib::SizeToInt( strlen( string ), "idThread::Event_StrMid" );
 	if ( start > len ) {
 		start = len;
 	}
@@ -1769,7 +2058,7 @@ idThread::Event_GetTicsPerSecond
 ================
 */
 void idThread::Event_GetTicsPerSecond( void ) { 
-	idThread::ReturnFloat( USERCMD_HZ );
+	idThread::ReturnFloat( gameLocal.GetMHz() );
 }
 
 /*
@@ -1841,3 +2130,230 @@ void idThread::Event_InfluenceActive( void ) {
 		idThread::ReturnInt( false );
 	}
 }
+
+// RAVEN BEGIN
+// kfuller: added events
+/*
+================
+idThread::Event_PlayWorldEffect
+================
+*/
+void idThread::Event_PlayWorldEffect( const char *effectName, idVec3 &org, idVec3 &angle ) {
+	gameLocal.PlayEffect ( ( const idDecl * )declManager->FindEffect( effectName ), org, angle.ToMat3() ); 
+}
+
+// abahr:
+/*
+================
+idThread::Event_ReferenceScriptObjectProxy
+================
+*/
+void idThread::Event_ReferenceScriptObjectProxy( const char* scriptObjectName ) {
+	ReturnEntity( gameLocal.ReferenceScriptObjectProxy(scriptObjectName) );
+	Event_WaitFrame();// Needed because the constructor call is delayed by one frame
+}
+
+/*
+================
+idThread::Event_ReleaseScriptObjectProxy
+================
+*/
+void idThread::Event_ReleaseScriptObjectProxy( const char* proxyName ) {
+	gameLocal.ReleaseScriptObjectProxy( proxyName );
+	Event_WaitFrame();// Needed because the destructor call is delayed by one frame
+}
+
+/*
+================
+idThread::Event_ClampFloat
+================
+*/
+void idThread::Event_ClampFloat( float min, float max, float val ) {
+	ReturnFloat( idMath::ClampFloat(min, max, val) );
+}
+
+/*
+================
+idThread::Event_MinFloat
+================
+*/
+void idThread::Event_MinFloat( float val1, float val2 ) {
+	ReturnFloat( Min<float>(val1, val2) );
+}
+
+/*
+================
+idThread::Event_MaxFloat
+================
+*/
+void idThread::Event_MaxFloat( float val1, float val2 ) {
+	ReturnFloat( Max<float>(val1, val2) );
+}
+
+/*
+================
+idThread::Event_StrFind
+================
+*/
+void idThread::Event_StrFind( const char *sourceStr, const char *subStr ) {
+	// openQ4: a "ss" event hands over C strings. This was declared to take two
+	// idStr references, so every call read the text itself as a string object
+	// and searched through whatever its bytes pointed at.
+	idThread::ReturnInt( idStr::FindText( sourceStr, subStr ) );
+}
+
+// asalmon: award achievement
+/*
+================
+idThread::Event_AwardAchievement
+================
+*/
+void idThread::Event_AwardAchievement( const char *name ) {
+#ifdef _XENON
+	Live()->AwardAchievement(name);
+#endif
+}
+// twhitaker: ceil, floor and intVal
+/*
+================
+idThread::Event_GetCeil
+================
+*/
+void idThread::Event_GetCeil( float val ) {
+	ReturnFloat( idMath::Ceil( val ) );
+}
+
+/*
+================
+idThread::Event_GetFloor
+================
+*/
+void idThread::Event_GetFloor( float val ) {
+	ReturnFloat( idMath::Floor( val ) );
+}
+
+/*
+================
+idThread::Event_ToInt
+================
+*/
+void idThread::Event_ToInt( float val ) {
+	ReturnFloat( idMath::Ftoi( val ) );
+//	ReturnFloat( idMath::FtoiFast( val ) );
+}
+
+// jdischler: send named event string to specified gui
+/*
+===============================
+idThread::Event_SendNamedEvent
+===============================
+*/
+void idThread::Event_SendNamedEvent( int guiEnum, const char *namedEvent ) {
+	if ( Awakening_DispatchShipStatus( guiEnum, namedEvent ) ) {
+		return;
+	}
+
+	typedef enum {
+		SNE_PLAYERHUD = 0,
+		SNE_CINEMATICHUD,
+		SNE_VEHICLECHUD,
+		SNE_CURSORHUD,
+	};
+
+	idPlayer *player = gameLocal.GetLocalPlayer();
+	if ( !player ) {
+		return;
+	}
+
+	switch( guiEnum ) {
+		case SNE_PLAYERHUD:
+			if ( player->hud ) {
+				player->hud->HandleNamedEvent( namedEvent );
+			}
+			break;
+		case SNE_CINEMATICHUD:
+			if ( player->cinematicHud ) {
+				player->cinematicHud->HandleNamedEvent( namedEvent );
+			}
+			break;
+		case SNE_VEHICLECHUD:
+			// twhitaker:  I'd really just rather use player->GetHud() ... which returns the vehicle hud if the player is in a vehicle
+			// but this way the scripter will be able to strictly enforce which hud the named event gets played on.  See idPlayer::GetHud()
+			if ( player->vehicleController.GetVehicle() ) {
+				idUserInterface * hud = player->vehicleController.GetVehicle()->GetHud();
+				
+				if ( hud ) {
+					hud->HandleNamedEvent( namedEvent );
+				}
+			}
+			break;
+		case SNE_CURSORHUD:
+			if ( player->GetCursorGUI() ) {
+				player->GetCursorGUI()->HandleNamedEvent( namedEvent );
+			}
+			break;
+	}
+}
+
+/*
+================
+idThread::Event_SetMatSort
+================
+*/
+void idThread::Event_SetMatSort( const char *name, const char *val ) const {
+	const idMaterial *mat = declManager->FindMaterial( name );
+	if ( mat ) {
+		int srt = SS_DECAL;
+		if ( idStr::Icmp( val, "SS_MIN" ) == 0 ) {
+			//srt = SS_MIN;		
+		} else if ( idStr::Icmp( val, "SS_SUBVIEW" ) == 0 ) {
+			srt = SS_SUBVIEW;		
+		} else if ( idStr::Icmp( val, "SS_PREGUI" ) == 0 ) {
+			//srt = SS_PREGUI;		
+		} else if ( idStr::Icmp( val, "SS_GUI" ) == 0 ) {
+			srt = SS_GUI;		
+		} else if ( idStr::Icmp( val, "SS_BAD" ) == 0 ) {
+			srt = SS_BAD;		
+		} else if ( idStr::Icmp( val, "SS_OPAQUE" ) == 0 ) {
+			srt = SS_OPAQUE;
+		} else if ( idStr::Icmp( val, "SS_PORTAL_SKY" ) == 0 ) {
+			srt = SS_PORTAL_SKY;		
+		} else if ( idStr::Icmp( val, "SS_DECAL" ) == 0 ) {
+			srt = SS_DECAL;		
+		} else if ( idStr::Icmp( val, "SS_FAR" ) == 0 ) {
+			srt = SS_FAR;		
+		} else if ( idStr::Icmp( val, "SS_MEDIUM" ) == 0 ) {
+			srt = SS_MEDIUM;		
+		} else if ( idStr::Icmp( val, "SS_CLOSE" ) == 0 ) {
+			srt = SS_CLOSE;		
+		} else if ( idStr::Icmp( val, "SS_ALMOST_NEAREST" ) == 0 ) {
+			srt = SS_ALMOST_NEAREST;		
+		} else if ( idStr::Icmp( val, "SS_NEAREST" ) == 0 ) {
+			srt = SS_NEAREST;		
+		} else if ( idStr::Icmp( val, "SS_POST_PROCESS" ) == 0 ) {
+			srt = SS_POST_PROCESS;		
+		}
+		
+		mat->SetSort( srt );
+	}
+}
+
+// jdischler: Adding ability to create texture streams from scripts
+/*
+================
+idThread::Event_BeginManualStreaming
+================
+*/
+void idThread::Event_BeginManualStreaming()
+{
+}
+
+/*
+================
+idThread::Event_EndManualStreaming
+================
+*/
+void idThread::Event_EndManualStreaming()
+{
+}
+// RAVEN END

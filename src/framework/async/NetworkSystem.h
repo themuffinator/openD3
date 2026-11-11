@@ -63,6 +63,68 @@ typedef struct {
 //RAVEN END
 } scannedServer_t;
 
+// Fixed-width, append-only game-module ABI for the server MVD publisher.
+// The query that fills this value is fallible: false means that no recording
+// attempt has produced a result yet.  A pending result names only the staged
+// stream; a committed result names only the published stream; and a failed
+// result may name the recoverable staged stream that was left behind.
+static const int SERVER_MVD_RESULT_QPATH_BYTES = 160;
+
+typedef enum {
+	SERVER_MVD_RESULT_PENDING = 0,
+	SERVER_MVD_RESULT_COMMITTED,
+	SERVER_MVD_RESULT_FAILED,
+	SERVER_MVD_RESULT_STATE_COUNT
+} serverMVDResultState_t;
+
+typedef enum {
+	SERVER_MVD_REASON_NONE = 0,
+	SERVER_MVD_REASON_START_REJECTED,
+	SERVER_MVD_REASON_NAME_UNAVAILABLE,
+	SERVER_MVD_REASON_OPEN_FAILED,
+	SERVER_MVD_REASON_SCHEMA_INVALID,
+	SERVER_MVD_REASON_INITIALIZATION_FAILED,
+	SERVER_MVD_REASON_STREAM_WRITE_FAILED,
+	SERVER_MVD_REASON_FINALIZE_WRITE_FAILED,
+	SERVER_MVD_REASON_SYNC_FAILED,
+	SERVER_MVD_REASON_PROMOTE_FAILED,
+	SERVER_MVD_REASON_COUNT
+} serverMVDResultReason_t;
+
+typedef struct {
+	serverMVDResultState_t	state;
+	serverMVDResultReason_t	reason;
+	char					finalQPath[ SERVER_MVD_RESULT_QPATH_BYTES + 1 ];
+	char					partialQPath[ SERVER_MVD_RESULT_QPATH_BYTES + 1 ];
+} serverMVDRecordingResult_t;
+
+// Fixed-width, append-only game-module ABI for structured MVD markers. The
+// recorder stamps each marker with the server frame and time; text is display
+// data, limited to printable bytes, never an instruction for playback.
+static const int SERVER_MVD_MARKER_TEXT_BYTES = 120;
+
+typedef enum {
+	SERVER_MVD_MARKER_NONE = 0,
+	SERVER_MVD_MARKER_PHASE,		// value0 previous match phase, value1 new phase
+	SERVER_MVD_MARKER_ROUND,		// value0 previous round state, value1 new round state
+	SERVER_MVD_MARKER_PAUSE,		// value0 new pause state, value1 kind | ( owner side + 1 ) << 8
+	SERVER_MVD_MARKER_SCORE,		// value0 team, value1 new team score
+	SERVER_MVD_MARKER_KILL,			// client attacker (-1 world), value0 victim, value1 method of death
+	SERVER_MVD_MARKER_FLAG,			// client carrier (-1 none), value0 flag team, value1 new flag state
+	SERVER_MVD_MARKER_POWERUP,		// client holder, value0 powerup
+	SERVER_MVD_MARKER_NOTE,			// text from an operator
+	SERVER_MVD_MARKER_KIND_COUNT
+} serverMVDMarkerKind_t;
+
+typedef struct {
+	int						kind;
+	int						client;		// -1 when no player owns the event
+	int						instance;	// -1 for every instance
+	int						value0;
+	int						value1;
+	char					text[ SERVER_MVD_MARKER_TEXT_BYTES + 1 ];
+} serverMVDMarker_t;
+
 typedef enum {
 	SC_NONE = -1,
 	SC_FAVORITE,
@@ -98,6 +160,11 @@ public:
 
 	virtual void			ServerSendReliableMessage( int clientNum, const idBitMsg &msg );
 	virtual void			ServerSendReliableMessageExcluding( int clientNum, const idBitMsg &msg );
+	// Instance-scoped game helpers fan out one logical message to several
+	// clients. These variants avoid recording each physical delivery.
+	virtual void			ServerSendReliableMessageNoDemo( int clientNum, const idBitMsg &msg );
+	virtual void			ServerSendReliableMessageExcludingNoDemo( int clientNum, const idBitMsg &msg );
+	virtual void			ServerRecordInstanceReliableMessage( int instance, int excludeClient, const idBitMsg &msg );
 	virtual int				ServerGetClientPing( int clientNum );
 	virtual int				ServerGetClientPrediction( int clientNum );
 	virtual int				ServerGetClientTimeSinceLastPacket( int clientNum );
@@ -105,6 +172,10 @@ public:
 	virtual int				ServerGetClientOutgoingRate( int clientNum );
 	virtual int				ServerGetClientIncomingRate( int clientNum );
 	virtual float			ServerGetClientIncomingPacketLoss( int clientNum );
+	// Typed game-side moderation must not synthesize console command text.
+	// Returns false for an inactive server, invalid slot, local listen host or
+	// invalid reason; successful calls synchronously retire the connection.
+	virtual bool			ServerDropClient( int clientNum, const char *reason );
 
 	virtual void			ClientSendReliableMessage( const idBitMsg &msg );
 	virtual int				ClientGetPrediction( void );
@@ -153,6 +224,20 @@ public:
 	virtual int				ServerConnectBot(void) { return 0; }
 
 	virtual int				RepeaterGetClientNum(int clientId) { return 0; }
+
+	// Append-only game-module ABI: server-owned multi-view demo lifecycle.
+	virtual bool			ServerStartMVDRecording( const char *name );
+	virtual bool			ServerStopMVDRecording( const char *reason );
+	virtual bool			ServerIsMVDRecording( void ) const;
+	virtual bool			ServerCopyMVDRecordingQPath( char *buffer, int bufferSize ) const;
+	virtual bool			ServerCopyMVDRecordingResult( serverMVDRecordingResult_t &result ) const;
+	// Voice has exact recipients, no spectator/demo fanout and no reliable
+	// delivery. The server batches only the current frame, after snapshots.
+	// False means dropped; true never promises delivery of disposable media.
+	virtual bool			ClientSendVoice( const idBitMsg &msg );
+	virtual bool			ServerSendVoice( int clientNum, const idBitMsg &msg );
+	// False when no recording is active or the marker is malformed.
+	virtual bool			ServerRecordMVDMarker( const serverMVDMarker_t &marker );
 };
 
 extern idNetworkSystem *	networkSystem;

@@ -1,33 +1,6 @@
-/*
-===========================================================================
 
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
-
-#include "../idlib/precompiled.h"
-#pragma hdrstop
 
 #include "Game_local.h"
 
@@ -324,12 +297,13 @@ idPVS::FloodPassagePVS_r
 ===============
 */
 pvsStack_t *idPVS::FloodPassagePVS_r( pvsPortal_t *source, const pvsPortal_t *portal, pvsStack_t *prevStack ) const {
-	int i, j, n, m;
+	int i, j, n;
+	dword m;
 	pvsPortal_t *p;
 	pvsArea_t *area;
 	pvsStack_t *stack;
 	pvsPassage_t *passage;
-	long *sourceVis, *passageVis, *portalVis, *mightSee, *prevMightSee, more;
+	dword *sourceVis, *passageVis, *portalVis, *mightSee, *prevMightSee, more;
 
 	area = &pvsAreas[portal->areaNum];
 
@@ -364,16 +338,16 @@ pvsStack_t *idPVS::FloodPassagePVS_r( pvsPortal_t *source, const pvsPortal_t *po
 		source->vis[n >> 3] |= (1 << (n & 7));
 
 		// get pointers to vis data
-		prevMightSee = reinterpret_cast<long *>(prevStack->mightSee);
-		passageVis = reinterpret_cast<long *>(passage->canSee);
-		sourceVis = reinterpret_cast<long *>(source->vis);
-		mightSee = reinterpret_cast<long *>(stack->mightSee);
+		prevMightSee = reinterpret_cast<dword *>(prevStack->mightSee);
+		passageVis = reinterpret_cast<dword *>(passage->canSee);
+		sourceVis = reinterpret_cast<dword *>(source->vis);
+		mightSee = reinterpret_cast<dword *>(stack->mightSee);
 
 		more = 0;
 		// use the portal PVS if it has been calculated
 		if ( p->done ) {
-			portalVis = reinterpret_cast<long *>(p->vis);
-			for ( j = 0; j < portalVisLongs; j++ ) {
+			portalVis = reinterpret_cast<dword *>(p->vis);
+			for ( j = 0; j < portalVisDwords; j++ ) {
 				// get new PVS which is decreased by going through this passage
 				m = *prevMightSee++ & *passageVis++ & *portalVis++;
 				// check if anything might be visible through this passage that wasn't yet visible
@@ -384,7 +358,7 @@ pvsStack_t *idPVS::FloodPassagePVS_r( pvsPortal_t *source, const pvsPortal_t *po
 		}
 		else {
 			// the p->mightSee is implicitely stored in the passageVis
-			for ( j = 0; j < portalVisLongs; j++ ) {
+			for ( j = 0; j < portalVisDwords; j++ ) {
 				// get new PVS which is decreased by going through this passage
 				m = *prevMightSee++ & *passageVis++;
 				// check if anything might be visible through this passage that wasn't yet visible
@@ -428,7 +402,10 @@ void idPVS::PassagePVS( void ) const {
 	for ( i = 0; i < numPortals; i++ ) {
 		source = &pvsPortals[i];
 		memset( source->vis, 0, portalVisBytes );
-		memcpy( stack->mightSee, source->mightSee, portalVisBytes );
+// RAVEN BEGIN
+// JSinger: Changed to call optimized memcpy
+		SIMDProcessor->Memcpy( stack->mightSee, source->mightSee, portalVisBytes );
+// RAVEN END
 		FloodPassagePVS_r( source, source, stack );
 		source->done = true;
 	}
@@ -719,7 +696,10 @@ void idPVS::CopyPortalPVSToMightSee( void ) const {
 
 	for ( i = 0; i < numPortals; i++ ) {
 		p = &pvsPortals[i];
-		memcpy( p->mightSee, p->vis, portalVisBytes );
+// RAVEN BEGIN
+// JSinger: Changed to call optimized memcpy
+		SIMDProcessor->Memcpy( p->mightSee, p->vis, portalVisBytes );
+// RAVEN BEGIN
 	}
 }
 
@@ -730,7 +710,7 @@ idPVS::AreaPVSFromPortalPVS
 */
 int idPVS::AreaPVSFromPortalPVS( void ) const {
 	int i, j, k, areaNum, totalVisibleAreas;
-	long *p1, *p2;
+	dword *p1, *p2;
 	byte *pvs, *portalPVS;
 	pvsArea_t *area;
 
@@ -755,9 +735,9 @@ int idPVS::AreaPVSFromPortalPVS( void ) const {
 
 		// store the PVS of all portals in this area at the first portal
 		for ( j = 1; j < area->numPortals; j++ ) {
-			p1 = reinterpret_cast<long *>(area->portals[0]->vis);
-			p2 = reinterpret_cast<long *>(area->portals[j]->vis);
-			for ( k = 0; k < portalVisLongs; k++ ) {
+			p1 = reinterpret_cast<dword *>(area->portals[0]->vis);
+			p2 = reinterpret_cast<dword *>(area->portals[j]->vis);
+			for ( k = 0; k < portalVisDwords; k++ ) {
 				*p1++ |= *p2++;
 			}
 		}
@@ -807,15 +787,14 @@ void idPVS::Init( void ) {
 	areaQueue = new int[numAreas];
 
 	areaVisBytes = ( ((numAreas+31)&~31) >> 3);
-	areaVisLongs = areaVisBytes/sizeof(long);
-
+	areaVisDwords = areaVisBytes / sizeof( dword );
 	areaPVS = new byte[numAreas * areaVisBytes];
 	memset( areaPVS, 0xFF, numAreas * areaVisBytes );
 
 	numPortals = GetPortalCount();
 
 	portalVisBytes = ( ((numPortals+31)&~31) >> 3);
-	portalVisLongs = portalVisBytes/sizeof(long);
+	portalVisDwords = portalVisBytes / sizeof( dword );
 
 	for ( int i = 0; i < MAX_CURRENT_PVS; i++ ) {
 		currentPVS[i].handle.i = -1;
@@ -841,10 +820,36 @@ void idPVS::Init( void ) {
 
 	timer.Stop();
 
+#if 0
+	// bkreimeier20060123 - per MrE's recommendation, used this in Wolf
+	// if the PVS is not relexive for (i,j), we assume floating point errors
+	//  and assume a false positive - remove either from either
+	for ( int i=0; i<numAreas; i++ ) {
+		byte* const pvs_i = areaPVS + i * areaVisBytes;
+
+		for ( int j=0; j<numAreas; j++ ) {
+			byte* const pvs_j = areaPVS + j * areaVisBytes;
+			const bool j_in_i = (pvs_i[j>>3] & (1<<(j&7)));
+			const bool i_in_j = (pvs_j[i>>3] & (1<<(i&7)));
+			if ( i_in_j!=j_in_i ) {
+				pvs_i[j>>3] &= ~(1 << (j&7));
+				pvs_j[i>>3] &= ~(1 << (i&7));
+			}
+		}
+	}
+#endif
+
 	gameLocal.Printf( "%5.0f msec to calculate PVS\n", timer.Milliseconds() );
 	gameLocal.Printf( "%5d areas\n", numAreas );
 	gameLocal.Printf( "%5d portals\n", numPortals );
-	gameLocal.Printf( "%5d areas visible on average\n", totalVisibleAreas / numAreas );
+
+// RAVEN BEGIN
+// rjohnson: fix for div by 0
+	if( numAreas ) {
+		gameLocal.Printf( "%5d areas visible on average\n", totalVisibleAreas / numAreas );
+	}
+// RAVEN END
+
 	if ( numAreas * areaVisBytes < 1024 ) {
 		gameLocal.Printf( "%5d bytes PVS data\n", numAreas * areaVisBytes );
 	}
@@ -860,20 +865,27 @@ idPVS::Shutdown
 */
 void idPVS::Shutdown( void ) {
 	if ( connectedAreas ) {
-		delete connectedAreas;
+		delete[] connectedAreas;
 		connectedAreas = NULL;
 	}
 	if ( areaQueue ) {
-		delete areaQueue;
+		delete[] areaQueue;
 		areaQueue = NULL;
 	}
 	if ( areaPVS ) {
-		delete areaPVS;
+		delete[] areaPVS;
 		areaPVS = NULL;
 	}
 	if ( currentPVS ) {
 		for ( int i = 0; i < MAX_CURRENT_PVS; i++ ) {
-			delete currentPVS[i].pvs;
+// RAVEN BEGIN
+// jsinger: modified to check to make sure the pointers have a value before attempting to delete
+//          them.  This prevents a call through the unified allocator before it has been initialized
+			if(currentPVS[i].pvs)
+			{
+				delete[] currentPVS[i].pvs;
+			}
+// RAVEN END
 			currentPVS[i].pvs = NULL;
 		}
 	}
@@ -892,12 +904,12 @@ void idPVS::GetConnectedAreas( int srcArea, bool *areas ) const {
 	int i, n;
 	exitPortal_t portal;
 
-	queueStart = -1;
+	queueStart = 0;
 	queueEnd = 0;
 	areas[srcArea] = true;
+	curArea = srcArea;
 
-	for ( curArea = srcArea; queueStart < queueEnd; curArea = areaQueue[++queueStart] ) {
-
+	while ( true ) {
 		n = gameRenderWorld->NumPortalsInArea( curArea );
 
 		for ( i = 0; i < n; i++ ) {
@@ -919,6 +931,11 @@ void idPVS::GetConnectedAreas( int srcArea, bool *areas ) const {
 			areaQueue[queueEnd++] = nextArea;
 			areas[nextArea] = true;
 		}
+
+		if ( queueStart >= queueEnd ) {
+			break;
+		}
+		curArea = areaQueue[queueStart++];
 	}
 }
 
@@ -983,7 +1000,10 @@ pvsHandle_t idPVS::SetupCurrentPVS( const int sourceArea, const pvsType_t type )
 	}
 
 	if ( type != PVS_CONNECTED_AREAS ) {
-		memcpy( currentPVS[handle.i].pvs, areaPVS + sourceArea * areaVisBytes, areaVisBytes );
+// RAVEN BEGIN
+// JSinger: Changed to call optimized memcpy
+		SIMDProcessor->Memcpy( currentPVS[handle.i].pvs, areaPVS + sourceArea * areaVisBytes, areaVisBytes );
+// RAVEN END
 	} else {
 		memset( currentPVS[handle.i].pvs, -1, areaVisBytes );
 	}
@@ -1013,7 +1033,7 @@ idPVS::SetupCurrentPVS
 pvsHandle_t idPVS::SetupCurrentPVS( const int *sourceAreas, const int numSourceAreas, const pvsType_t type ) const {
 	int i, j;
 	unsigned int h;
-	long *vis, *pvs;
+	dword *vis, *pvs;
 	pvsHandle_t handle;
 
 	h = 0;
@@ -1029,14 +1049,17 @@ pvsHandle_t idPVS::SetupCurrentPVS( const int *sourceAreas, const int numSourceA
 
 	if ( type != PVS_CONNECTED_AREAS ) {
 		// merge PVS of all areas the source is in
-		memcpy( currentPVS[handle.i].pvs, areaPVS + sourceAreas[0] * areaVisBytes, areaVisBytes );
+// RAVEN BEGIN
+// JSinger: Changed to call optimized memcpy
+		SIMDProcessor->Memcpy( currentPVS[handle.i].pvs, areaPVS + sourceAreas[0] * areaVisBytes, areaVisBytes );
+// RAVEN END
 		for ( i = 1; i < numSourceAreas; i++ ) {
 
 			assert( sourceAreas[i] >= 0 && sourceAreas[i] < numAreas );
 
-			vis = reinterpret_cast<long*>(areaPVS + sourceAreas[i] * areaVisBytes);
-			pvs = reinterpret_cast<long*>(currentPVS[handle.i].pvs);
-			for ( j = 0; j < areaVisLongs; j++ ) {
+			vis = reinterpret_cast<dword*>(areaPVS + sourceAreas[i] * areaVisBytes);
+			pvs = reinterpret_cast<dword*>(currentPVS[handle.i].pvs);
+			for ( j = 0; j < areaVisDwords; j++ ) {
 				*pvs++ |= *vis++;
 			}
 		}
@@ -1074,7 +1097,7 @@ idPVS::MergeCurrentPVS
 */
 pvsHandle_t idPVS::MergeCurrentPVS( pvsHandle_t pvs1, pvsHandle_t pvs2 ) const {
 	int i;
-	long *pvs1Ptr, *pvs2Ptr, *ptr;
+	dword *pvs1Ptr, *pvs2Ptr, *ptr;
 	pvsHandle_t handle;
 
 	if ( pvs1.i < 0 || pvs1.i >= MAX_CURRENT_PVS || pvs1.h != currentPVS[pvs1.i].handle.h ||
@@ -1084,11 +1107,11 @@ pvsHandle_t idPVS::MergeCurrentPVS( pvsHandle_t pvs1, pvsHandle_t pvs2 ) const {
 
 	handle = AllocCurrentPVS( pvs1.h ^ pvs2.h );
 
-	ptr = reinterpret_cast<long*>(currentPVS[handle.i].pvs);
-	pvs1Ptr = reinterpret_cast<long*>(currentPVS[pvs1.i].pvs);
-	pvs2Ptr = reinterpret_cast<long*>(currentPVS[pvs2.i].pvs);
+	ptr = reinterpret_cast<dword*>(currentPVS[handle.i].pvs);
+	pvs1Ptr = reinterpret_cast<dword*>(currentPVS[pvs1.i].pvs);
+	pvs2Ptr = reinterpret_cast<dword*>(currentPVS[pvs2.i].pvs);
 
-	for ( i = 0; i < areaVisLongs; i++ ) {
+	for ( i = 0; i < areaVisDwords; i++ ) {
 		*ptr++ = *pvs1Ptr++ | *pvs2Ptr++;
 	}
 

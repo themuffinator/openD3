@@ -1,33 +1,6 @@
-/*
-===========================================================================
 
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
-
-#include "../../idlib/precompiled.h"
-#pragma hdrstop
 
 #include "../Game_local.h"
 
@@ -89,7 +62,10 @@ idPhysics_Static::Restore
 ================
 */
 void idPhysics_Static::Restore( idRestoreGame *savefile ) {
-	savefile->ReadObject( reinterpret_cast<idClass *&>( self ) );
+	// ReadPhysicsObject installed the real owner before any field can fail.
+	// Consume the historical reference without publishing a foreign pointer.
+	idEntity *savedSelf = NULL;
+	savefile->ReadObject( savedSelf );
 
 	savefile->ReadVec3( current.origin );
 	savefile->ReadMat3( current.axis );
@@ -124,7 +100,10 @@ void idPhysics_Static::SetClipModel( idClipModel *model, float density, int id, 
 	}
 	clipModel = model;
 	if ( clipModel ) {
-		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		clipModel->Link( self, 0, current.origin, current.axis );
+// RAVEN END
 	}
 }
 
@@ -137,7 +116,10 @@ idClipModel *idPhysics_Static::GetClipModel( int id ) const {
 	if ( clipModel ) {
 		return clipModel;
 	}
-	return gameLocal.clip.DefaultClipModel();
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+	return idClip::DefaultClipModel();
+// RAVEN END
 }
 
 /*
@@ -165,6 +147,20 @@ idPhysics_Static::GetMass
 float idPhysics_Static::GetMass( int id ) const {
 	return 0.0f;
 }
+
+// RAVEN BEGIN
+// bdube: Added center mass call
+/*
+================
+idPhysics_Static::GetCenterMass
+
+default center of mass is origin
+================
+*/
+idVec3 idPhysics_Static::GetCenterMass ( int id ) const {
+	return GetOrigin();
+}
+// RAVEN END
 
 /*
 ================
@@ -239,11 +235,15 @@ idPhysics_Static::Evaluate
 ================
 */
 bool idPhysics_Static::Evaluate( int timeStepMSec, int endTimeMSec ) {
-	idVec3 masterOrigin, oldOrigin;
-	idMat3 masterAxis, oldAxis;
-
-
+// RAVEN BEGIN
+// bdube: draw bbox
 	if ( hasMaster ) {
+		idVec3 masterOrigin;
+		idVec3 oldOrigin;
+		idMat3 masterAxis;
+		idMat3 oldAxis;
+// RAVEN END
+
 		oldOrigin = current.origin;
 		oldAxis = current.axis;
 
@@ -255,7 +255,10 @@ bool idPhysics_Static::Evaluate( int timeStepMSec, int endTimeMSec ) {
 			current.axis = current.localAxis;
 		}
 		if ( clipModel ) {
-			clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+			clipModel->Link( self, 0, current.origin, current.axis );
+// RAVEN END
 		}
 
 		return ( current.origin != oldOrigin || current.axis != oldAxis );
@@ -348,6 +351,18 @@ bool idPhysics_Static::IsPushable( void ) const {
 	return false;
 }
 
+// RAVEN BEGIN
+// bdube: water interraction
+/*
+================
+idPhysics_Static::IsInWater
+================
+*/
+bool idPhysics_Static::IsInWater ( void ) const {
+	return false;
+}
+// RAVEN END	
+
 /*
 ================
 idPhysics_Static::SaveState
@@ -383,7 +398,10 @@ void idPhysics_Static::SetOrigin( const idVec3 &newOrigin, int id ) {
 	}
 
 	if ( clipModel ) {
-		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		clipModel->Link( self, 0, current.origin, current.axis );
+// RAVEN END
 	}
 }
 
@@ -406,7 +424,10 @@ void idPhysics_Static::SetAxis( const idMat3 &newAxis, int id ) {
 	}
 
 	if ( clipModel ) {
-		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		clipModel->Link( self, 0, current.origin, current.axis );
+// RAVEN END
 	}
 }
 
@@ -420,7 +441,10 @@ void idPhysics_Static::Translate( const idVec3 &translation, int id ) {
 	current.origin += translation;
 
 	if ( clipModel ) {
-		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		clipModel->Link( self, 0, current.origin, current.axis );
+// RAVEN END
 	}
 }
 
@@ -446,7 +470,10 @@ void idPhysics_Static::Rotate( const idRotation &rotation, int id ) {
 	}
 
 	if ( clipModel ) {
-		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		clipModel->Link( self, 0, current.origin, current.axis );
+// RAVEN END
 	}
 }
 
@@ -517,6 +544,10 @@ idPhysics_Static::GetGravity
 */
 const idVec3 &idPhysics_Static::GetGravity( void ) const {
 	static idVec3 gravity( 0, 0, -g_gravity.GetFloat() );
+	if( gameLocal.isMultiplayer ) {
+		gravity = idVec3( 0, 0, -g_mp_gravity.GetFloat() );	
+	} 
+
 	return gravity;
 }
 
@@ -537,11 +568,14 @@ idPhysics_Static::ClipTranslation
 */
 void idPhysics_Static::ClipTranslation( trace_t &results, const idVec3 &translation, const idClipModel *model ) const {
 	if ( model ) {
-		gameLocal.clip.TranslationModel( results, current.origin, current.origin + translation,
-			clipModel, current.axis, MASK_SOLID, model->Handle(), model->GetOrigin(), model->GetAxis() );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		gameLocal.TranslationModel( self, results, current.origin, current.origin + translation,
+			clipModel, current.axis, MASK_SOLID, model->GetCollisionModel(), model->GetOrigin(), model->GetAxis() );
 	} else {
-		gameLocal.clip.Translation( results, current.origin, current.origin + translation,
+		gameLocal.Translation( self, results, current.origin, current.origin + translation,
 			clipModel, current.axis, MASK_SOLID, self );
+// RAVEN END
 	}	
 }
 
@@ -552,11 +586,14 @@ idPhysics_Static::ClipRotation
 */
 void idPhysics_Static::ClipRotation( trace_t &results, const idRotation &rotation, const idClipModel *model ) const {
 	if ( model ) {
-		gameLocal.clip.RotationModel( results, current.origin, rotation,
-			clipModel, current.axis, MASK_SOLID, model->Handle(), model->GetOrigin(), model->GetAxis() );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		gameLocal.RotationModel( self, results, current.origin, rotation,
+			clipModel, current.axis, MASK_SOLID, model->GetCollisionModel(), model->GetOrigin(), model->GetAxis() );
 	} else {
-		gameLocal.clip.Rotation( results, current.origin, rotation, clipModel, current.axis, MASK_SOLID, self );
+		gameLocal.Rotation( self, results, current.origin, rotation, clipModel, current.axis, MASK_SOLID, self );
 	}
+// RAVEN END
 }
 
 /*
@@ -567,10 +604,13 @@ idPhysics_Static::ClipContents
 int idPhysics_Static::ClipContents( const idClipModel *model ) const {
 	if ( clipModel ) {
 		if ( model ) {
-			return gameLocal.clip.ContentsModel( clipModel->GetOrigin(), clipModel, clipModel->GetAxis(), -1,
-				model->Handle(), model->GetOrigin(), model->GetAxis() );
+// RAVEN BEGIN
+// ddynerman: multiple collision worlds
+			return gameLocal.ContentsModel( self, clipModel->GetOrigin(), clipModel, clipModel->GetAxis(), -1,
+				model->GetCollisionModel(), model->GetOrigin(), model->GetAxis() );
 		} else {
-			return gameLocal.clip.Contents( clipModel->GetOrigin(), clipModel, clipModel->GetAxis(), -1, NULL );
+			return gameLocal.Contents( self, clipModel->GetOrigin(), clipModel, clipModel->GetAxis(), -1, NULL );
+// RAVEN END
 		}
 	}
 	return 0;
@@ -616,7 +656,10 @@ idPhysics_Static::LinkClip
 */
 void idPhysics_Static::LinkClip( void ) {
 	if ( clipModel ) {
-		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		clipModel->Link( self, 0, current.origin, current.axis );
+// RAVEN END
 	}
 }
 

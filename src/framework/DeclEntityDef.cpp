@@ -26,9 +26,6 @@ If you have questions concerning this license or the applicable additional terms
 ===========================================================================
 */
 
-
-
-
 idDeclEntityDef::idDeclEntityDef() {
 
 }
@@ -57,6 +54,15 @@ idDeclEntityDef::Parse
 ================
 */
 bool idDeclEntityDef::Parse( const char *text, const int textLength ) {
+	return Parse( text, textLength, false );
+}
+
+/*
+================
+idDeclEntityDef::Parse
+================
+*/
+bool idDeclEntityDef::Parse( const char *text, const int textLength, bool noCaching ) {
 	idLexer src;
 	idToken	token, token2;
 
@@ -107,7 +113,7 @@ bool idDeclEntityDef::Parse( const char *text, const int textLength ) {
 			break;
 		}
 
-		const idDeclEntityDef *copy = static_cast<const idDeclEntityDef *>( declManager->FindType( DECL_ENTITYDEF, kv->GetValue(), false ) );
+		const idDeclEntityDef *copy = static_cast<const idDeclEntityDef *>( declManager->FindType( DECL_ENTITYDEF, kv->GetValue(), true, noCaching ) );
 		if ( !copy ) {
 			src.Warning( "Unknown entityDef '%s' inherited by '%s'", kv->GetValue().c_str(), GetName() );
 		} else {
@@ -123,9 +129,9 @@ bool idDeclEntityDef::Parse( const char *text, const int textLength ) {
 		dict.SetDefaults( &defList[ i ]->dict );
 	}
 
-	// precache all referenced media
-	// do this as long as we arent in modview
-	if ( !( com_editors & (EDITOR_RADIANT|EDITOR_AAS) ) ) {
+	// Keep the retail-style tool-state decision centralized so validation/tool
+	// modes do not drift away from entityDef media-cache behavior.
+	if ( openQ4_ShouldCacheEntityDefMedia( noCaching ) ) {
 		game->CacheDictionaryMedia( &dict );
 	}
 
@@ -151,6 +157,23 @@ idDeclEntityDef::Print
 Dumps all key/value pairs, including inherited ones
 ================
 */
-void idDeclEntityDef::Print( void ) {
+void idDeclEntityDef::Print( void ) const {
 	dict.Print();
+}
+
+/*
+================
+idDeclEntityDef::Validate
+================
+*/
+bool idDeclEntityDef::Validate( const char *psText, int iTextLength, idStr &strReportTo ) const {
+	(void)strReportTo;
+
+	idDecl *decl = declManager->AllocateDecl( DECL_ENTITYDEF );
+	const bool valid = DeclManager_ValidateParsedDecl( decl, DECL_ENTITYDEF, decl != NULL && decl->Parse( psText, iTextLength, false ) );
+	if ( decl != NULL ) {
+		decl->FreeData();
+	}
+	DeclManager_FreeAllocatedDecl( decl );
+	return valid;
 }

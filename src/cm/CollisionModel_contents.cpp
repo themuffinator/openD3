@@ -106,6 +106,7 @@ bool idCollisionModelManagerLocal::TestTrmVertsInBrush( cm_traceWork_t *tw, cm_b
 			tw->trace.c.point = *p;
 			tw->trace.c.modelFeature = 0;
 			tw->trace.c.trmFeature = j;
+			CM_GetMaterialType( tw, NULL );
 			return true;
 		}
 	}
@@ -118,11 +119,11 @@ CM_SetTrmEdgeSidedness
 ================
 */
 #define CM_SetTrmEdgeSidedness( edge, bpl, epl, bitNum ) {							\
-	if ( !(edge->sideSet & (1<<bitNum)) ) {											\
+	if ( !(edge->sideSet & (1u<<bitNum)) ) {											\
 		float fl;																	\
 		fl = (bpl).PermutedInnerProduct( epl );										\
-		edge->side = (edge->side & ~(1<<bitNum)) | (FLOATSIGNBITSET(fl) << bitNum);	\
-		edge->sideSet |= (1 << bitNum);												\
+		edge->side = (edge->side & ~(1u<<bitNum)) | (FLOATSIGNBITSET(fl) << bitNum);	\
+		edge->sideSet |= (1u << bitNum);												\
 	}																				\
 }
 
@@ -132,17 +133,17 @@ CM_SetTrmPolygonSidedness
 ================
 */
 #define CM_SetTrmPolygonSidedness( v, plane, bitNum ) {								\
-	if ( !((v)->sideSet & (1<<bitNum)) ) {											\
+	if ( !((v)->sideSet & (1u<<bitNum)) ) {											\
 		float fl;																	\
 		fl = plane.Distance( (v)->p );												\
 		/* cannot use float sign bit because it is undetermined when fl == 0.0f */	\
 		if ( fl < 0.0f ) {															\
-			(v)->side |= (1 << bitNum);												\
+			(v)->side |= (1u << bitNum);												\
 		}																			\
 		else {																		\
-			(v)->side &= ~(1 << bitNum);											\
+			(v)->side &= ~(1u << bitNum);											\
 		}																			\
-		(v)->sideSet |= (1 << bitNum);												\
+		(v)->sideSet |= (1u << bitNum);												\
 	}																				\
 }
 
@@ -230,6 +231,7 @@ bool idCollisionModelManagerLocal::TestTrmInPolygon( cm_traceWork_t *tw, cm_poly
 					tw->trace.c.point = v->p;
 					tw->trace.c.modelFeature = edge->vertexNum[j];
 					tw->trace.c.trmFeature = 0;
+					CM_GetMaterialType( tw, p );
 					return true;
 				}
 			}
@@ -302,8 +304,9 @@ bool idCollisionModelManagerLocal::TestTrmInPolygon( cm_traceWork_t *tw, cm_poly
 			tw->trace.c.contents = p->contents;
 			tw->trace.c.material = p->material;
 			tw->trace.c.point = tw->vertices[tw->edges[i].vertexNum[ !flip ]].p;
-			tw->trace.c.modelFeature = *reinterpret_cast<int *>(&p);
+			tw->trace.c.modelFeature = p->featureIndex;
 			tw->trace.c.trmFeature = i;
+			CM_GetMaterialType( tw, p );
 			return true;
 		}
 	}
@@ -381,6 +384,7 @@ bool idCollisionModelManagerLocal::TestTrmInPolygon( cm_traceWork_t *tw, cm_poly
 				tw->trace.c.point = tw->model->vertices[edge->vertexNum[ !flip ]].p;
 				tw->trace.c.modelFeature = edgeNum;
 				tw->trace.c.trmFeature = j;
+				CM_GetMaterialType( tw, p );
 				return true;
 			}
 		}
@@ -424,12 +428,8 @@ int idCollisionModelManagerLocal::PointContents( const idVec3 p, idCollisionMode
 	idPlane *plane;
 
 	// If model is NULL, assume we are wanting the world model.
-	if ( model == NULL ) {
-		model = collisionModelManager ? static_cast<idCollisionModelLocal *>( collisionModelManager->GetCollisionModel( 0 ) ) : NULL;
-		if ( model == NULL ) {
-			common->Warning( "%s: world model unavailable for nullptr model handle", __FUNCTION__ );
-			return 0;
-		}
+	if (model == NULL) {
+		common->FatalError("%s model passed was nullptr", __FUNCTION__);
 	}
 
 	node = idCollisionModelManagerLocal::PointNode( p, (idCollisionModelLocal *)model );
@@ -493,12 +493,8 @@ int idCollisionModelManagerLocal::ContentsTrm( trace_t *results, const idVec3 &s
 	idVec3 dir;
 	ALIGN16( cm_traceWork_t tw );
 
-	if ( model == NULL ) {
-		model = collisionModelManager ? static_cast<idCollisionModelLocal *>( collisionModelManager->GetCollisionModel( 0 ) ) : NULL;
-		if ( model == NULL ) {
-			common->Warning( "%s: world model unavailable for nullptr model handle", __FUNCTION__ );
-			return 0;
-		}
+	if (model == NULL) {
+		common->FatalError("%s model passed was nullptr", __FUNCTION__);
 	}
 
 	// fast point case
@@ -507,6 +503,8 @@ int idCollisionModelManagerLocal::ContentsTrm( trace_t *results, const idVec3 &s
 					trm->bounds[1][2] - trm->bounds[0][2] <= 0.0f ) ) {
 
 		results->c.contents = idCollisionModelManagerLocal::TransformedPointContents( start, model, modelOrigin, modelAxis );
+		results->c.material = NULL;
+		results->c.materialType = NULL;
 		results->fraction = ( results->c.contents == 0 );
 		results->endpos = start;
 		results->endAxis = trmAxis;
@@ -519,6 +517,8 @@ int idCollisionModelManagerLocal::ContentsTrm( trace_t *results, const idVec3 &s
 	tw.trace.fraction = 1.0f;
 	tw.trace.c.contents = 0;
 	tw.trace.c.type = CONTACT_NONE;
+	tw.trace.c.material = NULL;
+	tw.trace.c.materialType = NULL;
 	tw.contents = contentMask;
 	tw.isConvex = true;
 	tw.rotation = false;
@@ -646,12 +646,8 @@ int idCollisionModelManagerLocal::Contents( const idVec3 &start,
 	trace_t results;
 
 	// If the model is NULL then assume we are checking the world model.
-	if ( model == NULL ) {
-		model = collisionModelManager ? collisionModelManager->GetCollisionModel( 0 ) : NULL;
-		if ( model == NULL ) {
-			common->Warning( "%s: world model unavailable for nullptr model handle", __FUNCTION__ );
-			return 0;
-		}
+	if (model == NULL) {
+		common->FatalError("%s model passed was nullptr", __FUNCTION__);
 	}
 
 	return ContentsTrm( &results, start, trm, trmAxis, contentMask, (idCollisionModelLocal *)model, modelOrigin, modelAxis );

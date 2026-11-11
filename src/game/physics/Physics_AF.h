@@ -1,30 +1,3 @@
-/*
-===========================================================================
-
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
-
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
-
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
 
 #ifndef __PHYSICS_AF_H__
 #define __PHYSICS_AF_H__
@@ -58,7 +31,6 @@ class idAFConstraint_Contact;
 class idAFConstraint_ContactFriction;
 class idAFConstraint_ConeLimit;
 class idAFConstraint_PyramidLimit;
-class idAFConstraint_Suspension;
 class idAFBody;
 class idAFTree;
 class idPhysics_AF;
@@ -78,8 +50,7 @@ typedef enum {
 	CONSTRAINT_CONTACT,
 	CONSTRAINT_FRICTION,
 	CONSTRAINT_CONELIMIT,
-	CONSTRAINT_PYRAMIDLIMIT,
-	CONSTRAINT_SUSPENSION
+	CONSTRAINT_PYRAMIDLIMIT
 } constraintType_t;
 
 
@@ -100,6 +71,9 @@ public:
 	virtual					~idAFConstraint( void );
 	constraintType_t		GetType( void ) const { return type; }
 	const idStr &			GetName( void ) const { return name; }
+							// a transient constraint is left out of saves (idPhysics_AF::Save)
+	void					SetTransient( bool transient ) { fl.transient = transient; }
+	bool					IsTransient( void ) const { return fl.transient; }
 	idAFBody *				GetBody1( void ) const { return body1; }
 	idAFBody *				GetBody2( void ) const { return body2; }
 	void					SetPhysics( idPhysics_AF *p ) { physics = p; }
@@ -141,6 +115,7 @@ protected:
 		bool				noCollision			: 1;	// true if body1 and body2 never collide with each other
 		bool				isPrimary			: 1;	// true if this is a primary constraint
 		bool				isZero				: 1;	// true if 's' is zero during calculations
+		bool				transient			: 1;	// true if added at run time and left out of saves (a corpse pin)
 	} fl;
 
 protected:
@@ -597,48 +572,6 @@ protected:
 	virtual void			ApplyFriction( float invTimeStep );
 };
 
-// vehicle suspension
-class idAFConstraint_Suspension : public idAFConstraint {
-
-public:
-							idAFConstraint_Suspension( void );
-
-	void					Setup( const char *name, idAFBody *body, const idVec3 &origin, const idMat3 &axis, idClipModel *clipModel );
-	void					SetSuspension( const float up, const float down, const float k, const float d, const float f );
-
-	void					SetSteerAngle( const float degrees ) { steerAngle = degrees; }
-	void					EnableMotor( const bool enable ) { motorEnabled = enable; }
-	void					SetMotorForce( const float force ) { motorForce = force; }
-	void					SetMotorVelocity( const float vel ) { motorVelocity = vel; }
-	void					SetEpsilon( const float e ) { epsilon = e; }
-	const idVec3			GetWheelOrigin( void ) const;
-
-	virtual void			DebugDraw( void );
-	virtual void			Translate( const idVec3 &translation );
-	virtual void			Rotate( const idRotation &rotation );
-
-protected:
-	idVec3					localOrigin;				// position of suspension relative to body1
-	idMat3					localAxis;					// orientation of suspension relative to body1
-	float					suspensionUp;				// suspension up movement
-	float					suspensionDown;				// suspension down movement
-	float					suspensionKCompress;		// spring compress constant
-	float					suspensionDamping;			// spring damping
-	float					steerAngle;					// desired steer angle in degrees
-	float					friction;					// friction
-	bool					motorEnabled;				// whether the motor is enabled or not
-	float					motorForce;					// motor force
-	float					motorVelocity;				// desired velocity
-	idClipModel *			wheelModel;					// wheel model
-	idVec3					wheelOffset;				// wheel position relative to body1
-	trace_t					trace;						// contact point with the ground
-	float					epsilon;					// lcp epsilon
-
-protected:
-	virtual void			Evaluate( float invTimeStep );
-	virtual void			ApplyFriction( float invTimeStep );
-};
-
 
 //===============================================================
 //
@@ -808,7 +741,6 @@ typedef struct AFCollision_s {
 	idAFBody *				body;
 } AFCollision_t;
 
-
 class idPhysics_AF : public idPhysics_Base {
 
 public:
@@ -845,6 +777,7 @@ public:
 	void					DeleteBody( const int id );
 	void					DeleteConstraint( const char *constraintName );
 	void					DeleteConstraint( const int id );
+
 							// get all the contact constraints acting on the body
 	int						GetBodyContactConstraints( const int id, idAFConstraint_Contact *contacts[], int maxContacts ) const;
 							// set the default friction for bodies
@@ -879,6 +812,11 @@ public:
 	void					SetComeToRest( bool enable ) { comeToRest = enable; }
 							// call when structure of articulated figure changes
 	void					SetChanged( void ) { changedAF = true; }
+// RAVEN BEGIN
+// rjohnson: fast AF eval to skip some things that are not needed for specific circumstances
+							// enable or disable fast evaluation
+	void					SetFastEval( const bool enable ) { fastEval = enable; }
+// RAVEN END
 							// enable/disable activation by impact
 	void					EnableImpact( void );
 	void					DisableImpact( void );
@@ -896,6 +834,9 @@ public:	// common physics interface
 
 	void					SetMass( float mass, int id = -1 );
 	float					GetMass( int id = -1 ) const;
+
+	//MCG: added SetImpulseThreshold
+	void					SetImpulseThreshold( float newIT ) { impulseThreshold = newIT; };
 
 	void					SetContents( int contents, int id = -1 );
 	int						GetContents( int id = -1 ) const;
@@ -1008,6 +949,10 @@ private:
 	bool					noImpact;						// if true do not activate when another object collides
 	bool					worldConstraintsLocked;			// if true world constraints cannot be moved
 	bool					forcePushable;					// if true can be pushed even when bound to a master
+// RAVEN BEGIN
+// rjohnson: fast AF eval to skip some things that are not needed for specific circumstances
+	bool					fastEval;						// if true the fast eval is on
+// RAVEN END
 
 							// physics state
 	AFPState_t				current;

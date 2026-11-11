@@ -1,6 +1,4 @@
-
-
-
+#include "NumericString.h"
 
 // TTimo - don't do anything funky if you're on a real OS ;-)
 #if defined(_WINDOWS) || defined(_XENON)
@@ -19,13 +17,32 @@
 static idDynamicBlockAlloc<char, 1<<18, 128, MA_STRING>	stringDataAllocator;
 #endif
 
-idVec4	g_color_table[16] =
+namespace {
+idList<idStr>	g_iconEscapeCodes;
+static bool openQ4_IsRegisteredIconEscapeCode( const char *code ) {
+	if ( code == NULL || code[0] == '\0' || code[1] == '\0' || code[2] == '\0' ) {
+		return false;
+	}
+	char iconCode[4];
+	iconCode[0] = code[0];
+	iconCode[1] = code[1];
+	iconCode[2] = code[2];
+	iconCode[3] = '\0';
+	for ( int i = 0; i < g_iconEscapeCodes.Num(); ++i ) {
+		if ( g_iconEscapeCodes[i].Cmp( iconCode ) == 0 ) {
+			return true;
+		}
+	}
+	return false;
+}
+}
+idVec4	g_color_table[COLOR_INDEX_COUNT] =
 {
 	idVec4(0.0f, 0.0f, 0.0f, 1.0f),
 	idVec4(1.0f, 0.0f, 0.0f, 1.0f), // S_COLOR_RED
 	idVec4(0.0f, 1.0f, 0.0f, 1.0f), // S_COLOR_GREEN
 	idVec4(1.0f, 1.0f, 0.0f, 1.0f), // S_COLOR_YELLOW
-	idVec4(0.0f, 0.0f, 1.0f, 1.0f), // S_COLOR_BLUE
+	idVec4(0.2f, 0.6f, 1.0f, 1.0f), // S_COLOR_BLUE, softened toward Quake Live UI blue
 	idVec4(0.0f, 1.0f, 1.0f, 1.0f), // S_COLOR_CYAN
 	idVec4(1.0f, 0.0f, 1.0f, 1.0f), // S_COLOR_MAGENTA
 	idVec4(1.0f, 1.0f, 1.0f, 1.0f), // S_COLOR_WHITE
@@ -33,15 +50,36 @@ idVec4	g_color_table[16] =
 	idVec4(0.0f, 0.0f, 0.0f, 1.0f), // S_COLOR_BLACK
 // RAVEN BEGIN
 // bdube: console color
-	idVec4(0.0f, 0.67f, 0.67f, 1.0f),	// S_COLOR_CONSOLE
+	idVec4(0.94f, 0.62f, 0.05f, 1.0f),	// S_COLOR_CONSOLE
 // RAVEN END	
-	idVec4(0.0f, 0.0f, 0.0f, 1.0f),
-	idVec4(0.0f, 0.0f, 0.0f, 1.0f),
-	idVec4(0.0f, 0.0f, 0.0f, 1.0f),
-	idVec4(0.0f, 0.0f, 0.0f, 1.0f),
-	idVec4(0.0f, 0.0f, 0.0f, 1.0f),
+	// CPMA/CNQ3 alphabet rainbow colors, adapted via the FnQ3 implementation.
+	idVec4(1.00000f, 0.00000f, 0.00000f, 1.00000f), // a
+	idVec4(1.00000f, 0.26795f, 0.00000f, 1.00000f), // b
+	idVec4(1.00000f, 0.50000f, 0.00000f, 1.00000f), // c
+	idVec4(1.00000f, 0.73205f, 0.00000f, 1.00000f), // d
+	idVec4(1.00000f, 1.00000f, 0.00000f, 1.00000f), // e
+	idVec4(0.73205f, 1.00000f, 0.00000f, 1.00000f), // f
+	idVec4(0.50000f, 1.00000f, 0.00000f, 1.00000f), // g
+	idVec4(0.26795f, 1.00000f, 0.00000f, 1.00000f), // h
+	idVec4(0.00000f, 1.00000f, 0.00000f, 1.00000f), // i
+	idVec4(0.00000f, 1.00000f, 0.26795f, 1.00000f), // j
+	idVec4(0.00000f, 1.00000f, 0.50000f, 1.00000f), // k
+	idVec4(0.00000f, 1.00000f, 0.73205f, 1.00000f), // l
+	idVec4(0.00000f, 1.00000f, 1.00000f, 1.00000f), // m
+	idVec4(0.00000f, 0.73205f, 1.00000f, 1.00000f), // n
+	idVec4(0.00000f, 0.50000f, 1.00000f, 1.00000f), // o
+	idVec4(0.00000f, 0.26795f, 1.00000f, 1.00000f), // p
+	idVec4(0.00000f, 0.00000f, 1.00000f, 1.00000f), // q
+	idVec4(0.26795f, 0.00000f, 1.00000f, 1.00000f), // r
+	idVec4(0.50000f, 0.00000f, 1.00000f, 1.00000f), // s
+	idVec4(0.73205f, 0.00000f, 1.00000f, 1.00000f), // t
+	idVec4(1.00000f, 0.00000f, 1.00000f, 1.00000f), // u
+	idVec4(1.00000f, 0.00000f, 0.73205f, 1.00000f), // v
+	idVec4(1.00000f, 0.00000f, 0.50000f, 1.00000f), // w
+	idVec4(1.00000f, 0.00000f, 0.26795f, 1.00000f), // x
+	idVec4(1.00000f, 1.00000f, 1.00000f, 1.00000f), // y
+	idVec4(0.50000f, 0.50000f, 0.50000f, 1.00000f), // z
 };
-
 const char *units[2][4] =
 {
 	{ "B", "KB", "MB", "GB" },
@@ -163,6 +201,56 @@ const char idStr::lowerCaseCharacter[256] =
 
 /*
 ================
+idStr::ColorEscapeLength
+================
+*/
+int idStr::ColorEscapeLength( const char *s, idVec4 *outColor, bool *resetToDefault ) {
+	if ( resetToDefault ) {
+		*resetToDefault = false;
+	}
+	int type = 0;
+	const int escapeLength = idStr::IsEscape( s, &type );
+	if ( escapeLength == 0 ) {
+		return 0;
+	}
+	if ( type == S_ESCAPE_COMMAND && ( s[1] == 'r' || s[1] == 'R' ) ) {
+		if ( resetToDefault ) {
+			*resetToDefault = true;
+		}
+		return escapeLength;
+	}
+	if ( ( type & ( S_ESCAPE_COLOR | S_ESCAPE_COLORINDEX ) ) == 0 ) {
+		return 0;
+	}
+	switch ( s[1] ) {
+		case C_COLOR_DEFAULT:
+			if ( resetToDefault ) {
+				*resetToDefault = true;
+			}
+			return escapeLength;
+		case 'c': case 'C':
+			if ( escapeLength != 5 ) {
+				return 0;
+			}
+			if ( outColor ) {
+				static const float digitToChannel = 1.0f / 9.0f;
+				( *outColor )[0] = ( s[2] - '0' ) * digitToChannel;
+				( *outColor )[1] = ( s[3] - '0' ) * digitToChannel;
+				( *outColor )[2] = ( s[4] - '0' ) * digitToChannel;
+				( *outColor )[3] = 1.0f;
+			}
+			return escapeLength;
+	}
+	if ( type == S_ESCAPE_COLORINDEX ) {
+		if ( outColor ) {
+			*outColor = idStr::ColorForIndex( idStr::ColorIndex( s[1] ) );
+		}
+		return escapeLength;
+	}
+	return 0;
+}
+/*
+================
 idStr::RemoveColors
 ================
 */
@@ -174,12 +262,12 @@ char* idStr::RemoveColors(char* string) {
 	s = string;
 	d = string;
 	while ((c = *s) != 0) {
-		if (idStr::IsColor(s)) {
-			s++;
+		const int escapeLength = idStr::ColorEscapeLength( s );
+		if ( escapeLength > 0 ) {
+			s += escapeLength;
+			continue;
 		}
-		else {
-			*d++ = c;
-		}
+		*d++ = c;
 		s++;
 	}
 	*d = '\0';
@@ -193,28 +281,41 @@ idStr::ColorForIndex
 ============
 */
 idVec4 & idStr::ColorForIndex( int i ) {
-	return g_color_table[ i & 15 ];
+	const int index = idMath::ClampInt( 0, COLOR_INDEX_COUNT - 1, idStr::ColorIndex( i ) );
+	return g_color_table[ index ];
 }
-
+void idStr::ClearIconEscapeCodes( void ) {
+	g_iconEscapeCodes.Clear();
+}
+void idStr::RegisterIconEscapeCode( const char *code ) {
+	if ( code == NULL || code[0] == '\0' || code[1] == '\0' || code[2] == '\0' ) {
+		return;
+	}
+	char iconCode[4];
+	iconCode[0] = code[0];
+	iconCode[1] = code[1];
+	iconCode[2] = code[2];
+	iconCode[3] = '\0';
+	if ( openQ4_IsRegisteredIconEscapeCode( iconCode ) ) {
+		return;
+	}
+	g_iconEscapeCodes.Append( iconCode );
+}
 /*
 ============
 idStr::ReAllocate
 ============
 */
-void idStr::ReAllocate( int amount, bool keepold ) {
+void idStr::ReAllocate( size_t amount, bool keepold ) {
 	char	*newbuffer;
 	int		newsize;
-	int		mod;
 
 	//assert( data );
 	assert( amount > 0 );
 
-	mod = amount % STR_ALLOC_GRAN;
-	if ( !mod ) {
-		newsize = amount;
-	}
-	else {
-		newsize = amount + STR_ALLOC_GRAN - mod;
+	if ( !idStrAllocationDetail::TryRoundUpToInt( amount, STR_ALLOC_GRAN, newsize ) ) {
+		idLib::Error( "idStr::ReAllocate: requested allocation cannot fit the 32-bit string buffer" );
+		return;
 	}
 	alloced = newsize;
 
@@ -320,8 +421,9 @@ void idStr::operator=( const char *text ) {
 		return;
 	}
 
-	l = strlen( text );
-	EnsureAlloced( l + 1, false );
+	const size_t textLength = strlen( text );
+	EnsureAlloced( idStrAllocationDetail::SaturatingAdd( textLength, 1 ), false );
+	l = idLib::SizeToInt( textLength, "idStr::operator=" );
 	strcpy( data, text );
 	len = l;
 }
@@ -337,7 +439,7 @@ int idStr::FindChar( const char *str, const char c, int start, int end ) {
 	int i;
 
 	if ( end == -1 ) {
-		end = strlen( str ) - 1;
+		end = idLib::SizeToInt( strlen( str ), "idStr::FindChar" ) - 1;
 	}
 	for ( i = start; i <= end; i++ ) {
 		if ( str[i] == c ) {
@@ -358,9 +460,9 @@ int idStr::FindText( const char *str, const char *text, bool casesensitive, int 
 	int l, i, j;
 
 	if ( end == -1 ) {
-		end = strlen( str );
+		end = idLib::SizeToInt( strlen( str ), "idStr::FindText" );
 	}
-	l = end - strlen( text );
+	l = end - idLib::SizeToInt( strlen( text ), "idStr::FindText" );
 	for ( i = start; i <= l; i++ ) {
 		if ( casesensitive ) {
 			for ( j = 0; text[j]; j++ ) {
@@ -370,7 +472,7 @@ int idStr::FindText( const char *str, const char *text, bool casesensitive, int 
 			}
 		} else {
 			for ( j = 0; text[j]; j++ ) {
-				if ( ::toupper( str[i+j] ) != ::toupper( text[j] ) ) {
+				if ( ::toupper( (unsigned char)str[i+j] ) != ::toupper( (unsigned char)text[j] ) ) {
 					break;
 				}
 			}
@@ -423,6 +525,9 @@ bool idStr::Filter( const char *filter, const char *name, bool casesensitive ) {
 			}
 		}
 		else if (*filter == '?') {
+			if ( *name == '\0' ) {
+				return false;
+			}
 			filter++;
 			name++;
 		}
@@ -435,6 +540,9 @@ bool idStr::Filter( const char *filter, const char *name, bool casesensitive ) {
 				name++;
 			}
 			else {
+				if ( *name == '\0' ) {
+					return false;
+				}
 				filter++;
 				found = false;
 				while(*filter && !found) {
@@ -448,7 +556,7 @@ bool idStr::Filter( const char *filter, const char *name, bool casesensitive ) {
 							}
 						}
 						else {
-							if ( ::toupper(*name) >= ::toupper(*filter) && ::toupper(*name) <= ::toupper(*(filter+2)) ) {
+							if ( ::toupper( (unsigned char)*name ) >= ::toupper( (unsigned char)*filter ) && ::toupper( (unsigned char)*name ) <= ::toupper( (unsigned char)*(filter+2) ) ) {
 								found = true;
 							}
 						}
@@ -461,7 +569,7 @@ bool idStr::Filter( const char *filter, const char *name, bool casesensitive ) {
 							}
 						}
 						else {
-							if ( ::toupper(*filter) == ::toupper(*name) ) {
+							if ( ::toupper( (unsigned char)*filter ) == ::toupper( (unsigned char)*name ) ) {
 								found = true;
 							}
 						}
@@ -477,6 +585,9 @@ bool idStr::Filter( const char *filter, const char *name, bool casesensitive ) {
 					}
 					filter++;
 				}
+				if ( *filter == '\0' ) {
+					return false;
+				}
 				filter++;
 				name++;
 			}
@@ -488,7 +599,7 @@ bool idStr::Filter( const char *filter, const char *name, bool casesensitive ) {
 				}
 			}
 			else {
-				if ( ::toupper(*filter) != ::toupper(*name) ) {
+				if ( ::toupper( (unsigned char)*filter ) != ::toupper( (unsigned char)*name ) ) {
 					return false;
 				}
 			}
@@ -631,7 +742,7 @@ idStr::StripLeading
 void idStr::StripLeading( const char *string ) {
 	int l;
 
-	l = strlen( string );
+	l = idLib::SizeToInt( strlen( string ), "idStr::StripLeading" );
 	if ( l > 0 ) {
 		while ( !Cmpn( string, l ) ) {
 			memmove( data, data + l, len - l + 1 );
@@ -648,7 +759,7 @@ idStr::StripLeadingOnce
 bool idStr::StripLeadingOnce( const char *string ) {
 	int l;
 
-	l = strlen( string );
+	l = idLib::SizeToInt( strlen( string ), "idStr::StripLeadingOnce" );
 	if ( ( l > 0 ) && !Cmpn( string, l ) ) {
 		memmove( data, data + l, len - l + 1 );
 		len -= l;
@@ -679,7 +790,7 @@ idStr::StripLeading
 void idStr::StripTrailing( const char *string ) {
 	int l;
 
-	l = strlen( string );
+	l = idLib::SizeToInt( strlen( string ), "idStr::StripTrailing" );
 	if ( l > 0 ) {
 		while ( ( len >= l ) && !Cmpn( string, data + len - l, l ) ) {
 			len -= l;
@@ -696,7 +807,7 @@ idStr::StripTrailingOnce
 bool idStr::StripTrailingOnce( const char *string ) {
 	int l;
 
-	l = strlen( string );
+	l = idLib::SizeToInt( strlen( string ), "idStr::StripTrailingOnce" );
 	if ( ( l > 0 ) && ( len >= l ) && !Cmpn( string, data + len - l, l ) ) {
 		len -= l;
 		data[len] = '\0';
@@ -724,8 +835,11 @@ int idStr::Replace( const char *old, const char *nw ) {
 	int		oldLen, newLen, i, j, count;
 	idStr	oldString( data );
 
-	oldLen = strlen( old );
-	newLen = strlen( nw );
+	oldLen = idLib::SizeToInt( strlen( old ), "idStr::Replace" );
+	newLen = idLib::SizeToInt( strlen( nw ), "idStr::Replace" );
+	if ( oldLen == 0 ) {
+		return 0;
+	}
 
 	// Work out how big the new string will be
 	count = 0;
@@ -737,7 +851,23 @@ int idStr::Replace( const char *old, const char *nw ) {
 	}
 
 	if( count ) {
-		EnsureAlloced( len + ( ( newLen - oldLen ) * count ) + 2, false );
+		const size_t originalLength = static_cast<size_t>( oldString.Length() );
+		const size_t removedLength = idStrAllocationDetail::SaturatingMultiply(
+			static_cast<size_t>( oldLen ), static_cast<size_t>( count )
+		);
+		const size_t replacementLength = idStrAllocationDetail::SaturatingMultiply(
+			static_cast<size_t>( newLen ), static_cast<size_t>( count )
+		);
+		if ( removedLength > originalLength ) {
+			idLib::Error( "idStr::Replace: matched text exceeds the source length" );
+			return 0;
+		}
+
+		const size_t resultLength = idStrAllocationDetail::SaturatingAdd(
+			originalLength - removedLength, replacementLength
+		);
+		EnsureAlloced( idStrAllocationDetail::SaturatingAdd( resultLength, 2 ), false );
+		const int checkedResultLength = idLib::SizeToInt( resultLength, "idStr::Replace" );
 
 		// Replace the old data with the new data
 		for( i = 0, j = 0; i < oldString.Length(); i++ ) {
@@ -752,7 +882,8 @@ int idStr::Replace( const char *old, const char *nw ) {
 			}
 		}
 		data[j] = 0;
-		len = strlen( data );
+		assert( j == checkedResultLength );
+		len = checkedResultLength;
 	}
 	return iReplaced;
 }
@@ -854,6 +985,11 @@ idStr& idStr::StripQuotes ( void )
 	{
 		return *this;
 	}
+	if ( len == 1 )
+	{
+		Empty();
+		return *this;
+	}
 	
 	// Remove the trailing quote first
 	if ( data[len-1] == '\"' )
@@ -885,24 +1021,23 @@ idStr::FileNameHash
 */
 int idStr::FileNameHash( void ) const {
 	int		i;
-	long	hash;
-	char	letter;
+	uint32_t	hash;
+	byte	letter;
 
 	hash = 0;
 	i = 0;
 	while( data[i] != '\0' ) {
-		letter = idStr::ToLower( data[i] );
+		letter = static_cast<byte>( idStr::ToLower( data[i] ) );
 		if ( letter == '.' ) {
 			break;				// don't include extension
 		}
 		if ( letter =='\\' ) {
 			letter = '/';
 		}
-		hash += (long)(letter)*(i+119);
+		hash += static_cast<uint32_t>( letter ) * ( static_cast<uint32_t>( i ) + 119u );
 		i++;
 	}
-	hash &= (FILE_HASH_SIZE-1);
-	return hash;
+	return static_cast<int>( hash & ( FILE_HASH_SIZE - 1 ) );
 }
 
 /*
@@ -1115,7 +1250,10 @@ void idStr::AppendPath( const char *text ) {
 
 	if ( text && text[i] ) {
 		pos = len;
-		EnsureAlloced( len + strlen( text ) + 2 );
+		const size_t requiredLength = idStrAllocationDetail::SaturatingAdd(
+			static_cast<size_t>( len ), strlen( text )
+		);
+		EnsureAlloced( idStrAllocationDetail::SaturatingAdd( requiredLength, 2 ) );
 
 		if ( pos ) {
 			if ( data[ pos-1 ] != '/' ) {
@@ -1276,7 +1414,8 @@ void idStr::ScrubFileName( void )
 	StripFileExtension();
 
 	for ( i = 0; i < len; i++ ) {
-		if( !idStr::upperCaseCharacter[data[i]] && !isdigit(data[i]) ) {
+		const unsigned char character = static_cast<unsigned char>( data[i] );
+		if( !idStr::upperCaseCharacter[character] && !isdigit(character) ) {
 			data[i] = '_';
 		}
 	}
@@ -1321,25 +1460,7 @@ Checks a string to see if it contains only numerical values.
 ============
 */
 bool idStr::IsNumeric( const char *s ) {
-	int		i;
-	bool	dot;
-
-	if ( *s == '-' ) {
-		s++;
-	}
-
-	dot = false;
-	for ( i = 0; s[i]; i++ ) {
-		if ( !isdigit( ( byte )s[i] ) ) {
-			if ( ( s[ i ] == '.' ) && !dot ) {
-				dot = true;
-				continue;
-			}
-			return false;
-		}
-	}
-
-	return true;
+	return idNumericString::IsDecimal( s );
 }
 
 /*
@@ -1394,9 +1515,16 @@ idStr::Cmp
 int idStr::Cmp( const char *s1, const char *s2 ) {
 	int c1, c2, d;
 
+	// Every comparison in this family reads through byte rather than through
+	// plain char. char is signed on x86-64 and on Apple/Windows arm64 but
+	// unsigned on Linux AArch64, so reading through char would order any byte
+	// >= 0x80 before the ASCII range on some targets and after it on others.
+	// idDict::Checksum sorts its keys with idStr::Cmp and that checksum is
+	// compared across the network, so collation has to be byte-value ordered
+	// and identical on every platform.
 	do {
-		c1 = *s1++;
-		c2 = *s2++;
+		c1 = static_cast<byte>( *s1++ );
+		c2 = static_cast<byte>( *s2++ );
 
 		d = c1 - c2;
 		if ( d ) {
@@ -1418,8 +1546,8 @@ int idStr::Cmpn( const char *s1, const char *s2, int n ) {
 	assert( n >= 0 );
 
 	do {
-		c1 = *s1++;
-		c2 = *s2++;
+		c1 = static_cast<byte>( *s1++ );
+		c2 = static_cast<byte>( *s2++ );
 
 		if ( !n-- ) {
 			return 0;		// strings are equal until end point
@@ -1443,8 +1571,8 @@ int idStr::Icmp( const char *s1, const char *s2 ) {
 	int c1, c2, d;
 
 	do {
-		c1 = *s1++;
-		c2 = *s2++;
+		c1 = static_cast<byte>( *s1++ );
+		c2 = static_cast<byte>( *s2++ );
 
 		d = c1 - c2;
 		while( d ) {
@@ -1478,8 +1606,8 @@ int idStr::Icmpn( const char *s1, const char *s2, int n ) {
 	assert( n >= 0 );
 
 	do {
-		c1 = *s1++;
-		c2 = *s2++;
+		c1 = static_cast<byte>( *s1++ );
+		c2 = static_cast<byte>( *s2++ );
 
 		if ( !n-- ) {
 			return 0;		// strings are equal until end point
@@ -1524,8 +1652,8 @@ int idStr::IcmpNoEscape ( const char *s1, const char *s2 ) {
 			s2 += d;
 		}
 // RAVEN END
-		c1 = *s1++;
-		c2 = *s2++;
+		c1 = static_cast<byte>( *s1++ );
+		c2 = static_cast<byte>( *s2++ );
 
 		d = c1 - c2;
 		while( d ) {
@@ -1562,8 +1690,8 @@ int idStr::IcmpPath( const char *s1, const char *s2 ) {
 #endif
 
 	do {
-		c1 = *s1++;
-		c2 = *s2++;
+		c1 = static_cast<byte>( *s1++ );
+		c2 = static_cast<byte>( *s2++ );
 
 		d = c1 - c2;
 		while( d ) {
@@ -1596,13 +1724,13 @@ int idStr::IcmpPath( const char *s1, const char *s2 ) {
 				if ( c1 == '/' || c1 == '\\' ) {
 					break;
 				}
-				c1 = *s1++;
+				c1 = static_cast<byte>( *s1++ );
 			}
 			while( c2 ) {
 				if ( c2 == '/' || c2 == '\\' ) {
 					break;
 				}
-				c2 = *s2++;
+				c2 = static_cast<byte>( *s2++ );
 			}
 			if ( c1 && !c2 ) {
 				return -1;
@@ -1633,8 +1761,8 @@ int idStr::IcmpnPath( const char *s1, const char *s2, int n ) {
 	assert( n >= 0 );
 
 	do {
-		c1 = *s1++;
-		c2 = *s2++;
+		c1 = static_cast<byte>( *s1++ );
+		c2 = static_cast<byte>( *s2++ );
 
 		if ( !n-- ) {
 			return 0;		// strings are equal until end point
@@ -1671,13 +1799,13 @@ int idStr::IcmpnPath( const char *s1, const char *s2, int n ) {
 				if ( c1 == '/' || c1 == '\\' ) {
 					break;
 				}
-				c1 = *s1++;
+				c1 = static_cast<byte>( *s1++ );
 			}
 			while( c2 ) {
 				if ( c2 == '/' || c2 == '\\' ) {
 					break;
 				}
-				c2 = *s2++;
+				c2 = static_cast<byte>( *s2++ );
 			}
 			if ( c1 && !c2 ) {
 				return -1;
@@ -1723,7 +1851,7 @@ idStr::Append
 void idStr::Append( char *dest, int size, const char *src ) {
 	int		l1;
 
-	l1 = strlen( dest );
+	l1 = idLib::SizeToInt( strlen( dest ), "idStr::Append" );
 	if ( l1 >= size ) {
 		idLib::common->Error( "idStr::Append: already overflowed" );
 	}
@@ -1813,32 +1941,24 @@ int idStr::IsEscape( const char *s, int* type )  {
 				*type = S_ESCAPE_COLORINDEX;
 			}
 			return 2;
-
 		case '-': case '+':
 			if ( type ) {
 				*type = S_ESCAPE_COLOR;
 			}
 			return 2;
-			
-		case 'r': case 'R': 
-			if ( type ) {			
+		case 'r': case 'R':
+			if ( type ) {
 				*type = S_ESCAPE_COMMAND;
 			}
 			return 2;
-			
 		case 'c': case 'C':
-			if ( *(s+2) ) {
-				if ( *(s+3) ) {
-					if ( *(s+4) ) {
-						if ( type ) {
-							*type = S_ESCAPE_COLOR;
-						}
-						return 5;
-					}
+			if ( *(s+2) && *(s+3) && *(s+4) ) {
+				if ( type ) {
+					*type = S_ESCAPE_COLOR;
 				}
+				return 5;
 			}
 			return 0;
-			
 		case 'n': case 'N':
 			if ( type ) {
 				*type = S_ESCAPE_COMMAND;
@@ -1847,7 +1967,6 @@ int idStr::IsEscape( const char *s, int* type )  {
 				return 3;
 			}
 			return 0;
-			
 		case 'i': case 'I':
 			if ( *(s+2) && *(s+3) && *(s+4) ) {
 				if ( type ) {
@@ -1855,11 +1974,10 @@ int idStr::IsEscape( const char *s, int* type )  {
 				}
 				return 5;
 			}
-			return 0;		
+			return 0;
 	}			
 	return 0;
 }
-
 // RAVEN END
 
 /*
@@ -1870,22 +1988,21 @@ idStr::snPrintf
 int idStr::snPrintf( char *dest, int size, const char *fmt, ...) {
 	int len;
 	va_list argptr;
-	char buffer[32000];	// big, but small enough to fit in PPC stack
 
+	if ( dest == NULL || size <= 0 ) {
+		return -1;
+	}
 	va_start( argptr, fmt );
-	len = vsprintf( buffer, fmt, argptr );
+	len = idStr::vsnPrintf( dest, size, fmt, argptr );
 	va_end( argptr );
-	if ( len >= sizeof( buffer ) ) {
-		idLib::common->Error( "idStr::snPrintf: overflowed buffer" );
+	if ( len < 0 ) {
+		if ( idLib::common != NULL ) {
+			idLib::common->Warning( "idStr::snPrintf: overflow in %i byte buffer\n", size );
+		}
+		return idStr::Length( dest );
 	}
-	if ( len >= size ) {
-		idLib::common->Warning( "idStr::snPrintf: overflow of %i in %i\n", len, size );
-		len = size;
-	}
-	idStr::Copynz( dest, buffer, size );
 	return len;
 }
-
 /*
 ============
 idStr::vsnPrintf
@@ -1907,6 +2024,9 @@ or returns -1 on failure or if the buffer would be overflowed.
 int idStr::vsnPrintf( char *dest, int size, const char *fmt, va_list argptr ) {
 	int ret;
 
+	if ( dest == NULL || size <= 0 ) {
+		return -1;
+	}
 #ifdef _WIN32
 #undef _vsnprintf
 	ret = _vsnprintf( dest, size-1, fmt, argptr );
@@ -1983,7 +2103,7 @@ char *va( const char *fmt, ... ) {
 // RAVEN END
 
 	va_start( argptr, fmt );
-	vsprintf( buf, fmt, argptr );
+	idStr::vsnPrintf( buf, VA_BUF_LEN, fmt, argptr );
 	va_end( argptr );
 
 	return buf;
@@ -2248,10 +2368,18 @@ idStr idStr::GetLastColorCode( void ) const {
 		int escapeType = 0;
 		int escapeLength = idStr::IsEscape( &data[i-1], &escapeType );
 
-		if ( escapeLength && ( escapeType == S_ESCAPE_COLORINDEX || S_ESCAPE_COLOR ) ) {
+		if ( escapeLength == 0 ) {
+			continue;
+		}
+		if ( escapeType == S_ESCAPE_COLORINDEX || escapeType == S_ESCAPE_COLOR ) {
 			idStr result = "";
 			result.Append( &data[i-1], escapeLength );
 			return result;
+		}
+		// ^r resets the color: the text after it is in the default color.
+		// Icons and other commands set no color, so look past them.
+		if ( data[i] == 'r' || data[i] == 'R' ) {
+			return "";
 		}
 	}
 
@@ -2268,15 +2396,17 @@ void idStr::StripDoubleQuotes(void)
 {
 	idStr temp = *this;
 	char* string = (char*)temp.c_str();
+	int length = temp.Length();
 
-	if (*string == '\"')
+	if (length > 0 && *string == '\"')
 	{
-		strcpy(string, string + 1);
+		memmove(string, string + 1, length);
+		length--;
 	}
 
-	if (string[strlen(string) - 1] == '\"')
+	if (length > 0 && string[length - 1] == '\"')
 	{
-		string[strlen(string) - 1] = '\0';
+		string[length - 1] = '\0';
 	}
 
 	*this = string;

@@ -28,6 +28,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #ifndef __MATERIAL_H__
 #define __MATERIAL_H__
+#include "RendererConsumedPolicy.h"
 
 /*
 ===============================================================================
@@ -40,6 +41,87 @@ If you have questions concerning this license or the applicable additional terms
 class idImage;
 class idCinematic;
 class idUserInterface;
+
+// openQ4-only, opt-in physically based material metadata.  This is kept
+// separate from the classic stage list so retail Quake 4 materials retain
+// their exact bump/diffuse/specular parsing and rendering contract.
+typedef enum {
+	PBR_WORKFLOW_NONE = 0,
+	PBR_WORKFLOW_METALLIC_ROUGHNESS,
+	PBR_WORKFLOW_SPECULAR_GLOSSINESS
+} pbrWorkflow_t;
+
+typedef enum {
+	PBR_NORMAL_UNSPECIFIED = -1,
+	PBR_NORMAL_QUAKE4_AGB = 0,
+	PBR_NORMAL_TANGENT_RG,
+	PBR_NORMAL_TANGENT_XYZ
+} pbrNormalFormat_t;
+
+typedef struct {
+	idImage *	image;
+	bool		present;
+	int			filter;			// textureFilter_t, retained for classic fallback generation
+	int			repeat;			// textureRepeat_t, retained for classic fallback generation
+	bool		allowPicmip;
+	bool		noMips;
+	bool		highQuality;
+	bool		forceHighQuality;
+} pbrMaterialTexture_t;
+
+typedef struct {
+	bool				enabled;
+	pbrWorkflow_t		workflow;
+	pbrNormalFormat_t	normalFormat;
+	pbrMaterialTexture_t albedo;
+	pbrMaterialTexture_t normal;
+	pbrMaterialTexture_t orm;
+	pbrMaterialTexture_t metallic;
+	pbrMaterialTexture_t roughness;
+	pbrMaterialTexture_t ao;
+	pbrMaterialTexture_t emissive;
+	pbrMaterialTexture_t legacyBump;
+	pbrMaterialTexture_t legacyDiffuse;
+	pbrMaterialTexture_t legacySpecular;
+	pbrMaterialTexture_t legacyEmissive;
+	int					metallicRegister;
+	int					roughnessRegister;
+	int					aoRegister;
+	int					normalScaleRegister;
+	int					emissiveColorRegisters[3];
+	bool				autoLegacyFallback;
+	bool				hasAuthoredClassicFallback;
+	bool				hasExplicitLegacyFallback;
+	bool				usesGeneratedLegacyFallback;
+	bool				usesApproximateLegacyFallback;
+	bool				legacyFallbackMissing;
+	// Separate metallic/roughness/AO maps were packed into `orm` (packORM).
+	bool				packedSeparateData;
+} pbrMaterialInfo_t;
+
+// An authored specular probe is renderer metadata carried by a light material.
+// The light still supplies the spatial volume; this block supplies only the
+// immutable image and ranking/blending policy.  Keeping it out of renderLight_t
+// preserves the game-module, save-game, demo, and network contracts.
+typedef enum {
+	SPECULAR_PROBE_CUBE_NONE = 0,
+	SPECULAR_PROBE_CUBE_NATIVE,
+	SPECULAR_PROBE_CUBE_CAMERA
+} specularProbeCubeConvention_t;
+
+typedef struct {
+	bool						enabled;
+	idImage *				cubeImage;
+	specularProbeCubeConvention_t cubeConvention;
+	float					tint[3];
+	float					intensity;
+	float					blendFraction;
+	int						priority;
+	// The light's volume is a box room the cube map was captured inside:
+	// reflections are parallax-corrected against it and its weight falls off
+	// at its faces, so its light_radius may differ per axis.
+	bool					boxParallax;
+} specularProbeMaterialInfo_t;
 
 // moved from image.h for default parm
 typedef enum {
@@ -68,6 +150,7 @@ typedef struct {
 typedef enum {
 	DFRM_NONE,
 	DFRM_SPRITE,
+	DFRM_RECTSPRITE,
 	DFRM_TUBE,
 	DFRM_FLARE,
 	DFRM_EXPAND,
@@ -83,6 +166,8 @@ typedef enum {
 	DI_SCRATCH,		// video, screen wipe, etc
 	DI_CUBE_RENDER,
 	DI_MIRROR_RENDER,
+	DI_REFLECTION_RENDER,
+	DI_REFRACTION_RENDER,
 	DI_XRAY_RENDER,
 	DI_REMOTE_RENDER
 } dynamicidImage_t;
@@ -103,7 +188,8 @@ typedef enum {
 	OP_TYPE_NE,
 	OP_TYPE_AND,
 	OP_TYPE_OR,
-	OP_TYPE_SOUND
+	OP_TYPE_SOUND,
+	OP_TYPE_GLSL_ENABLED
 } expOpType_t;
 
 typedef enum {
@@ -150,6 +236,7 @@ typedef enum {
 	TG_REFLECT_CUBE,
 	TG_SKYBOX_CUBE,
 	TG_WOBBLESKY_CUBE,
+	TG_POT_CORRECTION,
 	TG_SCREEN,			// screen aligned, for mirrorRenders and screen space temporaries
 	TG_SCREEN2,
 	TG_GLASSWARP
@@ -185,18 +272,84 @@ typedef enum {
 } stageVertexColor_t;
 
 static const int	MAX_FRAGMENT_IMAGES = 8;
-static const int	MAX_VERTEX_PARMS = 4;
+static const int	MAX_VERTEX_PARMS = 8;
+static const int	MAX_FRAGMENT_PARMS = 8;
 static const int	MAX_GLSL_SHADER_PARMS = 32;
 static const int	MAX_GLSL_SHADER_NAME = 256;
 static const int	MAX_GLSL_SHADER_PARM_NAME = 32;
 
+typedef enum {
+	LEGACY_FRAGMENT_BINDING_NONE,
+	LEGACY_FRAGMENT_BINDING_LIGHT_FALLOFF,
+	LEGACY_FRAGMENT_BINDING_LIGHT_IMAGE,
+	LEGACY_FRAGMENT_BINDING_AMBIENT_NORMAL_MAP,
+	LEGACY_FRAGMENT_BINDING_NORMAL_CUBE_MAP,
+	LEGACY_FRAGMENT_BINDING_SPECULAR_TABLE
+} legacyFragmentProgramBinding_t;
+
+typedef enum {
+	GLSL_SHADERTEXTURE_IMAGE,
+	GLSL_SHADERTEXTURE_LIGHT_FALLOFF,
+	GLSL_SHADERTEXTURE_LIGHT_IMAGE,
+	GLSL_SHADERTEXTURE_AMBIENT_NORMAL_MAP,
+	GLSL_SHADERTEXTURE_NORMAL_CUBE_MAP,
+	GLSL_SHADERTEXTURE_SPECULAR_TABLE
+} glslShaderTextureBinding_t;
+
+typedef enum {
+	GLSL_SHADERPARM_REGISTERS,
+	GLSL_SHADERPARM_LOCAL_LIGHT_ORIGIN,
+	GLSL_SHADERPARM_LOCAL_VIEW_ORIGIN,
+	GLSL_SHADERPARM_LIGHT_PROJECT_S,
+	GLSL_SHADERPARM_LIGHT_PROJECT_T,
+	GLSL_SHADERPARM_LIGHT_PROJECT_Q,
+	GLSL_SHADERPARM_LIGHT_FALLOFF_S,
+	GLSL_SHADERPARM_BUMP_MATRIX_S,
+	GLSL_SHADERPARM_BUMP_MATRIX_T,
+	GLSL_SHADERPARM_DIFFUSE_MATRIX_S,
+	GLSL_SHADERPARM_DIFFUSE_MATRIX_T,
+	GLSL_SHADERPARM_SPECULAR_MATRIX_S,
+	GLSL_SHADERPARM_SPECULAR_MATRIX_T,
+	GLSL_SHADERPARM_COLOR_MODULATE,
+	GLSL_SHADERPARM_COLOR_ADD,
+	GLSL_SHADERPARM_DIFFUSE_COLOR,
+	GLSL_SHADERPARM_SPECULAR_COLOR,
+	GLSL_SHADERPARM_VIEW_ORIGIN,
+	GLSL_SHADERPARM_COLOR_MATRIX0,
+	GLSL_SHADERPARM_COLOR_MATRIX1,
+	GLSL_SHADERPARM_COLOR_MATRIX2,
+	GLSL_SHADERPARM_PROJECTION_ROW_0,
+	GLSL_SHADERPARM_PROJECTION_ROW_1,
+	GLSL_SHADERPARM_PROJECTION_ROW_2,
+	GLSL_SHADERPARM_PROJECTION_ROW_3,
+	GLSL_SHADERPARM_MODEL_ROW_0,
+	GLSL_SHADERPARM_MODEL_ROW_1,
+	GLSL_SHADERPARM_MODEL_ROW_2,
+	GLSL_SHADERPARM_GAUSSIAN_SAMPLE_OFFSETS,
+	GLSL_SHADERPARM_GAUSSIAN_SAMPLE_OFFSETS_HORIZONTAL,
+	GLSL_SHADERPARM_GAUSSIAN_SAMPLE_OFFSETS_VERTICAL,
+	GLSL_SHADERPARM_GAUSSIAN_SAMPLE_WEIGHTS,
+	GLSL_SHADERPARM_GAUSSIAN_SAMPLE_WEIGHTS2,
+	GLSL_SHADERPARM_POSTPROCESS_INV_TEX_SIZE,
+	GLSL_SHADERPARM_POSTPROCESS_TEX_SIZE,
+	GLSL_SHADERPARM_POSTPROCESS_SOURCE_COLOR_SPACE,
+	GLSL_SHADERPARM_POSTPROCESS_SMAA_QUALITY,
+	GLSL_SHADERPARM_CURRENT_RENDER_VIEWPORT_ORIGIN,
+	GLSL_SHADERPARM_CURRENT_RENDER_VIEWPORT_SIZE,
+	GLSL_SHADERPARM_CURRENT_RENDER_TEXTURE_SCALE
+} glslShaderParmBinding_t;
+
 typedef struct {
 	int					vertexProgram;
+	int					md5rVertexProgram;
 	int					numVertexParms;
 	int					vertexParms[MAX_VERTEX_PARMS][4];	// evaluated register indexes
 
 	int					fragmentProgram;
+	int					numFragmentParms;
+	int					fragmentParms[MAX_FRAGMENT_PARMS][4];
 	int					numFragmentProgramImages;
+	legacyFragmentProgramBinding_t fragmentProgramBindings[MAX_FRAGMENT_IMAGES];
 	idImage* fragmentProgramImages[MAX_FRAGMENT_IMAGES];
 
 	bool				glslProgram;
@@ -207,9 +360,11 @@ typedef struct {
 	bool				glslProgramLoaded;
 	bool				glslProgramValid;
 	int					glslProgramGeneration;
+	bool				customLighting;
 
 	int					numShaderParms;
 	char				shaderParmNames[MAX_GLSL_SHADER_PARMS][MAX_GLSL_SHADER_PARM_NAME];
+	glslShaderParmBinding_t shaderParmBindings[MAX_GLSL_SHADER_PARMS];
 	int					shaderParmNumRegisters[MAX_GLSL_SHADER_PARMS];
 	int					shaderParmRegisters[MAX_GLSL_SHADER_PARMS][4];
 	int					shaderParmLocations[MAX_GLSL_SHADER_PARMS];
@@ -217,15 +372,24 @@ typedef struct {
 	int					numShaderTextures;
 	char				shaderTextureNames[MAX_FRAGMENT_IMAGES][MAX_GLSL_SHADER_PARM_NAME];
 	int					shaderTextureLocations[MAX_FRAGMENT_IMAGES];
+	glslShaderTextureBinding_t shaderTextureBindings[MAX_FRAGMENT_IMAGES];
 	idImage* shaderTextureImages[MAX_FRAGMENT_IMAGES];
+	textureFilter_t		shaderTextureFilters[MAX_FRAGMENT_IMAGES];
+	textureRepeat_t		shaderTextureRepeats[MAX_FRAGMENT_IMAGES];
 } newShaderStage_t;
 
 typedef struct {
 	int					conditionRegister;	// if registers[conditionRegister] == 0, skip stage
 	stageLighting_t		lighting;			// determines which passes interact with lights
 	int					drawStateBits;
+	int					mStageRegisterStart;	// first register allocated while parsing this stage
+	int					mNumStageRegisters;		// number of registers allocated while parsing this stage
+	int					mStageOpsStart;			// first material op emitted while parsing this stage
+	int					mNumStageOps;			// number of material ops emitted while parsing this stage
 	colorStage_t		color;
 	bool				hasAlphaTest;
+	bool				hasAlphaFunc;
+	int					alphaTestMode;
 	int					alphaTestRegister;
 	textureStage_t		texture;
 	stageVertexColor_t	vertexColor;
@@ -244,7 +408,9 @@ typedef enum {
 } materialCoverage_t;
 
 typedef enum {
-	SS_SUBVIEW = -3,	// mirrors, viewscreens, etc
+	SS_MIN = -10000,
+	SS_SUBVIEW = -4,	// mirrors, viewscreens, etc
+	SS_PREGUI = -3,		// guis
 	SS_GUI = -2,		// guis
 	SS_BAD = -1,
 	SS_OPAQUE,			// opaque
@@ -261,7 +427,8 @@ typedef enum {
 
 	SS_NEAREST,			// screen blood blobs
 
-	SS_POST_PROCESS = 100	// after a screen copy to texture
+	SS_POST_PROCESS = 100,	// after a screen copy to texture
+	SS_MAX = 10000
 } materialSort_t;
 
 typedef enum {
@@ -285,7 +452,10 @@ typedef enum {
 	MF_FORCESHADOWS = BIT(3),
 	MF_NOSELFSHADOW = BIT(4),
 	MF_NOPORTALFOG = BIT(5),	// this fog volume won't ever consider a portal fogged out
-	MF_EDITOR_VISIBLE = BIT(6)	// in use (visible) per editor
+	MF_EDITOR_VISIBLE = BIT(6),	// in use (visible) per editor
+	MF_SKY = BIT(7),
+	MF_NEED_CURRENT_RENDER = BIT(8),
+	MF_NOSHADOWS_EXPLICIT = BIT(9) // authored noShadows/DECAL_MACRO, not inferred from translucent coverage
 } materialFlags_t;
 
 // contents flags, NOTE: make sure to keep the defines in doom_defs.script up to date with these!
@@ -390,14 +560,21 @@ class idSoundEmitter;
 class idMaterial : public idDecl {
 public:
 	idMaterial();
+	idMaterial(const idMaterial&) = delete;
+	idMaterial& operator=(const idMaterial&) = delete;
+	uint64_t GetImagePolicyIdentity() const { return imagePolicyIdentity; }
+	bool GetConsumedPolicy(materialConsumedPolicy_t& output) const;
 	virtual				~idMaterial();
 
 	virtual size_t		Size(void) const;
 	virtual bool		SetDefaultText(void);
 	virtual const char* DefaultDefinition(void) const;
 	virtual bool		Parse(const char* text, const int textLength) override;
+	virtual bool		Parse(const char* text, const int textLength, bool noCaching) override;
 	virtual void		FreeData(void);
 	virtual void		Print(void) const;
+	virtual bool		RebuildTextSource(void) override { return false; }
+	virtual bool		Validate(const char* psText, int iTextLength, idStr& strReportTo) const override;
 
 	//BSM Nerve: Added for material editor
 	bool				Save(const char* fileName = NULL);
@@ -407,7 +584,7 @@ public:
 	// I'm not really sure why this needs to be virtual...
 	virtual const char* ImageName(void) const;
 
-	void				ReloadImages(bool force) const;
+	virtual void		ReloadImages(bool force) const;
 
 	// returns number of stages this material contains
 	const int			GetNumStages(void) const { return numStages; }
@@ -415,9 +592,40 @@ public:
 	// get a specific stage
 	const shaderStage_t* GetStage(const int index) const { assert(index >= 0 && index < numStages); return &stages[index]; }
 
+	// PBR metadata is consumed only by explicitly enabled modern renderer paths.
+	// Classic callers continue to use the unchanged stage list.
+	bool				HasPBR(void) const { return pbrInfo.enabled; }
+	const pbrMaterialInfo_t& GetPBRInfo(void) const { return pbrInfo; }
+
+	// openQ4-authored light-material metadata. Classic material stages and
+	// every public render-light/game ABI remain unchanged.
+	bool				HasSpecularProbe(void) const { return specularProbeInfo.enabled && !TestMaterialFlag( MF_DEFAULTED ); }
+	const specularProbeMaterialInfo_t& GetSpecularProbeInfo(void) const { return specularProbeInfo; }
+
+	// Retarget a parsed stage without rewriting authored declaration text.
+	// Runtime-generated images (for example the scalable console font atlas)
+	// must not change the declaration checksum used by multiplayer handshakes.
+	bool				OverrideStageImageForRuntime(const int index, idImage* image) {
+		if (index < 0 || index >= numStages || image == NULL) {
+			return false;
+		}
+		shaderStage_t& stage = stages[index];
+		if (stage.newStage != NULL || stage.texture.cinematic != NULL || stage.texture.dynamic != DI_STATIC) {
+			return false;
+		}
+		stage.texture.image = image;
+		return true;
+	}
+
 	// get the first bump map stage, or NULL if not present.
 	// used for bumpy-specular
 	const shaderStage_t* GetBumpStage(void) const;
+
+	// custom GLSL lighting can use the stock shadow-map receiver only when the
+	// material still exposes active non-custom bump/diffuse/specular stages.
+	bool				HasActiveCustomGLSLLighting(const float* registers) const;
+	bool				HasActiveStockLightingInteractions(const float* registers) const;
+	bool				CanUseStockShadowMapReceiverForCustomGLSLLighting(const float* registers) const;
 
 	// returns true if the material will draw anything at all.  Triggers, portals,
 	// etc, will not have anything to draw.  A not drawn surface can still castShadow,
@@ -435,9 +643,24 @@ public:
 	// a mirror or dynamic rendered image
 	bool				HasSubview(void) const { return hasSubview; }
 
+	// Retail collision helpers are hidden, explicitly non-shadowing collision
+	// hulls. Keep this separate from SurfaceCastsShadow() so callers can decide
+	// whether they need retail shadow semantics or render-only admission.
+	bool				IsDedicatedCollisionSurface(void) const {
+		return (surfaceFlags & SURF_COLLISION) != 0 && !IsDrawn() && TestMaterialFlag(MF_NOSHADOWS) && !TestMaterialFlag(MF_FORCESHADOWS);
+	}
+
 	// returns true if the material will generate shadows, not making a
 	// distinction between global and no-self shadows
-	bool				SurfaceCastsShadow(void) const { return TestMaterialFlag(MF_FORCESHADOWS) || !TestMaterialFlag(MF_NOSHADOWS); }
+	bool				SurfaceCastsShadow(void) const {
+		return TestMaterialFlag(MF_FORCESHADOWS) || !TestMaterialFlag(MF_NOSHADOWS);
+	}
+
+	// Translucent shadow options may override the coverage-implied default,
+	// but must retain authored opt-outs. forceShadows keeps its usual priority.
+	bool				ExplicitlyDisablesShadows(void) const {
+		return TestMaterialFlag(MF_NOSHADOWS_EXPLICIT) && !TestMaterialFlag(MF_FORCESHADOWS);
+	}
 
 	// returns true if the material will generate interactions with fog/blend lights
 	// All non-translucent surfaces receive fog unless they are explicitly noFog
@@ -503,6 +726,10 @@ public:
 	// into each other.
 	bool				NoFragment(void) const { return (surfaceFlags & SURF_NOFRAGMENT) != 0; }
 
+	// Raven decals can be merged for batching, but should not participate in
+	// T-junction fixing because that can split visible decal edges.
+	bool				NoTFix(void) const { return (surfaceFlags & SURF_NO_T_FIX) != 0; }
+
 	//------------------------------------------------------------------
 	// light shader specific functions, only called for light entities
 
@@ -523,7 +750,7 @@ public:
 	}
 
 	const rvDeclMatType* GetMaterialType(void) const { return(materialType); }
-	const rvDeclMatType* GetMaterialType(idVec2& tc) const;
+	virtual const rvDeclMatType* GetMaterialType(idVec2& tc) const;
 	byte* GetMaterialTypeArray(void) const { return(materialTypeArray); }
 	const char* GetMaterialTypeArrayName(void) const { return(materialTypeArrayName.c_str()); }
 
@@ -604,6 +831,10 @@ public:
 	float				GetPortalFar(void) const { return portalDistanceFar; }
 	const idImage *		GetPortalImage(void) const { return portalImage; }
 
+						// name of the portal-sky capture image, for tools that must not
+						// reach into renderer image internals; NULL when none is set
+	virtual const char *	GetPortalImageName( void ) const;
+
 	float				GetSurfaceArea(void) const { return surfaceArea; }
 	void				AddToSurfaceArea(float area) { surfaceArea += area; }
 
@@ -611,25 +842,28 @@ public:
 
 						// returns the length, in milliseconds, of the videoMap on this material,
 						// or zero if it doesn't have one
-	int					CinematicLength(void) const;
+	virtual int			CinematicLength(void) const;
+
+	// Returns the current cinematic status enum value (see cinStatus_t in Cinematic.h).
+	virtual int			CinematicStatus( int time ) const;
 
 	void				CloseCinematic(void) const;
 
-	void				ResetCinematicTime(int time) const;
+	virtual void		ResetCinematicTime(int time) const;
 
-	void				UpdateCinematic(int time) const;
+	virtual void		UpdateCinematic(int time) const;
 
 	//------------------------------------------------------------------
 
 						// gets an image for the editor to use
 	idImage* GetEditorImage(void) const;
-	int					GetImageWidth(void) const;
-	int					GetImageHeight(void) const;
+	virtual int			GetImageWidth(void) const;
+	virtual int			GetImageHeight(void) const;
 
 	void				SetGui(const char* _gui) const;
 
 	// just for resource tracking
-	void				SetImageClassifications(int tag) const;
+	virtual void		SetImageClassifications(int tag) const;
 
 	//------------------------------------------------------------------
 
@@ -639,17 +873,32 @@ public:
 	// regs should point to a float array large enough to hold GetNumRegisters() floats
 	void				EvaluateRegisters(float* regs, const float entityParms[MAX_ENTITY_SHADER_PARMS],
 		const struct viewDef_s* view, idSoundEmitter* soundEmitter = NULL) const;
+	void				EvaluateStageRegisters(int stageIndex, float* regs, const float entityParms[MAX_ENTITY_SHADER_PARMS],
+		float floatTime) const;
 
 	// if a material only uses constants (no entityParm or globalparm references), this
 	// will return a pointer to an internal table, and EvaluateRegisters will not need
 	// to be called.  If NULL is returned, EvaluateRegisters must be used.
 	const float* ConstantRegisters() const;
+	// Prove an individual literal/folded register independently of the optional
+	// whole-material cache and of unrelated animated material parameters.
+	bool GetConstantRegisterValue( int registerIndex, float &value ) const;
 
 	bool				SuppressInSubview() const { return suppressInSubview; };
 	bool				IsPortalSky() const { return portalSky; };
 	void				AddReference();
+	void				ClearUseCount() { useCount = 0; }
+	void				IncreaseUseCount() { useCount++; globalUseCount++; }
+	void				AddLevelLoadReference() { IncreaseUseCount(); }
+	int					GetUseCount() const { return useCount; }
+	int					GetGlobalUseCount() const { return globalUseCount; }
+	virtual void		ResolveUse();
 
 private:
+	materialConsumedPolicy_t consumedPolicy{};
+	uint64_t consumedParseRevision = 0;
+	uint32_t consumedParseDepth = 0;
+	const uint64_t imagePolicyIdentity;
 	// parse the entire material
 	void				CommonInit();
 	void				ParseMaterial(idLexer& src);
@@ -657,10 +906,15 @@ private:
 	void				ParseSort(idLexer& src);
 	void				ParseBlend(idLexer& src, shaderStage_t* stage);
 	void				ParseVertexParm(idLexer& src, newShaderStage_t* newStage);
+	void				ParseFragmentParm(idLexer& src, newShaderStage_t* newStage);
 	void				ParseFragmentMap(idLexer& src, newShaderStage_t* newStage);
 	void				ParseShaderParm(idLexer& src, newShaderStage_t* newStage);
 	void				ParseShaderTexture(idLexer& src, newShaderStage_t* newStage);
 	void				ParseStage(idLexer& src, const textureRepeat_t trpDefault = TR_REPEAT);
+	bool				ParsePBRBlock(idLexer& src, const textureRepeat_t trpDefault);
+	bool				ParsePBRImage(idLexer& src, pbrMaterialTexture_t& target, const int usage, const textureRepeat_t trpDefault);
+	bool				ParseSpecularProbeBlock(idLexer& src);
+	void				AddPBRLegacyFallbackStages(const textureRepeat_t trpDefault);
 	void				ParseDeform(idLexer& src);
 	void				ParseDecalInfo(idLexer& src);
 	bool				CheckSurfaceParm(idToken* token);
@@ -766,8 +1020,20 @@ private:
 
 	bool				suppressInSubview;
 	bool				portalSky;
+	pbrMaterialInfo_t	pbrInfo;
+	specularProbeMaterialInfo_t specularProbeInfo;
+	// parse-time structural fact: some stage carries an active-able customLighting
+	// GLSL program (newStage with customLighting + glslProgram). Lets the hot
+	// per-surface interaction and shadow-receiver chain scans early-out without
+	// walking every stage; register conditions are still evaluated when set.
+	bool				hasCustomGLSLLightingStage;
 	int					refCount;
 };
+
+// Parser-free regression hook for custom GLSL receiver compatibility helpers.
+bool R_MaterialCustomGLSLReceiverHelperSelfTest( void );
+bool R_PBRMaterialParserSelfTest( void );
+bool R_SpecularProbeMaterialParserSelfTest( void );
 
 typedef idList<const idMaterial*> idMatList;
 

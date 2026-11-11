@@ -95,7 +95,7 @@ static char THIS_FILE[] = __FILE__;
 #define SHADERS_KEY				"radiant_UseShaders"
 #define SWITCHCLIP_KEY			"radiant_SwitchClipKey"
 #define SELWHOLEENTS_KEY		"radiant_SelectWholeEntitiesKey"
-#define TEXTURE_SCOPE_KEY		"radiant_UseTextureSubsetLoading"
+#define TEXTURESUBSET_KEY		"radiant_UseTextureSubsetLoading"
 #define TEXTUREQUALITY_KEY		"radiant_TextureQuality"
 #define SHOWSHADERS_KEY			"radiant_ShowShaders"
 #define SHADERTEST_KEY			"radiant_ShaderTest"
@@ -450,4 +450,3 @@ void CPrefsDlg::SetGamePrefs() {
 	m_bWideToolbar = TRUE;
 	SavePrefs();
 }
-

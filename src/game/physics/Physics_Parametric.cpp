@@ -1,38 +1,45 @@
-/*
-===========================================================================
 
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
-
-#include "../../idlib/precompiled.h"
-#pragma hdrstop
 
 #include "../Game_local.h"
 
 CLASS_DECLARATION( idPhysics_Base, idPhysics_Parametric )
 END_CLASS
+
+/*
+================
+Parametric_SplineBanking
+
+openQ4: The Awakening's spline movers that face along their spline also bank
+into its turns, as its game code did; its m03 and m06 fighters ride them.
+Retail's movers never banked, so only the Awakening's do.
+================
+*/
+static bool Parametric_SplineBanking( void ) {
+	return !idStr::Icmp( fileSystem->GetActiveGameDir(), "q4xbase" );
+}
+
+/*
+================
+Parametric_SplineRoll
+
+The roll that banks into the turn ahead: against the change of heading between
+the spline's next two g_splineRollLookahead spans, times g_splineRollMultiplier.
+================
+*/
+static float Parametric_SplineRoll( const idCurve_Spline<idVec3> *spline, float t, const idVec3 &origin ) {
+	const float lookahead = g_splineRollLookahead.GetFloat();
+	const idVec3 ahead = spline->GetCurrentValue( t + lookahead );
+	const idVec3 further = spline->GetCurrentValue( t + 2.0f * lookahead );
+	float turn = idMath::ATan( further.y - ahead.y, further.x - ahead.x ) - idMath::ATan( ahead.y - origin.y, ahead.x - origin.x );
+	if ( turn > idMath::PI ) {
+		turn -= idMath::TWO_PI;
+	} else if ( turn < -idMath::PI ) {
+		turn += idMath::TWO_PI;
+	}
+	return -g_splineRollMultiplier.GetFloat() * RAD2DEG( turn );
+}
 
 
 /*
@@ -125,6 +132,13 @@ idPhysics_Parametric::idPhysics_Parametric( void ) {
 
 	hasMaster = false;
 	isOrientated = false;
+	splineBanking = false;
+
+// RAVEN BEGIN
+// abahr:
+	useAxisOffset = false;
+	axisOffset.Identity();
+// RAVEN END
 }
 
 /*
@@ -283,6 +297,9 @@ void idPhysics_Parametric::Save( idSaveGame *savefile ) const {
 
 	savefile->WriteBool( hasMaster );
 	savefile->WriteBool( isOrientated );
+
+	savefile->WriteBool ( useAxisOffset );	// cnicholson: Added unsaved var
+	savefile->WriteMat3 ( axisOffset );		// cnicholson: Added unsaved var
 }
 
 /*
@@ -304,6 +321,11 @@ void idPhysics_Parametric::Restore( idRestoreGame *savefile ) {
 
 	savefile->ReadBool( hasMaster );
 	savefile->ReadBool( isOrientated );
+
+	savefile->ReadBool ( useAxisOffset );	// cnicholson: Added unrestored var
+	savefile->ReadMat3 ( axisOffset );		// cnicholson: Added unrestored var
+
+	splineBanking = Parametric_SplineBanking( );
 }
 
 /*
@@ -410,6 +432,7 @@ void idPhysics_Parametric::SetSpline( idCurve_Spline<idVec3> *spline, int accelT
 		current.splineInterpolate.Init( startTime, accelTime, decelTime, endTime - startTime, 0.0f, length );
 	}
 	current.useSplineAngles = useSplineAngles;
+	splineBanking = Parametric_SplineBanking( );
 	Activate();
 }
 
@@ -481,7 +504,10 @@ void idPhysics_Parametric::SetClipModel( idClipModel *model, float density, int 
 		delete clipModel;
 	}
 	clipModel = model;
-	clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+	clipModel->Link( self, 0, current.origin, current.axis );
+// RAVEN END
 }
 
 /*
@@ -592,6 +618,9 @@ bool idPhysics_Parametric::Evaluate( int timeStepMSec, int endTimeMSec ) {
 		current.localOrigin = current.spline->GetCurrentValue( t );
 		if ( current.useSplineAngles ) {
 			current.localAngles = current.spline->GetCurrentFirstDerivative( t ).ToAngles();
+			if ( splineBanking ) {
+				current.localAngles.roll = Parametric_SplineRoll( current.spline, t, current.localOrigin );
+			}
 		}
 	} else if ( current.linearInterpolation.GetDuration() != 0 ) {
 		current.localOrigin += current.linearInterpolation.GetCurrentValue( endTimeMSec );
@@ -628,7 +657,10 @@ bool idPhysics_Parametric::Evaluate( int timeStepMSec, int endTimeMSec ) {
 
 		gameLocal.push.ClipPush( pushResults, self, pushFlags, oldOrigin, oldAxis, current.origin, current.axis );
 		if ( pushResults.fraction < 1.0f ) {
-			clipModel->Link( gameLocal.clip, self, 0, oldOrigin, oldAxis );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+			clipModel->Link( self, 0, oldOrigin, oldAxis );
+// RAVEN END
 			current.localOrigin = oldLocalOrigin;
 			current.origin = oldOrigin;
 			current.localAngles = oldLocalAngles;
@@ -642,7 +674,10 @@ bool idPhysics_Parametric::Evaluate( int timeStepMSec, int endTimeMSec ) {
 	}
 
 	if ( clipModel ) {
-		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
+// RAVEN BEGIN
+// abahr: a hack way of hiding gimble lock from movers.
+		clipModel->Link( self, 0, current.origin, UseAxisOffset() ? GetAxisOffset() * current.axis : current.axis );
+// RAVEN END
 	}
 
 	current.time = endTimeMSec;
@@ -729,7 +764,10 @@ void idPhysics_Parametric::RestoreState( void ) {
 	current = saved;
 
 	if ( clipModel ) {
-		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		clipModel->Link( self, 0, current.origin, current.axis );
+// RAVEN END
 	}
 }
 
@@ -754,7 +792,10 @@ void idPhysics_Parametric::SetOrigin( const idVec3 &newOrigin, int id ) {
 		current.origin = current.localOrigin;
 	}
 	if ( clipModel ) {
-		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		clipModel->Link( self, 0, current.origin, current.axis );
+// RAVEN END
 	}
 	Activate();
 }
@@ -784,7 +825,10 @@ void idPhysics_Parametric::SetAxis( const idMat3 &newAxis, int id ) {
 		current.angles = current.localAngles;
 	}
 	if ( clipModel ) {
-		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		clipModel->Link( self, 0, current.origin, current.axis );
+// RAVEN END
 	}
 	Activate();
 }
@@ -928,7 +972,10 @@ idPhysics_Parametric::LinkClip
 */
 void idPhysics_Parametric::LinkClip( void ) {
 	if ( clipModel ) {
-		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		clipModel->Link( self, 0, current.origin, current.axis );
+// RAVEN END
 	}
 }
 
@@ -1176,6 +1223,9 @@ void idPhysics_Parametric::ReadFromSnapshot( const idBitMsgDelta &msg ) {
 	current.axis = current.angles.ToMat3();
 
 	if ( clipModel ) {
-		clipModel->Link( gameLocal.clip, self, 0, current.origin, current.axis );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		clipModel->Link( self, 0, current.origin, current.axis );
+// RAVEN END
 	}
 }

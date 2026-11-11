@@ -1,52 +1,32 @@
-/*
-===========================================================================
 
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
-
-#include "../../idlib/precompiled.h"
-#pragma hdrstop
 
 #include "../Game_local.h"
 
+
 // simple types.  function types are dynamically allocated
 idTypeDef	type_void( ev_void, &def_void, "void", 0, NULL );
-idTypeDef	type_scriptevent( ev_scriptevent, &def_scriptevent, "scriptevent", sizeof( void * ), NULL );
-idTypeDef	type_namespace( ev_namespace, &def_namespace, "namespace", sizeof( void * ), NULL );
-idTypeDef	type_string( ev_string, &def_string, "string", MAX_STRING_LEN, NULL );
-idTypeDef	type_float( ev_float, &def_float, "float", sizeof( float ), NULL );
-idTypeDef	type_vector( ev_vector, &def_vector, "vector", sizeof( idVec3 ), NULL );
-idTypeDef	type_entity( ev_entity, &def_entity, "entity", sizeof( int ), NULL );						// stored as entity number
-idTypeDef	type_field( ev_field, &def_field, "field", sizeof( void * ), NULL );
-idTypeDef	type_function( ev_function, &def_function, "function", sizeof( void * ), &type_void );
+idTypeDef	type_scriptevent( ev_scriptevent, &def_scriptevent, "scriptevent", sizeof(intptr_t), NULL );
+idTypeDef	type_namespace( ev_namespace, &def_namespace, "namespace", sizeof(intptr_t), NULL );
+// RAVEN BEGIN
+// abahr
+rvTypeDefString	type_string( ev_string, &def_string, "string", MAX_STRING_LEN, NULL );
+rvTypeDefFloat	type_float( ev_float, &def_float, "float", sizeof( float ), NULL );
+rvTypeDefVec3	type_vector( ev_vector, &def_vector, "vector", sizeof( idVec3 ), NULL );
+rvTypeDefEntity	type_entity( ev_entity, &def_entity, "entity", sizeof( int ), NULL );						// stored as entity number
+// RAVEN END
+idTypeDef	type_field( ev_field, &def_field, "field", sizeof( int ), NULL );
+idTypeDef	type_function( ev_function, &def_function, "function", sizeof(intptr_t), &type_void );
 idTypeDef	type_virtualfunction( ev_virtualfunction, &def_virtualfunction, "virtual function", sizeof( int ), NULL );
-idTypeDef	type_pointer( ev_pointer, &def_pointer, "pointer", sizeof( void * ), NULL );
+idTypeDef	type_pointer( ev_pointer, &def_pointer, "pointer", sizeof(intptr_t), NULL );
 idTypeDef	type_object( ev_object, &def_object, "object", sizeof( int ), NULL );						// stored as entity number
-idTypeDef	type_jumpoffset( ev_jumpoffset, &def_jumpoffset, "<jump>", sizeof( int ), NULL );		// only used for jump opcodes
-idTypeDef	type_argsize( ev_argsize, &def_argsize, "<argsize>", sizeof( int ), NULL );				// only used for function call and thread opcodes
-idTypeDef	type_boolean( ev_boolean, &def_boolean, "boolean", sizeof( int ), NULL );
+idTypeDef	type_jumpoffset( ev_jumpoffset, &def_jumpoffset, "<jump>", sizeof( int ), NULL );			// only used for jump opcodes
+idTypeDef	type_argsize( ev_argsize, &def_argsize, "<argsize>", sizeof( int ), NULL );					// only used for function call and thread opcodes
+// RAVEN BEGIN
+// abahr
+rvTypeDefBool	type_boolean( ev_boolean, &def_boolean, "boolean", sizeof( int ), NULL );
+// RAVEN END
 
 idVarDef	def_void( &type_void );
 idVarDef	def_scriptevent( &type_scriptevent );
@@ -540,7 +520,7 @@ void idTypeDef::AddFunction( const function_t *func ) {
 	int i;
 
 	for( i = 0; i < functions.Num(); i++ ) {
-		if ( !strcmp( functions[ i ]->def->Name(), func->def->Name() ) ) {
+		if ( !idStr::Cmp( functions[ i ]->def->Name(), func->def->Name() ) ) {
 			if ( func->def->TypeDef()->MatchesVirtualFunction( *functions[ i ]->def->TypeDef() ) ) {
 				functions[ i ] = func;
 				return;
@@ -549,6 +529,284 @@ void idTypeDef::AddFunction( const function_t *func ) {
 	}
 	functions.Append( func );
 }
+
+// RAVEN BEGIN
+// abahr
+/*
+================
+rvTypeDefInt::Parse
+================
+*/
+int	rvTypeDefInt::Parse( const char* source ) const {
+	int i;
+
+	sscanf( source, Format(), &i );
+
+	return i;
+}
+
+/*
+================
+rvTypeDefInt::GetReturnedValAsString
+================
+*/
+const char*	rvTypeDefInt::GetReturnedValAsString( idProgram& program ) {
+	return va( Format(), program.GetReturnedInteger() );
+}
+
+/*
+================
+rvTypeDefInt::PushOntoStack
+================
+*/
+void rvTypeDefInt::PushOntoStack( idThread* thread, const char* source ) {
+	if( !thread ) {
+		return;
+	}
+
+	thread->PushInt( Parse(source) );
+}
+
+/*
+================
+rvTypeDefInt::IsValid
+================
+*/
+bool rvTypeDefInt::IsValid( const char* source ) const {
+	return idStr::IsNumeric( source );
+}
+
+/*
+================
+ rvTypeDefFloat::Parse
+================
+*/
+float rvTypeDefFloat::Parse( const char* source ) const {
+	float f;
+
+	sscanf( source, Format(), &f );
+
+	return f;
+}
+
+/*
+================
+rvTypeDefFloat::GetReturnedValAsString
+================
+*/
+const char*	rvTypeDefFloat::GetReturnedValAsString( idProgram& program ) {
+	return va( Format(), program.GetReturnedFloat() );
+}
+
+/*
+================
+rvTypeDefFloat::PushOntoStack
+================
+*/
+void rvTypeDefFloat::PushOntoStack( idThread* thread, const char* source ) {
+	if( !thread ) {
+		return;
+	}
+
+	thread->PushFloat( Parse(source) );
+}
+
+/*
+================
+rvTypeDefFloat::IsValid
+================
+*/
+bool rvTypeDefFloat::IsValid( const char* source ) const {
+	return idStr::IsNumeric( source );
+}
+
+/*
+================
+rvTypeDefVec3::Parse
+================
+*/
+idVec3 rvTypeDefVec3::Parse( const char* source ) const {
+	idVec3 v;
+
+	sscanf( source, Format(), &v[0], &v[1], &v[2] );
+
+	return v;
+}
+
+/*
+================
+rvTypeDefVec3::GetReturnedValAsString
+================
+*/
+const char*	rvTypeDefVec3::GetReturnedValAsString( idProgram& program ) {
+	idVec3 v( program.GetReturnedVec3() );
+	return va( Format(), v[0], v[1], v[2] );
+}
+
+/*
+================
+rvTypeDefVec3::PushOntoStack
+================
+*/
+void rvTypeDefVec3::PushOntoStack( idThread* thread, const char* source ) {
+	if( !thread ) {
+		return;
+	}
+
+	thread->PushVec3( Parse(source) );
+}
+
+/*
+================
+rvTypeDefVec3::IsValid
+================
+*/
+bool rvTypeDefVec3::IsValid( const char* source ) const {
+	//Looking for two ' '
+	return idStr::FindChar(source, ' ', idStr::FindChar(source, ' ') ) != -1;
+}
+
+/*
+================
+rvTypeDefEntity::Parse
+================
+*/
+idEntity* rvTypeDefEntity::Parse( const char* source ) const {
+	return gameLocal.FindEntity( source );
+}
+
+/*
+================
+rvTypeDefEntity::GetReturnedValAsString
+================
+*/
+
+const char*	rvTypeDefEntity::GetReturnedValAsString( idProgram& program ) {
+	idEntity* entity = program.GetReturnedEntity();
+	return (entity) ? entity->GetName() : "";
+}
+
+/*
+================
+rvTypeDefEntity::PushOntoStack
+================
+*/
+void rvTypeDefEntity::PushOntoStack( idThread* thread, const char* source ) {
+	if( !thread ) {
+		return;
+	}
+
+	thread->PushEntity( Parse(source) );
+}
+
+/*
+================
+rvTypeDefEntity::IsValid
+================
+*/
+bool rvTypeDefEntity::IsValid( const char* source ) const {
+	return Parse( source ) != NULL;
+}
+
+/*
+================
+rvTypeDefString::Parse
+================
+*/
+const char* rvTypeDefString::Parse( const char* source ) const {
+	return source;
+}
+
+/*
+================
+rvTypeDefString::GetReturnedValAsString
+================
+*/
+const char*	rvTypeDefString::GetReturnedValAsString( idProgram& program ) {
+	return program.GetReturnedString();
+}
+
+/*
+================
+rvTypeDefString::PushOntoStack
+================
+*/
+void rvTypeDefString::PushOntoStack( idThread* thread, const char* source ) {
+	if( !thread ) {
+		return;
+	}
+
+	thread->PushString( Parse(source) );
+}
+
+/*
+================
+vTypeDefString::IsValid
+================
+*/
+bool rvTypeDefString::IsValid( const char* source ) const {
+	return true;
+}
+
+/*
+================
+rvTypeDefBool::Parse
+================
+*/
+bool rvTypeDefBool::Parse( const char* source ) const {
+	unsigned int b;
+
+	sscanf( source, Format(), &b );
+
+	return !!b;
+}
+
+/*
+================
+rvTypeDefBool::GetReturnedValAsString
+================
+*/
+const char*	rvTypeDefBool::GetReturnedValAsString( idProgram& program ) {
+	return va( Format(), program.GetReturnedBool() );
+}
+
+/*
+================
+rvTypeDefBool::PushOntoStack
+================
+*/
+void rvTypeDefBool::PushOntoStack( idThread* thread, const char* source ) {
+	if( !thread ) {
+		return;
+	}
+
+	thread->PushBool( Parse(source) );
+}
+
+/*
+================
+rvTypeDefBool::IsValid
+================
+*/
+bool rvTypeDefBool::IsValid( const char* source ) const {
+	return !idStr::Icmp(source, "true") || !idStr::Icmp(source, "false") || !idStr::Icmp(source, "1") || !idStr::Icmp(source, "0");
+}
+
+/*
+================
+idProgram::GetReturnedEntity
+================
+*/
+idEntity* idProgram::GetReturnedEntity() {
+	//This is here because gameLocal isn't known about yet in the header
+	int entityNumber = *returnDef->value.entityNumberPtr;
+	if( !entityNumber ) {
+		return NULL;
+	}
+
+	return gameLocal.entities[ entityNumber - 1 ];
+}
+// RAVEN END
 
 /***********************************************************************
 
@@ -735,7 +993,7 @@ idVarDef::PrintInfo
 ============
 */
 void idVarDef::PrintInfo( idFile *file, int instructionPointer ) const {
-	statement_t	*jumpst;
+	const statement_t	*jumpst;
 	int			jumpto;
 	etype_t		etype;
 	int			i;
@@ -776,7 +1034,7 @@ void idVarDef::PrintInfo( idFile *file, int instructionPointer ) const {
 			switch( etype ) {
 			case ev_string :
 				file->Printf( "\"" );
-				len = strlen( value.stringPtr );
+				len = idLib::SizeToInt( strlen( value.stringPtr ), "idVarDef::PrintInfo" );
 				ch = value.stringPtr;
 				for( i = 0; i < len; i++, ch++ ) {
 					if ( idStr::CharIsPrintable( *ch ) ) {
@@ -898,16 +1156,18 @@ idScriptObject::Save
 ================
 */
 void idScriptObject::Save( idSaveGame *savefile ) const {
-	size_t size;
-
 	if ( type == &type_object && data == NULL ) {
 		// Write empty string for uninitialized object
 		savefile->WriteString( "" );
 	} else {
 		savefile->WriteString( type->Name() );
-		size = type->Size();
-		savefile->WriteInt( size );
-		savefile->Write( data, size );
+		const size_t typeSize = type->Size();
+		const int savedSize = static_cast<int>( typeSize );
+		if ( static_cast<size_t>( savedSize ) != typeSize ) {
+			gameLocal.Error( "idScriptObject::Save: size of object '%s' is too large to save.", type->Name() );
+		}
+		savefile->WriteInt( savedSize );
+		savefile->Write( data, savedSize );
 	}
 }
 
@@ -918,7 +1178,7 @@ idScriptObject::Restore
 */
 void idScriptObject::Restore( idRestoreGame *savefile ) {
 	idStr typeName;
-	size_t size;
+	int savedSize;
 
 	savefile->ReadString( typeName );
 
@@ -931,12 +1191,15 @@ void idScriptObject::Restore( idRestoreGame *savefile ) {
 		savefile->Error( "idScriptObject::Restore: failed to restore object of type '%s'.", typeName.c_str() );
 	}
 
-	savefile->ReadInt( (int &)size );
-	if ( size != type->Size() ) {
+	savefile->ReadInt( savedSize );
+	if ( savedSize < 0 ) {
+		savefile->Error( "idScriptObject::Restore: invalid size %d for object '%s'.", savedSize, typeName.c_str() );
+	}
+	if ( static_cast<size_t>( savedSize ) != type->Size() ) {
 		savefile->Error( "idScriptObject::Restore: size of object '%s' doesn't match size in save game.", typeName.c_str() );
 	}
 
-	savefile->Read( data, size );
+	savefile->Read( data, savedSize );
 }
 
 /*
@@ -971,7 +1234,10 @@ bool idScriptObject::SetType( const char *typeName ) {
 
 		// allocate the memory
 		size = type->Size();
-		data = ( byte * )Mem_Alloc( size );
+//RAVEN BEGIN
+//amccarthy: Added memory allocation tag
+		data = ( byte * )Mem_Alloc( size, MA_SCRIPT );
+//RAVEN END
 	}
 
 	// init object memory
@@ -1088,7 +1354,7 @@ byte *idScriptObject::GetVariable( const char *name, etype_t etype ) const {
 		}
 		for( i = 0; i < t->NumParameters(); i++ ) {
 			parm = t->GetParmType( i );
-			if ( !strcmp( t->GetParmName( i ), name ) ) {
+			if ( !idStr::Cmp( t->GetParmName( i ), name ) ) {
 				if ( etype != parm->FieldType()->Type() ) {
 					return NULL;
 				}
@@ -1154,7 +1420,7 @@ idTypeDef *idProgram::GetType( idTypeDef &type, bool allocate ) {
 
 	//FIXME: linear search == slow
 	for( i = types.Num() - 1; i >= 0; i-- ) {
-		if ( types[ i ]->MatchesType( type ) && !strcmp( types[ i ]->Name(), type.Name() ) ) {
+		if ( types[ i ]->MatchesType( type ) && !idStr::Cmp( types[ i ]->Name(), type.Name() ) ) {
 			return types[ i ];
 		}
 	}
@@ -1180,7 +1446,7 @@ idTypeDef *idProgram::FindType( const char *name ) {
 
 	for( i = types.Num() - 1; i >= 0; i-- ) {
 		check = types[ i ];
-		if ( !strcmp( check->Name(), name ) ) {
+		if ( !idStr::Cmp( check->Name(), name ) ) {
 			return check;
 		}
 	}
@@ -1232,11 +1498,14 @@ idProgram::AllocDef
 ============
 */
 idVarDef *idProgram::AllocDef( idTypeDef *type, const char *name, idVarDef *scope, bool constant ) {
+	saveChecksumValid = false;
+	pointerLocalsValid = false;
 	idVarDef	*def;
 	idStr		element;
 	idVarDef	*def_x;
 	idVarDef	*def_y;
 	idVarDef	*def_z;
+	const int	vectorComponentOffsets[ 3 ] = { 0, sizeof( float ), sizeof( float ) * 2 };
 
 	// allocate a new def
 	def = new idVarDef( type );
@@ -1251,7 +1520,7 @@ idVarDef *idProgram::AllocDef( idTypeDef *type, const char *name, idVarDef *scop
 		//
 		// vector
 		//
-		if ( !strcmp( name, RESULT_STRING ) ) {
+		if ( !idStr::Cmp( name, RESULT_STRING ) ) {
 			// <RESULT> vector defs don't need the _x, _y and _z components
 			assert( scope->Type() == ev_function );
 			def->value.stackOffset	= scope->value.functionPtr->locals;
@@ -1268,29 +1537,68 @@ idVarDef *idProgram::AllocDef( idTypeDef *type, const char *name, idVarDef *scop
 			// origin can be accessed as origin_x, origin_y, and origin_z
 			sprintf( element, "%s_x", def->Name() );
 			def_x = AllocDef( type, element, scope, constant );
+			def_x->value.ptrOffset = def->value.ptrOffset + vectorComponentOffsets[ 0 ];
 
 			sprintf( element, "%s_y", def->Name() );
 			def_y = AllocDef( type, element, scope, constant );
-			def_y->value.ptrOffset = def_x->value.ptrOffset + type_float.Size();
+			def_y->value.ptrOffset = def->value.ptrOffset + vectorComponentOffsets[ 1 ];
 
 			sprintf( element, "%s_z", def->Name() );
 			def_z = AllocDef( type, element, scope, constant );
-			def_z->value.ptrOffset = def_y->value.ptrOffset + type_float.Size();
+			def_z->value.ptrOffset = def->value.ptrOffset + vectorComponentOffsets[ 2 ];
 		} else {
+			if ( scope->Type() == ev_function ) {
+				def->value.stackOffset	= scope->value.functionPtr->locals;
+				def->initialized		= idVarDef::stackVariable;
+				scope->value.functionPtr->locals += type->Size();
+			} else {
+				def->value.bytePtr = &variables[ numVariables ];
+				numVariables += def->TypeDef()->Size();
+				if ( numVariables > sizeof( variables ) ) {
+					throw idCompileError( va( "Exceeded global memory size (%zu bytes)", sizeof( variables ) ) );
+				}
+
+				memset( def->value.bytePtr, 0, def->TypeDef()->Size() );
+			}
+
 			// make automatic defs for the vectors elements
 			// origin can be accessed as origin_x, origin_y, and origin_z
+			def_x = new idVarDef( &type_float );
+			def_x->scope		= scope;
+			def_x->numUsers		= 1;
+			def_x->num			= varDefs.Append( def_x );
 			sprintf( element, "%s_x", def->Name() );
-			def_x = AllocDef( &type_float, element, scope, constant );
+			AddDefToNameList( def_x, element );
 
+			def_y = new idVarDef( &type_float );
+			def_y->scope		= scope;
+			def_y->numUsers		= 1;
+			def_y->num			= varDefs.Append( def_y );
 			sprintf( element, "%s_y", def->Name() );
-			def_y = AllocDef( &type_float, element, scope, constant );
+			AddDefToNameList( def_y, element );
 
+			def_z = new idVarDef( &type_float );
+			def_z->scope		= scope;
+			def_z->numUsers		= 1;
+			def_z->num			= varDefs.Append( def_z );
 			sprintf( element, "%s_z", def->Name() );
-			def_z = AllocDef( &type_float, element, scope, constant );
+			AddDefToNameList( def_z, element );
 
-			// point the vector def to the x coordinate
-			def->value			= def_x->value;
-			def->initialized	= def_x->initialized;
+			if ( def->initialized == idVarDef::stackVariable ) {
+				def_x->value.stackOffset = def->value.stackOffset + vectorComponentOffsets[ 0 ];
+				def_y->value.stackOffset = def->value.stackOffset + vectorComponentOffsets[ 1 ];
+				def_z->value.stackOffset = def->value.stackOffset + vectorComponentOffsets[ 2 ];
+				def_x->initialized = idVarDef::stackVariable;
+				def_y->initialized = idVarDef::stackVariable;
+				def_z->initialized = idVarDef::stackVariable;
+			} else {
+				def_x->value.bytePtr = def->value.bytePtr + vectorComponentOffsets[ 0 ];
+				def_y->value.bytePtr = def->value.bytePtr + vectorComponentOffsets[ 1 ];
+				def_z->value.bytePtr = def->value.bytePtr + vectorComponentOffsets[ 2 ];
+				def_x->initialized = def->initialized;
+				def_y->initialized = def->initialized;
+				def_z->initialized = def->initialized;
+			}
 		}
 	} else if ( scope->TypeDef()->Inherits( &type_object ) ) {
 		//
@@ -1320,7 +1628,7 @@ idVarDef *idProgram::AllocDef( idTypeDef *type, const char *name, idVarDef *scop
 		def->value.bytePtr = &variables[ numVariables ];
 		numVariables += def->TypeDef()->Size();
 		if ( numVariables > sizeof( variables ) ) {
-			throw idCompileError( va( "Exceeded global memory size (%d bytes)", sizeof( variables ) ) );
+			throw idCompileError( va( "Exceeded global memory size (%zu bytes)", sizeof( variables ) ) );
 		}
 
 		memset( def->value.bytePtr, 0, def->TypeDef()->Size() );
@@ -1378,6 +1686,8 @@ idProgram::FreeDef
 ============
 */
 void idProgram::FreeDef( idVarDef *def, const idVarDef *scope ) {
+	saveChecksumValid = false;
+	pointerLocalsValid = false;
 	idVarDef *e;
 	int i;
 
@@ -1493,6 +1803,25 @@ function_t *idProgram::FindFunction( const char *name ) const {
 	return NULL;
 }
 
+// RAVEN BEGIN
+// bgeisler: list functions
+/*
+================
+idProgram::ListFunctions
+================
+*/
+void idProgram::ListStates( void )
+{
+	gameLocal.Printf( "Script States: \n");
+	// function 0 is a NULL function
+	for( int i = 1; i < functions.Num(); i++ ) 
+	{		
+		gameLocal.Printf( "%s \n", functions[ i ].Name() );		
+	}
+
+}
+// RAVEN END
+
 /*
 ================
 idProgram::FindFunction
@@ -1575,6 +1904,8 @@ idProgram::AllocStatement
 ================
 */
 statement_t *idProgram::AllocStatement( void ) {
+	saveChecksumValid = false;
+	pointerLocalsValid = false;
 	if ( statements.Num() >= statements.Max() ) {
 		throw idCompileError( va( "Exceeded maximum allowed number of statements (%d)", statements.Max() ) );
 	}
@@ -1706,6 +2037,7 @@ void idProgram::FinishCompilation( void ) {
 	for( i = 0; i < numVariables; i++ ) {
 		variableDefaults[ i ] = variables[ i ];
 	}
+	GetSaveChecksum();
 }
 
 /*
@@ -1716,14 +2048,14 @@ called after all files are compiled to report memory usage.
 ==============
 */
 void idProgram::CompileStats( void ) {
-	int	memused;
-	int	memallocated;
+	size_t	memused;
+	size_t	memallocated;
 	int	numdefs;
-	int	stringspace;
-	int funcMem;
+	size_t	stringspace;
+	size_t	funcMem;
 	int	i;
 
-	gameLocal.Printf( "---------- Compile stats ----------\n" );
+	gameLocal.Printf( "-------------- Compile stats ----------------\n" );
 	gameLocal.DPrintf( "Files loaded:\n" );
 
 	stringspace = 0;
@@ -1754,15 +2086,59 @@ void idProgram::CompileStats( void ) {
 	memused += sizeof( variables );
 
 	gameLocal.Printf( "\nMemory usage:\n" );
-	gameLocal.Printf( "     Strings: %d, %d bytes\n", fileList.Num(), stringspace );
-	gameLocal.Printf( "  Statements: %d, %d bytes\n", statements.Num(), statements.MemoryUsed() );
-	gameLocal.Printf( "   Functions: %d, %d bytes\n", functions.Num(), funcMem );
+	gameLocal.Printf( "     Strings: %d, %zu bytes\n", fileList.Num(), stringspace );
+	gameLocal.Printf( "  Statements: %d, %zu bytes\n", statements.Num(), statements.MemoryUsed() );
+	gameLocal.Printf( "   Functions: %d, %zu bytes\n", functions.Num(), funcMem );
 	gameLocal.Printf( "   Variables: %d bytes\n", numVariables );
-	gameLocal.Printf( "    Mem used: %d bytes\n", memused );
-	gameLocal.Printf( " Static data: %d bytes\n", sizeof( idProgram ) );
-	gameLocal.Printf( "   Allocated: %d bytes\n", memallocated );
-	gameLocal.Printf( " Thread size: %d bytes\n\n", sizeof( idThread ) );
+	gameLocal.Printf( "    Mem used: %zu bytes\n", memused );
+	gameLocal.Printf( " Static data: %zu bytes\n", sizeof( idProgram ) );
+	gameLocal.Printf( "   Allocated: %zu bytes\n", memallocated );
+	gameLocal.Printf( " Thread size: %zu bytes\n\n", sizeof( idThread ) );
 }
+
+// RAVEN BEGIN
+// jscott: summary of script memory usage
+/*
+================
+idProgram::ScriptSummary
+================
+*/
+size_t idProgram::ScriptSummary( const idCmdArgs &args ) {
+
+	size_t	memused;
+	int		i;
+
+	memused = 0;
+	for( i = 0; i < fileList.Num(); i++ ) {
+
+		memused += fileList[i].Allocated();
+	}
+	memused += fileList.Size();
+
+	memused += varDefs.Num() * sizeof( idVarDef );
+	memused += types.Num() * sizeof( idTypeDef );
+
+	for( i = 0; i < types.Num(); i++ ) {
+
+		memused += types[i]->Allocated();
+	}
+
+	memused += functions.MemoryUsed();
+	for( i = 0; i < functions.Num(); i++ ) {
+
+		memused += functions[i].Allocated();
+	}
+
+	memused += statements.MemoryUsed();
+	memused += sizeof( variables );
+	memused += sizeof( idProgram );
+	memused += sizeof( idThread );
+
+	common->Printf( "Scripts         - %zuK\n", memused >> 10 );
+
+	return( memused >> 10 );
+}
+// RAVEN END
 
 /*
 ================
@@ -1774,6 +2150,16 @@ bool idProgram::CompileText( const char *source, const char *text, bool console 
 	int			i;
 	idVarDef	*def;
 	idStr		ospath;
+
+// RAVEN BEGIN
+// bdube: Make sure the file hasnt already been loaded
+	// File includes are idempotent; console snippets are not. Every invocation
+	// of the `script` command uses the source name "console" and creates a new
+	// function. Reusing the file cache silently discarded every later command.
+	if ( !console && -1 != fileList.FindIndex ( idStr(source) ) ) {
+		return true;
+	}
+// RAVEN END
 
 	// use a full os path for GetFilenum since it calls OSPathToRelativePath to convert filenames from the parser
 	ospath = fileSystem->RelativePathToOSPath( source );
@@ -1806,6 +2192,7 @@ bool idProgram::CompileText( const char *source, const char *text, bool console 
 		CompileStats();
 	}
 
+	GetSaveChecksum();
 	return true;
 }
 
@@ -1835,17 +2222,21 @@ const function_t *idProgram::CompileFunction( const char *functionName, const ch
 idProgram::CompileFile
 ================
 */
+#include "../awakening/MissionScripts.inl"
+
 void idProgram::CompileFile( const char *filename ) {
 	char *src;
 	bool result;
-
-	if ( fileSystem->ReadFile( filename, ( void ** )&src, NULL ) < 0 ) {
-		gameLocal.Error( "Couldn't load %s\n", filename );
+	idStr missionSource;
+	if ( Awakening_LoadMissionScript( filename, missionSource ) ) {
+		result = CompileText( filename, missionSource, false );
+	} else {
+		if ( fileSystem->ReadFile( filename, ( void ** )&src, NULL ) < 0 ) {
+			gameLocal.Error( "Couldn't load %s\n", filename );
+		}
+		result = CompileText( filename, src, false );
+		fileSystem->FreeFile( src );
 	}
-
-	result = CompileText( filename, src, false );
-
-	fileSystem->FreeFile( src );
 
 	if ( g_disasm.GetBool() ) {
 		Disassemble();
@@ -1862,6 +2253,8 @@ idProgram::FreeData
 ================
 */
 void idProgram::FreeData( void ) {
+	saveChecksumValid = false;
+	pointerLocalsValid = false;
 	int i;
 
 	// free the defs
@@ -1906,6 +2299,10 @@ idProgram::Startup
 ================
 */
 void idProgram::Startup( const char *defaultScript ) {
+// RAVEN BEGIN
+// jnewquist: Tag scope and callees to track allocations using "new".
+	MEM_SCOPED_TAG(tag, MA_SCRIPT);
+// RAVEN END
 	gameLocal.Printf( "Initializing scripts\n" );
 
 	// make sure all data is freed up
@@ -1916,7 +2313,11 @@ void idProgram::Startup( const char *defaultScript ) {
 
 	// load the default script
 	if ( defaultScript && *defaultScript ) {
-		CompileFile( defaultScript );
+		if ( fileSystem->ReadFile( defaultScript, NULL, NULL ) < 0 ) {
+			gameLocal.Warning( "Default script '%s' is missing; continuing with an empty script program.", defaultScript );
+		} else {
+			CompileFile( defaultScript );
+		}
 	}
 
 	FinishCompilation();
@@ -1936,6 +2337,8 @@ void idProgram::Save( idSaveGame *savefile ) const {
 		savefile->WriteString( fileList[ currentFileNum ] );
 		currentFileNum++;
 	}
+	savefile->WriteString( filename );		// cnicholson: Added unsaved var
+	savefile->WriteInt ( filenum );			// cnicholson: Added unsaved var
 
 	for ( i = 0; i < variableDefaults.Num(); i++ ) {
 		if ( variables[i] != variableDefaults[i] ) {
@@ -1951,7 +2354,25 @@ void idProgram::Save( idSaveGame *savefile ) const {
 		savefile->WriteByte( variables[i] );
 	}
 
-	int checksum = CalculateChecksum();
+	savefile->WriteInt ( top_functions );	// cnicholson: Added unsaved var
+	savefile->WriteInt ( top_statements );	// cnicholson: Added unsaved var
+	savefile->WriteInt ( top_types );		// cnicholson: Added unsaved var
+	savefile->WriteInt ( top_defs );		// cnicholson: Added unsaved var
+	savefile->WriteInt ( top_files );		// cnicholson: Added unsaved var
+
+	const bool verifyChecksum = cvarSystem->GetCVarInteger( "com_saveGameProfile" ) >= 2;
+	const bool cacheHit = saveChecksumValid;
+	const int checksum = GetSaveChecksum();
+	if ( verifyChecksum ) {
+		const double start = idLib::sys->GetClockTicks();
+		const int reference = CalculateChecksum( false );
+		const double elapsed = ( idLib::sys->GetClockTicks() - start ) * 1000.0 / idLib::sys->ClockTicksPerSecond();
+		common->Printf( "Script save checksum: cached=%d matched=%d reference=%.3f ms statements=%d\n",
+			cacheHit ? 1 : 0, checksum == reference ? 1 : 0, elapsed, statements.Num() );
+		if ( checksum != reference ) {
+			gameLocal.Error( "Script save checksum cache mismatch" );
+		}
+	}
 	savefile->WriteInt( checksum );
 }
 
@@ -1966,26 +2387,62 @@ bool idProgram::Restore( idRestoreGame *savefile ) {
 	idStr scriptname;
 
 	savefile->ReadInt( num );
+	if ( num < 0 || num > MAX_GLOBALS ) {
+		savefile->Error( "idProgram::Restore: invalid script file count %d", num );
+	}
 	for ( i = 0; i < num; i++ ) {
 		savefile->ReadString( scriptname );
 		CompileFile( scriptname );
 	}
 
+	savefile->ReadString( filename );	// cnicholson: Added unrestored var
+	savefile->ReadInt ( filenum );		// cnicholson: Added unrestored var
+
 	savefile->ReadInt( index );
+	if ( index < -1 || index >= variableDefaults.Num() ) {
+		savefile->Error( "idProgram::Restore: invalid changed variable index %d", index );
+	}
 	while( index >= 0 ) {
 		savefile->ReadByte( variables[index] );
 		savefile->ReadInt( index );
+		if ( index < -1 || index >= variableDefaults.Num() ) {
+			savefile->Error( "idProgram::Restore: invalid changed variable index %d", index );
+		}
 	}
 
 	savefile->ReadInt( num );
+	if ( num < variableDefaults.Num() || num > MAX_GLOBALS ) {
+		savefile->Error( "idProgram::Restore: invalid variable count %d", num );
+	}
 	for ( i = variableDefaults.Num(); i < num; i++ ) {
 		savefile->ReadByte( variables[i] );
+	}
+
+	savefile->ReadInt ( top_functions );	// cnicholson: Added unrestored var
+	savefile->ReadInt ( top_statements );	// cnicholson: Added unrestored var
+	savefile->ReadInt ( top_types );		// cnicholson: Added unrestored var
+	savefile->ReadInt ( top_defs );			// cnicholson: Added unrestored var
+	savefile->ReadInt ( top_files );		// cnicholson: Added unrestored var
+	if ( top_functions < 0 || top_functions > functions.Num() ) {
+		savefile->Error( "idProgram::Restore: invalid function watermark %d for %d functions", top_functions, functions.Num() );
+	}
+	if ( top_statements < 0 || top_statements > statements.Num() ) {
+		savefile->Error( "idProgram::Restore: invalid statement watermark %d for %d statements", top_statements, statements.Num() );
+	}
+	if ( top_types < 0 || top_types > types.Num() ) {
+		savefile->Error( "idProgram::Restore: invalid type watermark %d for %d types", top_types, types.Num() );
+	}
+	if ( top_defs < 0 || top_defs > varDefs.Num() ) {
+		savefile->Error( "idProgram::Restore: invalid vardef watermark %d for %d vardefs", top_defs, varDefs.Num() );
+	}
+	if ( top_files < 0 || top_files > fileList.Num() ) {
+		savefile->Error( "idProgram::Restore: invalid file watermark %d for %d files", top_files, fileList.Num() );
 	}
 
 	int saved_checksum, checksum;
 
 	savefile->ReadInt( saved_checksum );
-	checksum = CalculateChecksum();
+	checksum = CalculateChecksum( savefile->GetOpenQ4SaveGameCompatibilityVersion() < OPENQ4_SAVEGAME_PORTABLE_COMPATIBILITY_VERSION );
 
 	if ( saved_checksum != checksum ) {
 		result = false;
@@ -1994,12 +2451,64 @@ bool idProgram::Restore( idRestoreGame *savefile ) {
 	return result;
 }
 
+// Keep the original checksum calculation independent for load validation and
+// the diagnostic save oracle. The compiler warms the cache before gameplay.
+int idProgram::GetSaveChecksum( void ) const {
+	if ( !saveChecksumValid ) {
+		saveChecksum = CalculateChecksum( false );
+		saveChecksumValid = true;
+	}
+	return saveChecksum;
+}
+
+/*
+================
+idProgram::ZeroPointerLocals
+
+Clears the pointer-typed locals of one frame in a copy of a thread's local
+stack. Those are OP_ADDRESS temporaries holding raw addresses into script
+objects. In shipped scripts no save point falls between an address and the
+store that uses it, so their bytes are stale. Writing them as zero keeps saves
+deterministic and free of pointer-width values, and a store through a restored
+slot is skipped (OP_STOREP_* checks for NULL) instead of writing through an
+address from another process (roadmap Q4-06).
+================
+*/
+void idProgram::ZeroPointerLocals( byte *stack, int stackUsed, const function_t *func, int stackBase ) const {
+	if ( func == NULL || functions.Num() == 0 ) {
+		return;
+	}
+	if ( !pointerLocalsValid ) {
+		pointerLocalFunctions.Clear();
+		pointerLocalOffsets.Clear();
+		for ( int i = 0; i < varDefs.Num(); i++ ) {
+			const idVarDef *def = varDefs[ i ];
+			if ( def != NULL && def->Type() == ev_pointer && def->initialized == idVarDef::stackVariable &&
+				 def->scope != NULL && def->scope->Type() == ev_function && def->scope->value.functionPtr != NULL ) {
+				pointerLocalFunctions.Append( static_cast<int>( def->scope->value.functionPtr - &functions[ 0 ] ) );
+				pointerLocalOffsets.Append( def->value.stackOffset );
+			}
+		}
+		pointerLocalsValid = true;
+	}
+	const int index = static_cast<int>( func - &functions[ 0 ] );
+	for ( int i = 0; i < pointerLocalFunctions.Num(); i++ ) {
+		if ( pointerLocalFunctions[ i ] != index ) {
+			continue;
+		}
+		const int start = stackBase + pointerLocalOffsets[ i ];
+		if ( start >= 0 && start + static_cast<int>( sizeof( intptr_t ) ) <= stackUsed ) {
+			memset( stack + start, 0, sizeof( intptr_t ) );
+		}
+	}
+}
+
 /*
 ================
 idProgram::CalculateChecksum
 ================
 */
-int idProgram::CalculateChecksum( void ) const {
+int idProgram::CalculateChecksum( bool sourcePositions ) const {
 	int i, result;
 
 	typedef struct {
@@ -2035,8 +2544,11 @@ int idProgram::CalculateChecksum( void ) const {
 			statementList[i].c = -1;
 		}
 
-		statementList[i].linenumber = statements[i].linenumber;
-		statementList[i].file = statements[i].file;
+		// Source positions stay zero unless asked for (see the declaration).
+		if ( sourcePositions ) {
+			statementList[i].linenumber = statements[i].linenumber;
+			statementList[i].file = statements[i].file;
+		}
 	}
 
 	result = MD4_BlockChecksum( statementList, ( sizeof(statementBlock_t) * statements.Num() ) );
@@ -2054,6 +2566,8 @@ Restores all variables to their initial value
 ==============
 */
 void idProgram::Restart( void ) {
+	saveChecksumValid = false;
+	pointerLocalsValid = false;
 	int i;
 
 	idThread::Restart();
@@ -2087,6 +2601,7 @@ void idProgram::Restart( void ) {
 	for( i = 0; i < numVariables; i++ ) {
 		variables[ i ] = variableDefaults[ i ];
 	}
+	GetSaveChecksum();
 }
 
 /*
@@ -2132,15 +2647,31 @@ idProgram::~idProgram() {
 	FreeData();
 }
 
+// RAVEN BEGIN
+// jscott: for debug with inlines and memory log
+/*
+================
+idProgram::Shutdown
+================
+*/
+void idProgram::Shutdown( void ) 
+{
+	FreeData();
+}
+// RAVEN END
+
 /*
 ================
 idProgram::ReturnEntity
 ================
 */
-void idProgram::ReturnEntity( idEntity *ent ) {
+// RAVEN BEGIN
+// abahr: added const
+void idProgram::ReturnEntity( const idEntity *ent ) {
 	if ( ent ) {
 		*returnDef->value.entityNumberPtr = ent->entityNumber + 1;
 	} else {
 		*returnDef->value.entityNumberPtr = 0;
 	}
 }
+

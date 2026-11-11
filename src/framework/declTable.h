@@ -30,10 +30,11 @@ public:
 	virtual size_t			Size( void ) const;
 	virtual const char *	DefaultDefinition( void ) const;
 	virtual bool			Parse( const char *text, const int textLength ) override;
+	virtual bool			Parse( const char *text, const int textLength, bool noCaching ) override;
 	virtual void			FreeData( void );
 
 // RAVEN BEGIN
-// jscott: for FX runtime
+// jscott: for BSE
 			float			GetMaxValue( void ) const { return( maxValue ); }
 			float			GetMinValue( void ) const { return( minValue ); }
 // bdube: made virtual so it can be accessed in game
@@ -41,14 +42,14 @@ public:
 // jscott: to prevent a recursive crash
 	virtual	bool			RebuildTextSource( void ) { return( false ); }
 // scork: for detailed error-reporting
-	//virtual	bool			Validate( const char *psText, int iTextLength, idStr &strReportTo ) const;
+	virtual	bool			Validate( const char *psText, int iTextLength, idStr &strReportTo ) const;
 // RAVEN END
 
 private:
 	bool					clamp;
 	bool					snap;
 // RAVEN BEGIN
-// jscott: for FX runtime
+// jscott: for BSE
 	float					minValue;
 	float					maxValue;
 // RAVEN END
@@ -56,4 +57,3 @@ private:
 };
 
 #endif /* !__DECLTABLE_H__ */
-

@@ -1,33 +1,6 @@
-/*
-===========================================================================
 
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
-
-#include "../../idlib/precompiled.h"
-#pragma hdrstop
 
 #include "../Game_local.h"
 
@@ -38,7 +11,7 @@ If you have questions concerning this license or the applicable additional terms
 #define TOP_PRIORITY		7
 
 bool idCompiler::punctuationValid[ 256 ];
-char *idCompiler::punctuation[] = {
+const char *idCompiler::punctuation[] = {
 	"+=", "-=", "*=", "/=", "%=", "&=", "|=", "++", "--",
 	"&&", "||", "<=", ">=", "==", "!=", "::", ";",  ",",
 	"~",  "!",  "*",  "/",  "%",  "(",   ")",  "-", "+",
@@ -73,7 +46,7 @@ opcode_t idCompiler::opcodes[] = {
 	
 	{ "-", "SUB_F", 4, false, &def_float, &def_float, &def_float },
 	{ "-", "SUB_V", 4, false, &def_vector, &def_vector, &def_vector },
-	
+
 	{ "==", "EQ_F", 5, false, &def_float, &def_float, &def_float },
 	{ "==", "EQ_V", 5, false, &def_vector, &def_vector, &def_float },
 	{ "==", "EQ_S", 5, false, &def_string, &def_string, &def_float },
@@ -207,7 +180,7 @@ idCompiler::idCompiler()
 ================
 */
 idCompiler::idCompiler() {
-	char	**ptr;
+	const char	**ptr;
 	int		id;
 
 	// make sure we have the right # of opcodes in the table
@@ -287,7 +260,14 @@ ID_INLINE idVarDef *idCompiler::VirtualFunctionConstant( idVarDef *func ) {
 	memset( &eval, 0, sizeof( eval ) );
 	eval._int = func->scope->TypeDef()->GetFunctionNumber( func->value.functionPtr );
 	if ( eval._int < 0 ) {
-		Error( "Function '%s' not found in scope '%s'", func->Name(), func->scope->Name() );
+// RAVEN BEGIN
+// bdube: added scope to print
+		if( !func->scope || !func->scope->initialized ) {
+			Error( "Function '%s' not found in uninitialized scope.  Make sure function is an object method.", func->Name() );
+		} else {
+			Error( "Function '%s' not found in scope '%s'", func->Name(), func->scope->Name() );
+		}
+// RAVEN END
 	}
     
 	return GetImmediate( &type_virtualfunction, &eval, "" );
@@ -577,10 +557,10 @@ idVarDef *idCompiler::EmitOpcode( const opcode_t *op, idVarDef *var_a, idVarDef 
 		return var_c;
 	}
 
-	if ( var_a && !strcmp( var_a->Name(), RESULT_STRING ) ) {
+	if ( var_a && !idStr::Cmp( var_a->Name(), RESULT_STRING ) ) {
 		var_a->numUsers++;
 	}
-	if ( var_b && !strcmp( var_b->Name(), RESULT_STRING ) ) {
+	if ( var_b && !idStr::Cmp( var_b->Name(), RESULT_STRING ) ) {
 		var_b->numUsers++;
 	}
 	
@@ -634,7 +614,7 @@ bool idCompiler::EmitPush( idVarDef *expression, const idTypeDef *funcArg ) {
 	opcode_t *out;
 
 	out = NULL;
-	for( op = &opcodes[ OP_PUSH_F ]; op->name && !strcmp( op->name, "<PUSH>" ); op++ ) {
+	for( op = &opcodes[ OP_PUSH_F ]; op->name && !idStr::Cmp( op->name, "<PUSH>" ); op++ ) {
 		if ( ( funcArg->Type() == op->type_a->Type() ) && ( expression->Type() == op->type_b->Type() ) ) {
 			out = op;
 			break;
@@ -982,7 +962,7 @@ idVarDef *idCompiler::EmitFunctionParms( int op, idVarDef *func, int startarg, i
 		EmitOpcode( op, object, VirtualFunctionConstant( func ) );
 
 		// need arg size seperate since script object may be NULL
-		statement_t &statement = gameLocal.program.GetStatement( gameLocal.program.NumStatements() - 1 );
+		statement_t &statement = gameLocal.program.GetMutableStatement( gameLocal.program.NumStatements() - 1 );
 		statement.c = SizeConstant( func->value.functionPtr->parmTotal );
 	} else {
 		EmitOpcode( op, func, SizeConstant( size ) );
@@ -1037,7 +1017,7 @@ idVarDef *idCompiler::EmitFunctionParms( int op, idVarDef *func, int startarg, i
 
 	// allocate result space
 	// try to reuse result defs as much as possible
-	statement_t &statement = gameLocal.program.GetStatement( gameLocal.program.NumStatements() - 1 );
+	statement_t &statement = gameLocal.program.GetMutableStatement( gameLocal.program.NumStatements() - 1 );
 	idVarDef *resultDef = gameLocal.program.FindFreeResultDef( returnType, RESULT_STRING, scope, statement.a, statement.b );
 	// set user count back to 0, a result def needs to be used twice before it can be reused
 	resultDef->numUsers = 0;
@@ -1149,7 +1129,10 @@ idVarDef *idCompiler::ParseSysObjectCall( idVarDef *funcDef ) {
 		Error( "\"%s\" cannot be called with object notation", funcDef->Name() );
 	}
 
-	if ( !idThread::Type.RespondsTo( *funcDef->value.functionPtr->eventdef ) ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+	if ( !idThread::GetClassType().RespondsTo( *funcDef->value.functionPtr->eventdef ) ) {
+// RAVEN END
 		Error( "\"%s\" is not callable as a 'sys' function", funcDef->Name() );
 	}
 
@@ -1223,7 +1206,7 @@ idVarDef *idCompiler::LookupDef( const char *name, const idVarDef *baseobj ) {
 						break;
 					}
 					op++;
-					if ( !op->name || strcmp( op->name, "." ) ) {
+					if ( !op->name || idStr::Cmp( op->name, "." ) ) {
 						Error( "no valid opcode to access type '%s'", field->TypeDef()->SuperClass()->Name() );
 					}
 				}
@@ -1521,7 +1504,7 @@ idVarDef *idCompiler::GetExpression( int priority ) {
 		if ( op->rightAssociative ) {
 			// if last statement is an indirect, change it to an address of
 			if ( gameLocal.program.NumStatements() > 0 ) {
-				statement_t &statement = gameLocal.program.GetStatement( gameLocal.program.NumStatements() - 1 );
+				statement_t &statement = gameLocal.program.GetMutableStatement( gameLocal.program.NumStatements() - 1 );
 				if ( ( statement.op >= OP_INDIRECT_F ) && ( statement.op < OP_ADDRESS ) ) {
 					statement.op = OP_ADDRESS;
 					type_pointer.SetPointerType( e->TypeDef() );
@@ -1574,7 +1557,7 @@ idVarDef *idCompiler::GetExpression( int priority ) {
 			}
 
 			op++;
-			if ( !op->name || strcmp( op->name, oldop->name ) ) {
+			if ( !op->name || idStr::Cmp( op->name, oldop->name ) ) {
 				Error( "type mismatch for '%s'", oldop->name );
 			}
 		}
@@ -1643,7 +1626,7 @@ idVarDef *idCompiler::GetExpression( int priority ) {
 				// statement.b points to type_pointer, which is just a temporary that gets its type reassigned, so we store the real type in statement.c
 				// so that we can do a type check during run time since we don't know what type the script object is at compile time because it
 				// comes from an entity
-				statement_t &statement = gameLocal.program.GetStatement( gameLocal.program.NumStatements() - 1 );
+				statement_t &statement = gameLocal.program.GetMutableStatement( gameLocal.program.NumStatements() - 1 );
 				statement.c = type_pointer.PointerType()->def;
 			}
 
@@ -1667,7 +1650,7 @@ void idCompiler::PatchLoop( int start, int continuePos ) {
 	int			i;
 	statement_t	*pos;
 
-	pos = &gameLocal.program.GetStatement( start );
+	pos = &gameLocal.program.GetMutableStatement( start );
 	for( i = start; i < gameLocal.program.NumStatements(); i++, pos++ ) {
 		if ( pos->op == OP_BREAK ) {
 			pos->op = OP_GOTO;
@@ -1711,7 +1694,7 @@ void idCompiler::ParseReturnStatement( void ) {
 	}
 
 	for( op = opcodes; op->name; op++ ) {
-		if ( !strcmp( op->name, "=" ) ) {
+		if ( !idStr::Cmp( op->name, "=" ) ) {
 			break;
 		}
 	}
@@ -1720,7 +1703,7 @@ void idCompiler::ParseReturnStatement( void ) {
 
 	while( !TypeMatches( type_a, op->type_a->Type() ) || !TypeMatches( type_b, op->type_b->Type() ) ) {
 		op++;
-		if ( !op->name || strcmp( op->name, "=" ) ) {
+		if ( !op->name || idStr::Cmp( op->name, "=" ) ) {
 			Error( "type mismatch for return value" );
 		}
 	}
@@ -1762,7 +1745,7 @@ void idCompiler::ParseWhileStatement( void ) {
         EmitOpcode( OP_IFNOT, e, 0 );
 		ParseStatement();
 		EmitOpcode( OP_GOTO, JumpTo( patch2 ), 0 );
-		gameLocal.program.GetStatement( patch1 ).b = JumpFrom( patch1 );
+		gameLocal.program.GetMutableStatement( patch1 ).b = JumpFrom( patch1 );
 	}
 
 	// fixup breaks and continues
@@ -1860,7 +1843,7 @@ void idCompiler::ParseForStatement( void ) {
 		EmitOpcode( OP_GOTO, JumpTo( patch4 ), 0 );
 
 		// fixup patch3
-		gameLocal.program.GetStatement( patch3 ).b = JumpFrom( patch3 );
+		gameLocal.program.GetMutableStatement( patch3 ).b = JumpFrom( patch3 );
 	}
 
 	ParseStatement();
@@ -1869,7 +1852,7 @@ void idCompiler::ParseForStatement( void ) {
 	EmitOpcode( OP_GOTO, JumpTo( patch2 ), 0 );
 
 	// fixup patch1
-	gameLocal.program.GetStatement( patch1 ).b = JumpFrom( patch1 );
+	gameLocal.program.GetMutableStatement( patch1 ).b = JumpFrom( patch1 );
 
 	// fixup breaks and continues
 	PatchLoop( start, patch2 );
@@ -1927,11 +1910,11 @@ void idCompiler::ParseIfStatement( void ) {
 	if ( CheckToken( "else" ) ) {
 		patch2 = gameLocal.program.NumStatements();
 		EmitOpcode( OP_GOTO, 0, 0 );
-		gameLocal.program.GetStatement( patch1 ).b = JumpFrom( patch1 );
+		gameLocal.program.GetMutableStatement( patch1 ).b = JumpFrom( patch1 );
 		ParseStatement();
-		gameLocal.program.GetStatement( patch2 ).a = JumpFrom( patch2 );
+		gameLocal.program.GetMutableStatement( patch2 ).a = JumpFrom( patch2 );
 	} else {
-		gameLocal.program.GetStatement( patch1 ).b = JumpFrom( patch1 );
+		gameLocal.program.GetMutableStatement( patch1 ).b = JumpFrom( patch1 );
 	}
 }
 
@@ -2155,15 +2138,17 @@ void idCompiler::ParseFunctionDef( idTypeDef *returnType, const char *name ) {
 		}
 	}
 
-	// check if this is a prototype or declaration
-	if ( !CheckToken( "{" ) ) {
-		// it's just a prototype, so get the ; and move on
-		ExpectToken( ";" );
-		return;
-	}
+// RAVEN BEGIN
+// abahr: moved to below parm size calc as per Jim D
+// RAVEN END
 
 	// calculate stack space used by parms
 	numParms = type->NumParameters();
+// RAVEN BEGIN
+// abahr
+	func->parmTotal = 0;
+	func->parmSize.Clear();
+// RAVEN END
 	func->parmSize.SetNum( numParms );
 	for( i = 0; i < numParms; i++ ) {
 		parmType = type->GetParmType( i );
@@ -2174,6 +2159,16 @@ void idCompiler::ParseFunctionDef( idTypeDef *returnType, const char *name ) {
 		}
 		func->parmTotal += func->parmSize[ i ];
 	}
+
+// RAVEN BEGIN
+// abahr: moved here so prototypes calculate parm sizes
+	// check if this is a prototype or declaration
+	if ( !CheckToken( "{" ) ) {
+		// it's just a prototype, so get the ; and move on
+		ExpectToken( ";" );
+		return;
+	}
+// RAVEN END
 
 	// define the parms
 	for( i = 0; i < numParms; i++ ) {
@@ -2189,7 +2184,7 @@ void idCompiler::ParseFunctionDef( idTypeDef *returnType, const char *name ) {
 	func->firstStatement = gameLocal.program.NumStatements();
 
 	// check if we should call the super class constructor
-	if ( oldscope->TypeDef()->Inherits( &type_object ) && !idStr::Icmp( name, "init" ) ) {
+	if ( oldscope->TypeDef()->Inherits( &type_object ) && !stricmp( name, "init" ) ) {
 		idTypeDef *superClass;
 		function_t *constructorFunc = NULL;
 
@@ -2216,7 +2211,7 @@ void idCompiler::ParseFunctionDef( idTypeDef *returnType, const char *name ) {
 	}
 
 	// check if we should call the super class destructor
-	if ( oldscope->TypeDef()->Inherits( &type_object ) && !idStr::Icmp( name, "destroy" ) ) {
+	if ( oldscope->TypeDef()->Inherits( &type_object ) && !stricmp( name, "destroy" ) ) {
 		idTypeDef *superClass;
 		function_t *destructorFunc = NULL;
 
@@ -2229,14 +2224,12 @@ void idCompiler::ParseFunctionDef( idTypeDef *returnType, const char *name ) {
 		}
 
 		if ( destructorFunc ) {
-			if ( func->firstStatement < gameLocal.program.NumStatements() ) {
-				// change all returns to point to the call to the destructor
-				pos = &gameLocal.program.GetStatement( func->firstStatement );
-				for( i = func->firstStatement; i < gameLocal.program.NumStatements(); i++, pos++ ) {
-					if ( pos->op == OP_RETURN ) {
-						pos->op = OP_GOTO;
-						pos->a = JumpDef( i, gameLocal.program.NumStatements() );
-					}
+			// change all returns to point to the call to the destructor
+			pos = &gameLocal.program.GetMutableStatement( func->firstStatement );
+			for( i = func->firstStatement; i < gameLocal.program.NumStatements(); i++, pos++ ) {
+				if ( pos->op == OP_RETURN ) {
+					pos->op = OP_GOTO;
+					pos->a = JumpDef( i, gameLocal.program.NumStatements() );
 				}
 			}
 
@@ -2251,7 +2244,7 @@ void idCompiler::ParseFunctionDef( idTypeDef *returnType, const char *name ) {
 // Disabled code since it caused a function to fall through to the next function when last statement is in the form "if ( x ) { return; }"
 #if 0
 	// don't bother adding a return opcode if the "return" statement was used.
-	if ( ( func->firstStatement == gameLocal.program.NumStatements() ) || ( gameLocal.program.GetStatement( gameLocal.program.NumStatements() - 1 ).op != OP_RETURN ) ) {
+	if ( ( func->firstStatement == gameLocal.program.NumStatements() ) || ( gameLocal.program.GetMutableStatement( gameLocal.program.NumStatements() - 1 ).op != OP_RETURN ) ) {
 		// emit an end of statements opcode
 		EmitOpcode( OP_RETURN, 0, 0 );
 	}
@@ -2435,7 +2428,7 @@ void idCompiler::ParseEventDef( idTypeDef *returnType, const char *name ) {
 	ExpectToken( "(" );
 
 	format = ev->GetArgFormat();
-	num = strlen( format );
+	num = idLib::SizeToInt( strlen( format ), "idCompiler::ParseEventDef" );
 	for( i = 0; i < num; i++ ) {
 		expectedType = GetTypeForEventArg( format[ i ] );
 		if ( !expectedType || ( expectedType == &type_void ) ) {
@@ -2583,6 +2576,7 @@ compiles the 0 terminated text, adding definitions to the program structure
 ============
 */
 void idCompiler::CompileFile( const char *text, const char *filename, bool toConsole ) {
+	idStr orig = filename;
 	idTimer compile_time;
 	bool error;
 
@@ -2601,7 +2595,7 @@ void idCompiler::CompileFile( const char *text, const char *filename, bool toCon
 	memset( &immediate, 0, sizeof( immediate ) );
 
 	parser.SetFlags( LEXFL_ALLOWMULTICHARLITERALS );
-	parser.LoadMemory( text, strlen( text ), filename );
+	parser.LoadMemory( text, idLib::SizeToInt( strlen( text ), "idCompiler::CompileFile" ), filename );
 	parserPtr = &parser;
 
 	// unread tokens to include script defines
@@ -2655,6 +2649,6 @@ void idCompiler::CompileFile( const char *text, const char *filename, bool toCon
 
 	compile_time.Stop();
 	if ( !toConsole ) {
-		gameLocal.Printf( "Compiled '%s': %.1f ms\n", filename, compile_time.Milliseconds() );
+		gameLocal.Printf( "Compiled '%s': %.1f ms\n", orig.c_str(), compile_time.Milliseconds() );
 	}
 }

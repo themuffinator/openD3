@@ -1,43 +1,17 @@
 /*
-===========================================================================
-
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
-
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
-
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
-/*
 sys_event.cpp
 
 Event are used for scheduling tasks and for linking script commands.
 
 */
 
-#include "../../idlib/precompiled.h"
-#pragma hdrstop
+
+
 
 #include "../Game_local.h"
+#include <memory>
 
-#define MAX_EVENTSPERFRAME			4096
+#define MAX_EVENTSPERFRAME			8192		// Upped from 4096
 //#define CREATE_EVENT_CODE
 
 /***********************************************************************
@@ -51,6 +25,107 @@ int idEventDef::numEventDefs = 0;
 
 static bool eventError = false;
 static char eventErrorMsg[ 128 ];
+
+// Event data is allocated from pointer-aligned blocks. Keep every argument on
+// that alignment and add explicit padding before trace_t, whose old bool +
+// trace layout placed the trace at an unaligned address on 64-bit targets.
+static const size_t EVENT_ARG_ALIGNMENT = alignof( trace_t ) > alignof( intptr_t ) ? alignof( trace_t ) : alignof( intptr_t );
+static_assert( EVENT_ARG_ALIGNMENT <= 16, "event data allocator alignment is insufficient" );
+static const size_t EVENT_TRACE_DATA_OFFSET =
+	( sizeof( bool ) + alignof( trace_t ) - 1 ) & ~( alignof( trace_t ) - 1 );
+static const size_t EVENT_TRACE_MATERIAL_OFFSET = EVENT_TRACE_DATA_OFFSET + sizeof( trace_t );
+static const size_t EVENT_TRACE_ARG_SIZE = EVENT_TRACE_MATERIAL_OFFSET + MAX_STRING_LEN;
+
+static size_t idEvent_GetLegacyArgLayout( const idEventDef *eventdef, size_t offsets[ D_EVENT_MAXARGS ] ) {
+	const char *formatspec = eventdef->GetArgFormat();
+	size_t size = 0;
+
+	for ( int i = 0; i < eventdef->GetNumArgs(); i++ ) {
+		offsets[ i ] = size;
+		switch ( formatspec[ i ] ) {
+		case D_EVENT_FLOAT:
+		case D_EVENT_INTEGER:
+		case D_EVENT_INTEGER64bit:
+		case D_EVENT_ENTITY:
+		case D_EVENT_ENTITY_NULL:
+			size += sizeof( intptr_t );
+			break;
+		case D_EVENT_VECTOR:
+			size += E_EVENT_SIZEOF_VEC;
+			break;
+		case D_EVENT_STRING:
+			size += MAX_STRING_LEN;
+			break;
+		case D_EVENT_TRACE:
+			size += sizeof( bool ) + sizeof( trace_t ) + MAX_STRING_LEN;
+			break;
+		default:
+			return 0;
+		}
+	}
+	return size;
+}
+
+static void idEvent_ConvertLegacyRawArgs( idRestoreGame *savefile, const idEventDef *eventdef, byte *dest, const byte *source,
+		const size_t legacyOffsets[ D_EVENT_MAXARGS ] ) {
+	const char *formatspec = eventdef->GetArgFormat();
+
+	for ( int i = 0; i < eventdef->GetNumArgs(); i++ ) {
+		byte *destPtr = dest + eventdef->GetArgOffset( i );
+		const byte *sourcePtr = source + legacyOffsets[ i ];
+		size_t copySize = 0;
+
+		switch ( formatspec[ i ] ) {
+		case D_EVENT_FLOAT:
+		case D_EVENT_INTEGER:
+		case D_EVENT_INTEGER64bit:
+		case D_EVENT_ENTITY:
+		case D_EVENT_ENTITY_NULL:
+			copySize = sizeof( intptr_t );
+			break;
+		case D_EVENT_VECTOR:
+			copySize = E_EVENT_SIZEOF_VEC;
+			break;
+		case D_EVENT_STRING:
+			if ( memchr( sourcePtr, '\0', MAX_STRING_LEN ) == NULL ) {
+				savefile->Error( "idEvent::Restore: unterminated legacy string on arg %d of event '%s'", i, eventdef->GetName() );
+			}
+			copySize = MAX_STRING_LEN;
+			break;
+		case D_EVENT_TRACE: {
+			if ( *sourcePtr > 1 ) {
+				savefile->Error( "idEvent::Restore: invalid legacy trace flag on arg %d of event '%s'", i, eventdef->GetName() );
+			}
+			const bool hasTrace = *sourcePtr != 0;
+			*reinterpret_cast<bool *>( destPtr ) = hasTrace;
+			if ( hasTrace ) {
+				memcpy( destPtr + EVENT_TRACE_DATA_OFFSET, sourcePtr + sizeof( bool ), sizeof( trace_t ) );
+				memcpy( destPtr + EVENT_TRACE_MATERIAL_OFFSET,
+					sourcePtr + sizeof( bool ) + sizeof( trace_t ), MAX_STRING_LEN );
+				trace_t *trace = reinterpret_cast<trace_t *>( destPtr + EVENT_TRACE_DATA_OFFSET );
+				if ( trace->c.material != NULL ) {
+					const char *materialName = reinterpret_cast<const char *>( destPtr + EVENT_TRACE_MATERIAL_OFFSET );
+					if ( memchr( materialName, '\0', MAX_STRING_LEN ) == NULL ) {
+						savefile->Error( "idEvent::Restore: unterminated legacy trace material on arg %d of event '%s'", i, eventdef->GetName() );
+					}
+					// Repair the saved address before an immediate resave can use it.
+					trace->c.material = declManager->FindMaterial( materialName, true );
+				}
+				// The raw format saved no material-type name or hit-map coordinates.
+				// Its old address cannot survive a load; use the material's base type.
+				trace->c.materialType = trace->c.material != NULL ? trace->c.material->GetMaterialType() : NULL;
+			}
+			break;
+		}
+		default:
+			break;
+		}
+
+		if ( copySize ) {
+			memcpy( destPtr, sourcePtr, copySize );
+		}
+	}
+}
 
 /*
 ================
@@ -75,32 +150,38 @@ idEventDef::idEventDef( const char *command, const char *formatspec, char return
 	this->formatspec = formatspec;
 	this->returnType = returnType;
 
-	numargs = strlen( formatspec );
-	assert( numargs <= D_EVENT_MAXARGS );
-	if ( numargs > D_EVENT_MAXARGS ) {
+	const size_t formatLength = strlen( formatspec );
+	assert( formatLength <= D_EVENT_MAXARGS );
+	if ( formatLength > D_EVENT_MAXARGS ) {
 		eventError = true;
 		sprintf( eventErrorMsg, "idEventDef::idEventDef : Too many args for '%s' event.", name );
 		return;
 	}
+	numargs = static_cast<int>( formatLength );
 
 	// make sure the format for the args is valid, calculate the formatspecindex, and the offsets for each arg
 	bits = 0;
 	argsize = 0;
 	memset( argOffset, 0, sizeof( argOffset ) );
 	for( i = 0; i < numargs; i++ ) {
+		argsize = ( argsize + EVENT_ARG_ALIGNMENT - 1 ) & ~( EVENT_ARG_ALIGNMENT - 1 );
 		argOffset[ i ] = argsize;
 		switch( formatspec[ i ] ) {
 		case D_EVENT_FLOAT :
 			bits |= 1 << i;
-			argsize += sizeof( float );
+			argsize += sizeof(intptr_t);
 			break;
 
 		case D_EVENT_INTEGER :
-			argsize += sizeof( int );
+			argsize += sizeof(intptr_t);
+			break;
+
+		case D_EVENT_INTEGER64bit :
+			argsize += sizeof(intptr_t);
 			break;
 
 		case D_EVENT_VECTOR :
-			argsize += sizeof( idVec3 );
+			argsize += E_EVENT_SIZEOF_VEC;
 			break;
 
 		case D_EVENT_STRING :
@@ -108,15 +189,15 @@ idEventDef::idEventDef( const char *command, const char *formatspec, char return
 			break;
 
 		case D_EVENT_ENTITY :
-			argsize += sizeof( idEntityPtr<idEntity> );
+			argsize += sizeof( intptr_t);
 			break;
 
 		case D_EVENT_ENTITY_NULL :
-			argsize += sizeof( idEntityPtr<idEntity> );
+			argsize += sizeof(intptr_t);
 			break;
 
 		case D_EVENT_TRACE :
-			argsize += sizeof( trace_t ) + MAX_STRING_LEN + sizeof( bool );
+			argsize += EVENT_TRACE_ARG_SIZE;
 			break;
 
 		default :
@@ -135,8 +216,8 @@ idEventDef::idEventDef( const char *command, const char *formatspec, char return
 	eventnum = numEventDefs;
 	for( i = 0; i < eventnum; i++ ) {
 		ev = eventDefList[ i ];
-		if ( strcmp( command, ev->name ) == 0 ) {
-			if ( strcmp( formatspec, ev->formatspec ) != 0 ) {
+		if ( idStr::Cmp( command, ev->name ) == 0 ) {
+			if ( idStr::Cmp( formatspec, ev->formatspec ) != 0 ) {
 				eventError = true;
 				sprintf( eventErrorMsg, "idEvent '%s' defined twice with same name but differing format strings ('%s'!='%s').",
 					command, formatspec, ev->formatspec );
@@ -199,7 +280,7 @@ const idEventDef *idEventDef::FindEvent( const char *name ) {
 	num = numEventDefs;
 	for( i = 0; i < num; i++ ) {
 		ev = eventDefList[ i ];
-		if ( strcmp( name, ev->name ) == 0 ) {
+		if ( idStr::Cmp( name, ev->name ) == 0 ) {
 			return ev;
 		}
 	}
@@ -219,7 +300,145 @@ static idEvent EventPool[ MAX_EVENTS ];
 
 bool idEvent::initialized = false;
 
-idDynamicBlockAlloc<byte, 16 * 1024, 256>	idEvent::eventDataAllocator;
+idDynamicBlockAlloc<byte, 16 * 1024, 256, MA_EVENT>	idEvent::eventDataAllocator;
+
+static const int EVENT_SAVE_FORMAT_TYPED = -2;
+
+static void idEvent_WriteIntPtr( idSaveGame *savefile, const intptr_t value ) {
+	const uint64_t bits = static_cast<uint64_t>( static_cast<int64_t>( value ) );
+	savefile->WriteInt( static_cast<int>( bits & 0xffffffffu ) );
+	savefile->WriteInt( static_cast<int>( ( bits >> 32 ) & 0xffffffffu ) );
+}
+
+static intptr_t idEvent_ReadIntPtr( idRestoreGame *savefile ) {
+	int low;
+	int high;
+
+	savefile->ReadInt( low );
+	savefile->ReadInt( high );
+
+	const uint64_t bits = static_cast<uint32_t>( low ) | ( static_cast<uint64_t>( static_cast<uint32_t>( high ) ) << 32 );
+	return static_cast<intptr_t>( static_cast<int64_t>( bits ) );
+}
+
+static void idEvent_StoreTraceMaterialName( byte *dataPtr ) {
+	trace_t *trace = reinterpret_cast<trace_t *>( dataPtr + EVENT_TRACE_DATA_OFFSET );
+	char *materialName = reinterpret_cast<char *>( dataPtr + EVENT_TRACE_MATERIAL_OFFSET );
+
+	if ( trace->c.material ) {
+		idStr::Copynz( materialName, trace->c.material->GetName(), MAX_STRING_LEN );
+	} else {
+		materialName[0] = '\0';
+	}
+}
+
+static void idEvent_SaveTypedArgs( idSaveGame *savefile, const idEventDef *eventdef, byte *eventData ) {
+	const char *formatspec = eventdef->GetArgFormat();
+	const int numargs = eventdef->GetNumArgs();
+
+	for ( int i = 0; i < numargs; i++ ) {
+		const size_t offset = eventdef->GetArgOffset( i );
+		byte *dataPtr = eventData + offset;
+
+		switch( formatspec[ i ] ) {
+		case D_EVENT_FLOAT :
+			savefile->WriteFloat( *reinterpret_cast<float *>( dataPtr ) );
+			break;
+
+		case D_EVENT_INTEGER :
+			savefile->WriteInt( static_cast<int>( *reinterpret_cast<intptr_t *>( dataPtr ) ) );
+			break;
+
+		case D_EVENT_INTEGER64bit :
+			idEvent_WriteIntPtr( savefile, *reinterpret_cast<intptr_t *>( dataPtr ) );
+			break;
+
+		case D_EVENT_VECTOR :
+			savefile->WriteVec3( *reinterpret_cast<idVec3 *>( dataPtr ) );
+			break;
+
+		case D_EVENT_STRING :
+			savefile->WriteString( reinterpret_cast<const char *>( dataPtr ) );
+			break;
+
+		case D_EVENT_ENTITY :
+		case D_EVENT_ENTITY_NULL :
+			reinterpret_cast< idEntityPtr<idEntity> * >( dataPtr )->Save( savefile );
+			break;
+
+		case D_EVENT_TRACE : {
+			const bool hasTrace = *reinterpret_cast<bool *>( dataPtr );
+			savefile->WriteBool( hasTrace );
+			if ( hasTrace ) {
+				savefile->WriteTrace( *reinterpret_cast<trace_t *>( dataPtr + EVENT_TRACE_DATA_OFFSET ) );
+			}
+			break;
+		}
+
+		default :
+			gameLocal.Error( "idEvent::Save : Invalid arg format '%s' string for '%s' event.", formatspec, eventdef->GetName() );
+			break;
+		}
+	}
+}
+
+static void idEvent_RestoreTypedArgs( idRestoreGame *savefile, const idEventDef *eventdef, byte *eventData ) {
+	const char *formatspec = eventdef->GetArgFormat();
+	const int numargs = eventdef->GetNumArgs();
+
+	for ( int i = 0; i < numargs; i++ ) {
+		const size_t offset = eventdef->GetArgOffset( i );
+		byte *dataPtr = eventData + offset;
+
+		switch( formatspec[ i ] ) {
+		case D_EVENT_FLOAT :
+			savefile->ReadFloat( *reinterpret_cast<float *>( dataPtr ) );
+			break;
+
+		case D_EVENT_INTEGER : {
+			int value;
+			savefile->ReadInt( value );
+			*reinterpret_cast<intptr_t *>( dataPtr ) = value;
+			break;
+		}
+
+		case D_EVENT_INTEGER64bit :
+			*reinterpret_cast<intptr_t *>( dataPtr ) = idEvent_ReadIntPtr( savefile );
+			break;
+
+		case D_EVENT_VECTOR :
+			savefile->ReadVec3( *reinterpret_cast<idVec3 *>( dataPtr ) );
+			break;
+
+		case D_EVENT_STRING : {
+			idStr string;
+			savefile->ReadString( string );
+			idStr::Copynz( reinterpret_cast<char *>( dataPtr ), string.c_str(), MAX_STRING_LEN );
+			break;
+		}
+
+		case D_EVENT_ENTITY :
+		case D_EVENT_ENTITY_NULL :
+			reinterpret_cast< idEntityPtr<idEntity> * >( dataPtr )->Restore( savefile );
+			break;
+
+		case D_EVENT_TRACE : {
+			bool hasTrace;
+			savefile->ReadBool( hasTrace );
+			*reinterpret_cast<bool *>( dataPtr ) = hasTrace;
+			if ( hasTrace ) {
+				savefile->ReadTrace( *reinterpret_cast<trace_t *>( dataPtr + EVENT_TRACE_DATA_OFFSET ) );
+				idEvent_StoreTraceMaterialName( dataPtr );
+			}
+			break;
+		}
+
+		default :
+			savefile->Error( "idEvent::Restore : Invalid arg format '%s' string for '%s' event.", formatspec, eventdef->GetName() );
+			break;
+		}
+	}
+}
 
 /*
 ================
@@ -228,6 +447,28 @@ idEvent::~idEvent()
 */
 idEvent::~idEvent() {
 	Free();
+}
+
+
+void idEvent::WriteDebugInfo( void ) {
+	idEvent	*event;
+	int		count = 0;
+
+	idFile *FH = fileSystem->OpenFileAppend( "idEvents.txt" );
+
+	FH->Printf( "Num Events = %d\n", EventQueue.Num() );
+
+	event = EventQueue.Next();
+	while( event != NULL ) {
+		count++;
+
+		FH->Printf( "%d. %d - %s - %s - %s\n", count, event->time, event->eventdef->GetName(), event->typeinfo->classname, event->object->GetClassname() );
+
+		event = event->eventNode.Next();
+	}
+
+	FH->Printf( "\n\n" );
+	fileSystem->CloseFile( FH );
 }
 
 /*
@@ -245,7 +486,14 @@ idEvent *idEvent::Alloc( const idEventDef *evdef, int numargs, va_list args ) {
 	const char	*materialName;
 
 	if ( FreeEvents.IsListEmpty() ) {
-		gameLocal.Error( "idEvent::Alloc : No more free events" );
+		// Map shutdown clears the whole queue, so an event posted while the map
+		// is torn down would never run. Dropping it keeps a full queue, which a
+		// refused load can leave behind, from raising a second error in teardown.
+		if ( gameLocal.GameState() == GAMESTATE_SHUTDOWN ) {
+			return NULL;
+		}
+		WriteDebugInfo( );
+		gameLocal.Error( "idEvent::Alloc : No more free events for '%s' event.", evdef->GetName() );
 	}
 
 	ev = FreeEvents.Next();
@@ -259,7 +507,15 @@ idEvent *idEvent::Alloc( const idEventDef *evdef, int numargs, va_list args ) {
 
 	size = evdef->GetArgSize();
 	if ( size ) {
-		ev->data = eventDataAllocator.Alloc( size );
+		if ( size > ID_HEAP_MAX_SIZE ) {
+			gameLocal.Error( "idEvent::Alloc : Event data is too large (%zu bytes) for '%s'.", size, evdef->GetName() );
+			throw idAllocError( "idEvent data exceeds the 32-bit heap limit" );
+		}
+		ev->data = eventDataAllocator.Alloc( static_cast<int>( size ) );
+		if ( ev->data == NULL ) {
+			gameLocal.Error( "idEvent::Alloc : Failed to allocate %zu bytes for '%s'.", size, evdef->GetName() );
+			throw idAllocError( "idEvent data allocation failed" );
+		}
 		memset( ev->data, 0, size );
 	} else {
 		ev->data = NULL;
@@ -269,18 +525,32 @@ idEvent *idEvent::Alloc( const idEventDef *evdef, int numargs, va_list args ) {
 	for( i = 0; i < numargs; i++ ) {
 		arg = va_arg( args, idEventArg * );
 		if ( format[ i ] != arg->type ) {
-			// when NULL is passed in for an entity, it gets cast as an integer 0, so don't give an error when it happens
-			if ( !( ( ( format[ i ] == D_EVENT_TRACE ) || ( format[ i ] == D_EVENT_ENTITY ) ) && ( arg->type == 'd' ) && ( arg->value == 0 ) ) ) {
-				gameLocal.Error( "idEvent::Alloc : Wrong type passed in for arg # %d on '%s' event.", i, evdef->GetName() );
-			}
+// RAVEN BEGIN
+// abahr: type checking change as per Jim D.
+			//if ( ( format[ i ] == D_EVENT_ENTITY_NULL ) && ( arg->type == D_EVENT_ENTITY ) ) {
+			//// these types are identical, so allow them
+			//} else if ( ( arg->type == D_EVENT_INTEGER ) && ( arg->value == 0 ) ) {
+			//	if ( ( format[ i ] == D_EVENT_ENTITY ) || ( format[ i ] == D_EVENT_ENTITY_NULL ) || ( format[ i ] == D_EVENT_TRACE ) ) {
+			//	 // when NULL is passed in for an entity or trace, it gets cast as an integer 0, so don't give an error when it happens
+			//	} else {
+			//		 gameLocal.Error( "idEvent::Alloc : Wrong type passed in for arg # %d on '%s' event.", i, evdef->GetName() );
+			//	}
+			//} else {
+			//	gameLocal.Error( "idEvent::Alloc : Wrong type passed in for arg # %d on '%s' event.", i, evdef->GetName() );
+			//}
+// RAVEN END
 		}
 
 		dataPtr = &ev->data[ evdef->GetArgOffset( i ) ];
 
 		switch( format[ i ] ) {
 		case D_EVENT_FLOAT :
+			*reinterpret_cast<int *>( dataPtr ) = static_cast<int>( arg->value );
+			break;
+
 		case D_EVENT_INTEGER :
-			*reinterpret_cast<int *>( dataPtr ) = arg->value;
+		case D_EVENT_INTEGER64bit :
+			*reinterpret_cast<intptr_t *>( dataPtr ) = arg->value;
 			break;
 
 		case D_EVENT_VECTOR :
@@ -295,22 +565,33 @@ idEvent *idEvent::Alloc( const idEventDef *evdef, int numargs, va_list args ) {
 			}
 			break;
 
+// RAVEN BEGIN
+// abahr: type checking change as per Jim D.
+// jshepard: TODO FIXME HACK this never ever produces desired, positive results. Events should be built to prepare for null entities, especially when dealing with 
+//							 script events. This will throw a warning, and events should be prepared to deal with null entities. 
 		case D_EVENT_ENTITY :
+			if ( reinterpret_cast<idEntity *>( arg->value ) == NULL ) {
+				gameLocal.Warning( "idEvent::Alloc : NULL entity passed in to event function that expects a non-NULL pointer on arg # %d on '%s' event.", i, evdef->GetName() );
+			}
+			*reinterpret_cast< idEntityPtr<idEntity> * >( dataPtr ) = reinterpret_cast<idEntity *>( arg->value );
+			break;
+ 
 		case D_EVENT_ENTITY_NULL :
 			*reinterpret_cast< idEntityPtr<idEntity> * >( dataPtr ) = reinterpret_cast<idEntity *>( arg->value );
 			break;
+//RAVEN END
 
 		case D_EVENT_TRACE :
 			if ( arg->value ) {
 				*reinterpret_cast<bool *>( dataPtr ) = true;
-				*reinterpret_cast<trace_t *>( dataPtr + sizeof( bool ) ) = *reinterpret_cast<const trace_t *>( arg->value );
+				*reinterpret_cast<trace_t *>( dataPtr + EVENT_TRACE_DATA_OFFSET ) = *reinterpret_cast<const trace_t *>( arg->value );
 
 				// save off the material as a string since the pointer won't be valid in save games.
 				// since we save off the entire trace_t structure, if the material is NULL here,
 				// it will be NULL when we process it, so we don't need to save off anything in that case.
 				if ( reinterpret_cast<const trace_t *>( arg->value )->c.material ) {
 					materialName = reinterpret_cast<const trace_t *>( arg->value )->c.material->GetName();
-					idStr::Copynz( reinterpret_cast<char *>( dataPtr + sizeof( bool ) + sizeof( trace_t ) ), materialName, MAX_STRING_LEN );
+					idStr::Copynz( reinterpret_cast<char *>( dataPtr + EVENT_TRACE_MATERIAL_OFFSET ), materialName, MAX_STRING_LEN );
 				}
 			} else {
 				*reinterpret_cast<bool *>( dataPtr ) = false;
@@ -344,10 +625,20 @@ void idEvent::CopyArgs( const idEventDef *evdef, int numargs, va_list args, intp
 	for( i = 0; i < numargs; i++ ) {
 		arg = va_arg( args, idEventArg * );
 		if ( format[ i ] != arg->type ) {
-			// when NULL is passed in for an entity, it gets cast as an integer 0, so don't give an error when it happens
-			if ( !( ( ( format[ i ] == D_EVENT_TRACE ) || ( format[ i ] == D_EVENT_ENTITY ) ) && ( arg->type == 'd' ) && ( arg->value == 0 ) ) ) {
-				gameLocal.Error( "idEvent::CopyArgs : Wrong type passed in for arg # %d on '%s' event.", i, evdef->GetName() );
-			}
+// RAVEN BEGIN
+// abahr: type checking change as per Jim D.
+			//if ( ( format[ i ] == D_EVENT_ENTITY_NULL ) && ( arg->type == D_EVENT_ENTITY ) ) {
+			//// these types are identical, so allow them
+			//} else if ( ( arg->type == D_EVENT_INTEGER ) && ( arg->value == 0 ) ) {
+			//	if ( ( format[ i ] == D_EVENT_ENTITY ) || ( format[ i ] == D_EVENT_ENTITY_NULL ) ) {
+			//	// when NULL is passed in for an entity, it gets cast as an integer 0, so don't give an error when it happens
+			//	} else {
+			//		gameLocal.Error( "idEvent::Alloc : Wrong type passed in for arg # %d on '%s' event.", i, evdef->GetName() );
+			//	}
+			//} else {
+			//	gameLocal.Error( "idEvent::Alloc : Wrong type passed in for arg # %d on '%s' event.", i, evdef->GetName() );
+			//}
+// RAVEN END
 		}
 
 		data[ i ] = arg->value;
@@ -430,6 +721,32 @@ void idEvent::CancelEvents( const idClass *obj, const idEventDef *evdef ) {
 	}
 }
 
+// RAVEN BEGIN
+// abahr:
+/*
+================
+idEvent::EventIsPosted
+================
+*/
+bool idEvent::EventIsPosted( const idClass *obj, const idEventDef *evdef ) {
+	idEvent *event;
+	idEvent *next;
+
+	if ( !initialized ) {
+		return false;
+	}
+
+	for( event = EventQueue.Next(); event != NULL; event = next ) {
+		next = event->eventNode.Next();
+		if( event->object == obj && evdef == event->eventdef ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+// RAVEN END
+
 /*
 ================
 idEvent::ClearEventList
@@ -458,10 +775,11 @@ idEvent::ServiceEvents
 ================
 */
 void idEvent::ServiceEvents( void ) {
+	gameLocal.NotePresentationGameplay( "idEvent::ServiceEvents" );
 	idEvent		*event;
 	int			num;
 	intptr_t	args[ D_EVENT_MAXARGS ];
-	int			offset;
+	size_t		offset;
 	int			i;
 	int			numargs;
 	const char	*formatspec;
@@ -472,6 +790,11 @@ void idEvent::ServiceEvents( void ) {
 
 	num = 0;
 	while( !EventQueue.IsListEmpty() ) {
+		
+#ifdef _XENON
+		session->PacifierUpdate();
+#endif
+		
 		event = EventQueue.Next();
 		assert( event );
 
@@ -488,8 +811,12 @@ void idEvent::ServiceEvents( void ) {
 			data = event->data;
 			switch( formatspec[ i ] ) {
 			case D_EVENT_FLOAT :
-			case D_EVENT_INTEGER :
 				args[ i ] = *reinterpret_cast<int *>( &data[ offset ] );
+				break;
+
+			case D_EVENT_INTEGER :
+			case D_EVENT_INTEGER64bit :
+				args[ i ] = *reinterpret_cast<intptr_t *>( &data[ offset ] );
 				break;
 
 			case D_EVENT_VECTOR :
@@ -499,20 +826,27 @@ void idEvent::ServiceEvents( void ) {
 			case D_EVENT_STRING :
 				*reinterpret_cast<const char **>( &args[ i ] ) = reinterpret_cast<const char *>( &data[ offset ] );
 				break;
-
+// RAVEN BEGIN
+// abahr: type checking change as per Jim D.
 			case D_EVENT_ENTITY :
+				*reinterpret_cast<idEntity **>( &args[ i ] ) = reinterpret_cast< idEntityPtr<idEntity> * >( &data[ offset ] )->GetEntity();
+				if ( *reinterpret_cast<idEntity **>( &args[ i ] ) == NULL ) {
+					gameLocal.Warning( "idEvent::ServiceEvents : NULL entity passed in to event function that expects a non-NULL pointer on arg # %d on '%s' event.", i, ev->GetName() );
+				}
+				break;
+ 
 			case D_EVENT_ENTITY_NULL :
 				*reinterpret_cast<idEntity **>( &args[ i ] ) = reinterpret_cast< idEntityPtr<idEntity> * >( &data[ offset ] )->GetEntity();
 				break;
-
+// RAVEN END
 			case D_EVENT_TRACE :
 				tracePtr = reinterpret_cast<trace_t **>( &args[ i ] );
 				if ( *reinterpret_cast<bool *>( &data[ offset ] ) ) {
-					*tracePtr = reinterpret_cast<trace_t *>( &data[ offset + sizeof( bool ) ] );
+					*tracePtr = reinterpret_cast<trace_t *>( &data[ offset + EVENT_TRACE_DATA_OFFSET ] );
 
 					if ( ( *tracePtr )->c.material != NULL ) {
 						// look up the material name to get the material pointer
-						materialName = reinterpret_cast<const char *>( &data[ offset + sizeof( bool ) + sizeof( trace_t ) ] );
+						materialName = reinterpret_cast<const char *>( &data[ offset + EVENT_TRACE_MATERIAL_OFFSET ] );
 						( *tracePtr )->c.material = declManager->FindMaterial( materialName, true );
 					}
 				} else {
@@ -529,7 +863,11 @@ void idEvent::ServiceEvents( void ) {
 		// is deleted, the event won't be freed twice
 		event->eventNode.Remove();
 		assert( event->object );
-		event->object->ProcessEventArgPtr( ev, args );
+		
+		// savegames can trash the object, so do this for safety
+		if ( event->object ) {
+			event->object->ProcessEventArgPtr( ev, args );
+		}
 
 #if 0
 		// event functions may never leave return values on the FPU stack
@@ -612,12 +950,7 @@ idEvent::Save
 ================
 */
 void idEvent::Save( idSaveGame *savefile ) {
-	char *str;
-	int i, size;
 	idEvent	*event;
-	byte *dataPtr;
-	bool validTrace;
-	const char	*format;
 
 	savefile->WriteInt( EventQueue.Num() );
 
@@ -627,45 +960,9 @@ void idEvent::Save( idSaveGame *savefile ) {
 		savefile->WriteString( event->eventdef->GetName() );
 		savefile->WriteString( event->typeinfo->classname );
 		savefile->WriteObject( event->object );
-		savefile->WriteInt( event->eventdef->GetArgSize() );
-		format = event->eventdef->GetArgFormat();
-		for ( i = 0, size = 0; i < event->eventdef->GetNumArgs(); ++i) {
-			dataPtr = &event->data[ event->eventdef->GetArgOffset( i ) ];
-			switch( format[ i ] ) {
-				case D_EVENT_FLOAT :
-					savefile->WriteFloat( *reinterpret_cast<float *>( dataPtr ) );
-					size += sizeof( float );
-					break;
-				case D_EVENT_INTEGER :
-				case D_EVENT_ENTITY :
-				case D_EVENT_ENTITY_NULL :
-					savefile->WriteInt( *reinterpret_cast<int *>( dataPtr ) );
-					size += sizeof( int );
-					break;
-				case D_EVENT_VECTOR :
-					savefile->WriteVec3( *reinterpret_cast<idVec3 *>( dataPtr ) );
-					size += sizeof( idVec3 );
-					break;
-				case D_EVENT_TRACE :
-					validTrace = *reinterpret_cast<bool *>( dataPtr );
-					savefile->WriteBool( validTrace );
-					size += sizeof( bool );
-					if ( validTrace ) {
-						size += sizeof( trace_t );
-						const trace_t &t = *reinterpret_cast<trace_t *>( dataPtr + sizeof( bool ) );
-						SaveTrace( savefile, t );
-						if ( t.c.material ) {
-							size += MAX_STRING_LEN;
-							str = reinterpret_cast<char *>( dataPtr + sizeof( bool ) + sizeof( trace_t ) );
-							savefile->Write( str, MAX_STRING_LEN );
-						}
-					}
-					break;
-				default:
-					break;
-			}
-		}
-		assert( size == event->eventdef->GetArgSize() );
+		savefile->WriteInt( EVENT_SAVE_FORMAT_TYPED );
+		idEvent_SaveTypedArgs( savefile, event->eventdef, event->data );
+
 		event = event->eventNode.Next();
 	}
 }
@@ -676,14 +973,17 @@ idEvent::Restore
 ================
 */
 void idEvent::Restore( idRestoreGame *savefile ) {
-	char    *str;
-	int		num, argsize, i, j, size;
+	int		i;
+	int		num;
+	int		argsize;
 	idStr	name;
-	byte *dataPtr;
 	idEvent	*event;
-	const char	*format;
+	int		previousTime = 0;
 
 	savefile->ReadInt( num );
+	if ( num < 0 || num > MAX_EVENTS ) {
+		savefile->Error( "idEvent::Restore: invalid event count %d", num );
+	}
 
 	for ( i = 0; i < num; i++ ) {
 		if ( FreeEvents.IsListEmpty() ) {
@@ -695,6 +995,12 @@ void idEvent::Restore( idRestoreGame *savefile ) {
 		event->eventNode.AddToEnd( EventQueue );
 
 		savefile->ReadInt( event->time );
+		// ServiceEvents stops at the first future event, so preserve the
+		// chronological queue invariant maintained by Schedule.
+		if ( i > 0 && event->time < previousTime ) {
+			savefile->Error( "idEvent::Restore: event %d is out of order (%d after %d)", i, event->time, previousTime );
+		}
+		previousTime = event->time;
 
 		// read the event name
 		savefile->ReadString( name );
@@ -710,108 +1016,71 @@ void idEvent::Restore( idRestoreGame *savefile ) {
 			savefile->Error( "idEvent::Restore: unknown class '%s' on event '%s'", name.c_str(), event->eventdef->GetName() );
 		}
 
-		savefile->ReadObject( event->object );
+		savefile->ReadObject( event->object, *event->typeinfo, event->eventdef->GetName() );
+		if ( event->object == NULL ) {
+			savefile->Error( "idEvent::Restore: event '%s' has a NULL target object", event->eventdef->GetName() );
+		}
+		if ( !event->object->RespondsTo( *event->eventdef ) ) {
+			savefile->Error( "idEvent::Restore: target class '%s' does not support event '%s'", event->typeinfo->classname, event->eventdef->GetName() );
+		}
 
 		// read the args
 		savefile->ReadInt( argsize );
-		if ( argsize != event->eventdef->GetArgSize() ) {
-			savefile->Error( "idEvent::Restore: arg size (%d) doesn't match saved arg size(%d) on event '%s'", event->eventdef->GetArgSize(), argsize, event->eventdef->GetName() );
+		if ( argsize == EVENT_SAVE_FORMAT_TYPED ) {
+			const size_t eventArgSize = event->eventdef->GetArgSize();
+			if ( eventArgSize ) {
+				if ( eventArgSize > ID_HEAP_MAX_SIZE ) {
+					savefile->Error( "idEvent::Restore: event data is too large (%zu bytes) on event '%s'", eventArgSize, event->eventdef->GetName() );
+					throw idAllocError( "restored idEvent data exceeds the 32-bit heap limit" );
+				}
+				event->data = eventDataAllocator.Alloc( static_cast<int>( eventArgSize ) );
+				if ( event->data == NULL ) {
+					savefile->Error( "idEvent::Restore: failed to allocate %zu bytes on event '%s'", eventArgSize, event->eventdef->GetName() );
+					throw idAllocError( "restored idEvent data allocation failed" );
+				}
+				memset( event->data, 0, eventArgSize );
+				idEvent_RestoreTypedArgs( savefile, event->eventdef, event->data );
+			} else {
+				event->data = NULL;
+			}
+			continue;
+		}
+		if ( argsize < 0 ) {
+			savefile->Error( "idEvent::Restore: invalid arg size %d on event '%s'", argsize, event->eventdef->GetName() );
+		}
+		const size_t eventArgSize = event->eventdef->GetArgSize();
+		size_t legacyOffsets[ D_EVENT_MAXARGS ] = {};
+		const size_t legacyArgSize = idEvent_GetLegacyArgLayout( event->eventdef, legacyOffsets );
+		if ( static_cast<size_t>( argsize ) != legacyArgSize ) {
+			savefile->Error( "idEvent::Restore: legacy arg size (%zu) doesn't match saved arg size(%d) on event '%s'", legacyArgSize, argsize, event->eventdef->GetName() );
 		}
 		if ( argsize ) {
-			event->data = eventDataAllocator.Alloc( argsize );
-			format = event->eventdef->GetArgFormat();
-			assert( format );
-			for ( j = 0, size = 0; j < event->eventdef->GetNumArgs(); ++j) {
-				dataPtr = &event->data[ event->eventdef->GetArgOffset( j ) ];
-				switch( format[ j ] ) {
-					case D_EVENT_FLOAT :
-						savefile->ReadFloat( *reinterpret_cast<float *>( dataPtr ) );
-						size += sizeof( float );
-						break;
-					case D_EVENT_INTEGER :
-					case D_EVENT_ENTITY :
-					case D_EVENT_ENTITY_NULL :
-						savefile->ReadInt( *reinterpret_cast<int *>( dataPtr ) );
-						size += sizeof( int );
-						break;
-					case D_EVENT_VECTOR :
-						savefile->ReadVec3( *reinterpret_cast<idVec3 *>( dataPtr ) );
-						size += sizeof( idVec3 );
-						break;
-					case D_EVENT_TRACE :
-						savefile->ReadBool( *reinterpret_cast<bool *>( dataPtr ) );
-						size += sizeof( bool );
-						if ( *reinterpret_cast<bool *>( dataPtr ) ) {
-							size += sizeof( trace_t );
-							trace_t &t = *reinterpret_cast<trace_t *>( dataPtr + sizeof( bool ) );
-							RestoreTrace( savefile,  t) ;
-							if ( t.c.material ) {
-								size += MAX_STRING_LEN;
-								str = reinterpret_cast<char *>( dataPtr + sizeof( bool ) + sizeof( trace_t ) );
-								savefile->Read( str, MAX_STRING_LEN );
-							}
-						}
-						break;
-					default:
-						break;
-				}
+			if ( eventArgSize > ID_HEAP_MAX_SIZE ) {
+				savefile->Error( "idEvent::Restore: event data is too large (%zu bytes) on event '%s'", eventArgSize, event->eventdef->GetName() );
+				throw idAllocError( "restored legacy idEvent data exceeds the 32-bit heap limit" );
 			}
-			assert( size == event->eventdef->GetArgSize() );
+			// Queue cleanup owns event->data. The legacy conversion buffer must
+			// also unwind if reading or allocating the final arguments fails.
+			const auto freeLegacyData = []( byte *data ) { Mem_Free( data ); };
+			std::unique_ptr<byte, decltype( freeLegacyData )> legacyData(
+				static_cast<byte *>( Mem_Alloc( static_cast<size_t>( argsize ), MA_EVENT ) ), freeLegacyData );
+			if ( legacyData == NULL ) {
+				savefile->Error( "idEvent::Restore: failed to allocate %d bytes for legacy event '%s'", argsize, event->eventdef->GetName() );
+				throw idAllocError( "legacy idEvent data allocation failed" );
+			}
+			savefile->Read( legacyData.get(), argsize );
+			event->data = eventDataAllocator.Alloc( static_cast<int>( eventArgSize ) );
+			if ( event->data == NULL ) {
+				savefile->Error( "idEvent::Restore: failed to allocate %zu bytes on legacy event '%s'", eventArgSize, event->eventdef->GetName() );
+				throw idAllocError( "restored legacy idEvent data allocation failed" );
+			}
+			memset( event->data, 0, eventArgSize );
+			idEvent_ConvertLegacyRawArgs( savefile, event->eventdef, event->data, legacyData.get(), legacyOffsets );
 		} else {
 			event->data = NULL;
 		}
 	}
 }
-
-/*
- ================
- idEvent::ReadTrace
- 
- idRestoreGame has a ReadTrace procedure, but unfortunately idEvent wants the material
- string name at the of the data structure rather than in the middle
- ================
- */
-void idEvent::RestoreTrace( idRestoreGame *savefile, trace_t &trace ) {
-	savefile->ReadFloat( trace.fraction );
-	savefile->ReadVec3( trace.endpos );
-	savefile->ReadMat3( trace.endAxis );
-	savefile->ReadInt( (int&)trace.c.type );
-	savefile->ReadVec3( trace.c.point );
-	savefile->ReadVec3( trace.c.normal );
-	savefile->ReadFloat( trace.c.dist );
-	savefile->ReadInt( trace.c.contents );
-	savefile->ReadInt( (int&)trace.c.material );
-	savefile->ReadInt( trace.c.contents );
-	savefile->ReadInt( trace.c.modelFeature );
-	savefile->ReadInt( trace.c.trmFeature );
-	savefile->ReadInt( trace.c.id );
-}
-
-/*
- ================
- idEvent::WriteTrace
-
- idSaveGame has a WriteTrace procedure, but unfortunately idEvent wants the material
- string name at the of the data structure rather than in the middle
-================
- */
-void idEvent::SaveTrace( idSaveGame *savefile, const trace_t &trace ) {
-	savefile->WriteFloat( trace.fraction );
-	savefile->WriteVec3( trace.endpos );
-	savefile->WriteMat3( trace.endAxis );
-	savefile->WriteInt( trace.c.type );
-	savefile->WriteVec3( trace.c.point );
-	savefile->WriteVec3( trace.c.normal );
-	savefile->WriteFloat( trace.c.dist );
-	savefile->WriteInt( trace.c.contents );
-	savefile->WriteInt( (int&)trace.c.material );
-	savefile->WriteInt( trace.c.contents );
-	savefile->WriteInt( trace.c.modelFeature );
-	savefile->WriteInt( trace.c.trmFeature );
-	savefile->WriteInt( trace.c.id );
-}
-
-
 
 #ifdef CREATE_EVENT_CODE
 /*

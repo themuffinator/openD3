@@ -20,6 +20,16 @@ class idMat3;
 class rvAngles;
 // RAVEN END
 
+#ifndef ID_ALIGNMENTCHECKER_DEFINED
+#define ID_ALIGNMENTCHECKER_DEFINED
+class AlignmentChecker {
+public:
+	static void UpdateCount( void const * const ptr ) {}
+	static void ClearCount() {}
+	static void Print() {}
+};
+#endif
+
 //===============================================================
 //
 //	idVec2 - 2D vector
@@ -560,7 +570,7 @@ public:
 // RAVEN BEGIN
 // jscott: Ensures second element greater than first
 	void			EnsureIncremental( void );
-// jscott: for FX runtime
+// jscott: for BSE
 	int				GetLargestAxis( void ) const;
 // jscott: for rvAngles
 	rvAngles		ToRadians( void ) const;
@@ -1123,7 +1133,7 @@ ID_INLINE idVec3 idVec3::Random( const idVec3& range, idRandom& random ) const {
 // RAVEN END
 
 ID_INLINE bool idVec3::IsZero( void ) const {
-	return ( ( ( *( const unsigned long * ) &( x ) ) | ( *( const unsigned long * ) &( y ) ) | ( *( const unsigned long * ) &( z ) ) ) & ~( 1<<31 ) ) == 0;
+	return ( ( idMath_FloatBits( x ) | idMath_FloatBits( y ) | idMath_FloatBits( z ) ) & 0x7fffffffu ) == 0;
 }
 
 //===============================================================
@@ -2205,7 +2215,7 @@ ID_INLINE void idVecX::SetData( int length, float *data ) {
 	if ( p && ( p < idVecX::tempPtr || p >= idVecX::tempPtr + VECX_MAX_TEMP ) && alloced != -1 ) {
 		Mem_Free16( p );
 	}
-	assert( ( ( (int) data ) & 15 ) == 0 ); // data must be 16 byte aligned
+	assert( ( ( (uintptr_t) data ) & 15 ) == 0 ); // data must be 16 byte aligned
 	p = data;
 	size = length;
 	alloced = -1;
@@ -2448,4 +2458,3 @@ ID_INLINE idVec3 idPolar3::ToVec3( void ) const {
 
 
 #endif /* !__MATH_VECTOR_H__ */
-

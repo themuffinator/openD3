@@ -1,33 +1,6 @@
-/*
-===========================================================================
 
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
-
-#include "../idlib/precompiled.h"
-#pragma hdrstop
 
 #include "Game_local.h"
 
@@ -71,6 +44,7 @@ void idIK::Save( idSaveGame *savefile ) const {
 	savefile->WriteBool( ik_activate );
 	savefile->WriteObject( self );
 	savefile->WriteString( animator != NULL && animator->GetAnim( modifiedAnim ) ? animator->GetAnim( modifiedAnim )->Name() : "" );
+	//savefile->WriteInt( modifiedAnim );  // Recomputed during restore, do not save
 	savefile->WriteVec3( modelOffset );
 }
 
@@ -79,30 +53,41 @@ void idIK::Save( idSaveGame *savefile ) const {
 idIK::Restore
 ================
 */
-void idIK::Restore( idRestoreGame *savefile ) {
+void idIK::Restore( idRestoreGame *savefile, idEntity *owner ) {
 	idStr anim;
+	idEntity *savedSelf = NULL;
+	bool restoredInitialized, restoredActive;
 
-	savefile->ReadBool( initialized );
-	savefile->ReadBool( ik_activate );
-	savefile->ReadObject( reinterpret_cast<idClass *&>( self ) );
+	// Publish only the containing entity, and only after validating resources.
+	// An interrupted read must leave this component safe to clear and destroy.
+	self = NULL;
+	animator = NULL;
+	modifiedAnim = 0;
+	initialized = false;
+	ik_activate = false;
+	savefile->ReadBool( restoredInitialized );
+	savefile->ReadBool( restoredActive );
+	savefile->ReadObject( savedSelf );
 	savefile->ReadString( anim );
 	savefile->ReadVec3( modelOffset );
 
-	if ( self ) {
-		animator = self->GetAnimator();
-		if ( animator == NULL || animator->ModelDef() == NULL ) {
-			gameLocal.Warning( "idIK::Restore: IK for entity '%s' at (%s) has no model set.",
-								self->name.c_str(), self->GetPhysics()->GetOrigin().ToString(0) );
-		}
-		modifiedAnim = animator->GetAnim( anim );
-		if ( modifiedAnim == 0 ) {
-			gameLocal.Warning( "idIK::Restore: IK for entity '%s' at (%s) has no modified animation.",
-									self->name.c_str(), self->GetPhysics()->GetOrigin().ToString(0) );
-		}
-	} else {
-		animator = NULL;
-		modifiedAnim = 0;
+	if ( owner == NULL || ( savedSelf != NULL && savedSelf != owner ) ) {
+		savefile->Error( "idIK::Restore: inconsistent owner reference" );
 	}
+	idAnimator *restoredAnimator = savedSelf ? owner->GetAnimator() : NULL;
+	int restoredAnim = restoredAnimator ? restoredAnimator->GetAnim( anim ) : 0;
+	if ( ( restoredInitialized || restoredActive ) &&
+		( restoredAnimator == NULL || restoredAnimator->ModelDef() == NULL ||
+		  restoredAnimator->ModelHandle() == NULL || restoredAnim == 0 ) ) {
+		savefile->Error( "idIK::Restore: active IK has no owner, model or animation" );
+	}
+	// Uninitialized IK can legitimately have no model/animation (Init failed),
+	// or no owner at all (Init was never called).
+	self = savedSelf ? owner : NULL;
+	animator = restoredAnimator;
+	modifiedAnim = restoredAnim;
+	initialized = restoredInitialized;
+	ik_activate = restoredActive;
 }
 
 /*
@@ -296,40 +281,29 @@ idIK_Walk::Save
 */
 void idIK_Walk::Save( idSaveGame *savefile ) const {
 	int i;
-	
+
 	idIK::Save( savefile );
 
 	savefile->WriteClipModel( footModel );
 
 	savefile->WriteInt( numLegs );
 	savefile->WriteInt( enabledLegs );
-	for ( i = 0; i < MAX_LEGS; i++ ) 
-		savefile->WriteInt( footJoints[i] );
-	for ( i = 0; i < MAX_LEGS; i++ ) 
-		savefile->WriteInt( ankleJoints[i] );
-	for ( i = 0; i < MAX_LEGS; i++ ) 
-		savefile->WriteInt( kneeJoints[i] );
-	for ( i = 0; i < MAX_LEGS; i++ ) 
-		savefile->WriteInt( hipJoints[i] );
-	for ( i = 0; i < MAX_LEGS; i++ ) 
-		savefile->WriteInt( dirJoints[i] );
-	savefile->WriteInt( waistJoint );
-	
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->WriteVec3( hipForward[i] );
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->WriteVec3( kneeForward[i] );
-	
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->WriteFloat( upperLegLength[i] );
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->WriteFloat( lowerLegLength[i] );
-	
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->WriteMat3( upperLegToHipJoint[i] );
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->WriteMat3( lowerLegToKneeJoint[i] );
-	
+	for ( i = 0; i < MAX_LEGS; i++ ) savefile->WriteJoint( footJoints[i] );
+	for ( i = 0; i < MAX_LEGS; i++ ) savefile->WriteJoint( ankleJoints[i] );
+	for ( i = 0; i < MAX_LEGS; i++ ) savefile->WriteJoint( kneeJoints[i] );
+	for ( i = 0; i < MAX_LEGS; i++ ) savefile->WriteJoint( hipJoints[i] );
+	for ( i = 0; i < MAX_LEGS; i++ ) savefile->WriteJoint( dirJoints[i] );
+	savefile->WriteJoint( waistJoint );
+
+	for ( i = 0; i < MAX_LEGS; i++ ) savefile->WriteVec3( hipForward[i] );
+	for ( i = 0; i < MAX_LEGS; i++ ) savefile->WriteVec3( kneeForward[i] );
+
+	for ( i = 0; i < MAX_LEGS; i++ ) savefile->WriteFloat( upperLegLength[i] );
+	for ( i = 0; i < MAX_LEGS; i++ ) savefile->WriteFloat( lowerLegLength[i] );
+
+	for ( i = 0; i < MAX_LEGS; i++ ) savefile->WriteMat3( upperLegToHipJoint[i] );
+	for ( i = 0; i < MAX_LEGS; i++ ) savefile->WriteMat3( lowerLegToKneeJoint[i] );
+
 	savefile->WriteFloat( smoothing );
 	savefile->WriteFloat( waistSmoothing );
 	savefile->WriteFloat( footShift );
@@ -346,9 +320,7 @@ void idIK_Walk::Save( idSaveGame *savefile ) const {
 	savefile->WriteVec3( pivotPos );
 	savefile->WriteBool( oldHeightsValid );
 	savefile->WriteFloat( oldWaistHeight );
-	for ( i = 0; i < MAX_LEGS; i++ ) {
-		savefile->WriteFloat( oldAnkleHeights[i] );
-	}
+	for ( i = 0; i < MAX_LEGS; i++ ) savefile->WriteFloat( oldAnkleHeights[i] );
 	savefile->WriteVec3( waistOffset );
 }
 
@@ -357,42 +329,52 @@ void idIK_Walk::Save( idSaveGame *savefile ) const {
 idIK_Walk::Restore
 ================
 */
-void idIK_Walk::Restore( idRestoreGame *savefile ) {
+void idIK_Walk::Restore( idRestoreGame *savefile, idEntity *owner ) {
 	int i;
-	
-	idIK::Restore( savefile );
+
+	idIK::Restore( savefile, owner );
 
 	savefile->ReadClipModel( footModel );
 
 	savefile->ReadInt( numLegs );
+	if ( numLegs < 0 || numLegs > MAX_LEGS ) {
+		savefile->Error( "idIK_Walk::Restore: invalid leg count %d", numLegs );
+	}
 	savefile->ReadInt( enabledLegs );
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->ReadInt( (int&)footJoints[i] );
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->ReadInt( (int&)ankleJoints[i] );
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->ReadInt( (int&)kneeJoints[i] );
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->ReadInt( (int&)hipJoints[i] );
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->ReadInt( (int&)dirJoints[i] );
-	savefile->ReadInt( (int&)waistJoint );
-	
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->ReadVec3( hipForward[i] );
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->ReadVec3( kneeForward[i] );
-	
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->ReadFloat( upperLegLength[i] );
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->ReadFloat( lowerLegLength[i] );
-	
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->ReadMat3( upperLegToHipJoint[i] );
-	for ( i = 0; i < MAX_LEGS; i++ )
-		savefile->ReadMat3( lowerLegToKneeJoint[i] );
-	
+	if ( enabledLegs < 0 || ( enabledLegs & ~(( 1 << MAX_LEGS ) - 1) ) != 0 ) {
+		savefile->Error( "idIK_Walk::Restore: invalid enabled leg mask %d", enabledLegs );
+	}
+	if ( savefile->GetOpenQ4SaveGameCompatibilityVersion() >= OPENQ4_SAVEGAME_TYPED_COMPATIBILITY_VERSION ) {
+		for ( i = 0; i < MAX_LEGS; i++ ) savefile->ReadJoint( footJoints[i] );
+		for ( i = 0; i < MAX_LEGS; i++ ) savefile->ReadJoint( ankleJoints[i] );
+		for ( i = 0; i < MAX_LEGS; i++ ) savefile->ReadJoint( kneeJoints[i] );
+		for ( i = 0; i < MAX_LEGS; i++ ) savefile->ReadJoint( hipJoints[i] );
+		for ( i = 0; i < MAX_LEGS; i++ ) savefile->ReadJoint( dirJoints[i] );
+		savefile->ReadJoint( waistJoint );
+
+		for ( i = 0; i < MAX_LEGS; i++ ) savefile->ReadVec3( hipForward[i] );
+		for ( i = 0; i < MAX_LEGS; i++ ) savefile->ReadVec3( kneeForward[i] );
+
+		for ( i = 0; i < MAX_LEGS; i++ ) savefile->ReadFloat( upperLegLength[i] );
+		for ( i = 0; i < MAX_LEGS; i++ ) savefile->ReadFloat( lowerLegLength[i] );
+
+		for ( i = 0; i < MAX_LEGS; i++ ) savefile->ReadMat3( upperLegToHipJoint[i] );
+		for ( i = 0; i < MAX_LEGS; i++ ) savefile->ReadMat3( lowerLegToKneeJoint[i] );
+	} else {
+		savefile->Read( footJoints, sizeof( footJoints ) );
+		savefile->Read( ankleJoints, sizeof( ankleJoints ) );
+		savefile->Read( kneeJoints, sizeof( kneeJoints ) );
+		savefile->Read( hipJoints, sizeof( hipJoints ) );
+		savefile->Read( dirJoints, sizeof( dirJoints ) );
+		savefile->Read( &waistJoint, sizeof( waistJoint ) );
+		savefile->Read( hipForward, sizeof( hipForward ) );
+		savefile->Read( kneeForward, sizeof( kneeForward ) );
+		savefile->Read( upperLegLength, sizeof( upperLegLength ) );
+		savefile->Read( lowerLegLength, sizeof( lowerLegLength ) );
+		savefile->Read( upperLegToHipJoint, sizeof( upperLegToHipJoint ) );
+		savefile->Read( lowerLegToKneeJoint, sizeof( lowerLegToKneeJoint ) );
+	}
+
 	savefile->ReadFloat( smoothing );
 	savefile->ReadFloat( waistSmoothing );
 	savefile->ReadFloat( footShift );
@@ -409,8 +391,10 @@ void idIK_Walk::Restore( idRestoreGame *savefile ) {
 	savefile->ReadVec3( pivotPos );
 	savefile->ReadBool( oldHeightsValid );
 	savefile->ReadFloat( oldWaistHeight );
-	for ( i = 0; i < MAX_LEGS; i++ ) {
-		savefile->ReadFloat( oldAnkleHeights[i] );
+	if ( savefile->GetOpenQ4SaveGameCompatibilityVersion() >= OPENQ4_SAVEGAME_TYPED_COMPATIBILITY_VERSION ) {
+		for ( i = 0; i < MAX_LEGS; i++ ) savefile->ReadFloat( oldAnkleHeights[i] );
+	} else {
+		savefile->Read( oldAnkleHeights, sizeof( oldAnkleHeights ) );
 	}
 	savefile->ReadVec3( waistOffset );
 }
@@ -561,7 +545,7 @@ idIK_Walk::Evaluate
 ================
 */
 void idIK_Walk::Evaluate( void ) {
-	int i, newPivotFoot;
+	int i, newPivotFoot = 0;
 	float modelHeight, jointHeight, lowestHeight, floorHeights[MAX_LEGS];
 	float shift, smallestShift, newHeight, step, newPivotYaw, height, largestAnkleHeight;
 	idVec3 modelOrigin, normal, hipDir, kneeDir, start, end, jointOrigins[MAX_LEGS];
@@ -626,7 +610,10 @@ void idIK_Walk::Evaluate( void ) {
 
 		start = jointOrigins[i] + normal * footUpTrace;
 		end = jointOrigins[i] - normal * footDownTrace;
-		gameLocal.clip.Translation( results, start, end, footModel, mat3_identity, CONTENTS_SOLID|CONTENTS_IKCLIP, self );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		gameLocal.Translation( self, results, start, end, footModel, mat3_identity, CONTENTS_SOLID|CONTENTS_IKCLIP, self );
+// RAVEN END
 		floorHeights[i] = results.endpos * normal;
 
 		if ( ik_debug.GetBool() && footModel ) {
@@ -647,7 +634,10 @@ void idIK_Walk::Evaluate( void ) {
 	bool onPlat = false;
 	for ( i = 0; i < phys->GetNumContacts(); i++ ) {
 		idEntity *ent = gameLocal.entities[ phys->GetContact( i ).entityNum ];
-		if ( ent != NULL && ent->IsType( idPlat::Type ) ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+		if ( ent != NULL && ent->IsType( idPlat::GetClassType() ) ) {
+// RAVEN END
 			onPlat = true;
 			break;
 		}
@@ -698,7 +688,10 @@ void idIK_Walk::Evaluate( void ) {
 	if ( minWaistFloorDist > 0.0f && waistOffset * normal < 0.0f ) {
 		start = waistOrigin;
 		end = waistOrigin + waistOffset - normal * minWaistFloorDist;
-		gameLocal.clip.Translation( results, start, end, footModel, modelAxis, CONTENTS_SOLID|CONTENTS_IKCLIP, self );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		gameLocal.Translation( self, results, start, end, footModel, modelAxis, CONTENTS_SOLID|CONTENTS_IKCLIP, self );
+// RAVEN END
 		height = ( waistOrigin + waistOffset - results.endpos ) * normal;
 		if ( height < minWaistFloorDist ) {
 			waistOffset += ( minWaistFloorDist - height ) * normal;
@@ -881,33 +874,21 @@ idIK_Reach::Save
 */
 void idIK_Reach::Save( idSaveGame *savefile ) const {
 	int i;
+
 	idIK::Save( savefile );
 
 	savefile->WriteInt( numArms );
 	savefile->WriteInt( enabledArms );
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->WriteInt( handJoints[i] );
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->WriteInt( elbowJoints[i] );
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->WriteInt( shoulderJoints[i] );
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->WriteInt( dirJoints[i] );
-		
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->WriteVec3( shoulderForward[i] );
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->WriteVec3( elbowForward[i] );
-		
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->WriteFloat( upperArmLength[i] );
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->WriteFloat( lowerArmLength[i] );
-		
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->WriteMat3( upperArmToShoulderJoint[i] );
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->WriteMat3( lowerArmToElbowJoint[i] );
+	for ( i = 0; i < MAX_ARMS; i++ ) savefile->WriteJoint( handJoints[i] );
+	for ( i = 0; i < MAX_ARMS; i++ ) savefile->WriteJoint( elbowJoints[i] );
+	for ( i = 0; i < MAX_ARMS; i++ ) savefile->WriteJoint( shoulderJoints[i] );
+	for ( i = 0; i < MAX_ARMS; i++ ) savefile->WriteJoint( dirJoints[i] );
+	for ( i = 0; i < MAX_ARMS; i++ ) savefile->WriteVec3( shoulderForward[i] );
+	for ( i = 0; i < MAX_ARMS; i++ ) savefile->WriteVec3( elbowForward[i] );
+	for ( i = 0; i < MAX_ARMS; i++ ) savefile->WriteFloat( upperArmLength[i] );
+	for ( i = 0; i < MAX_ARMS; i++ ) savefile->WriteFloat( lowerArmLength[i] );
+	for ( i = 0; i < MAX_ARMS; i++ ) savefile->WriteMat3( upperArmToShoulderJoint[i] );
+	for ( i = 0; i < MAX_ARMS; i++ ) savefile->WriteMat3( lowerArmToElbowJoint[i] );
 }
 
 /*
@@ -915,35 +896,42 @@ void idIK_Reach::Save( idSaveGame *savefile ) const {
 idIK_Reach::Restore
 ================
 */
-void idIK_Reach::Restore( idRestoreGame *savefile ) {
+void idIK_Reach::Restore( idRestoreGame *savefile, idEntity *owner ) {
 	int i;
-	idIK::Restore( savefile );
+
+	idIK::Restore( savefile, owner );
 
 	savefile->ReadInt( numArms );
+	if ( numArms < 0 || numArms > MAX_ARMS ) {
+		savefile->Error( "idIK_Reach::Restore: invalid arm count %d", numArms );
+	}
 	savefile->ReadInt( enabledArms );
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->ReadInt( (int&)handJoints[i] );
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->ReadInt( (int&)elbowJoints[i] );
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->ReadInt( (int&)shoulderJoints[i] );
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->ReadInt( (int&)dirJoints[i] );
-		
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->ReadVec3( shoulderForward[i] );
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->ReadVec3( elbowForward[i] );
-		
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->ReadFloat( upperArmLength[i] );
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->ReadFloat( lowerArmLength[i] );
-		
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->ReadMat3( upperArmToShoulderJoint[i] );
-	for ( i = 0; i <  MAX_ARMS; i++ )
-		savefile->ReadMat3( lowerArmToElbowJoint[i] );
+	if ( enabledArms < 0 || ( enabledArms & ~(( 1 << MAX_ARMS ) - 1) ) != 0 ) {
+		savefile->Error( "idIK_Reach::Restore: invalid enabled arm mask %d", enabledArms );
+	}
+	if ( savefile->GetOpenQ4SaveGameCompatibilityVersion() >= OPENQ4_SAVEGAME_TYPED_COMPATIBILITY_VERSION ) {
+		for ( i = 0; i < MAX_ARMS; i++ ) savefile->ReadJoint( handJoints[i] );
+		for ( i = 0; i < MAX_ARMS; i++ ) savefile->ReadJoint( elbowJoints[i] );
+		for ( i = 0; i < MAX_ARMS; i++ ) savefile->ReadJoint( shoulderJoints[i] );
+		for ( i = 0; i < MAX_ARMS; i++ ) savefile->ReadJoint( dirJoints[i] );
+		for ( i = 0; i < MAX_ARMS; i++ ) savefile->ReadVec3( shoulderForward[i] );
+		for ( i = 0; i < MAX_ARMS; i++ ) savefile->ReadVec3( elbowForward[i] );
+		for ( i = 0; i < MAX_ARMS; i++ ) savefile->ReadFloat( upperArmLength[i] );
+		for ( i = 0; i < MAX_ARMS; i++ ) savefile->ReadFloat( lowerArmLength[i] );
+		for ( i = 0; i < MAX_ARMS; i++ ) savefile->ReadMat3( upperArmToShoulderJoint[i] );
+		for ( i = 0; i < MAX_ARMS; i++ ) savefile->ReadMat3( lowerArmToElbowJoint[i] );
+	} else {
+		savefile->Read( handJoints, sizeof( handJoints ) );
+		savefile->Read( elbowJoints, sizeof( elbowJoints ) );
+		savefile->Read( shoulderJoints, sizeof( shoulderJoints ) );
+		savefile->Read( dirJoints, sizeof( dirJoints ) );
+		savefile->Read( shoulderForward, sizeof( shoulderForward ) );
+		savefile->Read( elbowForward, sizeof( elbowForward ) );
+		savefile->Read( upperArmLength, sizeof( upperArmLength ) );
+		savefile->Read( lowerArmLength, sizeof( lowerArmLength ) );
+		savefile->Read( upperArmToShoulderJoint, sizeof( upperArmToShoulderJoint ) );
+		savefile->Read( lowerArmToElbowJoint, sizeof( lowerArmToElbowJoint ) );
+	}
 }
 
 /*
@@ -1071,7 +1059,10 @@ void idIK_Reach::Evaluate( void ) {
 		handOrigin = modelOrigin + handOrigin * modelAxis;
 
 		// get first collision going from shoulder to hand
-		gameLocal.clip.TracePoint( trace, shoulderOrigin, handOrigin, CONTENTS_SOLID, self );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		gameLocal.TracePoint( self, trace, shoulderOrigin, handOrigin, CONTENTS_SOLID, self );
+// RAVEN END
 		handOrigin = trace.endpos;
 
 		// get the IK bend direction

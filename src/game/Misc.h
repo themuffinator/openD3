@@ -1,34 +1,6 @@
-/*
-===========================================================================
-
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
-
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
-
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
 
 #ifndef __GAME_MISC_H__
 #define __GAME_MISC_H__
-
 
 /*
 ===============================================================================
@@ -69,6 +41,7 @@ public:
 
 	enum {
 		EVENT_TELEPORTPLAYER = idEntity::EVENT_MAXEVENTS,
+		EVENT_TELEPORTITEM,
 		EVENT_MAXEVENTS
 	};
 
@@ -84,8 +57,11 @@ public:
 private:
 	int					teleportStage;
 
-	void				Event_TeleportPlayer( idEntity *activator );
-	void				Event_TeleportStage( idEntity *player );
+	void				Event_TeleportEntity( idEntity *activator, bool predicted, idVec3& prevOrigin = vec3_origin );
+	void				Event_Teleport( idEntity *activator );
+	void				Teleport( idEntity* other );
+	void				Event_TeleportStage( idPlayer *player );
+	void				Event_ResetCamera( idPlayer *player );
 	void				TeleportPlayer( idPlayer *player );
 };
 
@@ -118,7 +94,6 @@ private:
 	void				Event_Activate( idEntity *activator );
 };
 
-
 /*
 ===============================================================================
 
@@ -140,6 +115,23 @@ private:
 	void				Event_RandomPath( void );
 };
 
+// RAVEN BEGIN
+// bdube: jump points
+/*
+===============================================================================
+
+  Debug Jump Point
+
+===============================================================================
+*/
+
+class rvDebugJumpPoint : public idEntity {
+public:
+
+	CLASS_PROTOTYPE( rvDebugJumpPoint );
+
+	void				Spawn();
+};
 
 /*
 ===============================================================================
@@ -161,7 +153,32 @@ public:
 	void				Spawn( void );
 	void				Killed( idEntity *inflictor, idEntity *attacker, int damage, const idVec3 &dir, int location );
 
-private:
+// RAVEN BEGIN
+// abahr:
+	virtual void		Damage( idEntity *inflictor, idEntity *attacker, const idVec3 &dir, const char *damageDefName, const float damageScale, const int location );
+
+	int					invincibleTime;
+// RAVEN BEGIN
+// abahr: changed to protected
+protected:
+	int					stage;
+	int					stageNext;
+	const idDict*		stageDict;
+	int					stageEndTime;
+	int					stageEndHealth;
+	int					stageEndSpeed;
+//jshepard: used to end a stage if a moveable is on the ground (for falling objects)
+	bool				stageEndOnGround;
+//jshepard: we want to activate certain objects when triggered-- falling blocks yes, barrels no.
+	bool				activateStageOnTrigger;
+		
+	virtual void		ExecuteStage	( void );
+	void				UpdateStage		( void );
+	idVec3				GetStageVector	( const char* key, const char* defaultString = "" ) const;
+	float				GetStageFloat	( const char* key, const char* defaultString = "" ) const;
+	int					GetStageInt		( const char* key, const char* defaultString = "" ) const;
+// RAVEN END
+
 	int					count;
 	int					nextTriggerTime;
 
@@ -169,7 +186,6 @@ private:
 	void				Event_BecomeBroken( idEntity *activator );
 	void				Event_RestoreDamagable( void );
 };
-
 
 /*
 ===============================================================================
@@ -203,17 +219,19 @@ public:
 	CLASS_PROTOTYPE( idSpring );
 
 	void				Spawn( void );
+	void				Save( idSaveGame *savefile ) const;
+	void				Restore( idRestoreGame *savefile );
 
 	virtual void		Think( void );
 
 private:
-	idEntity *			ent1;
-	idEntity *			ent2;
-	int					id1;
-	int					id2;
-	idVec3				p1;
-	idVec3				p2;
-	idForce_Spring		spring;
+	idEntityPtr<idEntity>	ent1;
+	idEntityPtr<idEntity>	ent2;
+	int						id1;
+	int						id2;
+	idVec3					p1;
+	idVec3					p2;
+	idForce_Spring			spring;
 
 	void				Event_LinkSpring( void );
 };
@@ -238,9 +256,20 @@ public:
 
 	virtual void		Think( void );
 
-private:
-	idForce_Field		forceField;
+// RAVEN BEGIN
+// kfuller: idDamagable may want to change some things on the fly
+	void				SetExplosion(float force) { forceField.Explosion(force); }
+// RAVEN END
 
+
+// RAVEN BEGIN
+// bdube: made force field protected
+protected:
+
+	idForce_Field		forceField;
+	
+private:
+// RAVEN END
 	void				Toggle( void );
 
 	void				Event_Activate( idEntity *activator );
@@ -248,6 +277,40 @@ private:
 	void				Event_FindTargets( void );
 };
 
+// RAVEN BEGIN
+// bdube: jump pads
+/*
+===============================================================================
+
+  rvJumpPad
+
+===============================================================================
+*/
+
+class rvJumpPad : public idForceField {
+public:
+	CLASS_PROTOTYPE( rvJumpPad );
+
+	rvJumpPad ( void );
+
+	void				Spawn( void );
+	void				Think( void );
+
+private:
+
+	int					lastEffectTime;
+
+	void				Event_FindTargets( void );
+
+	enum {
+		EVENT_JUMPFX = idEntity::EVENT_MAXEVENTS,
+		EVENT_MAXEVENTS
+	};
+	bool				ClientReceiveEvent( int event, int time, const idBitMsg &msg );
+
+	idMat3				effectAxis;
+};
+// RAVEN END
 
 /*
 ===============================================================================
@@ -263,14 +326,23 @@ public:
 
 							idAnimated();
 							~idAnimated();
+	virtual void			PrepareFailedRestoreShutdown( void ) override;
 
 	void					Save( idSaveGame *savefile ) const;
 	void					Restore( idRestoreGame *savefile );
 
 	void					Spawn( void );
-	virtual bool			LoadAF( void );
+	virtual bool			LoadAF( const char* keyname );
 	bool					StartRagdoll( void );
 	virtual bool			GetPhysicsToSoundTransform( idVec3 &origin, idMat3 &axis );
+
+// RAVEN BEGIN
+// bdube: script 
+	void					Think ( void );
+	
+	virtual	void			Damage( idEntity *inflictor, idEntity *attacker, const idVec3 &dir, const char *damageDefName, const float damageScale, const int location );
+ 	virtual bool			ShouldConstructScriptObjectAtSpawn( void ) const;
+// RAVEN END
 
 private:
 	int						num_anims;
@@ -281,6 +353,20 @@ private:
 	idEntityPtr<idEntity>	activator;
 	bool					activated;
 
+// RAVEN BEGIN
+// bdube: script variables
+	// script control
+	idThread *				scriptThread;
+	idStr					state;
+	idStr					idealState;
+	int						animDoneTime[ANIM_NumAnimChannels];
+
+	// Script state management
+	void					UpdateScript( void );
+	void					SetState( const char *statename, int blend );
+	void					CallHandler ( const char* handler );
+// RAVEN END
+
 	void					PlayNextAnim( void );
 
 	void					Event_Activate( idEntity *activator );	
@@ -290,8 +376,15 @@ private:
 	void					Event_Footstep( void );
 	void					Event_LaunchMissiles( const char *projectilename, const char *sound, const char *launchjoint, const char *targetjoint, int numshots, int framedelay );
 	void					Event_LaunchMissilesUpdate( int launchjoint, int targetjoint, int numshots, int framedelay );
-};
 
+// RAVEN BEGIN
+// kfuller: added
+	void					Event_SetAnimState( const char* state, int blendframes );
+	void					Event_PlayAnim( int channel, const char *animname );
+	void					Event_PlayCycle( int channel, const char *animname );
+	void					Event_AnimDone2( int channel, int blendFrames );
+// RAVEN END	
+};
 
 /*
 ===============================================================================
@@ -300,6 +393,38 @@ private:
 
 ===============================================================================
 */
+
+// openQ4 BEGIN
+/*
+===============================================================================
+
+	idLiquidVolume
+
+	A liquid volume that is not a brush. Quake 4 ships no liquid-textured geometry at all, so this
+	is the only way to put water, slime or lava into an existing map - and it gives mappers a way
+	to box off a pool without authoring a liquid material for it.
+
+	"liquid"  water (default), slime or lava
+	"size"    "x y z" box, sitting on the entity origin
+	"mins" / "maxs"  explicit bounds instead of "size"
+
+===============================================================================
+*/
+class idLiquidVolume : public idEntity {
+public:
+	CLASS_PROTOTYPE( idLiquidVolume );
+
+						idLiquidVolume( void );
+
+	void				Spawn( void );
+
+	void				Save( idSaveGame *savefile ) const;
+	void				Restore( idRestoreGame *savefile );
+
+private:
+	int					liquidContents;
+};
+// openQ4 END
 
 class idStaticEntity : public idEntity {
 public:
@@ -362,6 +487,11 @@ private:
 };
 
 
+// RAVEN BEGIN
+// bdube: not using
+#if 0
+// RAVEN END
+
 /*
 ===============================================================================
 
@@ -390,6 +520,10 @@ private:
 	bool					restart;
 };
 
+// RAVEN BEGIN
+// bdube: not using
+#endif
+// RAVEN END
 
 /*
 ===============================================================================
@@ -431,6 +565,7 @@ public:
 	void				Restore( idRestoreGame *savefile );
 
 	virtual void		Think( void );
+	virtual void		ClientPredictionThink( void );
 
 private:
 	idStr				text;
@@ -492,6 +627,78 @@ public:
 private:
 };
 
+// RAVEN BEGIN
+// abahr
+class rvGravitySeparatorEntity : public idEntity {
+public:
+	CLASS_PROTOTYPE( rvGravitySeparatorEntity );
+
+						rvGravitySeparatorEntity( void );
+
+	void				Spawn( void );
+
+	void				Save( idSaveGame *savefile ) const;
+	void				Restore( idRestoreGame *savefile );
+
+	void				Event_Activate( idEntity *activator );	
+
+private:
+	qhandle_t			portal;
+};
+
+class rvGravityArea : public idEntity {
+public:
+	ABSTRACT_PROTOTYPE( rvGravityArea );
+
+	void					Spawn( void );
+
+	virtual int				GetArea() const { return area; }
+	virtual const idVec3	GetGravity( const idVec3& origin, const idMat3& axis, int clipMask, idEntity* passEntity ) const = 0;
+	virtual const idVec3	GetGravity( const idEntity* ent ) const = 0;
+	virtual const idVec3	GetGravity( const rvClientEntity* ent ) const = 0;
+
+	void					Save( idSaveGame *savefile ) const;
+	void					Restore( idRestoreGame *savefile );
+
+	bool					IsEqualTo( const rvGravityArea* area ) const;
+	bool					operator==( const rvGravityArea* area ) const;
+	bool					operator==( const rvGravityArea& area ) const;
+	bool					operator!=( const rvGravityArea* area ) const;
+	bool					operator!=( const rvGravityArea& area ) const;
+
+protected:
+	int						area;
+};
+
+class rvGravityArea_Static : public rvGravityArea {
+public:
+	CLASS_PROTOTYPE( rvGravityArea_Static );
+
+	void					Spawn( void );
+
+	virtual const idVec3	GetGravity( const idVec3& origin, const idMat3& axis, int clipMask, idEntity* passEntity ) const { return gravity; }
+	virtual const idVec3	GetGravity( const idEntity* ent ) const { return gravity; }
+	virtual const idVec3	GetGravity( const rvClientEntity* ent ) const { return gravity; }
+
+	void					Save( idSaveGame *savefile ) const;
+	void					Restore( idRestoreGame *savefile );
+
+protected:
+	idVec3					gravity;
+};
+
+class rvGravityArea_SurfaceNormal : public rvGravityArea {
+public:
+	CLASS_PROTOTYPE( rvGravityArea_SurfaceNormal );
+
+	virtual const idVec3	GetGravity( const idVec3& origin, const idMat3& axis, int clipMask, idEntity* passEntity ) const;
+	virtual const idVec3	GetGravity( const idEntity* ent ) const;
+	virtual const idVec3	GetGravity( const rvClientEntity* ent ) const;
+
+protected:
+	virtual const idVec3	GetGravity( const idPhysics* physics ) const;
+};
+// RAVEN END
 
 /*
 ===============================================================================
@@ -571,6 +778,7 @@ public:
 	CLASS_PROTOTYPE( idShaking );
 
 							idShaking();
+							~idShaking();
 
 	void					Spawn( void );
 
@@ -606,6 +814,12 @@ public:
 	void				Restore( idRestoreGame *savefile );
 
 	virtual void		Think( void );
+
+// RAVEN BEGIN
+// kfuller: look for fx entities and the like that may want to be triggered when a mortar round (aka earthquake) goes off
+protected:
+	void				AffectNearbyEntities(float affectRadius);
+// RAVEN END
 
 private:
 	int					nextTriggerTime;
@@ -691,8 +905,12 @@ public:
 	void				Save( idSaveGame *savefile ) const;
 	void				Restore( idRestoreGame *savefile );
 
+	void				SetState ( bool _state );
+
 private:
 	bool				state;
+	bool				IsAwakeningSquadGate( void ) const;
+	void				Event_PostRestore( void );
 
 	void				Event_Activate( idEntity *activator );
 };
@@ -711,16 +929,22 @@ public:
 	CLASS_PROTOTYPE( idFuncRadioChatter );
 
 						idFuncRadioChatter();
+						~idFuncRadioChatter();
 
 	void				Spawn( void );
 
 	void				Save( idSaveGame *savefile ) const;
 	void				Restore( idRestoreGame *savefile );
 
+	static void			RepeatLast ( void );
+
 private:
+	static idEntityPtr<idFuncRadioChatter> lastRadioChatter;
 	float				time;
+	bool				isActive;
 	void				Event_Activate( idEntity *activator );
 	void				Event_ResetRadioHud( idEntity *activator );
+	void				Event_IsActive( void );
 };
 
 
@@ -761,5 +985,26 @@ private:
 	idList<int>			targetTime;
 	idList<idVec3>		lastTargetPos;
 };
+
+
+/*
+===============================================================================
+
+rvFuncSaveGame
+
+===============================================================================
+*/
+
+class rvFuncSaveGame : public idEntity {
+public:
+	CLASS_PROTOTYPE( rvFuncSaveGame );
+
+	void				Spawn( void );
+
+	void				Event_Activate		( idEntity *activator );
+
+private:
+};
+
 
 #endif /* !__GAME_MISC_H__ */

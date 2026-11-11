@@ -1,36 +1,15 @@
-/*
-===========================================================================
 
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
-
-#include "../../idlib/precompiled.h"
-#pragma hdrstop
 
 #include "../Game_local.h"
 
+// RAVEN BEGIN
+// bdube: projectile
+#ifndef __GAME_PROJECTILE_H__
+#include "../Projectile.h"
+#endif
+// RAVEN END
 
 /*
 ============
@@ -65,7 +44,10 @@ void idPush::SaveEntityPosition( idEntity *ent ) {
 	pushed[numPushed].ent = ent;
 
 	// if the entity is an actor
-	if ( ent->IsType( idActor::Type ) ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+	if ( ent->IsType( idActor::GetClassType() ) ) {
+// RAVEN END
 		// save the delta view angles
 		pushed[numPushed].deltaViewAngles = static_cast<idActor *>(ent)->GetDeltaViewAngles();
 	}
@@ -87,7 +69,10 @@ void idPush::RestorePushedEntityPositions( void ) {
 	for ( i = 0; i < numPushed; i++ ) {
 
 		// if the entity is an actor
-		if ( pushed[i].ent->IsType( idActor::Type ) ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+		if ( pushed[i].ent->IsType( idActor::GetClassType() ) ) {
+// RAVEN END
 			// set back the delta view angles
 			static_cast<idActor *>(pushed[i].ent)->SetDeltaViewAngles( pushed[i].deltaViewAngles );
 		}
@@ -114,15 +99,27 @@ bool idPush::RotateEntityToAxial( idEntity *ent, idVec3 rotationPoint ) {
 	if ( !axis.IsRotated() ) {
 		return true;
 	}
+
+// RAVEN BEGIN
+// abahr: caching current upVector to reduce visual effects of fp error
+	idVec3 upVector = -physics->GetGravityNormal();
+// RAVEN END
+
 	// try to rotate the bbox back to axial with at most four rotations
 	for ( i = 0; i < 4; i++ ) {
-		axis = physics->GetAxis();
+// RAVEN BEGIN
+// abahr: because of gravity we need to build axis from up vector
+		axis = physics->GetAxis()[2].ToMat3( 2 );
+// RAVEN END
 		rotation = axis.ToRotation();
 		rotation.Scale( -1 );
 		rotation.SetOrigin( rotationPoint );
 		// tiny float numbers in the clip axis, this can get the entity stuck
 		if ( rotation.GetAngle() == 0.0f ) {
-			physics->SetAxis( mat3_identity );
+// RAVEN BEGIN
+// abahr: because of gravity we need to build axis from up vector
+			physics->SetAxis( upVector.ToMat3(2) );
+// RAVEN END
 			return true;
 		}
 		//
@@ -131,7 +128,10 @@ bool idPush::RotateEntityToAxial( idEntity *ent, idVec3 rotationPoint ) {
 		if ( trace.fraction >= 1.0f ) {
 			// set bbox in final axial position
 			physics->SetOrigin( trace.endpos );
-			physics->SetAxis( mat3_identity );
+// RAVEN BEGIN
+// abahr: because of gravity we need to build axis from up vector
+			physics->SetAxis( upVector.ToMat3(2) );
+// RAVEN END
 			return true;
 		}
 		// if partial rotation was possible
@@ -287,7 +287,10 @@ int idPush::GetPushableEntitiesForTranslation( idEntity *pusher, idEntity *initi
 	pushBounds.ExpandSelf( 2.0f );
 
 	// get all entities within the push bounds
-	n = gameLocal.clip.EntitiesTouchingBounds( pushBounds, -1, entityList, MAX_GENTITIES );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+	n = gameLocal.EntitiesTouchingBounds( this, pushBounds, -1, entityList, MAX_GENTITIES );
+// RAVEN END
 
 	for ( l = i = 0; i < n; i++ ) {
 		if ( entityList[i] == pusher || entityList[i] == initialPusher ) {
@@ -483,7 +486,10 @@ int idPush::GetPushableEntitiesForRotation( idEntity *pusher, idEntity *initialP
 	pushBounds.ExpandSelf( 2.0f );
 
 	// get all entities within the push bounds
-	n = gameLocal.clip.EntitiesTouchingBounds( pushBounds, -1, entityList, MAX_GENTITIES );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+	n = gameLocal.EntitiesTouchingBounds( pusher, pushBounds, -1, entityList, MAX_GENTITIES );
+// RAVEN END
 
 	for ( l = i = 0; i < n; i++ ) {
 		if ( entityList[i] == pusher || entityList[i] == initialPusher ) {
@@ -810,8 +816,10 @@ int idPush::TryRotatePushEntity( trace_t &results, idEntity *check, idClipModel 
 	physics->Rotate( newRotation );
 
 	// set pusher into final position
-	clipModel->Link( gameLocal.clip, clipModel->GetEntity(), clipModel->GetId(), clipModel->GetOrigin(), newAxis );
-
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+	clipModel->Link( clipModel->GetEntity(), clipModel->GetId(), clipModel->GetOrigin(), newAxis );
+// RAVEN END
 #ifdef ROTATIONAL_PUSH_DEBUG
 	if ( physics->ClipContents( clipModel ) ) {
 		if ( !startsolid ) {
@@ -821,7 +829,10 @@ int idPush::TryRotatePushEntity( trace_t &results, idEntity *check, idClipModel 
 #endif
 
 	// if the entity uses actor physics
-	if ( physics->IsType( idPhysics_Actor::Type ) ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+	if ( physics->IsType( idPhysics_Actor::GetClassType() ) ) {
+// RAVEN END
 
 		// rotate the collision model back to axial
 		if ( !RotateEntityToAxial( check, rotationPoint ) ) {
@@ -839,7 +850,10 @@ int idPush::TryRotatePushEntity( trace_t &results, idEntity *check, idClipModel 
 #endif
 
 	// if the entity is an actor using actor physics
-	if ( check->IsType( idActor::Type ) && physics->IsType( idPhysics_Actor::Type ) ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+	if ( check->IsType( idActor::GetClassType() ) && physics->IsType( idPhysics_Actor::GetClassType() ) ) {
+// RAVEN END
 
 		// if the entity is standing ontop of the pusher
 		if ( physics->IsGroundClipModel( clipModel->GetEntity()->entityNumber, clipModel->GetId() ) ) {
@@ -914,23 +928,54 @@ int idPush::TryTranslatePushEntity( trace_t &results, idEntity *check, idClipMod
 	else {
 		// move entity in reverse only colliding with pusher
 		ClipEntityTranslation( results, check, clipModel, NULL, -move );
-		// if no collision with the pusher then the entity is not pushed by the pusher
+		// If the entity is hovering just above a fast-rising pusher, the reverse trace can
+		// miss the contact even though the pusher's final position would overlap it. Keep
+		// this compatibility nudge limited to upward movement; retail lets descending bound
+		// solids move away without turning a late destination overlap into a crush.
 		if ( results.fraction >= 1.0f ) {
-			return PUSH_NO;
+			if ( ( move * -physics->GetGravityNormal() ) <= 0.0f ) {
+				return PUSH_NO;
+			}
+
+			const idVec3 oldClipOrigin = clipModel->GetOrigin();
+			const idMat3 clipAxis = clipModel->GetAxis();
+
+			clipModel->Link( clipModel->GetEntity(), clipModel->GetId(), newOrigin, clipAxis );
+			const bool overlapsAtDestination = physics->ClipContents( clipModel );
+			clipModel->Link( clipModel->GetEntity(), clipModel->GetId(), oldClipOrigin, clipAxis );
+
+			// if no collision with the pusher then the entity is not pushed by the pusher
+			if ( !overlapsAtDestination ) {
+				return PUSH_NO;
+			}
+
+			ClipEntityTranslation( trace, check, NULL, clipModel, move );
+			if ( trace.fraction < 1.0f ) {
+				checkMove = move * trace.fraction;
+				ClipEntityTranslation( results, check, clipModel, NULL, -( move - checkMove ) );
+				if ( results.fraction < 1.0f ) {
+					results.c.normal = -results.c.normal;
+					results.c.dist = -results.c.dist;
+					return PUSH_BLOCKED;
+				}
+			} else {
+				checkMove = move;
+			}
 		}
-		// vector along which the entity is pushed
-		checkMove = move * (1.0f - results.fraction);
-		// move the entity colliding with all other entities except the pusher itself
-		ClipEntityTranslation( trace, check, NULL, clipModel, checkMove );
-		// if there is a collisions
-		if ( trace.fraction < 1.0f ) {
+		else {
+			// vector along which the entity is pushed
+			checkMove = move * (1.0f - results.fraction);
+			// move the entity colliding with all other entities except the pusher itself
+			ClipEntityTranslation( trace, check, NULL, clipModel, checkMove );
+			// if there is a collisions
+			if ( trace.fraction < 1.0f ) {
 
-			results.c.normal = -results.c.normal;
-			results.c.dist = -results.c.dist;
+				results.c.normal = -results.c.normal;
+				results.c.dist = -results.c.dist;
 
-			// FIXME: try to push the blocking entity as well ?
-			// FIXME: handle sliding along more than one collision plane ?
-			// FIXME: this code has issues, player pushing box into corner in "maps/mre/aaron/test.map"
+				// FIXME: try to push the blocking entity as well ?
+				// FIXME: handle sliding along more than one collision plane ?
+				// FIXME: this code has issues, player pushing box into corner in "maps/mre/aaron/test.map"
 
 /*
 			oldOrigin = physics->GetOrigin();
@@ -961,8 +1006,9 @@ int idPush::TryTranslatePushEntity( trace_t &results, idEntity *check, idClipMod
 
 			physics->SetOrigin( oldOrigin );
 */
-			if ( trace.fraction < 1.0f ) {
-				return PUSH_BLOCKED;
+				if ( trace.fraction < 1.0f ) {
+					return PUSH_BLOCKED;
+				}
 			}
 		}
 	}
@@ -1009,12 +1055,18 @@ int idPush::DiscardEntities( idEntity *entityList[], int numEntities, int flags,
 		}
 
 		// don't push players in noclip mode
-		if ( check->IsType( idPlayer::Type ) && static_cast<idPlayer *>(check)->noclip ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+		if ( check->IsType( idPlayer::GetClassType() ) && static_cast<idPlayer *>(check)->noclip ) {
+// RAVEN END
 			continue;
 		}
 
 		// if we should only push idMoveable entities
-		if ( ( flags & PUSHFL_ONLYMOVEABLE ) && !check->IsType( idMoveable::Type ) ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+		if ( ( flags & PUSHFL_ONLYMOVEABLE ) && !check->IsType( idMoveable::GetClassType() ) ) {
+// RAVEN END
 			continue;
 		}
 
@@ -1063,6 +1115,15 @@ float idPush::ClipTranslationalPush( trace_t &results, idEntity *pusher, const i
 		return totalMass;
 	}
 
+	// The collision system cannot sweep a trace model further than CM_MAX_TRACE_DIST, so a
+	// longer move is a teleport, not a push. A mover bound to an animated joint jumps with it
+	// when the animation changes (the mcc_landing ship snaps ~8400 units into its flyby);
+	// sweeping that fails as a huge translation, which blocked the whole team on whatever lay
+	// in the swept bounds. A pusher that clips against the world still cannot make the move.
+	if ( !( flags & PUSHFL_CLIP ) && translation.LengthSqr() > Square( CM_MAX_TRACE_DIST ) ) {
+		return totalMass;
+	}
+
 	dir = translation;
 	dir.Normalize();
 	dir.z += 1.0f;
@@ -1080,7 +1141,10 @@ float idPush::ClipTranslationalPush( trace_t &results, idEntity *pusher, const i
 	// make sure we don't get the pushing clip model in the list
 	clipModel->Disable();
 
-	listedEntities = gameLocal.clip.EntitiesTouchingBounds( pushBounds, -1, entityList, MAX_GENTITIES );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+	listedEntities = gameLocal.EntitiesTouchingBounds( pusher, pushBounds, -1, entityList, MAX_GENTITIES );
+// RAVEN END
 
 	// discard entities we cannot or should not push
 	listedEntities = DiscardEntities( entityList, listedEntities, flags, pusher );
@@ -1094,9 +1158,10 @@ float idPush::ClipTranslationalPush( trace_t &results, idEntity *pusher, const i
 		for ( i = 0; i < listedEntities; i++ ) {
 			entityList[i]->GetPhysics()->DisableClip();
 		}
-
-		gameLocal.clip.Translation( results, clipModel->GetOrigin(), clipModel->GetOrigin() + translation, clipModel, clipModel->GetAxis(), pusher->GetPhysics()->GetClipMask(), NULL );
-
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		gameLocal.Translation( pusher, results, clipModel->GetOrigin(), clipModel->GetOrigin() + translation, clipModel, clipModel->GetAxis(), pusher->GetPhysics()->GetClipMask(), NULL );
+// RAVEN END
 		// enable to be pushed entities for collision detection
 		for ( i = 0; i < listedEntities; i++ ) {
 			entityList[i]->GetPhysics()->EnableClip();
@@ -1143,11 +1208,17 @@ float idPush::ClipTranslationalPush( trace_t &results, idEntity *pusher, const i
 		// if the entity is pushed
 		if ( res == PUSH_OK ) {
 			// set the pusher in the translated position
-			clipModel->Link( gameLocal.clip, clipModel->GetEntity(), clipModel->GetId(), newOrigin, clipModel->GetAxis() );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+			clipModel->Link( clipModel->GetEntity(), clipModel->GetId(), newOrigin, clipModel->GetAxis() );
+// RAVEN END
 			// the entity might be pushed off the ground
 			physics->EvaluateContacts();
 			// put pusher back in old position
-			clipModel->Link( gameLocal.clip, clipModel->GetEntity(), clipModel->GetId(), oldOrigin, clipModel->GetAxis() );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+			clipModel->Link( clipModel->GetEntity(), clipModel->GetId(), oldOrigin, clipModel->GetAxis() );
+// RAVEN END
 
 			// wake up this object
 			if ( flags & PUSHFL_APPLYIMPULSE ) {
@@ -1167,7 +1238,10 @@ float idPush::ClipTranslationalPush( trace_t &results, idEntity *pusher, const i
 		}
 
 		// if the blocking entity is a projectile
-		if ( check->IsType( idProjectile::Type ) ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+		if ( check->IsType( idProjectile::GetClassType() ) ) {
+// RAVEN END
 			check->ProcessEvent( &EV_Explode );
 			continue;
 		}
@@ -1179,14 +1253,20 @@ float idPush::ClipTranslationalPush( trace_t &results, idEntity *pusher, const i
 		}
 
 		// if the entity is an active articulated figure and gibs
-		if ( check->IsType( idAFEntity_Base::Type ) && check->spawnArgs.GetBool( "gib" ) ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+		if ( check->IsType( idAFEntity_Base::GetClassType() ) && check->spawnArgs.GetBool( "gib" ) ) {
+// RAVEN END
 			if ( static_cast<idAFEntity_Base *>(check)->IsActiveAF() ) {
 				check->ProcessEvent( &EV_Gib, "damage_Gib" );
 			}
 		}
 
 		// if the entity is a moveable item and gibs
-		if ( check->IsType( idMoveableItem::Type ) && check->spawnArgs.GetBool( "gib" ) ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+		if ( check->IsType( idMoveableItem::GetClassType() ) && check->spawnArgs.GetBool( "gib" ) ) {
+// RAVEN END
 			check->ProcessEvent( &EV_Gib, "damage_Gib" );
 		}
 
@@ -1256,7 +1336,10 @@ float idPush::ClipRotationalPush( trace_t &results, idEntity *pusher, const int 
 	// make sure we don't get the pushing clip model in the list
 	clipModel->Disable();
 
-	listedEntities = gameLocal.clip.EntitiesTouchingBounds( pushBounds, -1, entityList, MAX_GENTITIES );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+	listedEntities = gameLocal.EntitiesTouchingBounds( pusher, pushBounds, -1, entityList, MAX_GENTITIES );
+// RAVEN END
 
 	// discard entities we cannot or should not push
 	listedEntities = DiscardEntities( entityList, listedEntities, flags, pusher );
@@ -1270,9 +1353,10 @@ float idPush::ClipRotationalPush( trace_t &results, idEntity *pusher, const int 
 		for ( i = 0; i < listedEntities; i++ ) {
 			entityList[i]->GetPhysics()->DisableClip();
 		}
-
-		gameLocal.clip.Rotation( results, clipModel->GetOrigin(), rotation, clipModel, clipModel->GetAxis(), pusher->GetPhysics()->GetClipMask(), NULL );
-
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+		gameLocal.Rotation( pusher, results, clipModel->GetOrigin(), rotation, clipModel, clipModel->GetAxis(), pusher->GetPhysics()->GetClipMask(), NULL );
+// RAVEN END
 		// enable to be pushed entities for collision detection
 		for ( i = 0; i < listedEntities; i++ ) {
 			entityList[i]->GetPhysics()->EnableClip();
@@ -1318,11 +1402,17 @@ float idPush::ClipRotationalPush( trace_t &results, idEntity *pusher, const int 
 		// if the entity is pushed
 		if ( res == PUSH_OK ) {
 			// set the pusher in the rotated position
-			clipModel->Link( gameLocal.clip, clipModel->GetEntity(), clipModel->GetId(), clipModel->GetOrigin(), newAxis );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+			clipModel->Link( clipModel->GetEntity(), clipModel->GetId(), clipModel->GetOrigin(), newAxis );
+// RAVEN END
 			// the entity might be pushed off the ground
 			physics->EvaluateContacts();
 			// put pusher back in old position
-			clipModel->Link( gameLocal.clip, clipModel->GetEntity(), clipModel->GetId(), clipModel->GetOrigin(), oldAxis );
+// RAVEN BEGIN
+// ddynerman: multiple clip worlds
+			clipModel->Link( clipModel->GetEntity(), clipModel->GetId(), clipModel->GetOrigin(), oldAxis );
+// RAVEN END
 
 			// wake up this object
 			check->ApplyImpulse( clipModel->GetEntity(), clipModel->GetId(), clipModel->GetOrigin(), vec3_origin );
@@ -1337,7 +1427,10 @@ float idPush::ClipRotationalPush( trace_t &results, idEntity *pusher, const int 
 		}
 
 		// if the blocking entity is a projectile
-		if ( check->IsType( idProjectile::Type ) ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+		if ( check->IsType( idProjectile::GetClassType() ) ) {
+// RAVEN END
 			check->ProcessEvent( &EV_Explode );
 			continue;
 		}
@@ -1349,7 +1442,10 @@ float idPush::ClipRotationalPush( trace_t &results, idEntity *pusher, const int 
 		}
 
 		// if the entity is an active articulated figure and gibs
-		if ( check->IsType( idAFEntity_Base::Type ) && check->spawnArgs.GetBool( "gib" ) ) {
+// RAVEN BEGIN
+// jnewquist: Use accessor for static class type 
+		if ( check->IsType( idAFEntity_Base::GetClassType() ) && check->spawnArgs.GetBool( "gib" ) ) {
+// RAVEN END
 			if ( static_cast<idAFEntity_Base *>(check)->IsActiveAF() ) {
 				check->ProcessEvent( &EV_Gib, "damage_Gib" );
 			}

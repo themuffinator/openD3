@@ -56,6 +56,17 @@ const int BUTTON_VOICECHAT = BIT(6);
 const int BUTTON_TOURNEY = BIT(7);
 // twhitaker: strafe
 const int BUTTON_STRAFE = BIT(8);
+const int BUTTON_WEAPONWHEEL = BIT(9);
+// openQ4 VR: the tracked head crouched (vr_physicalCrouch). It crouches the
+// body like a held crouch, and tells the game the view must not drop again.
+const int BUTTON_VRCROUCH = BIT(10);
+// openQ4: the multiplayer quick-chat wheel is held open (_quickChat). Like the
+// weapon wheel it freezes the view and the weapon on both ends of the wire.
+const int BUTTON_QUICKCHAT = BIT(11);
+// openQ4 VR: the command's angles are a tracked aim's (the weapon hand's, or
+// the head's). Its pitch is absolute, so the game keeps no pitch offset on it:
+// on both ends of the wire the shot then leaves along the controller's ray.
+const int BUTTON_VRAIM = BIT(12);
 // RAVEN END
 
 // usercmd_t->impulse commands
@@ -80,7 +91,7 @@ const int IMPULSE_17			= 17;			// ready to play ( toggles ui_ready )
 const int IMPULSE_18			= 18;			// center view
 const int IMPULSE_19			= 19;			// show PDA/INV/MAP
 const int IMPULSE_20			= 20;			// toggle team ( toggles ui_team )
-const int IMPULSE_21			= 21;			// <unused>
+const int IMPULSE_21			= 21;			// tourney toggle waiting room/spec
 const int IMPULSE_22			= 22;			// spectate
 const int IMPULSE_23			= 23;			// <unused>
 const int IMPULSE_24			= 24;			// <unused>
@@ -89,7 +100,12 @@ const int IMPULSE_26			= 26;			// <unused>
 const int IMPULSE_27			= 27;			// <unused>
 const int IMPULSE_28			= 28;			// vote yes
 const int IMPULSE_29			= 29;			// vote no
-const int IMPULSE_40			= 40;			// use vehicle
+const int IMPULSE_40			= 40;			// repeat last radio chatter
+const int IMPULSE_50			= 50;			// toggle flashlight
+const int IMPULSE_51			= 51;			// switch to last weapon
+const int IMPULSE_52			= 52;			// multiplayer stats
+const int IMPULSE_100			= 100;			// buy menu impulse range
+const int IMPULSE_127			= 127;			// buy menu impulse range
 
 // usercmd_t->flags
 const int UCF_IMPULSE_SEQUENCE	= 0x0001;		// toggled every time an impulse command is sent
@@ -99,7 +115,7 @@ public:
 	int			gameFrame;						// frame number
 	int			gameTime;						// game time
 	int			duplicateCount;					// duplication count for networking
-	byte		buttons;						// buttons
+	short		buttons;						// buttons
 	signed char	forwardmove;					// forward/backward movement
 	signed char	rightmove;						// left/right movement
 	signed char	upmove;							// up/down movement
@@ -154,6 +170,9 @@ public:
 	// Set a value that can safely be referenced by UsercmdInterrupt() for each key binding.
 	virtual	int			CommandStringUsercmdData( const char *cmdString ) = 0;
 
+	// Resolve a console token to an impulse number, or -1 if it is not an impulse command.
+	virtual int			ResolveImpulseCommand( const char *cmdString ) const = 0;
+
 	// Returns the number of user commands.
 	virtual int			GetNumUserCommands( void ) = 0;
 
@@ -171,6 +190,21 @@ public:
 
 	// Directly sample a usercmd.
 	virtual usercmd_t	GetDirectUsercmd( void ) = 0;
+
+	// Queue a one-shot impulse for the next generated usercmd.
+	virtual void		TriggerImpulse( int impulseNum ) = 0;
+
+	// Late look (in_presentationView): the view angles, in degrees, that the
+	// generator would put in its next usercmd if it were built now. That is
+	// the last built usercmd plus mouse/gyro motion not yet consumed and the
+	// elapsed share of held look keys and stick deflection. Comparing it with
+	// the angles of the usercmd the game last applied gives every input the
+	// game has not seen, including usercmds buffered but not yet run, so
+	// nothing is shown twice or skipped. Nothing is consumed: the next
+	// usercmd still receives all of it. Returns false when disabled, inhibited,
+	// temporally filtered (m_smooth/m_filter), replaying commands, in VR, or
+	// while a radial selector owns the look input.
+	virtual bool		GetPresentationViewAngles( float &yaw, float &pitch ) = 0;
 };
 
 extern idUsercmdGen	*usercmdGen;

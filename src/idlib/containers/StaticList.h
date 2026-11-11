@@ -17,7 +17,7 @@ public:
 
 						idStaticList();
 						idStaticList( const idStaticList<type,size> &other );
-						~idStaticList<type,size>( void );
+						~idStaticList( void );
 
 	void				Clear( void );										// marks the list as empty.  does not deallocate or intialize data.
 	int					Num( void ) const;									// returns number of elements in list
@@ -109,7 +109,7 @@ template<class type,int size>
 ID_INLINE void idStaticList<type,size>::DeleteContents( bool clear ) {
 	int i;
 
-	for( i = 0; i < size; i++ ) {
+	for( i = 0; i < num; i++ ) {
 		delete list[ i ];
 		list[ i ] = NULL;
 	}
@@ -152,7 +152,7 @@ idStaticList<type>::Allocated
 */
 template<class type,int size>
 ID_INLINE size_t idStaticList<type,size>::Allocated( void ) const {
-	return size * sizeof( type );
+	return 0;
 }
 
 /*
@@ -162,7 +162,7 @@ idStaticList<type>::Size
 */
 template<class type,int size>
 ID_INLINE size_t idStaticList<type,size>::Size( void ) const {
-	return sizeof( idStaticList<type,size> ) + Allocated();
+	return sizeof( idStaticList<type,size> );
 }
 
 /*

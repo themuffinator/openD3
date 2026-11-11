@@ -1,30 +1,3 @@
-/*
-===========================================================================
-
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
-
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
-
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
 
 #ifndef __GAME_PVS_H__
 #define __GAME_PVS_H__
@@ -45,13 +18,14 @@ typedef struct pvsHandle_s {
 	unsigned int		h;			// handle for current pvs
 } pvsHandle_t;
 
-
 typedef struct pvsCurrent_s {
 	pvsHandle_t			handle;		// current pvs handle
 	byte *				pvs;		// current pvs bit string
 } pvsCurrent_t;
 
-#define MAX_CURRENT_PVS		8		// must be a power of 2
+// must be a power of 2
+// base was 8, MP now stores client PVS from frame to frame ( MAX_CLIENTS )
+#define MAX_CURRENT_PVS		64
 
 typedef enum {
 	PVS_NORMAL				= 0,	// PVS through portals taking portal states into account
@@ -99,13 +73,14 @@ private:
 	bool *				connectedAreas;
 	int *				areaQueue;
 	byte *				areaPVS;
+
 						// current PVS for a specific source possibly taking portal states (open/closed) into account
 	mutable pvsCurrent_t currentPVS[MAX_CURRENT_PVS];
 						// used to create PVS
 	int					portalVisBytes;
-	int					portalVisLongs;
+	int					portalVisDwords;
 	int					areaVisBytes;
-	int					areaVisLongs;
+	int					areaVisDwords;
 	struct pvsPortal_s *pvsPortals;
 	struct pvsArea_s *	pvsAreas;
 

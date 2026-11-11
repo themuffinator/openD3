@@ -1,33 +1,6 @@
-/*
-===========================================================================
 
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
 
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
 
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
-
-#include "../../idlib/precompiled.h"
-#pragma hdrstop
 
 #include "../Game_local.h"
 
@@ -40,6 +13,7 @@ idInterpreter::idInterpreter() {
 	localstackUsed = 0;
 	terminateOnExit = true;
 	debug = 0;
+	LastScriptVariable = 0;
 	memset( localstack, 0, sizeof( localstack ) );
 	memset( callStack, 0, sizeof( callStack ) );
 	Reset();
@@ -66,7 +40,14 @@ void idInterpreter::Save( idSaveGame *savefile ) const {
 	savefile->WriteInt( maxStackDepth );
 
 	savefile->WriteInt( localstackUsed );
-	savefile->Write( &localstack, localstackUsed );
+	// Address temporaries are written as zero (idProgram::ZeroPointerLocals).
+	byte savedStack[ LOCALSTACK_SIZE ];
+	memcpy( savedStack, localstack, localstackUsed );
+	gameLocal.program.ZeroPointerLocals( savedStack, localstackUsed, currentFunction, localstackBase );
+	for( i = 0; i < callStackDepth; i++ ) {
+		gameLocal.program.ZeroPointerLocals( savedStack, localstackUsed, callStack[i].f, callStack[i].stackbase );
+	}
+	savefile->Write( savedStack, localstackUsed );
 
 	savefile->WriteInt( localstackBase );
 	savefile->WriteInt( maxLocalstackUsed );
@@ -80,6 +61,7 @@ void idInterpreter::Save( idSaveGame *savefile ) const {
 
 	savefile->WriteInt( popParms );
 
+	// TOSAVE: idVarDef			*LastScriptVariable;
 	if ( multiFrameEvent ) {
 		savefile->WriteString( multiFrameEvent->GetName() );
 	} else {
@@ -106,48 +88,108 @@ void idInterpreter::Restore( idRestoreGame *savefile ) {
 	int func_index;
 
 	savefile->ReadInt( callStackDepth );
+	if ( callStackDepth < 0 || callStackDepth > MAX_STACK_DEPTH ) {
+		savefile->Error( "idInterpreter::Restore: invalid call stack depth %d", callStackDepth );
+	}
 	for( i = 0; i < callStackDepth; i++ ) {
 		savefile->ReadInt( callStack[i].s );
+		if ( callStack[i].s < -1 || callStack[i].s >= gameLocal.program.NumStatements() ) {
+			savefile->Error( "idInterpreter::Restore: invalid call stack statement %d at depth %d", callStack[i].s, i );
+		}
 
 		savefile->ReadInt( func_index );
 		if ( func_index >= 0 ) {
+			if ( func_index >= gameLocal.program.NumFunctions() ) {
+				savefile->Error( "idInterpreter::Restore: invalid call stack function index %d at depth %d", func_index, i );
+			}
 			callStack[i].f = gameLocal.program.GetFunction( func_index );
-		} else {
+		} else if ( func_index == -1 ) {
 			callStack[i].f = NULL;
+		} else {
+			savefile->Error( "idInterpreter::Restore: invalid call stack function index %d at depth %d", func_index, i );
 		}
 
 		savefile->ReadInt( callStack[i].stackbase );
+		if ( callStack[i].stackbase < 0 || callStack[i].stackbase > LOCALSTACK_SIZE ) {
+			savefile->Error( "idInterpreter::Restore: invalid call stack base %d at depth %d", callStack[i].stackbase, i );
+		}
 	}
 	savefile->ReadInt( maxStackDepth );
+	if ( maxStackDepth < callStackDepth || maxStackDepth > MAX_STACK_DEPTH ) {
+		savefile->Error( "idInterpreter::Restore: invalid max call stack depth %d for current depth %d", maxStackDepth, callStackDepth );
+	}
 
 	savefile->ReadInt( localstackUsed );
-	savefile->Read( &localstack, localstackUsed );
+	if ( localstackUsed < 0 || localstackUsed > LOCALSTACK_SIZE ) {
+		savefile->Error( "idInterpreter::Restore: invalid local stack byte count %d", localstackUsed );
+	}
+	memset( localstack, 0, sizeof( localstack ) );
+	if ( localstackUsed > 0 ) {
+		savefile->Read( localstack, localstackUsed );
+	}
 
 	savefile->ReadInt( localstackBase );
+	if ( localstackBase < 0 || localstackBase > localstackUsed ) {
+		savefile->Error( "idInterpreter::Restore: invalid local stack base %d for byte count %d", localstackBase, localstackUsed );
+	}
 	savefile->ReadInt( maxLocalstackUsed );
+	if ( maxLocalstackUsed < localstackUsed || maxLocalstackUsed > LOCALSTACK_SIZE ) {
+		savefile->Error( "idInterpreter::Restore: invalid max local stack byte count %d for current byte count %d", maxLocalstackUsed, localstackUsed );
+	}
 
 	savefile->ReadInt( func_index );
 	if ( func_index >= 0 ) {
+		if ( func_index >= gameLocal.program.NumFunctions() ) {
+			savefile->Error( "idInterpreter::Restore: invalid current function index %d", func_index );
+		}
 		currentFunction = gameLocal.program.GetFunction( func_index );
-	} else {
+	} else if ( func_index == -1 ) {
 		currentFunction = NULL;
+	} else {
+		savefile->Error( "idInterpreter::Restore: invalid current function index %d", func_index );
 	}
 	savefile->ReadInt( instructionPointer );
+	if ( instructionPointer < -1 || instructionPointer >= gameLocal.program.NumStatements() ) {
+		savefile->Error( "idInterpreter::Restore: invalid instruction pointer %d", instructionPointer );
+	}
 
 	savefile->ReadInt( popParms );
+	if ( popParms < 0 || popParms > localstackUsed ) {
+		savefile->Error( "idInterpreter::Restore: invalid pending parameter byte count %d for local stack byte count %d", popParms, localstackUsed );
+	}
+
+	// TORESTORE: idVarDef			*LastScriptVariable;
 
 	savefile->ReadString( funcname );
 	if ( funcname.Length() ) {
 		multiFrameEvent = idEventDef::FindEvent( funcname );
+		if ( multiFrameEvent == NULL ) {
+			savefile->Error( "idInterpreter::Restore: unknown multi-frame event '%s'", funcname.c_str() );
+		}
+	} else {
+		multiFrameEvent = NULL;
 	}
 
-	savefile->ReadObject( reinterpret_cast<idClass *&>( eventEntity ) );
-	savefile->ReadObject( reinterpret_cast<idClass *&>( thread ) );
+	savefile->ReadObject( eventEntity );
+	RestoreThread( savefile );
 
 	savefile->ReadBool( doneProcessing );
 	savefile->ReadBool( threadDying );
 	savefile->ReadBool( terminateOnExit );
 	savefile->ReadBool( debug );
+}
+
+/*
+================
+idInterpreter::RestoreThread
+================
+*/
+void idInterpreter::RestoreThread( idRestoreGame *savefile ) {
+	idThread *restoredThread = NULL;
+	savefile->ReadObject( restoredThread );
+	if ( restoredThread != thread ) {
+		savefile->Error( "idInterpreter::Restore: saved thread does not match interpreter owner" );
+	}
 }
 
 /*
@@ -184,14 +226,16 @@ used primarily for the debugger and debugging
 //FIXME:  This is pretty much wrong.  won't access data in most situations.
 ================
 */
+// RAVEN BEGIN
+// bdube: took this over again
 bool idInterpreter::GetRegisterValue( const char *name, idStr &out, int scopeDepth ) {
 	varEval_t		reg;
 	idVarDef		*d;
 	char			funcObject[ 1024 ];
 	char			*funcName;
-	const idVarDef	*scope;
+	const idVarDef	*scope = NULL;
+	const idVarDef	*scopeObj;
 	const idTypeDef	*field;
-	const idScriptObject *obj;
 	const function_t *func;
 
 	out.Empty();
@@ -213,35 +257,44 @@ bool idInterpreter::GetRegisterValue( const char *name, idStr &out, int scopeDep
 	funcName = strstr( funcObject, "::" );
 	if ( funcName ) {
 		*funcName = '\0';
-		scope = gameLocal.program.GetDef( NULL, funcObject, &def_namespace );
-		funcName += 2;
+		scopeObj = gameLocal.program.GetDef( NULL, funcObject, &def_namespace );
+		funcName += 2;				
+		if ( scopeObj )
+		{
+			scope = gameLocal.program.GetDef( NULL, funcName, scopeObj );
+		}
 	} else {
 		funcName = funcObject;
-		scope = &def_namespace;
+		scope = gameLocal.program.GetDef( NULL, func->Name(), &def_namespace );
+		scopeObj = NULL;
 	}
 
-	// Get the function from the object
-	d = gameLocal.program.GetDef( NULL, funcName, scope );
-	if ( !d ) {
+	if ( !scope )
+	{
+		return false;
+	}
+
+	d = gameLocal.program.GetDef( NULL, name, scope );
+	
+	// Check the objects for it if it wasnt local to the function
+	if ( !d )
+	{
+		for ( ; scopeObj && scopeObj->TypeDef()->SuperClass(); scopeObj = scopeObj->TypeDef()->SuperClass()->def )
+		{
+			d = gameLocal.program.GetDef( NULL, name, scopeObj );
+			if ( d )
+			{
+				break;
+			}
+		}
+	}	
+
+	if ( !d )
+	{
+		out = "???";
 		return false;
 	}
 	
-	// Get the variable itself and check various namespaces
-	d = gameLocal.program.GetDef( NULL, name, d );
-	if ( !d ) {
-		if ( scope == &def_namespace ) {
-			return false;
-		}
-		
-		d = gameLocal.program.GetDef( NULL, name, scope );
-		if ( !d ) {
-			d = gameLocal.program.GetDef( NULL, name, &def_namespace );
-			if ( !d ) {
-				return false;
-			}
-		}
-	}
-		
 	reg = GetVariable( d );
 	switch( d->Type() ) {
 	case ev_float:
@@ -272,30 +325,55 @@ bool idInterpreter::GetRegisterValue( const char *name, idStr &out, int scopeDep
 		break;
 
 	case ev_field:
+	{
+		idEntity*		entity;			
+		idScriptObject*	obj;
+		
 		if ( scope == &def_namespace ) {
 			// should never happen, but handle it safely anyway
 			return false;
 		}
 
-		field = scope->TypeDef()->GetParmType( reg.ptrOffset )->FieldType();
-		obj   = *reinterpret_cast<const idScriptObject **>( &localstack[ callStack[ callStackDepth ].stackbase ] );
-		if ( !field || !obj ) {
+		field  = d->TypeDef()->FieldType();
+		entity = GetEntity ( *((int*)&localstack[ localstackBase ]) );
+		if ( !entity || !field )
+		{
 			return false;
 		}
-								
+
+		obj = &entity->scriptObject;
+		if ( !obj ) {
+			return false;
+		}
+		
 		switch ( field->Type() ) {
-		case ev_boolean:
-			out = va( "%d", *( reinterpret_cast<int *>( &obj->data[ reg.ptrOffset ] ) ) );
-			return true;
+			case ev_boolean:
+				out = va( "%d", *( reinterpret_cast<int *>( &obj->data[ reg.ptrOffset ] ) ) );
+				return true;
 
-		case ev_float:
-			out = va( "%g", *( reinterpret_cast<float *>( &obj->data[ reg.ptrOffset ] ) ) );
-			return true;
+			case ev_float:
+				out = va( "%g", *( reinterpret_cast<float *>( &obj->data[ reg.ptrOffset ] ) ) );
+				return true;
+				
+			case ev_string:	{
+				const char* str;
+				str = reinterpret_cast<const char*>( &obj->data[ reg.ptrOffset ] );
+				if ( !str ) {
+					out = "\"\"";
+				} else {
+					out  = "\"";
+					out += str;			
+					out += "\"";
+				}
+				return true;
+			}
 
-		default:
-			return false;
+			default:
+				return false;
 		}
+		
 		break;
+	}
 
 	case ev_string:
 		if ( reg.stringPtr ) {
@@ -311,6 +389,7 @@ bool idInterpreter::GetRegisterValue( const char *name, idStr &out, int scopeDep
 		return false;
 	}
 }
+// RAVEN END
 
 /*
 ================
@@ -425,7 +504,7 @@ idInterpreter::Error
 Aborts the currently executing function
 ============
 */
-void idInterpreter::Error( char *fmt, ... ) const {
+void idInterpreter::Error( const char *fmt, ... ) const {
 	va_list argptr;
 	char	text[ 1024 ];
 
@@ -436,7 +515,7 @@ void idInterpreter::Error( char *fmt, ... ) const {
 	StackTrace();
 
 	if ( ( instructionPointer >= 0 ) && ( instructionPointer < gameLocal.program.NumStatements() ) ) {
-		statement_t &line = gameLocal.program.GetStatement( instructionPointer );
+		const statement_t &line = gameLocal.program.GetStatement( instructionPointer );
 		common->Error( "%s(%d): Thread '%s': %s\n", gameLocal.program.GetFilename( line.file ), line.linenumber, thread->GetThreadName(), text );
 	} else {
 		common->Error( "Thread '%s': %s\n", thread->GetThreadName(), text );
@@ -450,7 +529,7 @@ idInterpreter::Warning
 Prints file and line number information with warning.
 ============
 */
-void idInterpreter::Warning( char *fmt, ... ) const {
+void idInterpreter::Warning( const char *fmt, ... ) const {
 	va_list argptr;
 	char	text[ 1024 ];
 
@@ -459,7 +538,7 @@ void idInterpreter::Warning( char *fmt, ... ) const {
 	va_end( argptr );
 
 	if ( ( instructionPointer >= 0 ) && ( instructionPointer < gameLocal.program.NumStatements() ) ) {
-		statement_t &line = gameLocal.program.GetStatement( instructionPointer );
+		const statement_t &line = gameLocal.program.GetStatement( instructionPointer );
 		common->Warning( "%s(%d): Thread '%s': %s", gameLocal.program.GetFilename( line.file ), line.linenumber, thread->GetThreadName(), text );
 	} else {
 		common->Warning( "Thread '%s' : %s", thread->GetThreadName(), text );
@@ -510,7 +589,10 @@ Copys the args from the calling thread's stack
 void idInterpreter::ThreadCall( idInterpreter *source, const function_t *func, int args ) {
 	Reset();
 
-	memcpy( localstack, &source->localstack[ source->localstackUsed - args ], args );
+// RAVEN BEGIN
+// JSinger: Changed to call optimized memcpy
+	SIMDProcessor->Memcpy( localstack, &source->localstack[ source->localstackUsed - args ], args );
+// RAVEN END
 
 	localstackUsed = args;
 	localstackBase = 0;
@@ -651,7 +733,7 @@ void idInterpreter::LeaveFunction( idVarDef *returnDef ) {
 	assert( localstackUsed == localstackBase );
 
 	if ( debug ) {
-		statement_t &line = gameLocal.program.GetStatement( instructionPointer );
+		const statement_t &line = gameLocal.program.GetStatement( instructionPointer );
 		gameLocal.Printf( "%d: %s(%d): exit %s", gameLocal.time, gameLocal.program.GetFilename( line.file ), line.linenumber, currentFunction->Name() );
 		if ( callStackDepth > 1 ) {
 			gameLocal.Printf( " return to %s(line %d)\n", callStack[ callStackDepth - 1 ].f->Name(), gameLocal.program.GetStatement( callStack[ callStackDepth - 1 ].s ).linenumber );
@@ -702,10 +784,26 @@ void idInterpreter::CallEvent( const function_t *func, int argsize ) {
 	eventEntity = GetEntity( *var.entityNumberPtr );
 
 	if ( !eventEntity || !eventEntity->RespondsTo( *evdef ) ) {
+// RAVEN BEGIN
+// jshepard: added catch for entities that don't exist 
 		if ( eventEntity && developer.GetBool() ) {
 			// give a warning in developer mode
 			Warning( "Function '%s' not supported on entity '%s'", evdef->GetName(), eventEntity->name.c_str() );
+		} else if( !eventEntity )	{
+			//check the last script variable.
+			if(!!LastScriptVariable)	{
+				//if it's $null_entity, then we should ignore this.
+				const char *lastVarName = LastScriptVariable->Name();
+				// Map-authored entity symbols use '$name'. Local script vars (for example
+				// function args like 'vehicle') may legitimately be null in guard logic.
+				if ( lastVarName != NULL && lastVarName[0] == '$' && idStr::Cmp( "$null_entity", lastVarName ) ) {
+					Warning( "Entity '%s' is a null entity", lastVarName );
+				}
+			} else {
+				Warning( "Null entity referenced -- check entity name spelling.");
+			}		
 		}
+// RAVEN END
 		// always return a safe value when an object doesn't exist
 		switch( evdef->GetReturnType() ) {
 		case D_EVENT_INTEGER :
@@ -791,8 +889,7 @@ void idInterpreter::CallEvent( const function_t *func, int argsize ) {
 	}
 
 	popParms = argsize;
-	eventEntity->ProcessEventArgPtr( evdef, data );
-
+	eventEntity->ProcessEventArgPtr( evdef, data );	
 	if ( !multiFrameEvent ) {
 		if ( popParms ) {
 			PopParms( popParms );
@@ -875,7 +972,7 @@ void idInterpreter::CallSysEvent( const function_t *func, int argsize ) {
 		switch( format[ i ] ) {
 		case D_EVENT_INTEGER :
 			source.intPtr = ( int * )&localstack[ start + pos ];
-			data[ i ] = int( *source.floatPtr );
+			*( int * )&data[ i ] = int( *source.floatPtr );
 			break;
 
 		case D_EVENT_FLOAT :
@@ -938,12 +1035,16 @@ bool idInterpreter::Execute( void ) {
 	varEval_t	var_b;
 	varEval_t	var_c;
 	varEval_t	var;
-	statement_t	*st;
+	const statement_t	*st;
 	int 		runaway;
 	idThread	*newThread;
 	float		floatVal;
 	idScriptObject *obj;
 	const function_t *func;
+// RAVEN BEGIN
+// jnewquist: Tag scope and callees to track allocations using "new".
+	MEM_SCOPED_TAG(tag,MA_SCRIPT);
+// RAVEN END
 
 	if ( threadDying || !currentFunction ) {
 		return true;
@@ -966,6 +1067,23 @@ bool idInterpreter::Execute( void ) {
 
 		// next statement
 		st = &gameLocal.program.GetStatement( instructionPointer );
+
+// RAVEN BEGIN
+// bdube: if the debugger is running then we need to check to see if any breakpoints have beeng hit
+// jmarshall - reval
+		//if ( gameLocal.editors & EDITOR_DEBUGGER ) {
+		//	common->DebuggerCheckBreakpoint ( this, &gameLocal.program, instructionPointer );
+		//} else if ( g_debugScript.GetBool ( ) ) {
+		//	static int lastLineNumber = -1;
+		//	if ( lastLineNumber != gameLocal.program.GetStatement ( instructionPointer ).linenumber ) {				
+		//		gameLocal.Printf ( "%s (%d)\n", 
+		//			gameLocal.program.GetFilename ( gameLocal.program.GetStatement ( instructionPointer ).file ),
+		//			gameLocal.program.GetStatement ( instructionPointer ).linenumber
+		//			);
+		//		lastLineNumber = gameLocal.program.GetStatement ( instructionPointer ).linenumber;
+		//	}
+		//}
+// RAVEN END
 
 		switch( st->op ) {
 		case OP_RETURN:
@@ -1146,11 +1264,20 @@ bool idInterpreter::Execute( void ) {
 			var_b = GetVariable( st->b );
 			var_c = GetVariable ( st->c );
 
-			if ( *var_b.floatPtr == 0.0f ) {
-				Warning( "Divide by zero" );
-				*var_c.floatPtr = *var_a.floatPtr;
-			} else {
-				*var_c.floatPtr = static_cast<int>( *var_a.floatPtr ) % static_cast<int>( *var_b.floatPtr );
+			// openQ4: test the integer that divides. The float was tested, so a
+			// divisor between -1 and 1 passed as non-zero, truncated to 0 and
+			// raised an integer divide fault that took the game down. -1 is
+			// answered here too: INT_MIN % -1 faults the same way.
+			{
+				const int divisor = static_cast<int>( *var_b.floatPtr );
+				if ( divisor == 0 ) {
+					Warning( "Divide by zero" );
+					*var_c.floatPtr = *var_a.floatPtr;
+				} else if ( divisor == -1 ) {
+					*var_c.floatPtr = 0.0f;
+				} else {
+					*var_c.floatPtr = static_cast<int>( *var_a.floatPtr ) % divisor;
+				}
 			}
 			break;
 
@@ -1423,11 +1550,16 @@ bool idInterpreter::Execute( void ) {
 			var_a = GetVariable( st->a );
 			var_b = GetVariable( st->b );
 
-			if ( *var_a.floatPtr == 0.0f ) {
-				Warning( "Divide by zero" );
-				*var_b.floatPtr = *var_a.floatPtr;
-			} else {
-				*var_b.floatPtr = static_cast<int>( *var_b.floatPtr ) % static_cast<int>( *var_a.floatPtr );
+			{
+				const int divisor = static_cast<int>( *var_a.floatPtr );
+				if ( divisor == 0 ) {
+					Warning( "Divide by zero" );
+					*var_b.floatPtr = *var_a.floatPtr;
+				} else if ( divisor == -1 ) {
+					*var_b.floatPtr = 0.0f;
+				} else {
+					*var_b.floatPtr = static_cast<int>( *var_b.floatPtr ) % divisor;
+				}
 			}
 			break;
 
@@ -1684,12 +1816,10 @@ bool idInterpreter::Execute( void ) {
 			var_a = GetVariable( st->a );
 			var_c = GetVariable( st->c );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			if ( var_c.evalPtr ) {
-				if ( obj ) {
-					var_c.evalPtr->bytePtr = &obj->data[ st->b->value.ptrOffset ];
-				} else {
-					var_c.evalPtr->bytePtr = NULL;
-				}
+			if ( obj ) {
+				var_c.evalPtr->bytePtr = &obj->data[ st->b->value.ptrOffset ];
+			} else {
+				var_c.evalPtr->bytePtr = NULL;
 			}
 			break;
 
@@ -1801,6 +1931,13 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_PUSH_ENT:
 			var_a = GetVariable( st->a );
+// RAVEN BEGIN
+// jshepard: keep tabs on this guy, he's the last referenced script variable.
+			assert(st->a);
+			LastScriptVariable = st->a;
+			//This line leads to memory corruption, I need to come up with a better way of keeping track.
+			//LastScriptVariable->initialized = idVarDef::stackVariable;
+// RAVEN END
 			Push( *var_a.entityNumberPtr );
 			break;
 
@@ -1810,9 +1947,7 @@ bool idInterpreter::Execute( void ) {
 
 		case OP_PUSH_V:
 			var_a = GetVariable( st->a );
-			Push( *reinterpret_cast<int *>( &var_a.vectorPtr->x ) );
-			Push( *reinterpret_cast<int *>( &var_a.vectorPtr->y ) );
-			Push( *reinterpret_cast<int *>( &var_a.vectorPtr->z ) );
+			PushVector(*var_a.vectorPtr);
 			break;
 
 		case OP_PUSH_OBJ:

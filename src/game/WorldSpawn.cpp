@@ -1,41 +1,15 @@
 /*
-===========================================================================
-
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
-
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
-
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
-/*
 game_worldspawn.cpp
 
 Worldspawn class.  Each map has one worldspawn which handles global spawnargs.
 
 */
 
-#include "../idlib/precompiled.h"
-#pragma hdrstop
+
+
 
 #include "Game_local.h"
+#include "awakening/MissionScripts.h"
 
 /*
 ================
@@ -62,19 +36,13 @@ void idWorldspawn::Spawn( void ) {
 
 	assert( gameLocal.world == NULL );
 	gameLocal.world = this;
-
-	g_gravity.SetFloat( spawnArgs.GetFloat( "gravity", va( "%f", DEFAULT_GRAVITY ) ) );
-
-	// disable stamina on hell levels
-	if ( spawnArgs.GetBool( "no_stamina" ) ) {
-		pm_stamina.SetFloat( 0.0f );
-	}
+	Awakening_PrepareLateMission( spawnArgs );
 
 	// load script
 	scriptname = gameLocal.GetMapName();
 	scriptname.SetFileExtension( ".script" );
 	if ( fileSystem->ReadFile( scriptname, NULL, NULL ) > 0 ) {
-		gameLocal.program.CompileFile( scriptname );
+		gameLocal.program.CompileFile( Awakening_MissionScriptName( scriptname ) );
 
 		// call the main function by default
 		func = gameLocal.program.FindFunction( "main" );
@@ -83,6 +51,8 @@ void idWorldspawn::Spawn( void ) {
 			thread->DelayedStart( 0 );
 		}
 	}
+
+	Awakening_PrepareM05M06( spawnArgs );
 
 	// call any functions specified in worldspawn
 	kv = spawnArgs.MatchPrefix( "call" );
@@ -114,12 +84,10 @@ idWorldspawn::Restore
 void idWorldspawn::Restore( idRestoreGame *savefile ) {
 	assert( gameLocal.world == this );
 
-	g_gravity.SetFloat( spawnArgs.GetFloat( "gravity", va( "%f", DEFAULT_GRAVITY ) ) );
-
-	// disable stamina on hell levels
-	if ( spawnArgs.GetBool( "no_stamina" ) ) {
-		pm_stamina.SetFloat( 0.0f );
-	}
+// RAVEN BEGIN
+// bdube: gravity change
+	g_gravity.SetFloat( spawnArgs.GetFloat( "gravity", va( "%f", DEFAULT_GRAVITY) ) );
+// RAVEN END
 }
 
 /*

@@ -28,7 +28,13 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef __LINUX_LOCAL_H__
 #define __LINUX_LOCAL_H__
 
+#include "linux_shared.h"
+
+#ifdef OPENQ4_RENDERER_VK_MODULE
+extern thread_local glconfig_t glConfig;
+#else
 extern glconfig_t glConfig;
+#endif
 
 // glimp.cpp
 
@@ -37,8 +43,11 @@ extern glconfig_t glConfig;
 #if defined( ID_ENABLE_DGA )
 #include <X11/extensions/xf86dga.h>
 #endif
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include <X11/extensions/xf86vmode.h>
 #include <X11/XKBlib.h>
+#include <GL/glx.h>
 
 extern Display *dpy;
 extern Window win;

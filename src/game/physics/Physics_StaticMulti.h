@@ -1,30 +1,3 @@
-/*
-===========================================================================
-
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
-
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
-
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
 
 #ifndef __PHYSICS_STATICMULTI_H__
 #define __PHYSICS_STATICMULTI_H__
@@ -53,6 +26,10 @@ public:
 public:	// common physics interface
 
 	void					SetSelf( idEntity *e );
+//RAVEN BEGIN
+// abahr: for gravity
+	virtual idEntity*		GetSelf() const { return self; }
+// RAVEN END
 
 	void					SetClipModel( idClipModel *model, float density, int id = 0, bool freeOld = true );
 	idClipModel *			GetClipModel( int id = 0 ) const;
@@ -60,6 +37,11 @@ public:	// common physics interface
 
 	void					SetMass( float mass, int id = -1 );
 	float					GetMass( int id = -1 ) const;
+
+// RAVEN BEGIN
+// bdube: means of getting center of mass
+	idVec3					GetCenterMass( int id = -1 ) const;
+// RAVEN END
 
 	void					SetContents( int contents, int id = -1 );
 	int						GetContents( int id = -1 ) const;
@@ -82,6 +64,10 @@ public:	// common physics interface
 	bool					IsAtRest( void ) const;
 	int						GetRestStartTime( void ) const;
 	bool					IsPushable( void ) const;
+// RAVEN BEGIN
+// bdube: water interraction
+	bool					IsInWater ( void ) const;
+// RAVEN END	
 
 	void					SaveState( void );
 	void					RestoreState( void );
@@ -143,7 +129,10 @@ public:	// common physics interface
 
 protected:
 	idEntity *				self;					// entity using this physics object
-	idList<staticPState_t>	current;				// physics state
+// RAVEN BEGIN
+// rjohnson: converted this from a struct to a class
+	idList<idStaticPState>	current;				// physics state
+// RAVEN END
 	idList<idClipModel *>	clipModels;				// collision model
 
 	// master

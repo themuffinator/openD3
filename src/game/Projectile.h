@@ -1,30 +1,7 @@
-/*
-===========================================================================
-
-Doom 3 GPL Source Code
-Copyright (C) 1999-2011 id Software LLC, a ZeniMax Media company. 
-
-This file is part of the Doom 3 GPL Source Code (?Doom 3 Source Code?).  
-
-Doom 3 Source Code is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-Doom 3 Source Code is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
-
-In addition, the Doom 3 Source Code is also subject to certain additional terms. You should have received a copy of these additional terms immediately following the terms and conditions of the GNU General Public License which accompanied the Doom 3 Source Code.  If not, please request a copy in writing from id Software at the address below.
-
-If you have questions concerning this license or the applicable additional terms, you may contact in writing id Software LLC, c/o ZeniMax Media Inc., Suite 120, Rockville, Maryland 20850 USA.
-
-===========================================================================
-*/
+// RAVEN BEGIN
+// bdube: note that this file is no longer merged with legacy engine updates
+//
+// MERGE_DATE 09/30/2004
 
 #ifndef __GAME_PROJECTILE_H__
 #define __GAME_PROJECTILE_H__
@@ -51,46 +28,62 @@ public :
 	void					Save( idSaveGame *savefile ) const;
 	void					Restore( idRestoreGame *savefile );
 
-	void					Create( idEntity *owner, const idVec3 &start, const idVec3 &dir );
-	virtual void			Launch( const idVec3 &start, const idVec3 &dir, const idVec3 &pushVelocity, const float timeSinceFire = 0.0f, const float launchPower = 1.0f, const float dmgPower = 1.0f );
+	void					Create( idEntity *owner, const idVec3 &start, const idVec3 &dir, idEntity* ignore = NULL, idEntity* extraPassEntity = NULL );
+	virtual void			Launch( const idVec3 &start, const idVec3 &dir, const idVec3 &pushVelocity, const float timeSinceFire = 0.0f, const float dmgPower = 1.0f );
+
 	virtual void			FreeLightDef( void );
+
+//RITUAL BEGIN
+	void					SetOwner(idEntity* ent)	{ owner = ent;	}
+// RITUAL END
 
 	idEntity *				GetOwner( void ) const;
 
 	virtual void			Think( void );
 	virtual void			Killed( idEntity *inflictor, idEntity *attacker, int damage, const idVec3 &dir, int location );
+	virtual bool			GetPhysicsToVisualTransform( idVec3 &origin, idMat3 &axis );
+
 	virtual bool			Collide( const trace_t &collision, const idVec3 &velocity );
-	virtual void			Explode( const trace_t &collision, idEntity *ignore );
+	virtual bool			Collide( const trace_t &collision, const idVec3 &velocity, bool &hitTeleporter );
+	virtual void			Explode( const trace_t *collision, const bool showExplodeFX, idEntity *ignore = NULL, const char *sndExplode = "snd_explode" );
 	void					Fizzle( void );
 
 	static idVec3			GetVelocity( const idDict *projectile );
 	static idVec3			GetGravity( const idDict *projectile );
 
-	enum {
-		EVENT_DAMAGE_EFFECT = idEntity::EVENT_MAXEVENTS,
-		EVENT_MAXEVENTS
-	};
+	void					SetSpeed		( float s, int accelTime = 0 );
+	float					GetSpeed		( void ) const;
 
-	static void				DefaultDamageEffect( idEntity *soundEnt, const idDict &projectileDef, const trace_t &collision, const idVec3 &velocity );
-	static bool				ClientPredictionCollide( idEntity *soundEnt, const idDict &projectileDef, const trace_t &collision, const idVec3 &velocity, bool addDamageEffect );
+	virtual void			UpdateVisualAngles();
+
+	// information about what kind of projectile we are, used for death messages
+	int						methodOfDeath;
+
 	virtual void			ClientPredictionThink( void );
 	virtual void			WriteToSnapshot( idBitMsgDelta &msg ) const;
 	virtual void			ReadFromSnapshot( const idBitMsgDelta &msg );
-	virtual bool			ClientReceiveEvent( int event, int time, const idBitMsg &msg );
 
+	virtual bool			ClientStale( void );
+	
 protected:
+	void					SpawnImpactEntities(const trace_t& collision, const idVec3 projectileDirection);
+	void					ApplyImpactForce	( idEntity *ent, const trace_t &collision, const idVec3 &dir );
+	void					ReadStickSettings	( void );
+	void					HoldStuck			( void );
+	void					Stick				( const trace_t &collision, idEntity *ent, const idVec3 &dir );
+	void					UpdatePin			( void );
+
+
 	idEntityPtr<idEntity>	owner;
 
 	struct projectileFlags_s {
 		bool				detonate_on_world			: 1;
 		bool				detonate_on_actor			: 1;
+		bool				detonate_on_bounce			: 1;		// Detonate if hit a bounce surface
 		bool				randomShaderSpin			: 1;
 		bool				isTracer					: 1;
-		bool				noSplashDamage				: 1;
 	} projectileFlags;
 
-	float					thrust;
-	int						thrust_end;
 	float					damagePower;
 
 	renderLight_t			renderLight;
@@ -100,34 +93,92 @@ protected:
 	int						lightEndTime;
 	idVec3					lightColor;
 
-	idForce_Constant		thruster;
-	idPhysics_RigidBody		physicsObj;
+	idEntity*				impactedEntity;
 
-	const idDeclParticle *	smokeFly;
-	int						smokeFlyTime;
+	rvPhysics_Particle		physicsObj;
+	idAngles				visualAngles;
+	idAngles				angularVelocity;
+	idInterpolate<float>	speed;
+	bool					updateVelocity;
 
+	rvSphericalInterpolate	rotation;
+
+	rvClientEffectPtr		flyEffect;
+	bool					flyEffectIsLiquid;	// openQ4: the fly trail is currently a bubble trail
+	float					flyEffectAttenuateSpeed;
+
+	int						bounceCount;
+	bool					sticky;
+	bool					passThroughActors;	// "passThroughActors": hurts a living actor once instead of detonating on it
+	float					maxPinDistance;		// "maxPinDistance": how far behind a corpse to look for a surface to pin it to
+	idEntityPtr<idEntity>	pinVictim;			// the corpse this projectile is stuck in and may still pin (not saved)
+	int						pinClipModelId;		// where it was hit
+	idVec3					pinDir;				// the direction it was travelling
+	idEntityPtr<idEntity>	passedThrough;		// the actor a passThroughActors projectile last hurt (not saved)
+	bool					applyRotation;		// "applyRotation": turn the model to its flight each frame (not saved)
+	
+	idStr					impactEntity;
+	int						numImpactEntities;
+	int						ieMinPitch;
+	int						ieMaxPitch;
+	float					ieSlicePercentage;
+
+// RAVEN BEGIN
+// ddynerman: hit count for stats
+	int						hitCount;
+// ddynerman: pre-prediction ( rocket jumping )
+	int						prePredictTime;
+// RAVEN END
 	typedef enum {
-		// must update these in script/doom_defs.script if changed
 		SPAWNED = 0,
 		CREATED = 1,
 		LAUNCHED = 2,
 		FIZZLED = 3,
-		EXPLODED = 4
+		EXPLODED = 4,
+		STUCK = 5			// "sticky": stopped where it hit (Stick)
 	} projectileState_t;
 	
 	projectileState_t		state;
 
+	void					PlayPainEffect		( idEntity* ent, int damage, const rvDeclMatType* materialType, const idVec3& origin, const idVec3& direction );
+	virtual void			PlayDetonateEffect	( const idVec3& origin, const idMat3& axis );
+
 private:
-	bool					netSyncPhysics;
+	void					DefaultDamageEffect	( const trace_t &collision, const idVec3 &velocity, const char *damageDefName );
 
-	void					AddDefaultDamageEffect( const trace_t &collision, const idVec3 &velocity );
+	void					Event_Explode			( void );
+	void					Event_Fizzle			( void );
+	void					Event_RadiusDamage		( idEntity *ignore );
+	void					Event_ResidualDamage	( idEntity *ignore );
+	void					Event_EmitDamage		( idEntity *ignore );
+	void					Event_Touch				( idEntity *other, trace_t *trace );
 
-	void					Event_Explode( void );
-	void					Event_Fizzle( void );
-	void					Event_RadiusDamage( idEntity *ignore );
-	void					Event_Touch( idEntity *other, trace_t *trace );
-	void					Event_GetProjectileState( void );
+	bool					syncPhysics;
+
+	// cheap linear client side projectiles
+	// transmitted in snapshot
+	int						launchTime;
+	idVec3					launchOrig;
+	idVec3					launchDir;
+	// set from def file in :Launch on both client and server
+	float					launchSpeed;
 };
+
+ID_INLINE float idProjectile::GetSpeed ( void ) const {
+	return speed.GetCurrentValue( gameLocal.time );
+}
+
+/*
+===============================================================================
+
+idGuidedProjectile
+
+===============================================================================
+*/
+
+extern const idEventDef EV_UpdateGuideTarget;
+extern const idEventDef EV_GuideToEntity;
+extern const idEventDef EV_GuideToPos;
 
 class idGuidedProjectile : public idProjectile {
 public :
@@ -136,134 +187,187 @@ public :
 							idGuidedProjectile( void );
 							~idGuidedProjectile( void );
 
+	enum {
+		GUIDE_NONE,
+		GUIDE_ENTITY,
+		GUIDE_POS,
+		GUIDE_DIR,
+		GUIDE_MAX
+	};
+
 	void					Save( idSaveGame *savefile ) const;
 	void					Restore( idRestoreGame *savefile );
 
-	void					Spawn( void );
 	virtual void			Think( void );
-	virtual void			Launch( const idVec3 &start, const idVec3 &dir, const idVec3 &pushVelocity, const float timeSinceFire = 0.0f, const float launchPower = 1.0f, const float dmgPower = 1.0f );
+	virtual void			Launch( const idVec3 &start, const idVec3 &dir, const idVec3 &pushVelocity, const float timeSinceFire = 0.0f, const float dmgPower = 1.0f );
+
+	void					GuideTo			( const idVec3& post, const idVec3& dir );
+	void					GuideTo			( const idVec3& pos );
+	void					GuideTo			( idEntity* ent, jointHandle_t guideJoint=INVALID_JOINT, const idVec3 &offset=vec3_origin );
+	void					CancelGuide		( void );
+
+	int						GetGuideType	( void ) const;
+
+	virtual void			Killed( idEntity *inflictor, idEntity *attacker, int damage, const idVec3 &dir, int location );
 
 protected:
-	float					speed;
-	idEntityPtr<idEntity>	enemy;
-	virtual void			GetSeekPos( idVec3 &out );
+
+	int						guideType;	
+	idEntityPtr<idEntity>	guideEnt;
+	idVec3					guideDir;
+	idVec3					guidePos;
+	jointHandle_t			guideJoint;
+	float					guideMinDist;
+	
+	int						driftTime;
+	int						driftRate;
+	float					driftRange;
+	float					driftRadius;
+	float					driftDiversity;
+	float					driftAngle;
+	float					driftAngleStep;
+	float					driftProjectRange;
+	
+	virtual bool			GetGuideDir		( idVec3 &outDir, float& outDist );
 
 private:
-	idAngles				rndScale;
-	idAngles				rndAng;
-	idAngles				angles;
-	int						rndUpdateTime;
-	float					turn_max;
-	float					clamp_dist;
-	bool					burstMode;
-	bool					unGuided;
-	float					burstDist;
-	float					burstVelocity;
-};
 
-class idSoulCubeMissile : public idGuidedProjectile {
-public:
-	CLASS_PROTOTYPE ( idSoulCubeMissile );
-	~idSoulCubeMissile();
-	void					Save( idSaveGame *savefile ) const;
-	void					Restore( idRestoreGame *savefile );
-
-	void					Spawn( void );
-	virtual void			Think( void );
-	virtual void			Launch( const idVec3 &start, const idVec3 &dir, const idVec3 &pushVelocity, const float timeSinceFire = 0.0f, const float power = 1.0f, const float dmgPower = 1.0f );
-
-protected:
-	virtual void			GetSeekPos( idVec3 &out );
-	void					ReturnToOwner( void );
-	void					KillTarget( const idVec3 &dir );
-
-private:
-	idVec3					startingVelocity;
-	idVec3					endingVelocity;
-	float					accelTime;
+	idInterpolate<float>	turn_max;
 	int						launchTime;
-	bool					killPhase;
-	bool					returnPhase;
-	idVec3					destOrg;
-	idVec3					orbitOrg;
-	int						orbitTime;
-	int						smokeKillTime;
-	const idDeclParticle *	smokeKill;
+	int						guideDelay;
+	int						driftDelay;
 };
 
-struct beamTarget_t {
-	idEntityPtr<idEntity>	target;
-	renderEntity_t			renderEntity;
-	qhandle_t				modelDefHandle;
-};
+ID_INLINE int idGuidedProjectile::GetGuideType ( void ) const {
+	return guideType;
+}
 
-class idBFGProjectile : public idProjectile {
+ID_INLINE void idGuidedProjectile::GuideTo ( const idVec3& pos, const idVec3& dir ) {
+	guideType = GUIDE_DIR;
+	guidePos  = pos;
+	guideDir  = dir;
+}
+
+ID_INLINE void idGuidedProjectile::GuideTo ( const idVec3& pos ) {
+	guideType = GUIDE_POS;
+	guidePos  = pos;
+}
+
+ID_INLINE void idGuidedProjectile::GuideTo ( idEntity* ent, jointHandle_t joint, const idVec3 &offset ) {
+	guideType = GUIDE_ENTITY;
+	guideEnt  = ent;
+	guideJoint = joint;
+	guidePos = offset;
+
+	if ( guideEnt.IsValid() ) {
+		guideEnt->GuidedProjectileIncoming( this );
+	}
+}
+
+ID_INLINE void idGuidedProjectile::CancelGuide ( void ) {
+	guideType = GUIDE_NONE;
+
+	// twhitaker: TEMP
+	if ( guideEnt.IsValid() ) {
+		guideEnt->GuidedProjectileIncoming( NULL );	
+	}
+	// </twhitaker>
+}
+
+/*
+===============================================================================
+
+rvDriftingProjectile
+
+===============================================================================
+*/
+
+class rvDriftingProjectile : public idProjectile {
 public :
-	CLASS_PROTOTYPE( idBFGProjectile );
+	CLASS_PROTOTYPE( rvDriftingProjectile );
 
-							idBFGProjectile();
-							~idBFGProjectile();
+							rvDriftingProjectile ( void );
+							~rvDriftingProjectile ( void );
 
-	void					Save( idSaveGame *savefile ) const;
-	void					Restore( idRestoreGame *savefile );
+	void					Save			( idSaveGame *savefile ) const;
+	void					Restore			( idRestoreGame *savefile );
 
-	void					Spawn( void );
-	virtual void			Think( void );
-	virtual void			Launch( const idVec3 &start, const idVec3 &dir, const idVec3 &pushVelocity, const float timeSinceFire = 0.0f, const float launchPower = 1.0f, const float dmgPower = 1.0f );
-	virtual void			Explode( const trace_t &collision, idEntity *ignore );
+	virtual void			Think			( void );
+	virtual void			Launch			( const idVec3 &start, const idVec3 &dir, const idVec3 &pushVelocity, const float timeSinceFire = 0.0f, const float dmgPower = 1.0f );
 
-private:
-	idList<beamTarget_t>	beamTargets;
-	renderEntity_t			secondModel;
-	qhandle_t				secondModelDefHandle;
-	int						nextDamageTime;
-	idStr					damageFreq;
+protected:
 
-	void					FreeBeams();
-	void					Event_RemoveBeams();
-	void					ApplyDamage();
+	virtual void			UpdateVisualAngles	( void );
+
+	idVec3					startDir;
+	idVec3					startOrigin;
+	idMat3					startAxis;
+	float					startSpeed;
+	
+	idInterpolateAccelDecelLinear<float>	driftOffset[2];
+	idInterpolateAccelDecelLinear<float>	driftSpeed;
+	float									driftOffsetMax;
+	float									driftSpeedMax;
+	float									driftTime;
 };
 
 /*
 ===============================================================================
 
-  idDebris
-	
+rvSpawnerProjectile
+
 ===============================================================================
 */
 
-class idDebris : public idEntity {
+class rvSpawner;
+class rvSpawnerProjectile : public idProjectile {
 public :
-	CLASS_PROTOTYPE( idDebris );
+	CLASS_PROTOTYPE( rvSpawnerProjectile );
+	
+							rvSpawnerProjectile ( void );
+							~rvSpawnerProjectile ( void );
 
-							idDebris();
-							~idDebris();
+	void					Spawn			( void );
+	virtual void			Think			( void );
 
-	// save games
-	void					Save( idSaveGame *savefile ) const;					// archives object for save game file
-	void					Restore( idRestoreGame *savefile );					// unarchives object from save game file
+	void					SetSpawner		( rvSpawner* spawner );
 
-	void					Spawn( void );
+protected:
 
-	void					Create( idEntity *owner, const idVec3 &start, const idMat3 &axis );
-	void					Launch( void );
-	void					Think( void );
-	void					Killed( idEntity *inflictor, idEntity *attacker, int damage, const idVec3 &dir, int location );
-	void					Explode( void );
-	void					Fizzle( void );
-	virtual bool			Collide( const trace_t &collision, const idVec3 &velocity );
+	idEntityPtr<rvSpawner>	spawner;
 
+	enum {
+		STATE_NONE,
+		STATE_ADDED,
+	} spawnState;	
+	
+private:
+
+	void					Event_PostSpawn	( void );
+};
+
+/*
+===============================================================================
+
+rvMIRVProjectile
+
+===============================================================================
+*/
+
+class rvMIRVProjectile : public idProjectile {
+	CLASS_PROTOTYPE( rvMIRVProjectile );
+
+						rvMIRVProjectile ( void );
+						~rvMIRVProjectile (  void );
+
+
+	void				Spawn				( void );
 
 private:
-	idEntityPtr<idEntity>	owner;
-	idPhysics_RigidBody		physicsObj;
-	const idDeclParticle *	smokeFly;
-	int						smokeFlyTime;
-	const idSoundShader *	sndBounce;
-
-
-	void					Event_Explode( void );
-	void					Event_Fizzle( void );
+		
+	void				Event_LaunchWarheads ( void );
 };
 
 #endif /* !__GAME_PROJECTILE_H__ */
+
+// RAVEN END

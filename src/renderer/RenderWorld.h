@@ -13,15 +13,14 @@
 */
 
 class idDemoFile;
-class idSoundEmitter;
 
-// Doom 3 .proc format
-#define PROC_FILE_ID					"mapProcFile003"
+// RAVEN BEGIN
+// jscott: new proc format
+//#define	PROC_FILE_ID					"mapProcFile003"
+#define PROC_FILE_ID					"PROC"
 #define PROC_FILE_EXT					"proc"
-
-// Quake 4 compatibility (.proc) header accepted by loader, but not the default.
-#define PROC_FILE_ID_Q4					"PROC"
-#define PROC_FILEVERSION_Q4				"4"
+#define PROC_FILEVERSION				"4" // jmarshall: changed to string. 
+// RAVEN END
 
 // RAVEN BEGIN
 // dluetscher: new MD5RProc file format
@@ -105,6 +104,25 @@ struct renderEntity_s;
 struct renderView_s;
 typedef bool(*deferredEntityCallback_t)( renderEntity_s *, const renderView_s * );
 
+enum {
+	// Draw the outline through whatever geometry is in front of the entity. Only
+	// the outline: the rimlight and the brightskin stay depth tested, because a
+	// ring marks a position where a shaded body seen through a wall does not.
+	REF_OUTLINE_NODEPTH = 1 << 0,
+
+	// Force the entity into every view for its outline, whether or not the portal
+	// walk reached it, so an entity on the far side of the level still gets a
+	// ring. Implies REF_OUTLINE_NODEPTH - such an entity contributes no depth, so
+	// there is nothing for a depth test to compare against.
+	REF_OUTLINE_THROUGH_WORLD = 1 << 1
+};
+
+// Presentation-only replacement of an entity's lit diffuse texture.  The
+// renderer keeps bump, specular, ambient and authored alpha coverage intact.
+enum {
+	REF_FLAT_DIFFUSE = 1 << 0,
+	REF_FLAT_DIFFUSE_SWEEP = 1 << 1
+};
 
 // RAVEN BEGIN
 // bdube: attachments
@@ -174,6 +192,20 @@ typedef struct renderEntity_s {
 	int						referenceSoundHandle;	// for shader sound tables, allowing effects to vary with sounds
 // RAVEN END	
 	float					shaderParms[ MAX_ENTITY_SHADER_PARMS ];	// can be used in any way by shader or model generation
+
+	// Optional presentation-only visibility effects. An alpha value <= 0 disables
+	// the effect for this entity.
+	idVec4					outlineColor;
+	idVec4					rimlightColor;
+	idVec4					brightSkinColor;
+	float					outlineWidth;
+	int						outlineFlags;
+
+	// Optional client-side diffuse presentation used by multiplayer pickups
+	// and world weapons.  REF_FLAT_DIFFUSE_SWEEP adds the world-item-only
+	// upward lightness band; first-person weapon spaces are always excluded.
+	idVec4					flatDiffuseColor;
+	int						flatDiffuseFlags;
   
 // RAVEN BEGIN
 // mwhitlock: Xenon texture streaming
@@ -203,10 +235,7 @@ typedef struct renderEntity_s {
 													// all the lights in the moving monorail don't touch the meshes
 
 // RAVEN BEGIN
-	int						forceUpdate;			// force an update
-
-	// Doom 3 game code still toggles this directly.
-	bool					weaponDepthHack;
+	bool					forceUpdate;			// force an update
 
 // bdube: weapon depth hack only in a given view id
 	int						weaponDepthHackInViewID;// squash depth range so view weapons don't poke into walls
@@ -219,8 +248,9 @@ typedef struct renderEntity_s {
 	int						suppressLOD;
 // RAVEN END
 
-// Doom 3 compatibility pointer used by game-side sound emitters.
-	idSoundEmitter *		referenceSound;
+// jmarshall
+	int						referenceSound;
+// jmarshall end
 } renderEntity_t;
 
 typedef struct renderLight_s {
@@ -286,8 +316,9 @@ typedef struct renderLight_s {
 #endif
 // RAVEN END
 
-// Doom 3 compatibility pointer used by game-side sound emitters.
-	idSoundEmitter *		referenceSound;
+// jmarshall
+	int						referenceSound;
+// jmarshall end
 } renderLight_t;
 
 // RAVEN BEGIN
@@ -347,6 +378,18 @@ typedef struct renderView_s {
 	bool					streamingPrecache;	// If true, we precache all the textures that are visible in the world
 #endif
 // RAVEN END
+
+	// openQ4: an off-axis frustum, one eye of a head-mounted display. When set,
+	// the projection and the culling frustum come from these half-angle tangents
+	// (fovTanLeft and fovTanDown negative) instead of fov_x/fov_y, which should
+	// still hold the enclosing field of view for consumers that only estimate
+	// (LOD, effects, the light grid). The initializers keep every view built by
+	// existing code, demos and savegames symmetric.
+	bool					asymmetricFov = false;
+	float					fovTanLeft = 0.0f;
+	float					fovTanRight = 0.0f;
+	float					fovTanUp = 0.0f;
+	float					fovTanDown = 0.0f;
 } renderView_t;
 
 
@@ -363,6 +406,7 @@ typedef struct {
 typedef struct {
 	float				x, y;			// 0.0 to 1.0 range if trace hit a gui, otherwise -1
 	int					guiId;			// id of gui ( 0, 1, or 2 ) that the trace happened against
+	float				fraction;		// fraction of trace completed before hitting the gui surface
 } guiPoint_t;
 
 
@@ -426,6 +470,9 @@ enum
 	RF_PORTAL_SKY				= BIT( 6 ),
 	// this the primary view - when this is rendered, we then know we can capture the screen buffer
 	RF_PRIMARY_VIEW				= BIT( 7 ),
+	// An independently composited UI model preserves the surrounding frame's
+	// clocks, primary-world identity and render-demo stream.
+	RF_INDEPENDENT_VIEW          = BIT( 8 ),
 // RAVEN END
 };
 
@@ -449,7 +496,7 @@ public:
 	int serviceTime;
 	bool newEffect;
 	bool expired;
-	class rvEffect* effect;
+	class rvBSE* effect;
 	idBounds referenceBounds;
 	float modelMatrix[16];
 	class idRenderWorldLocal* world;
@@ -558,12 +605,12 @@ public:
 	// It would also be acceptable to render a scene multiple times, for "rear view mirrors", etc
 // RAVEN BEGIN
 // AReis: Modified RenderScene() signature to include renderFlags variable.
-	virtual void			RenderScene( const renderView_t *renderView ) = 0;
+	virtual void			RenderScene( const renderView_t *renderView, int renderFlags = RF_NORMAL ) = 0;
 // jscott: for portal skies
 	virtual bool			HasSkybox( int areaNum ) = 0;
-	//virtual void			FindVisibleAreas( idVec3 origin, int areaNum, bool *visibleAreas ) = 0;
+	virtual void			FindVisibleAreas( idVec3 origin, int areaNum, bool *visibleAreas ) = 0;
 // AReis: This is where we draw the portal fadeout polygon
-	//virtual void			RenderPortalFades( void ) = 0;
+	virtual void			RenderPortalFades( void ) = 0;
 // ddynerman: Helper function
 	//virtual idVec3			WorldToScreen( renderView_t* view, idVec3 point ) = 0;
 	//virtual idBounds		WorldToScreen( renderView_t* view, idBounds bounds ) = 0;
@@ -639,7 +686,7 @@ public:
 	// is less than 30hz
 	// demoTimeOffset will be set if a new map load command was processed before
 	// the next renderScene
-	//virtual bool			ProcessDemoCommand( idDemoFile *readDemo, renderView_t *demoRenderView, renderView_t *portalSkyRenderView, int *demoTimeOffset ) = 0;
+	virtual bool			ProcessDemoCommand( idDemoFile *readDemo, renderView_t *demoRenderView, int *demoTimeOffset ) = 0;
 
 	// this is used to regenerate all interactions ( which is currently only done during influences ), there may be a less 
 	// expensive way to do it
@@ -649,8 +696,6 @@ public:
 
 	// Line drawing for debug visualization
 	virtual void			DebugClear(int time) = 0;		// a time of 0 will clear all lines and text
-	virtual void			DebugClearLines( int time ) { DebugClear( time ); }
-	virtual void			DebugClearPolygons( int time ) { DebugClear( time ); }
 	virtual void			DebugLine(const idVec4& color, const idVec3& start, const idVec3& end, const int lifetime = 0, const bool depthTest = false) { }
 	virtual void			DebugArrow( const idVec4 &color, const idVec3 &start, const idVec3 &end, int size, const int lifetime = 0 ) = 0;
 	virtual void			DebugWinding( const idVec4 &color, const idWinding &w, const idVec3 &origin, const idMat3 &axis, const int lifetime = 0, const bool depthTest = false ) = 0;

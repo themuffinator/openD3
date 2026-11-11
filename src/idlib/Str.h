@@ -2,6 +2,8 @@
 #ifndef __STR_H__
 #define __STR_H__
 
+#include "StrAllocation.h"
+
 /*
 ===============================================================================
 
@@ -54,6 +56,11 @@ const int C_COLOR_BLACK				= '9';
 // bdube: added
 const int C_COLOR_CONSOLE			= ':';
 // RAVEN END
+
+const int COLOR_INDEX_CONSOLE		= 10;
+const int COLOR_INDEX_RAINBOW_A		= 11;
+const int COLOR_INDEX_RAINBOW_Z		= COLOR_INDEX_RAINBOW_A + 25;
+const int COLOR_INDEX_COUNT			= COLOR_INDEX_RAINBOW_Z + 1;
 
 // color escape string
 #define S_COLOR_DEFAULT				"^0"
@@ -179,7 +186,6 @@ public:
 // RAVEN BEGIN
 // bdube: changed to escapes
 	int					IcmpNoEscape( const char *text ) const;
-	int					IcmpNoColor( const char *text ) const;
 // RAVEN END
 
 						// compares paths and makes sure folders come first
@@ -192,6 +198,7 @@ public:
 	void				Empty( void );
 	bool				IsEmpty( void ) const;
 	void				Clear( void );
+	void				SecureClear( void );
 	void				Append( const char a );
 	void				Append( const idStr &text );
 	void				Append( const char *text );
@@ -293,10 +300,13 @@ public:
 	static char *		ToLower( char *s );
 	static char *		ToUpper( char *s );
 	static bool			IsColor(const char* s);
+	static int			ColorEscapeLength( const char *s, idVec4 *outColor = NULL, bool *resetToDefault = NULL );
 	static char*		RemoveColors(char* s);
 	static bool			IsNumeric( const char *s );
 	static bool			HasLower( const char *s );
 	static bool			HasUpper( const char *s );
+	static void			ClearIconEscapeCodes( void );
+	static void			RegisterIconEscapeCode( const char *code );
 // RAVEN BEGIN
 // bdube: escape codes
 	static int			IsEscape( const char *s, int* type = NULL );
@@ -310,7 +320,6 @@ public:
 // RAVEN BEGIN
 // bdube: escapes
 	static int			IcmpNoEscape( const char *s1, const char *s2 );
-	static int			IcmpNoColor( const char *s1, const char *s2 ) { return IcmpNoEscape( s1, s2 ); }
 // RAVEN END
 	static int			IcmpPath( const char *s1, const char *s2 );			// compares paths and makes sure folders come first
 	static int			IcmpnPath( const char *s1, const char *s2, int n );	// compares paths and makes sure folders come first
@@ -347,7 +356,7 @@ public:
 	friend int			sprintf( idStr &dest, const char *fmt, ... );
 	friend int			vsprintf( idStr &dest, const char *fmt, va_list ap );
 
-	void				ReAllocate( int amount, bool keepold );				// reallocate string data buffer
+	void				ReAllocate( size_t amount, bool keepold );			// reallocate string data buffer
 	void				FreeData( void );									// free allocated string memory
 
 						// format value in the given measurement with the best unit, returns the best unit
@@ -374,7 +383,7 @@ protected:
 	char				baseBuffer[ STR_ALLOC_BASE ];
 
 	void				Init( void );										// initialize string using base buffer
-	void				EnsureAlloced( int amount, bool keepold = true );	// ensure string data buffer is large anough
+	void				EnsureAlloced( size_t amount, bool keepold = true );	// ensure string data buffer is large anough
 
 // RAVEN BEGIN
 public:
@@ -396,12 +405,12 @@ ID_INLINE bool idStr::IsColor(void) const {
 }
 
 ID_INLINE bool idStr::IsColor(const char* s) {
-	return (s[0] == C_COLOR_ESCAPE && s[1] != '\0' && s[1] != ' ');
+	return ( s != NULL ) && ( idStr::ColorEscapeLength( s ) > 0 );
 }
 
 
-ID_INLINE void idStr::EnsureAlloced( int amount, bool keepold ) {
-	if ( amount > alloced ) {
+ID_INLINE void idStr::EnsureAlloced( size_t amount, bool keepold ) {
+	if ( amount > static_cast<size_t>( alloced ) ) {
 		ReAllocate( amount, keepold );
 	}
 }
@@ -425,7 +434,7 @@ ID_INLINE idStr::idStr( const idStr &text ) {
 
 	Init();
 	l = text.Length();
-	EnsureAlloced( l + 1 );
+	EnsureAlloced( idStrAllocationDetail::SaturatingAdd( static_cast<size_t>( l ), 1 ) );
 	strcpy( data, text.data );
 	len = l;
 }
@@ -460,12 +469,13 @@ ID_INLINE idStr::idStr( const idStr &text, int start, int end ) {
 		start = 0;
 	}
 
-	l = end - start;
-	if ( l < 0 ) {
+	if ( end <= start ) {
 		l = 0;
+	} else {
+		l = end - start;
 	}
 
-	EnsureAlloced( l + 1 );
+	EnsureAlloced( idStrAllocationDetail::SaturatingAdd( static_cast<size_t>( l ), 1 ) );
 
 	for ( i = 0; i < l; i++ ) {
 		data[ i ] = text[ start + i ];
@@ -480,8 +490,9 @@ ID_INLINE idStr::idStr( const char *text ) {
 
 	Init();
 	if ( text ) {
-		l = strlen( text );
-		EnsureAlloced( l + 1 );
+		const size_t textLength = strlen( text );
+		EnsureAlloced( idStrAllocationDetail::SaturatingAdd( textLength, 1 ) );
+		l = idLib::SizeToInt( textLength, "idStr::idStr" );
 		strcpy( data, text );
 		len = l;
 	}
@@ -489,7 +500,7 @@ ID_INLINE idStr::idStr( const char *text ) {
 
 ID_INLINE idStr::idStr( const char *text, int start, int end ) {
 	int i;
-	int l = strlen( text );
+	int l = idLib::SizeToInt( strlen( text ), "idStr::idStr" );
 
 	Init();
 	if ( end > l ) {
@@ -501,12 +512,13 @@ ID_INLINE idStr::idStr( const char *text, int start, int end ) {
 		start = 0;
 	}
 
-	l = end - start;
-	if ( l < 0 ) {
+	if ( end <= start ) {
 		l = 0;
+	} else {
+		l = end - start;
 	}
 
-	EnsureAlloced( l + 1 );
+	EnsureAlloced( idStrAllocationDetail::SaturatingAdd( static_cast<size_t>( l ), 1 ) );
 
 	for ( i = 0; i < l; i++ ) {
 		data[ i ] = text[ start + i ];
@@ -538,7 +550,7 @@ ID_INLINE idStr::idStr( const int i ) {
 
 	Init();
 	l = sprintf( text, "%d", i );
-	EnsureAlloced( l + 1 );
+	EnsureAlloced( idStrAllocationDetail::SaturatingAdd( static_cast<size_t>( l ), 1 ) );
 	strcpy( data, text );
 	len = l;
 }
@@ -549,7 +561,7 @@ ID_INLINE idStr::idStr( const unsigned u ) {
 
 	Init();
 	l = sprintf( text, "%u", u );
-	EnsureAlloced( l + 1 );
+	EnsureAlloced( idStrAllocationDetail::SaturatingAdd( static_cast<size_t>( l ), 1 ) );
 	strcpy( data, text );
 	len = l;
 }
@@ -562,7 +574,7 @@ ID_INLINE idStr::idStr( const float f ) {
 	l = idStr::snPrintf( text, sizeof( text ), "%f", f );
 	while( l > 0 && text[l-1] == '0' ) text[--l] = '\0';
 	while( l > 0 && text[l-1] == '.' ) text[--l] = '\0';
-	EnsureAlloced( l + 1 );
+	EnsureAlloced( idStrAllocationDetail::SaturatingAdd( static_cast<size_t>( l ), 1 ) );
 	strcpy( data, text );
 	len = l;
 }
@@ -601,7 +613,7 @@ ID_INLINE void idStr::operator=( const idStr &text ) {
 	int l;
 
 	l = text.Length();
-	EnsureAlloced( l + 1, false );
+	EnsureAlloced( idStrAllocationDetail::SaturatingAdd( static_cast<size_t>( l ), 1 ), false );
 	memcpy( data, text.data, l );
 	data[l] = '\0';
 	len = l;
@@ -752,7 +764,7 @@ ID_INLINE int idStr::Cmpn( const char *text, int n ) const {
 
 ID_INLINE int idStr::CmpPrefix( const char *text ) const {
 	assert( text );
-	return idStr::Cmpn( data, text, strlen( text ) );
+	return idStr::Cmpn( data, text, idLib::SizeToInt( strlen( text ), "idStr::CmpPrefix" ) );
 }
 
 ID_INLINE int idStr::Icmp( const char *text ) const {
@@ -767,7 +779,7 @@ ID_INLINE int idStr::Icmpn( const char *text, int n ) const {
 
 ID_INLINE int idStr::IcmpPrefix( const char *text ) const {
 	assert( text );
-	return idStr::Icmpn( data, text, strlen( text ) );
+	return idStr::Icmpn( data, text, idLib::SizeToInt( strlen( text ), "idStr::IcmpPrefix" ) );
 }
 
 // RAVEN BEGIN
@@ -775,11 +787,6 @@ ID_INLINE int idStr::IcmpPrefix( const char *text ) const {
 ID_INLINE int idStr::IcmpNoEscape( const char *text ) const {
 	assert( text );
 	return idStr::IcmpNoEscape( data, text );
-}
-
-ID_INLINE int idStr::IcmpNoColor( const char *text ) const {
-	assert( text );
-	return idStr::IcmpNoColor( data, text );
 }
 // RAVEN END
 
@@ -795,7 +802,7 @@ ID_INLINE int idStr::IcmpnPath( const char *text, int n ) const {
 
 ID_INLINE int idStr::IcmpPrefixPath( const char *text ) const {
 	assert( text );
-	return idStr::IcmpnPath( data, text, strlen( text ) );
+	return idStr::IcmpnPath( data, text, idLib::SizeToInt( strlen( text ), "idStr::IcmpPrefixPath" ) );
 }
 
 ID_INLINE int idStr::Length( void ) const {
@@ -825,8 +832,20 @@ ID_INLINE void idStr::Clear( void ) {
 	Init();
 }
 
+ID_INLINE void idStr::SecureClear( void ) {
+	if ( data != NULL ) {
+		const int bytes = data != baseBuffer ? alloced : static_cast<int>( sizeof( baseBuffer ) );
+		volatile char *cursor = data;
+		for ( int remaining = bytes; remaining > 0; --remaining ) {
+			*cursor++ = 0;
+		}
+	}
+	FreeData();
+	Init();
+}
+
 ID_INLINE void idStr::Append( const char a ) {
-	EnsureAlloced( len + 2 );
+	EnsureAlloced( idStrAllocationDetail::SaturatingAdd( static_cast<size_t>( len ), 2 ) );
 	data[ len ] = a;
 	len++;
 	data[ len ] = '\0';
@@ -836,8 +855,11 @@ ID_INLINE void idStr::Append( const idStr &text ) {
 	int newLen;
 	int i;
 
-	newLen = len + text.Length();
-	EnsureAlloced( newLen + 1 );
+	const size_t newLength = idStrAllocationDetail::SaturatingAdd(
+		static_cast<size_t>( len ), static_cast<size_t>( text.Length() )
+	);
+	EnsureAlloced( idStrAllocationDetail::SaturatingAdd( newLength, 1 ) );
+	newLen = idLib::SizeToInt( newLength, "idStr::Append" );
 	for ( i = 0; i < text.len; i++ ) {
 		data[ len + i ] = text[ i ];
 	}
@@ -850,8 +872,9 @@ ID_INLINE void idStr::Append( const char *text ) {
 	int i;
 
 	if ( text ) {
-		newLen = len + strlen( text );
-		EnsureAlloced( newLen + 1 );
+		const size_t newLength = idStrAllocationDetail::SaturatingAdd( static_cast<size_t>( len ), strlen( text ) );
+		EnsureAlloced( idStrAllocationDetail::SaturatingAdd( newLength, 1 ) );
+		newLen = idLib::SizeToInt( newLength, "idStr::Append" );
 		for ( i = 0; text[ i ]; i++ ) {
 			data[ len + i ] = text[ i ];
 		}
@@ -864,13 +887,24 @@ ID_INLINE void idStr::Append( const char *text, int l ) {
 	int newLen;
 	int i;
 
-	if ( text && l ) {
-		newLen = len + l;
-		EnsureAlloced( newLen + 1 );
-		for ( i = 0; text[ i ] && i < l; i++ ) {
+	if ( l < 0 ) {
+		idLib::Error( "idStr::Append: negative length" );
+		return;
+	}
+
+	if ( text && l > 0 ) {
+		const size_t newLength = idStrAllocationDetail::SaturatingAdd(
+			static_cast<size_t>( len ), static_cast<size_t>( l )
+		);
+		EnsureAlloced( idStrAllocationDetail::SaturatingAdd( newLength, 1 ) );
+		newLen = idLib::SizeToInt( newLength, "idStr::Append" );
+		// Test the bound before reading: callers pass exact-length buffers that
+		// are not NUL-terminated. An embedded NUL ends the copy, and the length
+		// then counts only the bytes copied, not the uninitialised tail.
+		for ( i = 0; i < l && text[ i ]; i++ ) {
 			data[ len + i ] = text[ i ];
 		}
-		len = newLen;
+		len = ( i == l ) ? newLen : len + i;
 		data[ len ] = '\0';
 	}
 }
@@ -885,7 +919,7 @@ ID_INLINE void idStr::Insert( const char a, int index ) {
 	}
 
 	l = 1;
-	EnsureAlloced( len + l + 1 );
+	EnsureAlloced( idStrAllocationDetail::SaturatingAdd( static_cast<size_t>( len ), 2 ) );
 	for ( i = len; i >= index; i-- ) {
 		data[i+l] = data[i];
 	}
@@ -894,7 +928,7 @@ ID_INLINE void idStr::Insert( const char a, int index ) {
 }
 
 ID_INLINE void idStr::Insert( const char *text, int index ) {
-	int i, l;
+	int i, l, newLen;
 
 	if ( index < 0 ) {
 		index = 0;
@@ -902,15 +936,17 @@ ID_INLINE void idStr::Insert( const char *text, int index ) {
 		index = len;
 	}
 
-	l = strlen( text );
-	EnsureAlloced( len + l + 1 );
+	const size_t newLength = idStrAllocationDetail::SaturatingAdd( static_cast<size_t>( len ), strlen( text ) );
+	EnsureAlloced( idStrAllocationDetail::SaturatingAdd( newLength, 1 ) );
+	newLen = idLib::SizeToInt( newLength, "idStr::Insert" );
+	l = newLen - len;
 	for ( i = len; i >= index; i-- ) {
 		data[i+l] = data[i];
 	}
 	for ( i = 0; i < l; i++ ) {
 		data[index+i] = text[i];
 	}
-	len += l;
+	len = newLen;
 }
 
 ID_INLINE void idStr::ToLower( void ) {
@@ -969,7 +1005,12 @@ ID_INLINE void idStr::CapLength( int newlen ) {
 }
 
 ID_INLINE void idStr::Fill( const char ch, int newlen ) {
-	EnsureAlloced( newlen + 1 );
+	if ( newlen < 0 ) {
+		idLib::Error( "idStr::Fill: negative length" );
+		return;
+	}
+
+	EnsureAlloced( idStrAllocationDetail::SaturatingAdd( static_cast<size_t>( newlen ), 1 ) );
 	len = newlen;
 	memset( data, ch, len );
 	data[ len ] = 0;
@@ -1054,36 +1095,43 @@ ID_INLINE char *idStr::ToUpper( char *s ) {
 	return s;
 }
 
+// The accumulator must see the raw byte value. Plain char is signed on x86-64
+// and on Apple/Windows arm64 but unsigned on Linux AArch64, so folding the
+// character in through char would place a different value in the sum for every
+// byte >= 0x80 depending on the target, and give the same string different hash
+// buckets on different architectures. Accumulating in uint32_t also removes the
+// signed-overflow undefined behavior the original int accumulator had. This
+// matches how idStr::FileNameHash was already hardened.
 ID_INLINE int idStr::Hash( const char *string ) {
-	int i, hash = 0;
-	for ( i = 0; *string != '\0'; i++ ) {
-		hash += ( *string++ ) * ( i + 119 );
+	uint32_t hash = 0;
+	for ( uint32_t i = 0; *string != '\0'; i++ ) {
+		hash += static_cast<uint32_t>( static_cast<byte>( *string++ ) ) * ( i + 119u );
 	}
-	return hash;
+	return static_cast<int>( hash );
 }
 
 ID_INLINE int idStr::Hash( const char *string, int length ) {
-	int i, hash = 0;
-	for ( i = 0; i < length; i++ ) {
-		hash += ( *string++ ) * ( i + 119 );
+	uint32_t hash = 0;
+	for ( int i = 0; i < length; i++ ) {
+		hash += static_cast<uint32_t>( static_cast<byte>( *string++ ) ) * ( static_cast<uint32_t>( i ) + 119u );
 	}
-	return hash;
+	return static_cast<int>( hash );
 }
 
 ID_INLINE int idStr::IHash( const char *string ) {
-	int i, hash = 0;
-	for( i = 0; *string != '\0'; i++ ) {
-		hash += ToLower( *string++ ) * ( i + 119 );
+	uint32_t hash = 0;
+	for( uint32_t i = 0; *string != '\0'; i++ ) {
+		hash += static_cast<uint32_t>( static_cast<byte>( ToLower( static_cast<byte>( *string++ ) ) ) ) * ( i + 119u );
 	}
-	return hash;
+	return static_cast<int>( hash );
 }
 
 ID_INLINE int idStr::IHash( const char *string, int length ) {
-	int i, hash = 0;
-	for ( i = 0; i < length; i++ ) {
-		hash += ToLower( *string++ ) * ( i + 119 );
+	uint32_t hash = 0;
+	for ( int i = 0; i < length; i++ ) {
+		hash += static_cast<uint32_t>( static_cast<byte>( ToLower( static_cast<byte>( *string++ ) ) ) ) * ( static_cast<uint32_t>( i ) + 119u );
 	}
-	return hash;
+	return static_cast<int>( hash );
 }
 
 ID_INLINE char idStr::ToLower( byte c ) {
@@ -1140,7 +1188,27 @@ ID_INLINE bool idStr::CharIsTab( byte c ) {
 }
 
 ID_INLINE int idStr::ColorIndex( int c ) {
-	return ( c & 15 );
+	if ( c >= 0 && c < COLOR_INDEX_COUNT ) {
+		return c;
+	}
+
+	if ( c >= '0' && c <= '9' ) {
+		return ( c - '0' );
+	}
+
+	if ( c == C_COLOR_CONSOLE ) {
+		return COLOR_INDEX_CONSOLE;
+	}
+
+	if ( c >= 'a' && c <= 'z' ) {
+		return COLOR_INDEX_RAINBOW_A + ( c - 'a' );
+	}
+
+	if ( c >= 'A' && c <= 'Z' ) {
+		return COLOR_INDEX_RAINBOW_A + ( c - 'A' );
+	}
+
+	return ( C_COLOR_WHITE - '0' );
 }
 
 ID_INLINE int idStr::DynamicMemoryUsed() const {
