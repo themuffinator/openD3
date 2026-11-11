@@ -1,7 +1,7 @@
 // Canonical document integration fixture. Rectangular diagnostic furniture is
 // temporary; this is not a completed vector design or a functional menu.
 {
-  "format": "opend3-ui",
+  "format": "retained-ui",
   "version": 1,
   "id": "document-smoke",
   "tokens": {

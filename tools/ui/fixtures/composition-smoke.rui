@@ -1,6 +1,6 @@
 // Composition qualification fixture. Matching panels at full and half group opacity.
 {
-  "format":"opend3-ui",
+  "format":"retained-ui",
   "version":1,
   "id":"composition-smoke",
   "tokens":{

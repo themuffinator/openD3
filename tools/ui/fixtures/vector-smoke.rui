@@ -1,6 +1,6 @@
 // Native path integration fixture; coverage AA and production artwork qualification remain open.
 {
-  "format":"opend3-ui",
+  "format":"retained-ui",
   "version":1,
   "id":"vector-smoke",
   "tokens":{

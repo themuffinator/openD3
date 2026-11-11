@@ -1224,7 +1224,7 @@ if build_engine or get_option('build_native_tests')
       include_directories: root_include_dir,
       dependencies: [opend3_retained_dep, rmlui_project.get_variable('rmlui_dep'), jsoncpp_project.get_variable('jsoncpp_dep')], install: false)
     test('opend3-ui-scrollbar-runtime', opend3_ui_scrollbar_runtime_test,
-      args: [meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings/system.q4ui'], timeout: 30)
+      args: [meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings/system.rui'], timeout: 30)
     opend3_ui_choice_scroll_interaction_test = executable('opend3-ui-choice-scroll-interaction-test',
       files('tools/tests/native/UiChoiceScrollInteractionTest.cpp'),
       include_directories: [root_include_dir, include_directories('src/ui/retained')],
@@ -1235,7 +1235,7 @@ if build_engine or get_option('build_native_tests')
       include_directories: root_include_dir,
       dependencies: [opend3_retained_dep, rmlui_project.get_variable('rmlui_dep'), jsoncpp_project.get_variable('jsoncpp_dep')], install: false)
     test('opend3-ui-choice-scroll-runtime', opend3_ui_choice_scroll_runtime_test,
-      args: [meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings/system.q4ui'], timeout: 180)
+      args: [meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings/system.rui'], timeout: 180)
     opend3_ui_text_input_test = executable(
       'opend3-ui-text-input-test',
       files('tools/tests/native/UiTextInputTest.cpp'),
@@ -1378,7 +1378,7 @@ if build_engine or get_option('build_native_tests')
       install: false,
     )
     test('opend3-ui-number-runtime', opend3_ui_number_runtime_test,
-      args: [meson.project_source_root() / 'tools/ui/fixtures/number-edit-smoke.q4ui'], timeout: 30)
+      args: [meson.project_source_root() / 'tools/ui/fixtures/number-edit-smoke.rui'], timeout: 30)
     opend3_ui_text_field_test = executable(
       'opend3-ui-text-field-test',
       files('tools/tests/native/UiTextFieldTest.cpp'),
@@ -1497,7 +1497,7 @@ if build_engine or get_option('build_native_tests')
       install: false,
     )
     test('opend3-ui-system-presets', opend3_ui_system_presets_test,
-      args: [meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings/system.q4ui',
+      args: [meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings/system.rui',
         meson.project_source_root() / 'content/baseod3/pak0/strings'], timeout: 900)
     test('opend3-ui-system-presets-source', py,
       args: [meson.project_source_root() / 'tools/tests/ui_system_presets.py'], timeout: 30)
@@ -1563,8 +1563,8 @@ if build_engine or get_option('build_native_tests')
       install: false,
     )
     test('opend3-retained-ui', opend3_retained_test,
-      args: [meson.project_source_root() / 'tools/ui/fixtures/interaction-smoke.q4ui',
-             meson.project_source_root() / 'tools/ui/fixtures/binding-smoke.q4ui'], timeout: 30)
+      args: [meson.project_source_root() / 'tools/ui/fixtures/interaction-smoke.rui',
+             meson.project_source_root() / 'tools/ui/fixtures/binding-smoke.rui'], timeout: 30)
     opend3_ui_generated_texture_test = executable(
       'opend3-ui-generated-texture-test',
       files('tools/tests/native/UiGeneratedTextureTest.cpp'),
@@ -1595,34 +1595,34 @@ if build_engine or get_option('build_native_tests')
     )
     # One test per group of documents (the groups in the test's main), so the
     # suite runs them side by side.
-    retained_screens_documents = [meson.project_source_root() / 'content/baseod3/pak0/guis/menu/title.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/pause.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/loading/loading.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/pause_strogg.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/singleplayer.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/campaigns.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/mp_escape.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/mp_welcome.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/weapons/machinegun_scope.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/weapons/railgun_scope.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/weapons/nailgun_scope.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/loading/initialization.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/campaign_skill.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/hud/view_effects.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/hud/weapon_wheel_marine.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/hud/weapon_wheel_marine_awakening.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/hud/weapon_wheel_strogg.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/hud/weapon_wheel_strogg_awakening.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/loadgame.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/savegame.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/restartlevel.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/demos.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/restartmenu.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/credits.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/arena.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/multiplayer.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/createserver.q4ui',
-      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/joingame.q4ui']
+    retained_screens_documents = [meson.project_source_root() / 'content/baseod3/pak0/guis/menu/title.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/pause.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/loading/loading.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/pause_strogg.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/singleplayer.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/campaigns.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/mp_escape.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/mp_welcome.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/weapons/machinegun_scope.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/weapons/railgun_scope.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/weapons/nailgun_scope.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/loading/initialization.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/campaign_skill.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/hud/view_effects.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/hud/weapon_wheel_marine.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/hud/weapon_wheel_marine_awakening.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/hud/weapon_wheel_strogg.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/hud/weapon_wheel_strogg_awakening.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/loadgame.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/savegame.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/restartlevel.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/demos.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/restartmenu.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/credits.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/arena.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/multiplayer.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/createserver.rui',
+      meson.project_source_root() / 'content/baseod3/pak0/guis/menu/joingame.rui']
     # The two full page matrices cost 43-57 s on the fastest hosted runner and
     # 100-175 s on the slowest (macOS Intel, Windows) and under ASan+UBSan, at
     # an unchanged case count, so their bound is a hang guard for every host.
@@ -1637,60 +1637,60 @@ if build_engine or get_option('build_native_tests')
     test('opend3-ui-retained-safe-area-menus', opend3_ui_retained_screens_test,
       args: ['--safe-area', retained_screens_documents[0], retained_screens_documents[1], retained_screens_documents[2],
         retained_screens_documents[4], retained_screens_documents[12], retained_screens_documents[7],
-        meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings.q4ui'], timeout: 120)
+        meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings.rui'], timeout: 120)
     test('opend3-ui-retained-safe-area-pages', opend3_ui_retained_screens_test,
       args: ['--safe-area', retained_screens_documents[18], retained_screens_documents[21], retained_screens_documents[23],
         retained_screens_documents[24], retained_screens_documents[27],
-        meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings/game.q4ui'], timeout: 120)
+        meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings/game.rui'], timeout: 120)
     test('opend3-ui-view-effects', opend3_ui_retained_screens_test,
-      args: ['--view-effects', meson.project_source_root() / 'content/baseod3/pak0/guis/hud/view_effects.q4ui'], timeout: 60)
+      args: ['--view-effects', meson.project_source_root() / 'content/baseod3/pak0/guis/hud/view_effects.rui'], timeout: 60)
     test('opend3-ui-subtitles', opend3_ui_retained_screens_test,
-      args: ['--subtitles', meson.project_source_root() / 'content/baseod3/pak0/guis/hud/subtitles.q4ui'], timeout: 60)
+      args: ['--subtitles', meson.project_source_root() / 'content/baseod3/pak0/guis/hud/subtitles.rui'], timeout: 60)
     # The retained SETTINGS page (UI-01).
     test('opend3-ui-retained-settings', opend3_ui_retained_screens_test,
-      args: ['--settings', meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings.q4ui'], timeout: 120)
+      args: ['--settings', meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings.rui'], timeout: 120)
     # The retained CONTROLS settings page (UI-01).
     test('opend3-ui-retained-controls', opend3_ui_retained_screens_test,
-      args: ['--controls', meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings/controls.q4ui'], timeout: 120)
+      args: ['--controls', meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings/controls.rui'], timeout: 120)
     # The retained GAME OPTIONS settings page (UI-01).
     test('opend3-ui-retained-game', opend3_ui_retained_screens_test,
-      args: ['--game', meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings/game.q4ui'], timeout: 120)
+      args: ['--game', meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings/game.rui'], timeout: 120)
     # The retained AUDIO settings page (UI-01).
     test('opend3-ui-retained-audio', opend3_ui_retained_screens_test,
-      args: ['--audio', meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings/audio.q4ui'], timeout: 120)
+      args: ['--audio', meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings/audio.rui'], timeout: 120)
     # The match summary card (ui-visual-design.md 14.14).
     test('opend3-ui-retained-summary', opend3_ui_retained_screens_test,
-      args: ['--summary', meson.project_source_root() / 'content/baseod3/pak0/guis/menu/mp_summary.q4ui'], timeout: 240)
+      args: ['--summary', meson.project_source_root() / 'content/baseod3/pak0/guis/menu/mp_summary.rui'], timeout: 240)
     test('opend3-ui-retained-rosters', opend3_ui_retained_screens_test,
       args: ['--rosters', retained_screens_documents[6], retained_screens_documents[7],
-        meson.project_source_root() / 'content/baseod3/pak0/guis/menu/mp_summary.q4ui'], timeout: 120)
+        meson.project_source_root() / 'content/baseod3/pak0/guis/menu/mp_summary.rui'], timeout: 120)
     # The multiplayer quick-chat wheel (ui-visual-design.md 14.6).
     test('opend3-ui-quick-chat', opend3_ui_retained_screens_test,
-      args: ['--quick-chat', meson.project_source_root() / 'content/baseod3/pak0/guis/hud/quick_chat.q4ui'], timeout: 120)
+      args: ['--quick-chat', meson.project_source_root() / 'content/baseod3/pak0/guis/hud/quick_chat.rui'], timeout: 120)
     test('opend3-ui-status-bar', opend3_ui_retained_screens_test,
-      args: [meson.project_source_root() / 'content/baseod3/pak0/guis/hud/status_bar_marine.q4ui',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/status_bar_strogg.q4ui'], timeout: 240)
+      args: [meson.project_source_root() / 'content/baseod3/pak0/guis/hud/status_bar_marine.rui',
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/status_bar_strogg.rui'], timeout: 240)
     test('opend3-ui-hud', opend3_ui_retained_screens_test,
-      args: [meson.project_source_root() / 'content/baseod3/pak0/guis/hud/artwork.q4ui'], timeout: 120)
+      args: [meson.project_source_root() / 'content/baseod3/pak0/guis/hud/artwork.rui'], timeout: 120)
     # The Remastered HUD documents (ui-visual-design.md 14.4-14.12) on their anchors, answering the stock events.
     test('opend3-ui-remastered-hud', opend3_ui_retained_screens_test,
       args: ['--remastered',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_marine.q4ui',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_strogg.q4ui',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_marine_awakening.q4ui',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_strogg_awakening.q4ui',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_mp.q4ui',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_vehicle.q4ui',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_airdef.q4ui',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_turret.q4ui',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_mcc.q4ui',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_chaingun_turret.q4ui',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_speeder.q4ui',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_gev.q4ui',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_medchange.q4ui',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_objectives.q4ui',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_objectives_strogg.q4ui',
-             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_scoreboard.q4ui'], timeout: 240)
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_marine.rui',
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_strogg.rui',
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_marine_awakening.rui',
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_strogg_awakening.rui',
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_mp.rui',
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_vehicle.rui',
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_airdef.rui',
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_turret.rui',
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_mcc.rui',
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_chaingun_turret.rui',
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_speeder.rui',
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_gev.rui',
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_medchange.rui',
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_objectives.rui',
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_objectives_strogg.rui',
+             meson.project_source_root() / 'content/baseod3/pak0/guis/hud/remastered_scoreboard.rui'], timeout: 240)
     test('opend3-ui-remastered-hud-generated', py,
       args: [meson.project_source_root() / 'tools/ui/build_remastered_hud.py', '--check'], timeout: 120)
     # The stock interface's HUD for The Awakening, generated from guis/hud.gui.
@@ -1754,7 +1754,7 @@ if build_engine or get_option('build_native_tests')
     system_page_locales = ['english', 'spanish', 'polish', 'russian', 'french', 'italian', 'german']
     foreach locale : system_page_locales
       test('opend3-ui-system-text-scale-' + locale, opend3_ui_system_text_scale_test,
-        args: [files('content/baseod3/pak0/guis/menu/settings/system.q4ui'), meson.current_source_dir() / 'content/baseod3/pak0/strings', locale], timeout: 900)
+        args: [files('content/baseod3/pak0/guis/menu/settings/system.rui'), meson.current_source_dir() / 'content/baseod3/pak0/strings', locale], timeout: 900)
     endforeach
     opend3_ui_system_interface_settings_test = executable('opend3-ui-system-interface-settings-test',
       files('tools/tests/native/UiSystemInterfaceSettingsTest.cpp', 'src/framework/PerformancePreset.cpp'),
@@ -1763,7 +1763,7 @@ if build_engine or get_option('build_native_tests')
       install: false)
     foreach locale : system_page_locales
       test('opend3-ui-system-interface-settings-' + locale, opend3_ui_system_interface_settings_test,
-        args: [files('content/baseod3/pak0/guis/menu/settings/system.q4ui'), meson.current_source_dir() / 'content/baseod3/pak0/strings', locale], timeout: 600)
+        args: [files('content/baseod3/pak0/guis/menu/settings/system.rui'), meson.current_source_dir() / 'content/baseod3/pak0/strings', locale], timeout: 600)
     endforeach
     opend3_ui_system_render_options_test = executable('opend3-ui-system-render-options-test',
       files('tools/tests/native/UiSystemRenderOptionsTest.cpp', 'src/framework/PerformancePreset.cpp'),
@@ -1772,7 +1772,7 @@ if build_engine or get_option('build_native_tests')
       install: false)
     foreach locale : system_page_locales
       test('opend3-ui-system-render-options-' + locale, opend3_ui_system_render_options_test,
-        args: [files('content/baseod3/pak0/guis/menu/settings/system.q4ui'), meson.current_source_dir() / 'content/baseod3/pak0/strings', locale], timeout: 600)
+        args: [files('content/baseod3/pak0/guis/menu/settings/system.rui'), meson.current_source_dir() / 'content/baseod3/pak0/strings', locale], timeout: 600)
     endforeach
     opend3_ui_system_display_controls_test = executable('opend3-ui-system-display-controls-test',
       files('tools/tests/native/UiSystemDisplayControlsTest.cpp', 'src/framework/PerformancePreset.cpp'),
@@ -1781,7 +1781,7 @@ if build_engine or get_option('build_native_tests')
       install: false)
     foreach locale : system_page_locales
       test('opend3-ui-system-display-controls-' + locale, opend3_ui_system_display_controls_test,
-        args: [files('content/baseod3/pak0/guis/menu/settings/system.q4ui'), meson.current_source_dir() / 'content/baseod3/pak0/strings', locale], timeout: 600)
+        args: [files('content/baseod3/pak0/guis/menu/settings/system.rui'), meson.current_source_dir() / 'content/baseod3/pak0/strings', locale], timeout: 600)
     endforeach
     opend3_ui_system_display_catalog_test = executable('opend3-ui-system-display-catalog-test',
       files('tools/tests/native/UiSystemDisplayCatalogTest.cpp', 'src/framework/PerformancePreset.cpp'),
@@ -1790,7 +1790,7 @@ if build_engine or get_option('build_native_tests')
       install: false)
     foreach locale : system_page_locales
       test('opend3-ui-system-display-catalog-' + locale, opend3_ui_system_display_catalog_test,
-        args: [files('content/baseod3/pak0/guis/menu/settings/system.q4ui'), meson.current_source_dir() / 'content/baseod3/pak0/strings', locale], timeout: 900)
+        args: [files('content/baseod3/pak0/guis/menu/settings/system.rui'), meson.current_source_dir() / 'content/baseod3/pak0/strings', locale], timeout: 900)
     endforeach
     opend3_ui_system_dimensions_test = executable('opend3-ui-system-dimensions-test',
       files('tools/tests/native/UiSystemDimensionsTest.cpp', 'src/framework/PerformancePreset.cpp'),
@@ -1799,7 +1799,7 @@ if build_engine or get_option('build_native_tests')
       install: false)
     foreach locale : system_page_locales
       test('opend3-ui-system-dimensions-' + locale, opend3_ui_system_dimensions_test,
-        args: [files('content/baseod3/pak0/guis/menu/settings/system.q4ui'), meson.current_source_dir() / 'content/baseod3/pak0/strings', locale], timeout: 600)
+        args: [files('content/baseod3/pak0/guis/menu/settings/system.rui'), meson.current_source_dir() / 'content/baseod3/pak0/strings', locale], timeout: 600)
     endforeach
     opend3_ui_model_scene_test = executable('opend3-ui-model-scene-test',
       files('tools/tests/native/UiModelSceneTest.cpp'),
@@ -1859,7 +1859,7 @@ if build_engine or get_option('build_native_tests')
       dependencies: [opend3_retained_dep, rmlui_project.get_variable('rmlui_dep'), jsoncpp_project.get_variable('jsoncpp_dep')],
       install: false)
     test('opend3-ui-popup-placement-runtime', opend3_ui_popup_placement_runtime_test,
-      args: [meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings/system.q4ui',
+      args: [meson.project_source_root() / 'content/baseod3/pak0/guis/menu/settings/system.rui',
              meson.project_source_root() / 'content/baseod3/pak0/strings'], timeout: 900)
     # Windows ARM64 write-through I/O can exceed three minutes. Let the
     # harness's 600-second command timeout report the failure before Meson
@@ -1886,7 +1886,7 @@ if build_engine or get_option('build_native_tests')
       install: false,
     )
     test('opend3-ui-state', opend3_ui_state_test,
-      args: [meson.project_source_root() / 'tools/ui/fixtures/binding-smoke.q4ui'], timeout: 30)
+      args: [meson.project_source_root() / 'tools/ui/fixtures/binding-smoke.rui'], timeout: 30)
     opend3_ui_vector_test = executable(
       'opend3-ui-vector-test',
       files('tools/tests/native/UiVectorTest.cpp'),
@@ -1897,7 +1897,7 @@ if build_engine or get_option('build_native_tests')
     test('opend3-ui-vector', opend3_ui_vector_test, timeout: 30)
     foreach scope : ['machinegun', 'railgun', 'nailgun']
       test('opend3-ui-scope-paint-' + scope, opend3_ui_vector_test,
-        args: [meson.project_source_root() / ('content/baseod3/pak0/guis/weapons/' + scope + '_scope.q4ui')], timeout: 30)
+        args: [meson.project_source_root() / ('content/baseod3/pak0/guis/weapons/' + scope + '_scope.rui')], timeout: 30)
     endforeach
     executable(
       'opend3-retained-ui-benchmark',

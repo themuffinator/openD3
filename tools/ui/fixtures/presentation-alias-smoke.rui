@@ -1,9 +1,9 @@
-// Authored vector controls adapted from interaction-smoke.q4ui.
-// Bounded managed adapter qualification; no shipped menu replacement acceptance.
+// Authored vector controls adapted from managed-settings-smoke.rui.
+// Bounded presentation alias qualification; no shipped menu replacement acceptance.
 {
-  "format": "opend3-ui",
+  "format": "retained-ui",
   "version": 1,
-  "id": "managed-settings-smoke",
+  "id": "presentation-alias-smoke",
   "tokens": {
     "marine.olive": {
       "type": "color",
@@ -122,6 +122,19 @@
               1,
               0
             ]
+          },
+          "height": {
+            "type": "length",
+            "value": 200,
+            "unit": "dp"
+          },
+          "display": {
+            "type": "keyword",
+            "value": "block"
+          },
+          "pointer-events": {
+            "type": "keyword",
+            "value": "auto"
           }
         },
         "children": [
@@ -147,6 +160,15 @@
                 "type": "length",
                 "value": 20,
                 "unit": "dp"
+              },
+              "color": {
+                "type": "color",
+                "value": [
+                  1,
+                  1,
+                  1,
+                  1
+                ]
               }
             }
           },
@@ -3046,6 +3068,14 @@
       "type": "boolean",
       "initial": true,
       "cvar": "r_shadows"
+    },
+    "aliasSource": {
+      "type": "number",
+      "initial": 2
+    },
+    "aliasOpacity": {
+      "type": "number",
+      "initial": 1
     }
   },
   "actions": {
@@ -3129,6 +3159,56 @@
           }
         ]
       }
+    },
+    {
+      "id": "alias-opacity",
+      "node": "managed-panel",
+      "property": "opacity",
+      "value": {
+        "state": "aliasOpacity"
+      }
     }
-  ]
+  ],
+  "presentationVariables": {
+    "page": {
+      "type": "number",
+      "initial": 0,
+      "value": {
+        "state": "aliasSource"
+      }
+    }
+  },
+  "aliases": {
+    "curr": {
+      "variable": "page"
+    },
+    "desktop::curr": {
+      "variable": "page"
+    },
+    "panel::rect": {
+      "node": "managed-panel",
+      "property": "rect"
+    },
+    "panel::visible": {
+      "node": "managed-panel",
+      "property": "visible",
+      "shown": "block"
+    },
+    "panel::noevents": {
+      "node": "managed-panel",
+      "property": "noevents"
+    },
+    "panel::opacity": {
+      "node": "managed-panel",
+      "property": "opacity"
+    },
+    "title::color": {
+      "node": "managed-title",
+      "property": "color"
+    },
+    "title::text": {
+      "node": "managed-title",
+      "property": "text"
+    }
+  }
 }

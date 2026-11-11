@@ -1,6 +1,6 @@
-// First-party vectors adapted from managed-settings-smoke.q4ui.
+// First-party vectors adapted from managed-settings-smoke.rui.
 // Transaction qualification only; no production GUI acceptance.
-{"format":"opend3-ui","version":1,"id":"system-settings-smoke","tokens":{"marine.olive":{"type":"color","value":[0.5451,0.5882,0.2941,1]},
+{"format":"retained-ui","version":1,"id":"system-settings-smoke","tokens":{"marine.olive":{"type":"color","value":[0.5451,0.5882,0.2941,1]},
 "marine.orange":{"type":"color","value":[0.8902,0.5373,0,1]},
 "marine.panel":{"type":"color","value":[0.0902,0.1098,0.0706,0.9333]},
 "space.frame":{"type":"length","value":24,"unit":"dp"}},

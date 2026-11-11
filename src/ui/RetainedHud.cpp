@@ -26,7 +26,7 @@ extern idCVar r_skipGuiShaders;
 #include <unordered_map>
 
 namespace {
-constexpr const char* Artwork="guis/hud/artwork.q4ui";
+constexpr const char* Artwork="guis/hud/artwork.rui";
 constexpr const char* Registry="guis/hud/coverage.json";
 bool Read(const char* path,std::string& result) {
 	void* data=nullptr; const int size=fileSystem->ReadFile(path,&data);
@@ -199,20 +199,20 @@ idCVar ui_cinematicShake("ui_cinematicShake","1",CVAR_GUI|CVAR_FLOAT|CVAR_ARCHIV
 namespace {
 struct RemasteredRoute { const char* source; const char* document; };
 constexpr RemasteredRoute RemasteredRoutes[]={
-	{"guis/hud.gui","guis/hud/remastered_marine.q4ui"},
-	{"guis/hud_strogg.gui","guis/hud/remastered_strogg.q4ui"},
-	{"guis/mphud.gui","guis/hud/remastered_mp.q4ui"},
+	{"guis/hud.gui","guis/hud/remastered_marine.rui"},
+	{"guis/hud_strogg.gui","guis/hud/remastered_strogg.rui"},
+	{"guis/mphud.gui","guis/hud/remastered_mp.rui"},
 	// The walker's and the hover tank's shared vehicle HUD (14.12).
-	{"guis/vehicles/hud.gui","guis/hud/remastered_vehicle.q4ui"},
+	{"guis/vehicles/hud.gui","guis/hud/remastered_vehicle.rui"},
 	// The air-defence cannon's optic, transmission display and HUD prompt (14.12).
-	{"guis/vehicles/airdef_cannon.gui","guis/hud/remastered_airdef.q4ui"},
+	{"guis/vehicles/airdef_cannon.gui","guis/hud/remastered_airdef.rui"},
 	// Medical Labs' implant activation at the end of stroggification (14.19).
-	{"guis/vehicles/medchange.gui","guis/hud/remastered_medchange.q4ui"},
+	{"guis/vehicles/medchange.gui","guis/hud/remastered_medchange.rui"},
 	// The objectives display and its notices (14.11).
-	{"guis/wristcomm.gui","guis/hud/remastered_objectives.q4ui"},
-	{"guis/wristcomm_strogg.gui","guis/hud/remastered_objectives_strogg.q4ui"},
+	{"guis/wristcomm.gui","guis/hud/remastered_objectives.rui"},
+	{"guis/wristcomm_strogg.gui","guis/hud/remastered_objectives_strogg.rui"},
 	// The scoreboard (14.14), Tourney's bracket tree included.
-	{"guis/scoreboard.gui","guis/hud/remastered_scoreboard.q4ui"},
+	{"guis/scoreboard.gui","guis/hud/remastered_scoreboard.rui"},
 };
 constexpr int AudioColumns=40;   // the playback graph's 650 ms history (section 14.8)
 // ui_hudProfile N: where a Remastered HUD's frame goes, averaged over N frames
@@ -436,7 +436,7 @@ int chatPresentedTime=-100000;
 }
 idRemasteredHud::idRemasteredHud(const char* document) : impl(std::make_unique<Impl>()) {
 	impl->document=document;
-	impl->chat=!idStr::Icmp(document,"guis/hud/remastered_mp.q4ui");
+	impl->chat=!idStr::Icmp(document,"guis/hud/remastered_mp.rui");
 }
 idRemasteredHud::~idRemasteredHud() = default;
 bool idRemasteredHud::Failed() const { return impl->failed; }
@@ -466,8 +466,8 @@ void idRemasteredHud::Rejoin() {
 const char* idRemasteredHud::AirDocumentFor(const char* source) {
 	if (!source) return nullptr;
 	const auto key=Key(source);
-	if (key=="guis/hud.gui" || key=="guis/q4xhud.gui") return "guis/hud/air_marine.q4ui";
-	if (key=="guis/hud_strogg.gui" || key=="guis/q4xhud_strogg.gui") return "guis/hud/air_strogg.q4ui";
+	if (key=="guis/hud.gui" || key=="guis/q4xhud.gui") return "guis/hud/air_marine.rui";
+	if (key=="guis/hud_strogg.gui" || key=="guis/q4xhud_strogg.gui") return "guis/hud/air_strogg.rui";
 	return nullptr;
 }
 void idRemasteredHud::Preload(const char* source) {

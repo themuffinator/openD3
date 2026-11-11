@@ -1,6 +1,6 @@
 // Vector mask qualification fixture; reference and nested/gradient-masked panels.
 {
-  "format": "opend3-ui",
+  "format": "retained-ui",
   "version": 1,
   "id": "vector-mask-qualification",
   "tokens": {
