@@ -2274,7 +2274,8 @@ void R_SetDrawInteraction( const shaderStage_t *surfaceStage, const float *surfa
 
 /*
 Retail Prey's stock interaction programs, selected by r_correctspecular and
-r_normalizebumpmap (both default 1 in PREY.exe):
+r_normalizebumpmap (both default 1 in PREY.exe, 0 in openD3: Doom 3 has only
+interaction.vfp, which the OpenGL ARB path always binds):
 
   normalize  correct  retail program            specular term
   0          0        interaction.vfp           _specularTable ramp of N.H

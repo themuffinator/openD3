@@ -135,6 +135,18 @@ static const float RB_ARB2_MD5RVertexColorModulate[4] = { 1.0f, 0.0f, 0.0f, 0.0f
 static const float RB_ARB2_MD5RVertexColorInverseModulate[4] = { -1.0f, 1.0f, 0.0f, 0.0f };
 static const int ARB2_MD5R_INTERACTION_PARAM_BASE = ARB2_MD5R_MVP_ROW_0;
 
+// The specular constant the ARB interaction programs receive. Quake 4's
+// interaction.vfp takes the specular map as sampled, so upstream doubles the
+// constant here. Doom 3's interaction.vfp doubles the map itself (ADD R2, R2,
+// R2) and id's draw_arb2.cpp passes din->specularColor unscaled: doubling it
+// again lit every stock surface with twice retail Doom 3's specular, and
+// twice what the GLSL shadow-map receivers and Vulkan draw.
+#ifdef OPEND3
+static const float ARB2_INTERACTION_SPECULAR_ENV_SCALE = 1.0f;
+#else
+static const float ARB2_INTERACTION_SPECULAR_ENV_SCALE = 2.0f;
+#endif
+
 // Value cache for ARB program env parameters set by the interaction loop.
 // Light projection planes, light/view origins, and stage matrices are
 // per-(light, entity) or per-stage constants that the classic loop re-sends
@@ -13078,14 +13090,14 @@ void	RB_ARB2_DrawInteraction( const drawInteraction_t *din ) {
 	}
 
 	// set the constant colors
-	const float specularColorX2[4] = {
-		din->specularColor[0] * 2.0f,
-		din->specularColor[1] * 2.0f,
-		din->specularColor[2] * 2.0f,
-		din->specularColor[3] * 2.0f
+	const float specularEnv[4] = {
+		din->specularColor[0] * ARB2_INTERACTION_SPECULAR_ENV_SCALE,
+		din->specularColor[1] * ARB2_INTERACTION_SPECULAR_ENV_SCALE,
+		din->specularColor[2] * ARB2_INTERACTION_SPECULAR_ENV_SCALE,
+		din->specularColor[3] * ARB2_INTERACTION_SPECULAR_ENV_SCALE
 	};
 	RB_ARB2_SetFragmentEnvParm( 0, din->diffuseColor.ToFloatPtr() );
-	RB_ARB2_SetFragmentEnvParm( 1, specularColorX2 );
+	RB_ARB2_SetFragmentEnvParm( 1, specularEnv );
 	const float alphaThreshold[4] = {
 		din->alphaTestThreshold,
 		din->alphaTestThreshold,
@@ -16305,14 +16317,14 @@ static void RB_SharedWorldInteractionGLLoadPrimitiveParameters(
 		RB_ARB2_SetVertexEnvParm( PP_COLOR_ADD, addVector );
 	}
 
-	const float specularColorX2[4] = {
-		primitive.specularColor[0] * 2.0f,
-		primitive.specularColor[1] * 2.0f,
-		primitive.specularColor[2] * 2.0f,
-		primitive.specularColor[3] * 2.0f
+	const float specularEnv[4] = {
+		primitive.specularColor[0] * ARB2_INTERACTION_SPECULAR_ENV_SCALE,
+		primitive.specularColor[1] * ARB2_INTERACTION_SPECULAR_ENV_SCALE,
+		primitive.specularColor[2] * ARB2_INTERACTION_SPECULAR_ENV_SCALE,
+		primitive.specularColor[3] * ARB2_INTERACTION_SPECULAR_ENV_SCALE
 	};
 	RB_ARB2_SetFragmentEnvParm( 0, primitive.diffuseColor );
-	RB_ARB2_SetFragmentEnvParm( 1, specularColorX2 );
+	RB_ARB2_SetFragmentEnvParm( 1, specularEnv );
 	RB_ARB2_SetFragmentEnvParm( 2, primitive.specularParms );
 }
 

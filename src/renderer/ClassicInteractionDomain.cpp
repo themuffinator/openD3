@@ -13,10 +13,14 @@
 
 // Retail PREY.exe registers both with default "1" (and r_cubemapNormalize
 // "0", which only chose a slower normalization). See R_InteractionSpecularParms.
-idCVar r_correctspecular( "r_correctspecular", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL,
-	"per pixel half angle calculation: shade stock interaction specular as pow( N.H, exponent ) * brightness from the material's specularExp; 0 uses the Doom 3 specular table ramp" );
-idCVar r_normalizebumpmap( "r_normalizebumpmap", "1", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL,
-	"per pixel renormalization of bumpmaps in the stock interaction" );
+// OPEND3: Doom 3 has neither: its interaction.vfp shades the _specularTable
+// ramp of the bump normal as stored, and the OpenGL stencil path always draws
+// with that program. Default both off so the GLSL shadow-map receivers and
+// Vulkan light stock surfaces as Doom 3 and the OpenGL stencil path do.
+idCVar r_correctspecular( "r_correctspecular", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL,
+	"per pixel half angle calculation: shade stock interaction specular as pow( N.H, exponent ) * brightness from the material's specularExp, as Prey does; 0 uses Doom 3's specular table ramp. The OpenGL ARB interaction program always uses the ramp" );
+idCVar r_normalizebumpmap( "r_normalizebumpmap", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL,
+	"per pixel renormalization of bumpmaps in the stock interaction, as Prey does; 0 uses the bump normal as stored, as Doom 3 does. The OpenGL ARB interaction program never renormalizes" );
 
 void R_ResetInteractionSpecular( drawInteraction_t *din ) {
 	din->specularExponent = MATERIAL_DEFAULT_SPECULAR_EXPONENT;
