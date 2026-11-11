@@ -115,6 +115,13 @@ release of Doom 3 (1.3.1 packs):
   Win32 system console draws the same cyan on a dark slate taken from the
   menus' dialog plate. The completion popup, text selection and the SDL system
   console on Linux and macOS take the same palette but were not looked at.
+- GUI and console text is drawn from the five reconstructed TrueType faces by
+  default ([font system](ttf-font-system.md)). At startup the engine loads
+  `fonts/english.ttf`, `an.ttf`, `bank.ttf`, `micro.ttf` and `bigchars.ttf`
+  from `baseod3/pak0.pk4`, fits each face's 12, 24 and 48 point slots to the
+  retail `.dat` metrics and rebuilds the console sheet. Captured at 2560x1440
+  on OpenGL: the main menu, and the HUD on `game/alphalabs1` (loaded with
+  `devmap`, 2,106 entities). `tools/tests/ttf_font_integrity.py` passes.
 - The dedicated server spawns `game/mp/d3dm1` (887 entities).
 - `+set fs_game d3xp` mounts the expansion directory, loads `game-d3xp_x64`
   and initialises the game. On the test machine, which has only the
@@ -124,7 +131,9 @@ release of Doom 3 (1.3.1 packs):
 That is all that has been run. In particular, nothing here is evidence for:
 playing past the first cinematic, combat, AI, PDA and video playback, level
 transitions, loading a savegame, a multiplayer client joining a server,
-Linux, macOS, Android, ARM64 or VR.
+Linux, macOS, Android, ARM64 or VR. The TrueType text was not compared
+screen by screen with the bitmap path, and was not checked on Vulkan, in the
+PDA, on in-world screens or in a language other than English.
 
 ## Open items
 
@@ -166,7 +175,11 @@ Listed roughly by how much they block a player.
    clamped. A `mars_city1` load currently logs about 25 distinct warnings,
    some of them the retail content's own.
 5. **The retained RmlUi interface has no Doom 3 documents.** Launches pin
-   `ui_retained 0`. The stock Doom 3 GUIs are the interface.
+   `ui_retained 0`. The stock Doom 3 GUIs are the interface. The contract
+   those documents will be built to is the
+   [visual design specification](ui-visual-design.md), drawn in the
+   [Interface Atlas](ui/atlas/opend3-interface-atlas.html); none of it is
+   implemented yet.
 6. **Tooling under `tools/` is inherited and unadapted.** The test corpus,
    validation profiles, packaging, installer and release scripts were written
    for openQ4. They were renamed mechanically and have not been run for

@@ -121,6 +121,8 @@ These guides follow the current source tree. Start with [release status](docs/us
 - [AGENTS.md](AGENTS.md): project rules and the debug loop
 - [The rebase record](docs/dev/doom3-rebase.md): how openD3 moved onto openQ4, the engine/game contract and the open items
 - [Game source provenance](docs/dev/game-source-provenance.md): where the game library came from
+- [UI visual design](docs/dev/ui-visual-design.md) and the [Interface Atlas](docs/dev/ui/atlas/opend3-interface-atlas.html): the measured Doom 3 interface and the contract for the new one
+- [TrueType font system](docs/dev/ttf-font-system.md): the faces rebuilt from Doom 3's bitmap fonts and how the engine draws with them
 
 ## Credits
 
@@ -139,6 +141,7 @@ These guides follow the current source tree. Start with [release status](docs/us
 - **Daniel Gibson and the [dhewm3](https://github.com/dhewm/dhewm3) contributors**: behaviour reference for Doom 3 compatibility, and code inherited through Quake4Doom and openQ4
 - **Robert Beckebans**: renderer modernisation reference work, including RBDOOM-3-BFG
 - **Raven Software**: the Quake 4 engine lineage behind openQ4
+- **[The Noto fonts](https://fonts.google.com/noto)** (Google, SIL Open Font License 1.1): donor glyphs for the scripts Doom 3's bitmap fonts never covered, in the [TrueType faces](docs/dev/ttf-font-system.md) rebuilt from those fonts
 - **[Ronald Rivest and RSA Data Security, Inc.](https://www.rfc-editor.org/rfc/rfc1320)**: the MD4 Message-Digest Algorithm behind the PK4 checksums; [notice](LICENSES/MD4.txt)
 - **[The RmlUi Team and contributors](https://github.com/mikke89/RmlUi/tree/6.3)**: MIT-licensed layout library behind the engine's retained interface; [notice](LICENSES/RmlUi.txt)
 - **[The JsonCpp authors](https://github.com/open-source-parsers/jsoncpp/tree/1.9.8)**: JSON parser, used under its MIT option; [notice](LICENSES/JsonCpp.txt)
