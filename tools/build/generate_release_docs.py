@@ -1501,8 +1501,8 @@ def generate_release_docs_site(
         "docs/dev/android-device-budgets.json",
         "docs/dev/retail-overlay-audit.csv",
         "docs/dev/archive/2026-10-18/manifest.json",
-        # The editable atlas sheet the visual specification links (14.19).
-        "docs/dev/ui/atlas/medlabs-implant.html",
+        # The Interface Atlas the visual design specification draws in.
+        "docs/dev/ui/atlas/opend3-interface-atlas.html",
         "subprojects/rmlui.wrap", "subprojects/packagefiles/libtess2/double-precision.patch",
         "subprojects/packagefiles/rmlui/masked-hit-test.patch",
         "subprojects/packagefiles/jsoncpp/subnormal-numbers.patch",

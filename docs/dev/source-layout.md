@@ -14,10 +14,10 @@ inherited from openQ4 and has not been run for openD3.
 | `src/` | Engine, game and tool sources |
 | `src/external/` | Vendored third-party code, kept in its upstream layout |
 | `subprojects/` | Meson wraps, with openD3 patches under `subprojects/packagefiles/<project>/` |
-| `content/baseod3/pak0/` | Authored runtime content, packed into `baseod3/pak0.pk4`: GLSL and ARB programs, post-process materials, fonts, default configs and engine string tables |
+| `content/baseod3/pak0/` | Authored runtime content, packed into `baseod3/pak0.pk4`: GLSL and ARB programs, post-process materials, the five TrueType faces rebuilt from Doom 3's bitmap fonts, default configs and engine string tables |
 | `assets/` | Packaging and branding inputs: icons, splash, desktop entries, documentation images and the packaged HTML readmes (`assets/docs/`, `assets/release/`) |
-| `tools/` | Build, packaging, debugging, test, validation and asset scripts |
-| `docs/dev/`, `docs/user/` | Developer and player documentation; curated release notes live in `docs/dev/releases/` |
+| `tools/` | Build, packaging, debugging, test, validation and asset scripts; `tools/assets/fonts/` rebuilds the TrueType faces from an installed Doom 3 |
+| `docs/dev/`, `docs/user/` | Developer and player documentation; curated release notes live in `docs/dev/releases/`, and the [UI visual design specification](ui-visual-design.md) is drawn in `docs/dev/ui/atlas/` |
 | `LICENSES/` | Licence terms and third-party notices; mirrors the `licenses/` folder that packages install |
 | `mobile/android/` | The Android launcher application, inherited and not built for openD3 |
 
