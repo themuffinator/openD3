@@ -875,6 +875,34 @@ extern idCVar r_windowWidth;				// windowed mode width
 extern idCVar r_windowHeight;				// windowed mode height
 extern idCVar r_multiSamples;			// number of antialiasing samples
 extern idCVar r_postAA;					// post AA mode: 0 = off, 1 = SMAA 1x
+extern idCVar r_bloom;					// enable bloom post-process
+extern idCVar r_bloomThreshold;		// bloom bright-pass threshold
+extern idCVar r_bloomSoftKnee;			// bloom soft threshold knee
+extern idCVar r_bloomIntensity;		// bloom contribution scale
+extern idCVar r_bloomRadius;			// bloom sample radius scale
+extern idCVar r_ssao;					// enable SSAO post-process
+extern idCVar r_ssaoRadius;			// SSAO sampling radius in view-space units
+extern idCVar r_ssaoBias;				// SSAO horizon bias in view-space units
+extern idCVar r_ssaoIntensity;			// SSAO darkening strength
+extern idCVar r_ssaoPower;				// SSAO response curve
+extern idCVar r_ssaoMaxDistance;		// SSAO far-distance fade
+extern idCVar r_ssaoSamples;			// SSAO spiral sample count
+extern idCVar r_ssaoDebug;				// visualize SSAO only
+extern idCVar r_hdrToneMap;			// enable HDR tonemapping and color correction
+extern idCVar r_hdrExposure;			// HDR tonemap exposure
+extern idCVar r_hdrWhitePoint;			// filmic white point for HDR tonemapping
+extern idCVar r_hdrLift;				// post-process shadow lift
+extern idCVar r_hdrPostGamma;			// post-process gamma curve
+extern idCVar r_hdrGain;				// post-process gain
+extern idCVar r_hdrVibrance;			// post-process vibrance
+extern idCVar r_hdrSaturation;			// post-process saturation
+extern idCVar r_hdrContrast;			// post-process contrast
+extern idCVar r_crt;					// enable CRT monitor post-process
+extern idCVar r_crtAmount;				// overall CRT blend amount
+extern idCVar r_crtScanlineStrength;	// scanline intensity
+extern idCVar r_crtMaskStrength;		// phosphor mask intensity
+extern idCVar r_crtCurvature;			// screen curvature
+extern idCVar r_crtChromatic;			// chromatic offset in pixel units
 extern idCVar r_msaaResolveDepth;		// include depth when resolving MSAA render targets
 extern idCVar r_msaaAlphaToCoverage;	// alpha-to-coverage for perforated materials on MSAA targets
 
@@ -979,6 +1007,8 @@ extern idCVar r_ignoreGLErrors;
 extern idCVar r_forceLoadImages;		// draw all images to screen after registration
 extern idCVar r_demonstrateBug;			// used during development to show IHV's their problems
 extern idCVar r_screenFraction;			// for testing fill rate, the resolution of the entire screen can be changed
+extern idCVar r_resolutionScaleMode;		// upscale path when r_screenFraction < 100
+extern idCVar r_resolutionScaleSharpness;	// sharpen amount for HQ resolution scaling
 
 extern idCVar r_showUnsmoothedTangents;	// highlight geometry rendered with unsmoothed tangents
 extern idCVar r_showSilhouette;			// highlight edges that are casting shadow planes
@@ -1330,6 +1360,8 @@ void RB_CreateSingleDrawInteractions( const drawSurf_t *surf, void (*DrawInterac
 const shaderStage_t *RB_SetLightTexture( const idRenderLightLocal *light );
 
 void RB_DrawView( const void *data );
+void RB_ApplyResolutionScaleToBackBuffer( void );
+void RB_ApplyCRTToBackBuffer( void );
 
 void RB_DetermineLightScale( void );
 void RB_STD_LightScale( void );

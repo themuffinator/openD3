@@ -332,6 +332,12 @@ int GLX_Init(glimpParms_t a) {
 	actualWidth = glConfig.vidWidth;
 	actualHeight = glConfig.vidHeight;
 
+	if ( a.fullScreen && r_mode.GetInteger() == -2 ) {
+		// Preserve Doom 3 semantics: r_mode -2 tracks native desktop size.
+		a.width = DisplayWidth( dpy, scrnum );
+		a.height = DisplayHeight( dpy, scrnum );
+	}
+
 	// Get video mode list
 	if ( !XF86VidModeQueryVersion( dpy, &vidmode_MajorVersion, &vidmode_MinorVersion ) ) {
 		vidmode_ext = false;
@@ -533,6 +539,8 @@ int GLX_Init(glimpParms_t a) {
 	common->Printf("GL_EXTENSIONS: %s\n", glstring);
 
 	// FIXME: here, software GL test
+	glConfig.vidWidth = actualWidth;
+	glConfig.vidHeight = actualHeight;
 
 	glConfig.isFullscreen = a.fullScreen;
 	

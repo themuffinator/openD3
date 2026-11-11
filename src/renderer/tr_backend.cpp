@@ -521,7 +521,12 @@ const void	RB_SwapBuffers( const void *data ) {
 		glFinish();
 	}
 
-    RB_LogComment( "***************** RB_SwapBuffers *****************\n\n\n" );
+	RB_LogComment( "***************** RB_SwapBuffers *****************\n\n\n" );
+
+	if ( !r_frontBuffer.GetBool() ) {
+		RB_ApplyResolutionScaleToBackBuffer();
+		RB_ApplyCRTToBackBuffer();
+	}
 
 	// don't flip if drawing to front buffer
 	if ( !r_frontBuffer.GetBool() ) {

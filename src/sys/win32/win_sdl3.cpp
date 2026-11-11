@@ -1651,15 +1651,28 @@ static bool SDL3_ApplyScreenParms(glimpParms_t parms) {
 			SDL_DisplayMode mode;
 			memset(&mode, 0, sizeof(mode));
 			const float requestedRefresh = parms.displayHz > 0 ? static_cast<float>(parms.displayHz) : 0.0f;
+			int requestedWidth = parms.width;
+			int requestedHeight = parms.height;
+
+			// Preserve legacy semantics: r_mode -2 means "native desktop resolution",
+			// including exclusive fullscreen mode on the selected display.
+			if (r_mode.GetInteger() == -2) {
+				const SDL_DisplayMode *desktopMode = (display != 0) ? SDL_GetDesktopDisplayMode(display) : NULL;
+				if (desktopMode) {
+					requestedWidth = desktopMode->w;
+					requestedHeight = desktopMode->h;
+				}
+			}
+
 			const bool hasClosestMode = display != 0 &&
-				SDL_GetClosestFullscreenDisplayMode(display, parms.width, parms.height, requestedRefresh, false, &mode);
+				SDL_GetClosestFullscreenDisplayMode(display, requestedWidth, requestedHeight, requestedRefresh, false, &mode);
 
 			if (hasClosestMode && mode.displayID == 0) {
 				mode.displayID = display;
 			}
 
-			const int modeWidth = hasClosestMode ? mode.w : parms.width;
-			const int modeHeight = hasClosestMode ? mode.h : parms.height;
+			const int modeWidth = hasClosestMode ? mode.w : requestedWidth;
+			const int modeHeight = hasClosestMode ? mode.h : requestedHeight;
 			SDL3_GetWindowPositionOnDisplay(display, modeWidth, modeHeight, targetX, targetY);
 			(void)SDL_SetWindowPosition(s_sdlWindow, targetX, targetY);
 
@@ -1669,7 +1682,7 @@ static bool SDL3_ApplyScreenParms(glimpParms_t parms) {
 				(void)SDL_SetWindowFullscreenMode(s_sdlWindow, NULL);
 			} else if (!hasClosestMode) {
 				common->Printf("SDL3: no fullscreen mode matched %dx%d @ %.2f Hz on display %d; using desktop mode.\n",
-					parms.width, parms.height, requestedRefresh, selectedDisplay.index);
+					requestedWidth, requestedHeight, requestedRefresh, selectedDisplay.index);
 				(void)SDL_SetWindowFullscreenMode(s_sdlWindow, NULL);
 			}
 		}

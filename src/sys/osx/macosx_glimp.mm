@@ -278,6 +278,12 @@ static bool CreateGameWindow(  glimpParms_t parms ) {
 		common->Error( "Could not get current graphics mode for display 0x%08x\n", glw_state.display );
 	}
 
+	if ( parms.fullScreen && r_mode.GetInteger() == -2 ) {
+		// Preserve Doom 3 semantics: r_mode -2 tracks native desktop size.
+		parms.width = [[glw_state.desktopMode objectForKey: (id)kCGDisplayWidth] intValue];
+		parms.height = [[glw_state.desktopMode objectForKey: (id)kCGDisplayHeight] intValue];
+	}
+
 	common->Printf(  " %d %d %s\n", parms.width, parms.height, windowed[ parms.fullScreen ] );
 
 	if (parms.fullScreen) {
@@ -671,7 +677,7 @@ void GLimp_SetGamma(unsigned short red[256],
 /*****************************************************************************/
 
 #pragma mark -
-#pragma mark ¥ ATI_fragment_shader
+#pragma mark ATI_fragment_shader
 
 static GLuint sGeneratingProgram = 0;
 static int sCurrentPass;

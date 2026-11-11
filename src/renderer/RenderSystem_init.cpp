@@ -49,9 +49,37 @@ idCVar r_glDriver( "r_glDriver", "", CVAR_RENDERER, "\"opengl32\", etc." );
 idCVar r_useLightPortalFlow( "r_useLightPortalFlow", "1", CVAR_RENDERER | CVAR_BOOL, "use a more precise area reference determination" );
 idCVar r_multiSamples( "r_multiSamples", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "number of antialiasing samples" );
 idCVar r_postAA( "r_postAA", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "post AA mode: 0 = off, 1 = SMAA 1x", 0, 1, idCmdSystem::ArgCompletion_Integer<0,1> );
+idCVar r_bloom( "r_bloom", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "enable bloom post-process" );
+idCVar r_bloomThreshold( "r_bloomThreshold", "0.72", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "bloom bright-pass threshold", 0.0f, 2.0f );
+idCVar r_bloomSoftKnee( "r_bloomSoftKnee", "0.15", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "bloom soft threshold knee", 0.0f, 1.0f );
+idCVar r_bloomIntensity( "r_bloomIntensity", "0.45", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "bloom contribution scale", 0.0f, 4.0f );
+idCVar r_bloomRadius( "r_bloomRadius", "1.35", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "bloom sample radius scale", 0.1f, 8.0f );
+idCVar r_ssao( "r_ssao", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "enable screen-space ambient occlusion" );
+idCVar r_ssaoRadius( "r_ssaoRadius", "36.0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "SSAO sampling radius in view-space units", 4.0f, 256.0f );
+idCVar r_ssaoBias( "r_ssaoBias", "2.0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "SSAO horizon bias in view-space units", 0.0f, 32.0f );
+idCVar r_ssaoIntensity( "r_ssaoIntensity", "1.35", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "SSAO darkening strength", 0.0f, 4.0f );
+idCVar r_ssaoPower( "r_ssaoPower", "1.6", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "SSAO response curve", 0.1f, 4.0f );
+idCVar r_ssaoMaxDistance( "r_ssaoMaxDistance", "220.0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "fade SSAO out past this view-space distance", 16.0f, 4096.0f );
+idCVar r_ssaoSamples( "r_ssaoSamples", "20", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "number of SSAO spiral samples", 4, 32, idCmdSystem::ArgCompletion_Integer<4,32> );
+idCVar r_ssaoDebug( "r_ssaoDebug", "0", CVAR_RENDERER | CVAR_BOOL, "visualize SSAO only" );
+idCVar r_hdrToneMap( "r_hdrToneMap", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "enable HDR tonemapping and color correction pass" );
+idCVar r_hdrExposure( "r_hdrExposure", "1.0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "HDR tone mapping exposure", 0.1f, 8.0f );
+idCVar r_hdrWhitePoint( "r_hdrWhitePoint", "6.0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "filmic white point used by HDR tonemapping", 1.0f, 16.0f );
+idCVar r_hdrLift( "r_hdrLift", "0.0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "post-process shadow lift applied after HDR tonemapping", -0.25f, 0.25f );
+idCVar r_hdrPostGamma( "r_hdrPostGamma", "1.0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "post-process gamma curve applied after HDR tonemapping", 0.5f, 2.5f );
+idCVar r_hdrGain( "r_hdrGain", "1.0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "post-process gain applied after HDR tonemapping", 0.5f, 2.0f );
+idCVar r_hdrVibrance( "r_hdrVibrance", "0.0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "post-process vibrance that favors muted colors", -1.0f, 1.0f );
+idCVar r_hdrSaturation( "r_hdrSaturation", "1.0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "post-process saturation", 0.0f, 2.0f );
+idCVar r_hdrContrast( "r_hdrContrast", "1.0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "post-process contrast", 0.1f, 3.0f );
+idCVar r_crt( "r_crt", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "enable CRT monitor post-process" );
+idCVar r_crtAmount( "r_crtAmount", "1.0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "overall blend amount for the CRT monitor post-process", 0.0f, 1.0f );
+idCVar r_crtScanlineStrength( "r_crtScanlineStrength", "0.55", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "scanline intensity for the CRT monitor post-process", 0.0f, 1.0f );
+idCVar r_crtMaskStrength( "r_crtMaskStrength", "0.35", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "phosphor mask intensity for the CRT monitor post-process", 0.0f, 1.0f );
+idCVar r_crtCurvature( "r_crtCurvature", "0.06", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "screen curvature amount for the CRT monitor post-process", 0.0f, 0.25f );
+idCVar r_crtChromatic( "r_crtChromatic", "1.35", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "channel convergence offset in pixel units for the CRT monitor post-process", 0.0f, 8.0f );
 idCVar r_msaaResolveDepth( "r_msaaResolveDepth", "0", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "resolve depth when blitting MSAA render targets" );
 idCVar r_msaaAlphaToCoverage( "r_msaaAlphaToCoverage", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "enable alpha-to-coverage for perforated materials on MSAA render targets" );
-idCVar r_mode( "r_mode", "-2", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "video mode number" );
+idCVar r_mode( "r_mode", "-2", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_INTEGER, "video mode number (-2 = desktop native, -1 = custom)" );
 idCVar r_displayRefresh( "r_displayRefresh", "0", CVAR_RENDERER | CVAR_INTEGER | CVAR_NOCHEAT, "optional display refresh rate option for vid mode", 0.0f, 200.0f );
 idCVar r_fullscreen( "r_fullscreen", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "0 = windowed, 1 = full screen" );
 idCVar r_fullscreenDesktop( "r_fullscreenDesktop", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL, "1 = native desktop fullscreen, 0 = exclusive mode using r_mode/r_customWidth/r_customHeight" );
@@ -168,7 +196,9 @@ idCVar r_useScissor( "r_useScissor", "1", CVAR_RENDERER | CVAR_BOOL, "scissor cl
 idCVar r_useCombinerDisplayLists( "r_useCombinerDisplayLists", "1", CVAR_RENDERER | CVAR_BOOL | CVAR_NOCHEAT, "put all nvidia register combiner programming in display lists" );
 idCVar r_useDepthBoundsTest( "r_useDepthBoundsTest", "1", CVAR_RENDERER | CVAR_BOOL, "use depth bounds test to reduce shadow fill" );
 
-idCVar r_screenFraction( "r_screenFraction", "100", CVAR_RENDERER | CVAR_INTEGER, "for testing fill rate, the resolution of the entire screen can be changed" );
+idCVar r_screenFraction( "r_screenFraction", "100", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "for testing fill rate, the resolution of the entire screen can be changed" );
+idCVar r_resolutionScaleMode( "r_resolutionScaleMode", "1", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "screen-fraction mode when r_screenFraction < 100: 0 = legacy cropped viewport, 1 = bilinear upscale, 2 = high-quality upscale", 0, 2, idCmdSystem::ArgCompletion_Integer<0,2> );
+idCVar r_resolutionScaleSharpness( "r_resolutionScaleSharpness", "0.4", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_FLOAT, "sharpening amount for high-quality resolution scaling", 0.0f, 1.5f );
 idCVar r_demonstrateBug( "r_demonstrateBug", "0", CVAR_RENDERER | CVAR_BOOL, "used during development to show IHV's their problems" );
 idCVar r_usePortals( "r_usePortals", "1", CVAR_RENDERER | CVAR_BOOL, " 1 = use portals to perform area culling, otherwise draw everything" );
 idCVar r_portalsDistanceCull( "r_portalsDistanceCull", "1", CVAR_RENDERER | CVAR_BOOL, "enable distance-cull checks using portal fade cull ranges" );
@@ -435,8 +465,9 @@ static void R_CheckPortableExtensions( void ) {
 R_GetModeInfo
 
 r_mode is normally a small non-negative integer that
-looks resolutions up in a table, but if it is set to -1,
-the values from r_customWidth, amd r_customHeight
+looks resolutions up in a table. If it is set to -2, the
+current desktop/native resolution is used. If it is set
+to -1, the values from r_customWidth and r_customHeight
 will be used instead.
 ====================
 */
@@ -460,6 +491,38 @@ vidmode_t r_vidModes[] = {
 };
 static int	s_numVidModes = ( sizeof( r_vidModes ) / sizeof( r_vidModes[0] ) );
 
+static bool R_GetDesktopModeInfo( int *width, int *height ) {
+	int desktopWidth = 0;
+	int desktopHeight = 0;
+
+#ifdef _WIN32
+	desktopWidth = win32.desktopWidth;
+	desktopHeight = win32.desktopHeight;
+
+	if ( desktopWidth <= 0 || desktopHeight <= 0 ) {
+		HDC hDC = GetDC( GetDesktopWindow() );
+		if ( hDC ) {
+			desktopWidth = GetDeviceCaps( hDC, HORZRES );
+			desktopHeight = GetDeviceCaps( hDC, VERTRES );
+			ReleaseDC( GetDesktopWindow(), hDC );
+		}
+	}
+#endif
+
+	if ( desktopWidth <= 0 || desktopHeight <= 0 ) {
+		return false;
+	}
+
+	if ( width ) {
+		*width = idMath::ClampInt( 320, 16384, desktopWidth );
+	}
+	if ( height ) {
+		*height = idMath::ClampInt( 240, 16384, desktopHeight );
+	}
+
+	return true;
+}
+
 #if MACOS_X
 bool R_GetModeInfo( int *width, int *height, int mode ) {
 #else
@@ -468,7 +531,7 @@ static bool R_GetModeInfo( int *width, int *height, int mode ) {
 	vidmode_t	*vm;
 	const int originalMode = mode;
 
-	if ( mode < -1 ) {
+	if ( mode < -2 ) {
 		common->Printf( "^3R_GetModeInfo: r_mode %d is invalid, using custom mode (-1)\n", mode );
 		mode = -1;
 	}
@@ -478,9 +541,20 @@ static bool R_GetModeInfo( int *width, int *height, int mode ) {
 		mode = 0;
 	}
 
-	if ( mode != originalMode && r_mode.GetInteger() == originalMode ) {
-		r_mode.SetInteger( mode );
-		r_mode.ClearModified();
+	if ( mode == -2 ) {
+		if ( R_GetDesktopModeInfo( width, height ) ) {
+			return true;
+		}
+
+		common->Printf( "^3R_GetModeInfo: unable to query desktop resolution in renderer; backend will resolve mode -2 (bootstrap %dx%d)\n",
+			r_vidModes[0].width, r_vidModes[0].height );
+		if ( width ) {
+			*width = r_vidModes[0].width;
+		}
+		if ( height ) {
+			*height = r_vidModes[0].height;
+		}
+		return true;
 	}
 
 	if ( mode == -1 ) {
@@ -499,6 +573,11 @@ static bool R_GetModeInfo( int *width, int *height, int mode ) {
 		*width = clampedWidth;
 		*height = clampedHeight;
 		return true;
+	}
+
+	if ( mode != originalMode && r_mode.GetInteger() == originalMode ) {
+		r_mode.SetInteger( mode );
+		r_mode.ClearModified();
 	}
 
 	vm = &r_vidModes[mode];
@@ -538,7 +617,7 @@ static void R_NormalizeDisplayCvars( void ) {
 	const int originalMode = r_mode.GetInteger();
 	int normalizedMode = originalMode;
 
-	if ( normalizedMode < -1 ) {
+	if ( normalizedMode < -2 ) {
 		common->Printf( "^3R_GetModeInfo: r_mode %d is invalid, using custom mode (-1)\n", normalizedMode );
 		normalizedMode = -1;
 	} else if ( normalizedMode >= s_numVidModes ) {
@@ -842,6 +921,7 @@ static void R_ListModes_f( const idCmdArgs &args ) {
 	for ( i = 0; i < s_numVidModes; i++ ) {
 		common->Printf( "%s\n", r_vidModes[i].description );
 	}
+	common->Printf( "Mode -2: native desktop resolution\n" );
 	common->Printf( "Mode -1: custom fullscreen using r_customWidth / r_customHeight\n" );
 	common->Printf( "Windowed sizing uses r_windowWidth / r_windowHeight when r_fullscreen is 0\n" );
 	common->Printf( "r_mode/r_custom* only affect fullscreen when r_fullscreenDesktop is 0 (exclusive mode)\n" );
