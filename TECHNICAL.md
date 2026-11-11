@@ -2,7 +2,8 @@
 
 openD3 is the openQ4 engine carrying Doom 3's game code. This page covers what
 is specific to openD3. For the state of the port, see the
-[rebase record](docs/dev/doom3-rebase.md); for building, [BUILDING.md](BUILDING.md).
+[rebase record](docs/dev/doom3-rebase.md); for building, [BUILDING.md](BUILDING.md);
+for installing and running, the [player guides](docs/user/getting-started.md).
 
 ## Repository layout
 

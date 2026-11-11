@@ -2,18 +2,21 @@
 
 <div align="center">
 
-<img src="assets/icons/doom3_256.png" alt="openD3" width="128">
+<img src="assets/docs/img/banner.png" alt="openD3">
 
-# openD3
-
-**Doom 3 on a modern open-source engine.**<br>
+**DOOM 3 on a modern open-source engine.**<br>
 A GPL engine and game-code replacement that runs the original 2004 game from your own retail files.
 
-[![Status](https://img.shields.io/badge/status-early%20development-d97a1f.svg)](docs/dev/doom3-rebase.md)
-[![Platform](https://img.shields.io/badge/tested-Windows%20x64-lightgrey.svg)](#platforms)
-[![Licence](https://img.shields.io/badge/licence-GPLv3-blue.svg)](LICENSING.md)
+[![Status](https://img.shields.io/badge/status-early%20development-d97a1f.svg)](docs/user/release-status.md)
+[![Release](https://img.shields.io/badge/release-none%20yet-lightgrey.svg)](docs/user/release-status.md)
+[![Platforms](https://img.shields.io/badge/tested-Windows%20x64-lightgrey.svg)](#platforms-and-requirements)
+[![Licensing](https://img.shields.io/badge/licence-GPLv3-blue.svg)](LICENSING.md)
+[![Proudly vibecoded](assets/docs/img/badge-proudly-vibecoded.svg)](AGENTS.md)
 
-[Quick start](#quick-start) · [What works](#what-works-today) · [Platforms](#platforms) · [Build from source](BUILDING.md)
+<a href="BUILDING.md"><img src="https://img.shields.io/badge/Build-from%20source-c2410c?style=for-the-badge&logo=github" alt="Build openD3 from source"></a>
+<a href="https://discord.gg/T32mFejwR4"><img src="https://img.shields.io/badge/Join%20the-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Join the DarkMatter Discord"></a>
+
+[Quick start](#quick-start) · [Features](#features) · [Platforms](#platforms-and-requirements) · [Guides](#player-guides) · [Help](#getting-help) · [Build from source](BUILDING.md)
 
 </div>
 
@@ -25,7 +28,7 @@ openD3 replaces Doom 3's engine and game binaries with its own, built from id So
 > openD3 does **not** include any Doom 3 game data. You need your own copy of Doom 3 (2004). Doom 3: BFG Edition's data is a different format and is not supported.
 
 > [!IMPORTANT]
-> openD3 is in **early development** and has no release. It has just moved onto the current openQ4 engine, and so far only the first campaign map and a dedicated-server start have been run on it. Read [what works today](#what-works-today) before expecting to play through the game.
+> openD3 is in **early development** and has no release. It has just moved onto the current openQ4 engine, and so far only the first campaign map and a dedicated-server start have been run on it. Read [Features](#features) before expecting to play through the game.
 
 ## Quick start
 
@@ -34,43 +37,76 @@ There is no release yet, so you build openD3 yourself:
 1. Install **Doom 3**. Leave it where it is; openD3 keeps to its own folder.
 2. Build and stage openD3 with [BUILDING.md](BUILDING.md). The staged package lands in `.install/`.
 3. Launch `openD3-client_x64` (`.exe` on Windows) from `.install/` with `+set ui_retained 0`.
-4. openD3 looks for Doom 3 in your Steam libraries, GOG folders, the Windows registry and the usual install folders. If it doesn't find it, add `+set fs_basepath "C:\path\to\Doom 3"`, pointing at the folder that contains `base`, not at `base` itself.
+4. openD3 finds your Doom 3 install on its own. If it doesn't, see [If auto-detection fails](docs/user/getting-started.md#if-auto-detection-fails).
 
 > [!TIP]
 > Don't copy retail `.pk4` files into `baseod3/`. That folder is for openD3's own files.
 
-## What works today
+Updating? Rebuild and stage the whole package rather than single files, and expect saves from an older build not to load. [Getting Started](docs/user/getting-started.md#updating-opend3) explains why.
 
-Checked on Windows x64 against the Steam release of Doom 3:
+## Features
+
+What has been run so far, on Windows x64 against the Steam release of Doom 3:
 
 - 💿 **Finds and checks your game files.** Startup locates the install, verifies `pak000`–`pak004` by checksum and ignores the retail game binaries.
 - 🗺️ **Loads the campaign's first map.** `game/mars_city1` loads, plays its opening cinematic with working in-world screens, and autosaves.
 - 🎨 **OpenGL and Vulkan.** The same map renders on the default OpenGL renderer and on the native Vulkan renderer (`+set r_renderApi vulkan`).
-- 🖥️ **Dedicated server.** `openD3-ded_x64` starts a deathmatch map.
+- 📺 **Doom 3's own menus.** The original main menu starts and plays the intro video.
+- 🖥️ **Dedicated server.** `openD3-ded_x64` starts a deathmatch map; see [Server Setup](docs/user/server-setup.md).
 
 Not yet checked, so don't rely on it: playing beyond the first cinematic, loading saves, level changes, a client joining a multiplayer server, and every platform other than Windows x64.
 
 Not working yet:
 
-- **Resurrection of Evil.** `+set fs_game d3xp` loads the expansion's game module, but no expansion map has been run yet.
+- **Resurrection of Evil.** `+set fs_game d3xp` loads the expansion's game module, but no expansion map has been run yet. See [Campaigns](docs/user/campaigns.md#resurrection-of-evil).
 - **openQ4's retained menus and HUD.** They have no Doom 3 pages; openD3 uses Doom 3's own menus, which is why you launch with `ui_retained 0`.
 
-The [rebase record](docs/dev/doom3-rebase.md) is the detailed and current statement of what has been verified and what is open.
+[Release status](docs/user/release-status.md) puts this in player terms. The [rebase record](docs/dev/doom3-rebase.md) is the detailed and current statement of what has been verified and what is open.
 
-## Platforms
+## Platforms and requirements
 
-| Platform | State |
+Only Windows x64 has been built and run. The openQ4 engine underneath also supports Linux, Steam Deck, macOS and Android, but openD3 has not been tried on any of them.
+
+| Platform | Package | Notes |
+|---|---|---|
+| **Windows x64** | Build from source | Builds and runs; all testing so far |
+| **Linux x64, Linux ARM64, Steam Deck** | None | Not built or run for openD3 |
+| **macOS** | None | Not built or run for openD3 |
+| **Android** | None | Not built or run for openD3 |
+
+| | Needed |
 |---|---|
-| **Windows x64** | Builds and runs; all testing so far |
-| **Linux x64, Linux ARM64, macOS, Android** | The openQ4 engine supports them, but openD3 has not been built or run on any of them |
+| **CPU** | 64-bit x64 |
+| **Graphics** | An OpenGL driver with ARB vertex and fragment program support, or a Vulkan 1.3 driver for the Vulkan renderer |
+| **Storage** | About 1.5 GB for Doom 3's `base/` files, plus the openD3 build |
+| **Game data** | Doom 3's retail `base/` packs at version 1.3.1 |
 
-You'll need a 64-bit CPU, a graphics driver with OpenGL ARB vertex and fragment program support (or Vulkan 1.3 for the Vulkan renderer), and Doom 3's retail `base/` files.
+No memory or performance minimums have been measured yet. Details are in [Getting Started](docs/user/getting-started.md#system-requirements).
+
+## Player guides
+
+These guides follow the current source tree. Start with [release status](docs/user/release-status.md) for what has been run and what has not.
+
+**Set up**
+- [Getting Started](docs/user/getting-started.md): what you need, first launch and where your files go
+- [Client Settings](docs/user/client-settings.md): launch options, the renderer choice and where settings are saved
+
+**Play**
+- [Campaigns](docs/user/campaigns.md): starting Doom 3's levels, and the state of Resurrection of Evil
+
+**Look and feel**
+- The renderer and display features inherited from openQ4 (shadow maps, light grids, post-processing, presets, controller support) are described in [openQ4's guides](https://github.com/themuffinator/openQ4/tree/main/docs/user). None has been checked with Doom 3 yet.
+
+**Host and create**
+- [Server Setup](docs/user/server-setup.md): starting a dedicated server (startup only has been run)
+- [Mods](TECHNICAL.md#mods): what a mod folder needs
 
 ## Compatibility
 
-- openD3 runs the retail Doom 3 assets with its **own engine and game modules**.
-- Mods that ship their own game DLL built for the original `gamex86` interface won't load. Content-only mods need a `mod.json`; see [TECHNICAL.md](TECHNICAL.md).
-- For multiplayer, use matching openD3 builds on every client and server.
+- openD3 runs the **official retail Doom 3 assets** with its **own engine and game modules**.
+- Mods that ship their own game DLL built for the original `gamex86` interface won't load. Content-only mods need a `mod.json`; see [TECHNICAL.md](TECHNICAL.md#mods).
+- Retail Doom 3 clients and servers are not expected to join openD3 games, or the other way round, and nothing of the kind has been tried. Use matching openD3 builds on every client and server.
+- openD3 is in **early development**: most of the game has not been run yet.
 
 ## Getting help
 

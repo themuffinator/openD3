@@ -176,9 +176,13 @@ Listed roughly by how much they block a player.
    invokes are adapted and exercised.
 7. **No CI.** openQ4's GitHub workflows were removed rather than left to fail;
    they need rebuilding for openD3.
-8. **Player guides do not exist yet.** openQ4's documentation was removed
-   because it describes Quake 4; only this record, the provenance note and
-   the Android/GLES integration record remain under `docs/`.
+8. **Player guides are a first pass.** openQ4's documentation was removed
+   because it describes Quake 4. `docs/user/` now holds five guides laid out
+   like openQ4's (getting started, release status, client settings, campaigns
+   and server setup). They state only what "Verified" covers and must follow
+   it when it changes. openQ4's display, input, gameplay and rendering guides
+   have no openD3 counterpart, because none of those features has been checked
+   with Doom 3. The README has no screenshots yet.
 
 ## Naming
 
