@@ -223,7 +223,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--timeout", type=int, default=240)
     parser.add_argument("--build", type=Path, default=ROOT / "builddir",
-                        help="build tree the runtime was staged from (builddir-perf for the VS Code builds)")
+                        help="build tree the runtime was staged from (builddir for the VS Code builds)")
     args = parser.parse_args()
     if args.timeout <= 0:
         parser.error("timeout must be positive")

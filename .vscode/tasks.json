@@ -3,7 +3,7 @@
   "tasks": [
     {
       "label": "Configure openD3 (Meson Optimized)",
-      "detail": "Configure builddir-perf as debugoptimized with b_ndebug=true (the release options), reconfiguring it in place when it exists.",
+      "detail": "Configure builddir as debugoptimized, reconfiguring it in place when it exists.",
       "type": "shell",
       "command": "powershell",
       "args": [
@@ -18,7 +18,7 @@
     },
     {
       "label": "Compile openD3 (Meson Optimized)",
-      "detail": "Compile builddir-perf without staging anything.",
+      "detail": "Compile builddir without staging anything.",
       "type": "shell",
       "command": "powershell",
       "args": [
@@ -35,7 +35,7 @@
     },
     {
       "label": "Stage openD3 Install Tree (Meson Optimized)",
-      "detail": "Install builddir-perf into .install with meson install (no rebuild, no subprojects).",
+      "detail": "Install builddir into .install with meson install (no rebuild, no subprojects).",
       "type": "shell",
       "command": "powershell",
       "args": [
@@ -50,7 +50,7 @@
     },
     {
       "label": "Build openD3 (Meson Optimized)",
-      "detail": "Compile builddir-perf, then copy changed runtime files into .install for the launch configurations.",
+      "detail": "Compile builddir, then copy changed runtime files into .install for the launch configurations.",
       "type": "shell",
       "command": "powershell",
       "args": [
@@ -71,7 +71,7 @@
     },
     {
       "label": "Full Build and Stage openD3 (Meson Optimized)",
-      "detail": "Configure, compile and fully install builddir-perf into .install.",
+      "detail": "Configure, compile and fully install builddir into .install.",
       "dependsOrder": "sequence",
       "dependsOn": [
         "Configure openD3 (Meson Optimized)",
@@ -82,7 +82,7 @@
     },
     {
       "label": "Bake Light Grids (All MP)",
-      "detail": "Full build and stage, then bake the light grids of every stock multiplayer map in a hidden client.",
+      "detail": "Full build and stage, then bake the light grids of Doom 3's multiplayer maps (game/mp) in a hidden client.",
       "type": "shell",
       "command": "${workspaceFolder}\\.install\\openD3-client_x64.exe",
       "args": [

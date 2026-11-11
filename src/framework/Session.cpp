@@ -3312,6 +3312,12 @@ void Session_RescanSI_f( const idCmdArgs &args ) {
 
 #ifndef ID_DEDICATED
 static bool Session_IsLightGridBakeMultiplayerMap( const idStr &mapName ) {
+#if defined( OPEND3 )
+	// Doom 3 keeps its multiplayer maps under game/mp/.
+	if ( idStr::Icmpn( mapName.c_str(), "game/mp/", 8 ) == 0 ) {
+		return true;
+	}
+#endif
 	return idStr::Icmpn( mapName.c_str(), "mp/", 3 ) == 0;
 }
 
@@ -3802,7 +3808,12 @@ static bool Session_LoadLightGridBakeMap( const idStr &mapName ) {
 			cvarSystem->SetCVarInteger( "net_serverDedicated", 0 );
 		}
 
+#if defined( OPEND3 )
+		// Doom 3 reads any name it does not know, such as DM, as single-player.
+		cvarSystem->SetCVarString( "si_gameType", "deathmatch" );
+#else
 		cvarSystem->SetCVarString( "si_gameType", "DM" );
+#endif
 		cvarSystem->SetCVarString( "si_map", mapName.c_str() );
 
 		idCmdArgs spawnArgs;

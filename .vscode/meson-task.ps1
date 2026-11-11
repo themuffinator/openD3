@@ -9,7 +9,7 @@ Set-StrictMode -Version Latest
 
 $workspaceRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $mesonWrapper = Join-Path $workspaceRoot 'tools\build\meson_setup.ps1'
-$buildDir = Join-Path $workspaceRoot 'builddir-perf'
+$buildDir = Join-Path $workspaceRoot 'builddir'
 $installDir = Join-Path $workspaceRoot '.install'
 $fastStageScript = Join-Path $workspaceRoot 'tools\build\stage_fast_install.py'
 $checkStagedContentScript = Join-Path $workspaceRoot 'tools\build\check_staged_content_edits.py'
@@ -38,11 +38,10 @@ function Test-MesonBuildDirectory([string]$Path) {
     return (Test-Path $coreData) -and (Test-Path $ninjaFile)
 }
 
-# Match the release packages: optimized code with symbols, and C assert() compiled
-# out (b_ndebug), including in the SDL3, GLEW and stb_vorbis subprojects.
+# openD3's standard tree (AGENTS.md): builddir, optimized code with symbols and
+# assert() left on, so the tasks and the documented commands share one build.
 $expectedBuildOptions = [ordered]@{
     'buildtype' = 'debugoptimized'
-    'b_ndebug' = 'true'
 }
 
 function Get-StaleBuildOptions([string]$Path) {
@@ -75,7 +74,7 @@ function Invoke-openD3Setup {
 function Invoke-openD3Compile {
     $stale = @(Get-StaleBuildOptions $buildDir)
     if ($stale.Count -gt 0) {
-        Write-Host "builddir-perf options out of date ($($stale -join ', ')); reconfiguring."
+        Write-Host "builddir options out of date ($($stale -join ', ')); reconfiguring."
         Invoke-openD3Setup
     }
     Invoke-openD3Meson @(

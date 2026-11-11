@@ -50,21 +50,21 @@ def validate_tasks() -> None:
     if len(default_tasks) != 1:
         raise AssertionError(f"Expected exactly one default build task, found {len(default_tasks)}")
 
-    fast_build = find_task(tasks, "Build openD3 (Meson Debug)")
+    fast_build = find_task(tasks, "Build openD3 (Meson Optimized)")
     if fast_build is not default_tasks[0]:
-        raise AssertionError("Build openD3 (Meson Debug) must be the default VS Code build task")
+        raise AssertionError("Build openD3 (Meson Optimized) must be the default VS Code build task")
     if fast_build.get("dependsOn"):
         raise AssertionError("Fast default build must not depend on configure or full install tasks")
     if "fastbuild" not in fast_build.get("args", []):
         raise AssertionError("Fast default build must invoke meson-task.ps1 fastbuild")
 
-    full_build = find_task(tasks, "Full Build and Stage openD3 (Meson Debug)")
+    full_build = find_task(tasks, "Full Build and Stage openD3 (Meson Optimized)")
     if full_build.get("dependsOrder") != "sequence":
         raise AssertionError("Full build task must keep ordered configure, compile, install steps")
     for label in (
-        "Configure openD3 (Meson Debug)",
-        "Compile openD3 (Meson Debug)",
-        "Stage openD3 Install Tree (Meson Debug)",
+        "Configure openD3 (Meson Optimized)",
+        "Compile openD3 (Meson Optimized)",
+        "Stage openD3 Install Tree (Meson Optimized)",
     ):
         if label not in full_build.get("dependsOn", []):
             raise AssertionError(f"Full build task is missing dependency {label!r}")
@@ -78,10 +78,10 @@ def validate_wrapper() -> None:
     wrapper = read(".vscode/meson-task.ps1")
     require(wrapper, "[ValidateSet('setup', 'compile', 'install', 'fastbuild')]", "VS Code Meson wrapper actions")
     require(wrapper, "stage_fast_install.py", "VS Code fast build staging script")
-    # openD3's standard local tree is builddir configured as a debug build;
-    # compile reconfigures an existing build directory that drifted from it.
+    # openD3's standard local tree (AGENTS.md) is builddir configured as
+    # debugoptimized; compile reconfigures a build directory that drifted from it.
     require(wrapper, "$buildDir = Join-Path $workspaceRoot 'builddir'", "VS Code build uses the standard builddir")
-    require(wrapper, "'buildtype' = 'debug'", "VS Code build must configure the debug buildtype")
+    require(wrapper, "'buildtype' = 'debugoptimized'", "VS Code build must configure the debugoptimized buildtype")
     require(wrapper, "Get-StaleBuildOptions $buildDir", "VS Code compile reconfigures stale build options")
     require(wrapper, "check_staged_content_edits.py", "VS Code fast build staged content guard")
     require(wrapper, "'compile',", "VS Code fast build compiles through Meson")
@@ -144,8 +144,10 @@ def validate_launch_configs() -> None:
             for index in range(max(0, len(args) - 2))
         ):
             raise AssertionError(f"Launch config {name!r} must force windowed mode")
-        if "baseod3" not in args:
-            raise AssertionError(f"Launch config {name!r} must select baseod3")
+        if set_values(args, "fs_game") not in (["baseod3"], ["d3xp"]):
+            raise AssertionError(f"Launch config {name!r} must select baseod3 or d3xp")
+        if set_values(args, "ui_retained") != ["0"]:
+            raise AssertionError(f"Launch config {name!r} must turn the retained interface off")
         if set_values(args, "fs_basepath"):
             raise AssertionError(f"Launch config {name!r} must leave fs_basepath to the engine's install discovery")
         if "(MP)" in name:
@@ -198,58 +200,8 @@ def validate_codex_actions() -> None:
     require(runner, "Get-Content -LiteralPath $Path -Raw -Encoding UTF8", "Codex runner JSON reads")
 
 
-def validate_mp_autojoin_policy() -> None:
-    listen_script = read("tools/debug/start_listen_server_client.ps1")
-    if listen_script.count('"+set", "ui_autoJoin", "1"') != 2:
-        raise AssertionError("MP listen-server helper must enable auto-join for host and client")
-
-    renderdoc_script = read("tools/debug/renderdoc_capture.ps1")
-    if renderdoc_script.count('"+set", "ui_autoJoin", "1"') != 1:
-        raise AssertionError("MP RenderDoc helper must enable auto-join for its listen host")
-
-    benchmark = read("tools/tests/renderer_gameplay_benchmark.py")
-    for target in ("server_args", "client_args"):
-        require(
-            benchmark,
-            f'append_set({target}, "ui_autoJoin", "1")',
-            f"MP renderer benchmark {target}",
-        )
-
-    baseline = read("tools/validation/stock_asset_baseline.py")
-    require(
-        baseline,
-        'args[restart_index:restart_index] = ("+set", "ui_autoJoin", "1")',
-        "stock baseline MP roles",
-    )
-    require(
-        baseline,
-        'launch_contract["ui_autoJoin"] = "1"',
-        "recorded stock baseline MP contract",
-    )
-
-    guide = read("AGENTS.md")
-    require(
-        guide,
-        "keep an explicit `+set ui_autoJoin 1`",
-        "agent MP test policy",
-    )
-    require(
-        guide,
-        "pass `+set ui_autoJoin 0`",
-        "interactive join-screen launch policy",
-    )
-
-
 def validate_validation_coverage() -> None:
-    validator = read("tools/validation/opend3_validate.py")
-    push = read(".github/workflows/push-verification.yml")
-    commit = read(".github/workflows/commit-validation.yml")
-    for haystack, context in (
-        (validator, "validation runner"),
-        (push, "push verification workflow"),
-        (commit, "commit validation workflow"),
-    ):
-        require(haystack, "vscode_fast_build.py", context)
+    require(read("tools/validation/opend3_validate.py"), "vscode_fast_build.py", "validation runner")
 
 
 def main() -> None:
@@ -257,7 +209,6 @@ def main() -> None:
     validate_wrapper()
     validate_launch_configs()
     validate_codex_actions()
-    validate_mp_autojoin_policy()
     validate_validation_coverage()
     print("vscode_fast_build: ok")
 

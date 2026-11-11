@@ -6,7 +6,7 @@
 # exists and is named after it.
 #
 # The launches are the main menus and their variants, then the first level of
-# each campaign and the first map of each stock multiplayer mode, on both
+# the Doom 3 campaign and the first stock multiplayer map in each mode, on both
 # renderers. VS Code's Run and Debug list has the rest.
 name = "openD3"
 
@@ -65,139 +65,79 @@ icon = "run"
 platform = "win32"
 
 [[actions]]
-name = "(MP) Main menu — GL"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) Main menu — GL"'''
-icon = "run"
-platform = "win32"
-
-[[actions]]
-name = "(MP) Main menu — Vulkan"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) Main menu — Vulkan"'''
-icon = "run"
-platform = "win32"
-
-[[actions]]
-name = "(SP) Awakening main menu — GL"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(SP) Awakening main menu — GL"'''
-icon = "run"
-platform = "win32"
-
-[[actions]]
-name = "(SP) Awakening main menu — Vulkan"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(SP) Awakening main menu — Vulkan"'''
-icon = "run"
-platform = "win32"
-
-[[actions]]
-name = "(MP) Awakening main menu — GL"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) Awakening main menu — GL"'''
-icon = "run"
-platform = "win32"
-
-[[actions]]
-name = "(MP) Awakening main menu — Vulkan"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) Awakening main menu — Vulkan"'''
-icon = "run"
-platform = "win32"
-
-[[actions]]
-name = "(SP) Main menu - Stock UI — GL"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(SP) Main menu - Stock UI — GL"'''
-icon = "run"
-platform = "win32"
-
-[[actions]]
-name = "(SP) Main menu - Stock UI — Vulkan"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(SP) Main menu - Stock UI — Vulkan"'''
-icon = "run"
-platform = "win32"
-
-[[actions]]
-name = "(MP) Main menu - Stock UI — GL"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) Main menu - Stock UI — GL"'''
-icon = "run"
-platform = "win32"
-
-[[actions]]
-name = "(MP) Main menu - Stock UI — Vulkan"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) Main menu - Stock UI — Vulkan"'''
-icon = "run"
-platform = "win32"
-
-[[actions]]
 name = "(SP) Main menu - Validation Layers — Vulkan"
 command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(SP) Main menu - Validation Layers — Vulkan"'''
 icon = "run"
 platform = "win32"
 
 [[actions]]
-name = "(SP) airdefense1 'AIR DEFENSE BUNKER' — GL"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(SP) airdefense1 'AIR DEFENSE BUNKER' — GL"'''
+name = "(SP) mars_city1 'MARS CITY' — GL"
+command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(SP) mars_city1 'MARS CITY' — GL"'''
 icon = "run"
 platform = "win32"
 
 [[actions]]
-name = "(SP) airdefense1 'AIR DEFENSE BUNKER' — Vulkan"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(SP) airdefense1 'AIR DEFENSE BUNKER' — Vulkan"'''
+name = "(SP) mars_city1 'MARS CITY' — Vulkan"
+command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(SP) mars_city1 'MARS CITY' — Vulkan"'''
 icon = "run"
 platform = "win32"
 
 [[actions]]
-name = "(SP) Awakening m01_stranarus_trench1 'STRANARUS TRENCH' — GL"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(SP) Awakening m01_stranarus_trench1 'STRANARUS TRENCH' — GL"'''
+name = "(MP) d3dm1 'TOMIKO REACTOR' (deathmatch) — GL"
+command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) d3dm1 'TOMIKO REACTOR' (deathmatch) — GL"'''
 icon = "run"
 platform = "win32"
 
 [[actions]]
-name = "(SP) Awakening m01_stranarus_trench1 'STRANARUS TRENCH' — Vulkan"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(SP) Awakening m01_stranarus_trench1 'STRANARUS TRENCH' — Vulkan"'''
+name = "(MP) d3dm1 'TOMIKO REACTOR' (deathmatch) — Vulkan"
+command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) d3dm1 'TOMIKO REACTOR' (deathmatch) — Vulkan"'''
 icon = "run"
 platform = "win32"
 
 [[actions]]
-name = "(MP) q4dm1 'THE FRAGGING YARD' — GL"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) q4dm1 'THE FRAGGING YARD' — GL"'''
+name = "(MP) d3dm1 'TOMIKO REACTOR' (Team DM) — GL"
+command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) d3dm1 'TOMIKO REACTOR' (Team DM) — GL"'''
 icon = "run"
 platform = "win32"
 
 [[actions]]
-name = "(MP) q4dm1 'THE FRAGGING YARD' — Vulkan"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) q4dm1 'THE FRAGGING YARD' — Vulkan"'''
+name = "(MP) d3dm1 'TOMIKO REACTOR' (Team DM) — Vulkan"
+command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) d3dm1 'TOMIKO REACTOR' (Team DM) — Vulkan"'''
 icon = "run"
 platform = "win32"
 
 [[actions]]
-name = "(MP) q4dm11v1 'THE FRAGGING YARD 1v1' — GL"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) q4dm11v1 'THE FRAGGING YARD 1v1' — GL"'''
+name = "(MP) d3dm1 'TOMIKO REACTOR' (Tourney) — GL"
+command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) d3dm1 'TOMIKO REACTOR' (Tourney) — GL"'''
 icon = "run"
 platform = "win32"
 
 [[actions]]
-name = "(MP) q4dm11v1 'THE FRAGGING YARD 1v1' — Vulkan"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) q4dm11v1 'THE FRAGGING YARD 1v1' — Vulkan"'''
+name = "(MP) d3dm1 'TOMIKO REACTOR' (Tourney) — Vulkan"
+command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) d3dm1 'TOMIKO REACTOR' (Tourney) — Vulkan"'''
 icon = "run"
 platform = "win32"
 
 [[actions]]
-name = "(MP) q4ctf1 'HEARTLESS' — GL"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) q4ctf1 'HEARTLESS' — GL"'''
+name = "(MP) d3dm1 'TOMIKO REACTOR' (Last Man) — GL"
+command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) d3dm1 'TOMIKO REACTOR' (Last Man) — GL"'''
 icon = "run"
 platform = "win32"
 
 [[actions]]
-name = "(MP) q4ctf1 'HEARTLESS' — Vulkan"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) q4ctf1 'HEARTLESS' — Vulkan"'''
+name = "(MP) d3dm1 'TOMIKO REACTOR' (Last Man) — Vulkan"
+command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) d3dm1 'TOMIKO REACTOR' (Last Man) — Vulkan"'''
 icon = "run"
 platform = "win32"
 
 [[actions]]
-name = "(MP) q4dz1 'HEARTLESS' — GL"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) q4dz1 'HEARTLESS' — GL"'''
+name = "(SP) Resurrection of Evil main menu — GL"
+command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(SP) Resurrection of Evil main menu — GL"'''
 icon = "run"
 platform = "win32"
 
 [[actions]]
-name = "(MP) q4dz1 'HEARTLESS' — Vulkan"
-command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(MP) q4dz1 'HEARTLESS' — Vulkan"'''
+name = "(SP) Resurrection of Evil main menu — Vulkan"
+command = '''powershell -NoProfile -ExecutionPolicy Bypass -File .codex\scripts\run-vscode-entry.ps1 launch "(SP) Resurrection of Evil main menu — Vulkan"'''
 icon = "run"
 platform = "win32"

@@ -3703,7 +3703,14 @@ bool R_BakeCurrentLightGrids( const lightGridBakeOptions_t &options, const char 
 	// captureSize x captureSize face. Window pixels drew a larger view and kept
 	// only its corner unless the window was 640x480. The synchronous and the
 	// async PBO capture paths both render through this view.
-	renderView_t captureView = tr.primaryView->renderView;
+	//
+	// Start from tr.primaryRenderView, the copy RenderScene keeps, not from
+	// tr.primaryView: that viewDef lives in frame memory, which later frames
+	// reuse. Three maps into a batch it held other data, and the garbage
+	// globalMaterial it gave the view replaced every surface's material. A
+	// game's whole-view material override must not be baked into the grid either.
+	renderView_t captureView = tr.primaryRenderView;
+	captureView.globalMaterial = NULL;
 	captureView.x = 0;
 	captureView.y = 0;
 	captureView.width = SCREEN_WIDTH;

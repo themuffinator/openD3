@@ -123,6 +123,18 @@ release of Doom 3 (1.3.1 packs):
   on OpenGL: the main menu, and the HUD on `game/alphalabs1` (loaded with
   `devmap`, 2,106 entities). `tools/tests/ttf_font_integrity.py` passes.
 - The dedicated server spawns `game/mp/d3dm1` (887 entities).
+- The VS Code tasks and launches. The default build task compiles `builddir`
+  and fast-stages `.install`. Run with their own arguments and an isolated
+  `fs_savepath`, these launches load their map and exit cleanly on the given
+  renderer: `mars_city1` load-and-quit (OpenGL), `comm1` (Vulkan) and the
+  `d3dm1` deathmatch listen server (OpenGL). `tools/tests/vscode_fast_build.py`
+  passes.
+- The "Bake Light Grids (All MP)" task (`bakeLightGrids all-mp`) bakes Doom
+  3's five `game/mp/` maps as deathmatch maps in one batch on OpenGL, writes a
+  `.lightgridpack` for each and exits cleanly. A later `d3dm3` listen server
+  loads its pack from the save path and draws with it. The bake still warns,
+  for every map, that another copy of the pack comes first; none exists, and
+  the warning is the bake's own read-back check failing (see "Open items").
 - `+set fs_game d3xp` mounts the expansion directory, loads `game-d3xp_x64`
   and initialises the game. On the test machine, which has only the
   expansion's patch pack, startup then stops with a parse error in the
@@ -186,7 +198,8 @@ Listed roughly by how much they block a player.
    openD3; many still test Quake 4 maps and content. The optional native test
    suite (`-Dbuild_native_tests=true`) references Quake 4 interface files that
    are no longer in the tree and will not configure. The build helpers Meson
-   invokes are adapted and exercised. Of the release tooling, only the
+   invokes are adapted and exercised, as are the VS Code tasks, launches and
+   `tools/tests/vscode_fast_build.py`. Of the release tooling, only the
    documentation side has been run: `generate_release_docs.py` builds the
    offline documentation site and `tools/tests/docs_link_integrity.py` passes
    over it, the source documents and the two HTML readmes. The packager,
@@ -208,6 +221,11 @@ Listed roughly by how much they block a player.
    `assets/docs/README.html` (the project overview) are drawn in Doom 3's
    front-end menu style with openD3's TrueType faces, as is the generated
    documentation site.
+9. **The light-grid bake warns falsely about its packs.**
+   `LightGrid_BakeLoadsNextTime` reads the new pack back through the file
+   system to confirm that it will load. For a pack written into a directory
+   the bake created, that read fails, and the bake reports that another copy
+   comes first although the pack loads on the next start.
 
 ## Naming
 

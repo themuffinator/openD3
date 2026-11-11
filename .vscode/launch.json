@@ -17,8 +17,7 @@
                 "+set", "fs_game", "baseod3",
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
-                "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1"
+                "+set", "si_gameType", "singleplayer"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
@@ -39,8 +38,7 @@
                 "+set", "fs_game", "baseod3",
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
-                "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1"
+                "+set", "si_gameType", "singleplayer"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
@@ -62,7 +60,6 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+set", "r_vkValidation", "1"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -85,7 +82,6 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/mars_city1"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -108,7 +104,6 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/mars_city1"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -131,7 +126,6 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/mc_underground"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -154,14 +148,13 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/mc_underground"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) mars_city2 'MARS CITY (RETURN)' — GL",
+            "name": "(SP) mars_city2 'MARS CITY' — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 5},
@@ -177,14 +170,13 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/mars_city2"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) mars_city2 'MARS CITY (RETURN)' — Vulkan",
+            "name": "(SP) mars_city2 'MARS CITY' — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 6},
@@ -200,14 +192,13 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/mars_city2"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) admin 'ADMINISTRATION' — GL",
+            "name": "(SP) admin 'UAC ADMINISTRATION' — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 7},
@@ -223,14 +214,13 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/admin"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) admin 'ADMINISTRATION' — Vulkan",
+            "name": "(SP) admin 'UAC ADMINISTRATION' — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 8},
@@ -246,7 +236,6 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/admin"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -269,7 +258,6 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/alphalabs1"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -292,7 +280,6 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/alphalabs1"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -315,7 +302,6 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/alphalabs2"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -338,7 +324,6 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/alphalabs2"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -361,7 +346,6 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/alphalabs3"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -384,7 +368,6 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/alphalabs3"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -407,7 +390,6 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/alphalabs4"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -430,7 +412,6 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/alphalabs4"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -453,7 +434,6 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/enpro"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -476,7 +456,6 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/enpro"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -499,7 +478,6 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/commoutside"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -522,14 +500,13 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/commoutside"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) communications 'COMMUNICATIONS' — GL",
+            "name": "(SP) comm1 'COMMUNICATIONS' — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 21},
@@ -545,14 +522,13 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
-                "+map", "game/communications"
+                "+map", "game/comm1"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) communications 'COMMUNICATIONS' — Vulkan",
+            "name": "(SP) comm1 'COMMUNICATIONS' — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 22},
@@ -568,8 +544,7 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
-                "+map", "game/communications"
+                "+map", "game/comm1"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
@@ -591,7 +566,6 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/recycling1"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -614,14 +588,13 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/recycling1"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) recycling2 'RECYCLING SECTOR 2' — GL",
+            "name": "(SP) recycling2 'RECYCLING SECTOR' — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 25},
@@ -637,14 +610,13 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/recycling2"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) recycling2 'RECYCLING SECTOR 2' — Vulkan",
+            "name": "(SP) recycling2 'RECYCLING SECTOR' — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 26},
@@ -660,7 +632,6 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/recycling2"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -683,7 +654,6 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/monorail"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -706,14 +676,13 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/monorail"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) delta1 'DELTA LABS LEVEL 1' — GL",
+            "name": "(SP) delta1 'DELTA LABS SECTOR 1' — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 29},
@@ -729,14 +698,13 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/delta1"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) delta1 'DELTA LABS LEVEL 1' — Vulkan",
+            "name": "(SP) delta1 'DELTA LABS SECTOR 1' — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 30},
@@ -752,14 +720,13 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/delta1"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) delta2a 'DELTA LABS LEVEL 2A' — GL",
+            "name": "(SP) delta2a 'DELTA LABS SECTOR 2A' — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 31},
@@ -775,14 +742,13 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/delta2a"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) delta2a 'DELTA LABS LEVEL 2A' — Vulkan",
+            "name": "(SP) delta2a 'DELTA LABS SECTOR 2A' — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 32},
@@ -798,14 +764,13 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/delta2a"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) delta2b 'DELTA LABS LEVEL 2B' — GL",
+            "name": "(SP) delta2b 'DELTA LABS SECTOR 2B' — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 33},
@@ -821,14 +786,13 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/delta2b"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) delta2b 'DELTA LABS LEVEL 2B' — Vulkan",
+            "name": "(SP) delta2b 'DELTA LABS SECTOR 2B' — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 34},
@@ -844,14 +808,13 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/delta2b"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) delta3 'DELTA LABS LEVEL 3' — GL",
+            "name": "(SP) delta3 'DELTA LABS SECTOR 3' — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 35},
@@ -867,14 +830,13 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/delta3"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) delta3 'DELTA LABS LEVEL 3' — Vulkan",
+            "name": "(SP) delta3 'DELTA LABS SECTOR 3' — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 36},
@@ -890,14 +852,13 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/delta3"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) delta4 'DELTA LABS LEVEL 4' — GL",
+            "name": "(SP) delta4 'DELTA LABS SECTOR 4' — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 37},
@@ -913,14 +874,13 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/delta4"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) delta4 'DELTA LABS LEVEL 4' — Vulkan",
+            "name": "(SP) delta4 'DELTA LABS SECTOR 4' — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 38},
@@ -936,7 +896,6 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/delta4"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -959,7 +918,6 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/hell1"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -982,14 +940,13 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/hell1"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) delta5 'DELTA COMPLEX' — GL",
+            "name": "(SP) delta5 'DELTA LABS SECTOR 5' — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 41},
@@ -1005,14 +962,13 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/delta5"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) delta5 'DELTA COMPLEX' — Vulkan",
+            "name": "(SP) delta5 'DELTA LABS SECTOR 5' — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 42},
@@ -1028,14 +984,13 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/delta5"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) cpu 'CPU COMPLEX' — GL",
+            "name": "(SP) cpu 'CENTRAL PROCESSING' — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 43},
@@ -1051,14 +1006,13 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/cpu"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) cpu 'CPU COMPLEX' — Vulkan",
+            "name": "(SP) cpu 'CENTRAL PROCESSING' — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 44},
@@ -1074,14 +1028,13 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/cpu"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) cpuboss 'CENTRAL PROCESSING' — GL",
+            "name": "(SP) cpuboss 'CENTRAL SERVER BANKS' — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 45},
@@ -1097,14 +1050,13 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/cpuboss"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) cpuboss 'CENTRAL PROCESSING' — Vulkan",
+            "name": "(SP) cpuboss 'CENTRAL SERVER BANKS' — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 46},
@@ -1120,7 +1072,6 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/cpuboss"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -1143,7 +1094,6 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/site3"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -1166,7 +1116,6 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/site3"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -1189,7 +1138,6 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/caverns1"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -1212,7 +1160,6 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/caverns1"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -1235,7 +1182,6 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/caverns2"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -1258,14 +1204,13 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/caverns2"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) hellhole 'PRIMARY EXCAVATION' — GL",
+            "name": "(SP) hellhole 'PRIMARY EXCAVATION SITE' — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 53},
@@ -1281,14 +1226,13 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/hellhole"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"
         },
         {
-            "name": "(SP) hellhole 'PRIMARY EXCAVATION' — Vulkan",
+            "name": "(SP) hellhole 'PRIMARY EXCAVATION SITE' — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "02 Doom 3 campaign", "order": 54},
@@ -1304,7 +1248,6 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/hellhole"
             ],
             "cwd": "${workspaceFolder}\\.install",
@@ -1327,7 +1270,6 @@
                 "+set", "r_renderApi", "gl",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/mars_city1",
                 "+wait", "240",
                 "+quit"
@@ -1352,7 +1294,6 @@
                 "+set", "r_renderApi", "vulkan",
                 "+set", "ui_retained", "0",
                 "+set", "si_gameType", "singleplayer",
-                "+set", "com_skipLoadingContinue", "1",
                 "+map", "game/mars_city1",
                 "+wait", "240",
                 "+quit"
@@ -1523,7 +1464,7 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "(MP) d3dm4 'THE EDGE' (deathmatch) — GL",
+            "name": "(MP) d3dm4 'THE EDGE 2' (deathmatch) — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "04 Multiplayer: Deathmatch", "order": 7},
@@ -1550,7 +1491,7 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "(MP) d3dm4 'THE EDGE' (deathmatch) — Vulkan",
+            "name": "(MP) d3dm4 'THE EDGE 2' (deathmatch) — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "04 Multiplayer: Deathmatch", "order": 8},
@@ -1793,7 +1734,7 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "(MP) d3dm4 'THE EDGE' (Team DM) — GL",
+            "name": "(MP) d3dm4 'THE EDGE 2' (Team DM) — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "05 Multiplayer: Team Deathmatch", "order": 7},
@@ -1820,7 +1761,7 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "(MP) d3dm4 'THE EDGE' (Team DM) — Vulkan",
+            "name": "(MP) d3dm4 'THE EDGE 2' (Team DM) — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "05 Multiplayer: Team Deathmatch", "order": 8},
@@ -2063,7 +2004,7 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "(MP) d3dm4 'THE EDGE' (Tourney) — GL",
+            "name": "(MP) d3dm4 'THE EDGE 2' (Tourney) — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "06 Multiplayer: Tourney", "order": 7},
@@ -2090,7 +2031,7 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "(MP) d3dm4 'THE EDGE' (Tourney) — Vulkan",
+            "name": "(MP) d3dm4 'THE EDGE 2' (Tourney) — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "06 Multiplayer: Tourney", "order": 8},
@@ -2333,7 +2274,7 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "(MP) d3dm4 'THE EDGE' (Last Man) — GL",
+            "name": "(MP) d3dm4 'THE EDGE 2' (Last Man) — GL",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "07 Multiplayer: Last Man Standing", "order": 7},
@@ -2360,7 +2301,7 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "(MP) d3dm4 'THE EDGE' (Last Man) — Vulkan",
+            "name": "(MP) d3dm4 'THE EDGE 2' (Last Man) — Vulkan",
             "type": "cppvsdbg",
             "request": "launch",
             "presentation": {"group": "07 Multiplayer: Last Man Standing", "order": 8},
@@ -2436,6 +2377,48 @@
                 "+set", "net_allowCheats", "1",
                 "+set", "si_map", "game/mp/d3dm5",
                 "+spawnServer"
+            ],
+            "cwd": "${workspaceFolder}\\.install",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "(SP) Resurrection of Evil main menu — GL",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "presentation": {"group": "08 Resurrection of Evil", "order": 1},
+            "program": "${workspaceFolder}\\.install\\openD3-client_x64.exe",
+            "args": [
+                "+set", "logFile", "2",
+                "+set", "logFileName", "logs/opend3.log",
+                "+set", "developer", "1",
+                "+set", "r_fullscreen", "0",
+                "+set", "fs_savepath", "${workspaceFolder}\\.home",
+                "+set", "fs_devpath", "${workspaceFolder}\\.install",
+                "+set", "fs_game", "d3xp",
+                "+set", "r_renderApi", "gl",
+                "+set", "ui_retained", "0",
+                "+set", "si_gameType", "singleplayer"
+            ],
+            "cwd": "${workspaceFolder}\\.install",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "(SP) Resurrection of Evil main menu — Vulkan",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "presentation": {"group": "08 Resurrection of Evil", "order": 2},
+            "program": "${workspaceFolder}\\.install\\openD3-client_x64.exe",
+            "args": [
+                "+set", "logFile", "2",
+                "+set", "logFileName", "logs/opend3.log",
+                "+set", "developer", "1",
+                "+set", "r_fullscreen", "0",
+                "+set", "fs_savepath", "${workspaceFolder}\\.home",
+                "+set", "fs_devpath", "${workspaceFolder}\\.install",
+                "+set", "fs_game", "d3xp",
+                "+set", "r_renderApi", "vulkan",
+                "+set", "ui_retained", "0",
+                "+set", "si_gameType", "singleplayer"
             ],
             "cwd": "${workspaceFolder}\\.install",
             "console": "integratedTerminal"

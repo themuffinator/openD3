@@ -10,7 +10,7 @@ Every configuration runs the client that the VS Code build task stages into
 what a launch exercises, so a value left in .home/<game>/openD3Config.cfg
 cannot change it: r_renderApi (each launch is a GL and Vulkan pair),
 ui_retained 0 because Doom 3 runs its stock GUIs (the retained RmlUi
-interface inherited from openD3 has no Doom 3 documents) and r_fullscreen 0.
+interface inherited from openQ4 has no Doom 3 documents) and r_fullscreen 0.
 
 fs_basepath is left unset: the engine finds the installed Doom 3 through
 Steam or GOG, or OPEND3_DOOM3_PATH, so no machine's path is baked in.
@@ -46,7 +46,6 @@ COMMON_CVARS = (
 )
 SINGLE_PLAYER_CVARS = (
     ("si_gameType", "singleplayer"),
-    ("com_skipLoadingContinue", "1"),
 )
 # A listen server; si_gameType and si_map come from the launch.
 MULTIPLAYER_CVARS = (
@@ -66,7 +65,6 @@ class Launch:
     game: str = "baseod3"
     command: tuple[str, ...] = ()
     cvars: tuple[tuple[str, str], ...] = ()
-    retained: bool = False
     renderers: tuple[tuple[str, str], ...] = RENDERERS
 
     @property
@@ -75,12 +73,10 @@ class Launch:
 
 
 def campaign(maps: tuple[tuple[str, str], ...], game: str = "baseod3", prefix: str = "") -> tuple[Launch, ...]:
-    # A second word in the label is the visit for maps played twice.
-    launches = []
-    for label, title in maps:
-        map_name, *visit = label.split()
-        launches.append(Launch(f"{prefix}{label} '{title}'", game=game, command=("+map", f"game/{map_name}", *visit)))
-    return tuple(launches)
+    return tuple(
+        Launch(f"{prefix}{map_name} '{title}'", game=game, command=("+map", f"game/{map_name}"))
+        for map_name, title in maps
+    )
 
 
 def servers(
@@ -98,34 +94,36 @@ def servers(
     )
 
 
+# Map names and titles as the retail def/maps.def and strings/english.lang
+# give them, in campaign order.
 DOOM3_CAMPAIGN = (
     ("mars_city1", "MARS CITY"),
     ("mc_underground", "MARS CITY UNDERGROUND"),
-    ("mars_city2", "MARS CITY (RETURN)"),
-    ("admin", "ADMINISTRATION"),
+    ("mars_city2", "MARS CITY"),
+    ("admin", "UAC ADMINISTRATION"),
     ("alphalabs1", "ALPHA LABS SECTOR 1"),
     ("alphalabs2", "ALPHA LABS SECTOR 2"),
     ("alphalabs3", "ALPHA LABS SECTOR 3"),
     ("alphalabs4", "ALPHA LABS SECTOR 4"),
     ("enpro", "ENPRO PLANT"),
     ("commoutside", "COMMUNICATIONS TRANSFER"),
-    ("communications", "COMMUNICATIONS"),
+    ("comm1", "COMMUNICATIONS"),
     ("recycling1", "MONORAIL SKYBRIDGE"),
-    ("recycling2", "RECYCLING SECTOR 2"),
+    ("recycling2", "RECYCLING SECTOR"),
     ("monorail", "MONORAIL"),
-    ("delta1", "DELTA LABS LEVEL 1"),
-    ("delta2a", "DELTA LABS LEVEL 2A"),
-    ("delta2b", "DELTA LABS LEVEL 2B"),
-    ("delta3", "DELTA LABS LEVEL 3"),
-    ("delta4", "DELTA LABS LEVEL 4"),
+    ("delta1", "DELTA LABS SECTOR 1"),
+    ("delta2a", "DELTA LABS SECTOR 2A"),
+    ("delta2b", "DELTA LABS SECTOR 2B"),
+    ("delta3", "DELTA LABS SECTOR 3"),
+    ("delta4", "DELTA LABS SECTOR 4"),
     ("hell1", "HELL"),
-    ("delta5", "DELTA COMPLEX"),
-    ("cpu", "CPU COMPLEX"),
-    ("cpuboss", "CENTRAL PROCESSING"),
+    ("delta5", "DELTA LABS SECTOR 5"),
+    ("cpu", "CENTRAL PROCESSING"),
+    ("cpuboss", "CENTRAL SERVER BANKS"),
     ("site3", "SITE 3"),
     ("caverns1", "CAVERNS AREA 1"),
     ("caverns2", "CAVERNS AREA 2"),
-    ("hellhole", "PRIMARY EXCAVATION"),
+    ("hellhole", "PRIMARY EXCAVATION SITE"),
 )
 
 DOOM3_CAMPAIGN_TESTS = (
@@ -139,7 +137,7 @@ DEATHMATCH = (
     ("d3dm1", "TOMIKO REACTOR"),
     ("d3dm2", "DELTA LAB"),
     ("d3dm3", "FRAG CHAMBER"),
-    ("d3dm4", "THE EDGE"),
+    ("d3dm4", "THE EDGE 2"),
     ("d3dm5", "LIGHTS OUT"),
 )
 
@@ -154,6 +152,9 @@ GROUPS = (
     ("05 Multiplayer: Team Deathmatch", servers(DEATHMATCH, "Team DM")),
     ("06 Multiplayer: Tourney", servers(DEATHMATCH, "Tourney")),
     ("07 Multiplayer: Last Man Standing", servers(DEATHMATCH, "Last Man")),
+    # game-d3xp loads and initialises, but no expansion map has been run, so
+    # only its main menu is listed until one has.
+    ("08 Resurrection of Evil", (Launch("Resurrection of Evil main menu", game="d3xp"),)),
 )
 
 
@@ -163,7 +164,7 @@ def configuration(launch: Launch, renderer: tuple[str, str], group: str, order: 
     cvars["fs_game"] = launch.game
     # r_renderApi has to precede the map command: the module loads at startup.
     cvars["r_renderApi"] = render_api
-    cvars["ui_retained"] = "1" if launch.retained else "0"
+    cvars["ui_retained"] = "0"
     if launch.multiplayer:
         cvars["si_gameType"] = launch.game_type
         cvars.update(MULTIPLAYER_CVARS)
