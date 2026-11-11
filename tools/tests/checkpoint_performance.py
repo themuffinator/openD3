@@ -52,12 +52,12 @@ def main():
         parser.error('Use a new evidence directory under project .tmp.')
     runtime = ROOT / '.install'
     verify_runtime_is_current(runtime)
-    game = output / 'save' / 'baseoq4'
+    game = output / 'save' / 'baseod3'
     game.mkdir(parents=True)
     spec = benchmark.RunSpec('sp-airdefense1', 'SP', 'game/airdefense1',
         'game/airdefense1', 'checkpoint', 'rotating', 'auto', '0', '0',
         'windowed', 'default', 'best', options.render_api)
-    args = benchmark.common_args(ROOT, runtime, output / 'save', 'openq4.log', '',
+    args = benchmark.common_args(ROOT, runtime, output / 'save', 'opend3.log', '',
         spec, options.width, options.height, 'baseline', False, False,
         (('in_mouse', '0'), ('in_joystick', '0'), ('ui_retained', '1'),
          ('r_multiSamples', str(quality['r_multiSamples'])), ('image_anisotropy', str(quality['image_anisotropy'])),
@@ -107,11 +107,11 @@ def main():
     write_script(game / 'restored.cfg', restored + ['quit'])
     report = dict(command=args, preset=options.preset, quality=quality, developer=options.developer, log_mode=options.log_mode, runtime={str(path.relative_to(runtime)):
         hashlib.sha256(path.read_bytes()).hexdigest() for path in
-        (runtime / 'openQ4-client_x64.exe', runtime / 'baseoq4/game-sp_x64.dll', runtime / f'renderer-{options.render_api}_x64.dll')})
+        (runtime / 'openD3-client_x64.exe', runtime / 'baseod3/game-sp_x64.dll', runtime / f'renderer-{options.render_api}_x64.dll')})
     (output / 'plan.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
-    code, timeout, elapsed = benchmark.launch_and_wait(runtime / 'openQ4-client_x64.exe',
+    code, timeout, elapsed = benchmark.launch_and_wait(runtime / 'openD3-client_x64.exe',
         args, runtime, output / 'stdout.txt', output / 'stderr.txt', 180)
-    text = (game / 'logs/openq4.log').read_text(encoding='utf-8', errors='replace')
+    text = (game / 'logs/opend3.log').read_text(encoding='utf-8', errors='replace')
     report['quality_failures'] = [f'{key}={value}' for key, value in quality.items()
         if re.findall(rf'^"{re.escape(key)}" is:"([^"\n]+)"', text, re.M) != [str(value)]]
     report.update(exit_code=code, timed_out=timeout, elapsed=elapsed,
@@ -168,7 +168,7 @@ def main():
         reopen[reopen.index('g_autoExecAfterMapLoad')+1] = 'reopen.cfg'
         reopen[reopen.index('logFileName')+1] = 'logs/reopened.log'
         reopen[-2:] = ['+loadGame', 'Checkpoint0']
-        reopen_code, reopen_timeout, _ = benchmark.launch_and_wait(runtime / 'openQ4-client_x64.exe',
+        reopen_code, reopen_timeout, _ = benchmark.launch_and_wait(runtime / 'openD3-client_x64.exe',
             reopen, runtime, output / 'reopened-stdout.txt', output / 'reopened-stderr.txt', 180)
         reopened = (game / 'logs/reopened.log').read_text(encoding='utf-8', errors='replace')
         report['reopened'] = (reopen_code == 0 and not reopen_timeout and
@@ -190,7 +190,7 @@ def main():
         corruption[corruption.index('g_autoExecAfterMapLoad')+1] = 'corrupt.cfg'
         corruption[corruption.index('logFileName')+1] = 'logs/corruption.log'
         corruption[-2:] = ['+loadGame', 'Checkpoint0']
-        corruption_code, corruption_timeout, _ = benchmark.launch_and_wait(runtime / 'openQ4-client_x64.exe',
+        corruption_code, corruption_timeout, _ = benchmark.launch_and_wait(runtime / 'openD3-client_x64.exe',
             corruption, runtime, output / 'corruption-stdout.txt', output / 'corruption-stderr.txt', 180)
         corruption_log = (game / 'logs/corruption.log').read_text(encoding='utf-8', errors='replace')
         report['corrupt_load_rejected'] = (corruption_code == 0 and not corruption_timeout and
@@ -217,7 +217,7 @@ def main():
         compiled[compiled.index('g_autoExecAfterMapLoad')+1] = 'checksum_compile.cfg'
         compiled[compiled.index('logFileName')+1] = 'logs/checksum_compile.log'
         compiled[-2:] = ['+loadGame', 'Checkpoint0']
-        compiled_code, compiled_timeout, _ = benchmark.launch_and_wait(runtime / 'openQ4-client_x64.exe',
+        compiled_code, compiled_timeout, _ = benchmark.launch_and_wait(runtime / 'openD3-client_x64.exe',
             compiled, runtime, output / 'checksum-stdout.txt', output / 'checksum-stderr.txt', 180)
         compiled_log = (game / 'logs/checksum_compile.log').read_text(encoding='utf-8', errors='replace')
         checks = re.findall(r'Script save checksum: cached=(\d) matched=(\d) reference=([\d.]+) ms statements=(\d+)', compiled_log)
@@ -260,7 +260,7 @@ def main():
         failure[failure.index('g_autoExecAfterMapLoad')+1] = 'failure.cfg'
         failure[failure.index('logFileName')+1] = 'logs/failure.log'
         failure[-2:] = ['+loadGame', 'Checkpoint0']
-        failure_code, failure_timeout, _ = benchmark.launch_and_wait(runtime / 'openQ4-client_x64.exe',
+        failure_code, failure_timeout, _ = benchmark.launch_and_wait(runtime / 'openD3-client_x64.exe',
             failure, runtime, output / 'failure-stdout.txt', output / 'failure-stderr.txt', 180)
         failure_log = (game / 'logs/failure.log').read_text(encoding='utf-8', errors='replace')
         after = {path.name: hashlib.sha256(path.read_bytes()).hexdigest() for path in committed}
@@ -305,7 +305,7 @@ def main():
             failure[failure.index('g_autoExecAfterMapLoad')+1] = 'commit_failure.cfg'
             failure[failure.index('logFileName')+1] = 'logs/commit_failure.log'
             failure[-2:] = ['+loadGame', 'Checkpoint0']
-            failure_code, failure_timeout, _ = benchmark.launch_and_wait(runtime / 'openQ4-client_x64.exe',
+            failure_code, failure_timeout, _ = benchmark.launch_and_wait(runtime / 'openD3-client_x64.exe',
                 failure, runtime, output / 'commit-failure-stdout.txt', output / 'commit-failure-stderr.txt', 180)
         finally:
             for handle in handles:

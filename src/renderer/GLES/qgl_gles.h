@@ -13,7 +13,7 @@
 
 	1. ES 3.0 core comes from the Khronos headers as ordinary link-time
 	   symbols, so they bind to libGLESv2. That is the arrangement
-	   src/renderer/GLES/gles_clear_probe.cpp proved: openQ4 calls GL 1.x
+	   src/renderer/GLES/gles_clear_probe.cpp proved: openD3 calls GL 1.x
 	   entry points as plain externs, so the *only* way they reach an ES
 	   driver is by linking that driver instead of desktop GL.
 

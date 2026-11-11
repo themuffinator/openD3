@@ -24,7 +24,7 @@ def main():
     args = parser.parse_args()
     compiler = os.environ.get("CXX") or shutil.which("clang++") or shutil.which("g++") or shutil.which("cl")
     if not compiler:
-        raise SystemExit("A C++ compiler is required (set CXX or use the openQ4 developer shell)")
+        raise SystemExit("A C++ compiler is required (set CXX or use the openD3 developer shell)")
     source = (ROOT / "src/renderer/GLES_D3/gles_draw.cpp").read_text(encoding="utf-8")
     start = source.index("float R_GLESD3_AlphaTestReference(")
     end = source.index("\n/*", start)

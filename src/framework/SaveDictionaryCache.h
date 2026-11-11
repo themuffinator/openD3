@@ -1,6 +1,6 @@
 // Copyright (C) 2026 DarkMatter Productions
-#ifndef OPENQ4_SAVE_DICTIONARY_CACHE_H
-#define OPENQ4_SAVE_DICTIONARY_CACHE_H
+#ifndef OPEND3_SAVE_DICTIONARY_CACHE_H
+#define OPEND3_SAVE_DICTIONARY_CACHE_H
 
 #include <array>
 #include <cstdint>

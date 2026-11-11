@@ -24,17 +24,17 @@ def main() -> int:
     args = parser.parse_args()
     runtime, output = args.runtime_dir.resolve(), args.output_dir.resolve()
     verify_runtime_is_current(runtime)
-    exe = runtime / ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    exe = runtime / ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     if not exe.is_file() or not (args.basepath / "q4base").is_dir() or args.timeout <= 0:
         parser.error("a staged client, retail assets and a positive timeout are required")
-    game = output / "save/baseoq4"
+    game = output / "save/baseod3"
     keeper = game / "demos/kept/storage-occupancy.mvd"
     keeper.parent.mkdir(parents=True, exist_ok=False)
     # Synthetic occupancy, deliberately not a playable demo. Every existing
     # recording byte counts, including malformed/interrupted user files.
     keeper.write_bytes(bytes((2 << 20) - (64 << 10)))
     keeper_digest = hashlib.sha256(keeper.read_bytes()).hexdigest()
-    paths = [exe, runtime / "baseoq4/game-mp_x64.dll", runtime / "baseoq4/pak0.pk4", runtime / "baseoq4/pak1.pk4",
+    paths = [exe, runtime / "baseod3/game-mp_x64.dll", runtime / "baseod3/pak0.pk4", runtime / "baseod3/pak1.pk4",
              *sorted(runtime.glob("renderer-*.dll" if os.name == "nt" else "renderer-*.so"))]
     def identity():
         return {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths if path.is_file()}
@@ -44,7 +44,7 @@ def main() -> int:
         "addbot Rhodes 4 exact", "addbot Sledge 4 exact", "addbot Voss 4 exact", "waitMsec 2000",
         "set mvd_libraryQuotaMB 1", "echo MVD_QUOTA_REFUSAL", "mvdLibrary", "recordMVD blocked", "mvdStatus",
         "set mvd_libraryQuotaMB 2", "echo MVD_QUOTA_ADMISSION", "recordMVD admitted", "mvdStatus",
-        "waitMsec 45000", "echo MVD_QUOTA_CAPPED", "mvdStatus", "mvdLibrary", "openq4_reportMPState",
+        "waitMsec 45000", "echo MVD_QUOTA_CAPPED", "mvdStatus", "mvdLibrary", "opend3_reportMPState",
         "echo MVD_QUOTA_RECOVERY", "mvdRecover admitted.mvd.part", "mvdInfo admitted_recovered",
         "echo MVD_QUOTA_PLAYBACK", "playMVD admitted_recovered", "waitMsec 2000", "mvdPause 1", "mvdStatus",
         'screenshot "screenshots/recovered.tga"', "waitMsec 250", "stopMVD", "echo MVD_QUOTA_COMPLETE", "quit",
@@ -53,7 +53,7 @@ def main() -> int:
         "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
         "sys_consoleWindow": "0", "in_tty": "0", "in_mouse": "0", "in_joystick": "0",
         "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(game.parent), "fs_devpath": str(game.parent),
-        "fs_game": "baseoq4", "com_gameMode": "MP", "com_nextGameModule": "game_mp", "ui_autoJoin": "1",
+        "fs_game": "baseod3", "com_gameMode": "MP", "com_nextGameModule": "game_mp", "ui_autoJoin": "1",
         "ui_spectate": "Play", "ui_retained": "1", "ui_name": "QuotaObserver",
         "r_fullscreen": "0", "r_borderless": "0", "r_fullscreenDesktop": "0", "r_borderlessDefaultMigrated": "1",
         "r_hiddenWindow": "1", "r_renderApi": "gl", "r_mode": "-1", "r_customWidth": "640", "r_customHeight": "480",
@@ -61,7 +61,7 @@ def main() -> int:
         "net_allowCheats": "1", "net_serverDedicated": "0", "net_LANServer": "1", "net_port": "28976",
         "si_pure": "0", "si_gameType": "DM", "si_maxPlayers": "6", "si_minPlayers": "1",
         "si_warmup": "0", "si_useReady": "0", "si_fragLimit": "999", "si_timeLimit": "0", "g_matchProfile": "casual",
-        "bot_minPlayers": "0", "bot_chat": "0", "logFile": "2", "logFileName": "logs/openq4.log",
+        "bot_minPlayers": "0", "bot_chat": "0", "logFile": "2", "logFileName": "logs/opend3.log",
         "com_skipLoadingContinue": "1", "g_autoExecAfterMapLoad": "quota_smoke.cfg", "g_autoExecAfterMapLoadDelayMs": "500",
     }
     assert len(cvars) + 1 <= 64
@@ -76,7 +76,7 @@ def main() -> int:
             process.kill()
             process.wait()
             code = -1
-    log_path = game / "logs/openq4.log"
+    log_path = game / "logs/opend3.log"
     log = read_log(log_path)
     failures = []
     if code != 0 or "\nMVD_QUOTA_COMPLETE" not in log:

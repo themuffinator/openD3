@@ -225,7 +225,7 @@ def main():
     settings={name:{**lab.BASE,**lab.CASES[name]} for name in cases}
     write=lab.write_capture_commands
     def write_commands(path,commands):
-        target=args.output_dir/'batch/baseoq4'
+        target=args.output_dir/'batch/baseod3'
         for name,source in sources.items():
             dest=target/(lab.lab.MAP+name)
             dest.parent.mkdir(parents=True,exist_ok=True)

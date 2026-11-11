@@ -13,10 +13,10 @@
 #include "../tr_local.h"
 #include "../TemporalPresentation.h"
 
-#if defined( OPENQ4_RENDERER_GL_MODULE ) && defined( _WIN32 )
+#if defined( OPEND3_RENDERER_GL_MODULE ) && defined( _WIN32 )
 #include <windows.h>
 #endif
-#if defined( OPENQ4_RENDERER_GL_MODULE ) && defined( __linux__ )
+#if defined( OPEND3_RENDERER_GL_MODULE ) && defined( __linux__ )
 #include <dlfcn.h>
 #endif
 
@@ -28,8 +28,8 @@
 // The GLES module and the static renderer of dedicated and macOS builds never
 // present to OpenXR; the Vulkan module has its own backend
 // (Vulkan/vk_VRPresentation.cpp).
-#if defined( OPENQ4_RENDERER_GL_MODULE ) && !defined( OPENQ4_RENDERER_GLES_MODULE )
-#define OPENQ4_VR_GL_PRESENTATION 1
+#if defined( OPEND3_RENDERER_GL_MODULE ) && !defined( OPEND3_RENDERER_GLES_MODULE )
+#define OPEND3_VR_GL_PRESENTATION 1
 #endif
 
 // GL presents through the front end's render textures (tr.vrTargets), and its
@@ -46,7 +46,7 @@ bool R_VR_BackendPrepareTargets( renderVRFrame_t &frame ) {
 void R_VR_BackendReleaseImages( void ) {
 }
 
-#if defined( OPENQ4_VR_GL_PRESENTATION )
+#if defined( OPEND3_VR_GL_PRESENTATION )
 
 static int		rb_vrTarget = -2;			// -2 none, -1 virtual screen, 0/1 eye
 static int		rb_vrFrameCount = -1;		// renderer frame the backend VR state belongs to
@@ -491,7 +491,7 @@ void R_VR_ShutdownTargets( void ) {
 	rb_vrTarget = -2;
 }
 
-#else // !OPENQ4_VR_GL_PRESENTATION
+#else // !OPEND3_VR_GL_PRESENTATION
 
 bool R_VR_BackendCanPresent( void ) {
 	return false;
@@ -518,4 +518,4 @@ void R_VR_ShutdownTargets( void ) {
 	R_SetDefaultRenderTarget( NULL );
 }
 
-#endif // OPENQ4_VR_GL_PRESENTATION
+#endif // OPEND3_VR_GL_PRESENTATION

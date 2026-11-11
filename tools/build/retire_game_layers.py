@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Remove obsolete openQ4 layer outputs after staging the unified modules.
+"""Remove obsolete openD3 layer outputs after staging the unified modules.
 
 Only known build artifacts are removed. Loose content, PK4s, saves and user
 configuration in q4xbase are preserved. Links are never followed or removed.

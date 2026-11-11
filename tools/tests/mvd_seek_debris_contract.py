@@ -26,7 +26,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_LIBS_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)).resolve()
+GAME_LIBS_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)).resolve()
 
 SOURCES = {
     "mvd": ROOT / "src" / "framework" / "async" / "MultiViewDemo.cpp",

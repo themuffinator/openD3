@@ -70,8 +70,8 @@ Declarations* declManager=&declarations;
 '''
 HOST = r'''
 struct Host {
-    openq4::ui::GeneratedImagePool generatedImages;
-    std::array<const idMaterial*,openq4::ui::GeneratedImagePool::Capacity> generatedMaterials{};
+    opend3::ui::GeneratedImagePool generatedImages;
+    std::array<const idMaterial*,opend3::ui::GeneratedImagePool::Capacity> generatedMaterials{};
     std::uint64_t frame=1;
     std::uint64_t RenderFrame() const{return frame;}
 '''

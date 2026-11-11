@@ -35,7 +35,7 @@
 ===============================================================================
 */
 
-#ifdef OPENQ4_RENDERER_GLES_MODULE
+#ifdef OPEND3_RENDERER_GLES_MODULE
 
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
@@ -842,4 +842,4 @@ void RB_GLES_RestoreStateAfterOverlay( void ) {
 }
 #endif /* __ANDROID__ */
 
-#endif /* OPENQ4_RENDERER_GLES_MODULE */
+#endif /* OPEND3_RENDERER_GLES_MODULE */

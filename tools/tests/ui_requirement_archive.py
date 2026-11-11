@@ -43,7 +43,7 @@ class ArchiveRelocationTests(unittest.TestCase):
         self.write_json("docs/dev/ui/migration-manifest.json", {"resources": [
             {"path": "guis/main.gui", "translation_status": "pending", "replacement": None}]})
         self.previous = {
-            "schema_version": 18, "date": "2026-10-09", "id_namespace": "openq4.ui.product",
+            "schema_version": 18, "date": "2026-10-09", "id_namespace": "opend3.ui.product",
             "status": "Implementation incomplete", "baseline": {"engine_revision": "earlier-checkpoint"},
             "normative_sources": {
                 "product": {"path": self.old_product, "sha256": self.hash(self.old_product), "authority": "completion scope"},

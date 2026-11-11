@@ -29,12 +29,12 @@ static constexpr int CMD_FL_SYSTEM=1,CMD_FL_CHEAT=2;
 struct Commands { unsigned count=0;template<class... T>void AddCommand(T...){++count;} } commands,*cmdSystem=&commands;
 struct Common { void Printf(const char*,...){} void Warning(const char*,...){} } commonObject,*common=&commonObject;
 struct Host { void DumpGeometry(){} void SetGeneratedImageProbe(bool){} } host;
-namespace openq4::ui { struct Runtime { explicit Runtime(Host&){} }; }
+namespace opend3::ui { struct Runtime { explicit Runtime(Host&){} }; }
 struct retainedUIEditControl { std::uint64_t lifetime=0; };
 using retainedUIViewCallback_t=void(*)(void*,int);
 struct retainedUIView_t {
     std::shared_ptr<retainedUIEditControl> edit;
-    std::unique_ptr<openq4::ui::Runtime> runtime;
+    std::unique_ptr<opend3::ui::Runtime> runtime;
     retainedUIViewCallback_t callback=nullptr;void* owner=nullptr;
 };
 std::vector<retainedUIView_t*> views;

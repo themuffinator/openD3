@@ -21,7 +21,7 @@ def verify_runtime_is_current(runtime: Path, executable_name: str | None = None)
     yesterday's binaries as today's behaviour, and the difference surfaces as a
     product failure rather than a packaging mistake.
     """
-    if os.environ.get("OPENQ4_ALLOW_STALE_RUNTIME", "").strip() == "1":
+    if os.environ.get("OPEND3_ALLOW_STALE_RUNTIME", "").strip() == "1":
         return
     # A standard stage in another worktree belongs to that worktree's build,
     # not to the checkout containing this harness. Resolve junctions as well.
@@ -31,9 +31,9 @@ def verify_runtime_is_current(runtime: Path, executable_name: str | None = None)
     if not build.is_dir():
         return
 
-    executable_name = executable_name or ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    executable_name = executable_name or ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     pairs = [(runtime / executable_name, build / executable_name)]
-    staged_game, built_game = runtime / "baseoq4", build / "baseoq4"
+    staged_game, built_game = runtime / "baseod3", build / "baseod3"
     if staged_game.is_dir() and built_game.is_dir():
         pairs += [(staged_game / built.name, built)
                   for built in sorted(built_game.iterdir())
@@ -57,7 +57,7 @@ def verify_runtime_is_current(runtime: Path, executable_name: str | None = None)
         f"{runtime} is older than {build} and would qualify a stale build:\n{listing}\n\n"
         f"Re-stage it before running:\n  {restage}\n"
         "Pass --runtime-dir to qualify a different tree, or set "
-        "OPENQ4_ALLOW_STALE_RUNTIME=1 to run the stale one deliberately.\n")
+        "OPEND3_ALLOW_STALE_RUNTIME=1 to run the stale one deliberately.\n")
 
 
 def write_script(path: Path, lines: list[str]) -> None:
@@ -95,40 +95,40 @@ def main() -> int:
     if args.managed and flag_mode:
         parser.error("--managed currently qualifies round modes")
     round_limit = 8 if args.managed else 2
-    take_flag = "teleport " + ("openq4_neutral_flag" if "One Flag" in args.gametype else "mp_ctf_strogg_flag_1")
+    take_flag = "teleport " + ("opend3_neutral_flag" if "One Flag" in args.gametype else "mp_ctf_strogg_flag_1")
     score_flag = "teleport " + ("mp_ctf_strogg_flag_1" if "One Flag" in args.gametype else "mp_ctf_marine_flag_1")
     capture = [take_flag, "waitMsec 1500", score_flag]
     active_marker = "MP_REMOTE_CAPTURE_ACTIVE" if flag_mode else "MP_REMOTE_ROUND_TWO_ACTIVE"
     live_shot = "capture_one" if flag_mode else "round_two"
     runtime, output = args.runtime_dir.resolve(), args.output_dir.resolve()
     verify_runtime_is_current(runtime, getattr(args, "executable_name", ""))
-    exe = runtime / (args.executable_name or ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64"))
+    exe = runtime / (args.executable_name or ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64"))
     if not exe.is_file() or not args.basepath.is_dir():
         parser.error("a staged runtime and installed Quake 4 assets are required")
     saves = {role: output / role for role in ("host", "client")}
-    games = {role: path / "baseoq4" for role, path in saves.items()}
+    games = {role: path / "baseod3" for role, path in saves.items()}
     for path in games.values():
         path.mkdir(parents=True, exist_ok=True)
-    logs = {role: path / "logs/openq4.log" for role, path in games.items()}
+    logs = {role: path / "logs/opend3.log" for role, path in games.items()}
     loops = {role: path / "round_probe.cfg" for role, path in games.items()}
-    host_loop = ["waitMsec 250", "openq4_reportMPState", "exec round_probe.cfg"]
+    host_loop = ["waitMsec 250", "opend3_reportMPState", "exec round_probe.cfg"]
     client_loop = ["waitMsec 250", "exec round_probe.cfg"]
     write_script(loops["host"], host_loop)
     write_script(loops["client"], client_loop)
-    write_script(games["host"] / "round_second.cfg", ["waitMsec 250", "openq4_reportMPState", "exec round_second.cfg"])
+    write_script(games["host"] / "round_second.cfg", ["waitMsec 250", "opend3_reportMPState", "exec round_second.cfg"])
     write_script(games["client"] / "round_wait.cfg", ["waitMsec 250", "exec round_wait.cfg"])
     for path in games.values():
         write_script(path / "round_start.cfg", ["exec round_probe.cfg"])
 
     common = {
         "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
-        "fs_basepath": str(args.basepath.resolve()), "fs_game": "baseoq4", "com_gameMode": "MP",
+        "fs_basepath": str(args.basepath.resolve()), "fs_game": "baseod3", "com_gameMode": "MP",
         "r_fullscreen": "0", "r_borderless": "0", "r_fullscreenDesktop": "0",
         "r_borderlessDefaultMigrated": "1", "r_mode": "-1", "r_customWidth": "800",
         "r_customHeight": "450", "r_windowWidth": "800", "r_windowHeight": "450",
         "r_hiddenWindow": "1", "in_mouse": "0", "in_joystick": "0", "s_noSound": "1",
         "r_renderApi": "gl", "com_maxfps": "60", "r_swapInterval": "0",
-        "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1",
+        "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1",
         "ui_autoJoin": "1", "ui_spectate": "Play", "ui_ready": "Ready", "net_allowCheats": "1",
         "com_skipLoadingContinue": "1", "g_autoExecAfterMapLoad": "round_start.cfg",
         "g_autoExecAfterMapLoadDelayMs": "500",
@@ -183,42 +183,42 @@ def main() -> int:
             if args.managed and not force_sent and all(re.search(
                     rf"MP_PLAYER slot={slot} .*spectating=0 wantSpectate=0 ingame=1", current_host) for slot in (0, 1)):
                 ready_wait = games["host"] / "round_ready_wait.cfg"
-                write_script(ready_wait, ["waitMsec 250", "openq4_reportMPState", "exec round_ready_wait.cfg"])
-                write_script(loops["host"], ["openq4_assertMPClientActive", "forceReady", "echo MP_REMOTE_FORCE_READY", "exec round_ready_wait.cfg"])
+                write_script(ready_wait, ["waitMsec 250", "opend3_reportMPState", "exec round_ready_wait.cfg"])
+                write_script(loops["host"], ["opend3_assertMPClientActive", "forceReady", "echo MP_REMOTE_FORCE_READY", "exec round_ready_wait.cfg"])
                 loops["host"] = ready_wait
                 force_sent = True
             if stage == 0 and re.search(r"MP_STATE .*phase=3 " + ("" if flag_mode else r".*round=2 round_number=1"), host):
-                first_action = [*capture, "waitMsec 1500", "openq4_reportMPState", "echo MP_REMOTE_FIRST_CAPTURE"] if flag_mode else ["echo MP_REMOTE_FIRST_DEATH", "kill 1"]
+                first_action = [*capture, "waitMsec 1500", "opend3_reportMPState", "echo MP_REMOTE_FIRST_CAPTURE"] if flag_mode else ["echo MP_REMOTE_FIRST_DEATH", "kill 1"]
                 write_script(loops["host"], [*first_action, "exec round_second.cfg"])
                 stage = 1
             if stage == 1 and ("\nMP_REMOTE_FIRST_CAPTURE" in host if flag_mode else
                     "MP round world restart:" in client and re.search(r"phase=3 .*round=2 round_number=2", current_host)):
                 # Wait through the two-second round countdown before checking
                 # that the previously eliminated remote player has respawned.
-                write_script(loops["client"], ["waitMsec 3500", "openq4_assertMPClientActive",
+                write_script(loops["client"], ["waitMsec 3500", "opend3_assertMPClientActive",
                              f'screenshot "screenshots/{live_shot}.tga"', f"echo {active_marker}",
                              "exec round_wait.cfg"])
                 stage = 2
             if stage == 2 and "\n" + active_marker in client:
                 if args.managed:
-                    write_script(managed_poll, ["waitMsec 250", "openq4_reportMPState", f"exec {managed_poll.name}"])
+                    write_script(managed_poll, ["waitMsec 250", "opend3_reportMPState", f"exec {managed_poll.name}"])
                     write_script(games["host"] / "round_second.cfg", ["kill 1", f"exec {managed_poll.name}"])
                     killed_round = 2
                     stage = 5
                 else:
-                    write_script(games["host"] / "round_second.cfg", ["openq4_reportMPState", *(capture if flag_mode else ["kill 1"]), "waitMsec 5000",
-                                 "echo MP_REMOTE_REVIEW", "openq4_reportMPState",
+                    write_script(games["host"] / "round_second.cfg", ["opend3_reportMPState", *(capture if flag_mode else ["kill 1"]), "waitMsec 5000",
+                                 "echo MP_REMOTE_REVIEW", "opend3_reportMPState",
                                  'screenshot "screenshots/review.tga"', "waitMsec 2000", "quit"])
                     stage = 3
             if stage == 5 and re.search(rf"phase=3 .*round=2 round_number={killed_round + 1} ", current_host):
                 killed_round += 1
                 if killed_round == round_limit:
                     write_script(managed_poll, ["kill 1", "waitMsec 6500", "echo MP_REMOTE_REVIEW",
-                                 "openq4_reportMPState", 'screenshot "screenshots/review.tga"', "waitMsec 2000", "quit"])
+                                 "opend3_reportMPState", 'screenshot "screenshots/review.tga"', "waitMsec 2000", "quit"])
                     stage = 3
                 else:
                     next_poll = games["host"] / ("round_managed_wait.cfg" if managed_poll.name == "round_managed_poll.cfg" else "round_managed_poll.cfg")
-                    write_script(next_poll, ["waitMsec 250", "openq4_reportMPState", f"exec {next_poll.name}"])
+                    write_script(next_poll, ["waitMsec 250", "opend3_reportMPState", f"exec {next_poll.name}"])
                     write_script(managed_poll, ["kill 1", f"exec {next_poll.name}"])
                     managed_poll = next_poll
             if stage == 3 and "\nMP_REMOTE_REVIEW" in host:
@@ -248,7 +248,7 @@ def main() -> int:
         failures.append(f"remote client did not preserve its match state through {round_limit - 1} round resets")
     if not re.search(rf"MP_REMOTE_REVIEW.*?MP_STATE .*phase=5 .*marine={round_limit} strogg=0", host, re.DOTALL):
         failures.append(f"host did not retain a {round_limit}-0 result in review")
-    if "OPENQ4_STOCK_BASELINE_MP_CLIENT_ACTIVE" not in client:
+    if "OPEND3_STOCK_BASELINE_MP_CLIENT_ACTIVE" not in client:
         failures.append("remote player was not active after the first score")
     for role, log in (("host", host), ("client", client)):
         if not logs[role].is_file() or logs[role].stat().st_mtime < started:

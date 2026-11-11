@@ -31,7 +31,7 @@ if ! command -v zip >/dev/null 2>&1; then
     exit 1
 fi
 
-tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/openq4-updatepaks.XXXXXX")
+tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/opend3-updatepaks.XXXXXX")
 cleanup() {
     rm -rf "$tmpdir"
 }
@@ -40,7 +40,7 @@ trap cleanup EXIT HUP INT TERM
 echo "current pak files:       $current_pak_dir"
 echo "expanded updated source: $expanded_source_dir"
 echo "new pak file:            $new_pak"
-if [ "${OPENQ4_UPDATEPAKS_ASSUME_YES:-0}" != "1" ]; then
+if [ "${OPEND3_UPDATEPAKS_ASSUME_YES:-0}" != "1" ]; then
     printf "press enter to continue, or Ctrl-C to abort"
     read _answer
 fi

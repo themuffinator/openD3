@@ -265,7 +265,7 @@ def chapters_document(ui):
     the chosen campaign's levels under the SINGLE PLAYER and CAMPAIGN crumbs,
     CHAPTERS carried into the title slot. Each arrival focuses the chosen
     level, or the first; BACK and Back climb to Campaign onto CHAPTERS."""
-    doc=ui.Document('openq4.campaign-chapters')
+    doc=ui.Document('opend3.campaign-chapters')
     panel=chapter_view(ui,doc)
     doc.session('back','campaignChaptersBack')
     doc.events['onBack']=[{'op':'action','action':'back'}]
@@ -285,7 +285,7 @@ def chapters_document(ui):
     return result
 
 def skill_document(ui):
-    U=ui.U;doc=ui.Document('openq4.campaign-skill')
+    U=ui.U;doc=ui.Document('opend3.campaign-skill')
     doc.state.update({'skill':{'type':'number','initial':1},'turbo':{'type':'boolean','initial':False},
         'campaign_title':{'type':'string','initial':'#str_230039'},'skill_description':{'type':'string','initial':'#str_200019'}})
     skill_keys=['#str_200014','#str_200015','#str_200016','#str_200017','#str_41117']

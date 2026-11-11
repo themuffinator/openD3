@@ -413,7 +413,7 @@ def validate_apple_gl21_simple_interaction_fallback() -> None:
 
 
 def validate_docs_and_validation() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     platform = read("docs/dev/platform-support.md")
     status_ledger = read("docs/dev/prey-rebase/status-ledger.md")
 

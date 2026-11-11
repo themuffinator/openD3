@@ -59,7 +59,7 @@ def validate_aas_settings_round_trip() -> None:
 
 
 def validate_ci_wiring() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     if validator.count("aas_settings_contract.py") != 1:
         raise AssertionError("Local validation must register the AAS settings contract exactly once")
 

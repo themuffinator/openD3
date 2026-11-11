@@ -24,7 +24,7 @@ EVIDENCE_HISTORY_HEADING = "## Evidence History"
 CURRENT_RELEASE_HEADING = "## Current Release Evidence"
 PACKAGE_ARTIFACT_SUFFIXES = (".dmg", ".tar.gz", ".tar.xz", ".zip")
 PACKAGE_ARTIFACT_PATTERN = re.compile(
-    r"^openq4-[A-Za-z0-9._+-]+-macos-arm64-(?P<bridge>opengl|metal)(?:-unsigned)?"
+    r"^opend3-[A-Za-z0-9._+-]+-macos-arm64-(?P<bridge>opengl|metal)(?:-unsigned)?"
     r"(?P<suffix>\.dmg|\.tar\.gz|\.tar\.xz|\.zip)$"
 )
 MAX_EVIDENCE_TEXT_VALUE_CHARS = 2048
@@ -46,7 +46,7 @@ class EvidenceData:
     archive_sha256: str
     validator_command: str
     validator_result: str
-    openq4_commit: str
+    opend3_commit: str
     gamelibs_commit: str
     package_artifacts: tuple[str, ...]
     signing_status: str
@@ -259,7 +259,7 @@ def validate_package_artifacts(artifacts: list[str], bridges: tuple[str, ...]) -
         match = PACKAGE_ARTIFACT_PATTERN.fullmatch(artifact)
         if match is None:
             raise RuntimeError(
-                "Package artifact is not an exact macOS arm64 openQ4 "
+                "Package artifact is not an exact macOS arm64 openD3 "
                 f"opengl/metal package artifact: {artifact}"
             )
         if match.group("suffix") not in PACKAGE_ARTIFACT_SUFFIXES:
@@ -314,8 +314,8 @@ def validate_recording_arguments(args: argparse.Namespace) -> None:
     args.support_tier = validate_evidence_text("support tier", args.support_tier, allow_empty=False)
     args.artifact_url = validate_evidence_text("artifact URL", args.artifact_url)
     args.signing_status = validate_evidence_text("signing status", args.signing_status)
-    args.openq4_commit = validate_evidence_text("openQ4 commit", args.openq4_commit)
-    args.gamelibs_commit = validate_evidence_text("openQ4-game commit", args.gamelibs_commit)
+    args.opend3_commit = validate_evidence_text("openD3 commit", args.opend3_commit)
+    args.gamelibs_commit = validate_evidence_text("openD3-game commit", args.gamelibs_commit)
     args.known_exception = validate_evidence_text_items("known exception", args.known_exception)
     args.release_note_limitation = validate_evidence_text_items(
         "release-note limitation",
@@ -376,7 +376,7 @@ def build_evidence(args: argparse.Namespace, *, run_id: str, bridges: tuple[str,
         archive_sha256=sha256_file(args.archive),
         validator_command=validator_command,
         validator_result="passed with --require-completed-checklist",
-        openq4_commit=args.openq4_commit or run_git_commit(ROOT),
+        opend3_commit=args.opend3_commit or run_git_commit(ROOT),
         gamelibs_commit=args.gamelibs_commit or run_git_commit(args.gamelibs_root),
         package_artifacts=validate_package_artifacts(args.package_artifact, bridges) or ("not recorded",),
         signing_status=args.signing_status or "not recorded",
@@ -400,10 +400,10 @@ def build_evidence(args: argparse.Namespace, *, run_id: str, bridges: tuple[str,
         dedicated_coverage="staged dedicated server path recorded and completed manual checklist validated",
         finder_coverage="completed manual checklist validated",
         terminal_coverage="completed manual checklist validated",
-        package_layout_contract="self-contained openQ4.app: data in Contents/Resources/baseoq4 and signed modules in Contents/Frameworks",
+        package_layout_contract="self-contained openD3.app: data in Contents/Resources/baseod3 and signed modules in Contents/Frameworks",
         mounted_dmg_coverage="completed manual checklist validated or recorded as an unsigned-package exception",
         copied_package_coverage="completed manual checklist validated",
-        app_only_move_behavior="completed manual checklist validated for dragging openQ4.app independently to a user-writable location",
+        app_only_move_behavior="completed manual checklist validated for dragging openD3.app independently to a user-writable location",
         path_resolution_log_coverage="fs_basepath, fs_cdpath, and fs_savepath confirmed by completed manual checklist",
         gatekeeper_assessment="completed manual checklist validated for signed/notarized DMGs or unsigned development archive friction",
         input_devices=compact_lines("\n".join((usb, bluetooth)), max_lines=6),
@@ -438,8 +438,8 @@ def format_fields(data: EvidenceData) -> str:
         bullet_value("Archive SHA-256", data.archive_sha256),
         bullet_value("Validator command", data.validator_command),
         bullet_value("Validator result", data.validator_result),
-        bullet_value("openQ4 commit", data.openq4_commit),
-        bullet_value("`openQ4-game` commit", data.gamelibs_commit),
+        bullet_value("openD3 commit", data.opend3_commit),
+        bullet_value("`openD3-game` commit", data.gamelibs_commit),
         bullet_list_value("Package artifacts", data.package_artifacts),
         bullet_value("Signing/notarization status", data.signing_status),
         bullet_value("Architecture policy", data.architecture_policy),
@@ -495,7 +495,7 @@ def format_checklist(data: EvidenceData) -> str:
             "- [x] Finder or Desktop launcher startup was checked.",
             "- [x] Terminal startup was checked.",
             "- [x] Mounted signed/notarized DMG launch was checked, or unsigned archive behavior was recorded as an unsigned-package exception.",
-            "- [x] Dragging only `openQ4.app` to `/Applications` or another user-writable location was checked.",
+            "- [x] Dragging only `openD3.app` to `/Applications` or another user-writable location was checked.",
             "- [x] Whole-package copied launch was checked for loose client, dedicated-server, and support-tool sibling-runtime discovery.",
             "- [x] `fs_basepath`, `fs_cdpath`, and `fs_savepath` were confirmed in logs for Finder/copied package and terminal launches.",
             "- [x] Gatekeeper assessment was checked for signed/notarized DMGs, or unsigned/unnotarized approval friction was recorded for development archives.",
@@ -503,7 +503,7 @@ def format_checklist(data: EvidenceData) -> str:
             "- [x] Controller hotplug/rumble was checked, or unavailable hardware was recorded as an exception.",
             "- [x] Audio output, volume changes, and at least one device switch or reconnect were checked.",
             "- [x] Windowed, fullscreen, selected-display, and HiDPI/Retina behavior were checked.",
-            "- [x] The app contained data under `Contents/Resources/baseoq4` and signed SP/MP modules under `Contents/Frameworks`, with no adjacent `baseoq4` duplicate.",
+            "- [x] The app contained data under `Contents/Resources/baseod3` and signed SP/MP modules under `Contents/Frameworks`, with no adjacent `baseod3` duplicate.",
             "- [x] First-class macOS release artifacts are signed/notarized DMGs, or the release stays a preview and unsigned artifacts are labeled as fallback output.",
             "- [x] Architecture policy, CPU architecture, and OS matrix role were recorded.",
             "- [x] Xcode and macOS SDK versions were recorded.",
@@ -609,9 +609,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--artifact-url", default="", help="External URL for the archived evidence, if available.")
     parser.add_argument("--package-artifact", action="append", default=[], help="Package artifact name. Repeat for multiple artifacts.")
     parser.add_argument("--signing-status", default="", help="Signing/notarization status for the tested packages.")
-    parser.add_argument("--openq4-commit", default="", help="openQ4 commit. Defaults to git rev-parse HEAD.")
+    parser.add_argument("--opend3-commit", default="", help="openD3 commit. Defaults to git rev-parse HEAD.")
     parser.add_argument("--gamelibs-root", type=Path, default=DEFAULT_GAMELIBS_ROOT, help="Game source checkout; defaults to the canonical engine checkout.")
-    parser.add_argument("--gamelibs-commit", default="", help="openQ4-game commit. Defaults to git rev-parse HEAD in --gamelibs-root.")
+    parser.add_argument("--gamelibs-commit", default="", help="openD3-game commit. Defaults to git rev-parse HEAD in --gamelibs-root.")
     parser.add_argument("--known-exception", action="append", default=[], help="Known exception to record. Repeat as needed.")
     parser.add_argument("--release-note-limitation", action="append", default=[], help="Release-note limitation to record. Repeat as needed.")
     parser.add_argument("--index", type=Path, default=DEFAULT_INDEX, help="Evidence index to update with --update-index.")

@@ -27,26 +27,26 @@ VIEWS = (('escape', 'mp_escape', 'players', 'players'),
 
 
 def menu(action):
-    return [f'openq4_retainedGui menu {action} 1', f'openq4_retainedGui menu {action} 0', 'waitMsec 200']
+    return [f'opend3_retainedGui menu {action} 1', f'opend3_retainedGui menu {action} 0', 'waitMsec 200']
 
 
 def state(values):
-    return [*[f'openq4_retainedGui pending {key} "{value}"' for key, value in values.items()], 'openq4_retainedGui update']
+    return [*[f'opend3_retainedGui pending {key} "{value}"' for key, value in values.items()], 'opend3_retainedGui update']
 
 
 def observe(stage, prefix, last, screenshot=True):
-    return [f'echo "ROSTER_STAGE {stage}"', 'openq4_retainedGui report',
-            f'openq4_retainedGui widget "{prefix}-scroll"',
-            *[f'openq4_retainedGui inspect "{prefix}-{node}"' for node in ('headings', 'viewport', last)],
+    return [f'echo "ROSTER_STAGE {stage}"', 'opend3_retainedGui report',
+            f'opend3_retainedGui widget "{prefix}-scroll"',
+            *[f'opend3_retainedGui inspect "{prefix}-{node}"' for node in ('headings', 'viewport', last)],
             *([f'screenshot "screenshots/{stage}.tga"'] if screenshot else [])]
 
 
 def steps():
     commands = ['waitMsec 6000', 'screenshot "screenshots/gameplay.tga"',
-                'openq4_assertMenuActivation 4000 game', 'waitMsec 500',
-                'openq4_retainedGui event tab_players', 'waitMsec 500',
-                'openq4_retainedGui focus "players-a-1"', *menu('accept'),
-                'screenshot "screenshots/live-players.tga"', 'openq4_retainedGui event onBack', 'waitMsec 500']
+                'opend3_assertMenuActivation 4000 game', 'waitMsec 500',
+                'opend3_retainedGui event tab_players', 'waitMsec 500',
+                'opend3_retainedGui focus "players-a-1"', *menu('accept'),
+                'screenshot "screenshots/live-players.tga"', 'opend3_retainedGui event onBack', 'waitMsec 500']
     for name, document, tab, prefix in VIEWS:
         commands += [f'testGUI "guis/menu/{document}.q4ui"', 'waitMsec 500']
         values = {'mp.players.a.shown': 1, 'mp.players.a.count': 32, 'mp.players.a.color': 3,
@@ -58,13 +58,13 @@ def steps():
                            f'{key}.score': row, f'{key}.ping': 20 + row})
         if name != 'welcome':
             values.update({'mp.stat.client': 31, 'mp.stat.name': 'Roster fixture 32'})
-        commands += state(values) + ['openq4_retainedGui event open', f'openq4_retainedGui event tab_{tab}',
-                                     'waitMsec 500', f'openq4_retainedGui focus "{prefix}-scroll"', *menu('home')]
+        commands += state(values) + ['opend3_retainedGui event open', f'opend3_retainedGui event tab_{tab}',
+                                     'waitMsec 500', f'opend3_retainedGui focus "{prefix}-scroll"', *menu('home')]
         commands += observe(f'{name}-top', prefix, 'a-0')
         commands += menu('end') + observe(f'{name}-end', prefix, 'a-31')
         # Actual adapter snapshot save/restore retains the scroll; a shrink
         # afterwards must remove the obsolete offset.
-        commands += ['openq4_retainedGui save', *menu('home'), 'openq4_retainedGui restore', 'waitMsec 300']
+        commands += ['opend3_retainedGui save', *menu('home'), 'opend3_retainedGui restore', 'waitMsec 300']
         commands += observe(f'{name}-restored', prefix, 'a-31', False)
         mixed = {'mp.players.a.count': 10, 'mp.players.b.shown': 1,
                  'mp.players.b.title': '#str_200199', 'mp.players.b.color': 1, 'mp.players.b.count': 10,
@@ -77,7 +77,7 @@ def steps():
                               f'{key}.score': row if kind == 'b' else '', f'{key}.ping': 30 + row})
         commands += state(mixed)
         # Publication and the next rendered layout are separate engine steps.
-        commands += ['waitMsec 300', f'openq4_retainedGui focus "{prefix}-scroll"', *menu('end')]
+        commands += ['waitMsec 300', f'opend3_retainedGui focus "{prefix}-scroll"', *menu('end')]
         commands += observe(f'{name}-mixed', prefix, 's-11')
         commands += state({'mp.players.a.count': 1, 'mp.players.b.shown': 0,
                            'mp.players.b.count': 0, 'mp.players.s.count': 0})
@@ -111,7 +111,7 @@ def qualify(log):
             records[suffix] = nodes
         headings = [records[s].get(f'{prefix}-headings', []) for s in records]
         checks[f'{name}-fixed-headings'] = all(len(h) == 4 and h == headings[0] for h in headings)
-    checks['semantic-operations'] = not re.search(r'RETAINED_GUI_OPERATION .* failed|openq4_retainedGui: requires', log)
+    checks['semantic-operations'] = not re.search(r'RETAINED_GUI_OPERATION .* failed|opend3_retainedGui: requires', log)
     return checks
 
 
@@ -128,16 +128,16 @@ def main():
         parser.error('choose a new output directory under the project .tmp')
     verify_runtime_is_current(args.runtime)
     args.output.mkdir(parents=True)
-    executable = args.runtime / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64')
-    binaries = [executable, *sorted(args.runtime.glob('renderer-*')), *sorted((args.runtime / 'baseoq4').glob('game-*'))]
+    executable = args.runtime / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64')
+    binaries = [executable, *sorted(args.runtime.glob('renderer-*')), *sorted((args.runtime / 'baseod3').glob('game-*'))]
     binaries = [p for p in binaries if p.is_file()]
     bindings = {str(p.relative_to(args.runtime)): capture.digest(p) for p in binaries}
     documents = {f'guis/menu/{doc}.q4ui' for _, doc, _, _ in VIEWS}
-    source_paths = [*(ROOT / 'content/baseoq4/pak0' / doc for doc in sorted(documents)),
+    source_paths = [*(ROOT / 'content/baseod3/pak0' / doc for doc in sorted(documents)),
                     ROOT / 'src/mpgame/MultiplayerGame.h', ROOT / 'src/mpgame/MultiplayerGame.cpp', Path(__file__).resolve()]
     sources = {str(p.relative_to(ROOT)): capture.digest(p) for p in source_paths}
-    with zipfile.ZipFile(args.runtime / 'baseoq4/pak0.pk4') as pack:
-        if any(pack.read(doc).replace(b'\r\n', b'\n') != (ROOT / 'content/baseoq4/pak0' / doc).read_bytes().replace(b'\r\n', b'\n')
+    with zipfile.ZipFile(args.runtime / 'baseod3/pak0.pk4') as pack:
+        if any(pack.read(doc).replace(b'\r\n', b'\n') != (ROOT / 'content/baseod3/pak0' / doc).read_bytes().replace(b'\r\n', b'\n')
                for doc in documents):
             raise RuntimeError('staged roster documents differ from current source')
     capture.SCENARIOS['rosters'] = ('mp:mp/q4dm1', steps())

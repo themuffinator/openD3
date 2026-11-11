@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Preserved from openQ4-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
+# Preserved from openD3-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
 """Execute the production score-limit loops and session/countdown adapter.
 
 Engine services are small deterministic stubs; the functions under test are

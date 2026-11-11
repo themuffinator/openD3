@@ -17,7 +17,7 @@ import shutil
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
-PRODUCTION = ROOT / 'mobile/android/app/src/main/java/com/darkmatter/openq4'
+PRODUCTION = ROOT / 'mobile/android/app/src/main/java/com/darkmatter/opend3'
 
 # Windows in dp (landscape; portrait swaps them), densities, player sizes.
 WINDOWS = [(640, 360), (732, 412), (832, 384), (915, 412), (1024, 768), (1280, 800), (960, 600)]
@@ -81,7 +81,7 @@ CPP = r'''
 #include <cstdlib>
 #include <cstring>
 #include <string>
-using namespace openq4::touch;
+using namespace opend3::touch;
 static void dump(const char* tag,const Layout& l){
     std::printf("%s %d %d %d %u %.5f %.5f",tag,l.available?1:0,l.edited?1:0,l.editsRejected?1:0,l.hidden,l.stickTop,l.stickHome.y);
     for(int i=0;i<BUTTON_COUNT;i++)std::printf(" %.5f %.5f %.5f %.4f",l.buttons[i].x,l.buttons[i].y,l.buttons[i].radius,RestOpacity(l,i));
@@ -105,7 +105,7 @@ int main(int argc,char** argv){
 '''
 
 JAVA = r'''
-package com.darkmatter.openq4;
+package com.darkmatter.opend3;
 import java.io.*;
 import java.util.*;
 public class TouchLayoutCheck {
@@ -219,7 +219,7 @@ def main() -> None:
     javac = Path(args.javac).resolve()
     subprocess.run([str(javac), '--release', '17', '-d', str(classes), str(PRODUCTION / 'TouchLayout.java'), str(unit)], check=True)
     java = javac.with_name('java.exe' if os.name == 'nt' else 'java')
-    java_out = subprocess.run([str(java), '-cp', str(classes), 'com.darkmatter.openq4.TouchLayoutCheck'],
+    java_out = subprocess.run([str(java), '-cp', str(classes), 'com.darkmatter.opend3.TouchLayoutCheck'],
                               input='\n'.join(cases + grammar + canonical) + '\n', capture_output=True, text=True,
                               encoding='utf-8', check=True).stdout.splitlines()
 

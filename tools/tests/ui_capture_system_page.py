@@ -23,19 +23,19 @@ import capture_system_page as capture
 
 def route(stage, mode):
     page = stage['page']
-    return ('OPENQ4_SYSTEM enabled=1 active='+(capture.PAGE if page else capture.PARENT)+
+    return ('OPEND3_SYSTEM enabled=1 active='+(capture.PAGE if page else capture.PARENT)+
             ' parent='+(capture.PARENT if page else '-')+f' child={int(page)} guiTest=0 menu=1 map=1 multiplayer={int(mode=="mp")} menuSound=1 canReturn={int(page and not stage["values"][1])}')
 
 
 def trace(mode='sp', renderer='gl'):
-    lines = ['Renderer API: requested='+renderer+' active='+renderer, 'OPENQ4_MENU_ACTIVATION PASS elapsed=13ms limit=10000ms']
+    lines = ['Renderer API: requested='+renderer+' active='+renderer, 'OPEND3_MENU_ACTIVATION PASS elapsed=13ms limit=10000ms']
     owner = 1
     for stage in capture.stages():
         lines.append(capture.STAGE_MARKER+' '+stage['name'])
         if stage['opening']:
             owner += 36
-            lines += ['RETAINED_GUI_LOADED '+capture.PAGE, 'OPENQ4_SYSTEM operation=open result=1', route(stage,mode)]
-        lines += ['RETAINED_GUI_OPERATION '+command.split()[1]+' passed' for command in stage['commands'] if command.startswith('openq4_retainedGui ')]
+            lines += ['RETAINED_GUI_LOADED '+capture.PAGE, 'OPEND3_SYSTEM operation=open result=1', route(stage,mode)]
+        lines += ['RETAINED_GUI_OPERATION '+command.split()[1]+' passed' for command in stage['commands'] if command.startswith('opend3_retainedGui ')]
         # Pin the changed production event shapes independently of stages().
         events = [('apply',1,0)] if stage['name'] in ('applied','extras_applied','extras_restored') else \
                  [('continueediting',1,1)] if stage['name']=='keep_editing' else stage['events']
@@ -176,13 +176,13 @@ class SystemPageOracleTests(unittest.TestCase):
         lines[at],lines[service]=lines[service],lines[at];self.reject('\n'.join(lines))
 
     def test_matched_staged_source_cannot_weaken_local_draft_guards(self):
-        raw=(ROOT/'content/baseoq4/pak0'/capture.PAGE).read_text(encoding='utf-8')
+        raw=(ROOT/'content/baseod3/pak0'/capture.PAGE).read_text(encoding='utf-8')
         original=json.loads('\n'.join(line for line in raw.splitlines() if not line.lstrip().startswith('//')))
         for name,model in number_contract_mutations(original):
             with self.subTest(name=name),tempfile.TemporaryDirectory(prefix='system-number-contract-',dir=ROOT/'.tmp') as directory:
                 root=Path(directory);runtime=root/'.install';data=json.dumps(model).encode('utf-8')
-                source=root/'content/baseoq4/pak0'/capture.PAGE;source.parent.mkdir(parents=True);source.write_bytes(data)
-                package(runtime/'baseoq4/pak0.pk4',[(capture.PAGE,data)])
+                source=root/'content/baseod3/pak0'/capture.PAGE;source.parent.mkdir(parents=True);source.write_bytes(data)
+                package(runtime/'baseod3/pak0.pk4',[(capture.PAGE,data)])
                 with patch.object(capture,'ROOT',root):
                     with self.assertRaises(ValueError):capture.source_contract(runtime)
                 type(self).negative_cases += 1
@@ -190,7 +190,7 @@ class SystemPageOracleTests(unittest.TestCase):
     def test_every_required_observation_is_required_and_ordered(self):
         original = trace().splitlines()
         for index,line in enumerate(original):
-            if line.startswith(('SYSTEM_PAGE_', 'OPENQ4_', 'GUI_VALUE ', 'RETAINED_GUI_', 'RETAINED_GUI ', 'UI_SETTINGS ')):
+            if line.startswith(('SYSTEM_PAGE_', 'OPEND3_', 'GUI_VALUE ', 'RETAINED_GUI_', 'RETAINED_GUI ', 'UI_SETTINGS ')):
                 with self.subTest(index=index,line=line[:70]): self.reject('\n'.join(original[:index]+original[index+1:]))
         first = original.index('GUI_VALUE open=1')
         changed = original.copy(); changed[first],changed[first+1]=changed[first+1],changed[first]
@@ -263,24 +263,24 @@ class SystemPageOracleTests(unittest.TestCase):
         self.assertEqual(rows['extras_restore_draft']['actions'],[('edit',1)]*7)
 
     def test_errors_and_unknown_commands_fail(self):
-        for error in ('ERROR: retained failure','FATAL: bad device','openq4_guiGet: unknown GUI variable',
-                      'openq4_retainedGui: requires an active GUI','usage: openq4_system invalid'):
+        for error in ('ERROR: retained failure','FATAL: bad device','opend3_guiGet: unknown GUI variable',
+                      'opend3_retainedGui: requires an active GUI','usage: opend3_system invalid'):
             self.reject(trace()+error+'\n')
 
     def test_script_is_fixed_and_semantic_only(self):
         commands = [shlex.split(line) for line in capture.script().splitlines()]
-        allowed = {'openq4_assertMenuActivation','wait','echo','openq4_system','openq4_guiGet','openq4_retainedGui','reloadLanguage','vid_restart','screenshot','gfxInfo','quit'}
+        allowed = {'opend3_assertMenuActivation','wait','echo','opend3_system','opend3_guiGet','opend3_retainedGui','reloadLanguage','vid_restart','screenshot','gfxInfo','quit'}
         self.assertEqual(set(row[0] for row in commands),allowed)
-        self.assertEqual(commands[0],['openq4_assertMenuActivation','10000'])
+        self.assertEqual(commands[0],['opend3_assertMenuActivation','10000'])
         self.assertEqual(commands[-2:], [['echo',capture.COMPLETE],['quit']])
         self.assertNotIn('testGUI',capture.script()); self.assertNotIn('ui_retainedPreview',capture.script())
         self.assertEqual([row for row in commands if row[0]=='vid_restart'],[['vid_restart','windowed']])
-        self.assertEqual([row for row in commands if row[0]=='openq4_system' and row[1]=='open'],[['openq4_system','open']]*5)
+        self.assertEqual([row for row in commands if row[0]=='opend3_system' and row[1]=='open'],[['opend3_system','open']]*5)
         for row in commands:
             self.assertNotIn(';',' '.join(row))
             if row[0]=='wait': self.assertTrue(1<=int(row[1])<=60)
-            if row[0]=='openq4_retainedGui': self.assertIn(row[1],('focus','menu','widget','report','event'))
-            if row[:2]==['openq4_retainedGui','event']: self.assertIn(row[2],('tab_graphics','tab_screen','tab_image'))
+            if row[0]=='opend3_retainedGui': self.assertIn(row[1],('focus','menu','widget','report','event'))
+            if row[:2]==['opend3_retainedGui','event']: self.assertIn(row[2],('tab_graphics','tab_screen','tab_image'))
             if row[0]=='screenshot': self.assertRegex(row[1],r'^screenshots/system-[a-z]+\.tga$')
 
     def test_probes_switch_tabs_first_and_closes_deactivate(self):
@@ -290,9 +290,9 @@ class SystemPageOracleTests(unittest.TestCase):
             switches=[]
             for command in stage['commands']:
                 words=shlex.split(command)
-                if words[:2]==['openq4_retainedGui','event']:
+                if words[:2]==['opend3_retainedGui','event']:
                     current=words[2][len('tab_'):]; switches.append((words[2],0,capture.TAB_WRITES))
-                elif words[:2]==['openq4_retainedGui','focus'] and words[2] in capture.TABS:
+                elif words[:2]==['opend3_retainedGui','focus'] and words[2] in capture.TABS:
                     self.assertEqual(capture.TABS[words[2]],current,(stage['name'],command))
             self.assertEqual(stage['events'][:len(switches)],switches,stage['name'])
             self.assertEqual(stage['events'][-1:]==[capture.CLOSED],not stage['page'],stage['name'])
@@ -310,7 +310,7 @@ class SystemPageOracleTests(unittest.TestCase):
     def test_peer_documents_hold_their_own_context(self):
         # The classic HUD's essential document runs beside the page in gameplay.
         peer='guis/hud/air_marine.q4ui'
-        log=trace().replace('OPENQ4_MENU_ACTIVATION ','RETAINED_GUI_LOADED '+peer+'\nOPENQ4_MENU_ACTIVATION ',1)
+        log=trace().replace('OPEND3_MENU_ACTIVATION ','RETAINED_GUI_LOADED '+peer+'\nOPEND3_MENU_ACTIVATION ',1)
         self.reject(log)
         mark=capture.STAGE_MARKER+' language\n'
         log=log.replace('contexts=1','contexts=2').replace(mark,mark+f'RETAINED_GUI_RESOURCE path={peer} event=restored\n')
@@ -340,7 +340,7 @@ class SystemPageOracleTests(unittest.TestCase):
 
     def test_packaged_source_precedence_and_exact_member_binding(self):
         with tempfile.TemporaryDirectory(prefix='system-package-order-',dir=ROOT/'.tmp') as directory:
-            runtime=Path(directory); game=runtime/'baseoq4'
+            runtime=Path(directory); game=runtime/'baseod3'
             for name,raw in [('pak0.pk4',b'zero'),('pak1.pk4',b'one'),('pak001.pk4',b'padded'),('pak01.pk4',b'padded-two')]:
                 package(game/name,[(capture.PAGE,raw)])
             raw,binding=capture.staged_source(runtime)
@@ -368,7 +368,7 @@ class SystemPageOracleTests(unittest.TestCase):
         limit=16*1024*1024  # Retained document loader's supported source size.
         for kind in ('package','loose'):
             with self.subTest(kind=kind),tempfile.TemporaryDirectory(prefix='system-source-size-',dir=ROOT/'.tmp') as directory:
-                runtime=Path(directory); game=runtime/'baseoq4'
+                runtime=Path(directory); game=runtime/'baseod3'
                 for size in (limit,limit+1):
                     raw=b'x'*size
                     if kind=='package': package(game/'pak0.pk4',[(capture.PAGE,raw)])
@@ -379,12 +379,12 @@ class SystemPageOracleTests(unittest.TestCase):
                         with self.assertRaisesRegex(ValueError,'size'): capture.staged_source(runtime)
 
     def test_production_source_contract_accepts_lf_and_crlf_packages(self):
-        production=(ROOT/'content/baseoq4/pak0'/capture.PAGE).read_bytes().replace(b'\r\n',b'\n')
+        production=(ROOT/'content/baseod3/pak0'/capture.PAGE).read_bytes().replace(b'\r\n',b'\n')
         for newline in (b'\n',b'\r\n'):
             with self.subTest(newline=newline),tempfile.TemporaryDirectory(prefix='system-source-newlines-',dir=ROOT/'.tmp') as directory:
                 root=Path(directory); runtime=root/'.install'; raw=production.replace(b'\n',newline)
-                source=root/'content/baseoq4/pak0'/capture.PAGE; source.parent.mkdir(parents=True); source.write_bytes(raw)
-                package(runtime/'baseoq4/pak0.pk4',[(capture.PAGE,raw)])
+                source=root/'content/baseod3/pak0'/capture.PAGE; source.parent.mkdir(parents=True); source.write_bytes(raw)
+                package(runtime/'baseod3/pak0.pk4',[(capture.PAGE,raw)])
                 with patch.object(capture,'ROOT',root): result=capture.source_contract(runtime)
                 self.assertEqual(result['staged']['effective']['member_size'],len(raw))
                 self.assertEqual(result['staged']['effective']['member_sha256'],capture.hashlib.sha256(raw).hexdigest())
@@ -398,10 +398,10 @@ class SystemPageOracleTests(unittest.TestCase):
                ([(capture.PAGE,b'x'*(16*1024*1024+1))],'size')]
         for members,error in cases:
             with self.subTest(error=error,members=[name for name,_ in members]), tempfile.TemporaryDirectory(prefix='system-package-invalid-',dir=ROOT/'.tmp') as directory:
-                runtime=Path(directory); package(runtime/'baseoq4/pak0.pk4',members)
+                runtime=Path(directory); package(runtime/'baseod3/pak0.pk4',members)
                 with self.assertRaisesRegex(ValueError,error): capture.staged_source(runtime)
         with tempfile.TemporaryDirectory(prefix='system-package-corrupt-',dir=ROOT/'.tmp') as directory:
-            runtime=Path(directory); game=runtime/'baseoq4'; game.mkdir()
+            runtime=Path(directory); game=runtime/'baseod3'; game.mkdir()
             (game/'pak0.pk4').write_bytes(b'not a zip')
             with self.assertRaisesRegex(ValueError,'Cannot verify'): capture.staged_source(runtime)
             archive=game/'pak0.pk4'
@@ -411,7 +411,7 @@ class SystemPageOracleTests(unittest.TestCase):
 
     def test_case_collisions_and_missing_effective_source_fail_closed(self):
         with tempfile.TemporaryDirectory(prefix='system-package-case-',dir=ROOT/'.tmp') as directory:
-            runtime=Path(directory); game=runtime/'baseoq4'; game.mkdir()
+            runtime=Path(directory); game=runtime/'baseod3'; game.mkdir()
             with self.assertRaisesRegex(ValueError,'absent'): capture.staged_source(runtime)
             package(game/'pak0.pk4',[('unrelated/file.txt',b'not the page')])
             with self.assertRaisesRegex(ValueError,'absent'): capture.staged_source(runtime)
@@ -427,10 +427,10 @@ class SystemPageOracleTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,'Ambiguous loose'): capture.staged_source(runtime)
 
     def test_source_contract_uses_effective_bytes_not_first_matching_package(self):
-        production=(ROOT/'content/baseoq4/pak0'/capture.PAGE).read_bytes()
+        production=(ROOT/'content/baseod3/pak0'/capture.PAGE).read_bytes()
         with tempfile.TemporaryDirectory(prefix='system-effective-source-',dir=ROOT/'.tmp') as directory:
-            root=Path(directory); runtime=root/'.install'; game=runtime/'baseoq4'
-            source=root/'content/baseoq4/pak0'/capture.PAGE; source.parent.mkdir(parents=True); source.write_bytes(production)
+            root=Path(directory); runtime=root/'.install'; game=runtime/'baseod3'
+            source=root/'content/baseod3/pak0'/capture.PAGE; source.parent.mkdir(parents=True); source.write_bytes(production)
             package(game/'pak0.pk4',[(capture.PAGE,production)])
             package(game/'pak1.pk4',[(capture.PAGE,production+b'\n')])
             with patch.object(capture,'ROOT',root):
@@ -445,15 +445,15 @@ class SystemPageOracleTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError,'exactly match'): capture.source_contract(runtime)
 
     def test_mocked_normal_launch_and_source_binding(self):
-        production=(ROOT/'content/baseoq4/pak0'/capture.PAGE).read_bytes()
+        production=(ROOT/'content/baseod3/pak0'/capture.PAGE).read_bytes()
         for mode,renderer,changed in (('sp','gl',False),('mp','vulkan',False),('sp','gl',True)):
             with self.subTest(mode=mode,changed=changed), tempfile.TemporaryDirectory(prefix='system-page-oracle-',dir=ROOT/'.tmp') as directory:
                 root=Path(directory); runtime=root/'.install'; runtime.mkdir(); (root/'.tmp').mkdir()
-                executable=runtime/('openQ4-client_x64.exe' if capture.os.name=='nt' else 'openQ4-client_x64'); executable.write_bytes(b'never executed')
-                path=root/'content/baseoq4/pak0'/capture.PAGE
+                executable=runtime/('openD3-client_x64.exe' if capture.os.name=='nt' else 'openD3-client_x64'); executable.write_bytes(b'never executed')
+                path=root/'content/baseod3/pak0'/capture.PAGE
                 path.parent.mkdir(parents=True,exist_ok=True); path.write_bytes(production)
-                package(runtime/'baseoq4/pak0.pk4',[(capture.PAGE,production)])
-                package(runtime/'baseoq4/pak1.pk4',[('unrelated.txt',b'packaged content')])
+                package(runtime/'baseod3/pak0.pk4',[(capture.PAGE,production)])
+                package(runtime/'baseod3/pak1.pk4',[('unrelated.txt',b'packaged content')])
                 (root/'.vscode').mkdir(); gameplay=['+map','game/airdefense1'] if mode=='sp' else ['+spawnServer','mp/q4dm1']
                 profile={'name':('(SP) airdefense1 ' if mode=='sp' else '(MP) q4dm1 ')+'test GL',
                          'args':['+set','R_FULLSCREEN','1','+seta','ui_retainedSystem','0','+set','in_mouse','1','+set','ui_autoJoin','0']+gameplay}
@@ -462,10 +462,10 @@ class SystemPageOracleTests(unittest.TestCase):
                 output=root/'.tmp/evidence'; args=SimpleNamespace(output=output,runtime=runtime,assets=assets,mode=mode,renderer=renderer,density=None,text_scale=1.5,language='french',timeout=360)
                 calls=[]
                 def launch(command,**kwargs):
-                    calls.append((command,kwargs)); game=output/'save/baseoq4'; (game/'logs').mkdir(); (game/'screenshots').mkdir()
-                    (game/'logs/openq4.log').write_text(trace(mode,renderer),encoding='utf-8')
+                    calls.append((command,kwargs)); game=output/'save/baseod3'; (game/'logs').mkdir(); (game/'screenshots').mkdir()
+                    (game/'logs/opend3.log').write_text(trace(mode,renderer),encoding='utf-8')
                     for name in capture.SCREENSHOTS: (game/f'screenshots/system-{name}.tga').write_bytes(image())
-                    if changed: package(runtime/'baseoq4/pak0.pk4',[(capture.PAGE,production),('extra.txt',b'changed during capture')])
+                    if changed: package(runtime/'baseod3/pak0.pk4',[(capture.PAGE,production),('extra.txt',b'changed during capture')])
                     return SimpleNamespace(pid=1234,wait=lambda timeout:0)
                 with patch.object(capture,'ROOT',root),patch.object(capture.subprocess,'Popen',side_effect=launch),contextlib.redirect_stdout(io.StringIO()):
                     self.assertEqual(capture.capture(args),int(changed))
@@ -481,8 +481,8 @@ class SystemPageOracleTests(unittest.TestCase):
                 for _,_,key,_,seed in capture.EXTRA_ROWS: self.assertEqual(values[key.lower()],str(seed))
                 self.assertEqual(command[-2:],gameplay); self.assertEqual(kwargs['cwd'],runtime)
                 self.assertEqual(kwargs['env']['TEMP'],str(root/'.tmp'))
-                self.assertFalse((output/'save/baseoq4'/capture.PAGE).exists())
-                self.assertEqual((output/'save/baseoq4/system-page.cfg').read_text(encoding='utf-8'),capture.script())
+                self.assertFalse((output/'save/baseod3'/capture.PAGE).exists())
+                self.assertEqual((output/'save/baseod3/system-page.cfg').read_text(encoding='utf-8'),capture.script())
                 metadata=json.loads((output/'capture.json').read_text(encoding='utf-8'))
                 self.assertEqual(metadata['status'],'failed' if changed else 'captured_pending_visual_and_warning_review')
                 self.assertEqual(metadata['text_scale'],1.5)
@@ -493,7 +493,7 @@ class SystemPageOracleTests(unittest.TestCase):
                 self.assertEqual(Path(metadata['source']['staged']['effective']['package']).name,'pak0.pk4')
                 self.assertEqual(metadata['source']['sha256'],metadata['source_after']['sha256'])
                 self.assertFalse(metadata['qualification']['replacement_acceptance'])
-                loose=runtime/'baseoq4'/capture.PAGE; loose.parent.mkdir(parents=True); loose.write_bytes(production+b'\n')
+                loose=runtime/'baseod3'/capture.PAGE; loose.parent.mkdir(parents=True); loose.write_bytes(production+b'\n')
                 with patch.object(capture,'ROOT',root):
                     with self.assertRaisesRegex(ValueError,'exactly match'): capture.source_contract(runtime)
 

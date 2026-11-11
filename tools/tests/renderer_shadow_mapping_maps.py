@@ -82,7 +82,7 @@ def inspect_run(save: Path, code: int | str, map_name: str,
                 captures: tuple[str, ...] = CAPTURES,
                 fail_on_missing_casters: bool = False,
                 scenario: str | None = None) -> dict:
-    log = save / "baseoq4/logs/shadow-matrix.log"
+    log = save / "baseod3/logs/shadow-matrix.log"
     text = re.sub(r"\^\d", "", log.read_text(errors="replace")) if log.exists() else ""
     lines = text.splitlines()
     mapped_lines = text.split("SHADOW_MATRIX_MAPPED", 1)[0].splitlines()
@@ -116,7 +116,7 @@ def inspect_run(save: Path, code: int | str, map_name: str,
                 for actual, expected in zip(sp_poses[-1], SP_VIEWS[map_name])):
             failures.append("Requested single-player comparison camera was not confirmed")
     for kind in captures:
-        path = save / f"baseoq4/screenshots/{kind}.tga"
+        path = save / f"baseod3/screenshots/{kind}.tga"
         if not path.is_file() or path.stat().st_size < 18:
             failures.append(f"Missing engine capture: {kind}")
             continue
@@ -150,7 +150,7 @@ def inspect_run(save: Path, code: int | str, map_name: str,
         "summary": [line for line in mapped_lines if line.startswith(("SM summary:", "Vulkan shadow cache:"))][-1:],
         "missing_casters": missing_casters,
         "warnings": sorted(set(line for line in lines if "WARNING:" in line)),
-        "log": str(log), "captures": str(save / "baseoq4/screenshots"),
+        "log": str(log), "captures": str(save / "baseod3/screenshots"),
         "image_metrics": image_metrics,
     }
 
@@ -167,7 +167,7 @@ def main() -> int:
     parser.add_argument("--apis", nargs="+", choices=("gl", "vulkan"), default=["gl", "vulkan"])
     parser.add_argument("--output", type=Path,
                         default=ROOT / ".tmp" / ("shadow-maps-" + datetime.now().strftime("%Y%m%d-%H%M%S")))
-    parser.add_argument("--binary", type=Path, default=ROOT / ".install/openQ4-client_x64.exe")
+    parser.add_argument("--binary", type=Path, default=ROOT / ".install/openD3-client_x64.exe")
     parser.add_argument("--basepath", type=Path, help="Installed Quake 4 assets (default: the engine's Steam/GOG install discovery)")
     parser.add_argument("--hidden", action="store_true", help="Use an engine-owned hidden window for unattended captures")
     parser.add_argument("--terrain-check", action="store_true", help="Check q4dm2/Air Defense 1 terrain against stencil and shadows-off controls")
@@ -181,7 +181,7 @@ def main() -> int:
     stock_sp_maps = sorted({qualified.removeprefix("game/") for config in configs
                             if (qualified := value(config.get("args", []), "+map"))
                             and qualified.startswith("game/")
-                            and value(config["args"], "fs_game") == "baseoq4"
+                            and value(config["args"], "fs_game") == "baseod3"
                             and value(config["args"], "r_renderApi") == "gl"})
     if opts.random_maps is not None:
         if opts.scenario:
@@ -220,9 +220,9 @@ def main() -> int:
         assets = opts.basepath.resolve()
         identity['assetRoot'] = str(assets)
         identity['stockPk4s'] = collect_pk4s(assets)
-        identity['openQ4OverlayPk4s'] = collect_overlay_pk4s(runtime)
+        identity['openD3OverlayPk4s'] = collect_overlay_pk4s(runtime)
         identity['retailPathCollisions'] = collect_retail_path_collisions(
-            assets, identity['stockPk4s'], runtime, identity['openQ4OverlayPk4s'])
+            assets, identity['stockPk4s'], runtime, identity['openD3OverlayPk4s'])
     (output / 'identity.json').write_text(json.dumps(identity, indent=2), encoding='utf-8')
     (output / "selection.json").write_text(json.dumps({
         "maps": opts.maps, "apis": opts.apis, "scenario": opts.scenario,
@@ -238,7 +238,7 @@ def main() -> int:
                       and (not multiplayer or value(c["args"], "net_serverDedicated") == "0"))
         for api in opts.apis:
             save = output / f"{map_name}-{api}"
-            cfg = save / "baseoq4/shadow-matrix.cfg"
+            cfg = save / "baseod3/shadow-matrix.cfg"
             cfg.parent.mkdir(parents=True)
             cfg.write_text("\n".join(commands(map_name, extra,
                            settle_lift=opts.scenario != "emitter-lift")) + "\n", encoding="utf-8")
@@ -282,7 +282,7 @@ def main() -> int:
                 setting(args, "si_pure", 0)
                 setting(args, "net_allowCheats", 1)
             if map_name == "storage1":
-                setting(args, "g_openQ4Storage1NoDropPodState", 1)
+                setting(args, "g_openD3Storage1NoDropPodState", 1)
             args += ["+exec", "shadow-matrix.cfg"]
             launch = {"source": source["name"], "binary": str(opts.binary.resolve()),
                       "cwd": str(runtime), "args": args}
@@ -306,8 +306,8 @@ def main() -> int:
             if collect_runtime_files(runtime, opts.binary.resolve()) != identity['runtimeFiles']:
                 result['failures'].append('Runtime changed during the capture matrix')
             evidence = [cfg, save / 'launch.json', save / 'stdout.txt', save / 'stderr.txt',
-                        save / 'baseoq4/logs/shadow-matrix.log']
-            evidence += [save / f'baseoq4/screenshots/{kind}.tga' for kind in captures]
+                        save / 'baseod3/logs/shadow-matrix.log']
+            evidence += [save / f'baseod3/screenshots/{kind}.tga' for kind in captures]
             result['artifacts'] = [file_record(path, output) for path in evidence if path.is_file()]
             if opts.terrain_check:
                 image_failures, image_metrics = validate_terrain_images(save, map_name)

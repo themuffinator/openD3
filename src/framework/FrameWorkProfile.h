@@ -1,11 +1,11 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
-#ifndef OPENQ4_FRAME_WORK_PROFILE_H
-#define OPENQ4_FRAME_WORK_PROFILE_H
+#ifndef OPEND3_FRAME_WORK_PROFILE_H
+#define OPEND3_FRAME_WORK_PROFILE_H
 #include <array>
 #include <cmath>
 #include <vector>
 
-namespace openq4 {
+namespace opend3 {
 enum class FrameWorkPhase { Gap, Wait, Events, Configuration, Commands, Session, Draw, Tail, Count };
 struct FrameWorkSample {
 	int frame = 0;

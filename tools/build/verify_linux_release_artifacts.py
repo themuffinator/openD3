@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from tools.validation import openq4_validate as staged_validator  # noqa: E402
+from tools.validation import opend3_validate as staged_validator  # noqa: E402
 from tools.build.game_layer import PACKAGED_LAYER_GAME_DIRS, LayerError, read_layer_mod_json  # noqa: E402
 
 
@@ -90,7 +90,7 @@ def require_native_arch(expected_arch: str) -> None:
 
 
 def packaged_layer_dirs(runtime_root: Path) -> list[str]:
-    """The game-library layers (q4xbase) this payload carries beside baseoq4."""
+    """The game-library layers (q4xbase) this payload carries beside baseod3."""
     return [
         name
         for name in PACKAGED_LAYER_GAME_DIRS
@@ -100,12 +100,12 @@ def packaged_layer_dirs(runtime_root: Path) -> list[str]:
 
 def expected_runtime_binaries(runtime_root: Path, arch: str) -> list[tuple[Path, str, bool]]:
     expected = [
-        (runtime_root / f"openQ4-client_{arch}", "openQ4-client", False),
-        (runtime_root / f"openQ4-ded_{arch}", "openQ4-ded", False),
-        (runtime_root / "baseoq4" / f"game-sp_{arch}.so", "game-sp", True),
-        (runtime_root / "baseoq4" / f"game-mp_{arch}.so", "game-mp", True),
+        (runtime_root / f"openD3-client_{arch}", "openD3-client", False),
+        (runtime_root / f"openD3-ded_{arch}", "openD3-ded", False),
+        (runtime_root / "baseod3" / f"game-sp_{arch}.so", "game-sp", True),
+        (runtime_root / "baseod3" / f"game-mp_{arch}.so", "game-mp", True),
     ]
-    # a layer's modules come after baseoq4's, so expected[2] and expected[3] stay baseoq4's
+    # a layer's modules come after baseod3's, so expected[2] and expected[3] stay baseod3's
     for name in packaged_layer_dirs(runtime_root):
         expected.append((runtime_root / name / f"game-sp_{arch}.so", "game-sp", True))
         expected.append((runtime_root / name / f"game-mp_{arch}.so", "game-mp", True))
@@ -131,9 +131,9 @@ def validate_layer_game_dir(runtime_root: Path, name: str, arch: str) -> None:
 def reject_unexpected_binary_variants(
     runtime_root: Path, expected: list[tuple[Path, str, bool]]
 ) -> None:
-    game_dir = runtime_root / "baseoq4"
-    candidates = set(runtime_root.glob("openQ4-client_*"))
-    candidates.update(runtime_root.glob("openQ4-ded_*"))
+    game_dir = runtime_root / "baseod3"
+    candidates = set(runtime_root.glob("openD3-client_*"))
+    candidates.update(runtime_root.glob("openD3-ded_*"))
     for module_dir in (game_dir, *(runtime_root / name for name in packaged_layer_dirs(runtime_root))):
         candidates.update(module_dir.glob("game-sp_*"))
         candidates.update(module_dir.glob("game-mp_*"))
@@ -241,7 +241,7 @@ def validate_linux_runtime_payload(runtime_root: Path, arch: str) -> list[tuple[
         runtime_root / "assets" / "splash" / "doom3_splash.bmp",
         "Linux startup splash bitmap",
     )
-    game_dir = require_directory(runtime_root / "baseoq4", "Linux runtime game directory")
+    game_dir = require_directory(runtime_root / "baseod3", "Linux runtime game directory")
     expected = expected_runtime_binaries(runtime_root, arch)
     for binary_path, stem, _ in expected:
         require_regular_file(binary_path, f"Linux {stem} binary")
@@ -311,7 +311,7 @@ def dump_elf_section(path: Path, section_name: str) -> bytes:
     objcopy = shutil.which("objcopy")
     if objcopy is None:
         raise ReleaseArtifactError("Linux ELF section validation requires objcopy")
-    with tempfile.TemporaryDirectory(prefix="openq4-elf-section-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="opend3-elf-section-") as temp_dir:
         section_path = Path(temp_dir) / "section.bin"
         copied_elf_path = Path(temp_dir) / "validated-elf-copy"
         completed = subprocess.run(
@@ -481,7 +481,7 @@ def expected_archive_root_name(archive_path: Path) -> str:
             f"Linux runtime archive must use the expected {suffix} suffix: {archive_path.name}"
         )
     name = archive_path.name[: -len(suffix)]
-    if re.fullmatch(r"openq4-[A-Za-z0-9._-]+-linux-(?:x64|arm64)(?:-preview)?", name) is None:
+    if re.fullmatch(r"opend3-[A-Za-z0-9._-]+-linux-(?:x64|arm64)(?:-preview)?", name) is None:
         raise ReleaseArtifactError(f"Linux runtime archive has an unsafe package stem: {name!r}")
     return name
 
@@ -592,7 +592,7 @@ def verify_archive(args: argparse.Namespace) -> None:
     require_native_arch(args.arch)
     work_root = require_directory(args.work_root, "Linux archive verification work root")
     with tempfile.TemporaryDirectory(
-        prefix=f"openq4-linux-{args.arch}-archive-", dir=work_root
+        prefix=f"opend3-linux-{args.arch}-archive-", dir=work_root
     ) as temp_dir:
         extraction_root = Path(temp_dir) / "extract"
         runtime_root = extract_linux_runtime_archive(args.archive, extraction_root)

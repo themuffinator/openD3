@@ -47,10 +47,10 @@ typedef BOOL(WINAPI* MiniDumpWriteDumpFn)(
 static volatile LONG g_crashHandlerEntered = 0;
 static LPTOP_LEVEL_EXCEPTION_FILTER g_prevExceptionFilter = NULL;
 
-static const DWORD OPENQ4_EXCEPTION_INVALID_PARAMETER = 0xE0000001;
-static const DWORD OPENQ4_EXCEPTION_PURECALL = 0xE0000002;
-static const DWORD OPENQ4_EXCEPTION_ABORT = 0xE0000003;
-static const DWORD OPENQ4_EXCEPTION_TERMINATE = 0xE0000004;
+static const DWORD OPEND3_EXCEPTION_INVALID_PARAMETER = 0xE0000001;
+static const DWORD OPEND3_EXCEPTION_PURECALL = 0xE0000002;
+static const DWORD OPEND3_EXCEPTION_ABORT = 0xE0000003;
+static const DWORD OPEND3_EXCEPTION_TERMINATE = 0xE0000004;
 
 /*
 ====================
@@ -120,10 +120,10 @@ static const char* Sys_GetExceptionCodeName(DWORD code) {
 	case EXCEPTION_PRIV_INSTRUCTION: return "EXCEPTION_PRIV_INSTRUCTION";
 	case EXCEPTION_SINGLE_STEP: return "EXCEPTION_SINGLE_STEP";
 	case EXCEPTION_STACK_OVERFLOW: return "EXCEPTION_STACK_OVERFLOW";
-	case OPENQ4_EXCEPTION_INVALID_PARAMETER: return "OPENQ4_INVALID_PARAMETER";
-	case OPENQ4_EXCEPTION_PURECALL: return "OPENQ4_PURECALL";
-	case OPENQ4_EXCEPTION_ABORT: return "OPENQ4_ABORT";
-	case OPENQ4_EXCEPTION_TERMINATE: return "OPENQ4_TERMINATE";
+	case OPEND3_EXCEPTION_INVALID_PARAMETER: return "OPEND3_INVALID_PARAMETER";
+	case OPEND3_EXCEPTION_PURECALL: return "OPEND3_PURECALL";
+	case OPEND3_EXCEPTION_ABORT: return "OPEND3_ABORT";
+	case OPEND3_EXCEPTION_TERMINATE: return "OPEND3_TERMINATE";
 	default: return "EXCEPTION_UNKNOWN";
 	}
 }
@@ -143,7 +143,7 @@ Sys_InvalidParameterHandler
 ====================
 */
 static void __cdecl Sys_InvalidParameterHandler(const wchar_t*, const wchar_t*, const wchar_t*, unsigned int, uintptr_t) {
-	Sys_RaiseSyntheticException(OPENQ4_EXCEPTION_INVALID_PARAMETER);
+	Sys_RaiseSyntheticException(OPEND3_EXCEPTION_INVALID_PARAMETER);
 }
 
 /*
@@ -152,7 +152,7 @@ Sys_PurecallHandler
 ====================
 */
 static void __cdecl Sys_PurecallHandler(void) {
-	Sys_RaiseSyntheticException(OPENQ4_EXCEPTION_PURECALL);
+	Sys_RaiseSyntheticException(OPEND3_EXCEPTION_PURECALL);
 }
 
 /*
@@ -161,7 +161,7 @@ Sys_AbortSignalHandler
 ====================
 */
 static void __cdecl Sys_AbortSignalHandler(int) {
-	Sys_RaiseSyntheticException(OPENQ4_EXCEPTION_ABORT);
+	Sys_RaiseSyntheticException(OPEND3_EXCEPTION_ABORT);
 }
 
 /*
@@ -170,7 +170,7 @@ Sys_TerminateHandler
 ====================
 */
 static void __cdecl Sys_TerminateHandler(void) {
-	Sys_RaiseSyntheticException(OPENQ4_EXCEPTION_TERMINATE);
+	Sys_RaiseSyntheticException(OPEND3_EXCEPTION_TERMINATE);
 }
 
 /*

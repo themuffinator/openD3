@@ -200,8 +200,8 @@ void PopulateOld( int existing ) {
 	if ( existing & 2 ) WriteFile( At( Names[1] ), Preview( "old" ) );
 	if ( existing & 4 ) WriteFile( At( Names[2] ), Payload( "old", 4096 ) );
 }
-std::array<openq4::SaveGameTransactionFile, 3> SlotFiles() {
-	std::array<openq4::SaveGameTransactionFile, 3> files;
+std::array<opend3::SaveGameTransactionFile, 3> SlotFiles() {
+	std::array<opend3::SaveGameTransactionFile, 3> files;
 	for ( int i = 0; i < 3; ++i ) {
 		files[i].final = Utf8( At( Names[i] ) );
 		files[i].temporary = files[i].final + ".tmp";
@@ -230,7 +230,7 @@ int ChildCommit( int killAfter ) {
 	auto files = SlotFiles();
 	KillingOps ops;
 	ops.remaining = killAfter;
-	const auto result = openq4::CommitSaveGame( files, ops, false );
+	const auto result = opend3::CommitSaveGame( files, ops, false );
 	return result.committed ? 0 : 2;
 }
 
@@ -343,7 +343,7 @@ void Matrix() {
 	Check( lock != INVALID_HANDLE_VALUE, "lock old payload" );
 	auto files = SlotFiles();
 	sessionSaveCommitFileOps_t ops;
-	const auto result = openq4::CommitSaveGame( files, ops, false );
+	const auto result = opend3::CommitSaveGame( files, ops, false );
 	CloseHandle( lock );
 	Check( !result.committed && !result.recoveryNeeded, "locked payload refuses and rolls back" );
 	CheckWhole( "old", 7, "locked payload" );
@@ -417,7 +417,7 @@ void Bench( const std::vector<std::size_t>& mebibytes, int repeat ) {
 			auto files = SlotFiles();
 			sessionSaveCommitFileOps_t durable;
 			begin = std::chrono::steady_clock::now();
-			Check( openq4::CommitSaveGame( files, durable, false ).committed, "bench durable commit" );
+			Check( opend3::CommitSaveGame( files, durable, false ).committed, "bench durable commit" );
 			const double commitDurable = Seconds( begin );
 			Check( durable.durabilityUnconfirmed.empty(), "filesystem confirmed every rename: " + durable.durabilityUnconfirmed );
 			// The pre-change commit for comparison, from the same state: the new
@@ -429,7 +429,7 @@ void Bench( const std::vector<std::size_t>& mebibytes, int repeat ) {
 			files = SlotFiles();
 			PlainOps plain;
 			begin = std::chrono::steady_clock::now();
-			Check( openq4::CommitSaveGame( files, plain, false ).committed, "bench plain commit" );
+			Check( opend3::CommitSaveGame( files, plain, false ).committed, "bench plain commit" );
 			const double commitPlain = Seconds( begin );
 			begin = std::chrono::steady_clock::now();
 			Check( CrcFile( At( Names[2] ), bodyBytes ) == crc, "bench load checksum" );

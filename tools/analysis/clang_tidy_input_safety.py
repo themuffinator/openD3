@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run a focused clang-tidy gate over openQ4 input-safety code.
+"""Run a focused clang-tidy gate over openD3 input-safety code.
 
 Meson's Windows compilation database describes the MSVC build accurately, but
 clang-tidy cannot consume MSVC's binary PCH or its Windows-1252 charset flags.
@@ -131,9 +131,9 @@ def choose_production_entry(database: Sequence[dict[str, Any]], source: Path) ->
     def priority(entry: dict[str, Any]) -> tuple[int, str]:
         arguments = compile_arguments(entry)
         joined = " ".join(arguments).lower()
-        if "openq4-client" in joined:
+        if "opend3-client" in joined:
             rank = 0
-        elif "openq4-ded" in joined:
+        elif "opend3-ded" in joined:
             rank = 1
         else:
             rank = 2

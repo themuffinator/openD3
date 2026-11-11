@@ -125,7 +125,7 @@ def world_time(section):
 
 
 def run(args, root, speakers, steps):
-    game = root / 'save' / 'baseoq4'
+    game = root / 'save' / 'baseod3'
     game.mkdir(parents=True, exist_ok=True)
     fixtures(game, args.fixtures)
     (game / 'audio-output.cfg').write_text('\n'.join(steps) + '\n', encoding='utf-8')
@@ -134,7 +134,7 @@ def run(args, root, speakers, steps):
                       '\n[wave]\nfile=' + str(root / 'mix.wav') + '\n', encoding='utf-8')
     cvars = {
         'fs_basepath': str(args.assets.resolve()), 'fs_savepath': str(root / 'save'), 'fs_devpath': str(root / 'save'),
-        'fs_game': 'baseoq4', 'com_gameMode': 'SP', 'si_gameType': 'singleplayer', 'logFile': '2', 'logFileName': 'logs/openq4.log',
+        'fs_game': 'baseod3', 'com_gameMode': 'SP', 'si_gameType': 'singleplayer', 'logFile': '2', 'logFileName': 'logs/opend3.log',
         'r_fullscreen': '0', 'r_fullscreenDesktop': '0', 'r_borderless': '0', 'r_borderlessDefaultMigrated': '1',
         'win_allowMultipleInstances': '1', 'r_hiddenWindow': '1', 'r_windowWidth': '1280', 'r_windowHeight': '720',
         'r_mode': '-1', 'r_customWidth': '1280', 'r_customHeight': '720', 'r_renderApi': args.renderer, 'r_multiSamples': '0',
@@ -144,7 +144,7 @@ def run(args, root, speakers, steps):
         'com_skipLoadingContinue': '1', 'com_maxfps': '60', 'ui_autoJoin': '0', 'ui_retained': '1',
         'sys_lang': 'english', 'g_autoExecAfterMapLoad': 'audio-output.cfg', 'g_autoExecAfterMapLoadDelayMs': '3000',
     }
-    exe = ROOT / '.install' / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64')
+    exe = ROOT / '.install' / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64')
     command = [str(exe)]
     for key, value in cvars.items():
         command += ['+set', key, value]
@@ -157,7 +157,7 @@ def run(args, root, speakers, steps):
         options.update(startupinfo=startup, creationflags=subprocess.CREATE_NO_WINDOW)
     with (root / 'process.log').open('w') as out:
         process = subprocess.run(command, cwd=ROOT / '.install', stdout=out, stderr=subprocess.STDOUT, timeout=args.timeout, **options)
-    log = (game / 'logs/openq4.log').read_text(encoding='utf-8', errors='replace')
+    log = (game / 'logs/opend3.log').read_text(encoding='utf-8', errors='replace')
     return process.returncode, log, command
 
 
@@ -324,10 +324,10 @@ def main():
         report['runs'][name] = {'checks': checks, **details}
         passed &= all(checks.values())
         print(json.dumps({name: checks}, indent=2))
-    exe = ROOT / '.install' / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64')
+    exe = ROOT / '.install' / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64')
     report.update(passed=passed, executable_sha256=hashlib.sha256(exe.read_bytes()).hexdigest(),
                   runtime_sha256={str(p.relative_to(ROOT / '.install')): hashlib.sha256(p.read_bytes()).hexdigest()
-                                  for p in (ROOT / '.install/baseoq4').iterdir()
+                                  for p in (ROOT / '.install/baseod3').iterdir()
                                   if p.is_file() and p.suffix.lower() in ('.dll', '.so', '.dylib', '.pk4')},
                   harness_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
     (output_root / 'result.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')

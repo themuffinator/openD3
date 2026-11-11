@@ -66,7 +66,7 @@ struct GUI {
 using idUserInterface=GUI;
 struct Common { int GetPresentationTime() const { return 0; } } commonLocal;
 Common* common=&commonLocal;
-namespace openq4 { void NativeInputBeforeSessionChange() {} }
+namespace opend3 { void NativeInputBeforeSessionChange() {} }
 struct idStr { static int Icmp(const char* a,const char* b) { return std::strcmp(a,b); } };
 bool UI_IsRetainedPath(const char* name) { return std::strstr(name,".q4ui")!=nullptr; }
 struct idSessionLocal {

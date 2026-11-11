@@ -68,7 +68,7 @@ typedef enum {
 typedef enum {
 	AUTH_NONE = 0,	// no reply yet
 	AUTH_OK,		// this client is good
-	AUTH_WAIT,		// legacy auth state (unused in openQ4)
+	AUTH_WAIT,		// legacy auth state (unused in openD3)
 	AUTH_DENY,		// denied - don't send me anything about this client anymore
 	AUTH_MAXSTATES
 } authReply_t;
@@ -166,7 +166,7 @@ typedef struct serverClient_s {
 	int					snapshotSequence;
 	int					acknowledgeSnapshotSequence;
 	int					numDuplicatedUsercmds;
-	// openQ4: what a client actually receives, as opposed to what
+	// openD3: what a client actually receives, as opposed to what
 	// net_serverSnapshotDelay asks for.  The channel's token bucket refuses a send
 	// until the previous packet has been paid for at net_serverMaxClientRate, so a
 	// snapshot larger than rate/snapshotHz silently pushes the real update rate

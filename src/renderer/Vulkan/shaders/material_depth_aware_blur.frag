@@ -1,6 +1,6 @@
 #version 450
 
-// Native Vulkan port of openQ4's live glprogs/blur.fs depth-aware
+// Native Vulkan port of openD3's live glprogs/blur.fs depth-aware
 // postprocess. This is intentionally a separate family from the retail
 // glsl/Blur.glsl contract.
 //

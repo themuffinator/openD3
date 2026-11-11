@@ -200,7 +200,7 @@ def validate_mover_images(save: Path) -> tuple[list[str], dict]:
     failures = []
     metrics = {}
     for phase in PHASES:
-        paths = {kind: save / f"baseoq4/screenshots/{phase}_{kind}.tga"
+        paths = {kind: save / f"baseod3/screenshots/{phase}_{kind}.tga"
                  for kind in ("cached", "fresh", "fresh_repeat", "unshadowed")}
         if not all(path.is_file() for path in paths.values()):
             continue  # The common runner reports missing captures.

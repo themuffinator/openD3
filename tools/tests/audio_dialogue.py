@@ -87,7 +87,7 @@ def main():
     args = parser.parse_args()
     verify_runtime_is_current(ROOT / '.install')
     root = args.output.resolve()
-    game_dir = 'q4xbase' if args.awakening else 'baseoq4'
+    game_dir = 'q4xbase' if args.awakening else 'baseod3'
     game = root / 'save' / game_dir
     game.mkdir(parents=True, exist_ok=True)
     tone(game / 'sound/vo_english/audio_test/dialogue.wav', 440)
@@ -127,8 +127,8 @@ def main():
     probe('RESTORE')
     steps.extend(['listSounds audio_test', 'writeConfig "audio-dialogue-saved.cfg"', 'testRadioChatter stop',
                   'testGUI guis/mainmenu.gui', 'waitMsec 1000',
-                  'openq4_guiAction main_b_settings', 'waitMsec 1000',
-                  'openq4_guiAction set_b_audio', 'waitMsec 500',
+                  'opend3_guiAction main_b_settings', 'waitMsec 1000',
+                  'opend3_guiAction set_b_audio', 'waitMsec 500',
                   'screenshot "screenshots/audio-dialogue.tga"', 'testGUI',
                   'echo AUDIO_DIALOGUE_COMPLETE', 'quit'])
     (game / 'audio-dialogue.cfg').write_text('\n'.join(steps) + '\n', encoding='utf-8')
@@ -137,7 +137,7 @@ def main():
                       '\nhrtf=false\n[wave]\nfile=' + str(root / 'mix.wav') + '\n', encoding='utf-8')
     cvars = {
         'fs_basepath': str(args.assets.resolve()), 'fs_savepath': str(root / 'save'), 'fs_devpath': str(root / 'save'),
-        'fs_game': game_dir, 'com_gameMode': 'SP', 'si_gameType': 'singleplayer', 'logFile': '2', 'logFileName': 'logs/openq4.log',
+        'fs_game': game_dir, 'com_gameMode': 'SP', 'si_gameType': 'singleplayer', 'logFile': '2', 'logFileName': 'logs/opend3.log',
         'r_fullscreen': '0', 'r_fullscreenDesktop': '0', 'r_borderless': '0', 'r_borderlessDefaultMigrated': '1',
         'win_allowMultipleInstances': '1',
         'r_hiddenWindow': '1', 'r_windowWidth': '1280', 'r_windowHeight': '720', 'r_mode': '-1',
@@ -157,7 +157,7 @@ def main():
         cvars.update(s_debugHardware='1')
     if args.awakening:
         cvars['fs_awakeningpath'] = str(args.awakening.resolve(strict=True))
-    exe = ROOT / '.install' / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64')
+    exe = ROOT / '.install' / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64')
     command = [str(exe)]
     for key, value in cvars.items():
         command += ['+set', key, value]
@@ -170,7 +170,7 @@ def main():
         options.update(startupinfo=startup, creationflags=subprocess.CREATE_NO_WINDOW)
     with (root / 'process.log').open('w') as output:
         run = subprocess.run(command, cwd=ROOT / '.install', stdout=output, stderr=subprocess.STDOUT, timeout=240, **options)
-    log = (game / 'logs/openq4.log').read_text(encoding='utf-8', errors='replace')
+    log = (game / 'logs/opend3.log').read_text(encoding='utf-8', errors='replace')
     rows = {}
     for name, section in re.findall(r'^AUDIO_DIALOGUE_(\w+)\s*\n(.*?)(?=^AUDIO_DIALOGUE_|\Z)', log, re.M | re.S):
         rows[name] = {Path(sample).stem: [float(gain), float(pitch)] for gain, pitch, sample in
@@ -191,7 +191,7 @@ def main():
         "Couldn't open savegame" not in log and bool(re.search(
         r"^AUDIO_DIALOGUE_SAVE\s*\n(?:.*\n)*?Saved 'audio_dialogue'\s*\n(?:.*\n)*?Map: ", log, re.M))
     # Engine settings are deliberately shared by the two SP campaigns.
-    saved = root / 'save/baseoq4/audio-dialogue-saved.cfg'
+    saved = root / 'save/baseod3/audio-dialogue-saved.cfg'
     checks['archived'] = saved.exists() and bool(re.search(r'seta s_dialogueVolume "0\.6"', saved.read_text()))
     checks['engine_capture'] = (game / 'screenshots/audio-dialogue.tga').is_file()
     checks['rendered_audio'] = (root / 'mix.wav').is_file() and (root / 'mix.wav').stat().st_size > 48000
@@ -225,7 +225,7 @@ def main():
               'center_ratio_median': center_ratio if args.speakers == 6 else None, 'speakers': args.speakers, 'language': args.language, 'compressed': args.compressed, 'returncode': run.returncode,
               'executable_sha256': hashlib.sha256(exe.read_bytes()).hexdigest(), 'command': command,
               'runtime_sha256': {str(p.relative_to(ROOT / '.install')): hashlib.sha256(p.read_bytes()).hexdigest()
-                                 for p in (ROOT / '.install/baseoq4').iterdir()
+                                 for p in (ROOT / '.install/baseod3').iterdir()
                                  if p.is_file() and p.suffix.lower() in ('.dll', '.so', '.dylib', '.pk4')},
               'harness_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
               'microphone': False, 'host_input': False, 'output': 'OpenAL wave', 'passed': all(checks.values())}

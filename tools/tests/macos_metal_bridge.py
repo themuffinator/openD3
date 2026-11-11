@@ -121,8 +121,8 @@ def load_package_module():
 
 
 def load_validation_module():
-    validation_path = ROOT / "tools" / "validation" / "openq4_validate.py"
-    spec = importlib.util.spec_from_file_location("openq4_validate_for_macos_test", validation_path)
+    validation_path = ROOT / "tools" / "validation" / "opend3_validate.py"
+    spec = importlib.util.spec_from_file_location("opend3_validate_for_macos_test", validation_path)
     if spec is None or spec.loader is None:
         raise AssertionError(f"Unable to import validation helper: {validation_path}")
 
@@ -146,7 +146,7 @@ def make_macos_plist_bytes(package, version: str) -> bytes:
 
 def make_version_manifest_bytes(version: str, version_tag: str, platform: str, arch: str) -> bytes:
     return (
-        "openQ4\n"
+        "openD3\n"
         f"version={version}\n"
         f"version_tag={version_tag}\n"
         f"platform={platform}\n"
@@ -157,9 +157,9 @@ def make_version_manifest_bytes(version: str, version_tag: str, platform: str, a
 def make_macos_localized_info_bytes(version: str) -> bytes:
     return (
         "/* Localized versions of Info.plist keys */\n\n"
-        'CFBundleName = "openQ4";\n'
+        'CFBundleName = "openD3";\n'
         f'CFBundleShortVersionString = "{version}";\n'
-        f'CFBundleGetInfoString = "openQ4 version {version}, Copyright 2026 DarkMatter Productions";\n'
+        f'CFBundleGetInfoString = "openD3 version {version}, Copyright 2026 DarkMatter Productions";\n'
         'NSHumanReadableCopyright = "Copyright 2026 DarkMatter Productions";\n'
     ).encode("utf-8")
 
@@ -177,9 +177,9 @@ def make_macos_package_root_error_bytes(package, locale: str = "English") -> byt
 def make_macos_support_info_script_bytes(package) -> bytes:
     lines = [
         "#!/bin/sh",
-        "OPENQ4_PACKAGE_ROOT=${OPENQ4_PACKAGE_ROOT:-.}",
+        "OPEND3_PACKAGE_ROOT=${OPEND3_PACKAGE_ROOT:-.}",
         "HOME_DIR=${HOME:-}",
-        "ARCHIVE_TMP=${ARCHIVE_TMP:-openq4-macos-support.tmp.tar.gz}",
+        "ARCHIVE_TMP=${ARCHIVE_TMP:-opend3-macos-support.tmp.tar.gz}",
         "MAX_SUPPORT_TEXT_BYTES=2097152",
         "MAX_CRASH_REPORT_BYTES=8388608",
         "MAX_SUPPORT_ARCHIVE_BYTES=134217728",
@@ -187,14 +187,14 @@ def make_macos_support_info_script_bytes(package) -> bytes:
         "limit_stream_tail() { cat; }",
         'echo "Support report output is limited to the final"',
         "write_bounded_report() {",
-        "write_openq4_log_candidate_paths() {",
-        "write_openq4_renderer_config_candidate_paths() {",
+        "write_opend3_log_candidate_paths() {",
+        "write_opend3_renderer_config_candidate_paths() {",
         "redact_text() { cat; }",
         "contains_control_chars() { return 1; }",
         'echo "Support package root must not contain control characters"',
         'echo "Support output directory must not contain control characters"',
-        'echo "HOME was not set; home-scoped openq4.log files were skipped."',
-        'echo "HOME was not set; saved openQ4Config.cfg paths were skipped."',
+        'echo "HOME was not set; home-scoped opend3.log files were skipped."',
+        'echo "HOME was not set; saved openD3Config.cfg paths were skipped."',
         'echo "logs/renderer-config.txt"',
         'echo "Game module search failed:"',
         'echo "Game module load failed:"',
@@ -203,7 +203,7 @@ def make_macos_support_info_script_bytes(package) -> bytes:
         'echo "HOME was not set; the macOS DiagnosticReports directory could not be located."',
         'echo ".XXXXXX.tar.gz.tmp"',
         'echo "does not dump the environment"',
-        'echo "does not launch openQ4"',
+        'echo "does not launch openD3"',
         'echo "does not copy retail q4base PK4 assets"',
         'echo "truncated copy failed; source was not copied"',
         'COPYFILE_DISABLE=1 tar -czf "${ARCHIVE_TMP}" .',
@@ -222,9 +222,9 @@ def make_macos_support_info_script_bytes(package) -> bytes:
 def make_validation_support_info_script_bytes(validator) -> bytes:
     lines = [
         "#!/bin/sh",
-        "OPENQ4_PACKAGE_ROOT=${OPENQ4_PACKAGE_ROOT:-.}",
+        "OPEND3_PACKAGE_ROOT=${OPEND3_PACKAGE_ROOT:-.}",
         "HOME_DIR=${HOME:-}",
-        "ARCHIVE_TMP=${ARCHIVE_TMP:-openq4-macos-support.tmp.tar.gz}",
+        "ARCHIVE_TMP=${ARCHIVE_TMP:-opend3-macos-support.tmp.tar.gz}",
         "MAX_SUPPORT_TEXT_BYTES=2097152",
         "MAX_CRASH_REPORT_BYTES=8388608",
         "MAX_SUPPORT_ARCHIVE_BYTES=134217728",
@@ -232,14 +232,14 @@ def make_validation_support_info_script_bytes(validator) -> bytes:
         "limit_stream_tail() { cat; }",
         'echo "Support report output is limited to the final"',
         "write_bounded_report() {",
-        "write_openq4_log_candidate_paths() {",
-        "write_openq4_renderer_config_candidate_paths() {",
+        "write_opend3_log_candidate_paths() {",
+        "write_opend3_renderer_config_candidate_paths() {",
         "redact_text() { cat; }",
         "contains_control_chars() { return 1; }",
         'echo "Support package root must not contain control characters"',
         'echo "Support output directory must not contain control characters"',
-        'echo "HOME was not set; home-scoped openq4.log files were skipped."',
-        'echo "HOME was not set; saved openQ4Config.cfg paths were skipped."',
+        'echo "HOME was not set; home-scoped opend3.log files were skipped."',
+        'echo "HOME was not set; saved openD3Config.cfg paths were skipped."',
         'echo "logs/renderer-config.txt"',
         'echo "Game module search failed:"',
         'echo "Game module load failed:"',
@@ -248,7 +248,7 @@ def make_validation_support_info_script_bytes(validator) -> bytes:
         'echo "HOME was not set; the macOS DiagnosticReports directory could not be located."',
         'echo ".XXXXXX.tar.gz.tmp"',
         'echo "does not dump the environment"',
-        'echo "does not launch openQ4"',
+        'echo "does not launch openD3"',
         'echo "does not copy retail q4base PK4 assets"',
         'echo "truncated copy failed; source was not copied"',
         'COPYFILE_DISABLE=1 tar -czf "${ARCHIVE_TMP}" .',
@@ -270,7 +270,7 @@ def make_macos_code_resources_bytes() -> bytes:
 
 def make_macos_symbol_manifest_bytes(package_name: str, arch: str, version: str, version_tag: str) -> bytes:
     return (
-        "openQ4 macOS symbols\n"
+        "openD3 macOS symbols\n"
         "format=1\n"
         f"version={version}\n"
         f"version_tag={version_tag}\n"
@@ -281,37 +281,37 @@ def make_macos_symbol_manifest_bytes(package_name: str, arch: str, version: str,
         f"symbol_archive={package_name}-symbols.tar.xz\n"
         "\n"
         "binaries:\n"
-        "- path=openQ4.app/Contents/MacOS/openQ4\n"
+        "- path=openD3.app/Contents/MacOS/openD3\n"
         f"  sha256={'0' * 64}\n"
         "  size=1\n"
-        "  macho_uuid=UUID: 00000000-0000-0000-0000-000000000001 (arm64) openQ4\n"
-        "  dsym=dSYMs/openQ4.app.dSYM\n"
-        f"- path=openQ4-client_{arch}\n"
+        "  macho_uuid=UUID: 00000000-0000-0000-0000-000000000001 (arm64) openD3\n"
+        "  dsym=dSYMs/openD3.app.dSYM\n"
+        f"- path=openD3-client_{arch}\n"
         f"  sha256={'1' * 64}\n"
         "  size=1\n"
-        f"  macho_uuid=UUID: 00000000-0000-0000-0000-000000000002 (arm64) openQ4-client_{arch}\n"
-        f"  dsym=dSYMs/openQ4-client_{arch}.dSYM\n"
-        f"- path=openQ4-ded_{arch}\n"
+        f"  macho_uuid=UUID: 00000000-0000-0000-0000-000000000002 (arm64) openD3-client_{arch}\n"
+        f"  dsym=dSYMs/openD3-client_{arch}.dSYM\n"
+        f"- path=openD3-ded_{arch}\n"
         f"  sha256={'2' * 64}\n"
         "  size=1\n"
-        f"  macho_uuid=UUID: 00000000-0000-0000-0000-000000000003 (arm64) openQ4-ded_{arch}\n"
-        f"  dsym=dSYMs/openQ4-ded_{arch}.dSYM\n"
-        f"- path=openQ4.app/Contents/Frameworks/game-sp_{arch}.dylib\n"
+        f"  macho_uuid=UUID: 00000000-0000-0000-0000-000000000003 (arm64) openD3-ded_{arch}\n"
+        f"  dsym=dSYMs/openD3-ded_{arch}.dSYM\n"
+        f"- path=openD3.app/Contents/Frameworks/game-sp_{arch}.dylib\n"
         f"  sha256={'3' * 64}\n"
         "  size=1\n"
         f"  macho_uuid=UUID: 00000000-0000-0000-0000-000000000004 (arm64) game-sp_{arch}.dylib\n"
         f"  dsym=dSYMs/game-sp_{arch}.dylib.dSYM\n"
-        f"- path=openQ4.app/Contents/Frameworks/game-mp_{arch}.dylib\n"
+        f"- path=openD3.app/Contents/Frameworks/game-mp_{arch}.dylib\n"
         f"  sha256={'4' * 64}\n"
         "  size=1\n"
         f"  macho_uuid=UUID: 00000000-0000-0000-0000-000000000005 (arm64) game-mp_{arch}.dylib\n"
         f"  dsym=dSYMs/game-mp_{arch}.dylib.dSYM\n"
-        # The Vulkan renderer module is openQ4-built, so it carries a dSYM and
+        # The Vulkan renderer module is openD3-built, so it carries a dSYM and
         # belongs in the manifest exactly like the game modules. libMoltenVK.dylib
         # ships beside it in Contents/Frameworks but is deliberately absent here:
         # it is a third-party prebuilt with no DWARF, and macos_symbol_targets()
         # excludes it for the same reason.
-        f"- path=openQ4.app/Contents/Frameworks/renderer-vk_{arch}.dylib\n"
+        f"- path=openD3.app/Contents/Frameworks/renderer-vk_{arch}.dylib\n"
         f"  sha256={'5' * 64}\n"
         "  size=1\n"
         f"  macho_uuid=UUID: 00000000-0000-0000-0000-000000000006 (arm64) renderer-vk_{arch}.dylib\n"
@@ -342,52 +342,52 @@ def make_macos_archive_entries(
             0o644,
         ),
         f"{prefix}{package.MACOS_SUPPORT_INFO_SCRIPT_NAME}": (make_macos_support_info_script_bytes(package), 0o755),
-        f"{prefix}openQ4-client_{arch}": (client_bytes, client_mode),
-        f"{prefix}openQ4-ded_{arch}": (b"dedicated-binary\n", dedicated_mode),
-        f"{prefix}openQ4.app/Contents/Frameworks/game-sp_{arch}.dylib": (b"sp-module\n", 0o755),
-        f"{prefix}openQ4.app/Contents/Frameworks/game-mp_{arch}.dylib": (b"mp-module\n", 0o755),
+        f"{prefix}openD3-client_{arch}": (client_bytes, client_mode),
+        f"{prefix}openD3-ded_{arch}": (b"dedicated-binary\n", dedicated_mode),
+        f"{prefix}openD3.app/Contents/Frameworks/game-sp_{arch}.dylib": (b"sp-module\n", 0o755),
+        f"{prefix}openD3.app/Contents/Frameworks/game-mp_{arch}.dylib": (b"mp-module\n", 0o755),
         # The Vulkan renderer module and the MoltenVK runtime it loads are both
         # signed executable code inside Contents/Frameworks, so both carry the
         # same 0o755 archive mode the game modules do.
-        f"{prefix}openQ4.app/Contents/Frameworks/renderer-vk_{arch}.dylib": (b"renderer-vk-module\n", 0o755),
-        f"{prefix}openQ4.app/Contents/Frameworks/{package.MACOS_MOLTENVK_DYLIB_NAME}": (
+        f"{prefix}openD3.app/Contents/Frameworks/renderer-vk_{arch}.dylib": (b"renderer-vk-module\n", 0o755),
+        f"{prefix}openD3.app/Contents/Frameworks/{package.MACOS_MOLTENVK_DYLIB_NAME}": (
             b"moltenvk-runtime\n",
             0o755,
         ),
-        f"{prefix}openQ4.app/Contents/Frameworks/{package.MACOS_OPENAL_SOFT_DYLIB_NAME}": (
+        f"{prefix}openD3.app/Contents/Frameworks/{package.MACOS_OPENAL_SOFT_DYLIB_NAME}": (
             b"openal-soft-runtime\n",
             0o755,
         ),
-        f"{prefix}openQ4.app/Contents/Resources/licenses/openal-soft/COPYING": (b"lgpl\n", 0o644),
-        f"{prefix}openQ4.app/Contents/Resources/licenses/openal-soft/LICENSE-pffft": (b"pffft-license\n", 0o644),
-        f"{prefix}openQ4.app/Contents/Resources/licenses/openal-soft/LICENSE-fmt": (b"fmt-license\n", 0o644),
-        f"{prefix}openQ4.app/Contents/Resources/licenses/openal-soft/LICENSE-gsl": (b"gsl-license\n", 0o644),
-        f"{prefix}openQ4.app/Contents/Resources/licenses/openal-soft/SOURCE.md": (b"source\n", 0o644),
-        f"{prefix}openQ4.app/Contents/Resources/licenses/openal-soft/openal-soft-1.25.2.tar.gz": (
+        f"{prefix}openD3.app/Contents/Resources/licenses/openal-soft/COPYING": (b"lgpl\n", 0o644),
+        f"{prefix}openD3.app/Contents/Resources/licenses/openal-soft/LICENSE-pffft": (b"pffft-license\n", 0o644),
+        f"{prefix}openD3.app/Contents/Resources/licenses/openal-soft/LICENSE-fmt": (b"fmt-license\n", 0o644),
+        f"{prefix}openD3.app/Contents/Resources/licenses/openal-soft/LICENSE-gsl": (b"gsl-license\n", 0o644),
+        f"{prefix}openD3.app/Contents/Resources/licenses/openal-soft/SOURCE.md": (b"source\n", 0o644),
+        f"{prefix}openD3.app/Contents/Resources/licenses/openal-soft/openal-soft-1.25.2.tar.gz": (
             b"source-archive\n",
             0o644,
         ),
-        f"{prefix}openQ4.app/Contents/Resources/{package.GAME_DIR_NAME}/mod.json": (b'{"version":"0.2.000"}\n', 0o644),
+        f"{prefix}openD3.app/Contents/Resources/{package.GAME_DIR_NAME}/mod.json": (b'{"version":"0.2.000"}\n', 0o644),
         **{
-            f"{prefix}openQ4.app/Contents/Resources/{package.GAME_DIR_NAME}/{pak_name}": (b"pk4\n", 0o644)
-            for pak_name in package.OPENQ4_PACK_NAMES
+            f"{prefix}openD3.app/Contents/Resources/{package.GAME_DIR_NAME}/{pak_name}": (b"pk4\n", 0o644)
+            for pak_name in package.OPEND3_PACK_NAMES
         },
-        f"{prefix}openQ4.app/Contents/Resources/assets/splash/doom3_splash.bmp": (b"bmp\n", 0o644),
-        f"{prefix}openQ4.app/Contents/Info.plist": (plist_bytes, 0o644),
-        f"{prefix}openQ4.app/Contents/PkgInfo": (package.MACOS_PKGINFO_BYTES, 0o644),
-        f"{prefix}openQ4.app/Contents/MacOS/openQ4": (client_bytes, app_exec_mode),
-        f"{prefix}openQ4.app/Contents/Resources/openQ4.icns": (b"icns\n", 0o644),
-        f"{prefix}openQ4.app/Contents/Resources/VERSION.txt": (
+        f"{prefix}openD3.app/Contents/Resources/assets/splash/doom3_splash.bmp": (b"bmp\n", 0o644),
+        f"{prefix}openD3.app/Contents/Info.plist": (plist_bytes, 0o644),
+        f"{prefix}openD3.app/Contents/PkgInfo": (package.MACOS_PKGINFO_BYTES, 0o644),
+        f"{prefix}openD3.app/Contents/MacOS/openD3": (client_bytes, app_exec_mode),
+        f"{prefix}openD3.app/Contents/Resources/openD3.icns": (b"icns\n", 0o644),
+        f"{prefix}openD3.app/Contents/Resources/VERSION.txt": (
             make_version_manifest_bytes(version, version_tag, "macos", arch),
             0o644,
         ),
-        f"{prefix}openQ4.app/Contents/Resources/English.lproj/InfoPlist.strings": (localized_info, 0o644),
-        f"{prefix}openQ4.app/Contents/Resources/French.lproj/InfoPlist.strings": (localized_info, 0o644),
-        f"{prefix}openQ4.app/Contents/Resources/English.lproj/{package.MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME}": (
+        f"{prefix}openD3.app/Contents/Resources/English.lproj/InfoPlist.strings": (localized_info, 0o644),
+        f"{prefix}openD3.app/Contents/Resources/French.lproj/InfoPlist.strings": (localized_info, 0o644),
+        f"{prefix}openD3.app/Contents/Resources/English.lproj/{package.MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME}": (
             make_macos_package_root_error_bytes(package, "English"),
             0o644,
         ),
-        f"{prefix}openQ4.app/Contents/Resources/French.lproj/{package.MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME}": (
+        f"{prefix}openD3.app/Contents/Resources/French.lproj/{package.MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME}": (
             make_macos_package_root_error_bytes(package, "French"),
             0o644,
         ),
@@ -411,7 +411,7 @@ def make_macos_symbol_archive_entries(
             make_macos_symbol_manifest_bytes(package_name, arch, version, version_tag),
             0o644,
         ),
-        f"{prefix}dSYMs/openQ4.app.dSYM/Contents/Resources/DWARF/openQ4": (b"app-dsym\n", 0o644),
+        f"{prefix}dSYMs/openD3.app.dSYM/Contents/Resources/DWARF/openD3": (b"app-dsym\n", 0o644),
         f"{prefix}dSYMs/{package.PRODUCT_NAME}-client_{arch}.dSYM/Contents/Resources/DWARF/{package.PRODUCT_NAME}-client_{arch}": (
             b"client-dsym\n",
             0o644,
@@ -599,8 +599,8 @@ def make_symlink(target: Path | str, link: Path, *, target_is_directory: bool = 
 def validate_macos_app_bundle_validator_runtime() -> None:
     package = load_package_module()
     work = ROOT / ".tmp" / "macos-app-contract"
-    package_root = work / "openq4-v0.2.000-macos-arm64-opengl"
-    app_root = package_root / "openQ4.app"
+    package_root = work / "opend3-v0.2.000-macos-arm64-opengl"
+    app_root = package_root / "openD3.app"
     app_contents = app_root / "Contents"
     arch = "arm64"
     version = "0.2.000"
@@ -608,10 +608,10 @@ def validate_macos_app_bundle_validator_runtime() -> None:
     shutil.rmtree(work, ignore_errors=True)
     try:
         client_bytes = b"client-binary\n"
-        write_test_file(package_root / f"openQ4-client_{arch}", client_bytes, 0o755)
+        write_test_file(package_root / f"openD3-client_{arch}", client_bytes, 0o755)
         write_test_file(app_contents / "Info.plist", make_macos_plist_bytes(package, version))
         write_test_file(app_contents / "PkgInfo", package.MACOS_PKGINFO_BYTES)
-        write_test_file(app_contents / "MacOS" / "openQ4", client_bytes, 0o755)
+        write_test_file(app_contents / "MacOS" / "openD3", client_bytes, 0o755)
         write_test_file(app_contents / "Frameworks" / f"game-sp_{arch}.dylib", b"sp-module\n", 0o755)
         write_test_file(app_contents / "Frameworks" / f"game-mp_{arch}.dylib", b"mp-module\n", 0o755)
         write_test_file(app_contents / "Frameworks" / f"renderer-vk_{arch}.dylib", b"renderer-vk-module\n", 0o755)
@@ -630,10 +630,10 @@ def validate_macos_app_bundle_validator_runtime() -> None:
                 app_contents / "Resources" / "licenses" / "openal-soft" / filename,
                 f"openal-soft-{filename}\n".encode(),
             )
-        write_test_file(app_contents / "Resources" / "openQ4.icns", b"icns\n")
-        write_test_file(app_contents / "Resources" / "VERSION.txt", b"openQ4\n")
+        write_test_file(app_contents / "Resources" / "openD3.icns", b"icns\n")
+        write_test_file(app_contents / "Resources" / "VERSION.txt", b"openD3\n")
         write_test_file(app_contents / "Resources" / package.GAME_DIR_NAME / "mod.json", b"{}\n")
-        for pak_name in package.OPENQ4_PACK_NAMES:
+        for pak_name in package.OPEND3_PACK_NAMES:
             write_test_file(app_contents / "Resources" / package.GAME_DIR_NAME / pak_name, b"pk4\n")
         write_test_file(
             app_contents / "Resources" / "assets" / "splash" / "doom3_splash.bmp",
@@ -694,18 +694,18 @@ def validate_macos_app_bundle_validator_runtime() -> None:
         )
         unexpected_bundle_dir.rmdir()
 
-        write_test_file(app_contents / "MacOS" / "openQ4", b"bundle-scoped-signature\n", 0o755)
+        write_test_file(app_contents / "MacOS" / "openD3", b"bundle-scoped-signature\n", 0o755)
         package.validate_macos_app_bundle(package_root, app_root, arch, version)
 
-        write_test_file(app_contents / "MacOS" / "openQ4", client_bytes, 0o755)
-        write_test_file(app_contents / "Resources" / "openQ4.icns", b"")
+        write_test_file(app_contents / "MacOS" / "openD3", client_bytes, 0o755)
+        write_test_file(app_contents / "Resources" / "openD3.icns", b"")
         expect_runtime_error(
             "icon is empty",
             lambda: package.validate_macos_app_bundle(package_root, app_root, arch, version),
             "empty macOS app icon",
         )
 
-        write_test_file(app_contents / "Resources" / "openQ4.icns", b"icns\n")
+        write_test_file(app_contents / "Resources" / "openD3.icns", b"icns\n")
         write_test_file(app_contents / "Info.plist", plistlib.dumps(["not-a-dictionary"]))
         expect_runtime_error(
             "dictionary root",
@@ -726,7 +726,7 @@ def validate_macos_app_bundle_validator_runtime() -> None:
         )
         write_test_file(app_contents / "Info.plist", plistlib.dumps(missing_layout_plist))
         expect_runtime_error(
-            "OpenQ4RuntimeLayout",
+            "openD3RuntimeLayout",
             lambda: package.validate_macos_app_bundle(package_root, app_root, arch, version),
             "macOS app Info.plist without self-contained runtime marker",
         )
@@ -740,9 +740,9 @@ def validate_macos_app_bundle_validator_runtime() -> None:
 
         missing_icon_package = work / "missing-icon-package"
         missing_icon_install = work / "missing-icon-install"
-        write_test_file(missing_icon_package / f"openQ4-client_{arch}", client_bytes, 0o755)
+        write_test_file(missing_icon_package / f"openD3-client_{arch}", client_bytes, 0o755)
         write_test_file(missing_icon_package / package.GAME_DIR_NAME / "mod.json", b"{}\n")
-        for pak_name in package.OPENQ4_PACK_NAMES:
+        for pak_name in package.OPEND3_PACK_NAMES:
             write_test_file(missing_icon_package / package.GAME_DIR_NAME / pak_name, b"pk4\n")
         write_test_file(
             missing_icon_package / package.GAME_DIR_NAME / f"game-sp_{arch}.dylib",
@@ -802,16 +802,16 @@ def validate_macos_app_bundle_validator_runtime() -> None:
 def validate_macos_self_contained_app_creation_runtime() -> None:
     package = load_package_module()
     work = ROOT / ".tmp" / "macos-self-contained-app-contract"
-    package_root = work / "openq4-v0.2.000-macos-arm64-opengl"
+    package_root = work / "opend3-v0.2.000-macos-arm64-opengl"
     install_dir = work / "install"
     arch = "arm64"
     version = "0.2.000"
 
     shutil.rmtree(work, ignore_errors=True)
     try:
-        write_test_file(package_root / f"openQ4-client_{arch}", b"client\n", 0o755)
+        write_test_file(package_root / f"openD3-client_{arch}", b"client\n", 0o755)
         write_test_file(package_root / package.GAME_DIR_NAME / "mod.json", b"{}\n")
-        for pak_name in package.OPENQ4_PACK_NAMES:
+        for pak_name in package.OPEND3_PACK_NAMES:
             write_test_file(package_root / package.GAME_DIR_NAME / pak_name, pak_name.removesuffix(".pk4").encode() + b"\n")
         write_test_file(
             package_root / package.GAME_DIR_NAME / f"game-sp_{arch}.dylib",
@@ -841,7 +841,7 @@ def validate_macos_self_contained_app_creation_runtime() -> None:
             install_dir / "assets" / "splash" / "doom3_splash.bmp",
             b"bmp\n",
         )
-        write_test_file(install_dir / "openQ4.icns", b"icns\n")
+        write_test_file(install_dir / "openD3.icns", b"icns\n")
 
         app_root = package.create_macos_app_bundle(
             package_root,
@@ -860,7 +860,7 @@ def validate_macos_self_contained_app_creation_runtime() -> None:
             raise AssertionError("macOS package must not retain the renderer module beside the app")
         for relative_path in (
             package.MACOS_APP_GAME_DATA_DIR / "mod.json",
-            *(package.MACOS_APP_GAME_DATA_DIR / pak_name for pak_name in package.OPENQ4_PACK_NAMES),
+            *(package.MACOS_APP_GAME_DATA_DIR / pak_name for pak_name in package.OPEND3_PACK_NAMES),
             package.MACOS_APP_SPLASH_DIR / "doom3_splash.bmp",
             package.MACOS_APP_FRAMEWORKS_DIR / f"game-sp_{arch}.dylib",
             package.MACOS_APP_FRAMEWORKS_DIR / f"game-mp_{arch}.dylib",
@@ -877,12 +877,12 @@ def validate_macos_self_contained_app_creation_runtime() -> None:
 def validate_macos_dmg_source_preflight_runtime() -> None:
     package = load_package_module()
     work = ROOT / ".tmp" / "macos-dmg-source-contract"
-    package_root = work / "openq4-v0.2.000-macos-arm64-opengl"
+    package_root = work / "opend3-v0.2.000-macos-arm64-opengl"
 
     shutil.rmtree(work, ignore_errors=True)
     try:
-        write_test_file(package_root / "VERSION.txt", b"openQ4\n")
-        write_test_file(package_root / "openQ4.app" / "Contents" / "Info.plist", b"plist\n")
+        write_test_file(package_root / "VERSION.txt", b"openD3\n")
+        write_test_file(package_root / "openD3.app" / "Contents" / "Info.plist", b"plist\n")
         write_test_file(package_root / package.MACOS_SUPPORT_INFO_SCRIPT_NAME, make_macos_support_info_script_bytes(package), 0o755)
         package.validate_macos_dmg_source_tree(package_root)
 
@@ -986,8 +986,8 @@ def validate_macos_package_main_collateral_error_runtime() -> None:
 def validate_macos_dmg_output_preflight_runtime() -> None:
     package = load_package_module()
     work = ROOT / ".tmp" / "macos-dmg-output-contract"
-    package_root = work / "openq4-v0.2.000-macos-arm64-opengl"
-    archive_path = work / "openq4-v0.2.000-macos-arm64-opengl.dmg"
+    package_root = work / "opend3-v0.2.000-macos-arm64-opengl"
+    archive_path = work / "opend3-v0.2.000-macos-arm64-opengl.dmg"
 
     original_platform = package.sys.platform
     original_which = package.shutil.which
@@ -995,7 +995,7 @@ def validate_macos_dmg_output_preflight_runtime() -> None:
 
     shutil.rmtree(work, ignore_errors=True)
     try:
-        write_test_file(package_root / "VERSION.txt", b"openQ4\n")
+        write_test_file(package_root / "VERSION.txt", b"openD3\n")
         write_test_file(package_root / package.MACOS_SUPPORT_INFO_SCRIPT_NAME, make_macos_support_info_script_bytes(package), 0o755)
         calls = []
 
@@ -1067,7 +1067,7 @@ def validate_macos_dmg_output_preflight_runtime() -> None:
 def validate_macos_archive_validator_runtime() -> None:
     package = load_package_module()
     work = ROOT / ".tmp" / "macos-archive-contract"
-    package_root = work / "openq4-v0.2.000-macos-arm64-opengl"
+    package_root = work / "opend3-v0.2.000-macos-arm64-opengl"
     arch = "arm64"
     version = "0.2.000"
     plist_bytes = make_macos_plist_bytes(package, version)
@@ -1076,10 +1076,10 @@ def validate_macos_archive_validator_runtime() -> None:
     work.mkdir(parents=True, exist_ok=True)
     try:
         package_root.mkdir(parents=True, exist_ok=True)
-        write_test_file(package_root / f"openQ4-client_{arch}", b"client\n", 0o755)
-        write_test_file(package_root / f"openQ4-ded_{arch}", b"ded\n", 0o755)
+        write_test_file(package_root / f"openD3-client_{arch}", b"client\n", 0o755)
+        write_test_file(package_root / f"openD3-ded_{arch}", b"ded\n", 0o755)
         package.validate_macos_package_root_engine_binaries(package_root, arch)
-        write_test_file(package_root / "openQ4-client_x64", b"stale\n", 0o755)
+        write_test_file(package_root / "openD3-client_x64", b"stale\n", 0o755)
         expect_runtime_error(
             "stale or mismatched root engine binaries",
             lambda: package.validate_macos_package_root_engine_binaries(package_root, arch),
@@ -1152,7 +1152,7 @@ def validate_macos_archive_validator_runtime() -> None:
         )
 
         corrupt_zip_archive = work / "corrupt-member.zip"
-        corrupt_member = f"{package_root.name}/openQ4.app/Contents/Info.plist"
+        corrupt_member = f"{package_root.name}/openD3.app/Contents/Info.plist"
         write_test_zip_archive_with_corrupt_member(
             corrupt_zip_archive,
             make_macos_archive_entries(package, package_root.name, arch, plist_bytes),
@@ -1267,7 +1267,7 @@ def validate_macos_archive_validator_runtime() -> None:
             arch,
             plist_bytes,
             extra_entries={
-                f"{package_root.name}/openQ4.app/Contents/_CodeSignature/CodeResources": (
+                f"{package_root.name}/openD3.app/Contents/_CodeSignature/CodeResources": (
                     make_macos_code_resources_bytes(),
                     0o644,
                 ),
@@ -1296,7 +1296,7 @@ def validate_macos_archive_validator_runtime() -> None:
                 arch,
                 plist_bytes,
                 extra_entries={
-                    f"{package_root.name}/openQ4.app/Contents/_CodeSignature/CodeResources": (
+                    f"{package_root.name}/openD3.app/Contents/_CodeSignature/CodeResources": (
                         b"not-a-plist\n",
                         0o644,
                     ),
@@ -1324,7 +1324,7 @@ def validate_macos_archive_validator_runtime() -> None:
                 arch,
                 plist_bytes,
                 extra_entries={
-                    f"{package_root.name}/openQ4.app/Contents/_CodeSignature/stale": (
+                    f"{package_root.name}/openD3.app/Contents/_CodeSignature/stale": (
                         b"stale\n",
                         0o644,
                     ),
@@ -1522,7 +1522,7 @@ def validate_macos_archive_validator_runtime() -> None:
                 package_root.name,
                 arch,
                 plist_bytes,
-                extra_entries={f"{package_root.name}/openQ4.app/Contents/Resources/._openQ4.icns": (b"metadata\n", 0o644)},
+                extra_entries={f"{package_root.name}/openD3.app/Contents/Resources/._openD3.icns": (b"metadata\n", 0o644)},
             ),
         )
         expect_runtime_error(
@@ -1545,7 +1545,7 @@ def validate_macos_archive_validator_runtime() -> None:
                 package_root.name,
                 arch,
                 plist_bytes,
-                extra_entries={f"{package_root.name}/__MACOSX/openQ4": (b"metadata\n", 0o644)},
+                extra_entries={f"{package_root.name}/__MACOSX/openD3": (b"metadata\n", 0o644)},
             ),
         )
         expect_runtime_error(
@@ -1569,7 +1569,7 @@ def validate_macos_archive_validator_runtime() -> None:
                 arch,
                 plist_bytes,
                 extra_entries={
-                    f"{package_root.name}/openQ4.app/Contents/Frameworks/stale-helper.dylib": (b"stale\n", 0o755)
+                    f"{package_root.name}/openD3.app/Contents/Frameworks/stale-helper.dylib": (b"stale\n", 0o755)
                 },
             ),
         )
@@ -1614,7 +1614,7 @@ def validate_macos_archive_validator_runtime() -> None:
         write_test_zip_archive_with_directory_entry(
             bad_zip_directory_archive,
             make_macos_archive_entries(package, package_root.name, arch, plist_bytes),
-            f"{package_root.name}/openQ4.app/Contents/Resources/EmptyDir",
+            f"{package_root.name}/openD3.app/Contents/Resources/EmptyDir",
         )
         expect_runtime_error(
             "non-regular entry",
@@ -1690,7 +1690,7 @@ def validate_macos_archive_validator_runtime() -> None:
                     package_root.name,
                     arch,
                     plist_bytes,
-                    extra_entries={f"{package_root.name}/baseoq4/bad\nname.txt": (b"bad\n", 0o644)},
+                    extra_entries={f"{package_root.name}/baseod3/bad\nname.txt": (b"bad\n", 0o644)},
                 ),
             )
             expect_runtime_error(
@@ -1714,7 +1714,7 @@ def validate_macos_archive_validator_runtime() -> None:
                 arch,
                 plist_bytes,
                 extra_entries={
-                    f"{package_root.name}/openQ4.app/Contents/PkgInfo": (b"BROKEN!!", 0o644)
+                    f"{package_root.name}/openD3.app/Contents/PkgInfo": (b"BROKEN!!", 0o644)
                 },
             ),
         )
@@ -1767,8 +1767,8 @@ def validate_macos_archive_validator_runtime() -> None:
                 arch,
                 plist_bytes,
                 extra_entries={
-                    f"{package_root.name}/openQ4.app/Contents/Resources/English.lproj/InfoPlist.strings": (
-                        b'CFBundleName = "openQ4";\n',
+                    f"{package_root.name}/openD3.app/Contents/Resources/English.lproj/InfoPlist.strings": (
+                        b'CFBundleName = "openD3";\n',
                         0o644,
                     )
                 },
@@ -1795,8 +1795,8 @@ def validate_macos_archive_validator_runtime() -> None:
                 arch,
                 plist_bytes,
                 extra_entries={
-                    f"{package_root.name}/openQ4.app/Contents/Resources/English.lproj/InfoPlist.strings": (
-                        make_macos_localized_info_bytes(version) + b'CFBundleName = "openQ4";\n',
+                    f"{package_root.name}/openD3.app/Contents/Resources/English.lproj/InfoPlist.strings": (
+                        make_macos_localized_info_bytes(version) + b'CFBundleName = "openD3";\n',
                         0o644,
                     )
                 },
@@ -1823,7 +1823,7 @@ def validate_macos_archive_validator_runtime() -> None:
                 arch,
                 plist_bytes,
                 extra_entries={
-                    f"{package_root.name}/openQ4.app/Contents/Info.plist": (
+                    f"{package_root.name}/openD3.app/Contents/Info.plist": (
                         b"x" * (package.MAX_MACOS_METADATA_MEMBER_BYTES + 1),
                         0o644,
                     )
@@ -1846,7 +1846,7 @@ def validate_macos_archive_validator_runtime() -> None:
         write_test_targz_archive_with_symlink(
             bad_symlink_archive,
             make_macos_archive_entries(package, package_root.name, arch, plist_bytes),
-            f"{package_root.name}/openQ4.app/Contents/MacOS/linked",
+            f"{package_root.name}/openD3.app/Contents/MacOS/linked",
         )
         expect_runtime_error(
             "symlink entry",
@@ -1864,7 +1864,7 @@ def validate_macos_archive_validator_runtime() -> None:
         write_test_targz_archive_with_fifo(
             bad_special_archive,
             make_macos_archive_entries(package, package_root.name, arch, plist_bytes),
-            f"{package_root.name}/openQ4.app/Contents/MacOS/fifo",
+            f"{package_root.name}/openD3.app/Contents/MacOS/fifo",
         )
         expect_runtime_error(
             "non-regular entry",
@@ -1932,7 +1932,7 @@ def validate_macos_archive_validator_runtime() -> None:
                 package_root.name,
                 arch,
                 plist_bytes,
-                extra_entries={f"{package_root.name}/openQ4-ded_x64": (b"stale\n", 0o755)},
+                extra_entries={f"{package_root.name}/openD3-ded_x64": (b"stale\n", 0o755)},
             ),
         )
         expect_runtime_error(
@@ -1978,7 +1978,7 @@ def validate_macos_archive_validator_runtime() -> None:
                 arch,
                 plist_bytes,
                 extra_entries={
-                    f"{package_root.name}/openQ4.app/Contents/MacOS/openQ4": (
+                    f"{package_root.name}/openD3.app/Contents/MacOS/openD3": (
                         b"other-binary\n",
                         0o755,
                     )
@@ -2179,7 +2179,7 @@ def validate_macos_signing_config_runtime() -> None:
                 macos_code_sign_identity="Developer ID Application: DarkMatter Productions (TEAMID1234)",
                 macos_entitlements=str(valid_entitlements),
                 macos_notarize=True,
-                macos_notary_keychain_profile="openq4-release-notary",
+                macos_notary_keychain_profile="opend3-release-notary",
                 macos_notary_keychain=str(notary_keychain),
             )
         )
@@ -2189,7 +2189,7 @@ def validate_macos_signing_config_runtime() -> None:
             or not developer_id.timestamp
             or developer_id.entitlements != valid_entitlements.resolve()
             or not developer_id.notarize
-            or developer_id.notary_keychain_profile != "openq4-release-notary"
+            or developer_id.notary_keychain_profile != "opend3-release-notary"
             or developer_id.notary_keychain != notary_keychain.resolve()
         ):
             raise AssertionError("Developer ID macOS signing config did not enable release signing requirements")
@@ -2200,7 +2200,7 @@ def validate_macos_signing_config_runtime() -> None:
 def validate_macos_notary_archive_output_preflight_runtime() -> None:
     package = load_package_module()
     work = ROOT / ".tmp" / "macos-notary-output-contract"
-    package_root = work / "openq4-v0.2.000-macos-arm64-opengl"
+    package_root = work / "opend3-v0.2.000-macos-arm64-opengl"
     notary_archive = package_root.parent / f"{package_root.name}-notary.zip"
     config = package.MacOSSigningConfig(
         mode="developer-id",
@@ -2209,7 +2209,7 @@ def validate_macos_notary_archive_output_preflight_runtime() -> None:
         timestamp=True,
         entitlements=None,
         notarize=True,
-        notary_keychain_profile="openq4-release-notary",
+        notary_keychain_profile="opend3-release-notary",
         notary_keychain=None,
     )
 
@@ -2219,7 +2219,7 @@ def validate_macos_notary_archive_output_preflight_runtime() -> None:
 
     shutil.rmtree(work, ignore_errors=True)
     try:
-        write_test_file(package_root / "VERSION.txt", b"openQ4\n")
+        write_test_file(package_root / "VERSION.txt", b"openD3\n")
         write_test_file(package_root / package.MACOS_SUPPORT_INFO_SCRIPT_NAME, make_macos_support_info_script_bytes(package), 0o755)
         calls = []
 
@@ -2269,9 +2269,9 @@ def validate_macos_notary_archive_output_preflight_runtime() -> None:
 def validate_macos_signing_keeps_standalone_client_signature_runtime() -> None:
     package = load_package_module()
     work = ROOT / ".tmp" / "macos-standalone-signing-contract"
-    package_root = work / "openq4-v0.2.000-macos-arm64-opengl"
-    app_root = package_root / "openQ4.app"
-    app_executable = app_root / "Contents" / "MacOS" / "openQ4"
+    package_root = work / "opend3-v0.2.000-macos-arm64-opengl"
+    app_root = package_root / "openD3.app"
+    app_executable = app_root / "Contents" / "MacOS" / "openD3"
     arch = "arm64"
 
     original_platform = package.sys.platform
@@ -2280,9 +2280,9 @@ def validate_macos_signing_keeps_standalone_client_signature_runtime() -> None:
 
     shutil.rmtree(work, ignore_errors=True)
     try:
-        client_binary = package_root / f"openQ4-client_{arch}"
+        client_binary = package_root / f"openD3-client_{arch}"
         write_test_file(client_binary, b"unsigned-client\n", 0o755)
-        write_test_file(package_root / f"openQ4-ded_{arch}", b"dedicated\n", 0o755)
+        write_test_file(package_root / f"openD3-ded_{arch}", b"dedicated\n", 0o755)
         framework_root = app_root / package.MACOS_APP_FRAMEWORKS_DIR
         write_test_file(framework_root / f"game-sp_{arch}.dylib", b"sp\n", 0o755)
         write_test_file(framework_root / f"game-mp_{arch}.dylib", b"mp\n", 0o755)
@@ -2329,14 +2329,14 @@ def validate_macos_signing_keeps_standalone_client_signature_runtime() -> None:
         # arrives ad-hoc signed upstream and must be re-signed with the release
         # identity before notarization.
         expected_calls = [
-            (f"openQ4-client_{arch}", True),
-            (f"openQ4-ded_{arch}", True),
-            (f"openQ4.app/Contents/Frameworks/game-sp_{arch}.dylib", False),
-            (f"openQ4.app/Contents/Frameworks/game-mp_{arch}.dylib", False),
-            (f"openQ4.app/Contents/Frameworks/renderer-vk_{arch}.dylib", False),
-            (f"openQ4.app/Contents/Frameworks/{package.MACOS_MOLTENVK_DYLIB_NAME}", False),
-            (f"openQ4.app/Contents/Frameworks/{package.MACOS_OPENAL_SOFT_DYLIB_NAME}", False),
-            ("openQ4.app", True),
+            (f"openD3-client_{arch}", True),
+            (f"openD3-ded_{arch}", True),
+            (f"openD3.app/Contents/Frameworks/game-sp_{arch}.dylib", False),
+            (f"openD3.app/Contents/Frameworks/game-mp_{arch}.dylib", False),
+            (f"openD3.app/Contents/Frameworks/renderer-vk_{arch}.dylib", False),
+            (f"openD3.app/Contents/Frameworks/{package.MACOS_MOLTENVK_DYLIB_NAME}", False),
+            (f"openD3.app/Contents/Frameworks/{package.MACOS_OPENAL_SOFT_DYLIB_NAME}", False),
+            ("openD3.app", True),
         ]
         if calls != expected_calls:
             raise AssertionError(f"Unexpected macOS signing order: {calls!r}")
@@ -2445,19 +2445,19 @@ def validate_macos_install_name_normalization_runtime() -> None:
                         )
 
         run_case(
-            work / "openq4-v0.2.000-macos-arm64-opengl",
+            work / "opend3-v0.2.000-macos-arm64-opengl",
             "arm64",
             {
-                ("game-sp", "arm64"): "/tmp/openq4/.install/baseoq4/game-sp_arm64.dylib",
-                ("renderer-vk", "arm64"): "/tmp/openq4/.install/renderer-vk_arm64.dylib",
+                ("game-sp", "arm64"): "/tmp/opend3/.install/baseod3/game-sp_arm64.dylib",
+                ("renderer-vk", "arm64"): "/tmp/opend3/.install/renderer-vk_arm64.dylib",
             },
             ("game-sp", "renderer-vk"),
         )
         run_case(
-            work / "openq4-v0.2.000-macos-universal2-metal",
+            work / "opend3-v0.2.000-macos-universal2-metal",
             "universal2",
             {
-                ("renderer-vk", "x86_64"): "/tmp/openq4/.install/renderer-vk_universal2.dylib",
+                ("renderer-vk", "x86_64"): "/tmp/opend3/.install/renderer-vk_universal2.dylib",
             },
             ("renderer-vk",),
         )
@@ -2475,7 +2475,7 @@ def validate_macos_pk4_symlink_guard_runtime() -> None:
 
     package = load_package_module()
     work = ROOT / ".tmp" / "macos-pk4-symlink-contract"
-    install_game_dir = work / "baseoq4"
+    install_game_dir = work / "baseod3"
     destination_pk4 = work / "pak0.pk4"
 
     shutil.rmtree(work, ignore_errors=True)
@@ -2517,7 +2517,7 @@ def validate_macos_staged_payload_validator_runtime() -> None:
     validator = load_validation_module()
     work = ROOT / ".tmp" / "macos-staged-contract"
     install_root = work / ".install"
-    game_dir = install_root / "baseoq4"
+    game_dir = install_root / "baseod3"
     arch = "arm64"
     expected_lipo_arch = validator.macos_expected_lipo_arch(arch)
     real_macos_lipo_arches = validator.macos_lipo_arches
@@ -2529,10 +2529,10 @@ def validate_macos_staged_payload_validator_runtime() -> None:
     shutil.rmtree(work, ignore_errors=True)
     try:
         validator.macos_lipo_arches = fake_macos_lipo_arches
-        client = install_root / f"openQ4-client_{arch}"
-        dedicated = install_root / f"openQ4-ded_{arch}"
+        client = install_root / f"openD3-client_{arch}"
+        dedicated = install_root / f"openD3-ded_{arch}"
         support_script = install_root / validator.MACOS_SUPPORT_INFO_SCRIPT_NAME
-        write_test_file(install_root / "openQ4.icns", b"icns\n")
+        write_test_file(install_root / "openD3.icns", b"icns\n")
         write_test_file(install_root / "assets" / "splash" / "doom3_splash.bmp", b"bmp\n")
         write_test_file(support_script, make_validation_support_info_script_bytes(validator), 0o755)
         write_test_file(client, b"client\n", 0o755)
@@ -2572,8 +2572,8 @@ def validate_macos_staged_payload_validator_runtime() -> None:
             )
             fake_lipo_arches[client] = {expected_lipo_arch}
 
-        stale_client = install_root / "openQ4-client_x64"
-        stale_dedicated = install_root / "openQ4-ded_x64"
+        stale_client = install_root / "openD3-client_x64"
+        stale_dedicated = install_root / "openD3-ded_x64"
         write_test_file(stale_client, b"stale-client\n", 0o755)
         write_test_file(stale_dedicated, b"stale-ded\n", 0o755)
         expect_runtime_error(
@@ -2693,7 +2693,7 @@ def validate_macos_staged_payload_validator_runtime() -> None:
             )
             os.chmod(mp_module, 0o755)
 
-        bad_dsym = install_root / f"openQ4-client_{arch}.dSYM"
+        bad_dsym = install_root / f"openD3-client_{arch}.dSYM"
         bad_dsym.mkdir()
         expect_runtime_error(
             "non-runtime artifacts",
@@ -2789,7 +2789,7 @@ def validate_macos_staged_payload_validator_runtime() -> None:
 def validate_meson_contract() -> None:
     options = read("meson_options.txt")
     meson = read("meson.build")
-    baseoq4_meson = read("content/baseoq4/meson.build")
+    baseod3_meson = read("content/baseod3/meson.build")
     setup_sh = read("tools/build/meson_setup.sh")
     setup_ps1 = read("tools/build/meson_setup.ps1")
 
@@ -2814,9 +2814,9 @@ def validate_meson_contract() -> None:
     require(meson, "if not use_sdl3_backend\n      macos_framework_modules += ['Carbon']", "native macOS Carbon isolation")
     require(meson, "modules: macos_framework_modules", "macOS conditional framework dependency")
     reject(meson, "modules: ['Cocoa', 'OpenGL', 'ApplicationServices', 'Carbon']", "macOS SDL3 Carbon isolation")
-    require(meson, "-DOPENQ4_MACOS_METAL_BRIDGE=1", "Metal bridge compile define")
-    require(meson, "shared_objcpp_args += ['-DOPENQ4_MACOS_METAL_BRIDGE=1']", "Metal bridge ObjC++ compile define")
-    require(meson, "shared_objc_args += ['-DOPENQ4_MACOS_METAL_BRIDGE=1']", "Metal bridge ObjC compile define")
+    require(meson, "-DOPEND3_MACOS_METAL_BRIDGE=1", "Metal bridge compile define")
+    require(meson, "shared_objcpp_args += ['-DOPEND3_MACOS_METAL_BRIDGE=1']", "Metal bridge ObjC++ compile define")
+    require(meson, "shared_objc_args += ['-DOPEND3_MACOS_METAL_BRIDGE=1']", "Metal bridge ObjC compile define")
     require(meson, "-fstack-protector-strong", "macOS compile hardening")
     require(meson, "-D_FORTIFY_SOURCE=2", "macOS compile hardening")
     require(meson, "-Wl,-pie", "macOS executable hardening")
@@ -2824,11 +2824,11 @@ def validate_meson_contract() -> None:
     require(meson, "'macOS graphics bridge': macos_graphics_bridge", "Meson summary")
     require(meson, "'macOS OpenAL provider': macos_openal_provider", "Meson summary")
 
-    require(baseoq4_meson, "elif host_system == 'darwin'", "macOS game module source branch")
-    require(baseoq4_meson, "shared_library(\n      game_sp_binary_name,", "macOS SP game module dylib target type")
-    require(baseoq4_meson, "shared_library(\n      game_mp_binary_name,", "macOS MP game module dylib target type")
-    require(baseoq4_meson, "name_suffix: 'dylib'", "macOS game module dylib suffix")
-    require(baseoq4_meson, "-Wl,-install_name,@loader_path/", "macOS game module install name")
+    require(baseod3_meson, "elif host_system == 'darwin'", "macOS game module source branch")
+    require(baseod3_meson, "shared_library(\n      game_sp_binary_name,", "macOS SP game module dylib target type")
+    require(baseod3_meson, "shared_library(\n      game_mp_binary_name,", "macOS MP game module dylib target type")
+    require(baseod3_meson, "name_suffix: 'dylib'", "macOS game module dylib suffix")
+    require(baseod3_meson, "-Wl,-install_name,@loader_path/", "macOS game module install name")
 
     sdl3_vendored_meson = read("subprojects/packagefiles/sdl3/meson.build")
     sdl3_audio_meson = read("subprojects/packagefiles/sdl3/src/audio/meson.build")
@@ -2877,7 +2877,7 @@ def validate_sdl3_runtime_contract() -> None:
     splash_ensure = function_body(syscon, "static bool Posix_SplashEnsureVideo( void ) {")
     console_ensure = function_body(syscon, "static bool Posix_ConsoleEnsureVideo( void ) {")
 
-    require(source, "OPENQ4_MACOS_METAL_BRIDGE", "SDL3 Metal bridge compile guard")
+    require(source, "OPEND3_MACOS_METAL_BRIDGE", "SDL3 Metal bridge compile guard")
     require(source, "SDL3_IsMacOSMetalBridge", "SDL3 Metal bridge predicate")
     require(source, "macOS Metal bridge (SDL3/Cocoa host, OpenGL renderer compatibility path)", "SDL3 bridge description")
     require(source, "static void SDL3_SetHintDefaultLogged", "SDL3 Metal bridge logged hint helper")
@@ -2899,7 +2899,7 @@ def validate_sdl3_runtime_contract() -> None:
     require_before(splash_ensure, "Sys_SDL_ApplyVideoHintDefaults();", "SDL_InitSubSystem( SDL_INIT_VIDEO )", "splash hint defaults before SDL video init")
     require_before(console_ensure, "Sys_SDL_ApplyVideoHintDefaults();", "SDL_InitSubSystem( SDL_INIT_VIDEO )", "console hint defaults before SDL video init")
 
-    require(support_renderer, "OPENQ4_MACOS_METAL_BRIDGE", "Metal bridge support-window renderer path")
+    require(support_renderer, "OPEND3_MACOS_METAL_BRIDGE", "Metal bridge support-window renderer path")
     require(support_renderer, "SDL_CreateRenderer( window, NULL )", "Metal bridge support-window default renderer")
     require(support_renderer, "SDL_GetRendererName( renderer )", "Metal bridge support-window created-driver probe")
     require(support_renderer, "macOS Metal bridge created '%s' driver", "Metal bridge support-window created-driver log")
@@ -2923,13 +2923,13 @@ def validate_sdl3_runtime_contract() -> None:
 
 def validate_packaging_and_release_contract() -> None:
     package = read("tools/build/package_nightly.py")
-    pak_helper = read("tools/build/openq4_pak.py")
+    pak_helper = read("tools/build/opend3_pak.py")
     plist = read("src/sys/macos/Info.plist")
     release = read(".github/workflows/manual-release.yml")
     compat = read("src/sys/macos/macos_compat.mm")
     main = read("src/sys/macos/macos_sdl3_main.cpp")
     posix = read("src/sys/posix/posix_main.cpp")
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
     create_macos_dmg_body = python_function_body(package, "def create_macos_dmg(")
@@ -3045,7 +3045,7 @@ def validate_packaging_and_release_contract() -> None:
     require(package, "forbidden privacy/no-launch pattern", "macOS archive support collector privacy validation")
     require(package, "MAX_MACOS_SUPPORT_INFO_SCRIPT_BYTES", "macOS archive support collector size validation")
     require(package, "macOS archive support collector", "macOS archive support collector validation")
-    require(package, "does not launch openQ4", "macOS archive support collector no-launch validation")
+    require(package, "does not launch openD3", "macOS archive support collector no-launch validation")
     require(package, "does not copy retail q4base PK4 assets", "macOS archive support collector privacy validation")
     require(package, "MAX_MACOS_RUNTIME_ARCHIVE_MEMBERS", "macOS runtime archive member-count validation")
     require(package, "MAX_MACOS_SYMBOL_ARCHIVE_MEMBERS", "macOS symbol archive member-count validation")
@@ -3136,12 +3136,12 @@ def validate_packaging_and_release_contract() -> None:
     # (core pak0, light-grid pak1, loadscreen pak2) rather than naming each one.
     require(
         python_function_body(package, "def validate_macos_archive_contents("),
-        "for pak_name in OPENQ4_PACK_NAMES",
+        "for pak_name in OPEND3_PACK_NAMES",
         "macOS archive content pack validation",
     )
     require(
         pak_helper,
-        "OPENQ4_PACK_NAMES = tuple(spec.name for spec in OPENQ4_CONTENT_PACKS)",
+        "OPEND3_PACK_NAMES = tuple(spec.name for spec in OPEND3_CONTENT_PACKS)",
         "macOS archive content pack list",
     )
     require(package, "macOS archive contains non-runtime metadata/debug entries", "macOS archive metadata validation")
@@ -3155,17 +3155,17 @@ def validate_packaging_and_release_contract() -> None:
     require(package, "must contain a dictionary root", "macOS package Info.plist root validation")
     require(package, "validate_macos_app_bundle", "macOS package app validation")
     require(package, "validate_macos_archive_contents", "macOS package archive validation")
-    require(package, '"CFBundleDisplayName": "openQ4"', "macOS package Info.plist validation")
-    require(package, '"CFBundleIconFile": "openQ4.icns"', "macOS package Info.plist validation")
-    require(package, '"CFBundleName": "openQ4"', "macOS package Info.plist validation")
+    require(package, '"CFBundleDisplayName": "openD3"', "macOS package Info.plist validation")
+    require(package, '"CFBundleIconFile": "openD3.icns"', "macOS package Info.plist validation")
+    require(package, '"CFBundleName": "openD3"', "macOS package Info.plist validation")
     require(package, '"LSApplicationCategoryType": "public.app-category.games"', "macOS package Info.plist validation")
     require(package, 'MACOS_RUNTIME_LAYOUT_VALUE = "self-contained-v1"', "macOS self-contained runtime layout marker")
     require(package, '("CFBundleShortVersionString", "CFBundleVersion")', "macOS package Info.plist validation")
-    require(package, "openQ4.app/Contents/PkgInfo", "macOS package PkgInfo validation")
-    require(package, "openQ4-ded_{arch}", "macOS package archive validation")
+    require(package, "openD3.app/Contents/PkgInfo", "macOS package PkgInfo validation")
+    require(package, "openD3-ded_{arch}", "macOS package archive validation")
     require(package, "English.lproj/InfoPlist.strings", "macOS package archive validation")
     require(package, "French.lproj/InfoPlist.strings", "macOS package archive validation")
-    require(package, "OpenQ4PackageRoot.strings", "macOS package localized package-root error validation")
+    require(package, "openD3PackageRoot.strings", "macOS package localized package-root error validation")
     require(package, "write_macos_package_root_error_strings", "macOS package localized package-root error writer")
     require(package, "validate_macos_package_root_error_bytes", "macOS package localized package-root error validation")
     require(package, "macOS archive entry is not executable", "macOS package archive validation")
@@ -3190,7 +3190,7 @@ def validate_packaging_and_release_contract() -> None:
     require(compat, "BASE_GAMEDIR", "macOS base path validation")
     require(compat, "Sys_SelectMacOSAppBundleRuntimeRoots", "macOS app bundle runtime-root validation")
     require(compat, "Sys_MacOSAppBundleDeclaresSelfContainedRuntime", "macOS self-contained app plist runtime marker")
-    require(compat, '@"OpenQ4RuntimeLayout"', "macOS self-contained app plist runtime marker")
+    require(compat, '@"openD3RuntimeLayout"', "macOS self-contained app plist runtime marker")
     require(compat, "Sys_GetSiblingSelfContainedAppRuntimeRoots", "macOS loose-binary self-contained runtime discovery")
     require(compat, 'resourceDirectory.AppendPath( "Resources" )', "macOS self-contained app resource root")
     require(compat, 'frameworkDirectory.AppendPath( "Frameworks" )', "macOS self-contained app module root")
@@ -3198,25 +3198,25 @@ def validate_packaging_and_release_contract() -> None:
     require(compat, "Sys_IsMacOSAppBundleDirectoryName", "macOS renamed app bundle base path validation")
     require(compat, 'static const char appBundleSuffix[] = ".app";', "macOS renamed app bundle base path validation")
     require(compat, "idStr::Icmp( suffixStart, appBundleSuffix )", "macOS renamed app bundle base path validation")
-    reject(compat, 'appName.Icmp( "openQ4.app" )', "macOS renamed app bundle base path validation")
+    reject(compat, 'appName.Icmp( "openD3.app" )', "macOS renamed app bundle base path validation")
     require(compat, 'Sys_UseBasePathCandidate( packageRoot, "app runtime" )', "macOS app bundle base path validation")
     require(compat, "Sys_ErrorIfMacOSAppBundleRuntimeIncomplete", "macOS damaged self-contained app diagnostic")
-    require(compat, "OpenQ4BundleRuntimeMissingTitle", "macOS self-contained app localized startup diagnostic")
-    require(compat, "Expected self-contained app contract: data in Contents/Resources/baseoq4 and signed game modules in Contents/Frameworks", "macOS self-contained app contract diagnostic")
+    require(compat, "openD3BundleRuntimeMissingTitle", "macOS self-contained app localized startup diagnostic")
+    require(compat, "Expected self-contained app contract: data in Contents/Resources/baseod3 and signed game modules in Contents/Frameworks", "macOS self-contained app contract diagnostic")
     require(compat, "Sys_ErrorIfMacOSAppBundlePackageRootIncomplete", "macOS app-only package-root startup diagnostic")
-    require(compat, "OpenQ4PackageRootMissingTitle", "macOS app-only package-root localized startup diagnostic")
-    require(compat, "Expected adjacent package-root contract: openQ4.app, loose binaries, and baseoq4/ together", "macOS app-only package-root contract diagnostic")
-    require(compat, 'idStr::snPrintf( spModuleEntry, sizeof( spModuleEntry ), "%s/game-sp_%s.dylib", OPENQ4_GAMEDIR, arch )', "macOS app package-root expects baseoq4 SP module")
-    require(compat, 'idStr::snPrintf( mpModuleEntry, sizeof( mpModuleEntry ), "%s/game-mp_%s.dylib", OPENQ4_GAMEDIR, arch )', "macOS app package-root expects baseoq4 MP module")
-    require(compat, "Sys_RequireMacOSPackageRootDirectory( packageDirectory, OPENQ4_GAMEDIR, missingEntries )", "macOS app package-root requires baseoq4 runtime directory")
+    require(compat, "openD3PackageRootMissingTitle", "macOS app-only package-root localized startup diagnostic")
+    require(compat, "Expected adjacent package-root contract: openD3.app, loose binaries, and baseod3/ together", "macOS app-only package-root contract diagnostic")
+    require(compat, 'idStr::snPrintf( spModuleEntry, sizeof( spModuleEntry ), "%s/game-sp_%s.dylib", OPEND3_GAMEDIR, arch )', "macOS app package-root expects baseod3 SP module")
+    require(compat, 'idStr::snPrintf( mpModuleEntry, sizeof( mpModuleEntry ), "%s/game-mp_%s.dylib", OPEND3_GAMEDIR, arch )', "macOS app package-root expects baseod3 MP module")
+    require(compat, "Sys_RequireMacOSPackageRootDirectory( packageDirectory, OPEND3_GAMEDIR, missingEntries )", "macOS app package-root requires baseod3 runtime directory")
     require(compat, "Sys_AppendAlternateMacOSPackageRootGameModuleEntries", "macOS app package-root mismatched module diagnostics")
     require(compat, "Sys_AppendAlternateMacOSPackageRootGameModuleEntries( packageDirectory, BASE_GAMEDIR, expectedArch, foundEntries )", "macOS app package-root reports q4base misplaced dylibs")
     reject(compat, 'idStr::snPrintf( spModuleEntry, sizeof( spModuleEntry ), "%s/game-sp_%s.dylib", BASE_GAMEDIR, arch )', "macOS app package-root must not expect SP module under q4base")
     reject(compat, 'idStr::snPrintf( mpModuleEntry, sizeof( mpModuleEntry ), "%s/game-mp_%s.dylib", BASE_GAMEDIR, arch )', "macOS app package-root must not expect MP module under q4base")
     reject(compat, "Sys_RequireMacOSPackageRootDirectory( packageDirectory, BASE_GAMEDIR, missingEntries )", "macOS app package-root must not require q4base as runtime directory")
     require(main, "SDL_MAIN_HANDLED", "macOS SDL3 launch initialization")
-    require(main, "static int SDLCALL OpenQ4_Main", "macOS SDL3 launch initialization")
-    require(main, "SDL_RunApp(argc, argv, OpenQ4_Main, NULL)", "macOS SDL3 launch initialization")
+    require(main, "static int SDLCALL openD3_Main", "macOS SDL3 launch initialization")
+    require(main, "SDL_RunApp(argc, argv, openD3_Main, NULL)", "macOS SDL3 launch initialization")
     require(posix, "realpath( path, resolvedPath )", "macOS dylib path canonicalization")
     require(posix, "RTLD_NOW | RTLD_LOCAL", "macOS dylib local symbol scope")
     require(validator, "host_is_macos", "macOS staged payload validation")
@@ -3232,7 +3232,7 @@ def validate_packaging_and_release_contract() -> None:
     require(validator, "forbidden privacy/no-launch pattern", "macOS staged support collector privacy validation")
     require(validator, "macOS support collector contains CRLF or carriage returns", "macOS staged support collector line-ending validation")
     require(validator, "validate_no_macos_symlinks(root, install_root)", "macOS staged symlink validation")
-    require(validator, "openQ4.icns", "macOS staged payload validation")
+    require(validator, "openD3.icns", "macOS staged payload validation")
     require(validator, "non-dylib game modules", "macOS staged payload validation")
     require(validator, "architecture-matched game modules", "macOS staged payload validation")
     require(validator, "macOS staged game module is not executable", "macOS staged game module validation")
@@ -3313,7 +3313,7 @@ def validate_packaging_and_release_contract() -> None:
         require(source, "LSMinimumSystemVersion", context)
         require(source, "11.0", context)
 
-    require(plist, "<string>openQ4.icns</string>", "legacy macOS Info.plist icon")
+    require(plist, "<string>openD3.icns</string>", "legacy macOS Info.plist icon")
     require(plist, "CFBundleShortVersionString", "legacy macOS Info.plist version")
 
     require(release, "macos_signed_release_enabled", "manual release credential-aware macOS matrix")
@@ -3332,7 +3332,7 @@ def validate_packaging_and_release_contract() -> None:
     require(release, '"package_suffix": f"-metal{macos_unsigned_suffix}"', "manual release Metal package suffix")
     require(release, "-Dmacos_graphics_bridge=${{ matrix.macos_graphics_bridge }}", "manual release setup")
     require(release, "-Dmacos_openal_provider=${{ matrix.macos_openal_provider }}", "manual release OpenAL setup")
-    # Meson never installs MoltenVK - openQ4 does not build it - so without an
+    # Meson never installs MoltenVK - openD3 does not build it - so without an
     # explicit staging step resolve_macos_moltenvk_source aborts the macOS
     # package and the whole release skips publishing. The release lane went out
     # without this once already.
@@ -3384,7 +3384,7 @@ def validate_packaging_and_release_contract() -> None:
     require(release, "require_smoke_output", "manual release app console-output validation")
     require(release, "Shutting down OpenGL subsystem (SDL3 backend)", "manual release app clean-shutdown validation")
     require(release, "macOS app-bundle smoke output contains a fatal startup diagnostic.", "manual release app fatal-diagnostic validation")
-    require(release, "fs_cdpath='${package_dir}/openQ4.app/Contents/Resources'", "manual release embedded app-resource search validation")
+    require(release, "fs_cdpath='${package_dir}/openD3.app/Contents/Resources'", "manual release embedded app-resource search validation")
     require(release, "hdiutil imageinfo", "manual release DMG validation")
     require(release, "spctl --assess --type execute", "manual release Gatekeeper validation")
     require(release, "check_macos_install_name", "manual release macOS install-name validation")
@@ -3394,8 +3394,8 @@ def validate_packaging_and_release_contract() -> None:
     require(release, 'otool -arch "${macho_arch}" -L', "manual release macOS dependency validation")
     require(release, "unbundled non-system dependency", "manual release macOS dependency validation")
     require(release, "Missing macOS staged payload file", "manual release macOS staged validation")
-    require(release, ".install/baseoq4/game-sp_${{ matrix.binary_arch }}.dylib", "manual release macOS staged validation")
-    require(release, ".install/baseoq4/game-mp_${{ matrix.binary_arch }}.dylib", "manual release macOS staged validation")
+    require(release, ".install/baseod3/game-sp_${{ matrix.binary_arch }}.dylib", "manual release macOS staged validation")
+    require(release, ".install/baseod3/game-mp_${{ matrix.binary_arch }}.dylib", "manual release macOS staged validation")
     require(release, ".install/collect_macos_support_info.sh", "manual release macOS support collector staging")
     require(release, "Missing or non-executable macOS support collector", "manual release macOS support collector validation")
     require(release, "contains_control_chars()", "manual release macOS support collector path-control validation")
@@ -3403,42 +3403,42 @@ def validate_packaging_and_release_contract() -> None:
     require(release, "limit_stream_tail()", "manual release macOS support collector stream-bounding validation")
     require(release, "Support report output is limited to the final", "manual release macOS support collector stream-bounding validation")
     require(release, ".XXXXXX.tar.gz.tmp", "manual release macOS support collector mktemp validation")
-    require(release, "does not launch openQ4", "manual release macOS support collector no-launch validation")
+    require(release, "does not launch openD3", "manual release macOS support collector no-launch validation")
     require(release, "does not copy retail q4base PK4 assets", "manual release macOS support collector privacy validation")
     require(release, "truncated copy failed; source was not copied", "manual release macOS support collector truncation validation")
     require(release, "forbidden privacy/no-launch pattern", "manual release macOS support collector forbidden-token validation")
-    require(release, "openQ4-client_x64 >", "manual release macOS support collector x64 launch denial")
-    require(release, "openQ4-ded_x64 >", "manual release macOS support collector x64 launch denial")
+    require(release, "openD3-client_x64 >", "manual release macOS support collector x64 launch denial")
+    require(release, "openD3-ded_x64 >", "manual release macOS support collector x64 launch denial")
     require(release, "|| cat", "manual release macOS support collector fallback denial")
     require(release, 'tail -c "${max_bytes}" < "${source_path}" 2>/dev/null || cat', "manual release macOS support collector fallback denial")
     require(release, "macOS staged payload contains non-dylib game modules", "manual release macOS staged validation")
     require(release, "macOS staged payload contains stale or mismatched root engine binary", "manual release macOS stale root binary validation")
     require(release, "macOS staged payload contains stale or mismatched game module", "manual release macOS stale game-module validation")
-    require(release, "check_plist_value CFBundleDisplayName openQ4", "manual release macOS app validation")
-    require(release, "check_plist_value CFBundleIconFile openQ4.icns", "manual release macOS app validation")
-    require(release, "check_plist_value CFBundleName openQ4", "manual release macOS app validation")
+    require(release, "check_plist_value CFBundleDisplayName openD3", "manual release macOS app validation")
+    require(release, "check_plist_value CFBundleIconFile openD3.icns", "manual release macOS app validation")
+    require(release, "check_plist_value CFBundleName openD3", "manual release macOS app validation")
     require(release, "check_plist_value CFBundleShortVersionString", "manual release macOS app validation")
     require(release, "check_plist_value CFBundleVersion", "manual release macOS app validation")
     require(release, "check_plist_value LSMinimumSystemVersion 11.0", "manual release macOS app validation")
     require(release, "check_plist_value LSApplicationCategoryType public.app-category.games", "manual release macOS app validation")
     require(release, "check_plist_value NSPrincipalClass NSApplication", "manual release macOS app validation")
     require(release, "check_plist_value NSSupportsAutomaticGraphicsSwitching true", "manual release macOS app validation")
-    require(release, "check_plist_value OpenQ4RuntimeLayout self-contained-v1", "manual release self-contained runtime marker validation")
-    require(release, "openq4-${{ needs.metadata.outputs.version_tag }}-macos-arm64-opengl.dmg", "manual release expected assets")
-    require(release, "openq4-${{ needs.metadata.outputs.version_tag }}-macos-arm64-metal.dmg", "manual release expected assets")
-    require(release, "openq4-${{ needs.metadata.outputs.version_tag }}-macos-arm64-opengl-unsigned.tar.gz", "manual release unsigned expected assets")
-    require(release, "openq4-${{ needs.metadata.outputs.version_tag }}-macos-arm64-metal-unsigned.tar.gz", "manual release unsigned expected assets")
+    require(release, "check_plist_value openD3RuntimeLayout self-contained-v1", "manual release self-contained runtime marker validation")
+    require(release, "opend3-${{ needs.metadata.outputs.version_tag }}-macos-arm64-opengl.dmg", "manual release expected assets")
+    require(release, "opend3-${{ needs.metadata.outputs.version_tag }}-macos-arm64-metal.dmg", "manual release expected assets")
+    require(release, "opend3-${{ needs.metadata.outputs.version_tag }}-macos-arm64-opengl-unsigned.tar.gz", "manual release unsigned expected assets")
+    require(release, "opend3-${{ needs.metadata.outputs.version_tag }}-macos-arm64-metal-unsigned.tar.gz", "manual release unsigned expected assets")
 
 
 def validate_macos_workflow_security_contract() -> None:
-    host = read("tools/macos/Invoke-openQ4MacOSWorkflow.ps1")
-    bootstrap = read("tools/macos/guest/openq4-macos-bootstrap.sh")
-    assets = read("tools/macos/guest/openq4-macos-install-quake4-assets.sh")
-    guest = read("tools/macos/guest/openq4-macos-sync-build-test.sh")
+    host = read("tools/macos/Invoke-openD3MacOSWorkflow.ps1")
+    bootstrap = read("tools/macos/guest/opend3-macos-bootstrap.sh")
+    assets = read("tools/macos/guest/opend3-macos-install-quake4-assets.sh")
+    guest = read("tools/macos/guest/opend3-macos-sync-build-test.sh")
     signoff_validator = read("tools/macos/validate_signoff_archive.py")
     debug = read(".github/workflows/macos-debug.yml")
     workflow_doc = read("docs/dev/macos-vm-testing-workflow.md")
-    validation_runner = read("tools/validation/openq4_validate.py")
+    validation_runner = read("tools/validation/opend3_validate.py")
 
     require(host, "Assert-NoArchiveLinks", "macOS host archive symlink guard")
     require(host, "Assert-NoCaseInsensitiveArchiveCollisions", "macOS host archive case-collision guard")
@@ -3457,7 +3457,7 @@ def validate_macos_workflow_security_contract() -> None:
     require(host, "Assert-SafeRemoteGuestHomePath", "macOS host guest-home override validation")
     require(host, "Invalid MacHome", "macOS host guest-home override validation")
     require(host, "Use an absolute POSIX path such as /Users/codex", "macOS host guest-home override validation")
-    require(host, "OPENQ4_GUEST_HOME=$(Quote-Sh $MacHome)", "macOS host guest-home override environment")
+    require(host, "OPEND3_GUEST_HOME=$(Quote-Sh $MacHome)", "macOS host guest-home override environment")
     require(host, "Use an absolute POSIX path or a ~/ path", "macOS host relative remote path rejection")
     require(host, "Empty POSIX path segments are not allowed", "macOS host empty remote path segment rejection")
     require(host, "Dot path segments are not allowed", "macOS host dot remote path segment rejection")
@@ -3488,7 +3488,7 @@ def validate_macos_workflow_security_contract() -> None:
     require(host, "BuildDir must live under .tmp/ or use a builddir* name", "macOS host builddir output-tree guard")
     require(host, "RemoteTempRoot", "macOS host per-run remote temp root")
     require(host, "function Remove-RemoteTempRoot", "macOS host remote temp cleanup")
-    require(host, r"\A/tmp/openq4-macos-[0-9a-fA-F]{32}\z", "macOS host remote temp cleanup path guard")
+    require(host, r"\A/tmp/opend3-macos-[0-9a-fA-F]{32}\z", "macOS host remote temp cleanup path guard")
     require(host, "Refusing to remove unexpected macOS remote temp root", "macOS host remote temp cleanup path guard")
     require(host, "Failed to remove macOS remote temp root", "macOS host remote temp cleanup warning")
     require(host, "try {\n    Invoke-MacOSWorkflowMain\n} finally {\n    Remove-RemoteTempRoot", "macOS host remote temp cleanup finally")
@@ -3522,12 +3522,12 @@ def validate_macos_workflow_security_contract() -> None:
     require(host, "tar -tvf", "macOS host archive type validation")
     require(host, "including hardlinks", "macOS host archive hardlink validation")
     require(host, "rsync -a --delete", "macOS host safe temp extraction sync")
-    require(host, 'Join-RemotePosixPath -Base $MacWorkspace -Child "openQ4"', "macOS host remote source sync path joining")
-    reject(host, 'Join-RemotePosixPath -Base $MacWorkspace -Child "openQ4-game"', "macOS host obsolete companion transfer")
+    require(host, 'Join-RemotePosixPath -Base $MacWorkspace -Child "openD3"', "macOS host remote source sync path joining")
+    reject(host, 'Join-RemotePosixPath -Base $MacWorkspace -Child "openD3-game"', "macOS host obsolete companion transfer")
     require(host, "$HostGameLibsPath = $repoRoot", "macOS host canonical in-tree game sources")
-    require(host, "openQ4/.git", "macOS host source metadata exclusion")
-    require(host, "openQ4/.codex", "macOS host local agent metadata exclusion")
-    reject(host, "openQ4-game/.git", "macOS host obsolete companion archive")
+    require(host, "openD3/.git", "macOS host source metadata exclusion")
+    require(host, "openD3/.codex", "macOS host local agent metadata exclusion")
+    reject(host, "openD3-game/.git", "macOS host obsolete companion archive")
     require(host, "$assetRootName/q4base/*.cfg", "macOS host personal config exclusion")
     require(host, "$assetRootName/q4base/q4key", "macOS host private key exclusion")
     require(host, '"Signoff"', "macOS host signoff action")
@@ -3561,7 +3561,7 @@ def validate_macos_workflow_security_contract() -> None:
     require(host, "contains a symlink or special file", "macOS host result symlink/special preflight")
     require(host, "has no file evidence under", "macOS host result renderer-output preflight")
     require(host, 'require_result_file_under "${path}" "renderer-mp-smoke"', "macOS host result MP-smoke preflight")
-    require(host, 'openq4-macos-results-${RunId}.tar.gz', "macOS host result archive naming")
+    require(host, 'opend3-macos-results-${RunId}.tar.gz', "macOS host result archive naming")
     require(host, 'expected_bridges=(__BRIDGES__)', "macOS host bridge-specific result collection")
     require(host, '${run_id}-signoff-${bridge}', "macOS host signoff-only result collection")
     require(host, "macOS signoff result directory is incomplete", "macOS host incomplete signoff result guard")
@@ -3579,8 +3579,8 @@ def validate_macos_workflow_security_contract() -> None:
     require(host, "function Get-MacOSBridgeBuildDir", "macOS host bridge-specific builddir")
     require(host, 'return "${BuildDir}-${Bridge}"', "macOS host bridge-specific builddir")
     require(host, "function Invoke-BuildTestActionForBridge", "macOS host bridge action environment")
-    require(host, '"OPENQ4_MACOS_OPENAL_PROVIDER" = $MacOSOpenALProvider', "macOS host OpenAL provider environment")
-    require(host, '"OPENQ4_MACOS_RUN_ID" = $MacOSRunId', "macOS host run ID environment")
+    require(host, '"OPEND3_MACOS_OPENAL_PROVIDER" = $MacOSOpenALProvider', "macOS host OpenAL provider environment")
+    require(host, '"OPEND3_MACOS_RUN_ID" = $MacOSRunId', "macOS host run ID environment")
     require(host, 'foreach ($bridge in (Get-MacOSGraphicsBridgeRuns))', "macOS host multi-bridge loop")
     require(host, "-MacOSGraphicsBridge both is supported for Build, Signoff, and All", "macOS host multi-bridge guard")
     require(host, "Collect-MacOSResults -RunId $MacOSRunId", "macOS host automatic signoff result collection")
@@ -3603,9 +3603,9 @@ def validate_macos_workflow_security_contract() -> None:
         (guest, "macOS build/test guest-home validation"),
     ):
         require(source, "require_guest_home", context)
-        require(source, "OPENQ4_GUEST_HOME", context)
+        require(source, "OPEND3_GUEST_HOME", context)
         require(source, "contains_control_chars", context)
-        require(source, "OPENQ4_GUEST_HOME/HOME must not contain control characters", context)
+        require(source, "OPEND3_GUEST_HOME/HOME must not contain control characters", context)
         require(source, 'GUEST_HOME="$(require_guest_home)"', context)
         require(source, 'export HOME="${GUEST_HOME}"', context)
         require(source, "macOS guest home directory does not exist", context)
@@ -3635,13 +3635,13 @@ def validate_macos_workflow_security_contract() -> None:
     require(assets, "must be an absolute path after ~ expansion", "macOS asset relative root rejection")
     require(assets, "must not contain dot or empty path segments", "macOS asset ambiguous root segment rejection")
     require(assets, "require_basepath_outside_reserved_workspace_children", "macOS asset reserved workspace child guard")
-    require(assets, 'reserved_children = ("openQ4", "openQ4-game", "incoming-quake4", "results")', "macOS asset reserved workspace child list")
+    require(assets, 'reserved_children = ("openD3", "openD3-game", "incoming-quake4", "results")', "macOS asset reserved workspace child list")
     require(assets, "path_is_same_or_under", "macOS asset reserved workspace child case-insensitive guard")
     require(assets, "casefold()", "macOS asset reserved workspace child case-insensitive guard")
     require(assets, "Asset install basepath must not target a reserved workflow directory", "macOS asset reserved workspace child diagnostic")
     require(assets, "Asset install basepath must not live under a reserved workflow directory", "macOS asset reserved workspace subtree diagnostic")
-    require(assets, "OPENQ4_Q4_TAR must not be a symlink", "macOS asset archive symlink validation")
-    require(assets, "OPENQ4_Q4_TAR must not contain control characters", "macOS asset archive path control-character validation")
+    require(assets, "OPEND3_Q4_TAR must not be a symlink", "macOS asset archive symlink validation")
+    require(assets, "OPEND3_Q4_TAR must not contain control characters", "macOS asset archive path control-character validation")
     require(assets, "COPYFILE_DISABLE=1 tar -xf", "macOS asset archive copyfile suppression")
     require(assets, "rsync --delete would remove workflow files", "macOS asset destructive target guard")
     require(assets, "Unsafe asset archive path", "macOS asset tar path validation")
@@ -3661,15 +3661,15 @@ def validate_macos_workflow_security_contract() -> None:
     require(assets, "multiple q4base directories", "macOS asset ambiguity validation")
     require(assets, "Installed asset directory has no q4base PK4 files", "macOS asset PK4 presence validation")
     require(assets, "Installed Quake 4 asset PK4 count", "macOS asset PK4 install evidence")
-    require(assets, "/tmp/openq4-macos-*/*", "macOS asset copied archive cleanup")
+    require(assets, "/tmp/opend3-macos-*/*", "macOS asset copied archive cleanup")
 
     require(guest, "resolve_under_repo", "macOS guest builddir containment")
-    require(guest, "Path escapes the openQ4 repository", "macOS guest builddir containment")
+    require(guest, "Path escapes the openD3 repository", "macOS guest builddir containment")
     require(guest, "expand_guest_path", "macOS guest tilde expansion")
     require(guest, "require_safe_builddir", "macOS guest builddir safety validation")
-    require(guest, "OPENQ4_BUILDDIR must not resolve to the openQ4 repository root", "macOS guest builddir root guard")
-    require(guest, "OPENQ4_BUILDDIR must live under .tmp/ or use a builddir* name", "macOS guest builddir output-tree guard")
-    require(guest, "OPENQ4_BUILDDIR must not target source, content, tool, git, or staged runtime directories", "macOS guest builddir owned-tree guard")
+    require(guest, "OPEND3_BUILDDIR must not resolve to the openD3 repository root", "macOS guest builddir root guard")
+    require(guest, "OPEND3_BUILDDIR must live under .tmp/ or use a builddir* name", "macOS guest builddir output-tree guard")
+    require(guest, "OPEND3_BUILDDIR must not target source, content, tool, git, or staged runtime directories", "macOS guest builddir owned-tree guard")
     require(guest, "require_positive_integer", "macOS guest numeric option validation")
     require(guest, "require_safe_guest_roots", "macOS guest workspace/basepath validation")
     require(guest, "workspace_raw = sys.argv[1]", "macOS guest raw root validation")
@@ -3679,14 +3679,14 @@ def validate_macos_workflow_security_contract() -> None:
     require(guest, "segments = path_text.strip", "macOS guest raw path segment validation")
     require(guest, "must be an absolute path after ~ expansion", "macOS guest relative root rejection")
     require(guest, "must not contain dot or empty path segments", "macOS guest ambiguous root segment rejection")
-    require(guest, "OPENQ4_BASEPATH must not contain OPENQ4_GUEST_WORKSPACE", "macOS guest destructive basepath guard")
+    require(guest, "OPEND3_BASEPATH must not contain OPEND3_GUEST_WORKSPACE", "macOS guest destructive basepath guard")
     require(guest, "require_basepath_outside_reserved_workspace_children", "macOS guest reserved workspace child guard")
-    require(guest, 'reserved_children = ("openQ4", "openQ4-game", "incoming-quake4", "results")', "macOS guest reserved workspace child list")
+    require(guest, 'reserved_children = ("openD3", "openD3-game", "incoming-quake4", "results")', "macOS guest reserved workspace child list")
     require(guest, "path_is_same_or_under", "macOS guest reserved workspace child case-insensitive guard")
     require(guest, "casefold()", "macOS guest reserved workspace child case-insensitive guard")
-    require(guest, "OPENQ4_BASEPATH must not target reserved workflow directory", "macOS guest reserved workspace child diagnostic")
-    require(guest, "OPENQ4_BASEPATH must not live under reserved workflow directory", "macOS guest reserved workspace subtree diagnostic")
-    require(guest, "OPENQ4_ALLOW_CROSS_ARCH_CLIENT", "macOS guest cross-arch launch opt-in")
+    require(guest, "OPEND3_BASEPATH must not target reserved workflow directory", "macOS guest reserved workspace child diagnostic")
+    require(guest, "OPEND3_BASEPATH must not live under reserved workflow directory", "macOS guest reserved workspace subtree diagnostic")
+    require(guest, "OPEND3_ALLOW_CROSS_ARCH_CLIENT", "macOS guest cross-arch launch opt-in")
     require(guest, "Missing staged macOS client for host architecture", "macOS guest exact-arch client selection")
     require(guest, "Staged macOS client must not be a symlink", "macOS guest client symlink validation")
     require(guest, "count_q4base_pk4s", "macOS guest asset PK4 validation")
@@ -3697,50 +3697,50 @@ def validate_macos_workflow_security_contract() -> None:
     require(guest, "Quake 4 asset basepath contains a case-insensitive path collision", "macOS guest asset basepath case-collision validation")
     require(guest, "Quake 4 asset basepath has no q4base PK4 files", "macOS guest asset basepath validation")
     require(guest, "Validated Quake 4 asset basepath", "macOS guest asset validation evidence")
-    require(guest, 'graphics_bridge="${OPENQ4_MACOS_GRAPHICS_BRIDGE:-opengl}"', "macOS guest bridge environment")
-    require(guest, 'openal_provider="${OPENQ4_MACOS_OPENAL_PROVIDER:-system}"', "macOS guest OpenAL Soft provider environment")
-    require(guest, 'stamp="${OPENQ4_MACOS_RUN_ID:-$(date +%Y%m%d-%H%M%S)}"', "macOS guest host-controlled run ID")
+    require(guest, 'graphics_bridge="${OPEND3_MACOS_GRAPHICS_BRIDGE:-opengl}"', "macOS guest bridge environment")
+    require(guest, 'openal_provider="${OPEND3_MACOS_OPENAL_PROVIDER:-system}"', "macOS guest OpenAL Soft provider environment")
+    require(guest, 'stamp="${OPEND3_MACOS_RUN_ID:-$(date +%Y%m%d-%H%M%S)}"', "macOS guest host-controlled run ID")
     require(guest, "RESULT_TOKEN_MAX_LENGTH=80", "macOS guest result token length guard")
     require(guest, "require_result_token", "macOS guest result token validation")
     require(guest, "require_choice", "macOS guest option choice validation")
-    require(guest, 'require_result_token "OPENQ4_MACOS_RUN_ID" "${stamp}"', "macOS guest run ID validation")
+    require(guest, 'require_result_token "OPEND3_MACOS_RUN_ID" "${stamp}"', "macOS guest run ID validation")
     require(guest, 'require_choice "macOS workflow action" "${action}" build smoke renderer launcher signoff all', "macOS guest action validation")
-    require(guest, 'require_choice "OPENQ4_MACOS_GRAPHICS_BRIDGE" "${graphics_bridge}" opengl metal', "macOS guest bridge validation")
-    require(guest, 'require_choice "OPENQ4_MACOS_OPENAL_PROVIDER" "${openal_provider}" apple_framework system', "macOS guest OpenAL provider validation")
+    require(guest, 'require_choice "OPEND3_MACOS_GRAPHICS_BRIDGE" "${graphics_bridge}" opengl metal', "macOS guest bridge validation")
+    require(guest, 'require_choice "OPEND3_MACOS_OPENAL_PROVIDER" "${openal_provider}" apple_framework system', "macOS guest OpenAL provider validation")
     require(guest, "prepare_run_dir", "macOS guest result directory preparation")
     require(guest, "require_empty_result_directory", "macOS guest stale result directory guard")
     require(guest, "macOS result directory already exists and is not empty", "macOS guest stale result directory diagnostic")
-    require(guest, "Use a fresh OPENQ4_MACOS_RUN_ID or remove the stale result directory before rerunning", "macOS guest stale result directory diagnostic")
+    require(guest, "Use a fresh OPEND3_MACOS_RUN_ID or remove the stale result directory before rerunning", "macOS guest stale result directory diagnostic")
     require(guest, 'find "${candidate}" -mindepth 1 -print -quit', "macOS guest stale result directory hidden-file guard")
     require(guest, "macOS results root must not be a symlink", "macOS guest result root symlink validation")
     require(guest, "macOS result directory must not be a symlink", "macOS guest result directory symlink validation")
     require(guest, "macOS workflow log path must not be a symlink or directory", "macOS guest workflow log symlink validation")
     require(guest, "macOS workflow log path must be a regular file", "macOS guest workflow log special-file validation")
     require_before(guest, 'require_choice "macOS workflow action" "${action}" build smoke renderer launcher signoff all', 'prepare_run_dir', "macOS guest validates action before result directory creation")
-    require_before(guest, 'prepare_run_dir', 'exec > >(tee -a "${run_dir}/openq4-macos-workflow.log")', "macOS guest validates result directory before logging")
-    require_before(guest, 'require_choice "OPENQ4_MACOS_GRAPHICS_BRIDGE" "${graphics_bridge}" opengl metal', 'run_dir="${results_root}/${stamp}-${action}-${graphics_bridge}"', "macOS guest validates bridge before result directory naming")
-    require_before(guest, 'require_choice "OPENQ4_MACOS_OPENAL_PROVIDER" "${openal_provider}" apple_framework system', 'run_dir="${results_root}/${stamp}-${action}-${graphics_bridge}"', "macOS guest validates provider before logging starts")
+    require_before(guest, 'prepare_run_dir', 'exec > >(tee -a "${run_dir}/opend3-macos-workflow.log")', "macOS guest validates result directory before logging")
+    require_before(guest, 'require_choice "OPEND3_MACOS_GRAPHICS_BRIDGE" "${graphics_bridge}" opengl metal', 'run_dir="${results_root}/${stamp}-${action}-${graphics_bridge}"', "macOS guest validates bridge before result directory naming")
+    require_before(guest, 'require_choice "OPEND3_MACOS_OPENAL_PROVIDER" "${openal_provider}" apple_framework system', 'run_dir="${results_root}/${stamp}-${action}-${graphics_bridge}"', "macOS guest validates provider before logging starts")
     require(guest, 'run_dir="${results_root}/${stamp}-${action}-${graphics_bridge}"', "macOS guest bridge-specific results")
-    require(guest, 'require_choice "OPENQ4_BUILDTYPE" "${buildtype}" plain debug debugoptimized release minsize custom', "macOS guest buildtype validation")
-    require(guest, 'require_choice "OPENQ4_PLATFORM_BACKEND" "${platform_backend}" sdl3 native', "macOS guest platform backend validation")
+    require(guest, 'require_choice "OPEND3_BUILDTYPE" "${buildtype}" plain debug debugoptimized release minsize custom', "macOS guest buildtype validation")
+    require(guest, 'require_choice "OPEND3_PLATFORM_BACKEND" "${platform_backend}" sdl3 native', "macOS guest platform backend validation")
     require_before(guest, 'require_safe_builddir "${raw_builddir}" "${builddir}"', 'bash tools/build/meson_setup.sh setup --wipe "${builddir}" .', "macOS guest validates builddir before Meson setup")
-    require_before(guest, 'require_choice "OPENQ4_PLATFORM_BACKEND" "${platform_backend}" sdl3 native', 'bash tools/build/meson_setup.sh setup --wipe "${builddir}" .', "macOS guest validates backend before Meson setup")
-    require_before(guest, 'require_positive_integer "OPENQ4_SMOKE_LIMIT" "${smoke_limit}" 100000', 'python3 tools/tests/renderer_gameplay_benchmark.py', "macOS guest validates smoke limit before benchmark")
-    require_before(guest, 'require_positive_integer "OPENQ4_SMOKE_TIMEOUT" "${smoke_timeout}" 86400', 'python3 tools/tests/renderer_gameplay_benchmark.py', "macOS guest validates smoke timeout before benchmark")
+    require_before(guest, 'require_choice "OPEND3_PLATFORM_BACKEND" "${platform_backend}" sdl3 native', 'bash tools/build/meson_setup.sh setup --wipe "${builddir}" .', "macOS guest validates backend before Meson setup")
+    require_before(guest, 'require_positive_integer "OPEND3_SMOKE_LIMIT" "${smoke_limit}" 100000', 'python3 tools/tests/renderer_gameplay_benchmark.py', "macOS guest validates smoke limit before benchmark")
+    require_before(guest, 'require_positive_integer "OPEND3_SMOKE_TIMEOUT" "${smoke_timeout}" 86400', 'python3 tools/tests/renderer_gameplay_benchmark.py', "macOS guest validates smoke timeout before benchmark")
     require(guest, "run_mp_smoke", "macOS guest multiplayer smoke action")
-    require(guest, "OPENQ4_MP_SMOKE_TIMEOUT", "macOS guest MP smoke timeout control")
+    require(guest, "OPEND3_MP_SMOKE_TIMEOUT", "macOS guest MP smoke timeout control")
     require(guest, "--cases mp-q4dm1-listen", "macOS guest MP smoke case")
     require(guest, '--output-dir "${run_dir}/renderer-mp-smoke"', "macOS guest MP smoke output directory")
-    require(guest, "Running openQ4 macOS multiplayer smoke", "macOS guest MP smoke log evidence")
-    require_before(guest, 'require_positive_integer "OPENQ4_MP_SMOKE_TIMEOUT" "${mp_smoke_timeout}" 86400', '--cases mp-q4dm1-listen', "macOS guest validates MP smoke timeout before benchmark")
-    require_before(guest, 'require_positive_integer "OPENQ4_RENDERER_TIMEOUT" "${renderer_timeout}" 86400', 'python3 tools/tests/renderer_validation_matrix.py', "macOS guest validates renderer timeout before matrix")
+    require(guest, "Running openD3 macOS multiplayer smoke", "macOS guest MP smoke log evidence")
+    require_before(guest, 'require_positive_integer "OPEND3_MP_SMOKE_TIMEOUT" "${mp_smoke_timeout}" 86400', '--cases mp-q4dm1-listen', "macOS guest validates MP smoke timeout before benchmark")
+    require_before(guest, 'require_positive_integer "OPEND3_RENDERER_TIMEOUT" "${renderer_timeout}" 86400', 'python3 tools/tests/renderer_validation_matrix.py', "macOS guest validates renderer timeout before matrix")
     require(guest, '"-Dmacos_graphics_bridge=${graphics_bridge}"', "macOS guest bridge setup option")
     require(guest, '"-Dmacos_openal_provider=${openal_provider}"', "macOS guest OpenAL setup option")
     require(guest, "shell_quote", "macOS guest launcher quoting")
     require(guest, "shlex.quote", "macOS guest launcher quoting")
     require(guest, "exec ${client_q} +set fs_basepath ${basepath_q}", "macOS guest launcher quoted exec")
     require(guest, "Refusing to replace unsafe macOS launcher path", "macOS guest launcher symlink validation")
-    require(guest, 'launcher_tmp="$(mktemp "${GUEST_HOME}/Desktop/openQ4.command.XXXXXX")"', "macOS guest launcher atomic write")
+    require(guest, 'launcher_tmp="$(mktemp "${GUEST_HOME}/Desktop/openD3.command.XXXXXX")"', "macOS guest launcher atomic write")
     require(guest, "Refusing to replace unsafe macOS signoff report path", "macOS guest report symlink validation")
     require(guest, 'report_tmp="$(mktemp "${run_dir}/macos-runtime-signoff.md.XXXXXX")"', "macOS guest report atomic write")
     require(guest, 'mv -f "${report_tmp}" "${report}"', "macOS guest report atomic publish")
@@ -3766,12 +3766,12 @@ def validate_macos_workflow_security_contract() -> None:
     require(guest, "limit_stream_tail()", "macOS guest staged support collector stream-bounding validation")
     require(guest, "Support report output is limited to the final", "macOS guest staged support collector stream-bounding validation")
     require(guest, ".XXXXXX.tar.gz.tmp", "macOS guest staged support collector mktemp validation")
-    require(guest, "does not launch openQ4", "macOS guest staged support collector no-launch validation")
+    require(guest, "does not launch openD3", "macOS guest staged support collector no-launch validation")
     require(guest, "does not copy retail q4base PK4 assets", "macOS guest staged support collector privacy validation")
     require(guest, "truncated copy failed; source was not copied", "macOS guest staged support collector truncation validation")
     require(guest, "forbidden privacy/no-launch pattern", "macOS guest staged support collector forbidden-token validation")
-    require(guest, "openQ4-client_x64 >", "macOS guest staged support collector x64 launch denial")
-    require(guest, "openQ4-ded_x64 >", "macOS guest staged support collector x64 launch denial")
+    require(guest, "openD3-client_x64 >", "macOS guest staged support collector x64 launch denial")
+    require(guest, "openD3-ded_x64 >", "macOS guest staged support collector x64 launch denial")
     require(guest, "|| cat", "macOS guest staged support collector fallback denial")
     require(guest, 'tail -c "${max_bytes}" < "${source_path}" 2>/dev/null || cat', "macOS guest staged support collector fallback denial")
     require(guest, "macOS staged install contains a symlink or special file", "macOS guest staged symlink/special validation")
@@ -3791,9 +3791,9 @@ def validate_macos_workflow_security_contract() -> None:
     require(guest, "SPAudioDataType", "macOS guest audio inventory")
     require(guest, "SPUSBDataType", "macOS guest USB inventory")
     require(guest, "SPBluetoothDataType", "macOS guest Bluetooth inventory")
-    require(workflow_doc, "OPENQ4_GUEST_HOME", "macOS workflow guest-home override documentation")
+    require(workflow_doc, "OPEND3_GUEST_HOME", "macOS workflow guest-home override documentation")
     require(workflow_doc, "archive-expansion and result-collection snippets", "macOS workflow remote home fallback documentation")
-    require(guest, "build_openq4\n    run_smoke\n    run_mp_smoke\n    run_renderer_matrix\n    install_launcher\n    write_signoff_report", "macOS guest signoff run order")
+    require(guest, "build_opend3\n    run_smoke\n    run_mp_smoke\n    run_renderer_matrix\n    install_launcher\n    write_signoff_report", "macOS guest signoff run order")
 
     require(signoff_validator, "validate_signoff_archive", "macOS signoff archive validator")
     require(signoff_validator, "Archive path escapes through '..'", "macOS signoff archive path guard")
@@ -3834,7 +3834,7 @@ def validate_macos_workflow_security_contract() -> None:
     require(signoff_validator, "Quake 4 asset basepath validation completed.", "macOS signoff archive asset evidence")
     require(signoff_validator, "Archive contains unexpected top-level result directories", "macOS signoff archive exact top-dir guard")
     require(signoff_validator, "macos-runtime-signoff.md", "macOS signoff archive report check")
-    require(signoff_validator, "openq4-macos-workflow.log", "macOS signoff archive log check")
+    require(signoff_validator, "opend3-macos-workflow.log", "macOS signoff archive log check")
     require(signoff_validator, "renderer-smoke", "macOS signoff archive smoke output check")
     require(signoff_validator, "renderer-mp-smoke", "macOS signoff archive MP smoke output check")
     require(signoff_validator, "renderer-matrix", "macOS signoff archive matrix output check")
@@ -3844,17 +3844,17 @@ def validate_macos_workflow_security_contract() -> None:
     require(signoff_validator, "require_completed_checklist", "macOS signoff archive completed checklist gate")
     require(validation_runner, "macos_signoff_archive.py", "validation runner macOS signoff archive test")
 
-    require(debug, "bash -n tools/macos/guest/openq4-macos-bootstrap.sh", "macOS debug workflow guest script syntax check")
-    require(debug, "bash -n tools/macos/guest/openq4-macos-install-quake4-assets.sh", "macOS debug workflow asset script syntax check")
-    require(debug, "bash -n tools/macos/guest/openq4-macos-sync-build-test.sh", "macOS debug workflow build script syntax check")
+    require(debug, "bash -n tools/macos/guest/opend3-macos-bootstrap.sh", "macOS debug workflow guest script syntax check")
+    require(debug, "bash -n tools/macos/guest/opend3-macos-install-quake4-assets.sh", "macOS debug workflow asset script syntax check")
+    require(debug, "bash -n tools/macos/guest/opend3-macos-sync-build-test.sh", "macOS debug workflow build script syntax check")
     for token in (
         "Record hosted evidence scope",
         "macos-debug-evidence-scope.txt",
         "requested_bridge=${requested}",
         "artifact_bridge=${bridge}",
-        "openq4_commit=\"$(git rev-parse HEAD)\"",
-        "openq4_game_commit=\"$(git -C \"${OPENQ4_GAMELIBS_REPO}\" rev-parse HEAD)\"",
-        "openq4_game_dirty=${openq4_game_dirty}",
+        "opend3_commit=\"$(git rev-parse HEAD)\"",
+        "opend3_game_commit=\"$(git -C \"${OPEND3_GAMELIBS_REPO}\" rev-parse HEAD)\"",
+        "opend3_game_dirty=${opend3_game_dirty}",
         "hosted build/package validation only; not a completed manual Apple-hardware gameplay signoff",
         "both requested; this artifact contains only ${bridge}",
         "the other bridge was intentionally not selected",
@@ -3865,7 +3865,7 @@ def validate_macos_workflow_security_contract() -> None:
     require(workflow_doc, "-MacOSGraphicsBridge both", "macOS workflow dual bridge signoff documentation")
     require(workflow_doc, "<timestamp>-signoff-opengl", "macOS workflow bridge-specific signoff documentation")
     require(workflow_doc, "<timestamp>-signoff-metal", "macOS workflow bridge-specific signoff documentation")
-    require(workflow_doc, ".tmp/macos-vm/results/openq4-macos-results-<run-id>.tar.gz", "macOS workflow result collection documentation")
+    require(workflow_doc, ".tmp/macos-vm/results/opend3-macos-results-<run-id>.tar.gz", "macOS workflow result collection documentation")
     require(workflow_doc, "-MacOSRunId <id>", "macOS workflow run ID documentation")
     require(workflow_doc, "-ResultCollectionDir", "macOS workflow result directory documentation")
     require(workflow_doc, "-SkipResultCollection", "macOS workflow result collection opt-out documentation")
@@ -3914,7 +3914,7 @@ def validate_docs_and_ci_hooks() -> None:
     getting_started = read("docs/user/getting-started.md")
     package_readme = read("assets/release/README.html")
     release_notes = read("docs/dev/release-completion.md")
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     push = read(".github/workflows/push-verification.yml")
     commit = read(".github/workflows/commit-validation.yml")
 
@@ -3923,7 +3923,7 @@ def validate_docs_and_ci_hooks() -> None:
     require(building, "when a signed/notarized macOS release is required", "macOS release signing documentation")
     require(building, "MACOS_DEVELOPER_ID_APPLICATION_CERTIFICATE_BASE64", "macOS release signing documentation")
     require(building, "xcrun stapler validate", "macOS release signing documentation")
-    require(building, "openq4-<version>-macos-arm64-opengl.dmg", "macOS DMG release asset documentation")
+    require(building, "opend3-<version>-macos-arm64-opengl.dmg", "macOS DMG release asset documentation")
     require(building, "final DMG notarization/stapling", "macOS DMG release documentation")
     require(building, "do not pass a custom entitlements file by default", "macOS entitlement policy documentation")
     require(building, "rejects App Sandbox or `get-task-allow` entitlements", "macOS entitlement policy documentation")
@@ -3935,14 +3935,14 @@ def validate_docs_and_ci_hooks() -> None:
     require(building, "macos_openal_provider", "macOS OpenAL provider documentation")
     require(building, "dependency('openal', method: 'pkg-config')", "macOS OpenAL provider documentation")
     require(getting_started, "signed/notarized OpenGL and Metal bridge DMGs", "getting started guide")
-    require(getting_started, "drag `openQ4.app` to `/Applications`", "getting started guide")
+    require(getting_started, "drag `openD3.app` to `/Applications`", "getting started guide")
     require(getting_started, "signed SP/MP modules", "getting started self-contained app guide")
     require(getting_started, "publish clearly labeled `-unsigned.tar.gz` archives", "getting started macOS credential fallback")
     require(getting_started, "ad-hoc signed only for bundle validity", "getting started macOS unsigned policy")
     require(getting_started, "Our GitHub macOS packages remain a preview for Apple Silicon/arm64 Macs", "getting started macOS architecture policy")
     require(getting_started, "Our GitHub releases do not yet publish Intel Mac or universal2 packages", "getting started macOS architecture policy")
     require(package_readme, "signed/notarized OpenGL and Metal bridge DMGs", "release package README")
-    require(package_readme, "drag <code>openQ4.app</code> to <code>/Applications</code>", "release package README")
+    require(package_readme, "drag <code>openD3.app</code> to <code>/Applications</code>", "release package README")
     require(package_readme, "signed SP/MP modules", "release package self-contained app guide")
     require(package_readme, "clearly labeled <code>-unsigned.tar.gz</code> archives", "release package macOS credential fallback")
     require(package_readme, "ad-hoc signed only for bundle validity", "release package macOS unsigned policy")
@@ -3980,8 +3980,8 @@ def validate_docs_and_ci_hooks() -> None:
 
 
 def validate_embedded_guest_root_validators_runtime() -> None:
-    assets = read("tools/macos/guest/openq4-macos-install-quake4-assets.sh")
-    guest = read("tools/macos/guest/openq4-macos-sync-build-test.sh")
+    assets = read("tools/macos/guest/opend3-macos-install-quake4-assets.sh")
+    guest = read("tools/macos/guest/opend3-macos-sync-build-test.sh")
     asset_body = shell_heredoc_body(
         assets,
         "require_safe_asset_roots() {",
@@ -3999,7 +3999,7 @@ def validate_embedded_guest_root_validators_runtime() -> None:
         root = Path(temp_dir)
         home = root / "home"
         home.mkdir()
-        workspace = home / "openq4-work"
+        workspace = home / "opend3-work"
         basepath = workspace / "Quake4"
 
         valid_args = [workspace.as_posix(), basepath.as_posix(), home.as_posix()]
@@ -4021,7 +4021,7 @@ def make_macos_layer_mod_json_bytes(required: str = "0.2.000") -> bytes:
     manifest = {
         "name": "Quake 4: The Awakening",
         "version": "0.1.0",
-        "requiredopenQ4Version": required,
+        "requiredopenD3Version": required,
         "layer": "awakening",
     }
     return (json.dumps(manifest, indent=2) + "\n").encode("utf-8")
@@ -4032,7 +4032,7 @@ def make_macos_layer_symbol_records(arch: str) -> bytes:
     for index, kind in enumerate(("sp", "mp")):
         module = f"game-{kind}_{arch}.dylib"
         records.append(
-            f"- path=openQ4.app/Contents/Frameworks/q4xbase/{module}\n"
+            f"- path=openD3.app/Contents/Frameworks/q4xbase/{module}\n"
             f"  sha256={str(6 + index) * 64}\n"
             "  size=1\n"
             f"  macho_uuid=UUID: 00000000-0000-0000-0000-00000000000{7 + index} (arm64) {module}\n"
@@ -4045,16 +4045,16 @@ def validate_macos_game_layer_bundle_runtime() -> None:
     """Unified SP/MP modules are bundled; obsolete campaign stages are ignored."""
     package = load_package_module()
     work = ROOT / ".tmp" / "macos-game-layer-contract"
-    package_root = work / "openq4-v0.2.000-macos-arm64-opengl"
+    package_root = work / "opend3-v0.2.000-macos-arm64-opengl"
     install_dir = work / "install"
     arch = "arm64"
     version = "0.2.000"
 
     def stage_package() -> None:
         shutil.rmtree(package_root, ignore_errors=True)
-        write_test_file(package_root / f"openQ4-client_{arch}", b"client\n", 0o755)
+        write_test_file(package_root / f"openD3-client_{arch}", b"client\n", 0o755)
         write_test_file(package_root / package.GAME_DIR_NAME / "mod.json", b"{}\n")
-        for pak_name in package.OPENQ4_PACK_NAMES:
+        for pak_name in package.OPEND3_PACK_NAMES:
             write_test_file(package_root / package.GAME_DIR_NAME / pak_name, pak_name.removesuffix(".pk4").encode() + b"\n")
         write_test_file(package_root / package.GAME_DIR_NAME / f"game-sp_{arch}.dylib", b"sp\n", 0o755)
         write_test_file(package_root / package.GAME_DIR_NAME / f"game-mp_{arch}.dylib", b"mp\n", 0o755)
@@ -4076,7 +4076,7 @@ def validate_macos_game_layer_bundle_runtime() -> None:
                 f"openal-soft-{filename}\n".encode(),
             )
         write_test_file(install_dir / "assets" / "splash" / "doom3_splash.bmp", b"bmp\n")
-        write_test_file(install_dir / "openQ4.icns", b"icns\n")
+        write_test_file(install_dir / "openD3.icns", b"icns\n")
 
         # Historical q4xbase outputs may still exist beside an upgraded stage.
         # The unified package must ignore their modules, metadata and user assets.
@@ -4108,14 +4108,14 @@ def validate_macos_game_layer_archive_runtime() -> None:
     """The runtime and dSYM archives carry q4xbase exactly when the package embeds it."""
     package = load_package_module()
     work = ROOT / ".tmp" / "macos-game-layer-archive-contract"
-    package_root = work / "openq4-v0.2.000-macos-arm64-opengl"
+    package_root = work / "opend3-v0.2.000-macos-arm64-opengl"
     arch = "arm64"
     version = "0.2.000"
     version_tag = "v0.2.000"
     package_suffix = "-opengl"
     plist_bytes = make_macos_plist_bytes(package, version)
     prefix = package_root.name + "/"
-    contents = f"{prefix}openQ4.app/Contents/"
+    contents = f"{prefix}openD3.app/Contents/"
     base_manifest = make_macos_symbol_manifest_bytes(package_root.name, arch, version, version_tag)
     layer_manifest = base_manifest + make_macos_layer_symbol_records(arch)
     layer_sp = f"{contents}Frameworks/q4xbase/game-sp_{arch}.dylib"
@@ -4162,7 +4162,7 @@ def validate_macos_game_layer_archive_runtime() -> None:
             "macOS archive without the layer mod.json",
         )
         expect_runtime_error(
-            "outside openQ4.app",
+            "outside openD3.app",
             lambda: check(entries({f"{prefix}q4xbase/mod.json": (make_macos_layer_mod_json_bytes(), 0o644)})),
             "macOS archive with a loose q4xbase",
         )
@@ -4217,7 +4217,7 @@ def validate_macos_game_layer_archive_runtime() -> None:
             "macOS dSYM archive without the layer's dSYM",
         )
         with_runtime = dict(symbol_entries)
-        with_runtime[f"{symbol_prefix}openQ4.app/Contents/Frameworks/q4xbase/game-sp_{arch}.dylib"] = (b"code\n", 0o755)
+        with_runtime[f"{symbol_prefix}openD3.app/Contents/Frameworks/q4xbase/game-sp_{arch}.dylib"] = (b"code\n", 0o755)
         expect_runtime_error(
             "runtime payload entries",
             lambda: check_symbols(with_runtime),

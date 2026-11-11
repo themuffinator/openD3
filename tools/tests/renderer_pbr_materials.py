@@ -17,7 +17,7 @@ import renderer_gameplay_benchmark as gameplay
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
 
 
@@ -592,7 +592,7 @@ def test_controlled_fixture_gameplay_acceptance_gate() -> None:
         raise AssertionError("SP and both MP roles must enforce PBR fixture acceptance")
 
     gl_fixture_cvars = (
-        ("r_materialOverride", "materials/openq4/pbr_test/procedural_packed"),
+        ("r_materialOverride", "materials/opend3/pbr_test/procedural_packed"),
         ("r_pbrMaterials", "1"),
         ("r_rendererModernQuality", "1"),
         ("r_rendererModernVisible", "1"),
@@ -649,7 +649,7 @@ def test_controlled_fixture_gameplay_acceptance_gate() -> None:
         "r_pbrMaterials=$ fixtureValue",
         'r_pbrMaterials="1"',
         "r_pbrMaterials=+1",
-        "r_materialOverride=materials/openq4/*mutable*/procedural",
+        "r_materialOverride=materials/opend3/*mutable*/procedural",
         "fake=PBR material resources: records=9 resourceReady=9 modernReady=9 packed=9 separate=0 fallback=0",
         "fake=Map: tools/mv2",
     ):
@@ -1186,7 +1186,7 @@ def test_vulkan_environment_mip_chain_sampler() -> None:
 def test_box_parallax_and_probe_capture_contract() -> None:
     """Box probes share one kernel on every owner; probes bake in the engine."""
     kernel = read(ROOT / "src/renderer/PBRMath.h")
-    for token in ("OPENQ4_PBR_INLINE float PBRBoxParallaxDistance(", "OPENQ4_PBR_INLINE float PBRBoxInfluence("):
+    for token in ("OPEND3_PBR_INLINE float PBRBoxParallaxDistance(", "OPEND3_PBR_INLINE float PBRBoxInfluence("):
         require(kernel, token, "box-projected parallax kernel")
     owners = {
         "src/renderer/Vulkan/shaders/pbr_probes.glsl": ("vec4 boxExtents;", "localReflection = localPosition + localReflection * exitDistance;"),
@@ -1322,7 +1322,7 @@ def test_gl_classic_loop_native_pbr_contract() -> None:
         "RB_GLPBR_SurfaceIdentity( lightSurf ) != identity",
         "clamp( texture2D( uDiffuseMap, vDiffuseTexCoord ).a * uPBRTransparent.x, 0.0, 1.0 ) : 0.0;",
         "RB_GLSLSurfaceUsesGPUPosedGeometry( surf )",
-        "glPBRFragmentLibrary += OPENQ4_PBR_SCALAR_GLSL;",
+        "glPBRFragmentLibrary += OPEND3_PBR_SCALAR_GLSL;",
         "PBRClassicLightIrradianceColor(",
         "PBREnergyCompensationColor( f0, PBRSpecularAlbedo( ndotv, roughness ) )",
         "PBRUniformEnvironmentLight( radiance, albedo, metallic, roughness, PBRScreenAO( data.z ),",
@@ -1364,18 +1364,18 @@ def test_gl_classic_loop_native_pbr_contract() -> None:
     require(common, "RB_GLPBR_DepthCoverageImage( surf, pStage );", "perforated coverage uses the PBR albedo")
     require(common, "RB_SHARED_WORLD_AMBIENT_GL_REJECT_NATIVE_PBR", "the shared ambient phase yields")
     interaction = read(ROOT / "src/renderer/Interaction.cpp")
-    require(interaction, "#if !defined( OPENQ4_RENDERER_GLES_MODULE )\n\tneedsPBR = sint->shader->HasPBR()",
+    require(interaction, "#if !defined( OPEND3_RENDERER_GLES_MODULE )\n\tneedsPBR = sint->shader->HasPBR()",
             "OpenGL builds the PBR light triangles too")
     backend = read(ROOT / "src/renderer/tr_backend.cpp")
     for token in ("R_MaterialResourceTable_PrepareFrame( *scenePackets );\n\t\t\tRB_GLPBR_PrepareFrame( *scenePackets );",):
         require(backend, token, "the material contract table and probes are prepared with PBR on")
     for name in ("shadow_interaction", "shadow_point_interaction"):
-        vertex = read(ROOT / f"content/baseoq4/pak0/glprogs/{name}.vs")
-        fragment = read(ROOT / f"content/baseoq4/pak0/glprogs/{name}.fs")
+        vertex = read(ROOT / f"content/baseod3/pak0/glprogs/{name}.vs")
+        fragment = read(ROOT / f"content/baseod3/pak0/glprogs/{name}.fs")
         require(vertex, "PBRVertexFrame( attr_Normal, attr_Tangent, attr_Bitangent );", f"{name} PBR frame")
-        require(fragment, "vec3 OpenQ4PBRDirect( vec3 shadow );", f"{name} PBR shading")
-        require(fragment, "float OpenQ4PBRAlpha();", f"{name} translucent coverage")
-        if fragment.count("gl_FragColor = vec4( OpenQ4PBRDirect(") != fragment.count("), OpenQ4PBRAlpha() );"):
+        require(fragment, "vec3 openD3PBRDirect( vec3 shadow );", f"{name} PBR shading")
+        require(fragment, "float openD3PBRAlpha();", f"{name} translucent coverage")
+        if fragment.count("gl_FragColor = vec4( openD3PBRDirect(") != fragment.count("), openD3PBRAlpha() );"):
             raise AssertionError(f"{name}: every PBR output carries the translucent coverage alpha")
 
     # GLSL 1.30 programs: a context without it (Apple GL 2.1) stays classic.
@@ -1392,8 +1392,8 @@ def test_pbr_production_environment_contract() -> None:
     owners while the classic grid pass leaves its surfaces alone.
     """
     kernel = read(ROOT / "src/renderer/PBRMath.h")
-    for token in ("OPENQ4_PBR_INLINE float PBRSpecularBias(float NoV, float perceptualRoughness) {",
-                  "OPENQ4_PBR_INLINE float PBRUniformEnvironmentSpecular(float f0, float NoV, float perceptualRoughness) {",
+    for token in ("OPEND3_PBR_INLINE float PBRSpecularBias(float NoV, float perceptualRoughness) {",
+                  "OPEND3_PBR_INLINE float PBRUniformEnvironmentSpecular(float f0, float NoV, float perceptualRoughness) {",
                   "return (f * albedo + (1.0 - f) * PBRSpecularBias(NoV, perceptualRoughness)) * PBREnergyCompensation(f, albedo);"):
         require(kernel, token, "uniform environment kernel")
     shading = {
@@ -1481,7 +1481,7 @@ def test_pbr_ssao_indirect_contract() -> None:
     # Stage D): an occlusion field drawn after the depth prepass, folded into
     # indirect AO as the lesser of the two, and the post pass applying only the
     # field's classic factor.
-    for path in ("content/baseoq4/pak0/glprogs/ssao.fs", "src/renderer/Vulkan/shaders/post_ssao.frag"):
+    for path in ("content/baseod3/pak0/glprogs/ssao.fs", "src/renderer/Vulkan/shaders/post_ssao.frag"):
         shader = read(ROOT / path)
         for token in ("void FieldMain(", "void ApplyMain(", "ClassicDepthBuffer", "AOField",
                       "bool classic = classicDepth < 0.99999 && !PixelIsForeground( uv, classicDepth );"):
@@ -1605,8 +1605,8 @@ def test_native_gl_pbr_owner_stays_in_the_gl_module() -> None:
         block = sources.split(name + " = (", 1)[1].split(")", 1)[0]
         require(block, '"src/renderer/draw_pbr.cpp"', f"{name} excludes the native OpenGL owner")
     listings = {}
-    for module, macro in (("renderer_vk", "OPENQ4_RENDERER_VK_MODULE"),
-                          ("renderer_gles", "OPENQ4_RENDERER_GLES_MODULE")):
+    for module, macro in (("renderer_vk", "OPEND3_RENDERER_VK_MODULE"),
+                          ("renderer_gles", "OPEND3_RENDERER_GLES_MODULE")):
         listing = subprocess.run([sys.executable, str(ROOT / "tools/build/meson_sources.py"), "--emit", module],
                                  cwd=ROOT, capture_output=True, text=True, check=True).stdout.split()
         if not listing or "src/renderer/draw_pbr.cpp" in listing:
@@ -1631,12 +1631,12 @@ def test_native_gl_pbr_owner_stays_in_the_gl_module() -> None:
     # Negative control: the scan must flag an unguarded call and pass a
     # guarded one in either branch shape.
     if _calls_outside_module_guard("void f() {\n\tRB_GLPBR_PrintInfo();\n}\n", "RB_GLPBR_",
-                                   "OPENQ4_RENDERER_GLES_MODULE") != [2]:
+                                   "OPEND3_RENDERER_GLES_MODULE") != [2]:
         raise AssertionError("the module-guard scan must flag an unguarded call")
-    guarded = ("#if !defined( OPENQ4_RENDERER_VK_MODULE ) && !defined( OPENQ4_RENDERER_GLES_MODULE )\n"
-               "\tRB_GLPBR_PrintInfo();\n#endif\n#ifdef OPENQ4_RENDERER_GLES_MODULE\n\tGLES();\n#else\n"
+    guarded = ("#if !defined( OPEND3_RENDERER_VK_MODULE ) && !defined( OPEND3_RENDERER_GLES_MODULE )\n"
+               "\tRB_GLPBR_PrintInfo();\n#endif\n#ifdef OPEND3_RENDERER_GLES_MODULE\n\tGLES();\n#else\n"
                "\tRB_GLPBR_PrepareFrame( frame );\n#endif\n")
-    if _calls_outside_module_guard(guarded, "RB_GLPBR_", "OPENQ4_RENDERER_GLES_MODULE"):
+    if _calls_outside_module_guard(guarded, "RB_GLPBR_", "OPEND3_RENDERER_GLES_MODULE"):
         raise AssertionError("the module-guard scan must accept guarded calls")
 
 

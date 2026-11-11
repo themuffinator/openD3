@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Pin the capability gates that keep openQ4 voice away from peers without it.
+"""Pin the capability gates that keep openD3 voice away from peers without it.
 
-Older openQ4 releases speak the same 2.41 protocol but do not know the
+Older openD3 releases speak the same 2.41 protocol but do not know the
 appended unreliable VOICE message ids; an engine that receives one prints
 "unknown unreliable ..." for every packet. Mixed releases are refused at
 connect today (pure pak identity or the non-pure decl checksum, see

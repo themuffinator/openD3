@@ -50,7 +50,7 @@ class RosterOracleTests(unittest.TestCase):
         # The engine lexer splits unquoted hyphens; this catches the first
         # capture harness failure without requiring another engine launch.
         for line in steps():
-            if line.startswith(('openq4_retainedGui focus ', 'openq4_retainedGui widget ', 'openq4_retainedGui inspect ')):
+            if line.startswith(('opend3_retainedGui focus ', 'opend3_retainedGui widget ', 'opend3_retainedGui inspect ')):
                 self.assertRegex(line, r' "[^"\n]+"$')
             if line.startswith('echo '):
                 self.assertRegex(line, r'^echo "ROSTER_STAGE [^"]+"$')

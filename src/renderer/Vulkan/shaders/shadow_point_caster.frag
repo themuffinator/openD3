@@ -2,10 +2,10 @@
 #extension GL_GOOGLE_include_directive : require
 #include "point_shadow_math.glsl"
 
-// openQ4 Vulkan point-light shadow-map caster — fragment stage (Phase F2b).
+// openD3 Vulkan point-light shadow-map caster — fragment stage (Phase F2b).
 //
 // GL shadow_point_caster.fs parity in its hardware-compare depth variant
-// (OPENQ4_POINT_SHADOW_CASTER_DEPTH), including the same hard/hashed alpha
+// (OPEND3_POINT_SHADOW_CASTER_DEPTH), including the same hard/hashed alpha
 // coverage path as projected casters:
 // - perforated casters alpha-test against the material's alpha map;
 // - the stored depth is the normalized radial distance from the light

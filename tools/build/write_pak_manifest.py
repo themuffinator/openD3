@@ -6,7 +6,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from openq4_pak import format_pk4_source_manifest, require_directory_inside, write_text_if_changed
+from opend3_pak import format_pk4_source_manifest, require_directory_inside, write_text_if_changed
 
 
 def normalize(path: str) -> str:

@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$runner = Join-Path $scriptDir "openq4_validate.py"
+$runner = Join-Path $scriptDir "opend3_validate.py"
 
 $python = Get-Command python -ErrorAction SilentlyContinue
 if ($null -eq $python) {

@@ -29,16 +29,16 @@
 static const char *r_renderApiArgs[] = { "best", "gl", "vulkan", "gl-module", "gles", NULL };
 #ifdef __ANDROID__
 // Android has no desktop GL at all; the ES module is the only renderer built.
-#define OPENQ4_DEFAULT_RENDER_API	"gles"
+#define OPEND3_DEFAULT_RENDER_API	"gles"
 static const rendererModuleApi_t rm_platformDefaultApi = RENDER_MODULE_API_GLES;
 #else
 // openD3: retail Prey interaction stages are ARB programs that only the
 // OpenGL ARB2 path executes; Vulkan fails them closed. "best" therefore means
 // OpenGL on desktop until Vulkan parity lands (docs/dev/prey-rebase/plan.md, D2).
-#define OPENQ4_DEFAULT_RENDER_API	"best"
+#define OPEND3_DEFAULT_RENDER_API	"best"
 static const rendererModuleApi_t rm_platformDefaultApi = RENDER_MODULE_API_GL;
 #endif
-idCVar r_renderApi( "r_renderApi", OPENQ4_DEFAULT_RENDER_API, CVAR_RENDERER | CVAR_ARCHIVE, "rendering API: best = OpenGL on desktop (Prey's ARB interaction stages), OpenGL ES on Android; gl = OpenGL; vulkan = Vulkan module; gl-module = OpenGL module alias; gles = OpenGL ES module. Changes take effect on engine restart.", r_renderApiArgs, idCmdSystem::ArgCompletion_String<r_renderApiArgs> );
+idCVar r_renderApi( "r_renderApi", OPEND3_DEFAULT_RENDER_API, CVAR_RENDERER | CVAR_ARCHIVE, "rendering API: best = OpenGL on desktop (Prey's ARB interaction stages), OpenGL ES on Android; gl = OpenGL; vulkan = Vulkan module; gl-module = OpenGL module alias; gles = OpenGL ES module. Changes take effect on engine restart.", r_renderApiArgs, idCmdSystem::ArgCompletion_String<r_renderApiArgs> );
 idCVar r_renderDevice("r_renderDevice","auto",CVAR_RENDERER | CVAR_ARCHIVE,
 	"rendering GPU: auto prefers compatible high-performance hardware; otherwise a Vulkan device UUID (32 lowercase hex digits). Explicit GPU selection requires Vulkan and engine restart; r_vkDevice is a temporary diagnostic override.");
 idCVar r_actualRenderApi( "r_actualRenderApi", "UNINITIALIZED", CVAR_RENDERER | CVAR_ROM, "rendering API actually active after request/fallback selection" );
@@ -54,7 +54,7 @@ idCVar r_windowWidth( "r_windowWidth", "1280", CVAR_RENDERER | CVAR_ARCHIVE | CV
 idCVar r_windowHeight( "r_windowHeight", "720", CVAR_RENDERER | CVAR_ARCHIVE | CVAR_INTEGER, "windowed mode height" );
 idCVar r_skipGuiShaders( "r_skipGuiShaders", "0", CVAR_RENDERER | CVAR_INTEGER, "1 = skip all gui elements on surfaces, 2 = skip drawing but still handle events, 3 = draw but skip events", 0, 3, idCmdSystem::ArgCompletion_Integer<0,3> );
 
-#ifdef OPENQ4_RENDERER_MODULE_ONLY
+#ifdef OPEND3_RENDERER_MODULE_ONLY
 // module-only clients have no renderer TUs; the engine-side interface
 // globals live here, NULL until RM_PublishActiveModuleInterfaces fills them
 // at first boot (before declManager->Init, so nothing dereferences earlier)
@@ -99,7 +99,7 @@ static idStr rm_bootDevicePreference;
 static bool rm_selectionReloadPending = false;
 
 static rendererModuleApi_t RM_AutomaticApi(bool vrRequested) {
-#if defined(OPENQ4_OPENXR) && !defined(__ANDROID__)
+#if defined(OPEND3_OPENXR) && !defined(__ANDROID__)
 	// Automatic keeps VR on OpenGL; Vulkan VR is an explicit r_renderApi choice.
 	if (vrRequested) return RENDER_MODULE_API_GL;
 #else
@@ -450,7 +450,7 @@ Renderer modules load only from the executable directory, the platform package
 root, or the platform's trusted module root, mirroring the trusted-root policy
 in idFileSystem::FindDLL; they are never loaded from pak files, fs_savepath, or
 mod content. The extra roots matter on macOS, where the executable lives in
-openQ4.app/Contents/MacOS while signed Mach-O modules are staged in the flat
+openD3.app/Contents/MacOS while signed Mach-O modules are staged in the flat
 Contents/Frameworks code directory.
 ====================
 */
@@ -470,7 +470,7 @@ static bool RM_ResolveModulePath( rendererModuleApi_t api, char *outPath, int ma
 	// Thin packages carry architecture-specific module names. A universal2
 	// macOS package instead carries ONE two-slice module, so both executable
 	// slices must converge on the same trusted name -- mirrors the game-module
-	// fallback in openQ4_BuildGameModuleBinaryNameForArch / Common.cpp.
+	// fallback in openD3_BuildGameModuleBinaryNameForArch / Common.cpp.
 	const char *archTags[ 2 ];
 	int numArchTags = 0;
 	archTags[ numArchTags++ ] = RENDERER_MODULE_ARCH_TAG;
@@ -682,7 +682,7 @@ candidate is now the active renderer path.
 ====================
 */
 static bool RM_TryLoadModuleApi( rendererModuleApi_t api, rendererModuleStatus_t &status ) {
-#ifndef OPENQ4_RENDERER_MODULE_ONLY
+#ifndef OPEND3_RENDERER_MODULE_ONLY
 	if ( api == RENDER_MODULE_API_GL ) {
 		// this build shape statically links the OpenGL renderer; activating
 		// it is always possible
@@ -1290,7 +1290,7 @@ bool R_RendererModule_QueryDisplay( rendererDisplayState_t *outState ) {
 	if ( rm_state.interfacesPublished && rm_state.moduleExportValid ) {
 		query = rm_state.moduleExport.GetDisplayPresentation;
 	}
-#if !defined( OPENQ4_RENDERER_MODULE_ONLY ) && !defined( ID_DEDICATED )
+#if !defined( OPEND3_RENDERER_MODULE_ONLY ) && !defined( ID_DEDICATED )
 	else if ( rm_state.status.disposition != RENDER_MODULE_DISPOSITION_NONE ) {
 		query = R_GetDisplayPresentation;
 	}
@@ -1332,7 +1332,7 @@ bool R_RendererModule_TryDeviceRestart( const renderWindowRequest_t *request, ch
 	}
 	bool ( *restart )( const renderWindowRequest_t *, char *, int ) = NULL;
 	if ( rm_state.interfacesPublished && rm_state.moduleExportValid ) restart = rm_state.moduleExport.TryDeviceRestart;
-#if !defined( OPENQ4_RENDERER_MODULE_ONLY ) && !defined( ID_DEDICATED )
+#if !defined( OPEND3_RENDERER_MODULE_ONLY ) && !defined( ID_DEDICATED )
 	else if ( rm_state.status.disposition != RENDER_MODULE_DISPOSITION_NONE ) {
 		restart = R_TryFullVidRestart;
 	}
@@ -1375,7 +1375,7 @@ bool R_RendererModule_TryImagePolicyRestart(const renderImagePolicyRequest_t* re
     }
     bool (*restart)(const renderImagePolicyRequest_t*, renderImagePolicyResult_t*, char*, int) = NULL;
     if (rm_state.interfacesPublished && rm_state.moduleExportValid) restart = rm_state.moduleExport.TryImagePolicyRestart;
-#if !defined(OPENQ4_RENDERER_MODULE_ONLY) && !defined(ID_DEDICATED)
+#if !defined(OPEND3_RENDERER_MODULE_ONLY) && !defined(ID_DEDICATED)
     else if (rm_state.status.disposition != RENDER_MODULE_DISPOSITION_NONE) restart = R_TryImagePolicyRestart;
 #endif
     if (!restart) {
@@ -1429,7 +1429,7 @@ bool RM_ImageLeaseMatches(const rendererImageRecoveryLease_t& lease) {
 renderExport_t RM_ImageServices() {
     if(rm_state.interfacesPublished&&rm_state.moduleExportValid)return rm_state.moduleExport;
     renderExport_t table{};
-#if !defined(OPENQ4_RENDERER_MODULE_ONLY) && !defined(ID_DEDICATED)
+#if !defined(OPEND3_RENDERER_MODULE_ONLY) && !defined(ID_DEDICATED)
     if(rm_state.status.disposition!=RENDER_MODULE_DISPOSITION_NONE){
         table.PrepareImagePolicyRecovery=R_PrepareImagePolicyRecovery;table.CaptureImagePolicyRecovery=R_CaptureImagePolicyRecovery;
         table.PrepareColdImagePolicyRecovery=R_PrepareColdImagePolicyRecovery;table.CancelImagePolicyRecovery=R_CancelPreparedImagePolicyRecovery;
@@ -1529,7 +1529,7 @@ bool R_RendererModule_TryInitializeDisplay( const renderWindowRequest_t *request
 	}
 	bool ( *initialize )( const renderWindowRequest_t *, char *, int ) = NULL;
 	if ( rm_state.interfacesPublished && rm_state.moduleExportValid ) initialize = rm_state.moduleExport.TryInitializeDisplay;
-#if !defined( OPENQ4_RENDERER_MODULE_ONLY ) && !defined( ID_DEDICATED )
+#if !defined( OPEND3_RENDERER_MODULE_ONLY ) && !defined( ID_DEDICATED )
 	else if ( rm_state.status.disposition != RENDER_MODULE_DISPOSITION_NONE ) initialize = R_TryInitializeDisplay;
 #endif
 	if ( initialize == NULL ) {

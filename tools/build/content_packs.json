@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "comment": "openD3 runtime content packs. This table drives the Meson pack targets, the generated engine pack table (openq4_paks_generated.h), the packagers and the archive verifiers. Retail Doom 3 content is never packed here; users supply it. See docs/dev/content-pack-distribution.md.",
+  "comment": "openD3 runtime content packs. This table drives the Meson pack targets, the generated engine pack table (opend3_paks_generated.h), the packagers and the archive verifiers. Retail Doom 3 content is never packed here; users supply it. See docs/dev/content-pack-distribution.md.",
   "packs": [
     {
       "name": "pak0.pk4",
@@ -16,7 +16,7 @@
         "glprogs/smaa_edge.vs",
         "glprogs/smaa_weights.fs",
         "glprogs/smaa_weights.vs",
-        "materials/postprocess_openq4.mtr"
+        "materials/postprocess_opend3.mtr"
       ]
     }
   ]

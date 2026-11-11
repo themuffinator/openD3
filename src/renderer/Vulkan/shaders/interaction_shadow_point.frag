@@ -3,7 +3,7 @@
 #include "../../PBRMath.h"
 #include "point_shadow_math.glsl"
 
-// openQ4 Vulkan point-shadow-receiving interaction â€” fragment stage (Phase
+// openD3 Vulkan point-shadow-receiving interaction â€” fragment stage (Phase
 // F2b).
 //
 // interaction.frag plus the point-light cube shadow sample of the GL

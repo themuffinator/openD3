@@ -487,7 +487,7 @@ def create_server_document() -> dict:
                   title slot over the last 150 ms;
     onDeactivate  places it at rest while it is hidden."""
     check_create_fits()
-    doc = Document("openq4.createserver")
+    doc = Document("opend3.createserver")
     doc.session("back", "createBack")
     doc.session("createMap", "createMap")
     doc.session("createStart", "createStart")

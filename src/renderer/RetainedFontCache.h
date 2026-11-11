@@ -7,7 +7,7 @@
 #include <tuple>
 #include <vector>
 
-namespace openq4::fonts {
+namespace opend3::fonts {
 
 struct Raster {
 	float advance = 0;

@@ -1,6 +1,6 @@
 // Copyright (C) 2026 DarkMatter Productions
-#ifndef OPENQ4_PBR_NATIVE_CONTRACT_H
-#define OPENQ4_PBR_NATIVE_CONTRACT_H
+#ifndef OPEND3_PBR_NATIVE_CONTRACT_H
+#define OPEND3_PBR_NATIVE_CONTRACT_H
 
 // Per-surface admission for the native PBR owners: the OpenGL classic light
 // loop and the native Vulkan interaction renderer. A native owner replaces

@@ -176,7 +176,7 @@ static void Query(){
     throwBackend=true;output=sentinel;bool threw=false;try{R_RendererModule_QueryDisplay(&output);}catch(const std::runtime_error&){threw=true;}
     assert(threw && !std::memcmp(&output,&sentinel,sizeof(output)));throwBackend=false;
     Reset();rm_state.status.disposition=RENDER_MODULE_DISPOSITION_BUILTIN;
-#if !defined(OPENQ4_RENDERER_MODULE_ONLY) && !defined(ID_DEDICATED)
+#if !defined(OPEND3_RENDERER_MODULE_ONLY) && !defined(ID_DEDICATED)
     assert(R_RendererModule_QueryDisplay(&output) && builtinQueries==2 && !moduleQueries);
 #else
     assert(!R_RendererModule_QueryDisplay(&output) && !builtinQueries && !moduleQueries);
@@ -200,7 +200,7 @@ static void Dispatch(){
     // the remaining lease rather than hiding the failure as a usable device.
     assert(videoReferences==1);R_RendererModule_Shutdown();assert(!videoReferences && !rm_displayVideoPin);
     Reset();rm_state.status.disposition=RENDER_MODULE_DISPOSITION_BUILTIN;
-#if !defined(OPENQ4_RENDERER_MODULE_ONLY) && !defined(ID_DEDICATED)
+#if !defined(OPEND3_RENDERER_MODULE_ONLY) && !defined(ID_DEDICATED)
     assert(R_RendererModule_TryDeviceRestart(&request,error,sizeof(error)) && builtinRestarts==1);
 #else
     assert(!R_RendererModule_TryDeviceRestart(&request,error,sizeof(error)) && !builtinRestarts);
@@ -286,7 +286,7 @@ static void ColdDispatch(){
     lifetime.clear();R_RendererModule_Shutdown();assert(!videoReferences && !rm_displayVideoPin);
     assert((lifetime==std::vector<std::string>{"unload","release"}));
     Reset();rm_state.status.disposition=RENDER_MODULE_DISPOSITION_BUILTIN;builtinRenderer.ready=false;
-#if !defined(OPENQ4_RENDERER_MODULE_ONLY) && !defined(ID_DEDICATED)
+#if !defined(OPEND3_RENDERER_MODULE_ONLY) && !defined(ID_DEDICATED)
     assert(R_RendererModule_TryInitializeDisplay(&request,error,sizeof(error)) && builtinInitializes==1 && !moduleInitializes);
     assert(!std::memcmp(&request,&submitted,sizeof(request)) && videoRetains==1 && videoReleases==1 && !videoReferences);
 #else
@@ -378,7 +378,7 @@ def main():
         env = dict(os.environ, TEMP=temp, TMP=temp)
         test_source = Path(temp) / 'services.cpp'
         test_source.write_text(code, encoding='utf-8')
-        for name, defines in (('builtin', []), ('module-only', ['-DOPENQ4_RENDERER_MODULE_ONLY']), ('dedicated', ['-DID_DEDICATED'])):
+        for name, defines in (('builtin', []), ('module-only', ['-DOPEND3_RENDERER_MODULE_ONLY']), ('dedicated', ['-DID_DEDICATED'])):
             binary = Path(temp) / f'{name}.exe'
             subprocess.run([compiler, '-std=c++17', *defines, '-I', str(ROOT), str(test_source), '-o', str(binary)], check=True, env=env)
             subprocess.run([str(binary)], check=True, env=env)

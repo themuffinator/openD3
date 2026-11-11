@@ -184,7 +184,7 @@ struct Language {
         if(!std::strcmp(token,"#str_42861"))return "Showing %d out of %d servers";
         if(!std::strcmp(token,"#str_107298"))return "Scanning - Found: %s";
         if(!std::strcmp(token,"#str_107293"))return "Scanning for LAN servers...";
-        if(!std::strcmp(token,"#str_107294"))return "Scanned %d openQ4 Servers";
+        if(!std::strcmp(token,"#str_107294"))return "Scanned %d openD3 Servers";
         if(!std::strcmp(token,"#str_107297"))return "Scanning %d/%d: %s";
         if(!std::strcmp(token,"#str_107736"))return "Getting list of servers...";
         static const std::map<std::string,std::string> details={{"#str_107702","Map"},{"#str_107659","Time Limit"},
@@ -255,7 +255,7 @@ static networkServer_t server(const char *host,int ping,const char *name,int cli
     networkServer_t s{};s.adr={host,PORT_SERVER,NA_IP};s.ping=ping;s.clients=clients;s.OSMask=0;
     s.serverInfo.Set("si_name",name);s.serverInfo.Set("si_map","mp/q4dm1");
     s.serverInfo.Set("si_gameType","DM");s.serverInfo.Set("si_maxPlayers","4");
-    s.serverInfo.Set("fs_game","baseoq4");return s;
+    s.serverInfo.Set("fs_game","baseod3");return s;
 }
 int main(){
     assert(ServerBrowserText("^2Real\tname\n^imaterial") == idStr("Real name imaterial"));
@@ -408,8 +408,8 @@ int main(){
      auto a=server("10.3.0.1",5,"^2LAN Arena",1);a.challenge=lan.GetChallenge();assert(lan.InfoResponse(a)==0);
      assert(!std::strcmp(lan.GetLoadNotice(),"Scanning - Found: LAN Arena"));
      clockValue=2100;lan.RunFrame();
-     assert(lan.GetState()==idServerScan::IDLE&&!std::strcmp(lan.GetLoadNotice(),"Scanned 1 openQ4 Servers")&&lan.GetLoadProgress()==1.0f);
-     assert(!std::strcmp(bar.State().GetString("loadNotice"),"Scanned 1 openQ4 Servers")&&!std::strcmp(bar.State().GetString("loadPct"),"1.000000"));
+     assert(lan.GetState()==idServerScan::IDLE&&!std::strcmp(lan.GetLoadNotice(),"Scanned 1 openD3 Servers")&&lan.GetLoadProgress()==1.0f);
+     assert(!std::strcmp(bar.State().GetString("loadNotice"),"Scanned 1 openD3 Servers")&&!std::strcmp(bar.State().GetString("loadPct"),"1.000000"));
      lan.Clear();assert(!*lan.GetLoadNotice()&&lan.GetLoadProgress()==0.0f&&!*bar.State().GetString("loadNotice"));
      lan.Shutdown();}
     // A new Internet list: the master's request, then the server that answered
@@ -423,7 +423,7 @@ int main(){
      auto b=server("10.4.0.1",5,"^1Answering",0);b.challenge=net.GetChallenge();assert(net.InfoResponse(b)==0);
      assert(!std::strcmp(net.GetLoadNotice(),"Scanning 1/2: Answering")&&net.GetLoadProgress()==0.5f);
      clockValue=20000;net.RunFrame();
-     assert(net.GetState()==idServerScan::IDLE&&!std::strcmp(net.GetLoadNotice(),"Scanned 2 openQ4 Servers")&&net.GetLoadProgress()==1.0f);
+     assert(net.GetState()==idServerScan::IDLE&&!std::strcmp(net.GetLoadNotice(),"Scanned 2 openD3 Servers")&&net.GetLoadProgress()==1.0f);
      net.NetScan();assert(net.GetState()==idServerScan::NET_SCAN&&!*net.GetLoadNotice()&&net.GetLoadProgress()==0.0f);
      auto c=server("10.4.0.2",9,"Second",0);c.challenge=net.GetChallenge();assert(net.InfoResponse(c)>=0);
      assert(!std::strcmp(net.GetLoadNotice(),"Scanning 1/2: Second"));
@@ -434,7 +434,7 @@ int main(){
     // A server's details, as the stock browser's tooltip shows them: its
     // address, its players' names as the browser reads them, and its settings
     // with the limit its game type ends on. The tooltip follows the hovered
-    // row (or the row openq4_browser names) and hides with none.
+    // row (or the row opend3_browser names) and hides with none.
     {idUserInterface tip;idServerScan d;d.GUIConfig(&tip,"serverList");d.GUIInit();d.SetupLANScan();
      auto dm=server("10.5.0.1",5,"Duel Hall",2);dm.challenge=d.GetChallenge();
      std::snprintf(dm.nickname[0],MAX_NICKLEN,"%s","^1Grunt");std::snprintf(dm.nickname[1],MAX_NICKLEN,"%s","Kane\tX");
@@ -506,7 +506,7 @@ def main() -> None:
     labels = set(re.findall(r'"(#str_\d+)"', scan))
     for language in ("english", "german", "french", "italian", "spanish", "polish", "russian",
                      "brazilian", "czech", "hungarian", "turkish", "ukrainian"):
-        tables = "\n".join(p.read_text(encoding="utf-8", errors="replace") for p in (ROOT / "content/baseoq4/pak0/strings").glob(language + "_*.lang"))
+        tables = "\n".join(p.read_text(encoding="utf-8", errors="replace") for p in (ROOT / "content/baseod3/pak0/strings").glob(language + "_*.lang"))
         missing = labels - set(re.findall(r'"(#str_\d+)"', tables))
         if missing:
             raise AssertionError(f"Browser labels missing from {language}: {sorted(missing)}")

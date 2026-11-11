@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 
-openQ4 cryptographic hash primitives
+openD3 cryptographic hash primitives
 Copyright (C) 2026 DarkMatter Productions
 
 This program is free software: you can redistribute it and/or modify it under

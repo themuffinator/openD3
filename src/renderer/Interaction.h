@@ -64,7 +64,7 @@ typedef struct {
 
 	const idMaterial *		shader;
 
-	// openQ4's shadow-map paths draw ambient triangles instead of stencil volumes,
+	// openD3's shadow-map paths draw ambient triangles instead of stencil volumes,
 	// but they must still honor Quake 4's entity-level shadow LOD. Keep validity
 	// separate so cvar-gated shadow-map features can ask for the decision lazily;
 	// the decision is refreshed for each renderer view's coverage and distance.

@@ -3,23 +3,23 @@
 The Android platform layer and Quake 4 touch adapter were contributed by
 [Emile Belanger (emileb)](https://github.com/emileb/openQ4/tree/android), building
 on his [GLES shader variants](https://github.com/emileb/openQ4/tree/gles-shader-variants).
-The imported openQ4 adapter sources use this repository's GPL-3.0-or-later
+The imported openD3 adapter sources use this repository's GPL-3.0-or-later
 license. Their original attribution is retained in each source file.
 
 Android builds default to a standalone SDL3 host and export `SDL_main` from
 `libquake4.so`. An SDLActivity-based application must load SDL3 first, supply
-the native library directory through `OPENQ4_NATIVE_LIBS`, and pass the user's
+the native library directory through `OPEND3_NATIVE_LIBS`, and pass the user's
 Quake 4 installation directory with `+set fs_basepath`. Saves default to SDL's
 app-private internal storage, or `USER_FILES/quake4` when supplied by a host.
-Both single-player and multiplayer modules use the unified `baseoq4` directory.
+Both single-player and multiplayer modules use the unified `baseod3` directory.
 
-SigmaTouch is optional and selected with `OPENQ4_SIGMATOUCH` by the build system.
+SigmaTouch is optional and selected with `OPEND3_SIGMATOUCH` by the build system.
 The host supplies Clibs_OpenTouch, MobileTouchControls, its existing touch art,
 SDL3, OpenAL and SAF support. These third-party host sources and assets are not
-included in openQ4. The adapter retains Emile's configurable touch layout and
+included in openD3. The adapter retains Emile's configurable touch layout and
 action-based controls, so rebinding a physical key does not break touch buttons.
 It synchronizes UI-thread callbacks with engine-thread input, releases held
-touch controls on focus loss or queue overflow, and uses openQ4 language tables
+touch controls on focus loss or queue overflow, and uses openD3 language tables
 for the touch editor's labels.
 
 ## External host licensing

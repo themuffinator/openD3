@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Pack separate ambient-occlusion, roughness, and metallic maps into glTF ORM.
 
-openQ4 PBR declarations consume packed ORM data as R = ambient occlusion,
+openD3 PBR declarations consume packed ORM data as R = ambient occlusion,
 G = roughness, B = metallic.  Input data is read from the explicitly selected
 stored channel (R by default), never from an RGB-to-luminance conversion.  The
 command-line image backend is optional Pillow and writes PNG or TGA according

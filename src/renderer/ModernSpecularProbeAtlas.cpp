@@ -52,12 +52,12 @@ static std::uint64_t rg_modernSpecularProbeAtlasGeneration = 0;
 static std::uint64_t rg_modernSpecularProbeAtlasNextResidencyGeneration = 0;
 static std::uint64_t rg_modernSpecularProbeAtlasFrame = 0;
 static modernSpecularProbeAtlasStats_t rg_modernSpecularProbeAtlasStats;
-static openq4PBR::AsyncPrefilter rg_modernSpecularProbePrefilterJobs[MODERN_SPECULAR_PROBE_ATLAS_MAX_ENTRIES];
+static opend3PBR::AsyncPrefilter rg_modernSpecularProbePrefilterJobs[MODERN_SPECULAR_PROBE_ATLAS_MAX_ENTRIES];
 // Finished background tiles awaiting their budgeted upload slices.
 struct modernSpecularProbePublish_t {
 	bool taken = false;
 	int nextTile = 0;
-	openq4PBR::PrefilteredTiles tiles;
+	opend3PBR::PrefilteredTiles tiles;
 };
 static modernSpecularProbePublish_t rg_modernSpecularProbePublish[MODERN_SPECULAR_PROBE_ATLAS_MAX_ENTRIES];
 static const unsigned int MODERN_SPECULAR_PROBE_PREFILTER_WORKERS = 4;
@@ -312,7 +312,7 @@ static void R_ModernSpecularProbeAtlas_UploadTile( int cell, int level,
 		size, size, GL_RGBA, GL_FLOAT, rgba.data() );
 }
 
-static void R_ModernSpecularProbeAtlas_UploadTiles( int slot, const openq4PBR::PrefilteredTiles &tiles ) {
+static void R_ModernSpecularProbeAtlas_UploadTiles( int slot, const opend3PBR::PrefilteredTiles &tiles ) {
 	for ( int level = 0; level <= MODERN_SPECULAR_PROBE_ATLAS_MAX_MIP; ++level ) {
 		const int size = MODERN_SPECULAR_PROBE_ATLAS_FACE_SIZE >> level;
 		for ( int face = 0; face < MODERN_SPECULAR_PROBE_ATLAS_FACE_COUNT; ++face ) {
@@ -336,7 +336,7 @@ static void R_ModernSpecularProbeAtlas_UploadHalfTile( int cell, int level,
 template<class Sampler>
 static void R_ModernSpecularProbeAtlas_Filter( int slot, const Sampler &sample ) {
 	// The tiles are computed in parallel and uploaded in the original order.
-	R_ModernSpecularProbeAtlas_UploadTiles( slot, openq4PBR::PrefilterTiles( sample,
+	R_ModernSpecularProbeAtlas_UploadTiles( slot, opend3PBR::PrefilterTiles( sample,
 		MODERN_SPECULAR_PROBE_ATLAS_FACE_SIZE, MODERN_SPECULAR_PROBE_ATLAS_MAX_MIP,
 		MODERN_SPECULAR_PROBE_DIFFUSE_SIZE ) );
 }
@@ -412,15 +412,15 @@ static void R_ModernSpecularProbeAtlas_Allocate( void ) {
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 		// Bake the analytic source once before filtering; evaluating its lobe
 		// separately for every integration sample needlessly stalls debug builds.
-		openq4PBR::Cube analytic;
+		opend3PBR::Cube analytic;
 		analytic.size = 64;
-		const openq4PBR::AnalyticEnvironment analyticSample;
+		const opend3PBR::AnalyticEnvironment analyticSample;
 		for ( int face = 0; face < 6; ++face ) {
 			analytic.faces[face].resize( analytic.size * analytic.size );
 			for ( int y = 0; y < analytic.size; ++y ) {
 				for ( int x = 0; x < analytic.size; ++x ) {
 					analytic.faces[face][y * analytic.size + x] = analyticSample(
-						openq4PBR::FaceDirection( face, 2.0f * ( x + 0.5f ) / analytic.size - 1.0f,
+						opend3PBR::FaceDirection( face, 2.0f * ( x + 0.5f ) / analytic.size - 1.0f,
 							2.0f * ( y + 0.5f ) / analytic.size - 1.0f ) );
 				}
 			}
@@ -428,7 +428,7 @@ static void R_ModernSpecularProbeAtlas_Allocate( void ) {
 		R_ModernSpecularProbeAtlas_Filter( MODERN_SPECULAR_PROBE_ANALYTIC_SLOT, analytic );
 		R_ModernSpecularProbeAtlas_UploadTile( MODERN_SPECULAR_PROBE_BRDF_CELL,
 			0, MODERN_SPECULAR_PROBE_BRDF_SIZE,
-			openq4PBR::BRDFTable( MODERN_SPECULAR_PROBE_BRDF_SIZE ) );
+			opend3PBR::BRDFTable( MODERN_SPECULAR_PROBE_BRDF_SIZE ) );
 		rg_modernSpecularProbeAtlasStats.textureReady = true;
 	}
 
@@ -650,7 +650,7 @@ void R_ModernSpecularProbeAtlas_FlushUploads( bool captureFrame ) {
 			continue;
 		}
 
-		openq4PBR::AsyncPrefilter &job = rg_modernSpecularProbePrefilterJobs[slot];
+		opend3PBR::AsyncPrefilter &job = rg_modernSpecularProbePrefilterJobs[slot];
 		modernSpecularProbePublish_t &publish = rg_modernSpecularProbePublish[slot];
 		if ( entry.prefilterRunning ) {
 			if ( !publish.taken ) {
@@ -705,7 +705,7 @@ void R_ModernSpecularProbeAtlas_FlushUploads( bool captureFrame ) {
 		}
 		flushReads++;
 		const unsigned long long readBegin = R_RendererMetrics_CpuClock();
-		openq4PBR::Cube source;
+		opend3PBR::Cube source;
 		source.size = entry.faceSize;
 		const bool linearHDR = entry.image->GetOpts().format == FMT_RGBA16F;
 		bool sourceValid = true;
@@ -727,7 +727,7 @@ void R_ModernSpecularProbeAtlas_FlushUploads( bool captureFrame ) {
 				for ( int c = 0; c < 3; ++c ) {
 					const float value = scratch[pixel * 4 + c];
 					sourceValid = sourceValid && std::isfinite( value );
-					color[c] = linearHDR ? Max( 0.0f, value ) : openq4PBRMath::PBRSRGBToLinear( value );
+					color[c] = linearHDR ? Max( 0.0f, value ) : opend3PBRMath::PBRSRGBToLinear( value );
 				}
 				source.faces[face][pixel] = {
 					color[0], color[1], color[2] };

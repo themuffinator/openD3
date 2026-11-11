@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 // Shared by every context using a host. Retired images still consume the budget
 // until the host has consumed their last submission frame and shrunk the image.
@@ -63,4 +63,4 @@ private:
     std::size_t residentBytes = 0;
 };
 
-} // namespace openq4::ui
+} // namespace opend3::ui

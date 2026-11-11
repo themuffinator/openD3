@@ -35,7 +35,7 @@ If you have questions concerning this license or the applicable additional terms
 static const char VAR_GUIPREFIX[] = "gui::";
 static const int VAR_GUIPREFIX_LEN = static_cast<int>( sizeof( VAR_GUIPREFIX ) - 1 );
 
-static ID_INLINE bool OpenQ4_WriteSaveGameBytes( idFile *savefile, const void *buffer, int len, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_WriteSaveGameBytes( idFile *savefile, const void *buffer, int len, const char *context, const char *fieldName ) {
 	if ( savefile == NULL || len < 0 || ( buffer == NULL && len > 0 ) ) {
 		common->Error( "%s: invalid output while writing %s", context ? context : "savegame write", fieldName ? fieldName : "data" );
 		return false;
@@ -50,7 +50,7 @@ static ID_INLINE bool OpenQ4_WriteSaveGameBytes( idFile *savefile, const void *b
 	return true;
 }
 
-static ID_INLINE bool OpenQ4_ReadSaveGameBytes( idFile *savefile, void *buffer, int len, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_ReadSaveGameBytes( idFile *savefile, void *buffer, int len, const char *context, const char *fieldName ) {
 	if ( savefile == NULL || len < 0 || ( buffer == NULL && len > 0 ) ) {
 		if ( buffer != NULL && len > 0 ) {
 			memset( buffer, 0, len );
@@ -71,7 +71,7 @@ static ID_INLINE bool OpenQ4_ReadSaveGameBytes( idFile *savefile, void *buffer, 
 	return true;
 }
 
-static ID_INLINE bool OpenQ4_WriteSaveGameBool( idFile *savefile, bool value, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_WriteSaveGameBool( idFile *savefile, bool value, const char *context, const char *fieldName ) {
 	const unsigned char savedValue = value ? 1 : 0;
 	const int offset = savefile != NULL ? savefile->Tell() : -1;
 	const int bytesWritten = savefile != NULL ? savefile->WriteUnsignedChar( savedValue ) : 0;
@@ -83,7 +83,7 @@ static ID_INLINE bool OpenQ4_WriteSaveGameBool( idFile *savefile, bool value, co
 	return true;
 }
 
-static ID_INLINE bool OpenQ4_ReadSaveGameBool( idFile *savefile, bool &value, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_ReadSaveGameBool( idFile *savefile, bool &value, const char *context, const char *fieldName ) {
 	unsigned char savedValue = 0;
 	const int offset = savefile != NULL ? savefile->Tell() : -1;
 	const int bytesRead = savefile != NULL ? savefile->ReadUnsignedChar( savedValue ) : 0;
@@ -98,7 +98,7 @@ static ID_INLINE bool OpenQ4_ReadSaveGameBool( idFile *savefile, bool &value, co
 	return true;
 }
 
-static ID_INLINE bool OpenQ4_WriteSaveGameInt( idFile *savefile, int value, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_WriteSaveGameInt( idFile *savefile, int value, const char *context, const char *fieldName ) {
 	const int offset = savefile != NULL ? savefile->Tell() : -1;
 	const int bytesWritten = savefile != NULL ? savefile->WriteInt( value ) : 0;
 	if ( bytesWritten != static_cast<int>( sizeof( value ) ) ) {
@@ -110,7 +110,7 @@ static ID_INLINE bool OpenQ4_WriteSaveGameInt( idFile *savefile, int value, cons
 	return true;
 }
 
-static ID_INLINE bool OpenQ4_ReadSaveGameInt( idFile *savefile, int &value, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_ReadSaveGameInt( idFile *savefile, int &value, const char *context, const char *fieldName ) {
 	const int offset = savefile != NULL ? savefile->Tell() : -1;
 	const int bytesRead = savefile != NULL ? savefile->ReadInt( value ) : 0;
 	if ( bytesRead != static_cast<int>( sizeof( value ) ) ) {
@@ -123,7 +123,7 @@ static ID_INLINE bool OpenQ4_ReadSaveGameInt( idFile *savefile, int &value, cons
 	return true;
 }
 
-static ID_INLINE bool OpenQ4_WriteSaveGameFloat( idFile *savefile, float value, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_WriteSaveGameFloat( idFile *savefile, float value, const char *context, const char *fieldName ) {
 	if ( !std::isfinite( value ) ) {
 		common->Error( "%s: refusing non-finite %s", context ? context : "savegame write",
 			fieldName ? fieldName : "float" );
@@ -140,7 +140,7 @@ static ID_INLINE bool OpenQ4_WriteSaveGameFloat( idFile *savefile, float value, 
 	return true;
 }
 
-static ID_INLINE bool OpenQ4_ReadSaveGameFloat( idFile *savefile, float &value, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_ReadSaveGameFloat( idFile *savefile, float &value, const char *context, const char *fieldName ) {
 	const int offset = savefile != NULL ? savefile->Tell() : -1;
 	const int bytesRead = savefile != NULL ? savefile->ReadFloat( value ) : 0;
 	if ( bytesRead != static_cast<int>( sizeof( value ) ) ) {
@@ -152,7 +152,7 @@ static ID_INLINE bool OpenQ4_ReadSaveGameFloat( idFile *savefile, float &value, 
 	}
 	if ( !std::isfinite( value ) ) {
 		// A GUI variable can hold a non-finite expression result. Writers zero it
-		// (OpenQ4_SanitizeSaveGameWinVar), but builds before 40922f767 saved it
+		// (openD3_SanitizeSaveGameWinVar), but builds before 40922f767 saved it
 		// as is; the value is still a whole float in step, so zero it here too.
 		common->DPrintf( "%s: zeroing non-finite %s at offset %d\n", context ? context : "savegame restore",
 			fieldName ? fieldName : "float", offset );
@@ -163,7 +163,7 @@ static ID_INLINE bool OpenQ4_ReadSaveGameFloat( idFile *savefile, float &value, 
 
 /*
 ================
-OpenQ4_WriteSaveGameField
+openD3_WriteSaveGameField
 
 One GUI layout field through an explicit little-endian encoder. These are the
 bytes a raw copy of the field wrote on every supported target. Floats keep
@@ -171,7 +171,7 @@ their bits, non-finite values included, as the raw copy did; callers check
 them. A field type without an overload does not compile (roadmap Q4-06).
 ================
 */
-static ID_INLINE bool OpenQ4_CheckSaveGameField( int transferred, int expected, int offset, bool writing, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_CheckSaveGameField( int transferred, int expected, int offset, bool writing, const char *context, const char *fieldName ) {
 	if ( transferred != expected ) {
 		common->Error( "%s: %s %s at offset %d (%d of %d bytes)", context ? context : ( writing ? "savegame write" : "savegame restore" ),
 			writing ? "failed to write" : "truncated", fieldName ? fieldName : "field", offset, transferred, expected );
@@ -180,138 +180,138 @@ static ID_INLINE bool OpenQ4_CheckSaveGameField( int transferred, int expected, 
 	return true;
 }
 
-static ID_INLINE bool OpenQ4_WriteSaveGameField( idFile *savefile, float value, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_WriteSaveGameField( idFile *savefile, float value, const char *context, const char *fieldName ) {
 	const int offset = savefile->Tell();
-	return OpenQ4_CheckSaveGameField( savefile->WriteFloat( value ), 4, offset, true, context, fieldName );
+	return openD3_CheckSaveGameField( savefile->WriteFloat( value ), 4, offset, true, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_WriteSaveGameField( idFile *savefile, int value, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_WriteSaveGameField( idFile *savefile, int value, const char *context, const char *fieldName ) {
 	const int offset = savefile->Tell();
-	return OpenQ4_CheckSaveGameField( savefile->WriteInt( value ), 4, offset, true, context, fieldName );
+	return openD3_CheckSaveGameField( savefile->WriteInt( value ), 4, offset, true, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_WriteSaveGameField( idFile *savefile, unsigned int value, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_WriteSaveGameField( idFile *savefile, unsigned int value, const char *context, const char *fieldName ) {
 	const int offset = savefile->Tell();
-	return OpenQ4_CheckSaveGameField( savefile->WriteUnsignedInt( value ), 4, offset, true, context, fieldName );
+	return openD3_CheckSaveGameField( savefile->WriteUnsignedInt( value ), 4, offset, true, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_WriteSaveGameField( idFile *savefile, signed char value, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_WriteSaveGameField( idFile *savefile, signed char value, const char *context, const char *fieldName ) {
 	const int offset = savefile->Tell();
-	return OpenQ4_CheckSaveGameField( savefile->WriteChar( static_cast<char>( value ) ), 1, offset, true, context, fieldName );
+	return openD3_CheckSaveGameField( savefile->WriteChar( static_cast<char>( value ) ), 1, offset, true, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_WriteSaveGameField( idFile *savefile, unsigned char value, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_WriteSaveGameField( idFile *savefile, unsigned char value, const char *context, const char *fieldName ) {
 	const int offset = savefile->Tell();
-	return OpenQ4_CheckSaveGameField( savefile->WriteUnsignedChar( value ), 1, offset, true, context, fieldName );
+	return openD3_CheckSaveGameField( savefile->WriteUnsignedChar( value ), 1, offset, true, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_WriteSaveGameField( idFile *savefile, bool value, const char *context, const char *fieldName ) {
-	return OpenQ4_WriteSaveGameBool( savefile, value, context, fieldName );
+static ID_INLINE bool openD3_WriteSaveGameField( idFile *savefile, bool value, const char *context, const char *fieldName ) {
+	return openD3_WriteSaveGameBool( savefile, value, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_WriteSaveGameField( idFile *savefile, const idVec2 &value, const char *context, const char *fieldName ) {
-	return OpenQ4_WriteSaveGameField( savefile, value.x, context, fieldName ) &&
-		OpenQ4_WriteSaveGameField( savefile, value.y, context, fieldName );
+static ID_INLINE bool openD3_WriteSaveGameField( idFile *savefile, const idVec2 &value, const char *context, const char *fieldName ) {
+	return openD3_WriteSaveGameField( savefile, value.x, context, fieldName ) &&
+		openD3_WriteSaveGameField( savefile, value.y, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_WriteSaveGameField( idFile *savefile, const idVec3 &value, const char *context, const char *fieldName ) {
-	return OpenQ4_WriteSaveGameField( savefile, value.x, context, fieldName ) &&
-		OpenQ4_WriteSaveGameField( savefile, value.y, context, fieldName ) &&
-		OpenQ4_WriteSaveGameField( savefile, value.z, context, fieldName );
+static ID_INLINE bool openD3_WriteSaveGameField( idFile *savefile, const idVec3 &value, const char *context, const char *fieldName ) {
+	return openD3_WriteSaveGameField( savefile, value.x, context, fieldName ) &&
+		openD3_WriteSaveGameField( savefile, value.y, context, fieldName ) &&
+		openD3_WriteSaveGameField( savefile, value.z, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_WriteSaveGameField( idFile *savefile, const idVec4 &value, const char *context, const char *fieldName ) {
-	return OpenQ4_WriteSaveGameField( savefile, value.x, context, fieldName ) &&
-		OpenQ4_WriteSaveGameField( savefile, value.y, context, fieldName ) &&
-		OpenQ4_WriteSaveGameField( savefile, value.z, context, fieldName ) &&
-		OpenQ4_WriteSaveGameField( savefile, value.w, context, fieldName );
+static ID_INLINE bool openD3_WriteSaveGameField( idFile *savefile, const idVec4 &value, const char *context, const char *fieldName ) {
+	return openD3_WriteSaveGameField( savefile, value.x, context, fieldName ) &&
+		openD3_WriteSaveGameField( savefile, value.y, context, fieldName ) &&
+		openD3_WriteSaveGameField( savefile, value.z, context, fieldName ) &&
+		openD3_WriteSaveGameField( savefile, value.w, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_WriteSaveGameField( idFile *savefile, const idBounds &value, const char *context, const char *fieldName ) {
-	return OpenQ4_WriteSaveGameField( savefile, value[ 0 ], context, fieldName ) &&
-		OpenQ4_WriteSaveGameField( savefile, value[ 1 ], context, fieldName );
+static ID_INLINE bool openD3_WriteSaveGameField( idFile *savefile, const idBounds &value, const char *context, const char *fieldName ) {
+	return openD3_WriteSaveGameField( savefile, value[ 0 ], context, fieldName ) &&
+		openD3_WriteSaveGameField( savefile, value[ 1 ], context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_WriteSaveGameField( idFile *savefile, const idRectangle &value, const char *context, const char *fieldName ) {
-	return OpenQ4_WriteSaveGameField( savefile, value.x, context, fieldName ) &&
-		OpenQ4_WriteSaveGameField( savefile, value.y, context, fieldName ) &&
-		OpenQ4_WriteSaveGameField( savefile, value.w, context, fieldName ) &&
-		OpenQ4_WriteSaveGameField( savefile, value.h, context, fieldName );
+static ID_INLINE bool openD3_WriteSaveGameField( idFile *savefile, const idRectangle &value, const char *context, const char *fieldName ) {
+	return openD3_WriteSaveGameField( savefile, value.x, context, fieldName ) &&
+		openD3_WriteSaveGameField( savefile, value.y, context, fieldName ) &&
+		openD3_WriteSaveGameField( savefile, value.w, context, fieldName ) &&
+		openD3_WriteSaveGameField( savefile, value.h, context, fieldName );
 }
 
 template< class type >
-bool OpenQ4_WriteSaveGameField( idFile *savefile, const type &value, const char *context, const char *fieldName ) = delete;
+bool openD3_WriteSaveGameField( idFile *savefile, const type &value, const char *context, const char *fieldName ) = delete;
 
-static ID_INLINE bool OpenQ4_ReadSaveGameField( idFile *savefile, float &value, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_ReadSaveGameField( idFile *savefile, float &value, const char *context, const char *fieldName ) {
 	const int offset = savefile->Tell();
-	return OpenQ4_CheckSaveGameField( savefile->ReadFloat( value ), 4, offset, false, context, fieldName );
+	return openD3_CheckSaveGameField( savefile->ReadFloat( value ), 4, offset, false, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_ReadSaveGameField( idFile *savefile, int &value, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_ReadSaveGameField( idFile *savefile, int &value, const char *context, const char *fieldName ) {
 	const int offset = savefile->Tell();
-	return OpenQ4_CheckSaveGameField( savefile->ReadInt( value ), 4, offset, false, context, fieldName );
+	return openD3_CheckSaveGameField( savefile->ReadInt( value ), 4, offset, false, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_ReadSaveGameField( idFile *savefile, unsigned int &value, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_ReadSaveGameField( idFile *savefile, unsigned int &value, const char *context, const char *fieldName ) {
 	const int offset = savefile->Tell();
-	return OpenQ4_CheckSaveGameField( savefile->ReadUnsignedInt( value ), 4, offset, false, context, fieldName );
+	return openD3_CheckSaveGameField( savefile->ReadUnsignedInt( value ), 4, offset, false, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_ReadSaveGameField( idFile *savefile, signed char &value, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_ReadSaveGameField( idFile *savefile, signed char &value, const char *context, const char *fieldName ) {
 	const int offset = savefile->Tell();
 	char raw = 0;
 	const int bytesRead = savefile->ReadChar( raw );
 	value = static_cast<signed char>( raw );
-	return OpenQ4_CheckSaveGameField( bytesRead, 1, offset, false, context, fieldName );
+	return openD3_CheckSaveGameField( bytesRead, 1, offset, false, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_ReadSaveGameField( idFile *savefile, unsigned char &value, const char *context, const char *fieldName ) {
+static ID_INLINE bool openD3_ReadSaveGameField( idFile *savefile, unsigned char &value, const char *context, const char *fieldName ) {
 	const int offset = savefile->Tell();
-	return OpenQ4_CheckSaveGameField( savefile->ReadUnsignedChar( value ), 1, offset, false, context, fieldName );
+	return openD3_CheckSaveGameField( savefile->ReadUnsignedChar( value ), 1, offset, false, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_ReadSaveGameField( idFile *savefile, bool &value, const char *context, const char *fieldName ) {
-	return OpenQ4_ReadSaveGameBool( savefile, value, context, fieldName );
+static ID_INLINE bool openD3_ReadSaveGameField( idFile *savefile, bool &value, const char *context, const char *fieldName ) {
+	return openD3_ReadSaveGameBool( savefile, value, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_ReadSaveGameField( idFile *savefile, idVec2 &value, const char *context, const char *fieldName ) {
-	return OpenQ4_ReadSaveGameField( savefile, value.x, context, fieldName ) &&
-		OpenQ4_ReadSaveGameField( savefile, value.y, context, fieldName );
+static ID_INLINE bool openD3_ReadSaveGameField( idFile *savefile, idVec2 &value, const char *context, const char *fieldName ) {
+	return openD3_ReadSaveGameField( savefile, value.x, context, fieldName ) &&
+		openD3_ReadSaveGameField( savefile, value.y, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_ReadSaveGameField( idFile *savefile, idVec3 &value, const char *context, const char *fieldName ) {
-	return OpenQ4_ReadSaveGameField( savefile, value.x, context, fieldName ) &&
-		OpenQ4_ReadSaveGameField( savefile, value.y, context, fieldName ) &&
-		OpenQ4_ReadSaveGameField( savefile, value.z, context, fieldName );
+static ID_INLINE bool openD3_ReadSaveGameField( idFile *savefile, idVec3 &value, const char *context, const char *fieldName ) {
+	return openD3_ReadSaveGameField( savefile, value.x, context, fieldName ) &&
+		openD3_ReadSaveGameField( savefile, value.y, context, fieldName ) &&
+		openD3_ReadSaveGameField( savefile, value.z, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_ReadSaveGameField( idFile *savefile, idVec4 &value, const char *context, const char *fieldName ) {
-	return OpenQ4_ReadSaveGameField( savefile, value.x, context, fieldName ) &&
-		OpenQ4_ReadSaveGameField( savefile, value.y, context, fieldName ) &&
-		OpenQ4_ReadSaveGameField( savefile, value.z, context, fieldName ) &&
-		OpenQ4_ReadSaveGameField( savefile, value.w, context, fieldName );
+static ID_INLINE bool openD3_ReadSaveGameField( idFile *savefile, idVec4 &value, const char *context, const char *fieldName ) {
+	return openD3_ReadSaveGameField( savefile, value.x, context, fieldName ) &&
+		openD3_ReadSaveGameField( savefile, value.y, context, fieldName ) &&
+		openD3_ReadSaveGameField( savefile, value.z, context, fieldName ) &&
+		openD3_ReadSaveGameField( savefile, value.w, context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_ReadSaveGameField( idFile *savefile, idBounds &value, const char *context, const char *fieldName ) {
-	return OpenQ4_ReadSaveGameField( savefile, value[ 0 ], context, fieldName ) &&
-		OpenQ4_ReadSaveGameField( savefile, value[ 1 ], context, fieldName );
+static ID_INLINE bool openD3_ReadSaveGameField( idFile *savefile, idBounds &value, const char *context, const char *fieldName ) {
+	return openD3_ReadSaveGameField( savefile, value[ 0 ], context, fieldName ) &&
+		openD3_ReadSaveGameField( savefile, value[ 1 ], context, fieldName );
 }
 
-static ID_INLINE bool OpenQ4_ReadSaveGameField( idFile *savefile, idRectangle &value, const char *context, const char *fieldName ) {
-	return OpenQ4_ReadSaveGameField( savefile, value.x, context, fieldName ) &&
-		OpenQ4_ReadSaveGameField( savefile, value.y, context, fieldName ) &&
-		OpenQ4_ReadSaveGameField( savefile, value.w, context, fieldName ) &&
-		OpenQ4_ReadSaveGameField( savefile, value.h, context, fieldName );
+static ID_INLINE bool openD3_ReadSaveGameField( idFile *savefile, idRectangle &value, const char *context, const char *fieldName ) {
+	return openD3_ReadSaveGameField( savefile, value.x, context, fieldName ) &&
+		openD3_ReadSaveGameField( savefile, value.y, context, fieldName ) &&
+		openD3_ReadSaveGameField( savefile, value.w, context, fieldName ) &&
+		openD3_ReadSaveGameField( savefile, value.h, context, fieldName );
 }
 
 template< class type >
-bool OpenQ4_ReadSaveGameField( idFile *savefile, type &value, const char *context, const char *fieldName ) = delete;
+bool openD3_ReadSaveGameField( idFile *savefile, type &value, const char *context, const char *fieldName ) = delete;
 
 // Aggregates as an earlier build laid them out (transition interpolators in
 // payloads before version 5, which writes SaveCodec_WriteInterpolate).
 template< class type >
-static ID_INLINE bool OpenQ4_ReadSaveGameRawField( idFile *savefile, type &value, const char *context, const char *fieldName ) {
-	return OpenQ4_ReadSaveGameBytes( savefile, &value, sizeof( value ), context, fieldName );
+static ID_INLINE bool openD3_ReadSaveGameRawField( idFile *savefile, type &value, const char *context, const char *fieldName ) {
+	return openD3_ReadSaveGameBytes( savefile, &value, sizeof( value ), context, fieldName );
 }
 
 class idWindow;
@@ -381,7 +381,7 @@ protected:
 // non-finite value in one has no name of its own to report. The window does have
 // a name, so it sanitizes on the way out and says which variable it was. Losing a
 // cosmetic colour or rect component beats losing the save and the running map.
-ID_INLINE void OpenQ4_SanitizeSaveGameWinVar( idWinVar &var, const char *context, const char *windowName, const char *varName ) {
+ID_INLINE void openD3_SanitizeSaveGameWinVar( idWinVar &var, const char *context, const char *windowName, const char *varName ) {
 	if ( var.IsFinite() ) {
 		return;
 	}
@@ -433,12 +433,12 @@ public:
 
 	// SaveGames
 	virtual void WriteToSaveGame( idFile *savefile ) {
-		OpenQ4_WriteSaveGameBool( savefile, eval, "idWinBool::WriteToSaveGame", "eval flag" );
-		OpenQ4_WriteSaveGameBool( savefile, data, "idWinBool::WriteToSaveGame", "value" );
+		openD3_WriteSaveGameBool( savefile, eval, "idWinBool::WriteToSaveGame", "eval flag" );
+		openD3_WriteSaveGameBool( savefile, data, "idWinBool::WriteToSaveGame", "value" );
 	}
 	virtual void ReadFromSaveGame( idFile *savefile ) {
-		OpenQ4_ReadSaveGameBool( savefile, eval, "idWinBool::ReadFromSaveGame", "eval flag" );
-		OpenQ4_ReadSaveGameBool( savefile, data, "idWinBool::ReadFromSaveGame", "value" );
+		openD3_ReadSaveGameBool( savefile, eval, "idWinBool::ReadFromSaveGame", "eval flag" );
+		openD3_ReadSaveGameBool( savefile, data, "idWinBool::ReadFromSaveGame", "value" );
 	}
 
 	virtual float x( void ) const { return data ? 1.0f : 0.0f; };
@@ -524,7 +524,7 @@ public:
 
 	// SaveGames
 	virtual void WriteToSaveGame( idFile *savefile ) {
-		if ( !OpenQ4_WriteSaveGameBool( savefile, eval, "idWinStr::WriteToSaveGame", "eval flag" ) ) {
+		if ( !openD3_WriteSaveGameBool( savefile, eval, "idWinStr::WriteToSaveGame", "eval flag" ) ) {
 			return;
 		}
 
@@ -534,22 +534,22 @@ public:
 			common->Error( "idWinStr::WriteToSaveGame: invalid string length %d", len );
 			return;
 		}
-		if ( !OpenQ4_WriteSaveGameInt( savefile, len, "idWinStr::WriteToSaveGame", "string length" ) ) {
+		if ( !openD3_WriteSaveGameInt( savefile, len, "idWinStr::WriteToSaveGame", "string length" ) ) {
 			return;
 		}
 		if ( len > 0 ) {
-			OpenQ4_WriteSaveGameBytes( savefile, data.c_str(), len, "idWinStr::WriteToSaveGame", "string" );
+			openD3_WriteSaveGameBytes( savefile, data.c_str(), len, "idWinStr::WriteToSaveGame", "string" );
 		}
 	}
 	virtual void ReadFromSaveGame( idFile *savefile ) {
-		if ( !OpenQ4_ReadSaveGameBool( savefile, eval, "idWinStr::ReadFromSaveGame", "eval flag" ) ) {
+		if ( !openD3_ReadSaveGameBool( savefile, eval, "idWinStr::ReadFromSaveGame", "eval flag" ) ) {
 			data.Clear();
 			return;
 		}
 
 		int len = 0;
 		const int offset = savefile->Tell();
-		if ( !OpenQ4_ReadSaveGameInt( savefile, len, "idWinStr::ReadFromSaveGame", "string length" ) ) {
+		if ( !openD3_ReadSaveGameInt( savefile, len, "idWinStr::ReadFromSaveGame", "string length" ) ) {
 			data.Clear();
 			return;
 		}
@@ -563,7 +563,7 @@ public:
 		}
 		if ( len > 0 ) {
 			data.Fill( ' ', len );
-			if ( !OpenQ4_ReadSaveGameBytes( savefile, &data[0], len, "idWinStr::ReadFromSaveGame", "string" ) ) {
+			if ( !openD3_ReadSaveGameBytes( savefile, &data[0], len, "idWinStr::ReadFromSaveGame", "string" ) ) {
 				data.Clear();
 				return;
 			}
@@ -623,12 +623,12 @@ public:
 
 	// SaveGames
 	virtual void WriteToSaveGame( idFile *savefile ) {
-		OpenQ4_WriteSaveGameBool( savefile, eval, "idWinInt::WriteToSaveGame", "eval flag" );
-		OpenQ4_WriteSaveGameInt( savefile, data, "idWinInt::WriteToSaveGame", "value" );
+		openD3_WriteSaveGameBool( savefile, eval, "idWinInt::WriteToSaveGame", "eval flag" );
+		openD3_WriteSaveGameInt( savefile, data, "idWinInt::WriteToSaveGame", "value" );
 	}
 	virtual void ReadFromSaveGame( idFile *savefile ) {
-		OpenQ4_ReadSaveGameBool( savefile, eval, "idWinInt::ReadFromSaveGame", "eval flag" );
-		OpenQ4_ReadSaveGameInt( savefile, data, "idWinInt::ReadFromSaveGame", "value" );
+		openD3_ReadSaveGameBool( savefile, eval, "idWinInt::ReadFromSaveGame", "eval flag" );
+		openD3_ReadSaveGameInt( savefile, data, "idWinInt::ReadFromSaveGame", "value" );
 	}
 
 	// no suitable conversion
@@ -686,12 +686,12 @@ public:
 	}
 
 	virtual void WriteToSaveGame( idFile *savefile ) {
-		OpenQ4_WriteSaveGameBool( savefile, eval, "idWinFloat::WriteToSaveGame", "eval flag" );
-		OpenQ4_WriteSaveGameFloat( savefile, data, "idWinFloat::WriteToSaveGame", "value" );
+		openD3_WriteSaveGameBool( savefile, eval, "idWinFloat::WriteToSaveGame", "eval flag" );
+		openD3_WriteSaveGameFloat( savefile, data, "idWinFloat::WriteToSaveGame", "value" );
 	}
 	virtual void ReadFromSaveGame( idFile *savefile ) {
-		OpenQ4_ReadSaveGameBool( savefile, eval, "idWinFloat::ReadFromSaveGame", "eval flag" );
-		OpenQ4_ReadSaveGameFloat( savefile, data, "idWinFloat::ReadFromSaveGame", "value" );
+		openD3_ReadSaveGameBool( savefile, eval, "idWinFloat::ReadFromSaveGame", "eval flag" );
+		openD3_ReadSaveGameFloat( savefile, data, "idWinFloat::ReadFromSaveGame", "value" );
 	}
 
 	virtual float x( void ) const { return data; };
@@ -803,18 +803,18 @@ public:
 	}
 
 	virtual void WriteToSaveGame( idFile *savefile ) {
-		OpenQ4_WriteSaveGameBool( savefile, eval, "idWinRectangle::WriteToSaveGame", "eval flag" );
-		OpenQ4_WriteSaveGameFloat( savefile, data.x, "idWinRectangle::WriteToSaveGame", "x" );
-		OpenQ4_WriteSaveGameFloat( savefile, data.y, "idWinRectangle::WriteToSaveGame", "y" );
-		OpenQ4_WriteSaveGameFloat( savefile, data.w, "idWinRectangle::WriteToSaveGame", "width" );
-		OpenQ4_WriteSaveGameFloat( savefile, data.h, "idWinRectangle::WriteToSaveGame", "height" );
+		openD3_WriteSaveGameBool( savefile, eval, "idWinRectangle::WriteToSaveGame", "eval flag" );
+		openD3_WriteSaveGameFloat( savefile, data.x, "idWinRectangle::WriteToSaveGame", "x" );
+		openD3_WriteSaveGameFloat( savefile, data.y, "idWinRectangle::WriteToSaveGame", "y" );
+		openD3_WriteSaveGameFloat( savefile, data.w, "idWinRectangle::WriteToSaveGame", "width" );
+		openD3_WriteSaveGameFloat( savefile, data.h, "idWinRectangle::WriteToSaveGame", "height" );
 	}
 	virtual void ReadFromSaveGame( idFile *savefile ) {
-		OpenQ4_ReadSaveGameBool( savefile, eval, "idWinRectangle::ReadFromSaveGame", "eval flag" );
-		OpenQ4_ReadSaveGameFloat( savefile, data.x, "idWinRectangle::ReadFromSaveGame", "x" );
-		OpenQ4_ReadSaveGameFloat( savefile, data.y, "idWinRectangle::ReadFromSaveGame", "y" );
-		OpenQ4_ReadSaveGameFloat( savefile, data.w, "idWinRectangle::ReadFromSaveGame", "width" );
-		OpenQ4_ReadSaveGameFloat( savefile, data.h, "idWinRectangle::ReadFromSaveGame", "height" );
+		openD3_ReadSaveGameBool( savefile, eval, "idWinRectangle::ReadFromSaveGame", "eval flag" );
+		openD3_ReadSaveGameFloat( savefile, data.x, "idWinRectangle::ReadFromSaveGame", "x" );
+		openD3_ReadSaveGameFloat( savefile, data.y, "idWinRectangle::ReadFromSaveGame", "y" );
+		openD3_ReadSaveGameFloat( savefile, data.w, "idWinRectangle::ReadFromSaveGame", "width" );
+		openD3_ReadSaveGameFloat( savefile, data.h, "idWinRectangle::ReadFromSaveGame", "height" );
 	}
 
 protected:
@@ -885,14 +885,14 @@ public:
 	}
 
 	virtual void WriteToSaveGame( idFile *savefile ) {
-		OpenQ4_WriteSaveGameBool( savefile, eval, "idWinVec2::WriteToSaveGame", "eval flag" );
-		OpenQ4_WriteSaveGameFloat( savefile, data.x, "idWinVec2::WriteToSaveGame", "x" );
-		OpenQ4_WriteSaveGameFloat( savefile, data.y, "idWinVec2::WriteToSaveGame", "y" );
+		openD3_WriteSaveGameBool( savefile, eval, "idWinVec2::WriteToSaveGame", "eval flag" );
+		openD3_WriteSaveGameFloat( savefile, data.x, "idWinVec2::WriteToSaveGame", "x" );
+		openD3_WriteSaveGameFloat( savefile, data.y, "idWinVec2::WriteToSaveGame", "y" );
 	}
 	virtual void ReadFromSaveGame( idFile *savefile ) {
-		OpenQ4_ReadSaveGameBool( savefile, eval, "idWinVec2::ReadFromSaveGame", "eval flag" );
-		OpenQ4_ReadSaveGameFloat( savefile, data.x, "idWinVec2::ReadFromSaveGame", "x" );
-		OpenQ4_ReadSaveGameFloat( savefile, data.y, "idWinVec2::ReadFromSaveGame", "y" );
+		openD3_ReadSaveGameBool( savefile, eval, "idWinVec2::ReadFromSaveGame", "eval flag" );
+		openD3_ReadSaveGameFloat( savefile, data.x, "idWinVec2::ReadFromSaveGame", "x" );
+		openD3_ReadSaveGameFloat( savefile, data.y, "idWinVec2::ReadFromSaveGame", "y" );
 	}
 
 protected:
@@ -984,18 +984,18 @@ public:
 	}
 
 	virtual void WriteToSaveGame( idFile *savefile ) {
-		OpenQ4_WriteSaveGameBool( savefile, eval, "idWinVec4::WriteToSaveGame", "eval flag" );
-		OpenQ4_WriteSaveGameFloat( savefile, data.x, "idWinVec4::WriteToSaveGame", "x" );
-		OpenQ4_WriteSaveGameFloat( savefile, data.y, "idWinVec4::WriteToSaveGame", "y" );
-		OpenQ4_WriteSaveGameFloat( savefile, data.z, "idWinVec4::WriteToSaveGame", "z" );
-		OpenQ4_WriteSaveGameFloat( savefile, data.w, "idWinVec4::WriteToSaveGame", "w" );
+		openD3_WriteSaveGameBool( savefile, eval, "idWinVec4::WriteToSaveGame", "eval flag" );
+		openD3_WriteSaveGameFloat( savefile, data.x, "idWinVec4::WriteToSaveGame", "x" );
+		openD3_WriteSaveGameFloat( savefile, data.y, "idWinVec4::WriteToSaveGame", "y" );
+		openD3_WriteSaveGameFloat( savefile, data.z, "idWinVec4::WriteToSaveGame", "z" );
+		openD3_WriteSaveGameFloat( savefile, data.w, "idWinVec4::WriteToSaveGame", "w" );
 	}
 	virtual void ReadFromSaveGame( idFile *savefile ) {
-		OpenQ4_ReadSaveGameBool( savefile, eval, "idWinVec4::ReadFromSaveGame", "eval flag" );
-		OpenQ4_ReadSaveGameFloat( savefile, data.x, "idWinVec4::ReadFromSaveGame", "x" );
-		OpenQ4_ReadSaveGameFloat( savefile, data.y, "idWinVec4::ReadFromSaveGame", "y" );
-		OpenQ4_ReadSaveGameFloat( savefile, data.z, "idWinVec4::ReadFromSaveGame", "z" );
-		OpenQ4_ReadSaveGameFloat( savefile, data.w, "idWinVec4::ReadFromSaveGame", "w" );
+		openD3_ReadSaveGameBool( savefile, eval, "idWinVec4::ReadFromSaveGame", "eval flag" );
+		openD3_ReadSaveGameFloat( savefile, data.x, "idWinVec4::ReadFromSaveGame", "x" );
+		openD3_ReadSaveGameFloat( savefile, data.y, "idWinVec4::ReadFromSaveGame", "y" );
+		openD3_ReadSaveGameFloat( savefile, data.z, "idWinVec4::ReadFromSaveGame", "z" );
+		openD3_ReadSaveGameFloat( savefile, data.w, "idWinVec4::ReadFromSaveGame", "w" );
 	}
 
 protected:
@@ -1073,16 +1073,16 @@ public:
 	}
 
 	virtual void WriteToSaveGame( idFile *savefile ) {
-		OpenQ4_WriteSaveGameBool( savefile, eval, "idWinVec3::WriteToSaveGame", "eval flag" );
-		OpenQ4_WriteSaveGameFloat( savefile, data.x, "idWinVec3::WriteToSaveGame", "x" );
-		OpenQ4_WriteSaveGameFloat( savefile, data.y, "idWinVec3::WriteToSaveGame", "y" );
-		OpenQ4_WriteSaveGameFloat( savefile, data.z, "idWinVec3::WriteToSaveGame", "z" );
+		openD3_WriteSaveGameBool( savefile, eval, "idWinVec3::WriteToSaveGame", "eval flag" );
+		openD3_WriteSaveGameFloat( savefile, data.x, "idWinVec3::WriteToSaveGame", "x" );
+		openD3_WriteSaveGameFloat( savefile, data.y, "idWinVec3::WriteToSaveGame", "y" );
+		openD3_WriteSaveGameFloat( savefile, data.z, "idWinVec3::WriteToSaveGame", "z" );
 	}
 	virtual void ReadFromSaveGame( idFile *savefile ) {
-		OpenQ4_ReadSaveGameBool( savefile, eval, "idWinVec3::ReadFromSaveGame", "eval flag" );
-		OpenQ4_ReadSaveGameFloat( savefile, data.x, "idWinVec3::ReadFromSaveGame", "x" );
-		OpenQ4_ReadSaveGameFloat( savefile, data.y, "idWinVec3::ReadFromSaveGame", "y" );
-		OpenQ4_ReadSaveGameFloat( savefile, data.z, "idWinVec3::ReadFromSaveGame", "z" );
+		openD3_ReadSaveGameBool( savefile, eval, "idWinVec3::ReadFromSaveGame", "eval flag" );
+		openD3_ReadSaveGameFloat( savefile, data.x, "idWinVec3::ReadFromSaveGame", "x" );
+		openD3_ReadSaveGameFloat( savefile, data.y, "idWinVec3::ReadFromSaveGame", "y" );
+		openD3_ReadSaveGameFloat( savefile, data.z, "idWinVec3::ReadFromSaveGame", "z" );
 	}
 
 protected:
@@ -1188,7 +1188,7 @@ public:
 	}
 
 	virtual void WriteToSaveGame( idFile *savefile ) {
-		if ( !OpenQ4_WriteSaveGameBool( savefile, eval, "idWinBackground::WriteToSaveGame", "eval flag" ) ) {
+		if ( !openD3_WriteSaveGameBool( savefile, eval, "idWinBackground::WriteToSaveGame", "eval flag" ) ) {
 			return;
 		}
 
@@ -1198,15 +1198,15 @@ public:
 			common->Error( "idWinBackground::WriteToSaveGame: invalid material name length %d", len );
 			return;
 		}
-		if ( !OpenQ4_WriteSaveGameInt( savefile, len, "idWinBackground::WriteToSaveGame", "material name length" ) ) {
+		if ( !openD3_WriteSaveGameInt( savefile, len, "idWinBackground::WriteToSaveGame", "material name length" ) ) {
 			return;
 		}
 		if ( len > 0 ) {
-			OpenQ4_WriteSaveGameBytes( savefile, data.c_str(), len, "idWinBackground::WriteToSaveGame", "material name" );
+			openD3_WriteSaveGameBytes( savefile, data.c_str(), len, "idWinBackground::WriteToSaveGame", "material name" );
 		}
 	}
 	virtual void ReadFromSaveGame( idFile *savefile ) {
-		if ( !OpenQ4_ReadSaveGameBool( savefile, eval, "idWinBackground::ReadFromSaveGame", "eval flag" ) ) {
+		if ( !openD3_ReadSaveGameBool( savefile, eval, "idWinBackground::ReadFromSaveGame", "eval flag" ) ) {
 			data.Clear();
 			if ( mat != NULL ) {
 				*mat = NULL;
@@ -1216,7 +1216,7 @@ public:
 
 		int len = 0;
 		const int offset = savefile->Tell();
-		if ( !OpenQ4_ReadSaveGameInt( savefile, len, "idWinBackground::ReadFromSaveGame", "material name length" ) ) {
+		if ( !openD3_ReadSaveGameInt( savefile, len, "idWinBackground::ReadFromSaveGame", "material name length" ) ) {
 			data.Clear();
 			if ( mat != NULL ) {
 				*mat = NULL;
@@ -1236,7 +1236,7 @@ public:
 		}
 		if ( len > 0 ) {
 			data.Fill( ' ', len );
-			if ( !OpenQ4_ReadSaveGameBytes( savefile, &data[0], len, "idWinBackground::ReadFromSaveGame", "material name" ) ) {
+			if ( !openD3_ReadSaveGameBytes( savefile, &data[0], len, "idWinBackground::ReadFromSaveGame", "material name" ) ) {
 				data.Clear();
 				if ( mat != NULL ) {
 					*mat = NULL;

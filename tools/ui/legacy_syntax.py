@@ -351,7 +351,7 @@ def analyze_capture(folder: Path, output: Path) -> dict:
     state_refs, cvar_refs, string_refs = set(),set(),set()
     asset_refs, application_requests = Counter(),Counter()
     for record in imports['resources']:
-        source = folder/'save/baseoq4'/record['output']
+        source = folder/'save/baseod3'/record['output']
         if hashlib.sha256(source.read_bytes()).hexdigest() != record['output_sha256']:
             raise ValueError(f'token file changed: {source}')
         data = json.loads(source.read_text(encoding='ascii'))

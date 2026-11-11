@@ -7,7 +7,7 @@
 #include <limits>
 #include <random>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks;
 static void Check(bool value,const char* reason) {++checks;if(!value){std::fprintf(stderr,"FAIL %u: %s\n",checks,reason);std::exit(1);}}
 static bool Near(double a,double b) {return std::abs(a-b)<1e-5;}

@@ -59,9 +59,9 @@ def require_order(text: str, needles: tuple[str, ...], context: str) -> None:
 
 def validate_format() -> None:
     session_h = read("src/framework/Session.h")
-    require(session_h, "OPENQ4_RENDERDEMO_CURRENT_VERSION = 12;", "current render-demo version")
-    require(session_h, "OPENQ4_RENDERDEMO_SESSION_VERSION = 11;", "session-record version")
-    require(session_h, "OPENQ4_RENDERDEMO_JOINT_PREDICTION_VERSION = 12;", "joint-prediction version")
+    require(session_h, "OPEND3_RENDERDEMO_CURRENT_VERSION = 12;", "current render-demo version")
+    require(session_h, "OPEND3_RENDERDEMO_SESSION_VERSION = 11;", "session-record version")
+    require(session_h, "OPEND3_RENDERDEMO_JOINT_PREDICTION_VERSION = 12;", "joint-prediction version")
 
     demo_h = read("src/framework/DemoFile.h")
     require_order(demo_h, ("DS_FINISHED,", "DS_RENDER,", "DS_SOUND,", "DS_VERSION,", "DS_SESSION"),
@@ -134,7 +134,7 @@ def validate_recorder() -> None:
                   "the current level starts the recording, or it arms for the next one")
     reject(start, "OpenForWriting", "an armed recording opens no file")
     open_file = between(session, "bool idSessionLocal::OpenRenderDemoRecordFile", "idSessionLocal::StopRecordingRenderDemo", "open file")
-    require_order(open_file, ("OpenForWriting", "DS_VERSION", "OPENQ4_RENDERDEMO_CURRENT_VERSION",
+    require_order(open_file, ("OpenForWriting", "DS_VERSION", "OPEND3_RENDERDEMO_CURRENT_VERSION",
                               'header.Set( "game", fileSystem->GetActiveGameDir() );',
                               'header.SetInt( "userCmdHz", common->GetUserCmdHz() );', "DSC_HEADER", "WriteDict( header );"),
                   "the stream starts with its version and header")
@@ -159,7 +159,7 @@ def validate_player() -> None:
     demo = read("src/framework/Session_demo.cpp")
 
     advance = between(session, "void idSessionLocal::AdvanceRenderDemo( bool singleFrameOnly ) {", "idSessionLocal::Draw", "AdvanceRenderDemo")
-    require(advance, "ds == DS_SESSION && renderdemoVersion >= OPENQ4_RENDERDEMO_SESSION_VERSION", "version-gated session records")
+    require(advance, "ds == DS_SESSION && renderdemoVersion >= OPEND3_RENDERDEMO_SESSION_VERSION", "version-gated session records")
     require(advance, "malformed session record; playback stopped safely", "nonfatal session records")
     require(advance, "RenderDemoFramesToMS( numDemoFrames - 1 )", "frame-clock duration")
 
@@ -205,7 +205,7 @@ def validate_player() -> None:
 def validate_library() -> None:
     demo = read("src/framework/Session_demo.cpp")
     probe = between(demo, "static void DemoProbeEntry", "static void Session_CycleDemoAutoTrack", "library probe")
-    require(probe, "streamVersion >= OPENQ4_RENDERDEMO_SESSION_VERSION", "campaign probe version gate")
+    require(probe, "streamVersion >= OPEND3_RENDERDEMO_SESSION_VERSION", "campaign probe version gate")
     require(probe, 'entry.format = DemoLocalized( "#str_41576" );', "campaign demo kind")
     require_order(probe, ("sessLocal.IsRenderDemoRecording() && !recordingPath.Icmp( entry.path )",
                           'DemoLocalized( "#str_41581" )', "idStr::Icmp( recordedGame, fileSystem->GetActiveGameDir() )",
@@ -311,7 +311,7 @@ def validate_joints() -> None:
                            "R_DemoJointChecksum( words, numWords )", "R_DemoStoreJointHistory( *history, words, numJoints );"),
                   "raw without a matching history, else moved joints' zigzagged residuals and a checksum")
     reader = between(world_demo, "bool idRenderWorldLocal::ReadDemoJoints", "/*\n==============\nProcessDemoCommand", "joint reader")
-    require_order(reader, ("session->renderdemoVersion < OPENQ4_RENDERDEMO_JOINT_PREDICTION_VERSION",
+    require_order(reader, ("session->renderdemoVersion < OPEND3_RENDERDEMO_JOINT_PREDICTION_VERSION",
                            "R_DemoReadFloat( demo, data[j] )", "return true;"),
                   "older demos keep their raw joint floats")
     for needle in ("predicts joints it never recorded", "joint payload of %d bytes is out of range",
@@ -341,7 +341,7 @@ def validate_joints() -> None:
 
 def validate_localization() -> None:
     for language in LANGUAGES:
-        table = read(f"content/baseoq4/pak0/strings/{language}_openq4.lang")
+        table = read(f"content/baseod3/pak0/strings/{language}_opend3.lang")
         for key in CAMPAIGN_STRINGS:
             match = re.search(rf'"#str_{key}"\t"([^"]*)"', table)
             if match is None:

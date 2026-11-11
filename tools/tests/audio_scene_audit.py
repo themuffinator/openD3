@@ -21,7 +21,7 @@ player can touch, nearest first from the player start, so the map's own trigger 
 run as the player reaches them (doors, spawns, scripted scenes and the conversations
 that wait on them). Volumes that hurt or reach the level's end are left out. With
 --fight, the hostiles fighting the player halfway through each step are killed through
-ordinary damage from the player (openq4_killHostiles), so the deaths, death targets and
+ordinary damage from the player (opend3_killHostiles), so the deaths, death targets and
 the conversations scripts hold until a fight is won run too. This is still not a
 playthrough: no route is walked and nothing is aimed or dodged.
 
@@ -296,18 +296,18 @@ def scene_cfgs(entries, seconds, interval, walk=None, step_msec=4000, tail=0, mo
                 # start with a digit (e.g. recomp's 2wavfinal_berserker_trig).
                 steps += [f'echo SCENE_STEP {name} {number} "{entity}"', f'{move} "{entity}"']
                 if fight:
-                    steps += [f'waitMsec {step_msec // 2}', 'openq4_killHostiles']
+                    steps += [f'waitMsec {step_msec // 2}', 'opend3_killHostiles']
                     steps += probe(step_msec - step_msec // 2)
                 else:
                     steps += probe(step_msec)
             if fight:
-                steps.append('openq4_killHostiles')
+                steps.append('opend3_killHostiles')
             # Let the conversations the last steps started finish.
             for _ in range((tail * 1000) // (interval + 150)):
                 steps += probe(interval)
         # Residency after the opening: a filter no sample matches prints only the totals.
         # The voice report shows which streamed tracks are playing on bounded queues.
-        steps += [f'echo SCENE_MEMORY {name}', 'listSounds openq4_residency_totals_only', 'listSoundVoices',
+        steps += [f'echo SCENE_MEMORY {name}', 'listSounds opend3_residency_totals_only', 'listSoundVoices',
                   f'echo SCENE_END {name}']
         if index + 1 < len(entries):
             # Re-armed in the same command pass as the load, so it fires on the next map only.
@@ -319,7 +319,7 @@ def scene_cfgs(entries, seconds, interval, walk=None, step_msec=4000, tail=0, mo
 
 
 def launch(args, root, entries, walk=None, blocked_exits=None):
-    game_dir = 'q4xbase' if args.awakening else 'baseoq4'
+    game_dir = 'q4xbase' if args.awakening else 'baseod3'
     game = root / 'save' / game_dir
     game.mkdir(parents=True, exist_ok=True)
     move = 'teleport' if args.progress else 'trigger'
@@ -331,7 +331,7 @@ def launch(args, root, entries, walk=None, blocked_exits=None):
                       encoding='utf-8')
     cvars = {
         'fs_basepath': str(args.assets.resolve(strict=True)), 'fs_savepath': str(root / 'save'), 'fs_devpath': str(root / 'save'),
-        'fs_game': game_dir, 'com_gameMode': 'SP', 'si_gameType': 'singleplayer', 'logFile': '2', 'logFileName': 'logs/openq4.log',
+        'fs_game': game_dir, 'com_gameMode': 'SP', 'si_gameType': 'singleplayer', 'logFile': '2', 'logFileName': 'logs/opend3.log',
         'r_fullscreen': '0', 'r_fullscreenDesktop': '0', 'r_borderless': '0', 'r_borderlessDefaultMigrated': '1',
         'win_allowMultipleInstances': '1', 'r_hiddenWindow': '1', 'r_windowWidth': '1280', 'r_windowHeight': '720',
         'r_mode': '-1', 'r_customWidth': '1280', 'r_customHeight': '720', 'r_renderApi': 'gl', 'r_multiSamples': '0',
@@ -347,7 +347,7 @@ def launch(args, root, entries, walk=None, blocked_exits=None):
     }
     if args.awakening:
         cvars['fs_awakeningpath'] = str(args.awakening.resolve(strict=True))
-    exe = ROOT / '.install' / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64')
+    exe = ROOT / '.install' / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64')
     command = [str(exe)]
     for key, value in cvars.items():
         command += ['+set', key, value]
@@ -367,7 +367,7 @@ def launch(args, root, entries, walk=None, blocked_exits=None):
                                   timeout=timeout, **options).returncode
         except subprocess.TimeoutExpired:
             code = None  # a map that failed to load stalls the chain; report what ran
-    path = game / 'logs/openq4.log'
+    path = game / 'logs/opend3.log'
     log = path.read_text(encoding='utf-8', errors='replace') if path.exists() else ''
     return code, log, command, round(time.monotonic() - started, 1)
 
@@ -704,7 +704,7 @@ def main():
                       'payload_peak_kib': max(m['payload_peak_kib'] for m in residency),
                       'budget_mib': residency[-1]['budget_mib']})
         total['largest_map'] = largest
-    exe = ROOT / '.install' / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64')
+    exe = ROOT / '.install' / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64')
     report = {
         'passed': all(checks.values()), 'checks': checks, 'totals': dict(total), 'scenes': scenes,
         'maps': maps, 'repeat': args.repeat, 'seconds_per_map': args.seconds, 'probe_interval_ms': args.interval, 'run_seconds': seconds,
@@ -712,11 +712,11 @@ def main():
         'walk': {level: [entity for _, entity in steps] for level, steps in walk.items()} if walk else None,
         'step_msec': args.step_msec if walk else None,
         'progress': args.progress, 'fight': args.fight, 'suppressed_level_exits': blocked_exits,
-        'game': 'q4xbase' if args.awakening else 'baseoq4', 'returncode': code, 'command': command,
+        'game': 'q4xbase' if args.awakening else 'baseod3', 'returncode': code, 'command': command,
         'microphone': False, 'host_input': False, 'output': 'OpenAL wave writer', 'transcripts_recorded': False,
         'executable_sha256': hashlib.sha256(exe.read_bytes()).hexdigest(),
         'runtime_sha256': {str(p.relative_to(ROOT / '.install')): hashlib.sha256(p.read_bytes()).hexdigest()
-                           for p in (ROOT / '.install/baseoq4').iterdir()
+                           for p in (ROOT / '.install/baseod3').iterdir()
                            if p.is_file() and p.suffix.lower() in ('.dll', '.so', '.dylib', '.pk4')},
         'harness_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
     }

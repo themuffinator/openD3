@@ -4,7 +4,7 @@
 #include "../../framework/KeyInput.h"
 #include <atomic>
 
-namespace openq4 {
+namespace opend3 {
 namespace {
 std::atomic<std::uint64_t> inventoryHighwater{0};
 std::uint64_t NextInventory() noexcept {
@@ -208,4 +208,4 @@ bool NativeInputEmissionInventory::ReleaseTransfers(NativeInputTransfers& owner)
     transfers=nullptr;transferAuthorized=false;bound=false;disposalSerial=0;
     route=nullptr;ledger=nullptr;batch=nullptr;original.reset();entries.clear();return true;
 }
-} // namespace openq4
+} // namespace opend3

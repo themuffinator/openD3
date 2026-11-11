@@ -77,7 +77,7 @@ void main() {
 	// by the CPU to one resolvable depth-buffer step.
 	float depthSlope = max( abs( dFdx( rawDepth ) ), abs( dFdy( rawDepth ) ) );
 	float depth = clamp( rawDepth + uShadowCasterDepthOffset.x * depthSlope + uShadowCasterDepthOffset.y, 0.0, 1.0 );
-#ifdef OPENQ4_POINT_SHADOW_CASTER_DEPTH
+#ifdef OPEND3_POINT_SHADOW_CASTER_DEPTH
 	// The hardware-compare path samples the depth cubemap against a radial
 	// reference, so the radial value replaces the rasterized fragment depth.
 	// Writing gl_FragDepth only in this variant keeps the default variant's

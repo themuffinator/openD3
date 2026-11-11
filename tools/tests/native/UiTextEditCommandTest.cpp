@@ -7,7 +7,7 @@
 #include <limits>
 #include <numeric>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks;
 static void Check(bool value,const char* message) {
 	++checks;if (!value) {std::fprintf(stderr,"FAIL: %s\n",message);std::exit(1);}

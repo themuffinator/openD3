@@ -15,9 +15,9 @@ static void Check(bool value,const char* message){++checks;if(!value){std::fprin
 int main(){
  Seed();SystemSettingsHost host;std::string error;StateValues original;
  Check(host.Read(original,error),"complete host baseline");
- const std::set<std::string> keys(openq4::PerformancePresetTargets().begin(),openq4::PerformancePresetTargets().end());
+ const std::set<std::string> keys(opend3::PerformancePresetTargets().begin(),opend3::PerformancePresetTargets().end());
  Check(keys.size()==55&&original.size()==76,"catalog union");
- for(const auto& preset:openq4::PerformancePresets()){
+ for(const auto& preset:opend3::PerformancePresets()){
   SettingsTransaction tx(host);Check(tx.Begin(7).code==SettingsCode::Ok,"begin real host");
   Check(tx.Edit(7,{{"r_brightness",1.375},{"r_forceAmbient",0.1375}}).code==SettingsCode::Ok,"custom outside draft");
   const auto previous=tx.Draft();
@@ -85,7 +85,7 @@ struct idCVar{
 struct Cvars{
  std::map<std::string,idCVar> vars;std::vector<std::string> calls;int modified=64;std::string refuse;
  idCVar* Find(const char* name){auto i=vars.find(name);return i==vars.end()?nullptr:&i->second;}
- void SetCVarString(const char* key,const char* value,int flags){calls.push_back(key);if(refuse==key)return;openq4::CVarAssignmentCapture::Record(key);auto& v=vars.at(key);v.value=std::string(key)=="com_performancePreset"&&!*value?"balanced":value;v.flags|=flags;modified|=flags;}
+ void SetCVarString(const char* key,const char* value,int flags){calls.push_back(key);if(refuse==key)return;opend3::CVarAssignmentCapture::Record(key);auto& v=vars.at(key);v.value=std::string(key)=="com_performancePreset"&&!*value?"balanced":value;v.flags|=flags;modified|=flags;}
  void SetCVarInteger(const char* key,int value,int flags){if(std::string(key)=="image_anisotropy"&&value>16)value=16;SetCVarString(key,std::to_string(value).c_str(),flags);}
  float GetCVarFloat(const char* key){auto i=vars.find(key);return i==vars.end()?0.0f:(float)std::atof(i->second.value.c_str());}
  int GetModifiedFlags()const{return modified;}void ClearModifiedFlags(int f){modified&=~f;}void SetModifiedFlags(int f){modified|=f;}
@@ -95,7 +95,7 @@ using idCommonLocal=Common;
 static idCVar com_platformProfile,com_performancePreset,com_machineSpec,com_videoRam;
 static std::set<std::string> startupVariables;
 static bool Common_HasStartupVariable(const char* name){return startupVariables.contains(name);}
-static openq4::PerformancePresetSignals raw;
+static opend3::PerformancePresetSignals raw;
 static std::vector<std::string> observations;
 static bool Common_HasExplicitLowPowerHostSignal(){observations.push_back("explicit");return raw.explicitLowPower;}
 static bool Common_HasRaspberryPiHostSignal(){observations.push_back("pi");return raw.raspberryPi;}
@@ -120,31 +120,31 @@ struct Renderer{
 static idStr Sys_FormatMemoryMB(int n){return idStr(std::to_string(n).c_str());}
 static const char* va(const char* format,...){static char text[2048];va_list args;va_start(args,format);std::vsnprintf(text,sizeof(text),format,args);va_end(args);return text;}
 struct idCmdArgs{std::vector<std::string> args;int Argc()const{return (int)args.size();}const char* Argv(int i)const{return args.at(i).c_str();}};
-static void Seed(){cvars={};instance={};for(const auto* key:openq4::PerformancePresetTargets())cvars.vars.emplace(key,idCVar{});}
+static void Seed(){cvars={};instance={};for(const auto* key:opend3::PerformancePresetTargets())cvars.vars.emplace(key,idCVar{});}
 '''
 COMMON_MAIN=r'''
 int main(){
- for(const auto& preset:openq4::PerformancePresets()){
-  Seed();openq4::PerformancePresetAssignments expected;std::string error;
-  Check(openq4::ExpandPerformancePreset(preset,expected,error),"shared expansion");
+ for(const auto& preset:opend3::PerformancePresets()){
+  Seed();opend3::PerformancePresetAssignments expected;std::string error;
+  Check(opend3::ExpandPerformancePreset(preset,expected,error),"shared expansion");
   Check(Common_ApplyPerformancePreset(preset),"actual Common apply");
   Check(cvars.calls.size()==55&&instance.warnings==0&&instance.prints==1,"exact successful call count");
   for(size_t i=0;i<expected.size();++i){Check(cvars.calls[i]==expected[i].key,"old setter ordering and marker last");
    const auto& value=expected[i].value;Check(cvars.vars.at(expected[i].key).value==(value.index()==0?std::to_string(std::get<int>(value)):std::get<std::string>(value)),"real accepted readback");
    Check(cvars.vars.at(expected[i].key).flags==17,"archive flags preserved on success");}
  }
- for(const auto* key:openq4::PerformancePresetTargets()){
-  Seed();cvars.vars.erase(key);Check(!Common_ApplyPerformancePreset(openq4::PerformancePresets()[3]),"missing declaration rejected");
+ for(const auto* key:opend3::PerformancePresetTargets()){
+  Seed();cvars.vars.erase(key);Check(!Common_ApplyPerformancePreset(opend3::PerformancePresets()[3]),"missing declaration rejected");
   Check(cvars.calls.empty()&&instance.warnings==1&&cvars.modified==64,"all targets checked before any setter");
  }
  for(bool marker:{false,true}){
   Seed();cvars.refuse=marker?"com_performancePreset":"r_postAA";
-  Check(!Common_ApplyPerformancePreset(openq4::PerformancePresets()[3]),"setter refusal rejected");
+  Check(!Common_ApplyPerformancePreset(opend3::PerformancePresets()[3]),"setter refusal rejected");
   Check(cvars.calls.size()==(marker?110:109)&&instance.warnings==1&&cvars.modified==64,"rollback and global flags");
   for(const auto& [key,value]:cvars.vars)Check(value.value=="sentinel"&&value.flags==16,"all target values and flags restored");
   if(!marker)Check(cvars.calls[54]=="com_performancePreset","first marker setter belongs only to rollback");
  }
- Seed();auto invalid=openq4::PerformancePresets()[2];invalid.anisotropy=17;
+ Seed();auto invalid=opend3::PerformancePresets()[2];invalid.anisotropy=17;
  Check(!Common_ApplyPerformancePreset(invalid,true)&&instance.warnings==0&&instance.prints==0,"normalization rejected quietly");
  for(const auto& [key,value]:cvars.vars)Check(value.value=="sentinel"&&value.flags==16,"normalization rollback");
  Seed();Check(!Common_SetPerformancePresetInt("profile","not-declared",1,false)&&cvars.calls.empty(),"undeclared setters forbidden");
@@ -170,30 +170,30 @@ int main(){
  renderer.initialized=true;
  for(int flags=0;flags<32;++flags){
   Seed();raw={};raw.explicitLowPower=flags&1;raw.raspberryPi=flags&2;raw.steamDeck=flags&4;raw.legacyRenderer=flags&8;raw.arm64=flags&16;raw.systemRamMB=16384;raw.videoRamMB=8192;raw.gpuClass=RendererGpuClass::Discrete;raw.modernEffects=!raw.legacyRenderer;raw.logicalCpus=8;raw.drawableWidth=1920;raw.drawableHeight=1080;
-  observations.clear();com_platformProfile.value="desktop";openq4::PerformancePresetSignals got;std::string error;
+  observations.clear();com_platformProfile.value="desktop";opend3::PerformancePresetSignals got;std::string error;
   Check(Common_CapturePerformancePresetSignals(got,error),"actual readonly observation");
   Check(observations==std::vector<std::string>({"explicit","pi","deck","arm","ram","cpu"})&&cvars.calls.empty()&&cvars.modified==64,"active device observation never reads host-wide VRAM or writes settings");
   Check(got.gpuClass==raw.gpuClass&&got.videoRamMB==raw.videoRamMB&&got.drawableWidth==1920&&got.logicalCpus==8,"active device facts captured");
-  Check(openq4::DetectPerformancePreset(got).preset==openq4::DetectPerformancePreset(raw).preset,"actual capture uses pure branch selection");
+  Check(opend3::DetectPerformancePreset(got).preset==opend3::DetectPerformancePreset(raw).preset,"actual capture uses pure branch selection");
  }
- raw={};observations.clear();com_platformProfile.value="steamdeck";openq4::PerformancePresetSignals got;std::string error;
+ raw={};observations.clear();com_platformProfile.value="steamdeck";opend3::PerformancePresetSignals got;std::string error;
  Check(Common_CapturePerformancePresetSignals(got,error)&&got.steamDeck&&observations==std::vector<std::string>({"explicit","pi","arm","ram","cpu"}),"Deck hint still observes capabilities");
  com_platformProfile.value="desktop";raw.systemRamMB=16384;raw.logicalCpus=8;
  renderer.overrideConfig=true;renderer.config={};renderer.config.gpuClass=RendererGpuClass::Integrated;
  renderer.config.vidWidth=1920;renderer.config.vidHeight=1080;renderer.config.maxTextureSize=16384;
  renderer.config.GLSL130Available=false;
  Check(Common_CapturePerformancePresetSignals(got,error)&&!got.legacyRenderer&&!got.modernEffects&&!got.postAAAvailable,"Apple GLSL 1.20 lacks modern effects, not classic material quality");
- Check(std::string(openq4::DetectPerformancePreset(got).preset->name)=="balanced","Apple compatibility context keeps native classic quality");
+ Check(std::string(opend3::DetectPerformancePreset(got).preset->name)=="balanced","Apple compatibility context keeps native classic quality");
  renderer.config.GLSLProgramAvailable=false;
  Check(Common_CapturePerformancePresetSignals(got,error)&&!got.legacyRenderer,"complete ARB programs retain classic rendering without GLSL");
  renderer.config.ARBFragmentProgramAvailable=false;
- Check(Common_CapturePerformancePresetSignals(got,error)&&got.legacyRenderer&&std::string(openq4::DetectPerformancePreset(got).preset->name)=="minimum","incomplete classic material pipeline remains constrained");
+ Check(Common_CapturePerformancePresetSignals(got,error)&&got.legacyRenderer&&std::string(opend3::DetectPerformancePreset(got).preset->name)=="minimum","incomplete classic material pipeline remains constrained");
  renderer.config.GLSLProgramAvailable=true;renderer.config.maxTextureSize=1024;
  Check(Common_CapturePerformancePresetSignals(got,error)&&got.legacyRenderer,"small texture limits remain constrained even with shader objects");
  renderer.config.maxTextureSize=16384;renderer.config.backendCaps.hasFBO=false;
  Check(Common_CapturePerformancePresetSignals(got,error)&&!got.legacyRenderer&&!got.modernEffects,"missing optional FBOs do not rank classic throughput");
  raw.systemRamMB=0;
- Check(Common_CapturePerformancePresetSignals(got,error)&&got.systemRamMB==0&&std::string(openq4::DetectPerformancePreset(got).preset->name)=="performance","failed SDL RAM observation stays unknown without a fabricated 512 MiB fallback");
+ Check(Common_CapturePerformancePresetSignals(got,error)&&got.systemRamMB==0&&std::string(opend3::DetectPerformancePreset(got).preset->name)=="performance","failed SDL RAM observation stays unknown without a fabricated 512 MiB fallback");
  raw.systemRamMB=16384;renderer.config.vidWidth=3840;renderer.config.vidHeight=2160;
  Seed();Check(Common_AutoDetectPerformancePresetCommand({{"autoDetectPerformancePreset"}},true),"actual 4K classic auto command");
  Check(cvars.vars.at("r_screenFraction").value=="50"&&cvars.vars.at("r_postAA").value=="0"&&cvars.vars.at("com_performancePreset").value=="performance","console retains automatic scene/AA adjustments");
@@ -207,19 +207,19 @@ int main(){
  Check(!Common_CapturePerformancePresetSignals(got,error)&&got.systemRamMB==123,"absent observation output unchanged");
  renderSystem=&renderer;
  // Execute the actual first-launch merge, not a second copy of its policy.
- bool assigned[OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT]={};
+ bool assigned[OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT]={};
  const auto bootstrap=[&](auto& baseline){
   Seed();startupVariables.clear();com_platformProfile.value="desktop";
-  std::fill_n(assigned,OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT,false);
+  std::fill_n(assigned,OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT,false);
   Check(Common_BootstrapStartupPerformancePreset(baseline),"actual small pre-device/bootstrap after shipped defaults");
   Check(cvars.vars.at("com_performancePreset").value=="minimum","bootstrap keeps a valid enum marker");
   com_performancePreset.value="minimum";cvars.calls.clear();
   raw={};raw.systemRamMB=32768;raw.videoRamMB=8192;raw.gpuClass=RendererGpuClass::Discrete;
   raw.modernEffects=true;raw.logicalCpus=8;raw.drawableWidth=1920;raw.drawableHeight=1080;
  };
- openQ4PerformancePresetCVarBackup_t baseline[OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT];
+ openD3PerformancePresetCVarBackup_t baseline[OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT];
  bootstrap(baseline);
- openq4::CVarAssignmentCapture capture;capture.Begin(openq4::PerformancePresetTargets().data(),OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT,assigned);
+ opend3::CVarAssignmentCapture capture;capture.Begin(opend3::PerformancePresetTargets().data(),OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT,assigned);
  cvarSystem->SetCVarInteger("r_screenFraction",90,CVAR_ARCHIVE);
  cvarSystem->SetCVarInteger("r_multiSamples",0,CVAR_ARCHIVE); // autoexec value equal to bootstrap
  capture.End();cvars.calls.clear();
@@ -230,7 +230,7 @@ int main(){
  Check(Common_ApplyStartupPerformancePreset(baseline,assigned)&&cvars.vars.at("r_screenFraction").value=="50"&&cvars.vars.at("r_postAA").value=="0","first launch retains the same automatic scene/AA recommendation");
  for(const auto* choice:{"minimum","quality","ultra"}){
   bootstrap(baseline);com_performancePreset.value=choice;
-  capture.Begin(openq4::PerformancePresetTargets().data(),OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT,assigned);
+  capture.Begin(opend3::PerformancePresetTargets().data(),OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT,assigned);
   cvarSystem->SetCVarString("com_performancePreset",choice,CVAR_ARCHIVE);capture.End();
   Check(Common_ApplyStartupPerformancePreset(baseline,assigned)&&cvars.vars.at("com_performancePreset").value==choice,"explicit first-launch profile respected including equal Minimum");
  }
@@ -246,7 +246,7 @@ BARRIER_SUPPORT=r'''
 #include <cstdio>
 #include <cstdlib>
 #include "src/ui/retained/Document.h"
-using namespace openq4::ui;
+using namespace opend3::ui;
 struct PendingAction{ActionInvocation invocation;struct{unsigned editSession=0;}source;std::string control;};
 struct NumberDraftSummary{struct Item{std::string control;};std::vector<Item> blocking;};
 struct ModelDouble{std::map<std::string,Action> actions;const Node* FindNode(const std::string&)const{return nullptr;}};
@@ -275,8 +275,8 @@ def source(path):return (ROOT/path).read_text(encoding='utf-8')
 def no_includes(text):return '\n'.join(line for line in text.splitlines() if not line.startswith('#include '))
 def programs():
  doc=source('src/ui/retained/Document.cpp')
- valid='namespace openq4::ui {\n'+ '\n'.join(function_body(doc,x) for x in ('bool Utf8(', 'bool ValidStateValue('))+'\n}\n'
- common=source('src/framework/Common.cpp');start=common.index('using openQ4PerformancePreset_t =');end=common.index('static const char *commonCommandCompletionMatch',start)
+ valid='namespace opend3::ui {\n'+ '\n'.join(function_body(doc,x) for x in ('bool Utf8(', 'bool ValidStateValue('))+'\n}\n'
+ common=source('src/framework/Common.cpp');start=common.index('using openD3PerformancePreset_t =');end=common.index('static const char *commonCommandCompletionMatch',start)
  init=function_body(common,'void idCommonLocal::InitGame( void ) {')
  assert init.index('Common_ApplyStartupPerformancePreset( startupPresetBootstrap, startupPresetAssigned )')>init.index('session->Init();')
  assert init.index('OpenFileWrite( CONFIG_SPEC )')>init.index('Common_ApplyStartupPerformancePreset( startupPresetBootstrap, startupPresetAssigned )')
@@ -290,7 +290,7 @@ def programs():
  for command in ('applyPerformancePreset low\\n','applyPerformancePreset performance','applyPerformancePreset balanced','applyPerformancePreset ultra','autoDetectPerformancePreset'):
   assert command in video, 'stock video choices must route through shared profiles'
  assert 'oldSpec' not in video and 'execMachineSpec' not in video and 'setMachineSpec' not in video
- assert init.index('Common_BootstrapStartupPerformancePreset( startupPresetBootstrap )',init.index('exec openq4_defaults.cfg'))<init.index('Common_BuildPlatformProfileConfigName(')
+ assert init.index('Common_BootstrapStartupPerformancePreset( startupPresetBootstrap )',init.index('exec opend3_defaults.cfg'))<init.index('Common_BuildPlatformProfileConfigName(')
  setter=function_body(source('src/framework/CVarSystem.cpp'),'void idInternalCVar::Set(')
  assert setter.index('CVarAssignmentCapture::Record(')>setter.index('if ( !force )')
  assert setter.index('CVarAssignmentCapture::Record(')<setter.index('if ( unchanged )')
@@ -318,7 +318,7 @@ if(Probe(nullptr))return 3;std::puts("production GL/GLES shader capability parsi
  # macOS libc++ otherwise requires Android SDK headers for this host fixture.
  'android_observer':(COMMON_SUPPORT+'\n#define __ANDROID__ 1\n'+function_body(common,'bool Common_CapturePerformancePresetSignals(')+r'''
 int main(){raw.systemRamMB=16384;raw.gpuClass=RendererGpuClass::Integrated;raw.modernEffects=true;raw.logicalCpus=8;raw.drawableWidth=1920;raw.drawableHeight=1080;
-openq4::PerformancePresetSignals got;std::string error;if(!Common_CapturePerformancePresetSignals(got,error)||!got.mobile||std::string(openq4::DetectPerformancePreset(got).preset->name)!="performance")return 1;
+opend3::PerformancePresetSignals got;std::string error;if(!Common_CapturePerformancePresetSignals(got,error)||!got.mobile||std::string(opend3::DetectPerformancePreset(got).preset->name)!="performance")return 1;
 std::puts("production Android observer keeps a mobile power ceiling");}
 ''',['src/framework/PerformancePreset.cpp']),
  'barrier':(BARRIER_SUPPORT+function_body(source('src/ui/UserInterfaceRetained.cpp'),'bool ConflictsWithNumberDraft(')+BARRIER_MAIN,[]),
@@ -396,7 +396,7 @@ def main():
     ('reentry-publication','native','src/ui/application/SettingsTransaction.cpp','if(reentered)return Result(SettingsCode::Busy,"Generated settings edit was interrupted by reentry");','if(false)return Result(SettingsCode::Busy,"Generated settings edit was interrupted by reentry");'),
     ('missing-reentry-observation','native','src/ui/application/SettingsTransaction.cpp','if(generatedReentry)*generatedReentry=true;','if(false)*generatedReentry=true;'),
     ('wrong-owner','native','src/ui/application/SettingsTransaction.cpp','if (requestedOwner != owner) return Result','if (false) return Result'),
-    ('host-extra-key','host',None,'candidate.size()!=openq4::PerformancePresetTargetCount','(candidate["r_brightness"]=1.0,candidate.size()!=openq4::PerformancePresetTargetCount+1)'),
+    ('host-extra-key','host',None,'candidate.size()!=opend3::PerformancePresetTargetCount','(candidate["r_brightness"]=1.0,candidate.size()!=opend3::PerformancePresetTargetCount+1)'),
     ('host-detection-ignored','host',None,'return BuildPerformancePresetPatch(resolved,patch,error);','return BuildPreset(detection.preset->name,patch,error);'),
     ('scene-budget-ignored','native','src/framework/PerformancePreset.cpp','if(pixels*scale*scale<=budget*10000||scale==10)','if(true)'),
     ('unsupported-aa-enabled','native','src/framework/PerformancePreset.cpp','(signals.postAAAvailable||signals.modernEffects)?result.preset->postAA:0','result.preset->postAA'),

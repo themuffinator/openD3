@@ -16,7 +16,7 @@ from filesystem_case_segments import function_body
 
 ROOT = Path(__file__).resolve().parents[2]
 JAVA = r'''
-package com.darkmatter.openq4;
+package com.darkmatter.opend3;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -238,11 +238,11 @@ def main():
     args = parser.parse_args()
     out = ROOT/'.tmp/android-interface-setup'
     out.mkdir(parents=True, exist_ok=True)
-    production = ROOT/'mobile/android/app/src/main/java/com/darkmatter/openq4'
-    java_source = JAVA.replace('@GETTER@', function_body((production/'OpenQ4Activity.java').read_text(encoding='utf-8'), 'public String getInterfaceSetup('))
-    activity = (production/'OpenQ4Activity.java').read_text(encoding='utf-8')
+    production = ROOT/'mobile/android/app/src/main/java/com/darkmatter/opend3'
+    java_source = JAVA.replace('@GETTER@', function_body((production/'openD3Activity.java').read_text(encoding='utf-8'), 'public String getInterfaceSetup('))
+    activity = (production/'openD3Activity.java').read_text(encoding='utf-8')
     java_source = java_source.replace('@ORIENTATION@', function_body(activity, 'static int screenOrientation('))
-    # SDL's window-derived request (FULL_USER for openQ4's resizable window)
+    # SDL's window-derived request (FULL_USER for openD3's resizable window)
     # must never replace the player's orientation, which the Activity applies
     # before SDL creates the window and again on each return from setup.
     bis = function_body(activity, 'public void setOrientationBis(')
@@ -267,7 +267,7 @@ def main():
     javac = Path(args.javac).resolve()
     subprocess.run([str(javac), '--release', '17', '-d', str(classes), str(production/'InterfaceSettings.java'), str(unit)], check=True)
     subprocess.run([str(javac.with_name('java.exe' if os.name == 'nt' else 'java')), '-cp', str(classes),
-                    'com.darkmatter.openq4.InterfaceSetupTest', str(records)], check=True)
+                    'com.darkmatter.opend3.InterfaceSetupTest', str(records)], check=True)
     cpp = out/'jni.cpp'; binary = out/('jni.exe' if os.name == 'nt' else 'jni')
     cpp.write_text(NATIVE.replace('@FUNCTION@', function_body(glue, 'static void Interface_LoadSetup(')), encoding='utf-8')
     env = {**os.environ, 'TMP': str(out), 'TEMP': str(out), 'TMPDIR': str(out)}

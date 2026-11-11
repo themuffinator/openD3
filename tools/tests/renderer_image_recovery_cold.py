@@ -12,7 +12,7 @@ from renderer_image_recovery_codec import FILES
 ROOT=Path(__file__).resolve().parents[2]
 ROUNDTRIP=r'''
 static imagePortableContent_t Durable(const imagePortableContent_t& input){
- namespace ir=openq4::imageRecovery;
+ namespace ir=opend3::imageRecovery;
  for(unsigned direction:{1u,2u}){
   ir::Data data;data.attempt="0123456789abcdef0123456789abcdef";data.direction=direction;
   ir::Image image;image.name=input.file.qpath;image.usage=input.usage;image.resident=true;image.content=input;data.images.push_back(image);

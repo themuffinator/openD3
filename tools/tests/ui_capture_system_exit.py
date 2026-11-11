@@ -32,27 +32,27 @@ def warning_baseline():
 
 def route(stage,mode):
     child=stage['child']
-    return (f'OPENQ4_SYSTEM enabled=1 active={capture.PAGE if child else capture.PARENT} '
+    return (f'OPEND3_SYSTEM enabled=1 active={capture.PAGE if child else capture.PARENT} '
             f'parent={capture.PARENT if child else "-"} child={int(child)} guiTest=0 menu=1 map=1 '
             f'multiplayer={int(mode=="mp")} menuSound=1 canReturn={int(child and not stage["values"][1])}')
 
 
 def trace(mode='sp',renderer='gl'):
     lines=[f'Renderer API: requested={renderer} active={renderer}',
-           'OPENQ4_MENU_ACTIVATION PASS elapsed=15ms limit=10000ms']
+           'OPEND3_MENU_ACTIVATION PASS elapsed=15ms limit=10000ms']
     if renderer=='vulkan': lines += ['GPU frame timing reset: generation=1 reason=renderer init',VK_INIT,CACHE_WARNING]
     owner,request,catalog=0,100,0
     for index,stage in enumerate(capture.stages()):
         lines += [capture.STAGE_MARKER+' '+stage['name']]
         if stage['opening']:
             owner+=17
-            lines += ['RETAINED_GUI_LOADED '+capture.PAGE,'OPENQ4_SYSTEM operation=open result=1',route(stage,mode)]
+            lines += ['RETAINED_GUI_LOADED '+capture.PAGE,'OPEND3_SYSTEM operation=open result=1',route(stage,mode)]
         generation=10+stage['restarts']; sequence=100+index*100
         width,height=stage.get('size',(1280,720))
         if stage['display']=='apply': request+=1
         active_request=request
         if stage['display']=='restore': active_request=request+1
-        lines += ['RETAINED_GUI_OPERATION '+command.split()[1]+' passed' for command in stage['commands'] if command.startswith('openq4_retainedGui ')]
+        lines += ['RETAINED_GUI_OPERATION '+command.split()[1]+' passed' for command in stage['commands'] if command.startswith('opend3_retainedGui ')]
         # Pin the production lifecycle spelling independently of the oracle.
         events = [('onActivate',1,1)] if stage['opening'] else \
                  [('continueediting',1,1)] if stage['name']=='continued' else stage['events']
@@ -151,7 +151,7 @@ class ExitOracleTests(unittest.TestCase):
 
     def test_number_operations_are_bound_to_authored_stage(self):
         rows=copy.deepcopy(capture.stages())
-        rows[0]['commands']+=['openq4_retainedGui number begin "settings_window_width"']
+        rows[0]['commands']+=['opend3_retainedGui number begin "settings_window_width"']
         with patch.object(capture,'stages',return_value=rows):
             log=trace();self.assertTrue(capture.qualify(log,'sp','gl')['passed'])
             for replacement in ('', 'RETAINED_GUI_OPERATION number failed',
@@ -186,7 +186,7 @@ class ExitOracleTests(unittest.TestCase):
     def test_every_required_observation_missing_or_replayed(self):
         original=trace().splitlines()
         for index,line in enumerate(original):
-            if line.startswith(('SYSTEM_EXIT_','OPENQ4_','GUI_VALUE ','RETAINED_GUI','UI_SETTINGS','DISPLAY_PROBE')):
+            if line.startswith(('SYSTEM_EXIT_','OPEND3_','GUI_VALUE ','RETAINED_GUI','UI_SETTINGS','DISPLAY_PROBE')):
                 with self.subTest(index=index,line=line[:80]):
                     self.reject('\n'.join(original[:index]+original[index+1:]))
                     self.reject('\n'.join(original[:index]+[line]+original[index:]))
@@ -203,7 +203,7 @@ class ExitOracleTests(unittest.TestCase):
     def test_peer_documents_hold_their_own_context(self):
         # The classic HUD's essential document runs beside the page in gameplay.
         peer='guis/hud/air_marine.q4ui'
-        log=trace().replace('OPENQ4_MENU_ACTIVATION ','RETAINED_GUI_LOADED '+peer+'\nOPENQ4_MENU_ACTIVATION ',1)
+        log=trace().replace('OPEND3_MENU_ACTIVATION ','RETAINED_GUI_LOADED '+peer+'\nOPEND3_MENU_ACTIVATION ',1)
         self.reject(log)
         restored=f'RETAINED_GUI_RESOURCE path={capture.PAGE} event=restored'
         log=log.replace('contexts=1','contexts=2').replace(restored,f'RETAINED_GUI_RESOURCE path={peer} event=restored\n'+restored)
@@ -220,13 +220,13 @@ class ExitOracleTests(unittest.TestCase):
             self.reject(original.replace(continued,changed,1))
 
     def test_matched_source_cannot_weaken_numeric_exit_guards(self):
-        raw=(ROOT/'content/baseoq4/pak0'/capture.PAGE).read_text(encoding='utf-8')
+        raw=(ROOT/'content/baseod3/pak0'/capture.PAGE).read_text(encoding='utf-8')
         original=json.loads('\n'.join(line for line in raw.splitlines() if not line.lstrip().startswith('//')))
         for name,model in number_contract_mutations(original):
             with self.subTest(name=name),tempfile.TemporaryDirectory(prefix='system-number-exit-contract-',dir=ROOT/'.tmp') as directory:
                 root=Path(directory);runtime=root/'.install';data=json.dumps(model).encode('utf-8')
-                source=root/'content/baseoq4/pak0'/capture.PAGE;source.parent.mkdir(parents=True);source.write_bytes(data)
-                package(runtime/'baseoq4/pak0.pk4',data)
+                source=root/'content/baseod3/pak0'/capture.PAGE;source.parent.mkdir(parents=True);source.write_bytes(data)
+                package(runtime/'baseod3/pak0.pk4',data)
                 with patch.object(capture,'ROOT',root):
                     with self.assertRaises(ValueError):capture.source_contract(runtime)
                 type(self).mutations += 1
@@ -359,15 +359,15 @@ class ExitOracleTests(unittest.TestCase):
 
     def test_fixed_semantic_script(self):
         commands=[shlex.split(line) for line in capture.script().splitlines()]
-        allowed={'openq4_assertMenuActivation','wait','echo','openq4_system','openq4_retainedGui','openq4_guiGet','rendererDisplayProbe','screenshot','gfxInfo','quit'}
+        allowed={'opend3_assertMenuActivation','wait','echo','opend3_system','opend3_retainedGui','opend3_guiGet','rendererDisplayProbe','screenshot','gfxInfo','quit'}
         self.assertEqual({row[0] for row in commands},allowed)
-        self.assertEqual(commands[0],['openq4_assertMenuActivation','10000'])
+        self.assertEqual(commands[0],['opend3_assertMenuActivation','10000'])
         self.assertEqual(commands[-2:],[['echo',capture.COMPLETE],['quit']])
         self.assertEqual([row for row in commands if row[0]=='rendererDisplayProbe'],[['rendererDisplayProbe','report']]*21)
         for row in commands:
             self.assertNotIn(';',' '.join(row))
-            if row[0]=='openq4_retainedGui': self.assertIn(row[1],('focus','menu','widget','report','event'))
-            if row[:2]==['openq4_retainedGui','event']: self.assertIn(row[2],('tab_screen','tab_image'))
+            if row[0]=='opend3_retainedGui': self.assertIn(row[1],('focus','menu','widget','report','event'))
+            if row[:2]==['opend3_retainedGui','event']: self.assertIn(row[2],('tab_screen','tab_image'))
         self.assertNotIn('testGUI',capture.script()); self.assertNotIn('vid_restart',capture.script())
         # Every probe of a row on another tab switches first; every close deactivates.
         rows=capture.stages()
@@ -385,16 +385,16 @@ class ExitOracleTests(unittest.TestCase):
         self.assertEqual(reverted['commands'],capture.key('accept'))
 
     def test_real_source_and_mocked_capture_bindings(self):
-        production=(ROOT/'content/baseoq4/pak0'/capture.PAGE).read_bytes()
+        production=(ROOT/'content/baseod3/pak0'/capture.PAGE).read_bytes()
         for mode,renderer,defect in [('sp','gl',None),('mp','vulkan',None)]+[('sp','gl',x) for x in ('source','binary','warning','image','image-size','journal','config','exit','script','baseline')]:
             with self.subTest(mode=mode,defect=defect),tempfile.TemporaryDirectory(prefix='system-exit-oracle-',dir=ROOT/'.tmp') as directory:
                 rows=copy.deepcopy(capture.stages())
                 for row in rows:
                     row['size']=(960,600) if row['name'] in ('display_confirm','keep_confirm','keep_exit','reopen_kept','finished') else (1280,720)
                 root=Path(directory); runtime=root/'.install'; runtime.mkdir(); (root/'.tmp').mkdir()
-                executable=runtime/('openQ4-client_x64.exe' if capture.os.name=='nt' else 'openQ4-client_x64'); executable.write_bytes(b'never executed')
-                source=root/'content/baseoq4/pak0'/capture.PAGE; source.parent.mkdir(parents=True); source.write_bytes(production)
-                package(runtime/'baseoq4/pak0.pk4',production)
+                executable=runtime/('openD3-client_x64.exe' if capture.os.name=='nt' else 'openD3-client_x64'); executable.write_bytes(b'never executed')
+                source=root/'content/baseod3/pak0'/capture.PAGE; source.parent.mkdir(parents=True); source.write_bytes(production)
+                package(runtime/'baseod3/pak0.pk4',production)
                 (root/'.vscode').mkdir()
                 gameplay=['+map','game/airdefense1'] if mode=='sp' else ['+spawnServer','mp/q4dm1']
                 profile=dict(name=('(SP) airdefense1 ' if mode=='sp' else '(MP) q4dm1 ')+'test GL',
@@ -405,18 +405,18 @@ class ExitOracleTests(unittest.TestCase):
                 output=root/'.tmp/evidence'; args=SimpleNamespace(output=output,runtime=runtime,assets=assets,mode=mode,renderer=renderer,density=1.25,warning_baseline=baseline)
                 calls=[]
                 def launch(command,**kwargs):
-                    calls.append((command,kwargs)); game=output/'save/baseoq4'; (game/'logs').mkdir(); (game/'screenshots').mkdir()
+                    calls.append((command,kwargs)); game=output/'save/baseod3'; (game/'logs').mkdir(); (game/'screenshots').mkdir()
                     log=trace(mode,renderer)+(STOCK_WARNING+'\n' if mode=='mp' else '')
                     if defect=='warning': log+='WARNING: new failure\n'
-                    (game/'logs/openq4.log').write_text(log,encoding='utf-8')
+                    (game/'logs/opend3.log').write_text(log,encoding='utf-8')
                     for row in rows:
                         if row['shot']:
                             raw=image((1280,720) if defect=='image-size' else row['size']) if defect!='image' else b'bad'
                             (game/f'screenshots/system-exit-{row["shot"]}.tga').write_bytes(raw)
                     (game/'.settings-recovery.lock').write_bytes(b'')
-                    (game/'openQ4Config.cfg').write_text(configuration().replace('"1.1"','"1"') if defect=='config' else configuration(),encoding='utf-8')
+                    (game/'openD3Config.cfg').write_text(configuration().replace('"1.1"','"1"') if defect=='config' else configuration(),encoding='utf-8')
                     if defect=='journal': (game/'ui-settings-recovery.dat').write_bytes(b'unfinished')
-                    if defect=='source': package(runtime/'baseoq4/pak0.pk4',production,True)
+                    if defect=='source': package(runtime/'baseod3/pak0.pk4',production,True)
                     if defect=='binary': executable.write_bytes(b'replaced during capture')
                     if defect=='script': (game/'system-exit.cfg').write_text('changed\n',encoding='utf-8')
                     if defect=='baseline': baseline.write_text('WARNING: changed approval\n',encoding='utf-8')
@@ -436,12 +436,12 @@ class ExitOracleTests(unittest.TestCase):
                 self.assertEqual(metadata['status'],'failed' if defect else 'captured_pending_visual_review')
                 self.assertEqual(metadata['source_unchanged'],defect!='source')
                 self.assertEqual(metadata['binaries_unchanged'],defect!='binary')
-                self.assertFalse((output/'save/baseoq4'/capture.PAGE).exists())
+                self.assertFalse((output/'save/baseod3'/capture.PAGE).exists())
                 with patch.object(capture,'stages',return_value=rows):
-                    self.assertEqual((output/'save/baseoq4/system-exit.cfg').read_text(encoding='utf-8'),'changed\n' if defect=='script' else capture.script())
+                    self.assertEqual((output/'save/baseod3/system-exit.cfg').read_text(encoding='utf-8'),'changed\n' if defect=='script' else capture.script())
 
     def test_matching_packaged_bytes_do_not_excuse_changed_control_contract(self):
-        raw=(ROOT/'content/baseoq4/pak0'/capture.PAGE).read_text(encoding='utf-8')
+        raw=(ROOT/'content/baseod3/pak0'/capture.PAGE).read_text(encoding='utf-8')
         original=json.loads('\n'.join(line for line in raw.splitlines() if not line.lstrip().startswith('//')))
         def node(model,name):
             pending=[model['root']]
@@ -464,8 +464,8 @@ class ExitOracleTests(unittest.TestCase):
             with self.subTest(index=index),tempfile.TemporaryDirectory(prefix='system-exit-contract-',dir=ROOT/'.tmp') as directory:
                 root=Path(directory); runtime=root/'.install'; model=copy.deepcopy(original); mutate(model)
                 data=json.dumps(model).encode('utf-8')
-                source=root/'content/baseoq4/pak0'/capture.PAGE; source.parent.mkdir(parents=True); source.write_bytes(data)
-                package(runtime/'baseoq4/pak0.pk4',data)
+                source=root/'content/baseod3/pak0'/capture.PAGE; source.parent.mkdir(parents=True); source.write_bytes(data)
+                package(runtime/'baseod3/pak0.pk4',data)
                 with patch.object(capture,'ROOT',root):
                     with self.assertRaises(ValueError): capture.source_contract(runtime)
 

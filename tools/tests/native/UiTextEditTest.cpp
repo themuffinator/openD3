@@ -7,7 +7,7 @@
 #include <limits>
 #include <string>
 #include <vector>
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks = 0;
 static void Check(bool value, const char* message) {
 	++checks;

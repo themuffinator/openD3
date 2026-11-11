@@ -30,7 +30,7 @@ SUPPORT = r'''
 #include <string>
 #include <vector>
 #include <cctype>
-namespace openq4 { void NativeInputBeforeSessionChange() noexcept {} }
+namespace opend3 { void NativeInputBeforeSessionChange() noexcept {} }
 
 struct idStr : std::string {
     using std::string::string;
@@ -359,13 +359,13 @@ int main(){
         s.session.CloseSystemSettings();CHECK(s.manager.frees==1);
     }
     {
-        Scenario s;Session_SystemSettings_f({{"openq4_system","open"}});CHECK(s.session.guiSystem && s.manager.loads==1);
-        auto* child=s.session.guiSystem;Session_SystemSettings_f({{"openq4_system","report"}});CHECK(s.manager.loads==1);
-        child->canReturn=false;Session_SystemSettings_f({{"openq4_system","back"}});CHECK(child->active && child->backs==1);
+        Scenario s;Session_SystemSettings_f({{"opend3_system","open"}});CHECK(s.session.guiSystem && s.manager.loads==1);
+        auto* child=s.session.guiSystem;Session_SystemSettings_f({{"opend3_system","report"}});CHECK(s.manager.loads==1);
+        child->canReturn=false;Session_SystemSettings_f({{"opend3_system","back"}});CHECK(child->active && child->backs==1);
         CHECK(common->output.find("operation=back result=0")!=std::string::npos);
-        child->canReturn=true;Session_SystemSettings_f({{"openq4_system","back"}});CHECK(child->retired && s.parent->active);
-        Session_SystemSettings_f({{"openq4_system","open","extra"}});CHECK(s.manager.loads==1);
-        Session_SystemSettings_f({{"openq4_system","open"}});CHECK(s.session.guiSystem && s.session.guiSystem!=child && s.manager.loads==2);
+        child->canReturn=true;Session_SystemSettings_f({{"opend3_system","back"}});CHECK(child->retired && s.parent->active);
+        Session_SystemSettings_f({{"opend3_system","open","extra"}});CHECK(s.manager.loads==1);
+        Session_SystemSettings_f({{"opend3_system","open"}});CHECK(s.session.guiSystem && s.session.guiSystem!=child && s.manager.loads==2);
         auto* fresh=s.session.guiSystem;s.session.DispatchCommand(fresh,"typed");CHECK(fresh->retired && s.parent->active);
     }
     {
@@ -424,7 +424,7 @@ def main():
     menu_path = ROOT / 'src/framework/Session_menu.cpp'
     session_path = ROOT / 'src/framework/Session.cpp'
     header_path = ROOT / 'src/framework/Session_local.h'
-    gui_path = ROOT / 'content/baseoq4/pak0/guis/mainmenu.gui'
+    gui_path = ROOT / 'content/baseod3/pak0/guis/mainmenu.gui'
     menu = menu_path.read_text(encoding='utf-8')
     session = session_path.read_text(encoding='utf-8')
     header = header_path.read_text(encoding='utf-8')
@@ -479,7 +479,7 @@ def main():
     assert 'SetGUI( NULL, NULL );' in function_body(session, 'void idSessionLocal::StopInternal(')
     assert 'guiSystem = guiSystemParent = NULL;' in function_body(session, 'void idSessionLocal::Clear(')
     assert 'guiActive == guiSystem || guiActive->State().GetBool( "gameDraw" )' in session
-    assert '"openq4_system", Session_SystemSettings_f' in session
+    assert '"opend3_system", Session_SystemSettings_f' in session
     assert 'HandleGuiCommand_t\tguiSystemParentHandle;' in header
     compiler = next((p for name in ('clang++', 'g++', 'c++') if (p := shutil.which(name))), None)
     if not compiler:

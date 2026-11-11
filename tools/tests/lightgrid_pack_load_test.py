@@ -41,11 +41,11 @@ PROFILES = {
 
 def run_profile(args, name: str, overrides: dict[str, str]) -> dict:
     home = args.output_dir.resolve() / name
-    log = home / "baseoq4" / "logs" / "openq4.log"
+    log = home / "baseod3" / "logs" / "opend3.log"
     home.mkdir(parents=True)
     cvars = {
         "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(home), "fs_devpath": str(home),
-        "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1", "s_noSound": "1",
+        "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1", "s_noSound": "1",
         "r_hiddenWindow": "1", "r_fullscreen": "0", "r_mode": "-1", "r_customWidth": "640", "r_customHeight": "360",
         "in_mouse": "0", "in_joystick": "0", "ui_retained": "1", "r_useLightGrid": "1",
         # Mount every addon pk4: the community map pack's maps live in one.
@@ -53,7 +53,7 @@ def run_profile(args, name: str, overrides: dict[str, str]) -> dict:
         "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
         **overrides,
     }
-    command = [str(args.runtime_dir.resolve() / f"openQ4-client_x64{SUFFIX}")]
+    command = [str(args.runtime_dir.resolve() / f"openD3-client_x64{SUFFIX}")]
     command += [part for key, value in cvars.items() for part in ("+set", key, value)]
     command += ["+lightGridPackTest", *args.map, "+quit"]
     started = time.monotonic()

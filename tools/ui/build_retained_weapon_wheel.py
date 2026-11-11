@@ -154,7 +154,7 @@ def wheel_palette(doc):
 def document(strogg=False, awakening=False, chat=False):
     from remastered_hud_base import HudDocument, shear_group
     family='strogg' if strogg else 'marine'; variant=family+('_awakening' if awakening else '')
-    doc=HudDocument('openq4.quick-chat') if chat else ui.Document('openq4.weapon-wheel.'+variant)
+    doc=HudDocument('opend3.quick-chat') if chat else ui.Document('opend3.weapon-wheel.'+variant)
     roster=ROSTER[:10]+['corecannon','napalmgun','freezegun'] if awakening else ROSTER
     colors=COLORS[:10]+['#FF5AC8','#FFBF40','#9EEBFF'] if awakening else COLORS
     if chat: roster=roster[:len(PHRASES)]
@@ -485,7 +485,7 @@ def document(strogg=False, awakening=False, chat=False):
     props={**ui.absolute(width=560,height=560),'left':ui.length(50,'%'),'top':ui.length(50,'%'),'margin-left':ui.length(-280),'margin-top':ui.length(-280),'transform':ui.transform()}
     root=full('wheel-root',[ui.group('wheel-center',props,wheel)],opacity=ui.number(0))
     doc.bind('root.blend','wheel-root','opacity',S('blend'));doc.bind('wheel.placement','wheel-center','transform',[S('offset'),0,S('fit'),S('fit'),0])
-    return doc.build(root,{'extensions':{'openq4':{'reference':'ui-visual-design.md 14.6 / 14.16','family':family,'slots':n,
+    return doc.build(root,{'extensions':{'opend3':{'reference':'ui-visual-design.md 14.6 / 14.16','family':family,'slots':n,
         'input':'Player-owned radial selection; no pointer hit testing','placement':'ui_weaponWheelOffset percent of viewport width from center, default +27; fitted at narrow edges'}}})
 
 
@@ -526,9 +526,9 @@ def main():
     for strogg in (False,True):
         for awakening in (False,True):
             name=('strogg' if strogg else 'marine')+('_awakening' if awakening else '')
-            path=ROOT/'content/baseoq4/pak0/guis/hud'/('weapon_wheel_'+name+'.q4ui')
+            path=ROOT/'content/baseod3/pak0/guis/hud'/('weapon_wheel_'+name+'.q4ui')
             write(path,document(strogg,awakening),args.check)
-    write(ROOT/'content/baseoq4/pak0/guis/hud/quick_chat.q4ui',chat_document(),args.check)
+    write(ROOT/'content/baseod3/pak0/guis/hud/quick_chat.q4ui',chat_document(),args.check)
     print('Native weapon wheel documents are current')
 
 

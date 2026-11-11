@@ -159,12 +159,12 @@ bool Session_DemoEntryMatchesFilter( const demoLibraryEntry_t &entry, const char
 void Session_DemoEntryText( const demoLibraryEntry_t &entry, sessionDemoText_t &out );
 
 typedef enum {
-	OPENQ4_FRAME_BOUND_UNKNOWN,
-	OPENQ4_FRAME_BOUND_SIMULATION,
-	OPENQ4_FRAME_BOUND_VSYNC,
-	OPENQ4_FRAME_BOUND_PRESENTATION_CAP,
-	OPENQ4_FRAME_BOUND_UNCAPPED
-} openq4FramePacingBound_t;
+	OPEND3_FRAME_BOUND_UNKNOWN,
+	OPEND3_FRAME_BOUND_SIMULATION,
+	OPEND3_FRAME_BOUND_VSYNC,
+	OPEND3_FRAME_BOUND_PRESENTATION_CAP,
+	OPEND3_FRAME_BOUND_UNCAPPED
+} opend3FramePacingBound_t;
 
 // Frame intervals run on the high-resolution clock from the start of one
 // presentation frame to the next, binned at 50 us (PresentationPacing.h).
@@ -177,7 +177,7 @@ typedef struct {
 	float						avgFrameHz;
 	float						minFrameMsec;
 	float						maxFrameMsec;
-	int							frameIntervalBins[openq4::FRAME_PACING_BINS];
+	int							frameIntervalBins[opend3::FRAME_PACING_BINS];
 	int							lastTicDelta;
 	float						avgTicsPerFrame;
 	int							lastGameTics;
@@ -191,12 +191,12 @@ typedef struct {
 	int							swapInterval;
 	int							presentationCap;
 	float						refreshHz;			// the window's display, 0 when unknown
-	openq4AsyncTimingStats_t	asyncStats;
-	openq4FramePacingBound_t	boundMode;
-} openq4FramePacingStats_t;
+	opend3AsyncTimingStats_t	asyncStats;
+	opend3FramePacingBound_t	boundMode;
+} opend3FramePacingStats_t;
 
 // A frame-interval percentile since framePacingReset, in milliseconds.
-float Session_GetFramePacingPercentileMsec( const openq4FramePacingStats_t &stats, int percentile );
+float Session_GetFramePacingPercentileMsec( const opend3FramePacingStats_t &stats, int percentile );
 
 // The retained sub-page a change of menu level goes to or comes back from.
 typedef enum {
@@ -268,13 +268,13 @@ public:
 	virtual bool		IsLoadingSaveGame() const { return loadingSaveGame; }
 	virtual bool		IsGUIActive() const;
 	bool				IsMapSpawned() const { return mapSpawned; }
-	// A dedicated server presents nothing: openQ4-ded, and this client while it
+	// A dedicated server presents nothing: openD3-ded, and this client while it
 	// runs as one without a renderer device (launched with net_serverDedicated
 	// 1, or after turning into one). Its session has no menus and skips the
 	// wipes, loading screens and screen updates.
 	bool				IsDedicatedServer() const;
 	virtual idUserInterface *GetActiveGUI() const { return ( guiTest != NULL ) ? guiTest : guiActive; }
-	bool QueryNativeInputPublication(openq4::NativeSessionPublication&) const noexcept;
+	bool QueryNativeInputPublication(opend3::NativeSessionPublication&) const noexcept;
 	virtual bool		IsMainMenuIntroPlaying() const;
 
 	virtual bool		ProcessEvent( const sysEvent_t *event );
@@ -567,7 +567,7 @@ public:
 	virtual int			GetSaveGameVersion( void );
 
 	virtual const char *GetCurrentMapName();
-	const openq4FramePacingStats_t &GetFramePacingStats( void ) const { return framePacingStats; }
+	const opend3FramePacingStats_t &GetFramePacingStats( void ) const { return framePacingStats; }
 	void				ResetFramePacingStats( void );
 	void				PrintFramePacingSnapshot( const char *reason = NULL ) const;
 	void				SampleMultiplayerFramePacing( void );
@@ -688,11 +688,11 @@ public:
 	bool				syncNextGameFrameAwaitingAsyncTicLog;
 	bool				cinematicStateValid;
 	bool				cinematicActive;
-	openq4FramePacingStats_t framePacingStats;
+	opend3FramePacingStats_t framePacingStats;
 	double				framePacingWindowMsec;
 	double				framePacingLastFrameClock;
 	int					framePacingLastLatchedTic;
-	openq4FramePacingBound_t framePacingLastLoggedBound;
+	opend3FramePacingBound_t framePacingLastLoggedBound;
 	int					framePacingLastLoggedSampleCount;
 
 

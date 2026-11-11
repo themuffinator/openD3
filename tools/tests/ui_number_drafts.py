@@ -65,7 +65,7 @@ def main():
     paths=[CORE/n for n in ('Interaction.h','Interaction.cpp','ScrollGeometry.h','ScrollGeometry.cpp','Runtime.h','Runtime.cpp','Document.h','Document.cpp','TextInput.h','TextInput.cpp','TextEdit.h','TextEdit.cpp','TextEditCommand.h','NativeTextDocument.h','NativeTextDocument.cpp','NativeTextEditor.h','NativeTextEditor.cpp')]+[ROOT/'tools/tests/native/UiNumberDraftTest.cpp',Path(__file__)]
     sources={p.relative_to(ROOT).as_posix():digest(p) for p in paths}
     doc=(CORE/'Document.cpp').read_text(encoding='utf-8');valid=temp/'valid.cpp'
-    valid.write_text('#include "Interaction.h"\n#include <cmath>\nnamespace openq4::ui {\n'+function_body(doc,'bool Utf8(')+function_body(doc,'bool ValidStateValue(')+'}\n',encoding='utf-8',newline='\n')
+    valid.write_text('#include "Interaction.h"\n#include <cmath>\nnamespace opend3::ui {\n'+function_body(doc,'bool Utf8(')+function_body(doc,'bool ValidStateValue(')+'}\n',encoding='utf-8',newline='\n')
     production=(CORE/'Interaction.cpp').read_text(encoding='utf-8');native=(ROOT/'tools/tests/native/UiNumberDraftTest.cpp').read_text(encoding='utf-8')
     cases=[('native',native,production,False),('runtime-wrappers',runtime_unit(),production,False)]
     mutations=[

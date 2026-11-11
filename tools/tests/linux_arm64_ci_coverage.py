@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_LIBS_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)).resolve()
+GAME_LIBS_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)).resolve()
 
 
 def read(relative_path: str) -> str:
@@ -73,8 +73,8 @@ def validate_push_workflow() -> None:
     )
     require(source, '--runtime-cases "${runtime_cases}"', "push verification runtime smoke")
     require(source, "sdl3-x11-display-diagnostics", "push verification X11 display diagnostics case")
-    require(source, "OPENQ4_FORCE_X11=1 xvfb-run -a python tools/tests/renderer_validation_matrix.py", "push verification OPENQ4_FORCE_X11 runtime smoke")
-    require(source, "--cases sdl3-force-x11-display-diagnostics", "push verification OPENQ4_FORCE_X11 runtime smoke")
+    require(source, "OPEND3_FORCE_X11=1 xvfb-run -a python tools/tests/renderer_validation_matrix.py", "push verification OPEND3_FORCE_X11 runtime smoke")
+    require(source, "--cases sdl3-force-x11-display-diagnostics", "push verification OPEND3_FORCE_X11 runtime smoke")
     require(source, "--runtime-skip-official-pak-validation", "push verification assetless runtime smoke")
     require(source, "LIBGL_ALWAYS_SOFTWARE=1", "push verification software GL runtime smoke")
     require(source, "SDL_VIDEO_DRIVER=x11 SDL_VIDEODRIVER=x11", "push verification runtime display override")
@@ -100,8 +100,8 @@ def validate_commit_workflow() -> None:
         "commit validation runtime smoke",
     )
     require(source, "sdl3-x11-display-diagnostics", "commit validation X11 display diagnostics case")
-    require(source, "OPENQ4_FORCE_X11=1 xvfb-run -a python tools/tests/renderer_validation_matrix.py", "commit validation OPENQ4_FORCE_X11 runtime smoke")
-    require(source, "--cases sdl3-force-x11-display-diagnostics", "commit validation OPENQ4_FORCE_X11 runtime smoke")
+    require(source, "OPEND3_FORCE_X11=1 xvfb-run -a python tools/tests/renderer_validation_matrix.py", "commit validation OPEND3_FORCE_X11 runtime smoke")
+    require(source, "--cases sdl3-force-x11-display-diagnostics", "commit validation OPEND3_FORCE_X11 runtime smoke")
     require(source, "--runtime-skip-official-pak-validation", "commit validation assetless runtime smoke")
     require(source, "LIBGL_ALWAYS_SOFTWARE=1", "commit validation software GL runtime smoke")
     require(source, "SDL_VIDEO_DRIVER=x11 SDL_VIDEODRIVER=x11", "commit validation runtime display override")
@@ -146,7 +146,7 @@ def validate_commit_workflow() -> None:
         "    runs-on: ubuntu-24.04-arm\n"
         "    timeout-minutes: 150\n"
         "    env:\n"
-        "      OPENQ4_GAMELIBS_REPO: ${{ github.workspace }}\n"
+        "      OPEND3_GAMELIBS_REPO: ${{ github.workspace }}\n"
         "      CC: gcc\n"
         "      CXX: g++",
         "commit validation native ARM64 GCC dedicated job",
@@ -154,9 +154,9 @@ def validate_commit_workflow() -> None:
     require(source, "weston --backend=headless-backend.so", "commit validation native Wayland compositor")
     require(source, "SDL_VIDEO_DRIVER=wayland", "commit validation native Wayland video driver")
     require(source, "SDL_VIDEODRIVER=wayland", "commit validation native Wayland legacy video driver")
-    require(source, "OPENQ4_WAYLAND_DISABLE_LIBDECOR=1", "commit validation libdecor opt-out matrix")
-    require(source, "OPENQ4_WAYLAND_PREFER_LIBDECOR=1", "commit validation preferred libdecor matrix")
-    require(source, "OPENQ4_WAYLAND_SYNC_WINDOW_OPS=1", "commit validation sync-window matrix")
+    require(source, "OPEND3_WAYLAND_DISABLE_LIBDECOR=1", "commit validation libdecor opt-out matrix")
+    require(source, "OPEND3_WAYLAND_PREFER_LIBDECOR=1", "commit validation preferred libdecor matrix")
+    require(source, "OPEND3_WAYLAND_SYNC_WINDOW_OPS=1", "commit validation sync-window matrix")
     require(source, "sdl3-wayland-window-lifecycle", "commit validation Wayland window lifecycle case")
     require(source, "sdl3-wayland-window-stress", "commit validation Wayland window stress case")
     require(source, "sdl3-wayland-mouse-capture", "commit validation Wayland mouse capture case")
@@ -167,7 +167,7 @@ def validate_commit_workflow() -> None:
 
 def validate_linux_hardening_contract() -> None:
     meson = read("meson.build")
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
 
     require(meson, "linux_compile_hardening_args", "Linux compile hardening")
     require(meson, "-fstack-protector-strong", "Linux compile hardening")
@@ -190,7 +190,7 @@ def validate_linux_hardening_contract() -> None:
     require(validator, '["--wide", "--dyn-syms"]', "Linux dynamic module export validation")
     require(validator, 'fields[4] in {"GLOBAL", "WEAK", "UNIQUE"}', "Linux public symbol binding validation")
     require(validator, 'fields[5] in {"DEFAULT", "PROTECTED"}', "Linux public symbol visibility validation")
-    require(validator, 'expected_game_exports = {"GetGameAPI", "openQ4_Mem_GetModuleStats"}', "Linux exact game module export set")
+    require(validator, 'expected_game_exports = {"GetGameAPI", "openD3_Mem_GetModuleStats"}', "Linux exact game module export set")
     require(validator, "len(public_symbols) == len(expected_game_exports)", "no extra public Linux module export")
     require(validator, 'symbol[:3] == ("FUNC", "GLOBAL", "DEFAULT")', "Linux game module export binding validation")
     require(validator, "Linux game module must expose exactly the GLOBAL/DEFAULT/FUNC GetGameAPI", "Linux game module export validation")
@@ -198,7 +198,7 @@ def validate_linux_hardening_contract() -> None:
 
 def validate_runtime_flags() -> None:
     renderer = read("tools/tests/renderer_validation_matrix.py")
-    runner = read("tools/validation/openq4_validate.py")
+    runner = read("tools/validation/opend3_validate.py")
 
     require(renderer, '"id": "sdl3-wayland-window-lifecycle"', "renderer validation Wayland window lifecycle case")
     require(renderer, "native Wayland SDL3 window lifecycle smoke", "renderer validation Wayland window lifecycle case")
@@ -229,9 +229,9 @@ def validate_runtime_flags() -> None:
     require(renderer, '"id": "sdl3-x11-display-diagnostics"', "renderer validation X11 display diagnostics case")
     require(renderer, "SDL3 X11/Xvfb fallback display diagnostics smoke", "renderer validation X11 display diagnostics case")
     require(renderer, '"SDL3: current video driver: x11"', "renderer validation X11 driver assertion")
-    require(renderer, '"id": "sdl3-force-x11-display-diagnostics"', "renderer validation OPENQ4_FORCE_X11 display diagnostics case")
-    require(renderer, "openQ4 XWayland fallback diagnostics smoke", "renderer validation OPENQ4_FORCE_X11 display diagnostics case")
-    require(renderer, '"OPENQ4_FORCE_X11=1"', "renderer validation OPENQ4_FORCE_X11 environment assertion")
+    require(renderer, '"id": "sdl3-force-x11-display-diagnostics"', "renderer validation OPEND3_FORCE_X11 display diagnostics case")
+    require(renderer, "openD3 XWayland fallback diagnostics smoke", "renderer validation OPEND3_FORCE_X11 display diagnostics case")
+    require(renderer, '"OPEND3_FORCE_X11=1"', "renderer validation OPEND3_FORCE_X11 environment assertion")
     require(renderer, '"videoDriver": "x11"', "renderer validation X11 driver-specific metadata")
     require(renderer, '"videoDriver": "wayland"', "renderer validation Wayland driver-specific metadata")
     require(renderer, "filter_driver_specific_cases", "renderer validation default driver-specific filter")
@@ -281,7 +281,7 @@ def validate_release_note() -> None:
     source = read("docs/dev/release-completion.md")
 
     require(source, "Linux builds and Wayland validation are harder to regress", "release completion notes")
-    require(source, "OPENQ4_WAYLAND_DISABLE_LIBDECOR=1", "release completion notes")
+    require(source, "OPEND3_WAYLAND_DISABLE_LIBDECOR=1", "release completion notes")
     require(source, "Linux ARM64 is now covered by normal CI", "release completion notes")
     require(source, "assetless renderer startup smoke", "release completion notes")
     require(source, "AAS declarations", "release completion notes")
@@ -307,10 +307,10 @@ def validate_linux_arm64_release_claim_policy() -> None:
     )
 
     for token in (
-        "OPENQ4_LINUX_ARM64_SUPPORT_TIER",
-        "OPENQ4_LINUX_ARM64_EVIDENCE_SHA",
-        "OPENQ4_ARM64_EVIDENCE_CANDIDATE",
-        "OPENQ4_RELEASE_VERSION_TAG",
+        "OPEND3_LINUX_ARM64_SUPPORT_TIER",
+        "OPEND3_LINUX_ARM64_EVIDENCE_SHA",
+        "OPEND3_ARM64_EVIDENCE_CANDIDATE",
+        "OPEND3_RELEASE_VERSION_TAG",
         'linux_arm64_support_tier == "first-class"',
         "Resolve accepted Linux ARM64 evidence",
         "docs/dev/linux-arm64-first-class-evidence.toml",
@@ -323,8 +323,8 @@ def validate_linux_arm64_release_claim_policy() -> None:
         "--print-archive-sha256",
         "--stock-sp-report",
         "--dedicated-report",
-        "--expected-openq4-commit",
-        "--expected-openq4-game-commit",
+        "--expected-opend3-commit",
+        "--expected-opend3-game-commit",
         "--expected-release-version",
         "--expected-version-tag",
         "--expected-release-tag",
@@ -369,7 +369,7 @@ def validate_linux_arm64_release_claim_policy() -> None:
     embedded_python = textwrap.dedent(workflow[heredoc_start:heredoc_end])
     compile(embedded_python, ".github/workflows/manual-release.yml:release-matrix", "exec")
 
-    with tempfile.TemporaryDirectory(prefix="openq4-linux-arm64-release-policy-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="opend3-linux-arm64-release-policy-") as temp_dir:
         temp_root = Path(temp_dir)
         preview_docs = {
             temp_root / "README.md": "preview Linux ARM64\n",
@@ -385,12 +385,12 @@ def validate_linux_arm64_release_claim_policy() -> None:
             path.write_text(contents, encoding="utf-8")
 
         base_environment = os.environ.copy()
-        base_environment["OPENQ4_MACOS_SUPPORT_TIER"] = "preview"
-        base_environment["OPENQ4_RELEASE_VERSION_TAG"] = "9.9.9-test"
-        base_environment["OPENQ4_ARM64_EVIDENCE_CANDIDATE"] = "false"
+        base_environment["OPEND3_MACOS_SUPPORT_TIER"] = "preview"
+        base_environment["OPEND3_RELEASE_VERSION_TAG"] = "9.9.9-test"
+        base_environment["OPEND3_ARM64_EVIDENCE_CANDIDATE"] = "false"
 
         preview_environment = base_environment.copy()
-        preview_environment["OPENQ4_LINUX_ARM64_SUPPORT_TIER"] = "preview"
+        preview_environment["OPEND3_LINUX_ARM64_SUPPORT_TIER"] = "preview"
         preview_result = subprocess.run(
             [sys.executable, "-c", embedded_python],
             cwd=temp_root,
@@ -428,8 +428,8 @@ def validate_linux_arm64_release_claim_policy() -> None:
             raise AssertionError("preview Linux ARM64 matrix label is not explicit")
 
         candidate_environment = base_environment.copy()
-        candidate_environment["OPENQ4_LINUX_ARM64_SUPPORT_TIER"] = "preview"
-        candidate_environment["OPENQ4_ARM64_EVIDENCE_CANDIDATE"] = "true"
+        candidate_environment["OPEND3_LINUX_ARM64_SUPPORT_TIER"] = "preview"
+        candidate_environment["OPEND3_ARM64_EVIDENCE_CANDIDATE"] = "true"
         candidate_result = subprocess.run(
             [sys.executable, "-c", embedded_python],
             cwd=temp_root,
@@ -469,7 +469,7 @@ def validate_linux_arm64_release_claim_policy() -> None:
             raise AssertionError("evidence-candidate archive must use the first-class filename")
 
         invalid_candidate_environment = candidate_environment.copy()
-        invalid_candidate_environment["OPENQ4_LINUX_ARM64_SUPPORT_TIER"] = "first-class"
+        invalid_candidate_environment["OPEND3_LINUX_ARM64_SUPPORT_TIER"] = "first-class"
         invalid_candidate_result = subprocess.run(
             [sys.executable, "-c", embedded_python],
             cwd=temp_root,
@@ -487,7 +487,7 @@ def validate_linux_arm64_release_claim_policy() -> None:
         )
 
         first_class_environment = base_environment.copy()
-        first_class_environment["OPENQ4_LINUX_ARM64_SUPPORT_TIER"] = "first-class"
+        first_class_environment["OPEND3_LINUX_ARM64_SUPPORT_TIER"] = "first-class"
         missing_evidence_result = subprocess.run(
             [sys.executable, "-c", embedded_python],
             cwd=temp_root,
@@ -504,7 +504,7 @@ def validate_linux_arm64_release_claim_policy() -> None:
             "missing Linux ARM64 accepted-evidence commit rejection",
         )
 
-        first_class_environment["OPENQ4_LINUX_ARM64_EVIDENCE_SHA"] = "e" * 40
+        first_class_environment["OPEND3_LINUX_ARM64_EVIDENCE_SHA"] = "e" * 40
 
         selected_release_notes = (
             temp_root / "docs" / "dev" / "releases" / "v9.9.9-test.md"
@@ -612,7 +612,7 @@ def validate_linux_arm64_release_claim_policy() -> None:
     require(evidence, "Required Two-Pass Workflow", "Linux ARM64 signoff evidence")
     require(evidence, "linux_arm64_evidence_ref", "Linux ARM64 signoff evidence")
     require(evidence, "generate_linux_arm64_evidence_candidate", "Linux ARM64 signoff evidence")
-    require(evidence, "same triggering openQ4 commit", "Linux ARM64 signoff evidence")
+    require(evidence, "same triggering openD3 commit", "Linux ARM64 signoff evidence")
     require(evidence, "Fast-forward the exact tested candidate commit", "Linux ARM64 signoff evidence")
     require(evidence, "creates no tag or GitHub release", "Linux ARM64 signoff evidence")
     require(evidence, "SOURCE_DATE_EPOCH", "Linux ARM64 signoff evidence")
@@ -637,8 +637,8 @@ def validate_linux_arm64_release_claim_policy() -> None:
         "[runtime_reports]",
         "[candidate]",
         "[sha256]",
-        'openq4_commit = "pending"',
-        'openq4_game_commit = "pending"',
+        'opend3_commit = "pending"',
+        'opend3_game_commit = "pending"',
         'package_filename = "pending"',
         'archive = "pending"',
         'client = "pending"',
@@ -673,7 +673,7 @@ def validate_linux_arm64_release_claim_policy() -> None:
     ):
         require(evidence_helper, token, "Linux ARM64 candidate evidence verifier")
     require(
-        read("tools/validation/openq4_validate.py"),
+        read("tools/validation/opend3_validate.py"),
         '"linux_arm64_release_evidence.py"',
         "validation runner ARM64 evidence fixture wiring",
     )

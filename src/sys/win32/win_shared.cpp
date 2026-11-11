@@ -61,10 +61,10 @@ bool Sys_GetSecureRandomBytes( void *buffer, int bytes ) {
 
 namespace {
 
-static const int OPENQ4_WIN32_FALLBACK_VIDEO_RAM_MB = 2048;
-static const int OPENQ4_WIN32_MAX_REASONABLE_VIDEO_RAM_MB = 256 * 1024;
+static const int OPEND3_WIN32_FALLBACK_VIDEO_RAM_MB = 2048;
+static const int OPEND3_WIN32_MAX_REASONABLE_VIDEO_RAM_MB = 256 * 1024;
 
-typedef HRESULT ( WINAPI *openQ4_CreateDXGIFactoryFn )( REFIID riid, void **factory );
+typedef HRESULT ( WINAPI *openD3_CreateDXGIFactoryFn )( REFIID riid, void **factory );
 
 bool Sys_TryGetDriveFreeSpaceBytes( const char *path, DWORDLONG &freeBytes ) {
 	DWORDLONG bytesAvailable;
@@ -93,7 +93,7 @@ int Sys_QueryDXGIVideoRamMB( void ) {
 		return 0;
 	}
 
-	openQ4_CreateDXGIFactoryFn createDXGIFactory = reinterpret_cast<openQ4_CreateDXGIFactoryFn>( GetProcAddress( dxgiModule, "CreateDXGIFactory" ) );
+	openD3_CreateDXGIFactoryFn createDXGIFactory = reinterpret_cast<openD3_CreateDXGIFactoryFn>( GetProcAddress( dxgiModule, "CreateDXGIFactory" ) );
 	if ( createDXGIFactory == NULL ) {
 		FreeLibrary( dxgiModule );
 		return 0;
@@ -132,7 +132,7 @@ int Sys_QueryDXGIVideoRamMB( void ) {
 	}
 
 	const unsigned long long megabytes = ( maxDedicatedBytes + ( 1024ULL * 1024ULL - 1ULL ) ) / ( 1024ULL * 1024ULL );
-	if ( megabytes == 0 || megabytes > OPENQ4_WIN32_MAX_REASONABLE_VIDEO_RAM_MB ) {
+	if ( megabytes == 0 || megabytes > OPEND3_WIN32_MAX_REASONABLE_VIDEO_RAM_MB ) {
 		return 0;
 	}
 	return static_cast<int>( megabytes );
@@ -304,7 +304,7 @@ int Sys_GetVideoRam(void) {
 		return cachedVideoRam;
 	}
 
-	cachedVideoRam = OPENQ4_WIN32_FALLBACK_VIDEO_RAM_MB;
+	cachedVideoRam = OPEND3_WIN32_FALLBACK_VIDEO_RAM_MB;
 	return cachedVideoRam;
 }
 

@@ -1,4 +1,4 @@
-// First-party openQ4 checked audio settings. GPL-3.0-or-later.
+// First-party openD3 checked audio settings. GPL-3.0-or-later.
 #include "SoundSettings.h"
 #include "SoundRecovery.h"
 #include <atomic>

@@ -1,7 +1,7 @@
-// Copyright (C) 2026 openQ4 contributors
+// Copyright (C) 2026 openD3 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
-#ifndef OPENQ4_SOUND_MEMORY_TRIM_H
-#define OPENQ4_SOUND_MEMORY_TRIM_H
+#ifndef OPEND3_SOUND_MEMORY_TRIM_H
+#define OPEND3_SOUND_MEMORY_TRIM_H
 
 // What an operating-system low-memory notice may take from a loaded sample.
 // Nothing a channel references goes, in any world, audible or not: shakes,

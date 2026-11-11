@@ -18,7 +18,7 @@
 #include <locale>
 #include <sstream>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 std::string Number(double value, int decimals = -1) {
 	std::ostringstream stream; stream.imbue(std::locale::classic());
@@ -759,4 +759,4 @@ PointerPartResult ValueControlView::PointerPart(Rml::Element* hit, float x, floa
 	}
 	return result;
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

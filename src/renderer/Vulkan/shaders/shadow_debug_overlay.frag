@@ -1,6 +1,6 @@
 #version 450
 
-// openQ4 Vulkan shadow-map debug overlay — projected mini-map panel
+// openD3 Vulkan shadow-map debug overlay — projected mini-map panel
 // (r_shadowMapDebugOverlay).
 //
 // Reads the selected light's atlas block through set 0 binding 2, the RAW

@@ -94,7 +94,7 @@ def main() -> None:
     require(
         async_path,
         async_network,
-        # Upstream openQ4's ceilings: a cap below snapshotSize * snapshotHz sheds
+        # Upstream openD3's ceilings: a cap below snapshotSize * snapshotHz sheds
         # whole snapshots, so the defaults follow upstream rather than FW-38.
         'serverSnapshotDelay( "net_serverSnapshotDelay", "33"',
         'serverMaxClientRate( "net_serverMaxClientRate", "128000"',
@@ -168,13 +168,13 @@ def main() -> None:
         forbid(
             bse_path,
             bse_source,
-            "openq4_bse",
-            "openQ4-BSE",
+            "opend3_bse",
+            "openD3-BSE",
             "build_libbse",
-            "openQ4_GetIntegratedBSE",
-            "openQ4_AllocIntegratedBSE",
-            "openQ4_IsIntegratedBSE",
-            "openQ4_DisableBSE",
+            "openD3_GetIntegratedBSE",
+            "openD3_AllocIntegratedBSE",
+            "openD3_IsIntegratedBSE",
+            "openD3_DisableBSE",
             "OpenPrey_",
         )
 

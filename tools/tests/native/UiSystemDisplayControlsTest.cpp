@@ -42,7 +42,7 @@ static void Propose(View& v,const Field& field) {
  Check(v.host.writes==0,"selection never writes CVars or starts display work");
 }
 static void Run(const std::string& source,const std::string& directory,const char* locale,float expansion) {
- View v(source,directory+"/"+locale+"_openq4.lang",1,1280,720,expansion,directory+"/"+locale+"_guis.lang");
+ View v(source,directory+"/"+locale+"_opend3.lang",1,1280,720,expansion,directory+"/"+locale+"_guis.lang");
  for(const auto& field:fields)Check(v.host.strings.contains(field.label),"display label uses existing localized text");
  for(const auto* key:{"#str_230020","#str_229911","#str_229900"})Check(v.host.strings.contains(key),"all choice and section translations exist");
  const auto baseline=v.tx.Baseline();

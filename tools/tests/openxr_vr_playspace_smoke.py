@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Standing and seated VR play spaces against the openQ4 OpenXR test runtime
+"""Standing and seated VR play spaces against the openD3 OpenXR test runtime
 (requires a staged client built with OpenXR and retail assets).
 
 vr_playSpace picks the reference space heights are measured in. Standing play
@@ -8,7 +8,7 @@ LOCAL_FLOOR) against the standing eye height, vr_standingHeight, which is
 learned at the first recentre or measured by vr_calibrateHeight. Seated play
 measures it from where it was recentred. A runtime without a floor-level space
 leaves standing play head-relative and says so. The test runtime offers STAGE
-by default and is told which spaces to offer per run (OPENQ4_XR_TEST_SPACES).
+by default and is told which spaces to offer per run (OPEND3_XR_TEST_SPACES).
 Nothing synthesises input: console commands write marker files and the
 runtime's script moves the head when they appear.
 
@@ -27,7 +27,7 @@ Checks, on STAGE:
   body;
 - room scale on STAGE: a half-metre step walks the body about half a metre,
   once, and leaves the head near the origin, never the step twice;
-then with OPENQ4_XR_TEST_SPACES=local_floor standing play uses LOCAL_FLOOR,
+then with OPEND3_XR_TEST_SPACES=local_floor standing play uses LOCAL_FLOOR,
 and with none it falls back to head-relative play with a warning.
 
 The LOCAL_FLOOR run also recentres from the headset: the runtime announces
@@ -79,11 +79,11 @@ def frame_guarded(commands: list[str]) -> list[str]:
 
 def run(options, staged: Path, executable: str, manifest: Path, profile: Path, spaces: str,
         commands: list[str], script: list[str]) -> str:
-    game = profile / "baseoq4"
+    game = profile / "baseod3"
     game.mkdir(parents=True, exist_ok=True)
     for stale in game.glob("vr_marker_*.txt"):
         stale.unlink()
-    log_path = game / "logs/openq4.log"
+    log_path = game / "logs/opend3.log"
     log_path.unlink(missing_ok=True)
     (profile / "xr_script.txt").write_text("\n".join(script) + "\n", encoding="utf-8")
     (game / "openxr_vr_playspace_smoke.cfg").write_text("\n".join(frame_guarded(commands)) + "\n", encoding="utf-8")
@@ -114,14 +114,14 @@ def run(options, staged: Path, executable: str, manifest: Path, profile: Path, s
     args += ["+map", "game/airdefense1"]
     command = [str(staged / executable), *args]
     (profile / "command.json").write_text(json.dumps(command, indent=2), encoding="utf-8")
-    environment = {k: v for k, v in os.environ.items() if not k.startswith("OPENQ4_XR_TEST_")}
+    environment = {k: v for k, v in os.environ.items() if not k.startswith("OPEND3_XR_TEST_")}
     environment.update({
         "XR_RUNTIME_JSON": str(manifest),
-        "OPENQ4_XR_TEST_LOG": str(profile / "xr.jsonl"),
-        "OPENQ4_XR_TEST_SCRIPT": str(profile / "xr_script.txt"),
-        "OPENQ4_XR_TEST_EYE_SIZE": "640x704",
-        "OPENQ4_XR_TEST_RATE": "90",
-        "OPENQ4_XR_TEST_SPACES": spaces,
+        "OPEND3_XR_TEST_LOG": str(profile / "xr.jsonl"),
+        "OPEND3_XR_TEST_SCRIPT": str(profile / "xr_script.txt"),
+        "OPEND3_XR_TEST_EYE_SIZE": "640x704",
+        "OPEND3_XR_TEST_RATE": "90",
+        "OPEND3_XR_TEST_SPACES": spaces,
     })
     startup = None
     if os.name == "nt":
@@ -196,7 +196,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--basepath", type=Path, required=True, help="installed retail Quake 4 assets")
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
     parser.add_argument("--build-dir", type=Path, default=ROOT / "builddir",
-                        help="build directory holding openq4_xr_test_runtime.json")
+                        help="build directory holding opend3_xr_test_runtime.json")
     parser.add_argument("--executable-name")
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--timeout", type=int, default=300)
@@ -204,8 +204,8 @@ def main(argv: list[str] | None = None) -> None:
     options = parser.parse_args(argv)
 
     staged = options.runtime_dir.resolve()
-    executable = options.executable_name or ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
-    manifest = (options.build_dir / "openq4_xr_test_runtime.json").resolve()
+    executable = options.executable_name or ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
+    manifest = (options.build_dir / "opend3_xr_test_runtime.json").resolve()
     if not (staged / executable).is_file() or not options.basepath.is_dir():
         parser.error("a staged client and installed Quake 4 assets are required")
     if not manifest.is_file():
@@ -217,7 +217,7 @@ def main(argv: list[str] | None = None) -> None:
 
     # --- STAGE: the full sequence
     profile = output / f"stage-{options.render_api}"
-    game = profile / "baseoq4"
+    game = profile / "baseod3"
 
     def marker(name: str) -> str:
         return str(game / f"vr_marker_{name}.txt")
@@ -317,7 +317,7 @@ def main(argv: list[str] | None = None) -> None:
     # 0.4 m to the right and turns 40 degrees, then the runtime announces that
     # LOCAL_FLOOR moves there 2.5 s later
     floor_profile = output / f"local-floor-{options.render_api}"
-    floor_game = floor_profile / "baseoq4"
+    floor_game = floor_profile / "baseod3"
     floor_script = [
         f"when {floor_game / 'vr_marker_move.txt'} head 40 0 0 0.40 1.60 -0.30",
         f"when {floor_game / 'vr_marker_recenter.txt'} recenter 2500",
@@ -346,7 +346,7 @@ def main(argv: list[str] | None = None) -> None:
     # no floor at all, and where levels start: two snap turns, the map again,
     # a save, another snap turn, and the save loaded
     none_profile = output / f"no-floor-{options.render_api}"
-    none_game = none_profile / "baseoq4"
+    none_game = none_profile / "baseod3"
     none_game.mkdir(parents=True, exist_ok=True)
 
     def snap(name: str) -> list[str]:

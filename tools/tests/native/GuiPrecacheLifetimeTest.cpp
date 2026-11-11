@@ -35,7 +35,7 @@ struct idUserInterface {
     }
 };
 static idUserInterface* UI_CreateForPath(const char*) { return new idUserInterface; }
-static void openQ4_UpdateInitialization() {}
+static void openD3_UpdateInitialization() {}
 // @LOOKUP@
 struct Game { bool isMultiplayer=true; void FindEntityDef(const char*,bool) {} };
 static Game gameLocal;
@@ -58,9 +58,9 @@ struct KeyValue {
 #define TIME_THIS_SCOPE(...)
 #define MEM_SCOPED_TAG(...)
 static bool RememberMapMediaPrecache(const char*,const std::string&) { return false; }
-static double OpenQ4_BeginMapMediaPrecacheCall() { return 0; }
+static double openD3_BeginMapMediaPrecacheCall() { return 0; }
 static constexpr int MAP_MEDIA_GUI=0;
-static void OpenQ4_EndMapMediaPrecacheCall(int,double) {}
+static void openD3_EndMapMediaPrecacheCall(int,double) {}
 static void PrecacheDictionary(const KeyValue* kv) {
     for (int once=0;once<1;++once)
     // @DICTIONARY@

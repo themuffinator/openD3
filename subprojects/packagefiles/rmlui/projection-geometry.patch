@@ -5,7 +5,7 @@
  	/// Returns the element's transform state.
  	const TransformState* GetTransformState() const noexcept;
 +
-+	/// openQ4: Refresh stacking geometry and transforms after Context::Update,
++	/// openD3: Refresh stacking geometry and transforms after Context::Update,
 +	/// without rendering, so popup placement and projection use this layout.
 +	/// Call on the context root to update ancestors before descendants.
 +	void UpdateGeometryForProjection();

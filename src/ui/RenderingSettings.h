@@ -3,7 +3,7 @@
 #include "application/SettingsValue.h"
 #include "../renderer/RendererDeviceCatalog.h"
 
-namespace openq4::ui {
+namespace opend3::ui {
 // Engine adapter: the service owns one inventory for the lifetime of its view.
 // A pick re-enumerates and verifies the displayed catalog before editing a draft.
 class RenderingSettings {

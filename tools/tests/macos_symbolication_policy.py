@@ -83,12 +83,12 @@ def add_tar_bytes(archive: tarfile.TarFile, name: str, data: bytes) -> None:
 def symbol_manifest_text(
     *,
     package_suffix: str = "-opengl",
-    runtime_archive: str = "openq4-0.6.5-macos-arm64-opengl.dmg",
-    symbol_archive: str = "openq4-0.6.5-macos-arm64-opengl-symbols.tar.xz",
+    runtime_archive: str = "opend3-0.6.5-macos-arm64-opengl.dmg",
+    symbol_archive: str = "opend3-0.6.5-macos-arm64-opengl-symbols.tar.xz",
     duplicate_key: str = "",
 ) -> str:
     header = [
-        "openQ4 macOS symbols",
+        "openD3 macOS symbols",
         "format=1",
         "version=0.6.5",
         "version_tag=0.6.5",
@@ -105,37 +105,37 @@ def symbol_manifest_text(
         + [
             "",
             "binaries:",
-            "- path=openQ4.app/Contents/MacOS/openQ4",
+            "- path=openD3.app/Contents/MacOS/openD3",
             "  sha256=" + "0" * 64,
             "  size=1",
-            "  macho_uuid=UUID: 00000000-0000-0000-0000-000000000001 (arm64) openQ4",
-            "  dsym=dSYMs/openQ4.app.dSYM",
-            "- path=openQ4-client_arm64",
+            "  macho_uuid=UUID: 00000000-0000-0000-0000-000000000001 (arm64) openD3",
+            "  dsym=dSYMs/openD3.app.dSYM",
+            "- path=openD3-client_arm64",
             "  sha256=" + "1" * 64,
             "  size=1",
-            "  macho_uuid=UUID: 00000000-0000-0000-0000-000000000002 (arm64) openQ4-client_arm64",
-            "  dsym=dSYMs/openQ4-client_arm64.dSYM",
-            "- path=openQ4-ded_arm64",
+            "  macho_uuid=UUID: 00000000-0000-0000-0000-000000000002 (arm64) openD3-client_arm64",
+            "  dsym=dSYMs/openD3-client_arm64.dSYM",
+            "- path=openD3-ded_arm64",
             "  sha256=" + "2" * 64,
             "  size=1",
-            "  macho_uuid=UUID: 00000000-0000-0000-0000-000000000003 (arm64) openQ4-ded_arm64",
-            "  dsym=dSYMs/openQ4-ded_arm64.dSYM",
-            "- path=openQ4.app/Contents/Frameworks/game-sp_arm64.dylib",
+            "  macho_uuid=UUID: 00000000-0000-0000-0000-000000000003 (arm64) openD3-ded_arm64",
+            "  dsym=dSYMs/openD3-ded_arm64.dSYM",
+            "- path=openD3.app/Contents/Frameworks/game-sp_arm64.dylib",
             "  sha256=" + "3" * 64,
             "  size=1",
             "  macho_uuid=UUID: 00000000-0000-0000-0000-000000000004 (arm64) game-sp_arm64.dylib",
             "  dsym=dSYMs/game-sp_arm64.dylib.dSYM",
-            "- path=openQ4.app/Contents/Frameworks/game-mp_arm64.dylib",
+            "- path=openD3.app/Contents/Frameworks/game-mp_arm64.dylib",
             "  sha256=" + "4" * 64,
             "  size=1",
             "  macho_uuid=UUID: 00000000-0000-0000-0000-000000000005 (arm64) game-mp_arm64.dylib",
             "  dsym=dSYMs/game-mp_arm64.dylib.dSYM",
-            # The Vulkan renderer module is openQ4-built and therefore carries a
+            # The Vulkan renderer module is openD3-built and therefore carries a
             # dSYM, so it is a manifest binary exactly like the game modules.
             # libMoltenVK.dylib ships next to it in Contents/Frameworks but is
             # deliberately NOT listed: it is a third-party prebuilt with no DWARF,
             # and macos_symbol_targets() excludes it for that reason.
-            "- path=openQ4.app/Contents/Frameworks/renderer-vk_arm64.dylib",
+            "- path=openD3.app/Contents/Frameworks/renderer-vk_arm64.dylib",
             "  sha256=" + "5" * 64,
             "  size=1",
             "  macho_uuid=UUID: 00000000-0000-0000-0000-000000000006 (arm64) renderer-vk_arm64.dylib",
@@ -153,13 +153,13 @@ def create_symbol_archive(
     casefold_manifest: bool = False,
     huge_manifest: bool = False,
     metadata_sidecar: bool = False,
-    runtime_archive: str = "openq4-0.6.5-macos-arm64-opengl.dmg",
-    symbol_archive: str = "openq4-0.6.5-macos-arm64-opengl-symbols.tar.xz",
+    runtime_archive: str = "opend3-0.6.5-macos-arm64-opengl.dmg",
+    symbol_archive: str = "opend3-0.6.5-macos-arm64-opengl-symbols.tar.xz",
     package_suffix: str = "-opengl",
     duplicate_key: str = "",
     manifest_replacements: tuple[tuple[str, str], ...] = (),
 ) -> str:
-    root_name = "openq4-0.6.5-macos-arm64-opengl-symbols"
+    root_name = "opend3-0.6.5-macos-arm64-opengl-symbols"
     manifest_data = symbol_manifest_text(
         package_suffix=package_suffix,
         runtime_archive=runtime_archive,
@@ -173,9 +173,9 @@ def create_symbol_archive(
         manifest_data = b"x" * (PACKAGE.MAX_MACOS_METADATA_MEMBER_BYTES + 1)
     entries = {
         f"{root_name}/SYMBOLS.txt": manifest_data,
-        f"{root_name}/dSYMs/openQ4.app.dSYM/Contents/Resources/DWARF/openQ4": b"dsym\n",
-        f"{root_name}/dSYMs/openQ4-client_arm64.dSYM/Contents/Resources/DWARF/openQ4-client_arm64": b"dsym\n",
-        f"{root_name}/dSYMs/openQ4-ded_arm64.dSYM/Contents/Resources/DWARF/openQ4-ded_arm64": b"dsym\n",
+        f"{root_name}/dSYMs/openD3.app.dSYM/Contents/Resources/DWARF/openD3": b"dsym\n",
+        f"{root_name}/dSYMs/openD3-client_arm64.dSYM/Contents/Resources/DWARF/openD3-client_arm64": b"dsym\n",
+        f"{root_name}/dSYMs/openD3-ded_arm64.dSYM/Contents/Resources/DWARF/openD3-ded_arm64": b"dsym\n",
         f"{root_name}/dSYMs/game-sp_arm64.dylib.dSYM/Contents/Resources/DWARF/game-sp_arm64.dylib": b"dsym\n",
         f"{root_name}/dSYMs/game-mp_arm64.dylib.dSYM/Contents/Resources/DWARF/game-mp_arm64.dylib": b"dsym\n",
         f"{root_name}/dSYMs/renderer-vk_arm64.dylib.dSYM/Contents/Resources/DWARF/renderer-vk_arm64.dylib": b"dsym\n",
@@ -183,7 +183,7 @@ def create_symbol_archive(
         # to ship, and package_nightly.py never stages one here.
     }
     if leak_runtime:
-        entries[f"{root_name}/openQ4-client_arm64"] = b"runtime\n"
+        entries[f"{root_name}/openD3-client_arm64"] = b"runtime\n"
     if metadata_sidecar:
         entries[f"{root_name}/dSYMs/.DS_Store"] = b"finder\n"
 
@@ -205,12 +205,12 @@ def validate_packager_contract() -> None:
         'MACOS_SYMBOL_ARCHIVE_SUFFIX = ".tar.xz"',
         "def macos_symbol_archive_stem(",
         "def macos_symbol_targets(package_root: Path, arch: str)",
-        'Path("openQ4.app") / "Contents" / "MacOS" / "openQ4"',
+        'Path("openD3.app") / "Contents" / "MacOS" / "openD3"',
         f'Path(f"{{PRODUCT_NAME}}-client_{{arch}}")',
         f'Path(f"{{PRODUCT_NAME}}-ded_{{arch}}")',
-        'Path("openQ4.app") / MACOS_APP_FRAMEWORKS_DIR / f"game-sp_{arch}.dylib"',
-        'Path("openQ4.app") / MACOS_APP_FRAMEWORKS_DIR / f"game-mp_{arch}.dylib"',
-        'Path("openQ4.app") / MACOS_APP_FRAMEWORKS_DIR / f"renderer-vk_{arch}.dylib"',
+        'Path("openD3.app") / MACOS_APP_FRAMEWORKS_DIR / f"game-sp_{arch}.dylib"',
+        'Path("openD3.app") / MACOS_APP_FRAMEWORKS_DIR / f"game-mp_{arch}.dylib"',
+        'Path("openD3.app") / MACOS_APP_FRAMEWORKS_DIR / f"renderer-vk_{arch}.dylib"',
         "dwarfdump",
         "dsymutil",
         "create_macos_dsym_bundle",
@@ -264,7 +264,7 @@ def validate_symbol_archive_fixture() -> None:
     shutil.rmtree(work, ignore_errors=True)
     try:
         work.mkdir(parents=True, exist_ok=True)
-        good_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols.tar.xz"
+        good_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols.tar.xz"
         root_name = create_symbol_archive(good_archive)
         PACKAGE.validate_macos_symbol_archive_contents(
             good_archive,
@@ -273,13 +273,13 @@ def validate_symbol_archive_fixture() -> None:
             version_tag="0.6.5",
             arch="arm64",
             package_suffix="-opengl",
-            runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+            runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
         )
 
-        wrong_runtime_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-wrong-runtime.tar.xz"
+        wrong_runtime_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-wrong-runtime.tar.xz"
         wrong_runtime_root_name = create_symbol_archive(
             wrong_runtime_archive,
-            runtime_archive="openq4-0.6.5-macos-arm64-metal.dmg",
+            runtime_archive="opend3-0.6.5-macos-arm64-metal.dmg",
         )
         expect_runtime_error(
             "runtime_archive",
@@ -290,15 +290,15 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             ),
             "symbol archive manifest with wrong runtime archive",
         )
 
-        wrong_symbol_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-wrong-symbol.tar.xz"
+        wrong_symbol_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-wrong-symbol.tar.xz"
         wrong_symbol_root_name = create_symbol_archive(
             wrong_symbol_archive,
-            symbol_archive="openq4-0.6.5-macos-arm64-metal-symbols.tar.xz",
+            symbol_archive="opend3-0.6.5-macos-arm64-metal-symbols.tar.xz",
         )
         expect_runtime_error(
             "symbol_archive",
@@ -309,12 +309,12 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             ),
             "symbol archive manifest with wrong symbol archive",
         )
 
-        wrong_suffix_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-wrong-suffix.tar.xz"
+        wrong_suffix_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-wrong-suffix.tar.xz"
         wrong_suffix_root_name = create_symbol_archive(wrong_suffix_archive, package_suffix="-metal")
         expect_runtime_error(
             "package_suffix",
@@ -325,12 +325,12 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             ),
             "symbol archive manifest with wrong package suffix",
         )
 
-        duplicate_header_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-duplicate-header.tar.xz"
+        duplicate_header_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-duplicate-header.tar.xz"
         duplicate_header_root_name = create_symbol_archive(duplicate_header_archive, duplicate_key="runtime_archive")
         expect_runtime_error(
             "duplicate key",
@@ -341,12 +341,12 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             ),
             "symbol archive manifest with duplicate header key",
         )
 
-        unexpected_header_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-extra-header.tar.xz"
+        unexpected_header_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-extra-header.tar.xz"
         unexpected_header_root_name = create_symbol_archive(unexpected_header_archive, duplicate_key="release_channel")
         expect_runtime_error(
             "unexpected header key",
@@ -357,15 +357,15 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             ),
             "symbol archive manifest with unexpected header key",
         )
 
-        unsafe_runtime_name_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-unsafe-runtime.tar.xz"
+        unsafe_runtime_name_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-unsafe-runtime.tar.xz"
         unsafe_runtime_name_root_name = create_symbol_archive(
             unsafe_runtime_name_archive,
-            runtime_archive="nested/openq4-0.6.5-macos-arm64-opengl.dmg",
+            runtime_archive="nested/opend3-0.6.5-macos-arm64-opengl.dmg",
         )
         expect_runtime_error(
             "unsafe archive filename",
@@ -376,15 +376,15 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             ),
             "symbol archive manifest with path-like runtime archive name",
         )
 
-        unsafe_symbol_name_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-unsafe-symbol.tar.xz"
+        unsafe_symbol_name_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-unsafe-symbol.tar.xz"
         unsafe_symbol_name_root_name = create_symbol_archive(
             unsafe_symbol_name_archive,
-            symbol_archive="nested/openq4-0.6.5-macos-arm64-opengl-symbols.tar.xz",
+            symbol_archive="nested/opend3-0.6.5-macos-arm64-opengl-symbols.tar.xz",
         )
         expect_runtime_error(
             "unsafe archive filename",
@@ -395,15 +395,15 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             ),
             "symbol archive manifest with path-like symbol archive name",
         )
 
-        duplicate_binary_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-duplicate-binary.tar.xz"
+        duplicate_binary_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-duplicate-binary.tar.xz"
         duplicate_binary_root_name = create_symbol_archive(
             duplicate_binary_archive,
-            manifest_replacements=(("- path=openQ4-ded_arm64", "- path=openQ4-client_arm64"),),
+            manifest_replacements=(("- path=openD3-ded_arm64", "- path=openD3-client_arm64"),),
         )
         expect_runtime_error(
             "duplicate binary entry",
@@ -414,12 +414,12 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             ),
             "symbol archive manifest with duplicate binary path",
         )
 
-        bad_hash_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-bad-hash.tar.xz"
+        bad_hash_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-bad-hash.tar.xz"
         bad_hash_root_name = create_symbol_archive(
             bad_hash_archive,
             manifest_replacements=(("sha256=" + "0" * 64, "sha256=not-a-sha256"),),
@@ -433,12 +433,12 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             ),
             "symbol archive manifest with invalid sha256",
         )
 
-        bad_size_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-bad-size.tar.xz"
+        bad_size_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-bad-size.tar.xz"
         bad_size_root_name = create_symbol_archive(
             bad_size_archive,
             manifest_replacements=(("  size=1", "  size=0"),),
@@ -452,18 +452,18 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             ),
             "symbol archive manifest with invalid binary size",
         )
 
-        bad_uuid_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-bad-uuid.tar.xz"
+        bad_uuid_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-bad-uuid.tar.xz"
         bad_uuid_root_name = create_symbol_archive(
             bad_uuid_archive,
             manifest_replacements=(
                 (
-                    "macho_uuid=UUID: 00000000-0000-0000-0000-000000000001 (arm64) openQ4",
-                    "macho_uuid=UUID: 00000000-0000-0000-0000-000000000001 (x86_64) openQ4",
+                    "macho_uuid=UUID: 00000000-0000-0000-0000-000000000001 (arm64) openD3",
+                    "macho_uuid=UUID: 00000000-0000-0000-0000-000000000001 (x86_64) openD3",
                 ),
             ),
         )
@@ -476,16 +476,16 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             ),
             "symbol archive manifest with wrong Mach-O UUID architecture",
         )
 
-        wrong_dsym_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-wrong-dsym.tar.xz"
+        wrong_dsym_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-wrong-dsym.tar.xz"
         wrong_dsym_root_name = create_symbol_archive(
             wrong_dsym_archive,
             manifest_replacements=(
-                ("dsym=dSYMs/openQ4-client_arm64.dSYM", "dsym=dSYMs/openQ4-ded_arm64.dSYM"),
+                ("dsym=dSYMs/openD3-client_arm64.dSYM", "dsym=dSYMs/openD3-ded_arm64.dSYM"),
             ),
         )
         expect_runtime_error(
@@ -497,15 +497,15 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             ),
             "symbol archive manifest with wrong dSYM mapping",
         )
 
-        missing_binary_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-missing-binary.tar.xz"
+        missing_binary_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-missing-binary.tar.xz"
         missing_binary_root_name = create_symbol_archive(
             missing_binary_archive,
-            manifest_replacements=(("- path=openQ4.app/Contents/Frameworks/game-mp_arm64.dylib", "- path=openQ4.app/Contents/Frameworks/game-extra_arm64.dylib"),),
+            manifest_replacements=(("- path=openD3.app/Contents/Frameworks/game-mp_arm64.dylib", "- path=openD3.app/Contents/Frameworks/game-extra_arm64.dylib"),),
         )
         expect_runtime_error(
             "missing binary entries",
@@ -516,19 +516,19 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             ),
             "symbol archive manifest with missing expected binary",
         )
 
-        unexpected_binary_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-unexpected-binary.tar.xz"
+        unexpected_binary_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-unexpected-binary.tar.xz"
         unexpected_binary_root_name = create_symbol_archive(
             unexpected_binary_archive,
             manifest_replacements=(
                 (
                     "  dsym=dSYMs/game-mp_arm64.dylib.dSYM",
                     "  dsym=dSYMs/game-mp_arm64.dylib.dSYM\n"
-                    "- path=baseoq4/game-extra_arm64.dylib\n"
+                    "- path=baseod3/game-extra_arm64.dylib\n"
                     f"  sha256={'5' * 64}\n"
                     "  size=1\n"
                     "  macho_uuid=UUID: 00000000-0000-0000-0000-000000000006 (arm64) game-extra_arm64.dylib\n"
@@ -545,7 +545,7 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             ),
             "symbol archive manifest with unexpected binary",
         )
@@ -559,7 +559,7 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             )
         except RuntimeError as exc:
             if "was not created" not in str(exc):
@@ -581,7 +581,7 @@ def validate_symbol_archive_fixture() -> None:
                     version_tag="0.6.5",
                     arch="arm64",
                     package_suffix="-opengl",
-                    runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                    runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
                 )
             except RuntimeError as exc:
                 if "must not be a symlink" not in str(exc):
@@ -589,7 +589,7 @@ def validate_symbol_archive_fixture() -> None:
             else:
                 raise AssertionError("symbol archive validator accepted a symlinked archive")
 
-        bad_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-bad.tar.xz"
+        bad_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-bad.tar.xz"
         bad_root_name = create_symbol_archive(bad_archive, leak_runtime=True)
         try:
             PACKAGE.validate_macos_symbol_archive_contents(
@@ -599,7 +599,7 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             )
         except RuntimeError as exc:
             if "runtime payload entries" not in str(exc):
@@ -607,7 +607,7 @@ def validate_symbol_archive_fixture() -> None:
         else:
             raise AssertionError("symbol archive validator accepted leaked runtime binaries")
 
-        metadata_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-metadata.tar.xz"
+        metadata_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-metadata.tar.xz"
         metadata_root_name = create_symbol_archive(metadata_archive, metadata_sidecar=True)
         try:
             PACKAGE.validate_macos_symbol_archive_contents(
@@ -617,7 +617,7 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             )
         except RuntimeError as exc:
             if "metadata/debug entry" not in str(exc):
@@ -625,7 +625,7 @@ def validate_symbol_archive_fixture() -> None:
         else:
             raise AssertionError("symbol archive validator accepted macOS metadata sidecars")
 
-        duplicate_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-duplicate.tar.xz"
+        duplicate_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-duplicate.tar.xz"
         duplicate_root_name = create_symbol_archive(duplicate_archive, duplicate_manifest=True)
         try:
             PACKAGE.validate_macos_symbol_archive_contents(
@@ -635,7 +635,7 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             )
         except RuntimeError as exc:
             if "duplicate entry" not in str(exc):
@@ -643,7 +643,7 @@ def validate_symbol_archive_fixture() -> None:
         else:
             raise AssertionError("symbol archive validator accepted a duplicate member")
 
-        casefold_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-casefold.tar.xz"
+        casefold_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-casefold.tar.xz"
         casefold_root_name = create_symbol_archive(casefold_archive, casefold_manifest=True)
         try:
             PACKAGE.validate_macos_symbol_archive_contents(
@@ -653,7 +653,7 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             )
         except RuntimeError as exc:
             if "case-insensitive duplicate" not in str(exc):
@@ -671,7 +671,7 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             )
         except RuntimeError as exc:
             if "too many members" not in str(exc):
@@ -691,7 +691,7 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             )
         except RuntimeError as exc:
             if "total expanded size" not in str(exc):
@@ -701,7 +701,7 @@ def validate_symbol_archive_fixture() -> None:
         finally:
             PACKAGE.MAX_MACOS_SYMBOL_ARCHIVE_TOTAL_BYTES = previous_symbol_total_cap
 
-        huge_manifest_archive = work / "openq4-0.6.5-macos-arm64-opengl-symbols-huge-manifest.tar.xz"
+        huge_manifest_archive = work / "opend3-0.6.5-macos-arm64-opengl-symbols-huge-manifest.tar.xz"
         huge_manifest_root_name = create_symbol_archive(huge_manifest_archive, huge_manifest=True)
         try:
             PACKAGE.validate_macos_symbol_archive_contents(
@@ -711,7 +711,7 @@ def validate_symbol_archive_fixture() -> None:
                 version_tag="0.6.5",
                 arch="arm64",
                 package_suffix="-opengl",
-                runtime_archive_name="openq4-0.6.5-macos-arm64-opengl.dmg",
+                runtime_archive_name="opend3-0.6.5-macos-arm64-opengl.dmg",
             )
         except RuntimeError as exc:
             if "metadata member is too large" not in str(exc):
@@ -764,7 +764,7 @@ def validate_symbol_output_preflights() -> None:
             )
 
         dsym_parent = work / "dsyms"
-        dsym_path = dsym_parent / "openQ4.app.dSYM"
+        dsym_path = dsym_parent / "openD3.app.dSYM"
         dsym_path.parent.mkdir()
         dsym_path.mkdir()
         (dsym_path / "stale.txt").write_text("stale\n", encoding="utf-8")
@@ -820,11 +820,11 @@ def validate_release_workflow() -> None:
         "macOS runtime package directory must not contain .dSYM bundles",
         "Upload macOS dSYM symbols",
         "steps.package.outputs.symbols_archive_path",
-        "openq4-release-${{ needs.metadata.outputs.version_tag }}-macos-${{ matrix.binary_arch }}${{ matrix.package_suffix }}-symbols",
-        "openq4-${{ needs.metadata.outputs.version_tag }}-macos-arm64-opengl-symbols.tar.xz",
-        "openq4-${{ needs.metadata.outputs.version_tag }}-macos-arm64-metal-symbols.tar.xz",
-        "openq4-${{ needs.metadata.outputs.version_tag }}-macos-arm64-opengl-unsigned-symbols.tar.xz",
-        "openq4-${{ needs.metadata.outputs.version_tag }}-macos-arm64-metal-unsigned-symbols.tar.xz",
+        "opend3-release-${{ needs.metadata.outputs.version_tag }}-macos-${{ matrix.binary_arch }}${{ matrix.package_suffix }}-symbols",
+        "opend3-${{ needs.metadata.outputs.version_tag }}-macos-arm64-opengl-symbols.tar.xz",
+        "opend3-${{ needs.metadata.outputs.version_tag }}-macos-arm64-metal-symbols.tar.xz",
+        "opend3-${{ needs.metadata.outputs.version_tag }}-macos-arm64-opengl-unsigned-symbols.tar.xz",
+        "opend3-${{ needs.metadata.outputs.version_tag }}-macos-arm64-metal-unsigned-symbols.tar.xz",
     ):
         require(workflow, token, "manual release macOS symbol workflow")
 
@@ -840,13 +840,13 @@ def validate_docs_and_support_collector() -> None:
 
     for token in (
         "# macOS Symbolication Workflow",
-        "`openq4-<version>-macos-arm64-opengl-symbols.tar.xz`",
-        "`openq4-<version>-macos-arm64-metal-symbols.tar.xz`",
-        "`openQ4.app/Contents/MacOS/openQ4`",
-        "`openQ4-client_arm64`",
-        "`openQ4-ded_arm64`",
-        "`openQ4.app/Contents/Frameworks/game-sp_arm64.dylib`",
-        "`openQ4.app/Contents/Frameworks/game-mp_arm64.dylib`",
+        "`opend3-<version>-macos-arm64-opengl-symbols.tar.xz`",
+        "`opend3-<version>-macos-arm64-metal-symbols.tar.xz`",
+        "`openD3.app/Contents/MacOS/openD3`",
+        "`openD3-client_arm64`",
+        "`openD3-ded_arm64`",
+        "`openD3.app/Contents/Frameworks/game-sp_arm64.dylib`",
+        "`openD3.app/Contents/Frameworks/game-mp_arm64.dylib`",
         "`SYMBOLS.txt`",
         "SHA-256",
         "`dwarfdump --uuid`",
@@ -881,11 +881,11 @@ def validate_plan_status() -> None:
         "- [x] Add a macOS release/debug symbol artifact that is separate from the",
         "- [x] Keep `.dSYM` bundles out of runtime DMG/tarball packages.",
         "- [x] Ensure symbol artifacts cover:",
-        "`openQ4.app/Contents/MacOS/openQ4`",
-        "loose `openQ4-client_arm64`",
-        "loose `openQ4-ded_arm64`",
-        "`openQ4.app/Contents/Frameworks/game-sp_arm64.dylib`",
-        "`openQ4.app/Contents/Frameworks/game-mp_arm64.dylib`",
+        "`openD3.app/Contents/MacOS/openD3`",
+        "loose `openD3-client_arm64`",
+        "loose `openD3-ded_arm64`",
+        "`openD3.app/Contents/Frameworks/game-sp_arm64.dylib`",
+        "`openD3.app/Contents/Frameworks/game-mp_arm64.dylib`",
         "- [x] Document how to pair a user `.ips` report with the correct symbol archive.",
         "- [x] Add package-script tests that symbol archives cannot be mistaken for",
         "Phase 4 implementation status",
@@ -895,7 +895,7 @@ def validate_plan_status() -> None:
 
 
 def validate_ci_and_local_wiring() -> None:
-    local_runner = read("tools/validation/openq4_validate.py")
+    local_runner = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
     macos_debug = read(".github/workflows/macos-debug.yml")

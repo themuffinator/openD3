@@ -11,11 +11,11 @@ import argparse
 import sys
 from pathlib import Path
 
-from openq4_pak import (
-    OPENQ4_CONTENT_PACKS,
+from opend3_pak import (
+    OPEND3_CONTENT_PACKS,
     copy_file_if_changed,
     create_game_pk4,
-    format_openq4_paks_header,
+    format_opend3_paks_header,
     write_text_if_changed,
 )
 
@@ -68,21 +68,21 @@ def main(argv: list[str]) -> int:
 
     try:
         sources = {
-            spec.name: require_pack_source_dir(source_root / spec.source, spec.name) for spec in OPENQ4_CONTENT_PACKS
+            spec.name: require_pack_source_dir(source_root / spec.source, spec.name) for spec in OPEND3_CONTENT_PACKS
         }
     except RuntimeError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
     results = {}
-    for spec in OPENQ4_CONTENT_PACKS:
+    for spec in OPEND3_CONTENT_PACKS:
         results[spec.name] = build_pack(spec.name, sources[spec.name], out_dir / spec.name)
 
-    write_text_if_changed(Path(args.header_out).resolve(), format_openq4_paks_header(results))
+    write_text_if_changed(Path(args.header_out).resolve(), format_opend3_paks_header(results))
 
     if args.stage_dir:
         stage_dir = Path(args.stage_dir).resolve()
-        for spec in OPENQ4_CONTENT_PACKS:
+        for spec in OPEND3_CONTENT_PACKS:
             copy_if_changed(out_dir / spec.name, stage_dir / spec.name)
 
     for name, result in results.items():

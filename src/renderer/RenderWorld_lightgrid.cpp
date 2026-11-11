@@ -1686,7 +1686,7 @@ static const char *LightGrid_PackChunkSourceSuffix( int kind ) {
 ===================
 LightGrid_ReadBakedTGA
 
-Reads an atlas this bake wrote, from the save path. openQ4 searches fs_savepath
+Reads an atlas this bake wrote, from the save path. openD3 searches fs_savepath
 last, so loading it by name finds any copy a map ships in pak1 first: a re-bake
 of such a map packed the shipped atlases and lit bounces 2+ with the shipped
 grid. Returns top-down RGBA in R_StaticAlloc memory, as R_LoadImage does.
@@ -2250,7 +2250,7 @@ LightGrid_BakedForThisMap
 
 A baked grid only fits the build of the map it was baked from. A mod can ship its own
 build of a map under a stock name (the Awakening's mp/q4xdm13 has 10 areas where retail's
-has 14), and the grid openQ4 baked for the stock build must not light it. Every area the
+has 14), and the grid openD3 baked for the stock build must not light it. Every area the
 loaded grid describes has to have the layout SetupGrid gives this map's area at the
 grid's cell size.
 ===================
@@ -2288,7 +2288,7 @@ LightGrid_GameDirRank
 
 Where relativePath is found in the game-directory stack, counting from the top, or -1 when
 no game directory has it. The stack is the one idFileSystemLocal::Startup builds: fs_game
-over fs_game_base over the openQ4 runtime over q4base.
+over fs_game_base over the openD3 runtime over q4base.
 ===================
 */
 static int LightGrid_GameDirRank( const char *relativePath ) {
@@ -2306,7 +2306,7 @@ static int LightGrid_GameDirRank( const char *relativePath ) {
 	};
 	add( cvarSystem->GetCVarString( "fs_game" ) );
 	add( cvarSystem->GetCVarString( "fs_game_base" ) );
-	add( OPENQ4_GAMEDIR );
+	add( OPEND3_GAMEDIR );
 	dirs.Append( BASE_GAMEDIR );
 
 	for ( int i = 0; i < dirs.Num(); i++ ) {
@@ -2325,7 +2325,7 @@ LightGrid_LayeredBelowMap
 
 A grid found lower in the game-directory stack than the map it would light was baked for a
 build the map no longer uses: a mod's own map under a stock name (the Awakening's
-mp/q4xctf6 keeps retail's areas but not its geometry) must not take the grid openQ4 ships
+mp/q4xctf6 keeps retail's areas but not its geometry) must not take the grid openD3 ships
 for the stock one.
 ===================
 */
@@ -3121,7 +3121,7 @@ void idRenderWorldLocal::SetupLightGrid() {
 		return;
 	}
 
-	// Stock Quake 4 maps do not contain openQ4 light-grid assets.  Building a
+	// Stock Quake 4 maps do not contain openD3 light-grid assets.  Building a
 	// probe layout here performs thousands of collision/PVS tests even though
 	// the runtime cannot consume the layout without baked atlas images.  Bake
 	// entry points build the requested layout explicitly, so leave stock maps
@@ -3583,7 +3583,7 @@ static void LightGrid_UseBakedAtlases( idRenderWorldLocal *world ) {
 LightGrid_BakeLoadsNextTime
 
 True when the next load of relativePath reads the copy this bake left in the
-save path, which openQ4 searches last.
+save path, which openD3 searches last.
 ===================
 */
 static bool LightGrid_BakeLoadsNextTime( const char *relativePath ) {

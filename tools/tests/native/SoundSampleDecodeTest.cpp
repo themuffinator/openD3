@@ -1,4 +1,4 @@
-// Copyright (C) 2026 openQ4 contributors. SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 openD3 contributors. SPDX-License-Identifier: GPL-3.0-or-later
 // Production decode/join/cancel code on the real job system, with a deterministic
 // codec boundary so cancellation races do not depend on CPU speed or a device.
 #include "src/framework/ParallelJobSystem.h"

@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 SESSION = r'''
 #include <cstring>
-namespace openq4 { void NativeInputBeforeSessionChange() noexcept {} }
+namespace opend3 { void NativeInputBeforeSessionChange() noexcept {} }
 using HandleGuiCommand_t = bool (*)(const char*);
 static idUserInterfaceManagerLocal* uiManager=&uiManagerLocal;
 static int Sys_Milliseconds() { return 100; }

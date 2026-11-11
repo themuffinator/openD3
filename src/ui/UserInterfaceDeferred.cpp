@@ -176,12 +176,12 @@ bool idUserInterfaceDeferred::KeepForLevelLoad() {
 const char *idUserInterfaceDeferred::PendingApplicationCommand() const {
 	return backend != NULL ? backend->PendingApplicationCommand() : "";
 }
-openq4::ui::TextBrokerContext idUserInterfaceDeferred::QueryTextContext(std::uint64_t allocation,
+opend3::ui::TextBrokerContext idUserInterfaceDeferred::QueryTextContext(std::uint64_t allocation,
 	std::uint64_t window, std::uint64_t session) {
-	return backend != NULL ? backend->QueryTextContext(allocation,window,session) : openq4::ui::TextBrokerContext{};
+	return backend != NULL ? backend->QueryTextContext(allocation,window,session) : opend3::ui::TextBrokerContext{};
 }
-bool idUserInterfaceDeferred::ApplyTextInput(const openq4::ui::TextBrokerContext& expected,
-	const openq4::ui::TextInputEvent& input, std::string& error) {
+bool idUserInterfaceDeferred::ApplyTextInput(const opend3::ui::TextBrokerContext& expected,
+	const opend3::ui::TextInputEvent& input, std::string& error) {
 	return backend != NULL && backend->ApplyTextInput(expected,input,error);
 }
 bool idUserInterfaceDeferred::WriteToSaveGame( idFile *file ) const { return backend != NULL && backend->WriteToSaveGame( file ); }
@@ -223,44 +223,44 @@ bool idUserInterfaceDeferred::ReplaceClipboardSelection(const uiNumberEditorTarg
 	return backend != NULL && backend->ReplaceClipboardSelection(expected,text,error);
 }
 bool idUserInterfaceDeferred::SetClipboardNotice(const uiNumberEditorTarget_t& expected,
-	openq4::ui::NumberEditNotice notice, std::string& error) {
+	opend3::ui::NumberEditNotice notice, std::string& error) {
 	return backend != NULL && backend->SetClipboardNotice(expected,notice,error);
 }
 
 // No deferred loading: each call uses only the currently installed backend.
-bool idUserInterfaceDeferred::PrepareNativeText(const openq4::ui::TextEditorIdentity& owner) {
+bool idUserInterfaceDeferred::PrepareNativeText(const opend3::ui::TextEditorIdentity& owner) {
 	return backend != NULL ? backend->PrepareNativeText(owner) : false;
 }
-bool idUserInterfaceDeferred::AttachNativeText(const openq4::ui::TextEditorIdentity& owner, openq4::ui::NativeTextIdentity native, openq4::ui::NativeTextEditorBarrier& out, std::string& error) {
+bool idUserInterfaceDeferred::AttachNativeText(const opend3::ui::TextEditorIdentity& owner, opend3::ui::NativeTextIdentity native, opend3::ui::NativeTextEditorBarrier& out, std::string& error) {
 	return backend != NULL ? backend->AttachNativeText(owner,native,out,error) : false;
 }
-bool idUserInterfaceDeferred::RefreshNativeText(const openq4::ui::NativeTextEditorBarrier& expected, openq4::ui::NativeTextEditorView& out, std::string& error) {
+bool idUserInterfaceDeferred::RefreshNativeText(const opend3::ui::NativeTextEditorBarrier& expected, opend3::ui::NativeTextEditorView& out, std::string& error) {
 	return backend != NULL ? backend->RefreshNativeText(expected,out,error) : false;
 }
-bool idUserInterfaceDeferred::CurrentNativeText(const openq4::ui::NativeTextEditorBarrier& expected) const noexcept {
+bool idUserInterfaceDeferred::CurrentNativeText(const opend3::ui::NativeTextEditorBarrier& expected) const noexcept {
 	return backend != NULL ? backend->CurrentNativeText(expected) : false;
 }
-bool idUserInterfaceDeferred::BeginNativeText(const openq4::ui::NativeTextEditorBarrier& expected, const openq4::ui::NativeTextCollection& collection, openq4::ui::NativeTextEditorBarrier& out, std::string& error) {
+bool idUserInterfaceDeferred::BeginNativeText(const opend3::ui::NativeTextEditorBarrier& expected, const opend3::ui::NativeTextCollection& collection, opend3::ui::NativeTextEditorBarrier& out, std::string& error) {
 	return backend != NULL ? backend->BeginNativeText(expected,collection,out,error) : false;
 }
-bool idUserInterfaceDeferred::ApplyNativeText(const openq4::ui::NativeTextEditorBarrier& expected, const openq4::ui::NativeTextOffer& offer, openq4::ui::NativeTextEditorReceipt& out, std::string& error) {
+bool idUserInterfaceDeferred::ApplyNativeText(const opend3::ui::NativeTextEditorBarrier& expected, const opend3::ui::NativeTextOffer& offer, opend3::ui::NativeTextEditorReceipt& out, std::string& error) {
 	return backend != NULL ? backend->ApplyNativeText(expected,offer,out,error) : false;
 }
-bool idUserInterfaceDeferred::CompleteNativeText(const openq4::ui::NativeTextEditorBarrier& expected, const openq4::ui::NativeTextCollection& collection, openq4::ui::NativeTextEditorBarrier& out, std::string& error) {
+bool idUserInterfaceDeferred::CompleteNativeText(const opend3::ui::NativeTextEditorBarrier& expected, const opend3::ui::NativeTextCollection& collection, opend3::ui::NativeTextEditorBarrier& out, std::string& error) {
 	return backend != NULL ? backend->CompleteNativeText(expected,collection,out,error) : false;
 }
 #ifndef ID_DEDICATED
-std::unique_ptr<openq4::ui::Interaction::NativeSettlement> idUserInterfaceDeferred::PrepareNativeTextSettlement(const openq4::ui::NativeTextEditorBarrier& expected, std::string& error) {
+std::unique_ptr<opend3::ui::Interaction::NativeSettlement> idUserInterfaceDeferred::PrepareNativeTextSettlement(const opend3::ui::NativeTextEditorBarrier& expected, std::string& error) {
 	return backend != NULL ? backend->PrepareNativeTextSettlement(expected,error) : nullptr;
 }
 #endif
-bool idUserInterfaceDeferred::PublishNativeTextSettlement(openq4::ui::Interaction::NativeSettlement& prepared, openq4::ui::NativeTextEditorReceipt& out) noexcept {
+bool idUserInterfaceDeferred::PublishNativeTextSettlement(opend3::ui::Interaction::NativeSettlement& prepared, opend3::ui::NativeTextEditorReceipt& out) noexcept {
 	return backend != NULL ? backend->PublishNativeTextSettlement(prepared,out) : false;
 }
-openq4::ui::NativeTextPresence idUserInterfaceDeferred::QueryNativeTextPresence(openq4::ui::NativeTextIdentity native,
-    const openq4::ui::TextEditorIdentity& owner) const noexcept {
-    return backend!=NULL?backend->QueryNativeTextPresence(native,owner):openq4::ui::NativeTextPresence::AbsentOriginal;
+opend3::ui::NativeTextPresence idUserInterfaceDeferred::QueryNativeTextPresence(opend3::ui::NativeTextIdentity native,
+    const opend3::ui::TextEditorIdentity& owner) const noexcept {
+    return backend!=NULL?backend->QueryNativeTextPresence(native,owner):opend3::ui::NativeTextPresence::AbsentOriginal;
 }
-bool idUserInterfaceDeferred::RetireNativeTextExact(openq4::ui::NativeTextIdentity native, const openq4::ui::TextEditorIdentity& owner) noexcept {
+bool idUserInterfaceDeferred::RetireNativeTextExact(opend3::ui::NativeTextIdentity native, const opend3::ui::TextEditorIdentity& owner) noexcept {
 	return backend != NULL ? backend->RetireNativeTextExact(native,owner) : false;
 }

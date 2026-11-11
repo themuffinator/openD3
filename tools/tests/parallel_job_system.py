@@ -71,7 +71,7 @@ def validate_engine_lifecycle_and_policy() -> None:
     for token in (
         'jobs_enable( "jobs_enable", "1"',
         "0 preserves all work by executing job lists synchronously",
-        "OPENQ4_JOBS_DETERMINISTIC_DEFAULT = \"1\"",
+        "OPEND3_JOBS_DETERMINISTIC_DEFAULT = \"1\"",
         'jobs_deterministic( "jobs_deterministic"',
         'jobs_numThreads( "jobs_numThreads", "0"',
         'jobs_queueCapacity( "jobs_queueCapacity", "64"',
@@ -117,11 +117,11 @@ def validate_native_coverage_and_build() -> None:
         require(native, token, "native job-system coverage")
 
     meson = read("meson.build")
-    require(meson, "'openq4-job-system-test'", "native job-system target")
-    require(meson, "'openq4-job-system'", "native job-system Meson test")
+    require(meson, "'opend3-job-system-test'", "native job-system target")
+    require(meson, "'opend3-job-system'", "native job-system Meson test")
     require(meson, "tools/tests/native/ParallelJobSystemTest.cpp", "native job-system source wiring")
     require(meson, "src/framework/ParallelJobSystem.cpp", "production job-system source wiring")
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     require(validator, "parallel_job_system.py", "default validation runner")
     for workflow_path in (
         ".github/workflows/push-verification.yml",

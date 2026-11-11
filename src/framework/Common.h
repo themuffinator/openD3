@@ -68,7 +68,7 @@ typedef enum {
 
 	EDITOR_ALL					= -1,
 
-	// Legacy openQ4 tool aliases retained for old in-tree editor code.
+	// Legacy openD3 tool aliases retained for old in-tree editor code.
 	EDITOR_PARTICLE				= EDITOR_FX,
 	EDITOR_ENTITYDEF			= EDITOR_DECL
 } toolFlag_t;
@@ -183,7 +183,7 @@ class idInterpreter;
 class idProgram;
 class rvISourceControl;
 
-struct openq4AsyncTimingStats_t {
+struct opend3AsyncTimingStats_t {
 	bool			valid;
 	int				sampleCount;
 	int				lastDeltaMsec;
@@ -195,23 +195,23 @@ struct openq4AsyncTimingStats_t {
 	float			avgJitterMsec;
 };
 
-void				openQ4_GetAsyncTimingStats( openq4AsyncTimingStats_t &stats, int maxSamples = 60 );
-void				openQ4_BeginPresentationFrame( void );
+void				openD3_GetAsyncTimingStats( opend3AsyncTimingStats_t &stats, int maxSamples = 60 );
+void				openD3_BeginPresentationFrame( void );
 // Main-thread cooperative startup redraw; true while startup owns presentation.
-bool                openQ4_UpdateInitialization( void );
+bool                openD3_UpdateInitialization( void );
 // The presentation cap the throttle actually paces to. Callers that budget work
 // against a frame period must use this rather than com_maxfps directly, or their
 // budget and the throttle's period disagree and they sleep away the difference.
-int					openQ4_GetRequestedPresentationCap( void );
+int					openD3_GetRequestedPresentationCap( void );
 // When the limiter released the current presentation frame, in milliseconds on
 // the high-resolution clock (Sys_GetClockTicks); 0 before the first frame.
-double				openQ4_GetPresentationFrameStartMsec( void );
-void				openQ4_SetLoadingContinueInputActive( bool active );
-bool				openQ4_AcceptingLoadingContinueInput( void );
-int					openQ4_GetActiveToolFlags( int flags );
-bool				openQ4_IsAnyToolActive( void );
-void				openQ4_ToolPrint( const char *text );
-bool				openQ4_ShouldCacheEntityDefMedia( bool noCaching );
+double				openD3_GetPresentationFrameStartMsec( void );
+void				openD3_SetLoadingContinueInputActive( bool active );
+bool				openD3_AcceptingLoadingContinueInput( void );
+int					openD3_GetActiveToolFlags( int flags );
+bool				openD3_IsAnyToolActive( void );
+void				openD3_ToolPrint( const char *text );
+bool				openD3_ShouldCacheEntityDefMedia( bool noCaching );
 class idCommon {
 public:
 	virtual						~idCommon(void) {}

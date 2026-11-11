@@ -7,7 +7,7 @@
 #include <vector>
 
 #define CHECK(x) do { if (!(x)) { std::fprintf(stderr,"line %d: %s\n",__LINE__,#x); std::exit(1); } } while (0)
-using Entry = openq4::bse::DrawParticle<int>;
+using Entry = opend3::bse::DrawParticle<int>;
 
 int main() {
 	std::mt19937 random(42);
@@ -22,7 +22,7 @@ int main() {
 			while (j>=0 && expected[j].distance<key.distance) { expected[j+1]=expected[j]; --j; }
 			expected[j+1]=key;
 		}
-		openq4::bse::SortParticleDepth(actual.data(),actual.size());
+		opend3::bse::SortParticleDepth(actual.data(),actual.size());
 		for (int i=0; i<count; ++i) {
 			CHECK(actual[i].sequence==expected[i].sequence);
 			CHECK(actual[count-1-i].sequence==expected[count-1-i].sequence);
@@ -30,7 +30,7 @@ int main() {
 	}
 	const float nan=std::numeric_limits<float>::quiet_NaN(), inf=std::numeric_limits<float>::infinity();
 	std::vector<Entry> invalid{{nullptr,nan,0},{nullptr,2,1},{nullptr,inf,2},{nullptr,nan,3},{nullptr,2,4}};
-	openq4::bse::SortParticleDepth(invalid.data(),invalid.size());
+	opend3::bse::SortParticleDepth(invalid.data(),invalid.size());
 	const std::size_t order[]{2,1,4,0,3};
 	for (int i=0; i<5; ++i) CHECK(invalid[i].sequence==order[i]);
 	std::puts("BSE particle order: stable depth, inverse traversal, empty and malformed cases passed");

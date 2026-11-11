@@ -6,7 +6,7 @@
 #include <atomic>
 #include <utility>
 
-namespace openq4::sys {
+namespace opend3::sys {
 using namespace ui;
 namespace {
 bool Error(std::string& out,const char* message) noexcept {try{out=message;}catch(...){}return false;}
@@ -306,7 +306,7 @@ bool WindowsTextSession::FinishActivation(NativeTextCollectionCoordinator& coord
 bool WindowsTextSession::Quiesce(NativeTextCollectionCoordinator& coordinator,NativeQueueSource& source,
     WindowsTextSessionCleanup& out,std::string& error) {
     auto& p=*impl;if(!p.Enter(error))return false;Busy guard(p.busy);
-    openq4::NativeInputBeforeUiChange(p.original.editor.allocation,p.original.editor.backend);
+    opend3::NativeInputBeforeUiChange(p.original.editor.allocation,p.original.editor.backend);
     try{
         NativeTextEditorBarrier current;
         if(p.phase!=Phase::Active || !coordinator.QueryBarrier(current,error) || !p.Exact(current) ||
@@ -349,7 +349,7 @@ bool WindowsTextSession::FinishQuiesce(const WindowsTextSessionCleanup& requeste
 WindowsTextSessionRelease WindowsTextSession::FaultRetirePreservingEvents() noexcept {
     auto& p=*impl;
     if(!p.Thread())return {};
-    openq4::NativeInputBeforeUiChange(p.original.editor.allocation,p.original.editor.backend);
+    opend3::NativeInputBeforeUiChange(p.original.editor.allocation,p.original.editor.backend);
     if(p.busy){p.fault=true;p.phase=Phase::Fault;return {};}
     Busy guard(p.busy);p.fault=true;
     if(p.phase==Phase::Released)return {true,true,true,p.associationRestored,false};
@@ -367,5 +367,5 @@ WindowsTextSessionRelease WindowsTextSession::FaultRetirePreservingEvents() noex
     }
     return p.ReleaseNative(retired,false);
 }
-} // namespace openq4::sys
+} // namespace opend3::sys
 #endif

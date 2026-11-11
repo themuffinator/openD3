@@ -217,14 +217,14 @@ def validate_posix_fatal_signal_report() -> None:
     require_ordered(
         handler,
         (
-            'Posix_WriteSignalText( "openQ4: fatal signal " );',
+            'Posix_WriteSignalText( "openD3: fatal signal " );',
             'Posix_WriteSignalText( "), exiting without unsafe engine shutdown\\n" );',
             "if ( fatalError[0] != '\\0' ) {",
-            'Posix_WriteSignalText( "openQ4: fatal error being reported: " );',
+            'Posix_WriteSignalText( "openD3: fatal error being reported: " );',
             "Posix_WriteSignalText( fatalError );",
-            'Posix_WriteSignalText( "openQ4: last renderer startup phase: " );',
+            'Posix_WriteSignalText( "openD3: last renderer startup phase: " );',
             "Posix_RendererStartupPhaseName()",
-            'Posix_WriteSignalText( "openQ4: last game module phase: " );',
+            'Posix_WriteSignalText( "openD3: last game module phase: " );',
             "Com_GameModuleLoadPhaseSignalName()",
             "Posix_AppendFatalBreadcrumbRaw( breadcrumb );",
             'strcpy( fatalBreadcrumb, "fatal error being reported: " );',
@@ -340,7 +340,7 @@ def validate_renderer_failure_entry_points() -> None:
 
 
 def validate_ci_wiring() -> None:
-    local_runner = read("tools/validation/openq4_validate.py")
+    local_runner = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
 

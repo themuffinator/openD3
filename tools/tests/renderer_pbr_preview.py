@@ -33,7 +33,7 @@ def captured_scene(log, name):
     defs = re.findall(r'(?m)^\s*\d+:\s+\d+ intr\s+\d+ refs (\S+)\s*$', marker[1])
     return dict(specimens=sum(d.lower() == lab.lab.MODEL.lower() for d in defs),
                 lights=sorted(d.rsplit('/', 1)[-1] for d in defs
-                              if re.fullmatch(r'lights/openq4/pbr_lab/(?:fog|blend)', d, re.I)))
+                              if re.fullmatch(r'lights/opend3/pbr_lab/(?:fog|blend)', d, re.I)))
 
 
 def configure(manifest, samples):
@@ -61,7 +61,7 @@ def configure(manifest, samples):
         light = 'preview_emission_' + effect
         add('lit-' + effect, commands=['g_stopTime 0',
             f'spawn light name {light} origin "0 0 400" angle 0 '
-            f'light_radius "1400 1400 1000" texture "lights/openq4/pbr_lab/{effect}" noshadows 1',
+            f'light_radius "1400 1400 1000" texture "lights/opend3/pbr_lab/{effect}" noshadows 1',
             'wait 30', 'g_stopTime 1'], light=effect)
         add('lit-' + effect + '-restored', commands=['g_stopTime 0',
             f'script "${light}.remove()"', 'wait 30', 'g_stopTime 1'], reference='preview-lit-emission')

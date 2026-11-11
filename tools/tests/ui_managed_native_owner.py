@@ -20,13 +20,13 @@ def manager_source(full=False):
     declarations+='\n'+re.search(r'std::thread::id nativePresenceThread[^;]+;',header).group(0)+'\n'
     declarations+='\n bool textBoundaryActive=false,textBoundaryFailed=false;\n'
     if full:
-        declarations+=header[header.index('\topenq4::ui::TextBrokerContext QueryTextContext('):header.index('\nbool NativeTextAttach(')]
+        declarations+=header[header.index('\topend3::ui::TextBrokerContext QueryTextContext('):header.index('\nbool NativeTextAttach(')]
     source=source.replace('class idUserInterfaceManagerLocal {\npublic:','class idUserInterfaceManagerLocal {\npublic:'+declarations)
     production=(ROOT/'src/ui/UserInterface.cpp').read_text()
     source+=function_body(production,'std::uint64_t UI_NextTextLifetime(')
     source+=production[production.index('// Private native collection owner boundary.'):production.index('bool idUserInterfaceManagerLocal::DispatchApplicationActions(')]
     if full:
-        source+=production[production.index('openq4::ui::TextBrokerContext UI_QueryTextContext('):production.index('// Private native collection owner boundary.')]
+        source+=production[production.index('opend3::ui::TextBrokerContext UI_QueryTextContext('):production.index('// Private native collection owner boundary.')]
         source=source.replace('private:','public:').replace('protected:','public:') # Test observability only, no method edits.
         retained=(ROOT/'src/ui/UserInterfaceRetained.cpp').read_text()
         rt=(ROOT/'src/ui/retained/Runtime.cpp').read_text()
@@ -39,7 +39,7 @@ def manager_source(full=False):
             bodies.append(body)
         runtime=RUNTIME_SUPPORT.replace('/*DECLARATIONS*/','\n'.join(declarations))
         runtime=runtime.replace('/*CONTEXT*/',function_body(rtheader,'struct NumberEditorContext {')+';')
-        runtime+='\nnamespace openq4::ui {\n'+'\n'.join(bodies)+'\n}\n'
+        runtime+='\nnamespace opend3::ui {\n'+'\n'.join(bodies)+'\n}\n'
         native=(ROOT/'src/ui/UserInterfaceRetained.h').read_text()
         native=native[native.index('\tbool PrepareNativeText('):native.index('\nprivate:')]
         impl=IMPL_SUPPORT.replace('/*MATCH*/',function_body(retained,'bool NativeOwnerMatches(')).replace('/*ACCEPT*/',function_body(retained,'bool AcceptInput()'))
@@ -50,14 +50,14 @@ def manager_source(full=False):
     return source
 
 RUNTIME_SUPPORT=r'''
-using namespace openq4::ui;
+using namespace opend3::ui;
 static bool windowFocused=true;
 bool Sys_SDL_IsGameWindowFocused(){return windowFocused;}
 bool VR_HasInputFocus(){return false;}
 struct Console {bool open=false;bool Active(){return open;}} consoleObject;
 Console* console=&consoleObject;
 double RetainedUI_PresentationTime(){return 1;}
-namespace openq4::ui {
+namespace opend3::ui {
 /*CONTEXT*/
 // Counted Host/layout seam; all following Runtime native wrapper bodies are
 // production extraction. This cannot establish rendering or callback safety of
@@ -128,23 +128,23 @@ static uiNativeTextRoute_t Probe(void* value) noexcept {return *static_cast<uiNa
 int main() {
     auto* legacy=new idUserInterfaceLocal;
     uiNativeTextRoute_t route{legacy,5,true};
-    openq4::ui::NativeTextEditorBarrier expected;expected.editor={1,2,3,4,5,6,7,"number"};expected.native={8,9};
-    std::string error;openq4::ui::NativeTextEditorView out;out.presentation.text="untouched";
+    opend3::ui::NativeTextEditorBarrier expected;expected.editor={1,2,3,4,5,6,7,"number"};expected.native={8,9};
+    std::string error;opend3::ui::NativeTextEditorView out;out.presentation.text="untouched";
     assert(!UI_NativeTextRefresh(Probe,&route,expected,out,error));assert(out.presentation.text=="untouched");
     assert(!UI_NativeTextCurrent(Probe,&route,expected));
     assert(!UI_NativeTextRetireExact(expected.native,expected.editor));
-    assert(UI_NativeTextPresence(expected.native,expected.editor)==openq4::ui::NativeTextPresence::BusyOrUnknown);delete legacy;
+    assert(UI_NativeTextPresence(expected.native,expected.editor)==opend3::ui::NativeTextPresence::BusyOrUnknown);delete legacy;
 #ifdef ID_DEDICATED
-    assert(UI_NativeTextPresence(expected.native,expected.editor)==openq4::ui::NativeTextPresence::BusyOrUnknown);
+    assert(UI_NativeTextPresence(expected.native,expected.editor)==opend3::ui::NativeTextPresence::BusyOrUnknown);
 #else
-    assert(UI_NativeTextPresence(expected.native,expected.editor)==openq4::ui::NativeTextPresence::AbsentOriginal);
+    assert(UI_NativeTextPresence(expected.native,expected.editor)==opend3::ui::NativeTextPresence::AbsentOriginal);
 #endif
     std::puts("Managed native legacy/default gates passed.");
 }
 '''
     source=manager_source(True)+'\n'+(ROOT/'tools/tests/native/UiManagedNativeOwnerTest.cpp').read_text()
     core=ROOT/'src/ui/retained'
-    paths=[ROOT/n for n in ['src/ui/UserInterfaceNativeText.h','src/ui/UserInterface.h','src/ui/UserInterfaceLocal.h','src/ui/UserInterface.cpp','src/ui/UserInterfaceManaged.h','src/ui/UserInterfaceDeferred.h','src/ui/UserInterfaceDeferred.cpp','src/ui/UserInterfaceRetained.h','src/ui/UserInterfaceRetained.cpp','src/ui/UserInterfaceText.h','src/ui/UserInterfaceClipboard.h','src/ui/application/ManagedNativeTextOwner.h','src/ui/application/ManagedNativeTextOwner.cpp','src/ui/application/NativeTextCollectionCoordinator.h','src/sys/sdl3/NativeQueueBatch.h','tools/tests/ui_manager_lifecycle.py','tools/tests/ui_managed_native_owner.py','tools/tests/filesystem_case_segments.py','tools/tests/native/UiManagedNativeOwnerTest.cpp','tools/tests/sdl3_clipboard_status.py','subprojects/sdl3.wrap','subprojects/packagefiles/sdl3/include/SDL3/SDL_openq4_native_fence.h']]
+    paths=[ROOT/n for n in ['src/ui/UserInterfaceNativeText.h','src/ui/UserInterface.h','src/ui/UserInterfaceLocal.h','src/ui/UserInterface.cpp','src/ui/UserInterfaceManaged.h','src/ui/UserInterfaceDeferred.h','src/ui/UserInterfaceDeferred.cpp','src/ui/UserInterfaceRetained.h','src/ui/UserInterfaceRetained.cpp','src/ui/UserInterfaceText.h','src/ui/UserInterfaceClipboard.h','src/ui/application/ManagedNativeTextOwner.h','src/ui/application/ManagedNativeTextOwner.cpp','src/ui/application/NativeTextCollectionCoordinator.h','src/sys/sdl3/NativeQueueBatch.h','tools/tests/ui_manager_lifecycle.py','tools/tests/ui_managed_native_owner.py','tools/tests/filesystem_case_segments.py','tools/tests/native/UiManagedNativeOwnerTest.cpp','tools/tests/sdl3_clipboard_status.py','subprojects/sdl3.wrap','subprojects/packagefiles/sdl3/include/SDL3/SDL_opend3_native_fence.h']]
     paths += [core/n for n in ['Runtime.h','Runtime.cpp','Interaction.h','Interaction.cpp','ScrollGeometry.h','ScrollGeometry.cpp','Document.h','Document.cpp','Vector.h','TextInput.h','TextInput.cpp','TextEdit.h','TextEdit.cpp','TextEditCommand.h','NativeTextDocument.h','NativeTextDocument.cpp','NativeTextEditor.h','NativeTextEditor.cpp','TextInputBroker.h','Input.h','Input.cpp']]
     import sdl3_clipboard_status as helper
     helper.ROOT=ROOT
@@ -156,7 +156,7 @@ int main() {
     sdl_before={str(p.relative_to(sdl)):sha(p) for p in sdl_paths}
     before={str(p.relative_to(ROOT)):sha(p) for p in paths}
     valid=out/'valid.cpp';doc=(core/'Document.cpp').read_text()
-    valid.write_text('#include "Interaction.h"\n#include <cmath>\nnamespace openq4::ui {\n'+function_body(doc,'bool Utf8(')+function_body(doc,'bool ValidStateValue(')+'}\n',newline='\n')
+    valid.write_text('#include "Interaction.h"\n#include <cmath>\nnamespace opend3::ui {\n'+function_body(doc,'bool Utf8(')+function_body(doc,'bool ValidStateValue(')+'}\n',newline='\n')
     includes=[ROOT,core,ROOT/'subprojects/packagefiles/sdl3/include',sdl/'include']
     if args.msvc:flags=[args.compiler,'/nologo','/std:c++20','/EHsc','/W3','/MTd' if args.debug_crt else '/MT']+['/I'+str(p) for p in includes]
     else:flags=[args.compiler,'-std=c++20','-I',str(ROOT),'-I',str(core),'-I',str(includes[2]),'-I',str(includes[3])]

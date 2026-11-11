@@ -16,8 +16,7 @@ is specific to openD3. For the state of the port, see the
 | `tools/build/` | Build helpers Meson invokes, plus packaging and release scripts |
 | `tools/debug/` | VS Code launch generator and debugging helpers |
 | `tools/tests/`, `tools/validation/` | Test corpus and validation profiles inherited from openQ4; not yet adapted to openD3 |
-| `docs/dev/doom3-rebase.md`, `docs/dev/game-source-provenance.md` | openD3's own developer documentation |
-| `docs/` (everything else) | openQ4's documentation, kept as engine background |
+| `docs/dev/` | The rebase record, the game source provenance note and the Android/GLES integration record |
 | `LICENSES/` | Licence notices |
 | `.install/` | Staged runtime package (generated) |
 | `builddir/` | Build output (generated) |
@@ -61,7 +60,7 @@ of the search path.
 | Module | Loaded when |
 |---|---|
 | `game_<arch>` | Always, unless the expansion is selected |
-| `game-d3xp_<arch>` | `fs_game` or `fs_game_base` is `d3xp` (not playable yet) |
+| `game-d3xp_<arch>` | `fs_game` or `fs_game_base` is `d3xp` (loads; no map run yet) |
 | `renderer-gl_<arch>` | `r_renderApi gl`, the default |
 | `renderer-vk_<arch>` | `r_renderApi vulkan` |
 
@@ -114,8 +113,9 @@ and the game payload has no integrity check yet.
 | `com_platformProfile` | Platform profile, for example `steamdeck` |
 
 The many renderer and platform features inherited from openQ4 (shadow maps,
-light grids, post-processing, presets, controller support) are documented in
-openQ4's guides under `docs/user/`. None has been checked with Doom 3 yet.
+light grids, post-processing, presets, controller support) are described in
+[openQ4's guides](https://github.com/themuffinator/openQ4/tree/main/docs/user).
+None has been checked with Doom 3 yet.
 
 ## Environment variables
 
@@ -126,7 +126,6 @@ openQ4's guides under `docs/user/`. None has been checked with Doom 3 yet.
 | `OPEND3_OPENAL_ROOT` | OpenAL Soft package used when staging on Windows |
 | `OPEND3_FORCE_X11` | Prefer XWayland on Linux |
 
-Some inherited code still accepts the matching `OPENQ4_*` names.
 
 ## Dependencies
 

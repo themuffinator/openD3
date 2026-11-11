@@ -7,7 +7,7 @@
 #include "RendererImageRecovery.h"
 #include "../idlib/CryptoHash.h"
 #include "DisplayPresentation.h"
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 #include "Vulkan/VulkanDevice.h"
 #endif
 #include <array>
@@ -83,7 +83,7 @@ struct Attempt {
     bool preparing = false;
     Prepared* prepared = nullptr;
     std::map<const idImage*,std::unique_ptr<idBinaryImage>> cpu;
-    std::map<const idImage*,const openq4::imageRecovery::Image*> selectedContent;
+    std::map<const idImage*,const opend3::imageRecovery::Image*> selectedContent;
     std::set<const idImage*> borrowed;
     std::shared_ptr<const Baseline> original;
     std::array<const idCVar*, NumDependencies> dependencies{};
@@ -104,9 +104,9 @@ struct Prepared {
     uint64_t completedFailures=0;
     uint32_t completedDirection=0;
     bool touched=false;
-    std::unique_ptr<openq4::imageRecovery::Data> directions[2];
+    std::unique_ptr<opend3::imageRecovery::Data> directions[2];
     std::map<const idImage*,std::unique_ptr<idBinaryImage>> cpu[2];
-    std::map<const idImage*,const openq4::imageRecovery::Image*> selected[2];
+    std::map<const idImage*,const opend3::imageRecovery::Image*> selected[2];
     std::string raw[2]={std::string(""),std::string("")};
 };
 
@@ -340,7 +340,7 @@ bool Preflight(Attempt& a, char* error, int errorSize) {
     renderDisplayPresentation_t current{}; R_GetDisplayPresentation(&current);
     // Failed teardown is explicitly restorable. It has no old GPU work to wait.
     if (!current.available && previous) return Check(a, error, errorSize);
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
     // Pending uploads from the old device must be observed before teardown;
     // a blocked/failed old upload cannot become successful by destroying it.
     VK_Device_FlushUploadBatch();
@@ -411,7 +411,7 @@ bool VerifyMaterialImages(Attempt& a, const idMaterial& m, char* error, int size
     return true;
 }
 
-namespace ir = openq4::imageRecovery;
+namespace ir = opend3::imageRecovery;
 bool SameLease(const renderImageRecoveryLease_t& a,const renderImageRecoveryLease_t& b) {
     return a.owner&&a.request&&a.preparation&&a.owner==b.owner&&a.request==b.request&&a.preparation==b.preparation;
 }
@@ -671,7 +671,7 @@ bool R_ImagePolicyFinish(char* error, int size) {
         const auto* material = static_cast<const idMaterial*>(declManager->DeclByIndex(DECL_MATERIAL, i, false));
         if (material && material->GetState() != DS_UNPARSED && !VerifyMaterialImages(*a, *material, error, size, true)) return false;
     }
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
     VK_Device_FlushUploadBatch(); VK_Device_WaitUploadBatch();
     if (vkCtx.presentationBlocked || vkCtx.uploadBatchOpen || vkCtx.uploadBatchInFlight ||
         vkCtx.numUploadBatchPending || vkCtx.numUploadBatchInFlight)

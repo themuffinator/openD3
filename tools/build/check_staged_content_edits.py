@@ -12,9 +12,9 @@ from pathlib import Path
 
 STALE_LOOSE_ROOT_FILES = (
     "default.cfg",
-    "openq4_defaults.cfg",
-    "openq4_profile_couch.cfg",
-    "openq4_profile_steamdeck.cfg",
+    "opend3_defaults.cfg",
+    "opend3_profile_couch.cfg",
+    "opend3_profile_steamdeck.cfg",
 )
 
 STALE_LOOSE_SUBDIRS = (
@@ -116,7 +116,7 @@ def validate_source_root(path: Path) -> Path:
 
 
 def main(argv: list[str]) -> int:
-    if os.environ.get("OPENQ4_INSTALL_KEEP_STALE_LOOSE_CONTENT") == "1":
+    if os.environ.get("OPEND3_INSTALL_KEEP_STALE_LOOSE_CONTENT") == "1":
         return 0
 
     args = parse_args(argv)

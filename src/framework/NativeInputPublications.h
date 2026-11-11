@@ -3,7 +3,7 @@
 #include <cstdint>
 
 class idUserInterface;
-namespace openq4 {
+namespace opend3 {
 class NativeInputRoute;
 struct NativeInputBinding;
 // Engine-private POD only: this header may be included by the C++17 game PCH.
@@ -48,4 +48,4 @@ bool Sys_QueryNativeInputWindow(NativeWindowPublication&) noexcept;
 // This is ownership of a future registration, not native provider activation.
 bool Sys_AcquireNativeInputWindowClaim(NativeWindowPublication&) noexcept;
 bool Sys_ReleaseNativeInputWindowClaim(const NativeWindowPublication&) noexcept;
-} // namespace openq4
+} // namespace opend3

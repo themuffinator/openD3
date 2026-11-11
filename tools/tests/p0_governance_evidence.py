@@ -36,7 +36,7 @@ def require(text: str, snippet: str, context: str) -> None:
 
 def test_provenance_inventory() -> None:
     audit = load_module(
-        "openq4_source_provenance_audit",
+        "opend3_source_provenance_audit",
         ROOT / "tools" / "validation" / "audit_source_provenance.py",
     )
     manifest = audit.load_manifest()
@@ -180,7 +180,7 @@ def test_capability_matrix_is_authoritative_and_scoped() -> None:
 
 
 def test_workflow_registration() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     for test_name in ("p0_governance_evidence.py", "stock_asset_baseline.py"):
         require(validator, test_name, "local validation registration")
     for workflow in (

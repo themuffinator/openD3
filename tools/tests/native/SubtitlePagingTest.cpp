@@ -1,10 +1,10 @@
-// Copyright (C) 2026 openQ4 contributors.
+// Copyright (C) 2026 openD3 contributors.
 #include "src/game/gamesys/SubtitlePaging.h"
 #include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <limits>
-using namespace OpenQ4Subtitles;
+using namespace openD3Subtitles;
 static int Glyph(const char* p, int n, float& width) {
 	width = 1;
 	return static_cast<unsigned char>(*p) >= 0xc0 && n > 1 ? 2 : 1;

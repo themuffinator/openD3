@@ -1,7 +1,7 @@
 // Copyright (C) 2026 DarkMatter Productions
 // SPDX-License-Identifier: GPL-3.0-or-later
-#ifndef OPENQ4_EDITOR_MAP_EDITING_H
-#define OPENQ4_EDITOR_MAP_EDITING_H
+#ifndef OPEND3_EDITOR_MAP_EDITING_H
+#define OPEND3_EDITOR_MAP_EDITING_H
 
 #include "MapDocument.h"
 #include "MapGeometry.h"

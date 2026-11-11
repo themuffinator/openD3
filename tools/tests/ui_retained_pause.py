@@ -37,7 +37,7 @@ struct idGameLocal {
     bool isMultiplayer=false,presentationMenuPaused=false,demo=false,timedemo=false;
     int time=100,presentationAnimationTime=-1;
     float presentationSceneFraction=-1;
-    mutable openq4::PresentationClock presentationClock;
+    mutable opend3::PresentationClock presentationClock;
     float presentationClockSample=-1;
     int GetMSec()const{return 16;}
     int GetDemoState()const{return demo?DEMO_PLAYING:0;}

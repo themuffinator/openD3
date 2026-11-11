@@ -18,7 +18,7 @@ from filesystem_case_segments import function_body
 ROOT = Path(__file__).resolve().parents[2]
 
 SUPPORT = r'''
-#define OPENQ4_DURABLE_FILE_TESTING
+#define OPEND3_DURABLE_FILE_TESTING
 #include "src/framework/DurableFile.cpp"
 #include "src/framework/SettingsPersistence.h"
 #include <cassert>
@@ -150,7 +150,7 @@ struct FileSystem {
 struct Session {int cdWrites=0;void WriteCDKey(){++cdWrites;}} sessionObject,*session=&sessionObject;
 struct Arena {bool pending=false;bool NeedsCleanup()const{return pending;}} arenaCampaign;
 static bool com_fullyInitialized=true;
-#define CONFIG_FILE "openQ4Config.cfg"
+#define CONFIG_FILE "openD3Config.cfg"
 class idCommonLocal {
 public:
     int messages=0;
@@ -165,17 +165,17 @@ public:
 TESTS = r'''
 static std::string testRoot;
 static std::string Error;
-static std::string Path(const char* filename){return variables.saveRoot+"/baseoq4/"+filename;}
+static std::string Path(const char* filename){return variables.saveRoot+"/baseod3/"+filename;}
 static std::string Read(const std::string& path){
     std::string result;
-    Check(openq4::DurableReadExact(path,openq4::DurableFileMaxBytes,result,Error)==openq4::DurableReadResult::Present,"read test config");
+    Check(opend3::DurableReadExact(path,opend3::DurableFileMaxBytes,result,Error)==opend3::DurableReadResult::Present,"read test config");
     return result;
 }
 static void Seed(const std::string& path,const std::string& bytes){
-    Check(openq4::DurableReplaceExact(path,bytes,Error),"seed native file");
+    Check(opend3::DurableReplaceExact(path,bytes,Error),"seed native file");
 }
 static void Reset(const char* name){
-    openq4::durable_detail::faults={};
+    opend3::durable_detail::faults={};
     variables={};files={};sessionObject={};commonLocal={};compressor={};
     variables.saveRoot=testRoot+"/"+name;
     blocked=false;com_fullyInitialized=true;arenaCampaign.pending=false;
@@ -248,11 +248,11 @@ static void JournalAndLease(){
         commonLocal.WriteConfiguration();
         Check(variables.modified==CVAR_ARCHIVE && !std::filesystem::exists(Path(CONFIG_FILE)),"any journal blocks ordinary config publication");
     }
-    Check(openq4::DurableRemoveExact(Path("ui-settings-recovery.dat"),Error),"remove test journal");
+    Check(opend3::DurableRemoveExact(Path("ui-settings-recovery.dat"),Error),"remove test journal");
     std::filesystem::create_directory(Path("ui-settings-recovery.dat"));
     Check(!Common_WriteSettingsConfiguration(false,Error),"nonregular journal also blocks");
     Check(std::filesystem::remove(Path("ui-settings-recovery.dat")),"remove owned empty test directory");
-    openq4::DurableFileLease peer;
+    opend3::DurableFileLease peer;
     Check(peer.TryAcquire(Path(".settings-recovery.lock"),Error),"peer obtains lease");
     Check(!Common_WriteSettingsConfiguration(false,Error) && variables.modified==CVAR_ARCHIVE,"ordinary writer refuses held lease");
     Seed(Path("ui-settings-recovery.dat"),"pending");blocked=true;
@@ -260,18 +260,18 @@ static void JournalAndLease(){
     Check(peer.IsHeld() && Read(Path("ui-settings-recovery.dat"))=="pending","coordinator commit does not remove or release recovery ownership");
     Check(variables.modified==0,"coordinator success clears dirty archive");
     peer.Release();blocked=false;
-    Check(openq4::DurableRemoveExact(Path("ui-settings-recovery.dat"),Error),"remove test journal after release");
+    Check(opend3::DurableRemoveExact(Path("ui-settings-recovery.dat"),Error),"remove test journal after release");
     Check(std::filesystem::exists(Path(".settings-recovery.lock")),"lock identity remains permanently present");
-    using openq4::durable_detail::Point;
-    using openq4::durable_detail::faults;
+    using opend3::durable_detail::Point;
+    using opend3::durable_detail::faults;
     faults={};faults.point=Point::OpenRead;faults.failOn=1;
     variables.modified=CVAR_ARCHIVE;
     Check(!Common_WriteSettingsConfiguration(false,Error) && variables.modified==CVAR_ARCHIVE,"journal read refusal blocks publication");
     faults={};
 }
 static void DurabilityFailures(){
-    using openq4::durable_detail::Point;
-    using openq4::durable_detail::faults;
+    using opend3::durable_detail::Point;
+    using opend3::durable_detail::faults;
     const Point points[]={Point::OpenTemp,Point::Write,Point::FileSync,Point::CloseWrite,Point::Rename,Point::MetadataSync};
     int index=0;
     for(Point point:points){

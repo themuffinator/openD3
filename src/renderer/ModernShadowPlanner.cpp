@@ -969,7 +969,7 @@ static void R_ModernShadowPlanner_InitDescriptorContract( modernShadowLightDescr
 				r_shadowMapPointMaxWorldBias.GetFloat() );
 		shadowMapPointReceiverSettings_t pointReceiverSettings =
 			basePointReceiverSettings;
-#ifndef OPENQ4_RENDERER_VK_MODULE
+#ifndef OPEND3_RENDERER_VK_MODULE
 		// Modern GL always samples the manual color-depth cube, even when the
 		// classic receiver requested and obtained a hardware comparison cube.
 		// Preserve its storage-quantization floor as well as the shared

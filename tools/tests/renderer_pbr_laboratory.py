@@ -49,7 +49,7 @@ BASE = {
     # of it keeps the stations measurable; controls that need other light
     # levels set their own.
     'r_useScissor':'1', 'r_lightScale':'0.5',
-    'logFileName': 'logs/openq4.log', 'developer': '1', 'r_ignoreGLErrors': '0',
+    'logFileName': 'logs/opend3.log', 'developer': '1', 'r_ignoreGLErrors': '0',
     'com_skipLoadingContinue': '1', 'com_loadingContinueAutoAdvance': '1',
     'com_levelLoadModernization': '0', 'g_autoSkipCinematics': '1',
     'g_autoScreenshot': '0', 'ui_showGun': '0', 'g_showHud': '0',
@@ -109,11 +109,11 @@ GL_NATIVE_OVERRIDES = {
 # how the classic OpenGL owner always draws (--gl-native).
 PRODUCTION_OVERRIDES = {'r_pbrLinearScene': '0'}
 
-# Multi-GPU qualification: OPENQ4_LAB_VK_DEVICE pins r_vkDevice for this and
+# Multi-GPU qualification: OPEND3_LAB_VK_DEVICE pins r_vkDevice for this and
 # every harness that captures through BASE (on the qualification laptop, 2 is
 # the integrated Intel GPU). OpenGL ignores it.
-if os.environ.get('OPENQ4_LAB_VK_DEVICE', '').strip():
-    BASE['r_vkDevice'] = os.environ['OPENQ4_LAB_VK_DEVICE'].strip()
+if os.environ.get('OPEND3_LAB_VK_DEVICE', '').strip():
+    BASE['r_vkDevice'] = os.environ['OPEND3_LAB_VK_DEVICE'].strip()
 
 # Stage D: SSAO occludes native PBR indirect light only. The overview's
 # stations are native PBR in front of a classic room; the laboratory's analytic
@@ -1897,7 +1897,7 @@ def engine_args(cvars: dict[str, str]) -> list[str]:
 def startup_args(cvars: dict[str, str], save: Path) -> list[str]:
     # The engine accepts at most 64 +commands. Put the full profile in its
     # supported pre-renderer autoexec path, retaining bootstrap/safety on CLI.
-    config = save/'baseoq4/autoexec.cfg'
+    config = save/'baseod3/autoexec.cfg'
     config.parent.mkdir(parents=True, exist_ok=True)
     config.write_text('\n'.join(f'set {k} "{v}"' for k,v in cvars.items())+'\n',encoding='utf-8')
     early = ('fs_game','fs_basepath','fs_savepath','fs_devpath','r_renderApi','r_glTier',
@@ -1921,14 +1921,14 @@ def prepare(runtime: Path, basepath: Path, output: Path, timeout: int) -> None:
 def compile_fixture(runtime: Path, basepath: Path, output: Path, timeout: int) -> None:
     compile_save = output/'compile'
     compile_save.mkdir(parents=True)
-    args = {**BASE, 'fs_game': 'baseoq4', 'fs_basepath': str(basepath), 'fs_savepath': str(compile_save), 'fs_devpath': str(runtime), 'r_rendererModernExecutor': '0', 'r_renderApi': 'gl'}
-    executable = next(runtime.glob('openQ4-ded_*.exe')) if os.name == 'nt' else next(runtime.glob('openQ4-ded_*'))
+    args = {**BASE, 'fs_game': 'baseod3', 'fs_basepath': str(basepath), 'fs_savepath': str(compile_save), 'fs_devpath': str(runtime), 'r_rendererModernExecutor': '0', 'r_renderApi': 'gl'}
+    executable = next(runtime.glob('openD3-ded_*.exe')) if os.name == 'nt' else next(runtime.glob('openD3-ded_*'))
     command = [str(executable), *startup_args(args,compile_save), '+dmap', lab.MAP, '+quit']
     (compile_save/'command.json').write_text(json.dumps(command,indent=2))
     code, _ = run(command, runtime, compile_save/'process.log', timeout)
-    engine_log = compile_save/'baseoq4/logs/openq4.log'
+    engine_log = compile_save/'baseod3/logs/opend3.log'
     text = engine_log.read_text(errors='replace') if engine_log.exists() else ''
-    proc = runtime/'baseoq4'/f'{lab.MAP}.proc'
+    proc = runtime/'baseod3'/f'{lab.MAP}.proc'
     if code or not proc.is_file() or re.search(r'(?i)\b(?:leaked|fatal error|ERROR:)\b', text):
         raise RuntimeError(f'PBR map did not compile cleanly; see {compile_save}')
 
@@ -2200,7 +2200,7 @@ def write_capture_commands(cfg: Path, commands: list[str]) -> dict[str,str]:
 
 def capture_cases(args: argparse.Namespace, cases: list[str], save: Path) -> list[dict]:
     save.mkdir(parents=True, exist_ok=False)
-    cfg = save/'baseoq4/pbr_lab_capture.cfg'
+    cfg = save/'baseod3/pbr_lab_capture.cfg'
     cfg.parent.mkdir()
     manifest = json.loads((args.runtime_root/'pbr-lab.json').read_text())
     # Runtime files a fixture copies into each run's fresh save path, keyed by
@@ -2264,7 +2264,7 @@ def capture_cases(args: argparse.Namespace, cases: list[str], save: Path) -> lis
                 scene_setups.add('vk-direct-caster')
             if case.startswith('vk-direct-shadow-projected') and 'vk-direct-projector' not in scene_setups:
                 commands += ['script "$vk_direct_light.remove()"','wait 3',
-                    f'spawn light name vk_direct_light origin "-120 -1000 540" angle 0 texture "lights/openq4/pbr_lab/projected" light_target "120 300 -160" light_right "250 -100 0" light_up "40 100 217.5" light_start "1.2 3 -1.6" light_end "360 900 -480" _color "1 1 1" noshadows 0']
+                    f'spawn light name vk_direct_light origin "-120 -1000 540" angle 0 texture "lights/opend3/pbr_lab/projected" light_target "120 300 -160" light_right "250 -100 0" light_up "40 100 217.5" light_start "1.2 3 -1.6" light_end "360 900 -480" _color "1 1 1" noshadows 0']
                 scene_setups.add('vk-direct-projector')
             # Isolate emission with zero, one or several direct lights. The
             # emission-only diagnostic must agree with the unlit ordinary draw.
@@ -2303,7 +2303,7 @@ def capture_cases(args: argparse.Namespace, cases: list[str], save: Path) -> lis
             kind=overlay_case.split('-')[0]
             commands += ['g_stopTime 0']
             if kind not in scene_setups:
-                commands += [f'spawn light name pbr_overlay origin "0 0 400" light_radius "1400 1400 1000" texture "lights/openq4/pbr_lab/{kind}" noshadows 1']
+                commands += [f'spawn light name pbr_overlay origin "0 0 400" light_radius "1400 1400 1000" texture "lights/opend3/pbr_lab/{kind}" noshadows 1']
                 scene_setups.add(kind)
             commands += [f'script "$pbr_overlay.{"remove" if case.endswith("-off") else "On"}()"','wait 30','g_stopTime 1']
             if case.endswith('-off'): scene_setups.remove(kind)
@@ -2340,7 +2340,7 @@ def capture_cases(args: argparse.Namespace, cases: list[str], save: Path) -> lis
             for extra, shader, color in (('ambient', 'ambient', '0.25 0.2 0.15'), ('fog', 'fog', '1 1 1')):
                 wanted = case.startswith(f'production-fixed-{extra}')
                 if wanted and f'fixed-{extra}' not in scene_setups:
-                    commands += ['g_stopTime 0',f'spawn light name fixed_{extra} texture "lights/openq4/pbr_lab/{shader}" '
+                    commands += ['g_stopTime 0',f'spawn light name fixed_{extra} texture "lights/opend3/pbr_lab/{shader}" '
                                  f'origin "100 60 480" light_radius "400 400 400" _color "{color}" noshadows 1',
                                  'wait 30','g_stopTime 1']
                     scene_setups.add(f'fixed-{extra}')
@@ -2400,25 +2400,25 @@ def capture_cases(args: argparse.Namespace, cases: list[str], save: Path) -> lis
     commands += ['wait 5', 'quit']
     cfg_parts=write_capture_commands(cfg,commands)
     cvars.update(CASES[cases[0]])
-    cvars.update({'fs_game': 'baseoq4', 'fs_basepath': str(args.basepath), 'fs_savepath': str(save), 'fs_devpath': str(save), 'g_autoExecAfterMapLoad': 'pbr_lab_capture.cfg', 'g_autoExecAfterMapLoadDelayMs': '500'})
-    executable = next(args.runtime_root.glob('openQ4-client_*.exe')) if os.name == 'nt' else next(args.runtime_root.glob('openQ4-client_*'))
+    cvars.update({'fs_game': 'baseod3', 'fs_basepath': str(args.basepath), 'fs_savepath': str(save), 'fs_devpath': str(save), 'g_autoExecAfterMapLoad': 'pbr_lab_capture.cfg', 'g_autoExecAfterMapLoadDelayMs': '500'})
+    executable = next(args.runtime_root.glob('openD3-client_*.exe')) if os.name == 'nt' else next(args.runtime_root.glob('openD3-client_*'))
     command = [str(executable), *startup_args(cvars,save), '+map', lab.MAP]
     (save/'command.json').write_text(json.dumps(command,indent=2),encoding='utf-8')
     code, elapsed = run(command,args.runtime_root,save/'process.log',args.timeout)
-    log = save/'baseoq4/logs/openq4.log'
+    log = save/'baseod3/logs/opend3.log'
     text = log.read_text(errors='replace') if log.exists() else ''
     results = []
     for case in cases:
         start,end = f'PBRLAB_{case}_BEGIN', f'PBRLAB_{case}_END'
         section = text.split(start,1)[-1].split(end,1)[0] if start in text and end in text else ''
         inspection_args = argparse.Namespace(**{**vars(args),'camera':CASE_CAMERAS.get(case,args.camera)})
-        result = inspect_capture(inspection_args,case,section,save/f'baseoq4/screenshots/{case}.tga')
+        result = inspect_capture(inspection_args,case,section,save/f'baseod3/screenshots/{case}.tga')
         if args.backend == 'vk':
             result['failures'].extend(vulkan_backend_failures(text))
         if case.startswith('production-fixed-msaa') and not re.search(r'Forward render target MSAA: requested 4, effective 4\b',text):
             result['failures'].append('native fallback did not allocate a four-sample render target')
         if case=='production-fixed-resize':
-            intermediate=save/'baseoq4/screenshots/production-fixed-resize-small.tga'
+            intermediate=save/'baseod3/screenshots/production-fixed-resize-small.tga'
             small_section=text.split('PBRLAB_RESIZE_SMALL_BEGIN',1)[-1].split('PBRLAB_RESIZE_SMALL_END',1)[0]
             result['resizeScreenshot']=str(intermediate)
             result['sha256']['resizeScreenshot']=digest(intermediate) if intermediate.is_file() else None
@@ -2428,7 +2428,7 @@ def capture_cases(args: argparse.Namespace, cases: list[str], save: Path) -> lis
             if not re.search(r'Modern classic lighting: ready=1 executed=1 primitives=[1-9]\d* extent=960x600\b',small_section):
                 result['failures'].append('classic lighting did not allocate and submit at the intermediate extent')
         if args.linear and case not in LEGACY_CASES | FALLBACK_CASES | LINEAR_UNAVAILABLE_CASES:
-            linear = save/f'baseoq4/screenshots/{case}.pfm'
+            linear = save/f'baseod3/screenshots/{case}.pfm'
             is_linear=CASES[case].get('r_hdrToneMap',BASE['r_hdrToneMap'])=='1'
             result['linearCaptureStatus']='linear HDR' if is_linear else 'rejected encoded preview'
             if not is_linear:
@@ -2527,7 +2527,7 @@ def main() -> int:
     if args.prepare: prepare(args.runtime_root,args.basepath,args.output_dir,args.timeout)
     if args.update_fixture:
         existing=json.loads((args.runtime_root/'pbr-lab.json').read_text())
-        if existing.get('id')!='openq4-pbr-laboratory': raise ValueError('not an existing PBR laboratory runtime')
+        if existing.get('id')!='opend3-pbr-laboratory': raise ValueError('not an existing PBR laboratory runtime')
         lab.generate(args.runtime_root,force=True)
         compile_fixture(args.runtime_root,args.basepath,args.output_dir,args.timeout)
     manifest = json.loads((args.runtime_root/'pbr-lab.json').read_text())
@@ -2535,14 +2535,14 @@ def main() -> int:
         target = fixture.validate_contained_target(args.runtime_root,args.runtime_root/name)
         if not target.is_file() or digest(target) != expected:
             raise RuntimeError(f'Fixture content differs from its manifest: {target}')
-    map_source = args.runtime_root/'baseoq4'/f'{lab.MAP}.map'
+    map_source = args.runtime_root/'baseod3'/f'{lab.MAP}.map'
     compiled_map = map_source.with_suffix('.proc')
     if not compiled_map.is_file() or compiled_map.stat().st_mtime_ns < map_source.stat().st_mtime_ns:
         raise RuntimeError('PBR map must be compiled after its source was generated')
-    binaries = sorted(set([*args.runtime_root.glob('openQ4-client*'),*args.runtime_root.glob('renderer-*'),
+    binaries = sorted(set([*args.runtime_root.glob('openD3-client*'),*args.runtime_root.glob('renderer-*'),
                            *args.runtime_root.glob('*.dll'),*args.runtime_root.glob('*.so*'),
-                           *args.runtime_root.glob('*.dylib'),*args.runtime_root.glob('baseoq4/game-*'),
-                           *args.runtime_root.glob('baseoq4/*.pk4')]))
+                           *args.runtime_root.glob('*.dylib'),*args.runtime_root.glob('baseod3/game-*'),
+                           *args.runtime_root.glob('baseod3/*.pk4')]))
     provenance = {str(p.relative_to(args.runtime_root)):digest(p) for p in binaries if p.is_file() and p.suffix not in ('.pdb','.lib','.exp')}
     report = {'schema':2, 'basepath':str(args.basepath), 'fixture':manifest, 'runtimeSHA256':provenance, 'compiledMapSHA256':digest(compiled_map), 'results':[], 'complete':False, 'harnessSHA256':digest(Path(__file__))}
     sources=args.output_dir/'harness'

@@ -1,9 +1,9 @@
 /*
 ===========================================================================
 
-openQ4 portable parallel job system
+openD3 portable parallel job system
 
-Copyright (C) 2026 openQ4 contributors
+Copyright (C) 2026 openD3 contributors
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
@@ -12,7 +12,7 @@ version.
 
 The scheduling model is informed by id Software's Doom 3 BFG
 idParallelJobList, released under GPLv3.  This is an original implementation
-using portable C++ condition variables and bounded openQ4-owned state.
+using portable C++ condition variables and bounded openD3-owned state.
 
 ===========================================================================
 */

@@ -78,8 +78,8 @@ def main():
     if os.name!='nt': parser.error('This gameplay probe targets the staged Windows x64 runtime; native cleanup tests also run on Linux.')
     OUT=args.output.resolve(); SOURCE=args.source_save.resolve(); RUNTIME=ROOT/'.install'
     if (ROOT/'.tmp').resolve() not in OUT.parents: parser.error('Output must be a new directory below project .tmp.')
-    SAVE=OUT/'save'; GAME=SAVE/'baseoq4'
-    for relative in ('openQ4-client_x64.exe','baseoq4/game-sp_x64.dll','baseoq4/game-mp_x64.dll'):
+    SAVE=OUT/'save'; GAME=SAVE/'baseod3'
+    for relative in ('openD3-client_x64.exe','baseod3/game-sp_x64.dll','baseod3/game-mp_x64.dll'):
         if sha(ROOT/'builddir'/relative)!=sha(RUNTIME/relative): parser.error('Stage the current build before running this probe: '+relative)
     OUT.mkdir(parents=True,exist_ok=False)
     (GAME/'savegames').mkdir(parents=True)
@@ -93,19 +93,19 @@ def main():
             'set g_autoExecAfterMapLoad final.cfg','loadGame Good'],
         'final.cfg':['echo CLEANUP_VALID_AGAIN','screenshot screenshots/final.tga','quit'],
     }.items(): (GAME/name).write_text('\n'.join(commands)+'\n')
-    settings=dict(fs_game='baseoq4',fs_basepath=str(args.basepath.resolve()),fs_savepath=str(SAVE),
+    settings=dict(fs_game='baseod3',fs_basepath=str(args.basepath.resolve()),fs_savepath=str(SAVE),
         fs_devpath=str(SAVE),com_gameMode='SP',si_gameType='singleplayer',ui_retained='1',ui_autoJoin='0',
         win_allowMultipleInstances='1',sys_consoleWindow='0',in_tty='0',in_mouse='0',in_joystick='0',
         s_noSound='1',r_fullscreen='0',r_fullscreenDesktop='0',r_borderless='0',r_borderlessDefaultMigrated='1',
         r_hiddenWindow='1',r_mode='-1',r_customWidth='640',r_customHeight='480',r_windowWidth='640',r_windowHeight='480',
         r_renderApi='gl',r_swapInterval='0',com_maxfps='60',com_skipLoadingContinue='1',com_loadingContinueAutoAdvance='1',
         g_autoSkipCinematics='1',g_autoExecAfterMapLoad='initial.cfg',g_autoExecAfterMapLoadDelayMs='750',
-        logFile='2',logFileName='logs/openq4.log',developer='1')
-    executable=RUNTIME/'openQ4-client_x64.exe'
+        logFile='2',logFileName='logs/opend3.log',developer='1')
+    executable=RUNTIME/'openD3-client_x64.exe'
     command=[str(executable),*[part for key,value in settings.items() for part in ('+set',key,value)],'+loadGame','Good']
     report=dict(fixture=metadata,source_save=dict(path=str(SOURCE),sha256=sha(SOURCE)),command=command,
         harness_sha256=sha(Path(__file__)),
-        runtime={str(p.relative_to(RUNTIME)):sha(p) for p in [executable,RUNTIME/'baseoq4/game-sp_x64.dll',RUNTIME/'baseoq4/game-mp_x64.dll']},
+        runtime={str(p.relative_to(RUNTIME)):sha(p) for p in [executable,RUNTIME/'baseod3/game-sp_x64.dll',RUNTIME/'baseod3/game-mp_x64.dll']},
         before={p.name:sha(p) for p in [good,bad]},scope='Current v5 script-checksum rejection after object creation, automatic fresh-map fallback and valid load again. Hidden window; input disabled; engine screenshots only.')
     (OUT/'plan.json').write_text(json.dumps(report,indent=2)+'\n')
     startup=subprocess.STARTUPINFO(); startup.dwFlags|=subprocess.STARTF_USESHOWWINDOW; startup.wShowWindow=subprocess.SW_HIDE
@@ -116,7 +116,7 @@ def main():
         except subprocess.TimeoutExpired:
             process.terminate(); code=process.wait(timeout=15); report['timed_out']=True
     report.update(exit_code=code,elapsed=time.monotonic()-begin,after={p.name:sha(p) for p in [good,bad]})
-    log=GAME/'logs/openq4.log'; text=log.read_text(errors='replace')
+    log=GAME/'logs/opend3.log'; text=log.read_text(errors='replace')
     markers=['CLEANUP_VALID_RESTORED','CLEANUP_SCRIPT_RECOVERY','CLEANUP_VALID_AGAIN']
     positions=[text.find(value) for value in markers]
     report['markers']={value:text.count(value) for value in markers}

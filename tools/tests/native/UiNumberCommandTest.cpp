@@ -12,7 +12,7 @@
 #include <set>
 #include <sstream>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks=0;
 
 static void Check(bool value,const char* message) { ++checks;if(!value){std::fprintf(stderr,"FAIL: %s\n",message);std::exit(1);} }
@@ -29,7 +29,7 @@ static Json::Value Box(const char* id,double x,double y,double width,double heig
 }
 static void Colour(Json::Value& node,std::initializer_list<double> colour) { node["properties"]["background-color"]=Typed("color",Array(colour)); }
 static std::string Source(bool transformed=false,bool framed=false,bool hostSource=false) {
-	Json::Value source;source["format"]="openq4-ui";source["version"]=1;source["id"]="number-runtime";
+	Json::Value source;source["format"]="opend3-ui";source["version"]=1;source["id"]="number-runtime";
 	source["state"]["value"]["type"]="number";source["state"]["value"]["initial"]=1.05;
 	if(hostSource)source["state"]["value"]["cvar"]="r_number_test";
 	source["actions"]["edit"]["input"]="number";source["actions"]["edit"]["operation"]="test.edit";source["actions"]["edit"]["arguments"]["value"]["input"]="value";
@@ -71,7 +71,7 @@ static std::string Source(bool transformed=false,bool framed=false,bool hostSour
 	for(unsigned t:{0u,1u}){Json::Value key;key["atMs"]=t;key["value"]=Typed("number",1);track["keys"].append(key);}timeline["tracks"].append(track);source["timelines"].append(timeline);
 	Json::StreamWriterBuilder writer;writer["indentation"]="";writer["precision"]=17;return Json::writeString(writer,source);
 }
-#ifndef OPENQ4_NUMBER_COMMAND_INTERACTION_ONLY
+#ifndef OPEND3_NUMBER_COMMAND_INTERACTION_ONLY
 struct TestHost final:Host {
 	unsigned draws=0,layers=0,errors=0;std::uint64_t frame=1;double readback=1.05,fontSize=20;
 	bool missingFont=false,badGlyph=false;std::set<std::pair<int,std::uint32_t>> glyphs;
@@ -233,7 +233,7 @@ static void AtomicOperationBoundary(){
 	Check(restored->number->state.text=="1234"&&restored->number->state.anchor==3&&restored->number->state.caret==1,"range command undo preserves original direction");
 }
 int main(){
-#ifndef OPENQ4_NUMBER_COMMAND_INTERACTION_ONLY
+#ifndef OPEND3_NUMBER_COMMAND_INTERACTION_ONLY
 	SameBatchAndUndo();ScalarBoundariesAndInk();FreshTypographyAndFailures();OwnershipAndReadback();RestoreAndIndependentInstances();FontServiceRecreation();
 #endif
 	AtomicOperationBoundary();

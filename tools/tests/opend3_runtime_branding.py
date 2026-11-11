@@ -16,8 +16,8 @@ CONTRACTS = {
             "Launch openD3 through RenderDoc first",
         ),
         "forbidden": (
-            'captureTemplate.AppendPath( "openq4" );',
-            "Launch openQ4 through RenderDoc first",
+            'captureTemplate.AppendPath( "opend3" );',
+            "Launch openD3 through RenderDoc first",
         ),
     },
     "src/framework/Session.cpp": {
@@ -30,27 +30,27 @@ CONTRACTS = {
             "bakes openD3-compatible lightgrid metadata",
         ),
         "forbidden": (
-            "stamped openQ4 payload/footer",
-            "openQ4 loads each map automatically",
-            '"openQ4 map state',
-            "bakes openQ4-compatible lightgrid metadata",
+            "stamped openD3 payload/footer",
+            "openD3 loads each map automatically",
+            '"openD3 map state',
+            "bakes openD3-compatible lightgrid metadata",
         ),
     },
     "src/renderer/draw_arb2.cpp": {
         "required": ("but openD3 keeps ARB2 because the legacy NV20 backend is not shipped",),
-        "forbidden": ("but openQ4 keeps ARB2 because the legacy NV20 backend is not shipped",),
+        "forbidden": ("but openD3 keeps ARB2 because the legacy NV20 backend is not shipped",),
     },
     "src/renderer/RenderSystem.cpp": {
         "required": ("but openD3 only ships the ARB2 backend",),
-        "forbidden": ("but openQ4 only ships the ARB2 backend",),
+        "forbidden": ("but openD3 only ships the ARB2 backend",),
     },
     "src/renderer/RenderWorld_load.cpp": {
         "required": ("openD3 will prefer it before the classic proc world",),
-        "forbidden": ("openQ4 will prefer it before the classic proc world",),
+        "forbidden": ("openD3 will prefer it before the classic proc world",),
     },
     "src/renderer/RenderWorld_lightgrid.cpp": {
         "required": ("previous openD3 bake through the runtime light-grid pass",),
-        "forbidden": ("previous openQ4 bake through the runtime light-grid pass",),
+        "forbidden": ("previous openD3 bake through the runtime light-grid pass",),
     },
     "src/sys/posix/posix_main.cpp": {
         "required": (
@@ -58,8 +58,8 @@ CONTRACTS = {
             "another openD3 instance is already running",
         ),
         "forbidden": (
-            '"%s/openq4-%u.lock"',
-            "another openQ4 instance is already running",
+            '"%s/opend3-%u.lock"',
+            "another openD3 instance is already running",
         ),
     },
     "tools/build/prepare_macos_moltenvk.sh": {
@@ -68,8 +68,8 @@ CONTRACTS = {
             "until openD3's own macos_deployment_target moves off",
         ),
         "forbidden": (
-            "above openQ4's ${MOLTENVK_MAX_MINOS} deployment target",
-            "until openQ4's own macos_deployment_target moves off",
+            "above openD3's ${MOLTENVK_MAX_MINOS} deployment target",
+            "until openD3's own macos_deployment_target moves off",
         ),
     },
 }

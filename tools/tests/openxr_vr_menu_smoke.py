@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Change a VR setting from inside the headset, against the openQ4 OpenXR test
+"""Change a VR setting from inside the headset, against the openD3 OpenXR test
 runtime (requires Pillow, a staged client built with OpenXR, and retail assets).
 
 The runtime's scripted weapon hand opens the pause menu, then points and clicks
@@ -54,7 +54,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--basepath", type=Path, required=True, help="installed retail Quake 4 assets")
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
     parser.add_argument("--build-dir", type=Path, default=ROOT / "builddir",
-                        help="build directory holding openq4_xr_test_runtime.json")
+                        help="build directory holding opend3_xr_test_runtime.json")
     parser.add_argument("--executable-name")
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--timeout", type=int, default=300)
@@ -64,8 +64,8 @@ def main(argv: list[str] | None = None) -> None:
     from PIL import Image
 
     staged = options.runtime_dir.resolve()
-    executable = options.executable_name or ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
-    manifest = (options.build_dir / "openq4_xr_test_runtime.json").resolve()
+    executable = options.executable_name or ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
+    manifest = (options.build_dir / "opend3_xr_test_runtime.json").resolve()
     if not (staged / executable).is_file() or not options.basepath.is_dir():
         parser.error("a staged client and installed Quake 4 assets are required")
     if not manifest.is_file():
@@ -76,7 +76,7 @@ def main(argv: list[str] | None = None) -> None:
     if output == staged or staged in output.parents or output in staged.parents:
         parser.error("output and staged runtime directories must not overlap")
     profile = output / ( "sp-vulkan" if options.render_api == "vulkan" else "sp" )
-    game = profile / "baseoq4"
+    game = profile / "baseod3"
     game.mkdir(parents=True, exist_ok=True)
     for stale in list(game.glob("vr_marker_*.txt")) + list(profile.glob("xr_*.tga")) + list(profile.glob("xr_*.png")):
         stale.unlink()
@@ -155,10 +155,10 @@ def main(argv: list[str] | None = None) -> None:
     environment = dict(os.environ)
     environment.update({
         "XR_RUNTIME_JSON": str(manifest),
-        "OPENQ4_XR_TEST_LOG": str(xr_log),
-        "OPENQ4_XR_TEST_SCRIPT": str(profile / "xr_script.txt"),
-        "OPENQ4_XR_TEST_EYE_SIZE": "1200x1320",
-        "OPENQ4_XR_TEST_RATE": "90",
+        "OPEND3_XR_TEST_LOG": str(xr_log),
+        "OPEND3_XR_TEST_SCRIPT": str(profile / "xr_script.txt"),
+        "OPEND3_XR_TEST_EYE_SIZE": "1200x1320",
+        "OPEND3_XR_TEST_RATE": "90",
     })
     startup = None
     if os.name == "nt":
@@ -172,7 +172,7 @@ def main(argv: list[str] | None = None) -> None:
         except subprocess.TimeoutExpired:
             raise AssertionError(f"the client did not finish within {options.timeout} s")
 
-    text = (game / "logs/openq4.log").read_text(encoding="utf-8", errors="replace")
+    text = (game / "logs/opend3.log").read_text(encoding="utf-8", errors="replace")
     assert "OpenXR: presenting to the headset" in text, "the session never began"
     assert result.returncode == 0, result.returncode
     assert "VR_MENU_SMOKE_COMPLETE" in text, "script did not complete"

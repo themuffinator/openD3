@@ -49,15 +49,8 @@ const float TACTICAL_CORNER_TURN_COS		= 0.2f;
 const float TACTICAL_CORNER_STRAIGHT_COS	= 0.5f;
 const float TACTICAL_PARALLEL_COS			= 0.9f;
 
-#ifdef HUMANHEAD
-// Prey has no tactical-feature or sight-clip contents. Retail Prey AAS files are
-// 1.07 records without a feature span, so these masks only keep the builder whole.
-const int TACTICAL_PLACE_MASK				= CONTENTS_SOLID;
-const int TACTICAL_SIGHT_MASK				= CONTENTS_SOLID | CONTENTS_OPAQUE;
-#else
 const int TACTICAL_PLACE_MASK				= CONTENTS_SOLID | CONTENTS_NOTACTICALFEATURES;
 const int TACTICAL_SIGHT_MASK				= CONTENTS_SOLID | CONTENTS_SIGHTCLIP;
-#endif
 
 struct tacticalEdge_t {
 	int		vertexNum[2];		// oriented by the sign of the edge index

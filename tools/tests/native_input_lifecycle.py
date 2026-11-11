@@ -21,7 +21,7 @@ def main():
         ['Set','Reset','Update','UpdateValue','UpdateCheat','InternalSetString','InternalServerSetString','InternalSetBool','InternalSetInteger','InternalSetFloat']),
         'session_query.inc':function_body(session,'bool idSessionLocal::QueryNativeInputPublication('),
         'manager_queries.inc':function_body(manager,'void idUserInterfaceManaged::MarkNativeInputClosing(')+function_body(manager,'void idUserInterfaceManaged::SetNativeInputChanging(')+function_body(manager,'bool idUserInterfaceManagerLocal::QueryNativeInputAllocation('),
-        'window_publications.inc':sdl[sdl.index('static openq4::NativeWindowPublication s_nativeInputWindow'):sdl.index('static bool s_haveAbsoluteMousePosition')]}
+        'window_publications.inc':sdl[sdl.index('static opend3::NativeWindowPublication s_nativeInputWindow'):sdl.index('static bool s_haveAbsoluteMousePosition')]}
     # Every simple pinned mutation is preceded by invalidation. Constructor
     # initializer lists are lifecycle-before-existence; chained Session globals
     # have one explicit pre-chain invalidation. These are coverage guards, while
@@ -62,12 +62,12 @@ def main():
     try:
         case('baseline')
         mutations=[
-            ('setter-missing','cvar_methods.inc','if (nameString.Icmp("com_asyncInput") == 0) openq4::NativeInputBeforeInputBlockerChange();',''),
-            ('reset-missing','cvar_methods.inc','if (nameString.Icmp("com_asyncInput") == 0 && valueString.Cmp(resetString.c_str()) != 0)\n\t\topenq4::NativeInputBeforeInputBlockerChange();',''),
+            ('setter-missing','cvar_methods.inc','if (nameString.Icmp("com_asyncInput") == 0) opend3::NativeInputBeforeInputBlockerChange();',''),
+            ('reset-missing','cvar_methods.inc','if (nameString.Icmp("com_asyncInput") == 0 && valueString.Cmp(resetString.c_str()) != 0)\n\t\topend3::NativeInputBeforeInputBlockerChange();',''),
             ('setter-too-late','cvar_methods.inc','value = valueString.c_str();\n\tUpdateValue();','value = valueString.c_str();\n\tUpdateValue();'),
             ('closing-owner-visible','manager_queries.inc','!(allocation->nativeInputClosing || allocation->nativeInputChanging)','!allocation->nativeInputChanging'),
             ('changing-owner-visible','manager_queries.inc','!(allocation->nativeInputClosing || allocation->nativeInputChanging)','!allocation->nativeInputClosing'),
-            ('closing-after-publication','manager_queries.inc','openq4::NativeInputBeforeUiChange(allocationId);\n    nativeInputClosing = true;','nativeInputClosing = true;\n    openq4::NativeInputBeforeUiChange(allocationId);'),
+            ('closing-after-publication','manager_queries.inc','opend3::NativeInputBeforeUiChange(allocationId);\n    nativeInputClosing = true;','nativeInputClosing = true;\n    opend3::NativeInputBeforeUiChange(allocationId);'),
             ('manager-busy-visible','manager_queries.inc','clipboardBoundaryActive || applicationPumpDepth || !current','!current'),
             ('loading-route-allowed','session_query.inc',' && !loadingSaveGame',''),
             ('async-route-allowed','session_query.inc','!com_asyncInput.GetBool() && ',' '),
@@ -82,8 +82,8 @@ def main():
                 if name=='setter-too-late':
                     # The renderer-module sync between the hook and the assignment (8ed86d2d9)
                     # stays in place; only the hook moves past the value change.
-                    old='if (nameString.Icmp("com_asyncInput") == 0) openq4::NativeInputBeforeInputBlockerChange();\n#ifndef ID_DEDICATED\n\tif ( flags & CVAR_RENDERER ) R_RendererModule_SyncConfiguration();\n#endif\n\tCVar_AssignString( valueString, newValue, ( flags & CVAR_PRIVATE ) != 0 );'
-                    new='#ifndef ID_DEDICATED\n\tif ( flags & CVAR_RENDERER ) R_RendererModule_SyncConfiguration();\n#endif\n\tCVar_AssignString( valueString, newValue, ( flags & CVAR_PRIVATE ) != 0 );\n\tif (nameString.Icmp("com_asyncInput") == 0) openq4::NativeInputBeforeInputBlockerChange();'
+                    old='if (nameString.Icmp("com_asyncInput") == 0) opend3::NativeInputBeforeInputBlockerChange();\n#ifndef ID_DEDICATED\n\tif ( flags & CVAR_RENDERER ) R_RendererModule_SyncConfiguration();\n#endif\n\tCVar_AssignString( valueString, newValue, ( flags & CVAR_PRIVATE ) != 0 );'
+                    new='#ifndef ID_DEDICATED\n\tif ( flags & CVAR_RENDERER ) R_RendererModule_SyncConfiguration();\n#endif\n\tCVar_AssignString( valueString, newValue, ( flags & CVAR_PRIVATE ) != 0 );\n\tif (nameString.Icmp("com_asyncInput") == 0) opend3::NativeInputBeforeInputBlockerChange();'
                 expected=2 if name=='setter-missing' else 1
                 if text.count(old)!=expected:raise RuntimeError('Mutation anchor '+name+' count='+str(text.count(old)))
                 case(name,{file:text.replace(old,new)},True)

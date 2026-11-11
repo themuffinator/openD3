@@ -25,8 +25,8 @@ def main() -> int:
     impulse = dict(origin=[614.047, 215.628, 19.222], velocity=[36.745, -168.359, 31.18],
                    kick=[36.745, 477.541, 143.544], health=7, damage=63, knock_msec=200)
     trials = [t for t in trials_for(impulse) if t["name"] in ("air11", "controller", "preController")]
-    exe = "openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64"
-    files = [runtime / exe, *[p for p in (runtime / "baseoq4").glob("game-mp*")
+    exe = "openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64"
+    files = [runtime / exe, *[p for p in (runtime / "baseod3").glob("game-mp*")
                              if p.suffix in (".dll", ".so", ".dylib")],
              ROOT / "src/mpgame/bots/Bot.cpp", ROOT / "src/mpgame/bots/NavMesh.cpp"]
     identity = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}

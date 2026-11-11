@@ -46,30 +46,30 @@ def body(source: str, signature: str) -> str:
 def main() -> None:
     source = MOVER.read_text(encoding="utf-8")
 
-    active = body(source, "static bool OpenQ4_TurboMoversActive( const idEntity *mover )")
-    if "OpenQ4_TurboModeActive() && mover->GetType() != &idMover::GetClassType()" not in active:
+    active = body(source, "static bool openD3_TurboMoversActive( const idEntity *mover )")
+    if "openD3_TurboModeActive() && mover->GetType() != &idMover::GetClassType()" not in active:
         raise AssertionError("turbo must exempt exactly idMover (func_mover) by type identity")
     if "IsType" in active:
         raise AssertionError("IsType would also exempt idMover subclasses such as func_elevator")
 
     for helper in ("Speed", "Seconds", "Milliseconds"):
-        definition = re.search(rf"static \w+ OpenQ4_TurboMover{helper}\( const idEntity \*mover, ", source)
+        definition = re.search(rf"static \w+ openD3_TurboMover{helper}\( const idEntity \*mover, ", source)
         if definition is None:
-            raise AssertionError(f"OpenQ4_TurboMover{helper} must take the mover")
-        if f"OpenQ4_TurboMoversActive( mover )" not in body(source, definition.group(0)):
-            raise AssertionError(f"OpenQ4_TurboMover{helper} must ask about its mover")
+            raise AssertionError(f"openD3_TurboMover{helper} must take the mover")
+        if f"openD3_TurboMoversActive( mover )" not in body(source, definition.group(0)):
+            raise AssertionError(f"openD3_TurboMover{helper} must ask about its mover")
 
-    calls = re.findall(r"OpenQ4_TurboMover(?:Speed|Seconds|Milliseconds)\( ([^,)]*)", source)
+    calls = re.findall(r"openD3_TurboMover(?:Speed|Seconds|Milliseconds)\( ([^,)]*)", source)
     stray = [arg for arg in calls if arg not in ("this", "const idEntity *mover")]
     if stray:
         raise AssertionError(f"turbo call sites must pass the mover; found {stray}")
 
     for signature, token in (
-        ("void idMover::Spawn( void )", "move_time		= OpenQ4_TurboMoverMilliseconds( this, move_time );"),
-        ("void idMover::Event_SetMoveTime( float time )", "OpenQ4_TurboMoverMilliseconds( this, SEC2MS( time ) )"),
-        ("void idMover::Event_SetMoveSpeed( float speed )", "OpenQ4_TurboMoverSpeed( this, speed )"),
-        ("void idMover_Binary::InitSpeed(", "OpenQ4_TurboMoverSpeed( this, mspeed ? mspeed : 100 )"),
-        ("void idMover_Binary::InitTime(", "OpenQ4_TurboMoverSeconds( this, mtime )"),
+        ("void idMover::Spawn( void )", "move_time		= openD3_TurboMoverMilliseconds( this, move_time );"),
+        ("void idMover::Event_SetMoveTime( float time )", "openD3_TurboMoverMilliseconds( this, SEC2MS( time ) )"),
+        ("void idMover::Event_SetMoveSpeed( float speed )", "openD3_TurboMoverSpeed( this, speed )"),
+        ("void idMover_Binary::InitSpeed(", "openD3_TurboMoverSpeed( this, mspeed ? mspeed : 100 )"),
+        ("void idMover_Binary::InitTime(", "openD3_TurboMoverSeconds( this, mtime )"),
     ):
         if token not in body(source, signature):
             raise AssertionError(f"{signature} no longer applies turbo through the mover-aware helper")

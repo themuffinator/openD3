@@ -39,7 +39,7 @@ def load_module(name: str, path: Path) -> ModuleType:
     return module
 
 
-VALIDATOR = load_module("opend3_validation_hardening_test", ROOT / "tools" / "validation" / "openq4_validate.py")
+VALIDATOR = load_module("opend3_validation_hardening_test", ROOT / "tools" / "validation" / "opend3_validate.py")
 
 
 def write_file(path: Path, data: bytes = b"x\n") -> None:
@@ -100,7 +100,7 @@ def validate_positive_integer_arguments() -> None:
             f"positive_int({value!r})",
         )
 
-    source = (ROOT / "tools" / "validation" / "openq4_validate.py").read_text(encoding="utf-8")
+    source = (ROOT / "tools" / "validation" / "opend3_validate.py").read_text(encoding="utf-8")
     for token in (
         'parser.add_argument("--jobs", "-j", type=positive_int',
         'parser.add_argument("--runtime-timeout", type=positive_int',
@@ -171,8 +171,8 @@ def validate_source_and_build_dir_guards() -> None:
 
 
 def validate_game_libs_repo_guards() -> None:
-    game_libs_target = WORK / "OpenD3-GameLibs-real"
-    game_libs_link = WORK / "OpenD3-GameLibs-link"
+    game_libs_target = WORK / "openD3-GameLibs-real"
+    game_libs_link = WORK / "openD3-GameLibs-link"
     write_file(game_libs_target / "src" / "game" / "Game_local.cpp")
 
     expect_validation_error(
@@ -191,15 +191,15 @@ def validate_game_libs_repo_guards() -> None:
 
     alias_args = argparse.Namespace(game_libs_repo="", build_gamelibs=True, skip_icon_sync=True)
     original_primary = os.environ.get("OPEND3_GAMELIBS_REPO")
-    original_legacy = os.environ.get("OPENQ4_GAMELIBS_REPO")
+    original_legacy = os.environ.get("OPEND3_GAMELIBS_REPO")
     try:
         os.environ.pop("OPEND3_GAMELIBS_REPO", None)
-        os.environ["OPENQ4_GAMELIBS_REPO"] = str(game_libs_target)
+        os.environ["OPEND3_GAMELIBS_REPO"] = str(game_libs_target)
         alias_env = VALIDATOR.validation_env(alias_args, ROOT)
         expected_repo = str(game_libs_target.resolve())
         if alias_env.get("OPEND3_GAMELIBS_REPO") != expected_repo:
             raise AssertionError("legacy GameLibs override was not canonicalized")
-        if alias_env.get("OPENQ4_GAMELIBS_REPO") != expected_repo:
+        if alias_env.get("OPEND3_GAMELIBS_REPO") != expected_repo:
             raise AssertionError("legacy GameLibs compatibility alias did not mirror the canonical path")
         if alias_env.get("OPEND3_SKIP_ICON_SYNC") != "1":
             raise AssertionError("canonical icon-sync switch was not set")
@@ -209,9 +209,9 @@ def validate_game_libs_repo_guards() -> None:
         else:
             os.environ["OPEND3_GAMELIBS_REPO"] = original_primary
         if original_legacy is None:
-            os.environ.pop("OPENQ4_GAMELIBS_REPO", None)
+            os.environ.pop("OPEND3_GAMELIBS_REPO", None)
         else:
-            os.environ["OPENQ4_GAMELIBS_REPO"] = original_legacy
+            os.environ["OPEND3_GAMELIBS_REPO"] = original_legacy
 
     try:
         os.symlink(game_libs_target, game_libs_link, target_is_directory=True)
@@ -232,8 +232,8 @@ def validate_game_libs_repo_guards() -> None:
     )
 
     default_root = WORK / "default-gamelibs" / "openD3"
-    default_target = WORK / "default-gamelibs" / "OpenD3-GameLibs-real"
-    default_link = WORK / "default-gamelibs" / "OpenD3-GameLibs"
+    default_target = WORK / "default-gamelibs" / "openD3-GameLibs-real"
+    default_link = WORK / "default-gamelibs" / "openD3-GameLibs"
     write_file(default_root / "meson.build")
     write_file(default_target / "src" / "game" / "Game_local.cpp")
     try:
@@ -243,12 +243,12 @@ def validate_game_libs_repo_guards() -> None:
 
     default_args = argparse.Namespace(game_libs_repo="", build_gamelibs=False, skip_icon_sync=False)
     original_primary = os.environ.get("OPEND3_GAMELIBS_REPO")
-    original_legacy = os.environ.get("OPENQ4_GAMELIBS_REPO")
+    original_legacy = os.environ.get("OPEND3_GAMELIBS_REPO")
     try:
         os.environ.pop("OPEND3_GAMELIBS_REPO", None)
-        os.environ.pop("OPENQ4_GAMELIBS_REPO", None)
+        os.environ.pop("OPEND3_GAMELIBS_REPO", None)
         env = VALIDATOR.validation_env(default_args, default_root)
-        if Path(env["OPENQ4_GAMELIBS_REPO"]) != default_root.resolve():
+        if Path(env["OPEND3_GAMELIBS_REPO"]) != default_root.resolve():
             raise AssertionError("the canonical default must ignore a linked companion checkout")
     finally:
         if original_primary is None:
@@ -256,9 +256,9 @@ def validate_game_libs_repo_guards() -> None:
         else:
             os.environ["OPEND3_GAMELIBS_REPO"] = original_primary
         if original_legacy is None:
-            os.environ.pop("OPENQ4_GAMELIBS_REPO", None)
+            os.environ.pop("OPEND3_GAMELIBS_REPO", None)
         else:
-            os.environ["OPENQ4_GAMELIBS_REPO"] = original_legacy
+            os.environ["OPEND3_GAMELIBS_REPO"] = original_legacy
 
 
 def validate_staged_symlink_guard() -> None:
@@ -329,16 +329,16 @@ def validate_recursive_non_runtime_scan() -> None:
 
 def validate_staged_casefold_collision_guard() -> None:
     collision = VALIDATOR.first_staged_casefold_path_collision(
-        ["baseoq4/pak0.pk4", "OpenQ4.icns", "openQ4.icns"]
+        ["baseod3/pak0.pk4", "openD3.icns", "openD3.icns"]
     )
-    if collision != ("OpenQ4.icns", "openQ4.icns"):
+    if collision != ("openD3.icns", "openD3.icns"):
         raise AssertionError(f"unexpected casefold collision result: {collision!r}")
 
     root = WORK / "casefold-payload"
     install_root = root / ".install"
-    write_file(install_root / "OpenQ4.icns")
-    if not (install_root / "openQ4.icns").exists():
-        write_file(install_root / "openQ4.icns")
+    write_file(install_root / "openD3.icns")
+    if not (install_root / "openD3.icns").exists():
+        write_file(install_root / "openD3.icns")
         expect_validation_error(
             lambda: VALIDATOR.validate_no_staged_casefold_path_collisions(root, install_root),
             "case-insensitive duplicate paths",
@@ -651,7 +651,7 @@ def validate_windows_unified_staged_payload() -> None:
     )
     split_module.unlink()
 
-    legacy_game_dir = install_root / "baseoq4"
+    legacy_game_dir = install_root / "baseod3"
     write_file(legacy_game_dir / "pak0.pk4")
     with_host_flags(
         True,
@@ -659,13 +659,13 @@ def validate_windows_unified_staged_payload() -> None:
         False,
         lambda: expect_validation_error(
             lambda: VALIDATOR.validate_staged_payload(root, dry_run=False),
-            "obsolete OpenQ4/retail runtime layout",
-            "legacy OpenQ4 game directory in unified Windows payload",
+            "obsolete openD3/retail runtime layout",
+            "legacy openD3 game directory in unified Windows payload",
         ),
     )
     shutil.rmtree(legacy_game_dir)
 
-    legacy_executable = install_root / "openQ4-client_x64.exe"
+    legacy_executable = install_root / "openD3-client_x64.exe"
     write_file(legacy_executable)
     with_host_flags(
         True,
@@ -673,8 +673,8 @@ def validate_windows_unified_staged_payload() -> None:
         False,
         lambda: expect_validation_error(
             lambda: VALIDATOR.validate_staged_payload(root, dry_run=False),
-            "obsolete OpenQ4/retail runtime layout",
-            "legacy OpenQ4 executable in unified Windows payload",
+            "obsolete openD3/retail runtime layout",
+            "legacy openD3 executable in unified Windows payload",
         ),
     )
     legacy_executable.unlink()
@@ -687,7 +687,7 @@ def validate_windows_unified_staged_payload() -> None:
         False,
         lambda: expect_validation_error(
             lambda: VALIDATOR.validate_staged_payload(root, dry_run=False),
-            "obsolete OpenQ4/retail runtime layout",
+            "obsolete openD3/retail runtime layout",
             "retail game-module alias in unified Windows payload",
         ),
     )
@@ -776,7 +776,7 @@ def validate_python_test_failure_aggregation() -> None:
 
 
 def validate_validation_wiring() -> None:
-    validator = (ROOT / "tools" / "validation" / "openq4_validate.py").read_text(encoding="utf-8")
+    validator = (ROOT / "tools" / "validation" / "opend3_validate.py").read_text(encoding="utf-8")
     settings_coverage = (ROOT / "tools" / "tests" / "settings_menu_coverage.py").read_text(
         encoding="utf-8"
     )
@@ -799,7 +799,7 @@ def validate_validation_wiring() -> None:
         "validate_windows_symbols",
         "validate_no_non_runtime_artifacts",
         "DEFERRED_RELEASE_LANE_TESTS",
-        "INHERITED_OPENQ4_ONLY_TESTS",
+        "INHERITED_OPEND3_ONLY_TESTS",
         "DEFERRED_PREY_API_V7_TESTS",
         "TODO-D9",
         "TODO-RELEASE-LANES",
@@ -820,7 +820,7 @@ def validate_validation_wiring() -> None:
         if "validation_hardening.py" not in text:
             raise AssertionError(f"validation_hardening.py is not wired into {context}")
 
-    if 'os.environ.get("OPENQ4_GAMELIBS_REPO"' not in settings_coverage:
+    if 'os.environ.get("OPEND3_GAMELIBS_REPO"' not in settings_coverage:
         raise AssertionError("settings menu coverage ignores the configured GameLibs repository")
 
     # Runtime drivers need a built target package or retail assets. Helpers are
@@ -1066,7 +1066,7 @@ def validate_validation_wiring() -> None:
         "renderer_presentmon.py",
     }
     deferred_release_lane_tests = set(VALIDATOR.DEFERRED_RELEASE_LANE_TESTS)
-    inherited_openq4_only_tests = set(VALIDATOR.INHERITED_OPENQ4_ONLY_TESTS)
+    inherited_opend3_only_tests = set(VALIDATOR.INHERITED_OPEND3_ONLY_TESTS)
     deferred_prey_api_v7_tests = set(VALIDATOR.DEFERRED_PREY_API_V7_TESTS)
     expected_deferred_tests = {
         "linux_arm64_cross_compile.py",
@@ -1098,7 +1098,7 @@ def validate_validation_wiring() -> None:
         raise AssertionError(
             f"TODO-RELEASE-LANES exclusions name missing tests: {sorted(unknown_deferred_entries)}"
         )
-    if inherited_openq4_only_tests != {
+    if inherited_opend3_only_tests != {
         "campaign_split_state_transition.py",
         "game_class_allocator_alignment.py",
         "renderer_mp_flat_items.py",
@@ -1107,7 +1107,7 @@ def validate_validation_wiring() -> None:
         "ui_embedded_icons.py",
     }:
         raise AssertionError(
-            "inherited OpenQ4-only disposition must name the non-applicable campaign, allocator, flat-diffuse, multiplayer visibility, Quake settings-menu, and Quake obituary-icon contracts"
+            "inherited openD3-only disposition must name the non-applicable campaign, allocator, flat-diffuse, multiplayer visibility, Quake settings-menu, and Quake obituary-icon contracts"
         )
     expected_api_v7_deferrals = {
         "demo_playback.py",
@@ -1127,8 +1127,8 @@ def validate_validation_wiring() -> None:
     active_test_set = set(active_tests)
     if active_test_set.intersection(deferred_release_lane_tests):
         raise AssertionError("deferred release-lane tests leaked into active local validation")
-    if active_test_set.intersection(inherited_openq4_only_tests):
-        raise AssertionError("inherited OpenQ4-only tests leaked into active local validation")
+    if active_test_set.intersection(inherited_opend3_only_tests):
+        raise AssertionError("inherited openD3-only tests leaked into active local validation")
     if active_test_set.intersection(deferred_prey_api_v7_tests):
         raise AssertionError("Prey v7 API-deferred tests leaked into active local validation")
     if "macos_package_robustness.py" not in active_test_set:
@@ -1138,7 +1138,7 @@ def validate_validation_wiring() -> None:
         active_test_set,
         smoke_wiring_allowlist,
         deferred_release_lane_tests,
-        inherited_openq4_only_tests,
+        inherited_opend3_only_tests,
         deferred_prey_api_v7_tests,
     )
     if uncovered_tests:
@@ -1172,7 +1172,7 @@ def validate_validation_wiring() -> None:
     openal_start = windows_job.index(openal_step_name)
     openal_end = windows_job.index("\n      - name:", openal_start + len(openal_step_name))
     openal_step = windows_job[openal_start:openal_end]
-    # The project prefix is OPEND3_ with legacy OPENQ4_ aliases, so match the suffixes.
+    # The project prefix is OPEND3_ with legacy OPEND3_ aliases, so match the suffixes.
     for token in (
         "tools/build/prepare_windows_openal.ps1",
         '_VS_TARGET_ARCH = "x64"',

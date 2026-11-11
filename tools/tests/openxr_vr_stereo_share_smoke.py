@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stereo work sharing (VR-04) against the openQ4 OpenXR test runtime
+"""Stereo work sharing (VR-04) against the openD3 OpenXR test runtime
 (requires Pillow, a staged client built with OpenXR, and retail assets).
 
 Two eyes render one game frame. Work that does not depend on the eye is done
@@ -52,8 +52,8 @@ EYE = (10310.89, -6950.34, 6.96)
 # 40 degrees left of the start's facing, away from the dropship hull: with every
 # eye culling correctly, the hull, the wreck and the dune hid the screens there
 YAW = 190.7
-PREFIX = "textures/openq4/vr_share"
-MODEL = "models/openq4/vr_share/screen.ase"
+PREFIX = "textures/opend3/vr_share"
+MODEL = "models/opend3/vr_share/screen.ase"
 MATERIALS = f"""{PREFIX}/gui
 {{
 	translucent
@@ -113,7 +113,7 @@ def screen_spawns() -> list[str]:
     # 144-unit screens: the GUI and remote camera side by side, the mirror above the GUI against the
     # sky, all raised clear of the ground (lower, the terrain cuts into their bottom edges)
     screens = [(-155, 230.0, "mirror", ""), (0, 80.0, "remote", " cameraTarget vr_share_camera"),
-               (-155, 80.0, "gui", ' gui "guis/openq4_vr_share.gui"')]
+               (-155, 80.0, "gui", ' gui "guis/opend3_vr_share.gui"')]
     return [camera] + [f'spawn func_static name vr_share_{kind} model "{MODEL}" shader "{PREFIX}/{kind}" '
                        f'origin "{at(240, lateral, up)}" angle {facing} solid 0{extra}'
                        for lateral, up, kind, extra in screens]
@@ -144,7 +144,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--basepath", type=Path, required=True, help="installed retail Quake 4 assets")
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
     parser.add_argument("--build-dir", type=Path, default=ROOT / "builddir",
-                        help="build directory holding openq4_xr_test_runtime.json")
+                        help="build directory holding opend3_xr_test_runtime.json")
     parser.add_argument("--executable-name")
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--timeout", type=int, default=420)
@@ -153,8 +153,8 @@ def main(argv: list[str] | None = None) -> None:
     from PIL import Image, ImageChops, ImageStat
 
     staged = options.runtime_dir.resolve()
-    executable = options.executable_name or ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
-    manifest = (options.build_dir / "openq4_xr_test_runtime.json").resolve()
+    executable = options.executable_name or ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
+    manifest = (options.build_dir / "opend3_xr_test_runtime.json").resolve()
     if not (staged / executable).is_file() or not options.basepath.is_dir():
         parser.error("a staged client and installed Quake 4 assets are required")
     if not manifest.is_file():
@@ -164,13 +164,13 @@ def main(argv: list[str] | None = None) -> None:
     if output == staged or staged in output.parents or output in staged.parents:
         parser.error("output and staged runtime directories must not overlap")
     profile = output / options.render_api
-    game = profile / "baseoq4"
+    game = profile / "baseod3"
     game.mkdir(parents=True, exist_ok=True)
     for stale in list(game.glob("vr_marker_*.txt")) + list(profile.glob("xr_*.tga")):
         stale.unlink()
-    (game / "logs/openq4.log").unlink(missing_ok=True)
-    fixtures = {f"materials/openq4_vr_share.mtr": MATERIALS, "guis/openq4_vr_share.gui": GUI,
-                MODEL: backface_plane_ase().replace("textures/openq4/pbr_lab/neutral", f"{PREFIX}/remote")}
+    (game / "logs/opend3.log").unlink(missing_ok=True)
+    fixtures = {f"materials/opend3_vr_share.mtr": MATERIALS, "guis/opend3_vr_share.gui": GUI,
+                MODEL: backface_plane_ase().replace("textures/opend3/pbr_lab/neutral", f"{PREFIX}/remote")}
     for name, content in fixtures.items():
         (game / name).parent.mkdir(parents=True, exist_ok=True)
         (game / name).write_text(content, encoding="utf-8")
@@ -224,10 +224,10 @@ def main(argv: list[str] | None = None) -> None:
     args += ["+map", MAP]
     command = [str(staged / executable), *args]
     (profile / "command.json").write_text(json.dumps(command, indent=2), encoding="utf-8")
-    environment = {k: v for k, v in os.environ.items() if not k.startswith("OPENQ4_XR_TEST_")}
-    environment.update({"XR_RUNTIME_JSON": str(manifest), "OPENQ4_XR_TEST_EYE_SIZE": "800x880",
-                        "OPENQ4_XR_TEST_RATE": "60", "OPENQ4_XR_TEST_LOG": str(profile / "xr.jsonl"),
-                        "OPENQ4_XR_TEST_SCRIPT": str(profile / "xr_script.txt")})
+    environment = {k: v for k, v in os.environ.items() if not k.startswith("OPEND3_XR_TEST_")}
+    environment.update({"XR_RUNTIME_JSON": str(manifest), "OPEND3_XR_TEST_EYE_SIZE": "800x880",
+                        "OPEND3_XR_TEST_RATE": "60", "OPEND3_XR_TEST_LOG": str(profile / "xr.jsonl"),
+                        "OPEND3_XR_TEST_SCRIPT": str(profile / "xr_script.txt")})
     startup = None
     if os.name == "nt":
         startup = subprocess.STARTUPINFO()
@@ -236,7 +236,7 @@ def main(argv: list[str] | None = None) -> None:
     with (profile / "process.log").open("w", encoding="utf-8") as log:
         result = subprocess.run(command, cwd=staged, stdout=log, stderr=subprocess.STDOUT, env=environment,
                                 startupinfo=startup, timeout=options.timeout)
-    text = (game / "logs/openq4.log").read_text(encoding="utf-8", errors="replace")
+    text = (game / "logs/opend3.log").read_text(encoding="utf-8", errors="replace")
     assert result.returncode == 0 and "VR_SHARE_COMPLETE" in text, "the smoke did not complete"
     assert "OpenXR: presenting to the headset" in text, "the session never began"
 

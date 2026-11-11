@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Spoken-dialogue classification is independent of mixer priority and routing.
-#ifndef OPENQ4_SOUND_DIALOGUE_H
-#define OPENQ4_SOUND_DIALOGUE_H
+#ifndef OPEND3_SOUND_DIALOGUE_H
+#define OPEND3_SOUND_DIALOGUE_H
 
 #include <string_view>
 

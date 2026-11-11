@@ -3,7 +3,7 @@
 #include "Motion.h"
 #include <cstdint>
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 // Evaluate a compiled expression as bounded typed data, without changing its
 // variables or the previous result on failure. Unselected branches stay lazy.
@@ -64,7 +64,7 @@ public:
 private:
 	bool Evaluate(const StateValues& candidate, PropertyValues& props, std::map<std::string,bool>& controls,
 		StatePresentationSnapshot& output, std::map<std::string,ControlReadback>& readbacks, std::string& error) const;
-	// openQ4: re-evaluate only the bindings that read a changed variable,
+	// openD3: re-evaluate only the bindings that read a changed variable,
 	// in place once every evaluation has succeeded.
 	bool SetIncremental(const StateValues& overlay, std::string& error);
 	bool EvaluateDerived(const StateValues& base, const StateValues* overlay, StatePresentationSnapshot& output,
@@ -94,4 +94,4 @@ private:
 	bool allPropertiesChanged = true;
 };
 
-} // namespace openq4::ui
+} // namespace opend3::ui

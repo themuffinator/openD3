@@ -22,7 +22,7 @@ def main() -> None:
     gl_image = read("src/renderer/OpenGL/gl_Image.cpp")
     vk_image = read("src/renderer/Vulkan/vk_Image.cpp")
     docs = read("docs/user/display-settings.md")
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
 
     filter_values = (
         "GL_LINEAR_MIPMAP_LINEAR",

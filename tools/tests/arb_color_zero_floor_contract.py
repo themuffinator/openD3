@@ -2,7 +2,7 @@
 """Pin that the ARB light interaction programs load with a zero floor on their colour.
 
 The stock interaction programs never saturate N.L. Retail's RGBA8 framebuffer
-clamped the negative colour a light behind a surface writes; openQ4's RGBA16F
+clamped the negative colour a light behind a surface writes; openD3's RGBA16F
 scene target keeps it, so without the floor that light subtracts (q4xctf6's
 green cryo liquid turned magenta with SSAO on). The rewrite lives in
 src/renderer/ARBColorZeroFloor.h, and tools/tests/native/ARBColorZeroFloorTest.cpp
@@ -143,10 +143,10 @@ def validate_registration() -> None:
     native_block = meson[meson.find("if get_option('build_native_tests')"):]
     native_block = native_block[: native_block.find("\nendif")]
     require(native_block, "'tools/tests/native/ARBColorZeroFloorTest.cpp'", "meson.build native tests")
-    require(native_block, "'openq4-arb-color-zero-floor'", "meson.build native tests")
+    require(native_block, "'opend3-arb-color-zero-floor'", "meson.build native tests")
 
-    validator = read("tools/validation/openq4_validate.py")
-    require(validator, '"arb_color_zero_floor_contract.py"', "openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
+    require(validator, '"arb_color_zero_floor_contract.py"', "opend3_validate.py")
 
 
 def main() -> None:

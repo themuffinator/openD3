@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <limits>
 #define CHECK(x) do { if (!(x)) { std::fprintf(stderr,"line %d: %s\n",__LINE__,#x); std::exit(1); } } while (0)
-using namespace openq4;
+using namespace opend3;
 static bool Frame(FrameWorkProfile& profile, int frame, double start) {
 	profile.Begin(start);
 	for (int p=1; p<static_cast<int>(FrameWorkPhase::Tail); ++p) profile.Mark(static_cast<FrameWorkPhase>(p),start+p);

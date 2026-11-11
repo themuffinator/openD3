@@ -214,12 +214,12 @@ static bool GameSSD_ReadSaveBool( idFile *savefile, const char *fieldName ) {
 // write on every supported target (roadmap Q4-06).
 template< class type >
 static void GameSSD_ReadSaveField( idFile *savefile, type &value, const char *fieldName ) {
-	OpenQ4_ReadSaveGameField( savefile, value, "idGameSSDWindow::ReadFromSaveGame", fieldName );
+	openD3_ReadSaveGameField( savefile, value, "idGameSSDWindow::ReadFromSaveGame", fieldName );
 }
 
 template< class type >
 static void GameSSD_WriteSaveField( idFile *savefile, const type &value, const char *fieldName ) {
-	OpenQ4_WriteSaveGameField( savefile, value, "idGameSSDWindow::WriteToSaveGame", fieldName );
+	openD3_WriteSaveGameField( savefile, value, "idGameSSDWindow::WriteToSaveGame", fieldName );
 }
 
 static int GameSSD_ReadSaveVersion( idFile *savefile ) {

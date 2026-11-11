@@ -4,7 +4,7 @@
 #include <cmath>
 #include <exception>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 constexpr double DeviceTimeout = 20.0, ConfirmationTimeout = 15.0;
 bool Clock(double now, double previous) { return std::isfinite(now) && now >= 0 && now >= previous; }
@@ -236,4 +236,4 @@ void SettingsDisplayController::Frame(double now, bool ownerAlive, bool allowWor
 		const auto completion = result; Reset(); result = completion; lastCommitted = !restoring;
 	}
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

@@ -244,7 +244,7 @@ extern void stb_vorbis_flush_pushdata(stb_vorbis *f);
 #endif
 
 
-// openQ4: bounded virtual-filesystem input. The caller owns the handle and must
+// openD3: bounded virtual-filesystem input. The caller owns the handle and must
 // keep it alive until close. seek returns nonzero on success, read a byte count.
 typedef struct
 {
@@ -323,7 +323,7 @@ extern unsigned int stb_vorbis_stream_length_in_samples(stb_vorbis *f);
 extern float        stb_vorbis_stream_length_in_seconds(stb_vorbis *f);
 // these functions return the total length of the vorbis stream
 
-// openQ4: a stream whose final page carries no granule position (or whose
+// openD3: a stream whose final page carries no granule position (or whose
 // final page lies beyond trailing bytes) has no length, and stb_vorbis cannot
 // seek it. find_last_granule scans every page for the last one that carries a
 // position; set_length then supplies the length a complete decode counted, so
@@ -332,9 +332,9 @@ extern float        stb_vorbis_stream_length_in_seconds(stb_vorbis *f);
 typedef struct
 {
    unsigned int page_start, page_end, granule;
-} stb_vorbis_openq4_granule_page;
-extern int stb_vorbis_openq4_find_last_granule(stb_vorbis *f, stb_vorbis_openq4_granule_page *page);
-extern int stb_vorbis_openq4_set_length(stb_vorbis *f, unsigned int total_samples, const stb_vorbis_openq4_granule_page *page);
+} stb_vorbis_opend3_granule_page;
+extern int stb_vorbis_opend3_find_last_granule(stb_vorbis *f, stb_vorbis_opend3_granule_page *page);
+extern int stb_vorbis_opend3_set_length(stb_vorbis *f, unsigned int total_samples, const stb_vorbis_opend3_granule_page *page);
 
 extern int stb_vorbis_get_frame_float(stb_vorbis *f, int *channels, float ***output);
 // decode the next frame and return the number of samples. the number of
@@ -5073,8 +5073,8 @@ float stb_vorbis_stream_length_in_seconds(stb_vorbis *f)
    return stb_vorbis_stream_length_in_samples(f) / (float) f->sample_rate;
 }
 
-// openQ4: see the declarations of these two functions.
-int stb_vorbis_openq4_find_last_granule(stb_vorbis *f, stb_vorbis_openq4_granule_page *out)
+// openD3: see the declarations of these two functions.
+int stb_vorbis_opend3_find_last_granule(stb_vorbis *f, stb_vorbis_opend3_granule_page *out)
 {
    ProbedPage page;
    unsigned int restore_offset, end;
@@ -5099,7 +5099,7 @@ int stb_vorbis_openq4_find_last_granule(stb_vorbis *f, stb_vorbis_openq4_granule
    return found;
 }
 
-int stb_vorbis_openq4_set_length(stb_vorbis *f, unsigned int total_samples, const stb_vorbis_openq4_granule_page *page)
+int stb_vorbis_opend3_set_length(stb_vorbis *f, unsigned int total_samples, const stb_vorbis_opend3_granule_page *page)
 {
    if (IS_PUSH_MODE(f)) return error(f, VORBIS_invalid_api_mixing);
    if (stb_vorbis_stream_length_in_samples(f) != 0) return 0;

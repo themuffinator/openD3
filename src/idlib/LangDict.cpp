@@ -270,7 +270,7 @@ bool LangDict_LanguageNeedsScalableFonts( const char *language ) {
 	// Polish release shipped its own Central European set. Nothing shipped
 	// Cyrillic art at all, so Windows-1251 bytes land on blank slots.
 	//
-	// The languages openQ4 added have no retail release and so only ever find
+	// The languages openD3 added have no retail release and so only ever find
 	// the English atlases. For Czech, Hungarian and Turkish that is worse than
 	// a blank: their codepage bytes index Windows-1252 art, so c-caron would
 	// draw as e-grave and s-cedilla as thorn - wrong letters, not missing ones.

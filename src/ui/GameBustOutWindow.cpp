@@ -112,12 +112,12 @@ static void GameBustOut_ValidateEntityIndex( const char *fieldName, int index, i
 // write on every supported target (roadmap Q4-06).
 template< class type >
 static void GameBustOut_ReadSaveField( idFile *savefile, type &value, const char *fieldName ) {
-	OpenQ4_ReadSaveGameField( savefile, value, "idGameBustOutWindow::ReadFromSaveGame", fieldName );
+	openD3_ReadSaveGameField( savefile, value, "idGameBustOutWindow::ReadFromSaveGame", fieldName );
 }
 
 template< class type >
 static void GameBustOut_WriteSaveField( idFile *savefile, const type &value, const char *fieldName ) {
-	OpenQ4_WriteSaveGameField( savefile, value, "idGameBustOutWindow::WriteToSaveGame", fieldName );
+	openD3_WriteSaveGameField( savefile, value, "idGameBustOutWindow::WriteToSaveGame", fieldName );
 }
 
 static powerupType_t GameBustOut_ReadSavePowerup( idFile *savefile, const char *fieldName, int saveVersion ) {

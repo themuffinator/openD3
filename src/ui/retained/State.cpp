@@ -6,7 +6,7 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 // A state variable read: a pending change (the overlay) before the committed value.
 const StateValue* LookupState(const StateValues& variables, const StateValues* overlay, const std::string& name) {
@@ -293,7 +293,7 @@ bool State::Reset(std::shared_ptr<const DocumentModel> shared, std::string& erro
 	candidate.controlDeclarations = std::move(controls);
 	candidate.modelDeclarations = std::move(scenes);
 	candidate.model = std::move(shared);
-	// openQ4: index the bindings by the state they read, so a change
+	// openD3: index the bindings by the state they read, so a change
 	// re-evaluates only its dependents.
 	auto dependents = std::make_shared<std::map<std::string,std::vector<std::size_t>>>();
 	for (std::size_t index = 0; index < model.bindings.size(); ++index) {
@@ -512,4 +512,4 @@ bool State::OverrideProperties(const PropertyValues& values, bool overrideExpres
 	if (!values.empty()) ++revision;
 	return true;
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

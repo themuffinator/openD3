@@ -1,23 +1,23 @@
 /*
 ===========================================================================
 
-openQ4 Source Code
+openD3 Source Code
 Copyright (C) 2026 DarkMatter Productions
 
-This file is part of the openQ4 Source Code.
+This file is part of the openD3 Source Code.
 
-openQ4 Source Code is free software: you can redistribute it and/or modify
+openD3 Source Code is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-openQ4 Source Code is distributed in the hope that it will be useful,
+openD3 Source Code is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with openQ4 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+along with openD3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
 
 ===========================================================================
 */
@@ -30,7 +30,7 @@ along with openQ4 Source Code.  If not, see <http://www.gnu.org/licenses/>.
 
 	Self-contained TrueType outline reader and rasteriser.
 
-	openQ4 ships its own font files, so this only has to understand the subset
+	openD3 ships its own font files, so this only has to understand the subset
 	of the format those files use: 'glyf' outlines (simple and composite),
 	format 4 and 12 character maps, horizontal metrics and legacy 'kern'
 	pairs.  Deliberately no third-party dependency - the project keeps its

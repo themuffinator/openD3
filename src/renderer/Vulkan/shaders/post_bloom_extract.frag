@@ -1,7 +1,7 @@
 #version 450
 
 // Bloom bright pass into pyramid level 0. A port of
-// content/baseoq4/pak0/glprogs/bloom_extract.fs (RB_STD_Bloom). fragUV is
+// content/baseod3/pak0/glprogs/bloom_extract.fs (RB_STD_Bloom). fragUV is
 // OpenGL's texture coordinate; see post_ssao.frag.
 
 layout(set = 0, binding = 0) uniform sampler2D Scene;

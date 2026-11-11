@@ -29,13 +29,13 @@ def main():
             'set ui_retained 0','waitMsec 300','testWeaponScope','set ui_retained 1','waitMsec 300','testWeaponScope']
     for kind in ('machinegun','railgun','nailgun'):
         stages += [f'testGUI guis/weapons/{kind}_scope.q4ui','waitMsec 1200',
-                   'openq4_retainedGui state playerYaw 37',f'screenshot "screenshots/{kind}.tga"']
+                   'opend3_retainedGui state playerYaw 37',f'screenshot "screenshots/{kind}.tga"']
         if kind=='railgun':
-            stages += ['openq4_retainedGui state player_ammo 1','waitMsec 100','screenshot "screenshots/railgun-one.tga"']
+            stages += ['opend3_retainedGui state player_ammo 1','waitMsec 100','screenshot "screenshots/railgun-one.tga"']
         if kind=='nailgun':
-            stages += ['openq4_retainedGui pending lockStatus 1','openq4_retainedGui pending lockYaw 70',
-                       'openq4_retainedGui pending lockRange 12.4','openq4_retainedGui state lockTime 2.0',
-                       'openq4_retainedGui event lockAquired','waitMsec 500','screenshot "screenshots/nailgun-locked.tga"']
+            stages += ['opend3_retainedGui pending lockStatus 1','opend3_retainedGui pending lockYaw 70',
+                       'opend3_retainedGui pending lockRange 12.4','opend3_retainedGui state lockTime 2.0',
+                       'opend3_retainedGui event lockAquired','waitMsec 500','screenshot "screenshots/nailgun-locked.tga"']
     capture.SCENARIOS['scopes']=('game/airdefense1',stages)
     result=capture.run(args,'scopes')
     log=(ROOT/result['log']).read_text(encoding='utf-8',errors='replace')

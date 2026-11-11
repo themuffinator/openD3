@@ -448,7 +448,7 @@ namespace {
 	// This is intentionally a different format from BFG's trusted bproc stream.
 	// The BFG serializer was used only as a field inventory (models, portals and
 	// nodes); all bounds, validation and transactional publication below are
-	// openQ4-specific.
+	// openD3-specific.
 	static const unsigned int RENDER_WORLD_CACHE_MAGIC = 0x5734514fU; // "OQ4W"
 	static const int RENDER_WORLD_CACHE_VERSION = 2;
 	static const unsigned int RENDER_WORLD_CACHE_PARSER_VERSION = 4u;	// bump when the parsed models change; 3: surface ids were uninitialised before; 4: silhouette edges stopped at 65536
@@ -1375,7 +1375,7 @@ bool idRenderWorldLocal::ReadLevelLoadCachePayload( idFile &file, const char *ex
 R_RenderWorld_ParseSupportedMD5RProc
 
 Retail Quake 4 MD5RProc companions serialize shared packed buffers first and
-then attach per-area Model blocks that reference those shared arrays. openQ4
+then attach per-area Model blocks that reference those shared arrays. openD3
 now mirrors that layout directly while still accepting the older classic
 model / shadowModel fallback sections for compatibility.
 ================
@@ -2017,7 +2017,7 @@ void idRenderWorldLocal::ClearWorld() {
 ===========================
 idRenderWorldLocal::WriteMD5R
 
-Retail Quake 4 writes fully packed MD5RProc worlds from here. openQ4 now does
+Retail Quake 4 writes fully packed MD5RProc worlds from here. openD3 now does
 the same when the world was loaded from an MD5RProc companion and still has the
 shared packed buffer state resident, or when a classic proc world has already
 been converted into resident MD5R proc data during this session.

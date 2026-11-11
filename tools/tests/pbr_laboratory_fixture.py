@@ -25,7 +25,7 @@ def test_material_data_and_geometry() -> None:
         ramp=[s['roughness'] for s in stations if s['name'].startswith(metal+'_')]
         assert ramp==sorted(ramp) and ramp[0]==0.045 and ramp[-1]==1
     def texel(name: str) -> tuple:
-        raw=files[f'baseoq4/{lab.PREFIX}/{name}.tga']
+        raw=files[f'baseod3/{lab.PREFIX}/{name}.tga']
         assert struct.unpack_from('<HH',raw,12)==(64,64)
         return tuple(raw[18+c] for c in (2,1,0))
     ao,rough,metal=texel('orm')
@@ -33,10 +33,10 @@ def test_material_data_and_geometry() -> None:
     assert texel('metallic')==(metal,)*3 and texel('roughness')==(rough,)*3 and texel('ao')==(ao,)*3
     scalar=next(s for s in stations if s['name']=='data_scalar')['parameters']
     assert (scalar['metallic'],scalar['roughness'],scalar['ao'])==(metal/255,rough/255,ao/255)
-    cutout=files[f'baseoq4/{lab.PREFIX}/cutout.tga'][21::4]
+    cutout=files[f'baseod3/{lab.PREFIX}/cutout.tga'][21::4]
     assert cutout.count(0)==cutout.count(255)==2048
-    assert set(files[f'baseoq4/{lab.PREFIX}/translucent.tga'][21::4])=={112}
-    ase=files['baseoq4/'+lab.MODEL].decode()
+    assert set(files[f'baseod3/{lab.PREFIX}/translucent.tga'][21::4])=={112}
+    ase=files['baseod3/'+lab.MODEL].decode()
     vertices={int(i):(float(x),float(y),float(z)) for i,x,y,z in re.findall(r'\*MESH_VERTEX (\d+) ([^ ]+) ([^ ]+) ([^\n]+)',ase)}
     faces=re.findall(r'\*MESH_FACE (\d+): A: (\d+) B: (\d+) C: (\d+)',ase)
     assert len(faces)==48*46
@@ -45,14 +45,14 @@ def test_material_data_and_geometry() -> None:
         u=[vb[i]-va[i] for i in range(3)]; v=[vc[i]-va[i] for i in range(3)]
         cross=(u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0])
         assert sum(cross[i]*va[i] for i in range(3))>0, 'degenerate or inverted source sphere face'
-    level=files['baseoq4/'+lab.MAP+'.map'].decode()
+    level=files['baseod3/'+lab.MAP+'.map'].decode()
     assert 'classic_floor' in level and 'coverage_backplate' in level and '"light_target"' in level
     assert '"mtr_local_global_test"' in level
-    assert 'noSelfShadow' in files['baseoq4/materials/openq4_pbr_lab.mtr'].decode()
-    checker=files[f'baseoq4/{lab.PREFIX}/checker.tga'][18::3]
+    assert 'noSelfShadow' in files['baseod3/materials/opend3_pbr_lab.mtr'].decode()
+    checker=files[f'baseod3/{lab.PREFIX}/checker.tga'][18::3]
     assert checker.count(0)==checker.count(255)==2048
-    assert '*MESH_TVERT 0 2.37500000 2.37500000 0' in files['baseoq4/'+lab.SAMPLING_MODEL].decode()
-    plane = files['baseoq4/'+lab.BACKFACE_MODEL].decode()
+    assert '*MESH_TVERT 0 2.37500000 2.37500000 0' in files['baseod3/'+lab.SAMPLING_MODEL].decode()
+    plane = files['baseod3/'+lab.BACKFACE_MODEL].decode()
     plane_vertices = {int(i):(float(x),float(y),float(z)) for i,x,y,z in re.findall(r'\*MESH_VERTEX (\d+) ([^ ]+) ([^ ]+) ([^\n]+)',plane)}
     plane_faces = re.findall(r'\*MESH_FACE (\d+): A: (\d+) B: (\d+) C: (\d+)',plane)
     assert len(plane_vertices) == 4 and len(plane_faces) == 2
@@ -65,7 +65,7 @@ def test_material_data_and_geometry() -> None:
         # sits at local Y=10, so both geometric faces must reject that light.
         assert all(point[1] == 0 for point in (va,vb,vc))
         assert normal[1] * 10 < 0
-    mesh=files['baseoq4/models/openq4/pbr_lab/skinned.md5mesh'].decode()
+    mesh=files['baseod3/models/opend3/pbr_lab/skinned.md5mesh'].decode()
     weights=[(int(j),float(w)) for j,w in re.findall(r'weight \d+ (\d+) ([^ ]+) ',mesh)]
     assert {j for j,_ in weights}=={0,1}
     blended=0
@@ -118,10 +118,10 @@ def test_proof_rejects_fallback_and_missing_channels(root: Path) -> None:
     undefined=runner.inspect_capture(args,'lit',telemetry+'\nGL debug callback [source=api type=undefined severity=medium] invalid sampler',shot)
     assert undefined['diagnostics']
     assert not runner.diagnostic_lines('GL debug callback [source=api type=performance severity=medium] Program/shader state performance warning: recompiled')
-    startup={**runner.BASE,'fs_game':'baseoq4','fs_savepath':str(root),'fs_basepath':'stock','fs_devpath':str(root),'r_renderApi':'gl','r_glTier':'gl45'}
+    startup={**runner.BASE,'fs_game':'baseod3','fs_savepath':str(root),'fs_basepath':'stock','fs_devpath':str(root),'r_renderApi':'gl','r_glTier':'gl45'}
     command=runner.startup_args(startup,root)
     assert command.count('+set')+1<64
-    autoexec=(root/'baseoq4/autoexec.cfg').read_text()
+    autoexec=(root/'baseod3/autoexec.cfg').read_text()
     assert all(f'set {k} "{v}"' in autoexec for k,v in startup.items())
     assert len(manifest['sha256'])>=26
 

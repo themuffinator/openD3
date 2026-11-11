@@ -11,9 +11,9 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_LIBS_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)).resolve()
+GAME_LIBS_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)).resolve()
 
-# Engine-interface headers that openQ4-game carries as copies. The engine is
+# Engine-interface headers that openD3-game carries as copies. The engine is
 # authoritative: any content drift changes the effective virtual layouts the
 # standalone-built game modules are compiled against, which breaks the ABI at
 # the engine/game boundary even when GAME_API_VERSION still matches.
@@ -62,7 +62,7 @@ def read(relative_path: str) -> str:
 def read_game_libs(relative_path: str) -> str:
     path = GAME_LIBS_ROOT / relative_path
     if not path.is_file():
-        raise AssertionError(f"openQ4-game file not found: {path}")
+        raise AssertionError(f"openD3-game file not found: {path}")
     return path.read_text(encoding="utf-8")
 
 
@@ -99,9 +99,9 @@ def validate_companion_ci_revision() -> None:
     for name in ('commit-validation.yml','push-verification.yml','linux-arm64-cross.yml',
                  'macos-debug.yml','macos-sanitizer.yml','manual-release.yml','macos-universal2-candidate.yml'):
         source=read(f'.github/workflows/{name}')
-        reject(source,'OPENQ4_GAMELIBS_SHA','retired companion pin')
-        reject(source,'openQ4-game.git','retired companion fetch')
-        assert not re.search(r'^      openq4_game_ref:\s*$',source,re.MULTILINE), 'retired companion revision input'
+        reject(source,'OPEND3_GAMELIBS_SHA','retired companion pin')
+        reject(source,'openD3-game.git','retired companion fetch')
+        assert not re.search(r'^      opend3_game_ref:\s*$',source,re.MULTILINE), 'retired companion revision input'
         require(source,'actions/checkout@','canonical source checkout')
 
 
@@ -113,7 +113,7 @@ def validate_companion_boundary() -> None:
     assert not (ROOT / 'src' / 'mpgame').exists()
     require(meson,'game_libs_repo_root = meson.project_source_root()','in-tree source ownership')
     reject(meson,'stage_gamelibs.py','direct compiler inputs')
-    require(meson,"output: 'openq4_game_sources.json'",'canonical source inventory')
+    require(meson,"output: 'opend3_game_sources.json'",'canonical source inventory')
     inventory=read('tools/build/game_source_inventory.py')
     for field in ('projectGitCommit','gameLibsGitCommit','projectGitDirty','gameLibsGitDirty','sourceDigest'):
         require(inventory,field,'single-checkout provenance')
@@ -121,7 +121,7 @@ def validate_companion_boundary() -> None:
 
 def validate_companion_macos_contract() -> None:
     meson=read('meson.build')
-    modules=read('content/baseoq4/meson.build')
+    modules=read('content/baseod3/meson.build')
     for token in ("binary_arch = 'arm64'", "binary_arch = 'x64'",
                   "game_sp_binary_name = 'game-sp_' + binary_arch",
                   "game_mp_binary_name = 'game-mp_' + binary_arch"):
@@ -132,7 +132,7 @@ def validate_companion_macos_contract() -> None:
         require(modules,token,'in-tree macOS module install name')
     require(read('.github/workflows/commit-validation.yml'),'macos-15','in-tree macOS CI coverage')
     require(read('.github/workflows/push-verification.yml'),'macos-15-intel','in-tree macOS Intel CI coverage')
-    validator=read('tools/validation/openq4_validate.py')
+    validator=read('tools/validation/opend3_validate.py')
     require(validator,'lipo','staged Mach-O architecture validation')
     require(read('tools/build/package_nightly.py'),'macos_otool_install_name','packaged Mach-O install name validation')
     require(read('tools/build/package_nightly.py'),'macos_otool_dependencies','packaged Mach-O dependency validation')
@@ -145,10 +145,10 @@ def validate_game_module_symbol_discipline() -> None:
     translation unit compiles against."""
 
     engine_meson = read("meson.build")
-    module_meson = read("content/baseoq4/meson.build")
+    module_meson = read("content/baseod3/meson.build")
     engine_exports = read("tools/build/darwin_game_module.exp")
 
-    allowed_exports = {"_GetGameAPI", "_openQ4_Mem_GetModuleStats"}
+    allowed_exports = {"_GetGameAPI", "_openD3_Mem_GetModuleStats"}
     actual_exports = set()
     for line in engine_exports.splitlines():
         stripped = line.strip()
@@ -160,7 +160,7 @@ def validate_game_module_symbol_discipline() -> None:
 
     for token in (
         "game_idlib_library_mp = static_library(",
-        "'openq4_game_idlib_mp',",
+        "'opend3_game_idlib_mp',",
         "game_common_cpp_args + ['-DGAME_MPAPI'],",
         "game_idlib_mp_include_dirs",
         "darwin_game_module_export_list = files('tools/build/darwin_game_module.exp')",
@@ -182,7 +182,7 @@ def validate_game_module_symbol_discipline() -> None:
     lib_header = read("src/idlib/Lib.h")
     require(
         lib_header,
-        "#if defined( _DEBUG ) || defined( OPENQ4_ENABLE_IDLIB_ASSERTS )",
+        "#if defined( _DEBUG ) || defined( OPEND3_ENABLE_IDLIB_ASSERTS )",
         "idlib assert gate reachable on Clang",
     )
     require(read("meson_options.txt"), "'idlib_asserts',", "idlib assert build option")
@@ -204,7 +204,7 @@ def validate_build_string_contract() -> None:
 def validate_metadata_contract() -> None:
     packager = read("tools/build/package_nightly.py")
     collector = read("tools/macos/collect_macos_support_info.sh")
-    signoff = read("tools/macos/guest/openq4-macos-sync-build-test.sh")
+    signoff = read("tools/macos/guest/opend3-macos-sync-build-test.sh")
     validator = read("tools/macos/validate_signoff_archive.py")
     signoff_fixture = read("tools/tests/macos_signoff_archive.py")
 
@@ -213,10 +213,10 @@ def validate_metadata_contract() -> None:
         "GAMELIBS_STAGE_MANIFEST_NAME",
         "collect_package_repository_metadata",
         "read_staged_repository_metadata",
-        "openq4_commit",
-        "openq4_dirty",
-        "openq4_game_commit",
-        "openq4_game_dirty",
+        "opend3_commit",
+        "opend3_dirty",
+        "opend3_game_commit",
+        "opend3_game_dirty",
         "repository_metadata=repository_metadata",
     ):
         require(packager, token, "macOS package VERSION metadata contract")
@@ -224,8 +224,8 @@ def validate_metadata_contract() -> None:
     for token in (
         "package/build-metadata.txt",
         "package/app-VERSION.txt",
-        "openq4_commit",
-        "openq4_game_commit",
+        "opend3_commit",
+        "opend3_game_commit",
         "game-sp_*.dylib",
         "game-mp_*.dylib",
     ):
@@ -234,18 +234,18 @@ def validate_metadata_contract() -> None:
     for token in (
         "git_commit_or_unavailable",
         "git_dirty_or_unavailable",
-        "- openQ4 commit:",
-        "- openQ4 dirty:",
-        "- \\`openQ4-game\\` commit:",
-        "- \\`openQ4-game\\` dirty:",
+        "- openD3 commit:",
+        "- openD3 dirty:",
+        "- \\`openD3-game\\` commit:",
+        "- \\`openD3-game\\` dirty:",
     ):
         require(signoff, token, "macOS signoff provenance contract")
 
     for token in (
-        "- openQ4 commit:",
-        "- openQ4 dirty:",
-        "- `openQ4-game` commit:",
-        "- `openQ4-game` dirty:",
+        "- openD3 commit:",
+        "- openD3 dirty:",
+        "- `openD3-game` commit:",
+        "- `openD3-game` dirty:",
     ):
         require(validator, token, "macOS signoff archive provenance validator")
         require(signoff_fixture, token, "macOS signoff archive test fixture")
@@ -260,20 +260,20 @@ def validate_phase8_docs() -> None:
     signoff_evidence = read("docs/dev/macos-signoff-evidence.md")
 
     for token in (
-        "## Phase 8: Align `openQ4-game`",
+        "## Phase 8: Align `openD3-game`",
         "Phase 8 implementation status",
-        "[x] Keep `openQ4-game` Darwin/Clang support",
+        "[x] Keep `openD3-game` Darwin/Clang support",
         "[x] Add or keep static tests for `.dylib` names",
         "[x] Add or keep static tests for `@loader_path/<module>.dylib` install names",
         "[x] Make build strings report the actual macOS architecture",
         "[x] Add ABI/static checks for ARM64-sensitive game allocations",
-        "[x] Record both openQ4 and `openQ4-game` commits",
+        "[x] Record both openD3 and `openD3-game` commits",
     ):
         require(plan, token, "Phase 8 plan checklist")
 
     for token in (
         "Experimental macOS GameLibs alignment",
-        "openQ4 and `openQ4-game` commits",
+        "openD3 and `openD3-game` commits",
         "ARM64-sensitive allocation",
     ):
         require(release_completion, token, "release completion notes")
@@ -281,37 +281,37 @@ def validate_phase8_docs() -> None:
 
     for token in (
         "package/build-metadata.txt",
-        "openq4_commit",
-        "openq4_game_commit",
+        "opend3_commit",
+        "opend3_game_commit",
     ):
         require(support_data, token, "macOS support data guide")
 
-    require(signoff_evidence, "openQ4 commit and game-source inventory", "macOS signoff evidence index")
-    require(signoff_evidence, "both commit fields to the same openQ4 SHA", "macOS signoff evidence index")
+    require(signoff_evidence, "openD3 commit and game-source inventory", "macOS signoff evidence index")
+    require(signoff_evidence, "both commit fields to the same openD3 SHA", "macOS signoff evidence index")
 
     for token in (
-        "[x] Keep openQ4 staged builds as the release source of truth for game-module validation.",
+        "[x] Keep openD3 staged builds as the release source of truth for game-module validation.",
         "[x] Add a cross-repo validation note to the macOS evidence index",
         "[x] Verify `@loader_path/game-*.dylib` install names in release validation",
-        "[x] Add `../openQ4-game` macOS x86_64 CI for the experimental Intel corridor.",
-        "[x] Keep `openQ4-game` README support claims aligned with openQ4 platform support docs.",
-        "[x] Add a small scripted check in openQ4",
+        "[x] Add `../openD3-game` macOS x86_64 CI for the experimental Intel corridor.",
+        "[x] Keep `openD3-game` README support claims aligned with openD3 platform support docs.",
+        "[x] Add a small scripted check in openD3",
     ):
         require(compatibility_plan, token, "MAC-007 compatibility-plan status")
 
 
 def validate_wiring() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
     macos_debug = read(".github/workflows/macos-debug.yml")
     companion_workflow = read_game_libs(".github/workflows/commit-validation.yml")
 
-    require(validator, "macos_gamelibs_alignment.py", "local openQ4 validation wiring")
+    require(validator, "macos_gamelibs_alignment.py", "local openD3 validation wiring")
 
     for workflow, context in (
-        (commit, "openQ4 commit validation workflow"),
-        (push, "openQ4 push verification workflow"),
+        (commit, "openD3 commit validation workflow"),
+        (push, "openD3 push verification workflow"),
     ):
         require(workflow, "tools/tests/macos_gamelibs_alignment.py", context)
         if workflow.count("tools/tests/macos_gamelibs_alignment.py") < 2:

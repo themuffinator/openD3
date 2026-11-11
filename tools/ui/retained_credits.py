@@ -2,7 +2,7 @@
 CREDITS on the title opens it as LOAD GAME opens its page.
 
 Built by tools/ui/build_retained_screens.py, which writes and checks it with
-the other retained screens. The page is the stock p_credits of openQ4's
+the other retained screens. The page is the stock p_credits of openD3's
 mainmenu.gui, read at generation time for its layout and choreography but not
 its words: the Raven logo's light-up, then thirteen screens of headings and
 names, each line twice, in the rune face and in Lowpixel, translating from
@@ -31,7 +31,7 @@ from build_retained_screens import (ACCEL, CANVAS_W, FULL, ORANGE, ROOT, TITLE_S
                                     typeface, vector)
 from retained_saves import BACKING_STOPS, backing_x
 
-MAINMENU = ROOT / "content" / "baseoq4" / "pak0" / "guis" / "mainmenu.gui"
+MAINMENU = ROOT / "content" / "baseod3" / "pak0" / "guis" / "mainmenu.gui"
 SCREENS = 13
 ORDER = (1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 10, 9, 13)     # resettime's chain, then anim_credits again
 POINT = 72.0                                         # dp per unit of textscale (Lowpixel 0.25 is 18 dp)
@@ -242,7 +242,7 @@ def credits_document() -> dict:
     colours = parse_desktop(text)
     page = dict(blocks(text, "windowDef"))["p_credits"]
     windows = {name: own_properties(body) for name, body in blocks(page, "windowDef")}
-    doc = Document("openq4.credits")
+    doc = Document("opend3.credits")
     doc.session("back", "creditsBack")
     doc.events["onBack"] = [{"op": "action", "action": "back"}]
     info, screens = {}, []

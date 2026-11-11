@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Per-eye temporal AA in VR (VR-05) against the openQ4 OpenXR test runtime
+"""Per-eye temporal AA in VR (VR-05) against the openD3 OpenXR test runtime
 (requires Pillow, a staged client built with OpenXR, and retail assets).
 
 Each eye keeps its own temporal history: its view mixes its eye into its
@@ -44,7 +44,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--basepath", type=Path, required=True, help="installed retail Quake 4 assets")
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
     parser.add_argument("--build-dir", type=Path, default=ROOT / "builddir",
-                        help="build directory holding openq4_xr_test_runtime.json")
+                        help="build directory holding opend3_xr_test_runtime.json")
     parser.add_argument("--executable-name")
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--timeout", type=int, default=420)
@@ -54,8 +54,8 @@ def main(argv: list[str] | None = None) -> None:
     from PIL import Image
 
     staged = options.runtime_dir.resolve()
-    executable = options.executable_name or ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
-    manifest = (options.build_dir / "openq4_xr_test_runtime.json").resolve()
+    executable = options.executable_name or ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
+    manifest = (options.build_dir / "opend3_xr_test_runtime.json").resolve()
     if not (staged / executable).is_file() or not options.basepath.is_dir():
         parser.error("a staged client and installed Quake 4 assets are required")
     if not manifest.is_file():
@@ -65,11 +65,11 @@ def main(argv: list[str] | None = None) -> None:
     if output == staged or staged in output.parents or output in staged.parents:
         parser.error("output and staged runtime directories must not overlap")
     profile = output / f"{'mp' if options.mp else 'sp'}-{options.render_api}"
-    game = profile / "baseoq4"
+    game = profile / "baseod3"
     game.mkdir(parents=True, exist_ok=True)
     for stale in list(game.glob("vr_marker_*.txt")) + list(profile.glob("xr_*.tga")):
         stale.unlink()
-    (game / "logs/openq4.log").unlink(missing_ok=True)
+    (game / "logs/opend3.log").unlink(missing_ok=True)
 
     def marker(name: str) -> str:
         return str(game / f"vr_marker_{name}.txt")
@@ -132,10 +132,10 @@ def main(argv: list[str] | None = None) -> None:
     args += ["+spawnServer", MP_MAP] if options.mp else ["+map", SP_MAP]
     command = [str(staged / executable), *args]
     (profile / "command.json").write_text(json.dumps(command, indent=2), encoding="utf-8")
-    environment = {k: v for k, v in os.environ.items() if not k.startswith("OPENQ4_XR_TEST_")}
-    environment.update({"XR_RUNTIME_JSON": str(manifest), "OPENQ4_XR_TEST_EYE_SIZE": "800x880",
-                        "OPENQ4_XR_TEST_RATE": "60", "OPENQ4_XR_TEST_LOG": str(profile / "xr.jsonl"),
-                        "OPENQ4_XR_TEST_SCRIPT": str(profile / "xr_script.txt")})
+    environment = {k: v for k, v in os.environ.items() if not k.startswith("OPEND3_XR_TEST_")}
+    environment.update({"XR_RUNTIME_JSON": str(manifest), "OPEND3_XR_TEST_EYE_SIZE": "800x880",
+                        "OPEND3_XR_TEST_RATE": "60", "OPEND3_XR_TEST_LOG": str(profile / "xr.jsonl"),
+                        "OPEND3_XR_TEST_SCRIPT": str(profile / "xr_script.txt")})
     startup = None
     if os.name == "nt":
         startup = subprocess.STARTUPINFO()
@@ -144,7 +144,7 @@ def main(argv: list[str] | None = None) -> None:
     with (profile / "process.log").open("w", encoding="utf-8") as log:
         result = subprocess.run(command, cwd=staged, stdout=log, stderr=subprocess.STDOUT, env=environment,
                                 startupinfo=startup, timeout=options.timeout)
-    text = (game / "logs/openq4.log").read_text(encoding="utf-8", errors="replace")
+    text = (game / "logs/opend3.log").read_text(encoding="utf-8", errors="replace")
     assert result.returncode == 0 and "VR_TAA_COMPLETE" in text, "the smoke did not complete"
     assert "OpenXR: presenting to the headset" in text, "the session never began"
     status = text.partition("VR_TAA_STATUS")[2]

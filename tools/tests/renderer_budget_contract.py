@@ -26,7 +26,7 @@ import generate_pbr_fixture as pbr_fixture
 
 def load_benchmark() -> ModuleType:
     path = ROOT / "tools" / "tests" / "renderer_gameplay_benchmark.py"
-    spec = importlib.util.spec_from_file_location("openq4_renderer_gameplay_benchmark", path)
+    spec = importlib.util.spec_from_file_location("opend3_renderer_gameplay_benchmark", path)
     if spec is None or spec.loader is None:
         raise AssertionError("could not load renderer_gameplay_benchmark.py")
     module = importlib.util.module_from_spec(spec)
@@ -177,7 +177,7 @@ def test_benchmark_replay(base: Path) -> None:
     else:
         raise AssertionError("alternate benchmark runtime outside .tmp/stock-runtime must fail")
     suffix = ".exe" if os.name == "nt" else ""
-    executable = runtime_dir / f"openQ4-client_{harness.host_arch()}{suffix}"
+    executable = runtime_dir / f"openD3-client_{harness.host_arch()}{suffix}"
     executable.write_bytes(b"deterministic-client")
     fixture_paths = pbr_fixture.generate_fixture(
         runtime_dir, size=pbr_fixture.DEFAULT_TEXTURE_SIZE
@@ -231,7 +231,7 @@ def test_benchmark_replay(base: Path) -> None:
         / "mp-plan"
         / "savepaths"
         / f"{mp_spec.id}_server"
-        / "baseoq4"
+        / "baseod3"
         / dry_mp["serverAutoexecCfg"]
     ).read_text(encoding="utf-8")
     client_cfg = (
@@ -239,7 +239,7 @@ def test_benchmark_replay(base: Path) -> None:
         / "mp-plan"
         / "savepaths"
         / f"{mp_spec.id}_client"
-        / "baseoq4"
+        / "baseod3"
         / dry_mp["clientAutoexecCfg"]
     ).read_text(encoding="utf-8")
     assert f"waitMsec {harness.MP_SERVER_CLIENT_GRACE_MSEC}" in server_cfg
@@ -281,10 +281,10 @@ def test_benchmark_replay(base: Path) -> None:
         str(base / "mp-plan" / "savepaths" / f"{mp_spec.id}_server")
     ]
     savepath = base / "evidence" / "savepaths" / "case"
-    log = savepath / "baseoq4" / "logs" / "case.log"
+    log = savepath / "baseod3" / "logs" / "case.log"
     stdout = base / "evidence" / "case.out.txt"
     stderr = base / "evidence" / "case.err.txt"
-    screenshot = savepath / "baseoq4" / "screenshots" / "renderer-bench" / "sp_0.tga"
+    screenshot = savepath / "baseod3" / "screenshots" / "renderer-bench" / "sp_0.tga"
     log.parent.mkdir(parents=True)
     stdout.parent.mkdir(parents=True, exist_ok=True)
     marker = timing_marker(map_name="game/airdefense1")
@@ -330,7 +330,7 @@ def test_benchmark_replay(base: Path) -> None:
         harness.PBR_ACCEPTANCE_GL_CVARS,
         gpu_timers=True,
     )
-    autoexec_path = savepath / "baseoq4" / autoexec_cfg
+    autoexec_path = savepath / "baseod3" / autoexec_cfg
     role = harness.evaluate_role_result(
         spec,
         "sp",
@@ -789,12 +789,12 @@ def test_benchmark_replay(base: Path) -> None:
     def functional_fixture_report(render_api: str, tier: str) -> tuple[dict, Path]:
         evidence_root = base / f"functional-{render_api}-{tier}"
         fixture_savepath = evidence_root / "savepaths" / "case"
-        fixture_log = fixture_savepath / "baseoq4" / "logs" / "case.log"
+        fixture_log = fixture_savepath / "baseod3" / "logs" / "case.log"
         fixture_stdout = evidence_root / "case.out.txt"
         fixture_stderr = evidence_root / "case.err.txt"
         fixture_screenshot = (
             fixture_savepath
-            / "baseoq4"
+            / "baseod3"
             / "screenshots"
             / "renderer-bench"
             / "sp_0.tga"
@@ -851,7 +851,7 @@ def test_benchmark_replay(base: Path) -> None:
             gpu_timers=False,
             renderer_metrics=False,
         )
-        fixture_cfg_path = fixture_savepath / "baseoq4" / fixture_cfg
+        fixture_cfg_path = fixture_savepath / "baseod3" / fixture_cfg
         fixture_role = harness.evaluate_role_result(
             fixture_spec,
             "sp",
@@ -1167,7 +1167,7 @@ def test_scene_views(base: Path) -> None:
     for spec, expected_filter, expected_settle in zip(specs, ("first", "second"), (360, 720)):
         plan = harness.run_sp_spec(ROOT, base / "client", base / spec.case_id, "", "scene-test", spec, args)
         assert plan["args"][-3:] == ["+map", "game/storage1", expected_filter]
-        cfg = (base / spec.case_id / "savepaths" / spec.id / "baseoq4" / plan["autoexecCfg"]).read_text()
+        cfg = (base / spec.case_id / "savepaths" / spec.id / "baseod3" / plan["autoexecCfg"]).read_text()
         evidence = harness.parse_benchmark_config(cfg)
         assert evidence.entity_filter == expected_filter and evidence.scene_map == "game/storage1"
         assert evidence.settle_frames == expected_settle
@@ -1176,8 +1176,8 @@ def test_scene_views(base: Path) -> None:
         for mutation in (
             cfg.replace(f"echo {harness.VIEW_END}\n", ""),
             cfg.replace(f"echo {harness.VIEW_BEGIN}\n", f"echo {harness.VIEW_BEGIN}\n" * 2),
-            cfg.replace(f"echo {harness.VIEW_END}\nopenq4_assertMapState game/storage1 {expected_filter}",
-                        f"echo {harness.VIEW_END}\nopenq4_assertMapState game/storage1 other"),
+            cfg.replace(f"echo {harness.VIEW_END}\nopend3_assertMapState game/storage1 {expected_filter}",
+                        f"echo {harness.VIEW_END}\nopend3_assertMapState game/storage1 other"),
         ):
             try:
                 harness.parse_benchmark_config(mutation)
@@ -1187,7 +1187,7 @@ def test_scene_views(base: Path) -> None:
                 raise AssertionError("modified scene scaffold must fail replay")
 
     def snapshot(marker: str, z: str = "4.2", yaw: str = "90.0", entry: str = "second") -> str:
-        return (f"{marker} \nopenQ4 map state: map=game/storage1 entityFilter={entry} "
+        return (f"{marker} \nopenD3 map state: map=game/storage1 entityFilter={entry} "
                 f"expectedMap=game/storage1 expectedEntityFilter={entry}\n"
                 f"origin: (-2592.0 2504.0 {z}) angles: (-0.0 {yaw} -0.0)\n")
 
@@ -1219,7 +1219,7 @@ def test_scene_views(base: Path) -> None:
     )[1]
     intro = snapshot(harness.VIEW_BEGIN, "1000", entry="first") + snapshot(harness.VIEW_END, "2000", entry="first")
     assert not harness.evaluate_scene_view_evidence([("log", intro)], specs[0].scene_contract)[1]
-    for command in (f"echo {harness.VIEW_END}", "echo openQ4 map state:", "echo origin: (0 0 0)"):
+    for command in (f"echo {harness.VIEW_END}", "echo openD3 map state:", "echo origin: (0 0 0)"):
         try:
             harness.parse_exec_commands([command])
         except ValueError:
@@ -1232,8 +1232,8 @@ def test_fullscreen_pacing(base: Path) -> None:
     """Pacing uses its own display; an average cannot hide a frame over budget."""
     harness = load_benchmark()
     save = base / "fullscreen"
-    log = save / "baseoq4/logs/case.log"
-    shot = save / "baseoq4/screenshots/case.tga"
+    log = save / "baseod3/logs/case.log"
+    shot = save / "baseod3/screenshots/case.tga"
     log.parent.mkdir(parents=True)
     write_tga(shot, 2560, 1440)
     text = (

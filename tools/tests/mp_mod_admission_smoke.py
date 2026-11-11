@@ -7,7 +7,7 @@ with hidden windows and no operating-system input. The server runs a test mod
 
 * matching content: a client with the same package (plus an extra local
   package the server lacks) joins, and the extra package stays outside the pure
-  search path; both peers load the baseoq4 game module;
+  search path; both peers load the baseod3 game module;
 * a client launched without the mod switches to the server's game directory;
 * a client missing the package, or holding an altered package of the same name,
   is refused and never enters the game;
@@ -16,7 +16,7 @@ with hidden windows and no operating-system input. The server runs a test mod
 * a mod module in the trusted executable root is refused for pure startup
   until the operator sets `net_serverAllowServerMod 1`, then loads from the mod;
 * a mod with a broken `mod.json` is ignored and the server runs the normal
-  openQ4 game (its strings resolve), which an ordinary client joins.
+  openD3 game (its strings resolve), which an ordinary client joins.
 
 The trusted-root scenario writes `<runtime>/oq4modsmoke/` and removes it again.
 """
@@ -59,8 +59,8 @@ def manifest(folder: Path) -> None:
     # ignores fs_game and the server quietly runs the base game instead.
     (folder / "mod.json").write_text(json.dumps({
         "name": "MP-08 mod smoke", "version": "1.0", "releaseDate": "2026-11-03",
-        "website": "https://www.darkmatter-quake.com", "author": "openQ4 tests",
-        "requiredopenQ4Version": "0.13.2"}), encoding="utf-8")
+        "website": "https://www.darkmatter-quake.com", "author": "openD3 tests",
+        "requiredopenD3Version": "0.13.2"}), encoding="utf-8")
 
 
 class Scenario:
@@ -75,19 +75,19 @@ class Scenario:
 
     def log(self, role: str) -> str:
         texts = []
-        for path in sorted(self.saves[role].glob("*/logs/openq4.log")):
+        for path in sorted(self.saves[role].glob("*/logs/opend3.log")):
             texts.append(path.read_text(encoding="utf-8", errors="replace"))
         return "\n".join(texts)
 
     def launch(self, role: str, game_dir: str, extra: dict[str, str] | None = None) -> None:
         server = role == "server"
         runtime = self.args.runtime_dir.resolve()
-        exe = runtime / (f"openQ4-ded_x64{SUFFIX}" if server else f"openQ4-client_x64{SUFFIX}")
+        exe = runtime / (f"openD3-ded_x64{SUFFIX}" if server else f"openD3-client_x64{SUFFIX}")
         # A client may switch to the server's game directory, so arm both.
-        for folder in (MOD, "baseoq4"):
+        for folder in (MOD, "baseod3"):
             self.game(role, folder).mkdir(parents=True, exist_ok=True)
             write_script(self.game(role, folder) / "mod_loop.cfg",
-                         ["waitMsec 750", "openq4_reportMPState", "exec mod_step.cfg", "exec mod_loop.cfg"])
+                         ["waitMsec 750", "opend3_reportMPState", "exec mod_step.cfg", "exec mod_loop.cfg"])
             write_script(self.game(role, folder) / "mod_step.cfg", ["// idle"])
         cvars = {
             "fs_basepath": str(self.args.basepath.resolve()), "fs_savepath": str(self.saves[role]),
@@ -95,7 +95,7 @@ class Scenario:
             "r_fullscreen": "0", "r_borderless": "0", "r_mode": "-1", "r_customWidth": "640",
             "r_customHeight": "360", "r_hiddenWindow": "1", "r_renderApi": "gl", "r_swapInterval": "0",
             "com_maxfps": "60", "in_mouse": "0", "in_joystick": "0", "s_noSound": "1",
-            "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1", "ui_autoJoin": "1",
+            "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1", "ui_autoJoin": "1",
             "ui_spectate": "Play", "ui_name": f"mod_{role}", "net_allowCheats": "1", "net_ip": "127.0.0.1",
             "net_enableIPv6": "0", "net_clientDownload": "0", "com_skipLoadingContinue": "1",
             "g_autoExecAfterMapLoad": "mod_loop.cfg", "g_autoExecAfterMapLoadDelayMs": "500",
@@ -192,15 +192,15 @@ def run_scenario(args, number: int, name: str, setup, expect_join: bool, *, clie
         record["alive_at_close"] = scenario.alive_at_close
         server, client = scenario.log("server"), scenario.log("client")
         record["server_mod_active"] = f"Ignoring fs_game '{MOD}'" not in server
-        record["server_game_dirs"] = sorted({p.parent.parent.name for p in scenario.saves["server"].glob("*/logs/openq4.log")})
+        record["server_game_dirs"] = sorted({p.parent.parent.name for p in scenario.saves["server"].glob("*/logs/opend3.log")})
         record["server_unknown_strings"] = len(re.findall(r"Unknown string id", server))
         record["server_module"] = module_line(server)
         record["client_module"] = module_line(client)
         record["server_warnings"] = sorted(set(re.findall(
-            r"[^\n]*(?:active mod supplies game code|No trusted openQ4 game module|Refusing game module)[^\n]*", server)))
+            r"[^\n]*(?:active mod supplies game code|No trusted openD3 game module|Refusing game module)[^\n]*", server)))
         record["client_refusal"] = sorted(set(m[:200] for m in REFUSAL.findall(client)))[:16]
         record["client_pure_refused"] = "Can't connect to the pure server" in client
-        record["client_game_dirs"] = sorted({p.parent.parent.name for p in scenario.saves["client"].glob("*/logs/openq4.log")})
+        record["client_game_dirs"] = sorted({p.parent.parent.name for p in scenario.saves["client"].glob("*/logs/opend3.log")})
         path_output = client.rsplit("\nMOD_PATH_DONE", 1)[0].rsplit("Current search path:", 1)[-1] if "MOD_PATH_DONE" in client else ""
         record["client_package_pure_status"] = pure_status(path_output, PACKAGE)
         record["client_extra_pure_status"] = pure_status(path_output, EXTRA)
@@ -229,7 +229,7 @@ def main() -> int:
     args = parser.parse_args()
     args.output_dir = args.output_dir.resolve()
     runtime = args.runtime_dir.resolve()
-    if not (runtime / f"openQ4-ded_x64{SUFFIX}").is_file() or not args.basepath.is_dir():
+    if not (runtime / f"openD3-ded_x64{SUFFIX}").is_file() or not args.basepath.is_dir():
         parser.error("a staged runtime and installed stock Quake 4 assets are required")
     if args.output_dir.exists() and any(args.output_dir.iterdir()):
         parser.error("output-dir must be empty to prevent stale runtime evidence")
@@ -268,15 +268,15 @@ def main() -> int:
     def trusted_module(s: Scenario):
         matching(s)
         trusted.mkdir()
-        shutil.copy2(runtime / "baseoq4" / MODULE, trusted / MODULE)
+        shutil.copy2(runtime / "baseod3" / MODULE, trusted / MODULE)
 
     scenarios = [
         (0, "content-match", matching, True, {}),
-        (1, "client-follows-server-mod", matching, True, {"client_game": "baseoq4"}),
+        (1, "client-follows-server-mod", matching, True, {"client_game": "baseod3"}),
         (2, "content-missing", missing, False, {}),
         (3, "content-altered", altered, False, {}),
         (4, "untrusted-module-locations", untrusted, True, {}),
-        (7, "broken-manifest-fallback", broken_manifest, True, {"client_game": "baseoq4"}),
+        (7, "broken-manifest-fallback", broken_manifest, True, {"client_game": "baseod3"}),
         (5, "mod-module-refused", trusted_module, False, {"expect_server_map": False}),
         (6, "mod-module-admitted", trusted_module, True, {"server_extra": {"net_serverAllowServerMod": "1"}}),
     ]
@@ -296,18 +296,18 @@ def main() -> int:
         if trusted.is_dir() and not trusted.is_symlink():
             shutil.rmtree(trusted)
 
-    base_module = str(runtime / "baseoq4" / MODULE)
+    base_module = str(runtime / "baseod3" / MODULE)
     mod_module = str(trusted / MODULE)
     by_name = {r["scenario"]: r for r in results}
     checks = {}
     for record in results:
         name = record["scenario"]
         if name == "broken-manifest-fallback":
-            # The broken mod is refused, and the server runs the normal openQ4
+            # The broken mod is refused, and the server runs the normal openD3
             # game rather than retail-only content.
             checks[name + ":mod_refused"] = not record["server_mod_active"]
-            checks[name + ":openq4_game_dir"] = record["server_game_dirs"] == ["baseoq4"]
-            checks[name + ":openq4_strings_resolve"] = record["server_unknown_strings"] == 0
+            checks[name + ":opend3_game_dir"] = record["server_game_dirs"] == ["baseod3"]
+            checks[name + ":opend3_strings_resolve"] = record["server_unknown_strings"] == 0
             checks[name + ":join_as_expected"] = record.get("joined") is True and "error" not in record
             checks[name + ":clean_exits"] = all(code == 0 for code in record["exits"].values())
             continue
@@ -335,8 +335,8 @@ def main() -> int:
         checks["content-match:extra_off_pure_list"] = match["client_extra_pure_status"] in ("off", "absent")
     status = "pass" if checks and all(checks.values()) else "fail"
     identity = {name: runtime / name for name in (
-        f"openQ4-client_x64{SUFFIX}", f"openQ4-ded_x64{SUFFIX}", f"baseoq4/{MODULE}", "baseoq4/pak0.pk4",
-        "baseoq4/pak1.pk4")}
+        f"openD3-client_x64{SUFFIX}", f"openD3-ded_x64{SUFFIX}", f"baseod3/{MODULE}", "baseod3/pak0.pk4",
+        "baseod3/pak1.pk4")}
     report = {"status": status, "checks": checks, "results": results,
               "runtime": str(runtime), "basepath": str(args.basepath),
               "source": subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip(),

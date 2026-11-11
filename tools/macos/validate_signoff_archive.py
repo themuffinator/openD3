@@ -50,14 +50,14 @@ REQUIRED_REPORT_TOKENS = (
     "MP game module path is present in the staged payload.",
     "macOS-facing renderer validation matrix completed.",
     "Desktop launcher was written for Finder/Terminal launch checks.",
-    "- openQ4 commit:",
-    "- openQ4 dirty:",
-    "- `openQ4-game` commit:",
-    "- `openQ4-game` dirty:",
+    "- openD3 commit:",
+    "- openD3 dirty:",
+    "- `openD3-game` commit:",
+    "- `openD3-game` dirty:",
     "Package layout contract is self-contained app",
     "## Manual Hardware Checklist",
     "mounted signed/notarized DMG",
-    "Drag only openQ4.app",
+    "Drag only openD3.app",
     "whole package payload",
     "Contents/Resources",
     "Contents/Frameworks",
@@ -83,8 +83,8 @@ REQUIRED_REPORT_TOKENS = (
     "## Bluetooth Devices",
     "## Staged Payload",
     "## Staged Binary Architectures",
-    "openQ4-client_",
-    "openQ4-ded_",
+    "openD3-client_",
+    "openD3-ded_",
     "Dedicated server:",
     "game-sp_",
     "game-mp_",
@@ -92,13 +92,13 @@ REQUIRED_REPORT_TOKENS = (
 
 
 REQUIRED_LOG_TOKENS = (
-    "Configuring openQ4",
-    "Compiling openQ4",
-    "Staging openQ4 into .install",
+    "Configuring openD3",
+    "Compiling openD3",
+    "Staging openD3 into .install",
     "Validated staged macOS payload",
     "Validated Quake 4 asset basepath",
-    "Running openQ4 macOS renderer smoke",
-    "Running openQ4 macOS multiplayer smoke",
+    "Running openD3 macOS renderer smoke",
+    "Running openD3 macOS multiplayer smoke",
     "Running macOS-facing renderer validation matrix",
     "Installed macOS launcher",
     "macOS runtime signoff report:",
@@ -236,7 +236,7 @@ def has_file_under(file_names: set[str], prefix: str) -> bool:
 
 
 def expected_signoff_archive_name(run_id: str) -> str:
-    return f"openq4-macos-results-{run_id}.tar.gz"
+    return f"opend3-macos-results-{run_id}.tar.gz"
 
 
 def validate_report(
@@ -367,7 +367,7 @@ def validate_signoff_archive(
             require(result_dir in top_dirs, f"Missing result directory for {bridge}: {result_dir}")
 
             report_name = f"{result_dir}/macos-runtime-signoff.md"
-            log_name = f"{result_dir}/openq4-macos-workflow.log"
+            log_name = f"{result_dir}/opend3-macos-workflow.log"
             report = read_text(archive, report_name)
             log_text = read_text(archive, log_name)
             validate_report(
@@ -403,7 +403,7 @@ def validate_signoff_archive(
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("archive", type=Path, help="Collected openQ4 macOS signoff .tar.gz archive.")
+    parser.add_argument("archive", type=Path, help="Collected openD3 macOS signoff .tar.gz archive.")
     parser.add_argument("--run-id", default="", help="Expected run ID. Defaults to inferring from result directories.")
     parser.add_argument("--action", default="signoff", help="Expected guest action in result directory names.")
     parser.add_argument("--bridges", default="opengl,metal", help="Comma-separated bridge list to require.")

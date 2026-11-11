@@ -470,7 +470,7 @@ elif host_machine.system() == 'windows'
   sdl_deps += cc.find_library('setupapi')
   sdl_deps += cc.find_library('winmm')
   # no opengl32: SDL3 loads the GL driver dynamically (WIN_GL_LoadLibrary);
-  # a static import lib here would drag GL back into openQ4's GL-free
+  # a static import lib here would drag GL back into openD3's GL-free
   # dedicated/module-only targets (verified: libSDL3.a has no wgl/gl imports)
 elif host_machine.system() == 'darwin'
   cdata.set('SDL_PLATFORM_APPLE', 1)
@@ -568,7 +568,7 @@ sdl3_dep = declare_dependency(
   link_with: sdl_lib,
   # Only the patched Windows native status paths are currently qualified.
   # The same version or another native backend does not imply this contract.
-  compile_args: host_machine.system() == 'windows' ? ['-DOPENQ4_SDL3_CHECKED_CLIPBOARD=1', '-DOPENQ4_SDL3_TEXT_PROVENANCE=1', '-DOPENQ4_SDL3_NATIVE_FENCE=1', '-DOPENQ4_SDL3_CHECKED_NATIVE_QUEUE=1'] : [],
+  compile_args: host_machine.system() == 'windows' ? ['-DOPEND3_SDL3_CHECKED_CLIPBOARD=1', '-DOPEND3_SDL3_TEXT_PROVENANCE=1', '-DOPEND3_SDL3_NATIVE_FENCE=1', '-DOPEND3_SDL3_CHECKED_NATIVE_QUEUE=1'] : [],
 )
 
 meson.override_dependency('sdl3', sdl3_dep)

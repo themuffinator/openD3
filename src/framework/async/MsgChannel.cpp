@@ -97,7 +97,7 @@ void idMsgChannel::Init( const netadr_t adr, const int id ) {
 	this->remoteAddress = adr;
 	this->id = id;
 	this->maxRate = 50000;
-	// openQ4: a channel is opened again without a Shutdown when a client
+	// openD3: a channel is opened again without a Shutdown when a client
 	// reconnects onto its old slot, when a listen server changes map and when a
 	// pure restart reconnects, and each used to leak the previous compressor
 	// and its 64 KiB buffer. The compressor is re-initialised per message, so
@@ -180,7 +180,7 @@ bool idMsgChannel::WriteMessageData( idBitMsg &out, const idBitMsg &msg ) {
 	idBitMsg tmp;
 	byte tmpBuf[MAX_MESSAGE_SIZE];
 	idBitMsg packed;
-	// openQ4: the zero-run coder spends six bits on a lone three-bit zero word,
+	// openD3: the zero-run coder spends six bits on a lone three-bit zero word,
 	// so data chosen for it grows - 0x88 bytes by a quarter, and never by more
 	// than double. Packing straight into the caller's MAX_MESSAGE_SIZE buffer
 	// made a 13 KiB backlog of such bytes a fatal idBitMsg overflow, which a
@@ -367,7 +367,7 @@ idMsgChannel::SendMessage
 int idMsgChannel::SendMessage( idPort &port, const int time, const idBitMsg &msg ) {
 	int totalLength;
 
-	// openQ4: a bot slot has a channel but no remote end.  Without this every
+	// openD3: a bot slot has a channel but no remote end.  Without this every
 	// unreliable send aimed at one reached idPort::SendPacket and produced an
 	// "unsupported address type" warning - a wall of them on every map load.
 	if ( remoteAddress.type == NA_BAD || remoteAddress.type == NA_BOT ) {

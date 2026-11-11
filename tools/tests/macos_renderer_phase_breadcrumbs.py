@@ -428,7 +428,7 @@ def validate_docs_and_release_notes() -> None:
 
 
 def validate_ci_and_local_wiring() -> None:
-    local_runner = read("tools/validation/openq4_validate.py")
+    local_runner = read("tools/validation/opend3_validate.py")
     require(local_runner, "macos_renderer_phase_breadcrumbs.py", "local validation runner")
 
 

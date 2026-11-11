@@ -401,7 +401,7 @@ srfTriangles_t *R_CreateVertexProgramTurboShadowVolume( const idRenderEntityLoca
 #else
 	// sil edges grow with the surface, so a large surface builds its sil
 	// planes on the heap rather than walking off the end of the stack
-	OPENQ4_ALLOC16_SCRATCH( glIndex_t, tempIndexes, tri->numSilEdges * 6 );
+	OPEND3_ALLOC16_SCRATCH( glIndex_t, tempIndexes, tri->numSilEdges * 6 );
 	glIndex_t *shadowIndexes = tempIndexes;
 #endif
 
@@ -592,7 +592,7 @@ srfTriangles_t *R_CreateTurboShadowVolume( const idRenderEntityLocal *ent,
 	glIndex_t *tempIndexes = newTri->indexes;
 	glIndex_t *shadowIndexes = newTri->indexes;
 #else
-	OPENQ4_ALLOC16_SCRATCH( glIndex_t, tempIndexes, tri->numSilEdges * 6 );
+	OPEND3_ALLOC16_SCRATCH( glIndex_t, tempIndexes, tri->numSilEdges * 6 );
 	glIndex_t *shadowIndexes = tempIndexes;
 #endif
 

@@ -45,7 +45,7 @@ struct StringList {
     }
     void AddUnique(const char* text) { values.emplace_back(text); }
 };
-struct RestoreScope { const void* file=nullptr; int layoutBuild=0; int version=0; } openQ4_saveGameRestore;
+struct RestoreScope { const void* file=nullptr; int layoutBuild=0; int version=0; } openD3_saveGameRestore;
 struct CVars { int copy=0; bool fullscreen=false;
     int GetCVarInteger(const char*) { return copy; } bool GetCVarBool(const char*) { return fullscreen; }
 } cvars, *cvarSystem=&cvars;
@@ -106,7 +106,7 @@ public:
     }
     void Stop() {
         if(liveRestore)throw std::logic_error("session stopped before restore unwound");
-        if(restoredObjectsUnwound && shouldFail && openQ4_saveGameRestore.file)
+        if(restoredObjectsUnwound && shouldFail && openD3_saveGameRestore.file)
             throw std::logic_error("restore error policy stayed armed during session teardown");
         ++stops; events.push_back("stop");
     }
@@ -131,22 +131,22 @@ public:
 MAIN = r'''
 void reset() {
     commonLocal=idCommonLocal(); sessionLocal=idSessionLocal();
-    openQ4_saveGameRestore={}; cvars=CVars(); renderer=Renderer(); renderSystem=&renderer;
+    openD3_saveGameRestore={}; cvars=CVars(); renderer=Renderer(); renderSystem=&renderer;
     arenaCampaign=Arena(); commands=Commands();
     com_errorEntered=0; com_editors=0; com_refreshOnPrint=true;
     clipboardWrites=flushes=shutdowns=0; ticks+=1000;
     liveRestore=restoredObjectsUnwound=false; events.clear();
 }
-void arm() { openQ4_saveGameRestore.file=&sessionLocal; openQ4_saveGameRestore.layoutBuild=1687; openQ4_saveGameRestore.version=5; }
+void arm() { openD3_saveGameRestore.file=&sessionLocal; openD3_saveGameRestore.layoutBuild=1687; openD3_saveGameRestore.version=5; }
 void transactions() {
     reset(); arm();
     assert(session->ExecuteSaveGameMapChange("Good"));
     assert(session->stops==0 && session->menus==0 && common->warnings==0);
-    assert(openQ4_saveGameRestore.file && clipboardWrites==0);
+    assert(openD3_saveGameRestore.file && clipboardWrites==0);
     reset(); arm(); session->shouldFail=true;
     assert(!session->ExecuteSaveGameMapChange("Damaged"));
-    assert(restoredObjectsUnwound && !openQ4_saveGameRestore.file && openQ4_saveGameRestore.layoutBuild==0 &&
-        openQ4_saveGameRestore.version==0);
+    assert(restoredObjectsUnwound && !openD3_saveGameRestore.file && openD3_saveGameRestore.layoutBuild==0 &&
+        openD3_saveGameRestore.version==0);
     assert((events==std::vector<std::string>{"unwind","warning","stop","menu","home"}));
     assert(session->stops==1 && session->loadGameFailure==idSessionLocal::LOADGAME_FAILURE_RESTORE);
     assert(common->warnings==1 && common->warning.find("bad saved object 17")!=std::string::npos);
@@ -216,7 +216,7 @@ def source(mutate=False):
     menu = (ROOT/'src/framework/Session_menu.cpp').read_text(encoding='utf-8')
     error = function_body(common, 'void idCommonLocal::Error(')
     if mutate:
-        before = 'code == ERP_DROP && openQ4_saveGameRestore.file != NULL'
+        before = 'code == ERP_DROP && openD3_saveGameRestore.file != NULL'
         assert before in error
         error = error.replace(before, 'false', 1)
     return '\n'.join([SUPPORT, error,

@@ -112,7 +112,7 @@ def write_rgb_tga(path: Path, width: int, height: int, value: int) -> None:
 def validate_shadow_effectiveness_image_gate() -> None:
     gameplay = load_test_module(
         "tools/tests/renderer_gameplay_benchmark.py",
-        "openq4_renderer_gameplay_shadow_image_contract",
+        "opend3_renderer_gameplay_shadow_image_contract",
     )
     tmp_root = ROOT / ".tmp"
     tmp_root.mkdir(exist_ok=True)
@@ -121,7 +121,7 @@ def validate_shadow_effectiveness_image_gate() -> None:
     ) as temp_name:
         temp = Path(temp_name)
         savepath = temp / "save"
-        actual = savepath / "baseoq4" / "screenshots" / "renderer-bench" / "sp_0.tga"
+        actual = savepath / "baseod3" / "screenshots" / "renderer-bench" / "sp_0.tga"
         references = temp / "references"
         reference = references / actual.name
         write_rgb_tga(actual, 4, 4, 0)
@@ -160,7 +160,7 @@ def validate_shadow_effectiveness_image_gate() -> None:
         generated_reference = (
             generated_references
             / "shadow-contract"
-            / "baseoq4"
+            / "baseod3"
             / "screenshots"
             / "renderer-bench"
             / "sp_0.tga"
@@ -190,7 +190,7 @@ def validate_shadow_effectiveness_image_gate() -> None:
 def validate_shared_interaction_shadow_runtime_contract() -> None:
     gameplay = load_test_module(
         "tools/tests/renderer_gameplay_benchmark.py",
-        "openq4_renderer_gameplay_shadow_runtime_contract",
+        "opend3_renderer_gameplay_shadow_runtime_contract",
     )
     aggregate = (
         "Renderer shared interaction: requested=1 prepared=1 valid=1 views=1 "
@@ -612,7 +612,7 @@ def validate_shared_interaction_shadow_runtime_contract() -> None:
 def validate_shared_interaction_shadow_profile_contract() -> None:
     gameplay = load_test_module(
         "tools/tests/renderer_gameplay_benchmark.py",
-        "openq4_renderer_gameplay_shadow_profile_contract",
+        "opend3_renderer_gameplay_shadow_profile_contract",
     )
 
     interaction_args = gameplay.parse_args(
@@ -781,7 +781,7 @@ def validate_shared_interaction_shadow_profile_contract() -> None:
 
     matrix = load_test_module(
         "tools/tests/renderer_validation_matrix.py",
-        "openq4_renderer_validation_shadow_profile_contract",
+        "opend3_renderer_validation_shadow_profile_contract",
     )
     expected_matrix_keys = {
         (profile, backend)
@@ -889,11 +889,11 @@ def validate_shared_interaction_shadow_profile_contract() -> None:
 def validate_runtime_failure_gates() -> None:
     gameplay = load_test_module(
         "tools/tests/renderer_gameplay_benchmark.py",
-        "openq4_renderer_gameplay_benchmark_contract",
+        "opend3_renderer_gameplay_benchmark_contract",
     )
     matrix = load_test_module(
         "tools/tests/renderer_validation_matrix.py",
-        "openq4_renderer_validation_matrix_contract",
+        "opend3_renderer_validation_matrix_contract",
     )
 
     signature_lines = {
@@ -2092,7 +2092,7 @@ def validate_shadow_filtering_contract() -> None:
         ),
         "the rotation is taken from the tile-local texel",
     )
-    gl_projected_source = read("content/baseoq4/pak0/glprogs/shadow_interaction.fs")
+    gl_projected_source = read("content/baseod3/pak0/glprogs/shadow_interaction.fs")
     gl_rotation = braced_body(gl_projected_source, "mat2 ShadowOffsetRotation(", "OpenGL projected rotation")
     require(gl_rotation, "floor( tileTexel )", "OpenGL hashes the tile-local texel")
     if "uShadowTexelSize" in gl_rotation:
@@ -2255,7 +2255,7 @@ def validate_shadow_filtering_contract() -> None:
     # not products of the Vulkan SPIR-V header generator. Keep their blocker,
     # filter-tier, and rotation contracts pinned independently so one backend
     # cannot silently drift or compile with a different kernel.
-    gl_projected = read("content/baseoq4/pak0/glprogs/shadow_interaction.fs")
+    gl_projected = read("content/baseod3/pak0/glprogs/shadow_interaction.fs")
     gl_blocker_search = braced_body(
         gl_projected,
         "float ProjectedPCSSRadius(",
@@ -2319,7 +2319,7 @@ def validate_shadow_filtering_contract() -> None:
         "OpenGL exact projected filter tiers",
     )
 
-    gl_point = read("content/baseoq4/pak0/glprogs/shadow_point_interaction.fs")
+    gl_point = read("content/baseod3/pak0/glprogs/shadow_point_interaction.fs")
     gl_point_samples = braced_body(
         gl_point,
         "float SamplePointShadow()",
@@ -2398,7 +2398,7 @@ def validate_projected_footprint_bias_contract() -> None:
             "Both OpenGL projected receiver uploads must provide the texel depth step"
         )
 
-    gl = read("content/baseoq4/pak0/glprogs/shadow_interaction.fs")
+    gl = read("content/baseod3/pak0/glprogs/shadow_interaction.fs")
     require(gl, "uniform float uShadowTexelDepthStep[4];", "OpenGL projected receiver")
     gl_footprint = braced_body(gl, "float ShadowFootprintBias(", "OpenGL footprint bias")
     require_order(
@@ -2718,7 +2718,7 @@ def validate_point_receiver_world_bias_contract() -> None:
             "r_shadowMapTexelBiasScale.GetFloat()",
             "r_shadowMapNormalOffsetScale.GetFloat()",
             "r_shadowMapPointMaxWorldBias.GetFloat()",
-            "#ifndef OPENQ4_RENDERER_VK_MODULE",
+            "#ifndef OPEND3_RENDERER_VK_MODULE",
             "R_ShadowMapPointStorageAdjustedReceiverSettings(",
             "false",
             "r_shadowMapPointHighPrecision.GetBool()",
@@ -2844,7 +2844,7 @@ def validate_point_receiver_world_bias_contract() -> None:
     )
 
     gl_point_vertex = read(
-        "content/baseoq4/pak0/glprogs/shadow_point_interaction.vs"
+        "content/baseod3/pak0/glprogs/shadow_point_interaction.vs"
     )
     require_order(
         gl_point_vertex,
@@ -5584,7 +5584,7 @@ def validate_fail_closed_target_and_stencil_behavior() -> None:
         (
             'cvarSystem->GetCVarString( "r_actualRenderApi" )',
             'idStr::Icmp( activeRenderApi, "vulkan" ) == 0',
-            "#ifdef OPENQ4_RENDERER_VK_MODULE",
+            "#ifdef OPEND3_RENDERER_VK_MODULE",
             "return VK_ShadowMap_TranslucentMomentsAvailable();",
             "#else",
             "return false;",
@@ -7583,7 +7583,7 @@ def validate_vulkan_receiver_scan_contract() -> None:
                                    "return false;", "needed = def->stencilReceiverNeeded;"),
                   "a remembered verdict stands only for the same model, skin, shader and program generation")
     note = braced_body(light, "void R_ShadowMapNoteEntityModel(", "entity receiver verdict recorder")
-    require_order(note, ("#ifdef OPENQ4_RENDERER_VK_MODULE",
+    require_order(note, ("#ifdef OPEND3_RENDERER_VK_MODULE",
                          "def->stencilReceiverInstance == model",
                          "def->stencilReceiverInstanceFrame == def->dynamicModelFrameCount",
                          "def->stencilReceiverNeeded = R_ModelReceiverNeedsStencil( model, def->parms );"),
@@ -7959,8 +7959,8 @@ def validate_point_cache_parity_and_receiver_cost_contract() -> None:
 
     # Receivers: no shadow work for unlit fragments, a balanced five-tap ring,
     # and the default nine taps as one pass over a four-by-four texel block.
-    gl_point = read("content/baseoq4/pak0/glprogs/shadow_point_interaction.fs")
-    gl_projected = read("content/baseoq4/pak0/glprogs/shadow_interaction.fs")
+    gl_point = read("content/baseod3/pak0/glprogs/shadow_point_interaction.fs")
+    gl_projected = read("content/baseod3/pak0/glprogs/shadow_interaction.fs")
     vk_point = read("src/renderer/Vulkan/shaders/interaction_shadow_point.frag")
     vk_projected = read("src/renderer/Vulkan/shaders/interaction_shadow.frag")
     require_order(
@@ -8012,7 +8012,7 @@ def validate_point_cache_parity_and_receiver_cost_contract() -> None:
             f"{context} receiver balanced five-tap ring",
         )
     require(
-        read("content/baseoq4/pak0/glprogs/shadow_point_caster.fs"),
+        read("content/baseod3/pak0/glprogs/shadow_point_caster.fs"),
         "clamp( depth, 0.0, 65024.0 / 65025.0 )",
         "packed point depth cannot wrap to the nearest value at the far envelope",
     )
@@ -8739,7 +8739,7 @@ def validate_static_cutout_caster_contract() -> None:
 
 
 def validate_ci_registration() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
 

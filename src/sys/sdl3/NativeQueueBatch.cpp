@@ -5,7 +5,7 @@
 #include <cstring>
 #include <limits>
 
-namespace openq4 {
+namespace opend3 {
 namespace {
 std::atomic<std::uint64_t> nextIngress{1};
 bool SameFence(const std::optional<OQ4_NativeFence>& a,const std::optional<OQ4_NativeFence>& b) {
@@ -263,4 +263,4 @@ bool NativeQueueIngress::ResetAfterRetirement(NativeQueueSource& source,std::str
         phase=Phase::Idle; requireFreshGeneration=true; retirementEpoch=status.providerEpoch; published={}; failure={}; error.clear(); return true;
     } catch(...) { return Fail(error,"Native source retirement observation failed"); }
 }
-} // namespace openq4
+} // namespace opend3

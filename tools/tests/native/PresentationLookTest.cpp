@@ -26,59 +26,59 @@ static float Normalize180(double degrees) {
 }
 
 static void AngleArithmetic() {
-	CHECK(Near(openq4::PresentationAngleDelta(179.0f, -179.0f), -2.0));
-	CHECK(Near(openq4::PresentationAngleDelta(-179.0f, 179.0f), 2.0));
-	CHECK(Near(openq4::PresentationAngleDelta(10.0f, 370.0f), 0.0));
-	CHECK(Near(openq4::PresentationAngleDelta(720.5f, 0.0f), 0.5));
-	CHECK(Near(openq4::PresentationAngleDelta(180.0f, 0.0f), -180.0));
-	CHECK(Near(openq4::PresentationAngleDelta(100000.25f, 99999.75f), 0.5, 0.01));
+	CHECK(Near(opend3::PresentationAngleDelta(179.0f, -179.0f), -2.0));
+	CHECK(Near(opend3::PresentationAngleDelta(-179.0f, 179.0f), 2.0));
+	CHECK(Near(opend3::PresentationAngleDelta(10.0f, 370.0f), 0.0));
+	CHECK(Near(opend3::PresentationAngleDelta(720.5f, 0.0f), 0.5));
+	CHECK(Near(opend3::PresentationAngleDelta(180.0f, 0.0f), -180.0));
+	CHECK(Near(opend3::PresentationAngleDelta(100000.25f, 99999.75f), 0.5, 0.01));
 
-	CHECK(openq4::PresentationRateShare(120.0f, -0.004, 1.0 / 60.0) == 0.0f);
-	CHECK(Near(openq4::PresentationRateShare(120.0f, 0.005, 1.0 / 60.0), 0.6));
-	CHECK(Near(openq4::PresentationRateShare(120.0f, 0.5, 1.0 / 60.0), 2.0));
-	CHECK(openq4::PresentationRateShare(120.0f, std::nan(""), 1.0 / 60.0) == 0.0f);
-	CHECK(openq4::PresentationRateShare(120.0f, 0.005, 0.0) == 0.0f);
+	CHECK(opend3::PresentationRateShare(120.0f, -0.004, 1.0 / 60.0) == 0.0f);
+	CHECK(Near(opend3::PresentationRateShare(120.0f, 0.005, 1.0 / 60.0), 0.6));
+	CHECK(Near(opend3::PresentationRateShare(120.0f, 0.5, 1.0 / 60.0), 2.0));
+	CHECK(opend3::PresentationRateShare(120.0f, std::nan(""), 1.0 / 60.0) == 0.0f);
+	CHECK(opend3::PresentationRateShare(120.0f, 0.005, 0.0) == 0.0f);
 
 	// The view followed its commands (including across the wrap), or it was
 	// held while the commands moved on (radial selector, scripted lock).
-	CHECK(openq4::PresentationLookCoupled(10.0f, 15.0f, 100.0f, 105.0f));
-	CHECK(openq4::PresentationLookCoupled(178.0f, -178.0f, -2.0f, 2.0f));
-	CHECK(openq4::PresentationLookCoupled(20.0f, 20.0f, 33.0f, 33.0f));
-	CHECK(!openq4::PresentationLookCoupled(20.0f, 20.0f, 33.0f, 38.0f));
-	CHECK(!openq4::PresentationLookCoupled(20.0f, 50.0f, 33.0f, 33.0f)); // teleport/SetViewAngles
+	CHECK(opend3::PresentationLookCoupled(10.0f, 15.0f, 100.0f, 105.0f));
+	CHECK(opend3::PresentationLookCoupled(178.0f, -178.0f, -2.0f, 2.0f));
+	CHECK(opend3::PresentationLookCoupled(20.0f, 20.0f, 33.0f, 33.0f));
+	CHECK(!opend3::PresentationLookCoupled(20.0f, 20.0f, 33.0f, 38.0f));
+	CHECK(!opend3::PresentationLookCoupled(20.0f, 50.0f, 33.0f, 33.0f)); // teleport/SetViewAngles
 }
 
 static void Correction() {
-	openq4::PresentationLookSample s;
+	opend3::PresentationLookSample s;
 	s.previousYaw = 10.0f; s.currentYaw = 20.0f;
 	s.appliedYaw = 200.0f; s.inputYaw = 205.0f; // the game's view keeps its own delta
 	s.fraction = 0.5f;
-	openq4::PresentationLookCorrection c = openq4::ComputePresentationLook(s);
+	opend3::PresentationLookCorrection c = opend3::ComputePresentationLook(s);
 	CHECK(c.valid && Near(c.yaw, 10.0) && Near(c.pitch, 0.0)); // 15 drawn -> 25 wanted
 
 	// not interpolating: only unapplied input turns the view
 	s.fraction = 1.0f;
-	c = openq4::ComputePresentationLook(s);
+	c = opend3::ComputePresentationLook(s);
 	CHECK(c.valid && Near(c.yaw, 5.0));
 
 	// pitch stops at the clamp the game will apply, from either side
 	s.previousPitch = 80.0f; s.currentPitch = 88.0f; s.appliedPitch = 10.0f; s.inputPitch = 20.0f;
 	s.fraction = 0.25f;
-	c = openq4::ComputePresentationLook(s);
+	c = opend3::ComputePresentationLook(s);
 	CHECK(c.valid && Near(82.0 + c.pitch, 89.0));
 	s.currentPitch = -88.5f; s.previousPitch = -88.5f; s.inputPitch = 0.0f;
-	c = openq4::ComputePresentationLook(s);
+	c = opend3::ComputePresentationLook(s);
 	CHECK(c.valid && Near(-88.5 + c.pitch, -89.0));
 
 	// discontinuities and malformed samples keep the authoritative view
 	s.inputPitch = s.appliedPitch;
 	s.inputYaw = s.appliedYaw + 120.0f;
-	CHECK(!openq4::ComputePresentationLook(s).valid);
+	CHECK(!opend3::ComputePresentationLook(s).valid);
 	s.inputYaw = std::nanf("");
-	CHECK(!openq4::ComputePresentationLook(s).valid);
+	CHECK(!opend3::ComputePresentationLook(s).valid);
 	s.inputYaw = s.appliedYaw;
 	s.minPitch = 10.0f; s.maxPitch = -10.0f;
-	CHECK(!openq4::ComputePresentationLook(s).valid);
+	CHECK(!opend3::ComputePresentationLook(s).valid);
 }
 
 // Input model: degrees turned by time t (seconds).
@@ -127,8 +127,8 @@ static RunResult Run(const Motion &motion, double drawHz, int bufferTics, bool l
 			float pitch = Normalize180(double(appliedPitch) + pitchDelta);
 			pitch = pitch > 89.0f ? 89.0f : (pitch < -89.0f ? -89.0f : pitch);
 			curPitch = pitch;
-			yawDelta = float(openq4::PresentationAngleDelta(curYaw, appliedYaw));
-			pitchDelta = float(openq4::PresentationAngleDelta(curPitch, appliedPitch));
+			yawDelta = float(opend3::PresentationAngleDelta(curYaw, appliedYaw));
+			pitchDelta = float(opend3::PresentationAngleDelta(curPitch, appliedPitch));
 			if (applied == 0) { prevYaw = curYaw; prevPitch = curPitch; }
 		}
 		if (applied < 1) {
@@ -137,18 +137,18 @@ static RunResult Run(const Motion &motion, double drawHz, int bufferTics, bool l
 		// the game observed tic `applied` when its command reached it
 		const double phase = (t - (applied + bufferTics) * tick) / tick;
 		const float fraction = float(phase < 0.0 ? 0.0 : (phase > 1.0 ? 1.0 : phase));
-		const double interpYaw = prevYaw + openq4::PresentationAngleDelta(curYaw, prevYaw) * fraction;
+		const double interpYaw = prevYaw + opend3::PresentationAngleDelta(curYaw, prevYaw) * fraction;
 		const double interpPitch = prevPitch + (curPitch - prevPitch) * fraction;
 		double drawnYaw = interpYaw, drawnPitch = interpPitch;
 		if (lateLook) {
-			openq4::PresentationLookSample s;
+			opend3::PresentationLookSample s;
 			s.previousYaw = prevYaw; s.currentYaw = curYaw;
 			s.previousPitch = prevPitch; s.currentPitch = curPitch;
 			s.appliedYaw = appliedYaw; s.appliedPitch = appliedPitch;
 			// GetPresentationViewAngles: the next command's angles if built now
 			s.inputYaw = float(motion.Yaw(t)); s.inputPitch = float(motion.Pitch(t));
 			s.fraction = fraction;
-			const openq4::PresentationLookCorrection c = openq4::ComputePresentationLook(s);
+			const opend3::PresentationLookCorrection c = opend3::ComputePresentationLook(s);
 			CHECK(c.valid);
 			drawnYaw += c.yaw;
 			drawnPitch += c.pitch;
@@ -157,7 +157,7 @@ static RunResult Run(const Motion &motion, double drawHz, int bufferTics, bool l
 		const double wantedYaw = motion.Yaw(t) + yawDelta;
 		double wantedPitch = Normalize180(motion.Pitch(t) + pitchDelta);
 		wantedPitch = wantedPitch > 89.0 ? 89.0 : (wantedPitch < -89.0 ? -89.0 : wantedPitch);
-		const double yawError = std::fabs(openq4::PresentationAngleDelta(float(drawnYaw), float(wantedYaw)));
+		const double yawError = std::fabs(opend3::PresentationAngleDelta(float(drawnYaw), float(wantedYaw)));
 		if (lateLook) {
 			r.maxLateError = std::fmax(r.maxLateError, std::fmax(yawError, std::fabs(drawnPitch - wantedPitch)));
 		} else {
@@ -166,7 +166,7 @@ static RunResult Run(const Motion &motion, double drawHz, int bufferTics, bool l
 		}
 		if (haveDrawn) {
 			// how far a draw turned beyond the input's own motion since the last draw
-			const double step = std::fabs(openq4::PresentationAngleDelta(float(drawnYaw), float(previousDrawn)));
+			const double step = std::fabs(opend3::PresentationAngleDelta(float(drawnYaw), float(previousDrawn)));
 			r.maxStep = std::fmax(r.maxStep, step - motion.YawSpeed() * (t - previousTime) * 1.01);
 		}
 		previousDrawn = drawnYaw;
@@ -217,7 +217,7 @@ static void HeldRates() {
 		const int commands = int(t / tick + 1e-9);
 		const double builtAt = commands * tick;
 		const float builtYaw = float(commands * rate * tick);
-		const float drawn = builtYaw + openq4::PresentationRateShare(rate, t - builtAt, tick);
+		const float drawn = builtYaw + opend3::PresentationRateShare(rate, t - builtAt, tick);
 		CHECK(Near(drawn, rate * t, 0.001));
 		if (i > 0) {
 			maxStep = std::fmax(maxStep, drawn - previousDrawn);
@@ -226,7 +226,7 @@ static void HeldRates() {
 	}
 	CHECK(maxStep <= rate / 240.0 + 0.001);
 	// A late command build (a stalled main thread) never extrapolates past one tick.
-	CHECK(Near(openq4::PresentationRateShare(rate, 0.25, tick), rate * tick));
+	CHECK(Near(opend3::PresentationRateShare(rate, 0.25, tick), rate * tick));
 }
 
 int main() {

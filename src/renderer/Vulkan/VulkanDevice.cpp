@@ -12,7 +12,7 @@
 ===============================================================================
 */
 
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
@@ -518,7 +518,7 @@ VK_Device_InitLoader
 volk resolves the loader itself on Windows and Linux. On macOS its Apple branch
 dlopens bare leaf names (libvulkan.dylib, libMoltenVK.dylib, ...), which dyld
 resolves against DYLD paths and /usr/local/lib but never against the app
-bundle -- so a MoltenVK shipped in openQ4.app/Contents/Frameworks is invisible
+bundle -- so a MoltenVK shipped in openD3.app/Contents/Frameworks is invisible
 to it, while SDL binds that same bundled copy because its own search list starts
 at @executable_path/../Frameworks/libMoltenVK.dylib.
 
@@ -568,7 +568,7 @@ bool VK_Device_InitLoader( void ) {
 	idStr exeDir = Sys_EXEPath();
 	exeDir.StripFilename();
 
-	// openQ4.app/Contents/MacOS/openQ4 -> openQ4.app/Contents/Frameworks, then
+	// openD3.app/Contents/MacOS/openD3 -> openD3.app/Contents/Frameworks, then
 	// either supported loose package layout: Frameworks/ or executable-adjacent.
 	const idStr bundled = exeDir + "/../Frameworks/libMoltenVK.dylib";
 	if ( VK_Device_AdoptLoaderAt( bundled.c_str() ) ) {
@@ -2469,4 +2469,4 @@ void VK_Device_FlushDeferredDestroys( int slot ) {
 	vkDeferredDestroyOverflow[ slot ].Clear();
 }
 
-#endif /* OPENQ4_RENDERER_VK_MODULE */
+#endif /* OPEND3_RENDERER_VK_MODULE */

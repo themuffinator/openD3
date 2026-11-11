@@ -16,7 +16,7 @@
 #include <set>
 #include <tuple>
 
-namespace openq4::imageRecovery {
+namespace opend3::imageRecovery {
 namespace {
 bool Fail(std::string& e,const char* text) noexcept {try{e=text;}catch(...){e.clear();}return false;}
 struct Writer {
@@ -150,4 +150,4 @@ bool Decode(std::string_view raw,unsigned direction,std::string_view attempt,Rec
         output.value=std::move(d);error.clear();return true;
     }catch(...){return Fail(error,"Image recovery decoding allocation failed");}
 }
-} // namespace openq4::imageRecovery
+} // namespace opend3::imageRecovery

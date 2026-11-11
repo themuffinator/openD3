@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)).resolve()
+GAME_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)).resolve()
 
 
 def read(root: Path, relative: str) -> str:
@@ -117,7 +117,7 @@ def validate_manifest_and_envelope_contract() -> None:
         require(header + source, token, "hardened format implementation")
     require(native_test, "ExerciseEnvelopeFailures", "native malformed-cache coverage")
     require(native_test, "ExerciseManifestFailures", "native manifest corruption coverage")
-    require(meson, "openq4-level-load-cache-format", "native Meson cache-format test")
+    require(meson, "opend3-level-load-cache-format", "native Meson cache-format test")
 
 
 def validate_pipeline_and_lifecycle() -> None:
@@ -156,7 +156,7 @@ def validate_pipeline_and_lifecycle() -> None:
         "ExerciseQueueSaturationFallback",
     ):
         require(pipeline_test, token, "native level-load pipeline coverage")
-    require(meson, "openq4-level-load-pipeline", "native Meson level-load pipeline test")
+    require(meson, "opend3-level-load-pipeline", "native Meson level-load pipeline test")
     require(filesystem, "std::lock_guard<std::mutex> lock( readCountMutex )", "worker read accounting")
     require(filesystem, "std::this_thread::get_id() == fileSystemMainThread", "main-thread pacifier")
     require(filesystem, "UsePreloadedLevelLoadSource", "source-authoritative preload substitution")

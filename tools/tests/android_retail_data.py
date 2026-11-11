@@ -15,7 +15,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 JAVA = r'''
-package com.darkmatter.openq4;
+package com.darkmatter.opend3;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -348,9 +348,9 @@ int main(){std::string path;while(std::getline(std::cin,path)){
         classes=scratch/'classes';classes.mkdir()
         javac=Path(args.javac).resolve();java=javac.with_name('java.exe' if os.name=='nt' else 'java')
         subprocess.run([str(javac),'--release','17','-d',str(classes),str(java_source),
-                        *(str(ROOT/'mobile/android/app/src/main/java/com/darkmatter/openq4'/name)
+                        *(str(ROOT/'mobile/android/app/src/main/java/com/darkmatter/opend3'/name)
                           for name in ('Pk4Checksum.java','RetailData.java'))],check=True)
-        subprocess.run([str(java),'-cp',str(classes),'com.darkmatter.openq4.RetailDataTest',str(scratch),
+        subprocess.run([str(java),'-cp',str(classes),'com.darkmatter.opend3.RetailDataTest',str(scratch),
                         str(args.retail_root.resolve()) if args.retail_root else ''],check=True)
 
 

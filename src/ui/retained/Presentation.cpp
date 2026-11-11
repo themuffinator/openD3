@@ -7,7 +7,7 @@
 #include <string_view>
 #include <utility>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 size_t Components(PresentationType type) {
 	switch (type) {

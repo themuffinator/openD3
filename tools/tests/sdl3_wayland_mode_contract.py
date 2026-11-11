@@ -3,7 +3,7 @@
 exclusive mode rule rely on.
 
 SDL's Wayland driver emulates exclusive modes per window and never switches
-the output. openQ4's strict window query therefore reads an exclusive window's
+the output. openD3's strict window query therefore reads an exclusive window's
 own fullscreen mode on native Wayland, and SYSTEM display descriptors keep the
 desktop size while an exclusive mode resizes a display's bounds. This test
 reads the pinned SDL source (the provisioned tree, or only these members of the
@@ -67,7 +67,7 @@ def sdl_facts(video: str, wayland: str, window: str) -> None:
             "SDL's Wayland preference no longer depends on wp_fifo_manager_v1")
 
 
-def openq4_rules() -> None:
+def opend3_rules() -> None:
     backend = (ROOT / "src/sys/sdl3/sdl3_backend.cpp").read_text(encoding="utf-8")
     observed = body(backend, "static const SDL_DisplayMode *SDL3_StrictObservedMode(")
     require("if (SDL3_IsNativeWaylandVideoDriver() && state.fullscreen && !state.fullscreenDesktop) {" in observed and
@@ -98,7 +98,7 @@ def main() -> int:
         source, provenance, _ = provision_source(args.sdl_source, dict(wrap["wrap-file"]), scratch, files=FILES)
         video, wayland, window = [(source / name).read_text(encoding="utf-8") for name in FILES]
         sdl_facts(video, wayland, window)
-        openq4_rules()
+        opend3_rules()
     finally:
         shutil.rmtree(scratch, ignore_errors=True)
     print(f"SDL Wayland mode contract: emulated exclusive modes, window mode, buffer and bounds facts pinned ({provenance['kind']})")

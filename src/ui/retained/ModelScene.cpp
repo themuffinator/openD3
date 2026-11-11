@@ -6,7 +6,7 @@
 #include <cmath>
 #include <limits>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 template<std::size_t N>
 bool Bounded(const std::array<double,N>& value, double minimum, double maximum) {

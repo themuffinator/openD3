@@ -3,7 +3,7 @@
 #include "NativeTextCollectionCoordinator.h"
 #include "../UserInterfaceNativeText.h"
 
-namespace openq4::ui {
+namespace opend3::ui {
 // Engine adapter for one constructing thread. It owns no GUI/backend pointer,
 // native store or Session route; every endpoint re-observes the injected route
 // and manager allocation registry. The engine supplies the route probe when it
@@ -26,4 +26,4 @@ private:
 	void* context;
 	const std::thread::id thread=std::this_thread::get_id();
 };
-} // namespace openq4::ui
+} // namespace opend3::ui

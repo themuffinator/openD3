@@ -41,7 +41,7 @@ def main():
         ROOT/'tools/tests/native/NativeEventDispositionTest.cpp',ROOT/'src/framework/KeyInput.h',ROOT/'src/sys/sys_public.h']
     files+=list((ROOT/'src/framework').glob('NativeInput*.h'))+list((ROOT/'src/sys/sdl3').glob('Native*.h'))
     files += [ROOT/n for n in ['src/sys/EventDisposition.h','src/sys/EventQueueContinuity.h','src/ui/retained/NativeTextDocument.h',
-        'src/ui/retained/TextInput.h','src/ui/retained/TextInputBroker.h','subprojects/packagefiles/sdl3/include/SDL3/SDL_openq4_native_fence.h',
+        'src/ui/retained/TextInput.h','src/ui/retained/TextInputBroker.h','subprojects/packagefiles/sdl3/include/SDL3/SDL_opend3_native_fence.h',
         'tools/tests/native_event_disposition.py','tools/tests/sdl3_clipboard_status.py','subprojects/sdl3.wrap']]
     sdl_headers={name:sha(sdl/'SDL3'/name) for name in disposition_test.SDL_HEADERS}
     original={str(n.relative_to(ROOT)):sha(n) for n in files}

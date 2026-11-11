@@ -106,8 +106,8 @@ def unplanned_pad_replay(runtime: Path, executable: str, basepath: Path, output:
         result["failures"].insert(0, "Replay did not complete")
     result.update({"exit_code": code, "elapsed_seconds": round(time.monotonic() - started, 2),
                    "identity": {str(p): file_sha256(p) for p in
-                                (runtime / executable, runtime / "baseoq4/pak0.pk4", runtime / "baseoq4/pak1.pk4",
-                                 *[p for p in (runtime / "baseoq4").glob("game-mp*") if p.suffix in (".dll", ".so", ".dylib")])},
+                                (runtime / executable, runtime / "baseod3/pak0.pk4", runtime / "baseod3/pak1.pk4",
+                                 *[p for p in (runtime / "baseod3").glob("game-mp*") if p.suffix in (".dll", ".so", ".dylib")])},
                    "scope": "One isolated q4ctf5 bot on walking legs clear of func_jumppad_14 with momentum toward it; "
                             "no enemies. Bounded regression, not match acceptance."})
     (output / "report.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
@@ -118,7 +118,7 @@ def unplanned_pad_replay(runtime: Path, executable: str, basepath: Path, output:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
-    parser.add_argument("--executable-name", default="openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    parser.add_argument("--executable-name", default="openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     parser.add_argument("--basepath", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, default=ROOT / ".tmp/mp-bot-jump-replay")
     parser.add_argument("--port", type=int, default=28972)
@@ -138,7 +138,7 @@ def main() -> int:
     verify_runtime_is_current(runtime, args.executable_name)
     if args.unplanned_pad:
         return unplanned_pad_replay(runtime, args.executable_name, basepath, output, args.port)
-    game = output / "save/baseoq4"
+    game = output / "save/baseod3"
     game.mkdir(parents=True)
     command_name = "bot_probePad" if args.pad_impulse else "bot_probeJump"
     state = ("1538 108 434 822 -10 412 2452 76 256 func_jumppad_11" if args.pad_impulse else
@@ -161,7 +161,7 @@ def main() -> int:
         *[f"{command_name} {client} {state}" for client in ("0", "-1", "214748364800", "1.5")],
         f"{command_name} 1 {state}", "set bot_pause 0", "waitMsec 1500",
         'screenshot "screenshots/dm8-jump.tga"', "waitMsec 3500",
-        "openq4_reportMPState", "echo MP_BOT_JUMP_REPLAY_END", "quit",
+        "opend3_reportMPState", "echo MP_BOT_JUMP_REPLAY_END", "quit",
     ]
     (game / "jump_replay.cfg").write_text("\n".join(script) + "\n", encoding="utf-8")
     (output / "runner.py").write_bytes(Path(__file__).read_bytes())
@@ -174,7 +174,7 @@ def main() -> int:
         "r_windowWidth": "960", "r_windowHeight": "540", "r_renderApi": "gl",
         "r_swapInterval": "0", "com_maxfps": "60", "ui_retained": "0",
         "fs_basepath": str(basepath), "fs_savepath": str(game.parent), "fs_devpath": str(game.parent),
-        "fs_game": "baseoq4", "com_gameMode": "MP", "logFile": "2", "logFileName": "logs/openq4.log",
+        "fs_game": "baseod3", "com_gameMode": "MP", "logFile": "2", "logFileName": "logs/opend3.log",
         "developer": "1", "ui_autoJoin": "1", "ui_spectate": "Play", "ui_name": "BotAuditObserver",
         "net_serverDedicated": "0", "net_LANServer": "1", "net_ip": "127.0.0.1", "net_enableIPv6": "0",
         "net_allowCheats": "1", "sv_cheats": "1", "net_port": str(args.port), "si_pure": "0",
@@ -189,8 +189,8 @@ def main() -> int:
         command += ["+set", key, value]
     command += ["+spawnServer", "mp/q4xdm13" if args.dodge_runout else "mp/q4dm8"]
     (output / "launch.json").write_text(json.dumps(command, indent=2) + "\n", encoding="utf-8")
-    paths = [exe, runtime / "baseoq4/pak0.pk4", runtime / "baseoq4/pak1.pk4",
-             *[p for p in (runtime / "baseoq4").glob("game-mp*") if p.suffix in (".dll", ".so", ".dylib")],
+    paths = [exe, runtime / "baseod3/pak0.pk4", runtime / "baseod3/pak1.pk4",
+             *[p for p in (runtime / "baseod3").glob("game-mp*") if p.suffix in (".dll", ".so", ".dylib")],
              *[ROOT / p for p in ("src/mpgame/bots/NavMesh.cpp", "src/mpgame/bots/Bot.cpp",
                                  "src/mpgame/bots/Bot.h", "src/mpgame/gamesys/SysCmds.cpp", "src/mpgame/Player.cpp")],
              Path(__file__).resolve()]
@@ -205,7 +205,7 @@ def main() -> int:
             process.kill()
             process.wait()
             code = -1
-    log_path = game / "logs/openq4.log"
+    log_path = game / "logs/opend3.log"
     result = assess(log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else "", code, args.pad_impulse, args.dodge_runout)
     if any(file_sha256(path) != digest for path, digest in ((Path(p), h) for p, h in identity.items())):
         result["failures"].append("Source or runtime changed during the replay")

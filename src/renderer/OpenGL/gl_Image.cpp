@@ -49,8 +49,8 @@ already uses, and ES 3.0 supports GL_TEXTURE_SWIZZLE_* natively, so route the
 GLES module through the same branches rather than duplicating them.
 ================================================================================================
 */
-#if defined( USE_CORE_PROFILE ) || defined( OPENQ4_RENDERER_GLES_MODULE )
-#define OPENQ4_GL_SWIZZLED_LEGACY_FORMATS 1
+#if defined( USE_CORE_PROFILE ) || defined( OPEND3_RENDERER_GLES_MODULE )
+#define OPEND3_GL_SWIZZLED_LEGACY_FORMATS 1
 #endif
 #include "../GLPixelTransferScope.h"
 
@@ -194,7 +194,7 @@ void idImage::SubImageUpload( int mipLevel, int x, int y, int z, int width, int 
 	// silently does not happen, scrambling the 5/6/5 bit fields. Swap in software
 	// there instead.
 	const void *uploadPic = pic;
-#if defined( OPENQ4_RENDERER_GLES_MODULE )
+#if defined( OPEND3_RENDERER_GLES_MODULE )
 	const int swapRowPixels = ( pixelPitch != 0 ) ? pixelPitch : width;
 	const int swapPixelCount =
 		( opts.format == FMT_RGB565 && !Swap_IsBigEndian() && !IsCompressed() && pic != NULL && swapRowPixels > 0 && height > 0 )
@@ -239,7 +239,7 @@ void idImage::SubImageUpload( int mipLevel, int x, int y, int z, int width, int 
 #ifdef DEBUG
 	GL_CheckErrors();
 #endif
-#if !defined( OPENQ4_RENDERER_GLES_MODULE )
+#if !defined( OPEND3_RENDERER_GLES_MODULE )
 	if ( opts.format == FMT_RGB565 ) {
 		glPixelStorei( GL_UNPACK_SWAP_BYTES, GL_FALSE );
 	}
@@ -296,7 +296,7 @@ void idImage::SetTexParameters() {
 	if ( esTextureSwizzle || glConfig.backendCaps.glVersion >= 3.3f ||
 		GLCapabilityProbe_HasExtension( "GL_ARB_texture_swizzle" ) ||
 		GLCapabilityProbe_HasExtension( "GL_EXT_texture_swizzle" ) ) {
-#if defined( OPENQ4_GL_SWIZZLED_LEGACY_FORMATS )
+#if defined( OPEND3_GL_SWIZZLED_LEGACY_FORMATS )
 	if ( opts.colorFormat == CFM_GREEN_ALPHA ) {
 		glTexParameteri( target, GL_TEXTURE_SWIZZLE_R, GL_ONE );
 		glTexParameteri( target, GL_TEXTURE_SWIZZLE_G, GL_ONE );
@@ -493,7 +493,7 @@ void idImage::AllocImage() {
 		dataType = GL_HALF_FLOAT;
 		break;
 	case FMT_XRGB8:
-#if defined( OPENQ4_RENDERER_GLES_MODULE )
+#if defined( OPEND3_RENDERER_GLES_MODULE )
 		// XRGB source/cache pixels have four bytes. ES requires the upload
 		// format to match storage; allocate RGBA and swizzle alpha to one.
 		internalFormat = useSRGBTextureDecode ? GL_SRGB8_ALPHA8 : GL_RGBA8;
@@ -509,7 +509,7 @@ void idImage::AllocImage() {
 		dataType = GL_UNSIGNED_SHORT_5_6_5;
 		break;
 	case FMT_ALPHA:
-#if defined( OPENQ4_GL_SWIZZLED_LEGACY_FORMATS )
+#if defined( OPEND3_GL_SWIZZLED_LEGACY_FORMATS )
 		internalFormat = GL_R8;
 		dataFormat = GL_RED;
 #else
@@ -519,7 +519,7 @@ void idImage::AllocImage() {
 		dataType = GL_UNSIGNED_BYTE;
 		break;
 	case FMT_L8A8:
-#if defined( OPENQ4_GL_SWIZZLED_LEGACY_FORMATS )
+#if defined( OPEND3_GL_SWIZZLED_LEGACY_FORMATS )
 		internalFormat = GL_RG8;
 		dataFormat = GL_RG;
 #else
@@ -529,7 +529,7 @@ void idImage::AllocImage() {
 		dataType = GL_UNSIGNED_BYTE;
 		break;
 	case FMT_LUM8:
-#if defined( OPENQ4_GL_SWIZZLED_LEGACY_FORMATS )
+#if defined( OPEND3_GL_SWIZZLED_LEGACY_FORMATS )
 		internalFormat = GL_R8;
 		dataFormat = GL_RED;
 #else
@@ -539,7 +539,7 @@ void idImage::AllocImage() {
 		dataType = GL_UNSIGNED_BYTE;
 		break;
 	case FMT_INT8:
-#if defined( OPENQ4_GL_SWIZZLED_LEGACY_FORMATS )
+#if defined( OPEND3_GL_SWIZZLED_LEGACY_FORMATS )
 		internalFormat = GL_R8;
 		dataFormat = GL_RED;
 #else
@@ -603,7 +603,7 @@ void idImage::AllocImage() {
 		dataType = GL_UNSIGNED_BYTE;
 		break;
 	case FMT_DEPTH:
-#if defined( OPENQ4_RENDERER_GLES_MODULE )
+#if defined( OPEND3_RENDERER_GLES_MODULE )
 		// ES rejects UNSIGNED_BYTE depth uploads, including storage-only NULL
 		// uploads. Use a sized renderable depth format with a valid data type.
 		internalFormat = GL_DEPTH_COMPONENT24;

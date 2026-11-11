@@ -7,7 +7,7 @@
 #include <RmlUi/Core/Texture.h>
 #include <map>
 
-namespace openq4::ui {
+namespace opend3::ui {
 struct Node;
 struct RuntimeStatistics;
 // Presentation-only child of the editable artwork catalog. It owns neither

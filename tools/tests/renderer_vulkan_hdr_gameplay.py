@@ -154,7 +154,7 @@ def run_case(runtime: Path, output: Path, basepath: Path, mode: str, samples: in
     evidence = output / case_id
     evidence.mkdir()
     savepath = evidence / "savepath"
-    gamepath = savepath / "baseoq4"
+    gamepath = savepath / "baseod3"
     (gamepath / "screenshots").mkdir(parents=True)
     script = write_script(gamepath)
     args = matrix.common_args(runtime, case_id, str(basepath), savepath, False)
@@ -179,7 +179,7 @@ def run_case(runtime: Path, output: Path, basepath: Path, mode: str, samples: in
     stdout, stderr = evidence / "stdout.txt", evidence / "stderr.txt"
     exit_code, timed_out, elapsed = gameplay.launch_and_wait(
         matrix.find_client_executable(runtime), args, runtime, stdout, stderr, timeout)
-    log_path = matrix.find_log(savepath, f"openq4_validation_{case_id}.log")
+    log_path = matrix.find_log(savepath, f"opend3_validation_{case_id}.log")
     log = log_path.read_text(encoding="utf-8", errors="replace") if log_path else ""
     diagnostics = "\n".join((log, stdout.read_text(encoding="utf-8", errors="replace"),
                               stderr.read_text(encoding="utf-8", errors="replace")))

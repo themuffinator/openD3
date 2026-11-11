@@ -46,7 +46,7 @@ def wordmark():
     return paths
 
 def document():
-    doc=ui.Document('openq4.initialization')
+    doc=ui.Document('opend3.initialization')
     doc.state['message']={'type':'string','initial':'#str_104343'}
     doc.state['step']={'type':'number','initial':0}
     doc.state['motion_reduced']={'type':'boolean','initial':False,'cvar':'ui_retainedReducedMotion'}

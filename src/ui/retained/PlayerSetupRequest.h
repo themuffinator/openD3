@@ -2,7 +2,7 @@
 #pragma once
 #include "Document.h"
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 enum class PlayerSetupField { Name, Clan, Model, Page, Rail, Rotation };
 struct PlayerSetupRequest {

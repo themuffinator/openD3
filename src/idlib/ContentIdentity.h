@@ -1,6 +1,6 @@
 // Copyright (C) 2026 DarkMatter Productions
-#ifndef OPENQ4_CONTENT_IDENTITY_H
-#define OPENQ4_CONTENT_IDENTITY_H
+#ifndef OPEND3_CONTENT_IDENTITY_H
+#define OPEND3_CONTENT_IDENTITY_H
 
 class idContentObserver;
 

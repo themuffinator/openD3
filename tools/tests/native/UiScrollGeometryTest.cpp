@@ -6,7 +6,7 @@
 #include <initializer_list>
 #include <limits>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 namespace {
 int checks = 0, failures = 0;
 void Check(bool condition, int line) {

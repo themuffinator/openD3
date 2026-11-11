@@ -22,7 +22,7 @@ parser.add_argument('--timeout', type=int, default=600)
 args = parser.parse_args()
 source_hash = lab.digest(Path(__file__))
 manifest = json.loads((args.runtime_root/'pbr-lab.json').read_text())
-if 'baseoq4/models/openq4/pbr_lab/backface_receiver.ase' not in manifest['sha256']:
+if 'baseod3/models/opend3/pbr_lab/backface_receiver.ase' not in manifest['sha256']:
     parser.error('prepare or update the PBR laboratory fixture to include the backface receiver')
 profile = {}
 
@@ -37,7 +37,7 @@ def add(name, material='baked_normal_xyz', origin='-120 -690 540', pbr=True,
     else:
         commands += ['script "$backface_specimen.remove(); $backface_light.remove()"']
     commands += ['wait 3', f'spawn light name backface_light origin "{origin}" angle 0 light_radius "{radius}" _color "1 1 1" noshadows 1',
-                 f'spawn func_static name backface_specimen model "models/openq4/pbr_lab/backface_receiver.ase" shader "{lab.lab.PREFIX}/{material}" origin "0 -700 380" angle 0 solid 0',
+                 f'spawn func_static name backface_specimen model "models/opend3/pbr_lab/backface_receiver.ase" shader "{lab.lab.PREFIX}/{material}" origin "0 -700 380" angle 0 solid 0',
                  'wait 30','g_stopTime 1']
     settings = {'r_pbrIBL':'0', 'r_rendererReflectionProbes':'0', 'r_pbrMaterials':str(int(pbr)),
                 'r_pbrDebug':'0', 'r_multiSamples':str(args.samples),

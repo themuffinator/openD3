@@ -45,7 +45,7 @@ def validate_candidate_workflow() -> None:
         "thin_matrix:",
         "bridge_matrix:",
         "git status --porcelain --untracked-files=all",
-        "openq4_version.py",
+        "opend3_version.py",
         "macos-15-intel",
         "macos-15",
         "Verify requested native architecture",
@@ -76,9 +76,9 @@ def validate_candidate_workflow() -> None:
         require(workflow, token, "macOS universal2 candidate workflow")
 
     reject(workflow, "contents: write", "macOS universal2 candidate workflow permissions")
-    reject(workflow, "Fetch pinned openQ4-game source", "single-checkout game source ownership")
-    reject(workflow, "      openq4_game_ref:", "single-checkout source selection")
-    require(workflow, '--source-manifest builddir/openq4_game_sources.json', 'in-tree universal2 provenance')
+    reject(workflow, "Fetch pinned openD3-game source", "single-checkout game source ownership")
+    reject(workflow, "      opend3_game_ref:", "single-checkout source selection")
+    require(workflow, '--source-manifest builddir/opend3_game_sources.json', 'in-tree universal2 provenance')
     reject(workflow, "gh release", "macOS universal2 candidate workflow publication")
     reject(workflow, "softprops/action-gh-release", "macOS universal2 candidate workflow publication")
     reject(workflow, "path: .install", "macOS universal2 candidate thin artifact transfer")
@@ -167,7 +167,7 @@ def validate_candidate_workflow() -> None:
         'if ! [[ "${app_status}" =~ ^[0-9]+$ ]] || [ "${app_status}" -gt 127 ]; then',
         'require_smoke_output "RendererDefaultSafety self-test passed"',
         'require_smoke_output "Filesystem paths:"',
-        'require_smoke_output "fs_cdpath=\'${package_dir}/openQ4.app/Contents/Resources\'"',
+        'require_smoke_output "fs_cdpath=\'${package_dir}/openD3.app/Contents/Resources\'"',
         'require_smoke_output "Selected game module: logical=\'game_sp\' binary=\'game-sp_universal2\'"',
         'grep -Eiq \'(^|[[:space:]])(FATAL|Sys_Error):\' "${smoke_console}" "${smoke_log}"',
         "Universal2 app smoke output contains a fatal startup diagnostic.",
@@ -191,7 +191,7 @@ def validate_docs_and_wiring() -> None:
     plan = read("docs/dev/archive/2026-10-18/plan/2026-06-30-macos-compatibility-support.md")
     completion = read("docs/dev/release-completion.md")
     release_notes = read("docs/dev/releases/v0.8.1.md")
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
 

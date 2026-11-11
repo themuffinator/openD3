@@ -78,8 +78,8 @@ public final class Context {
     public ContentResolver getContentResolver(){check();return resolver;}
 }
 ''',
-'com/darkmatter/openq4/DocumentExportTest.java': r'''
-package com.darkmatter.openq4;
+'com/darkmatter/opend3/DocumentExportTest.java': r'''
+package com.darkmatter.opend3;
 import android.content.*;
 import android.net.Uri;
 import android.os.*;
@@ -102,7 +102,7 @@ public final class DocumentExportTest {
     }
     static void available()throws Exception {Object owner=StorageSession.INSTANCE.beginSetup();StorageSession.INSTANCE.endSetup(owner);}
     static void clean(Context app)throws Exception {
-        available();Path work=app.cache.toPath().resolve("openq4-exports");
+        available();Path work=app.cache.toPath().resolve("opend3-exports");
         if(Files.exists(work))try(var files=Files.list(work)){require(files.findAny().isEmpty(),"private export left behind");}
     }
     static final class Progress implements SetupTask.Reporter {
@@ -153,7 +153,7 @@ public final class DocumentExportTest {
     public static void main(String[] args)throws Exception {
         Path root=Path.of(args[0]);Context app=new Context();app.files=root.resolve("private").toFile();app.cache=root.resolve("cache").toFile();
         Context activity=new Context();activity.application=app;
-        Path save=app.files.toPath().resolve("saves/baseoq4/savegames/Test.save");Files.createDirectories(save.getParent());
+        Path save=app.files.toPath().resolve("saves/baseod3/savegames/Test.save");Files.createDirectories(save.getParent());
         byte[] original=new byte[190000];new Random(77).nextBytes(original);Files.write(save,original);
         Provider first=provider(app);Progress progress=new Progress();DocumentExport.Result result=work(activity).run(progress);
         Output output=(Output)first.output;
@@ -246,10 +246,10 @@ def main() -> None:
         classes.mkdir()
         javac = Path(args.javac).resolve()
         java = javac.with_name('java.exe' if os.name == 'nt' else 'java')
-        production = ROOT/'mobile/android/app/src/main/java/com/darkmatter/openq4'
+        production = ROOT/'mobile/android/app/src/main/java/com/darkmatter/opend3'
         sources.extend(str(production/name) for name in ('DocumentExport.java', 'PrivateExport.java', 'SetupTask.java', 'StorageSession.java'))
         subprocess.run([str(javac), '--release', '17', '-encoding', 'UTF-8', '-d', str(classes), *sources], check=True)
-        subprocess.run([str(java), '-cp', str(classes), 'com.darkmatter.openq4.DocumentExportTest', str(scratch)], check=True)
+        subprocess.run([str(java), '-cp', str(classes), 'com.darkmatter.opend3.DocumentExportTest', str(scratch)], check=True)
         verify_archive(scratch/'provider.zip', 'saves')
         print('PASS: provider output independently passes ZIP CRC and manifest hash/length checks')
 

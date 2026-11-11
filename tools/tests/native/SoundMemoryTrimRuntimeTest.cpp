@@ -1,4 +1,4 @@
-// Copyright (C) 2026 openQ4 contributors. SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 openD3 contributors. SPDX-License-Identifier: GPL-3.0-or-later
 // Execute the production low-memory traversal, including unjoined sample jobs.
 #include "src/sound/SoundMemoryTrim.h"
 #include <algorithm>

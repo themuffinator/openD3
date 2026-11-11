@@ -198,7 +198,7 @@ public:
 	// the row the pointer is over (<list>_hover, which the list draws) shows
 	// its server's details, and no row hides them.
 	void				GUIUpdateHover();
-	// openq4_browser hover: a visible row treated as the hovered one, so the
+	// opend3_browser hover: a visible row treated as the hovered one, so the
 	// tooltip shows without a pointer; -1 follows the pointer again.
 	void				SetHoverOverride( int row ) { hoverOverride = row; tooltipServer = -2; }
 

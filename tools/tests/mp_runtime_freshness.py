@@ -28,15 +28,15 @@ def main() -> None:
         runtime, build = root / ".install", root / "builddir"
         runtime.mkdir()
         build.mkdir()
-        executable = "openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64"
+        executable = "openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64"
         for parent in (runtime, build):
-            (parent / "baseoq4").mkdir()
-            for name in (executable, "custom-client", "baseoq4/game-mp.test"):
+            (parent / "baseod3").mkdir()
+            for name in (executable, "custom-client", "baseod3/game-mp.test"):
                 path = parent / name
                 path.write_bytes(b"independent test fixture")
                 os.utime(path, (1000, 1000))
 
-        with patch.object(smoke, "ROOT", root), patch.dict(os.environ, {"OPENQ4_ALLOW_STALE_RUNTIME": ""}):
+        with patch.object(smoke, "ROOT", root), patch.dict(os.environ, {"OPEND3_ALLOW_STALE_RUNTIME": ""}):
             # An omitted argument, argparse's None and older callers' empty
             # string must all inspect the same executable that will be launched.
             smoke.verify_runtime_is_current(runtime)
@@ -46,15 +46,15 @@ def main() -> None:
             for name in (None, "", executable):
                 expect_stale(runtime, name, executable)
             smoke.verify_runtime_is_current(runtime, "custom-client")
-            with patch.dict(os.environ, {"OPENQ4_ALLOW_STALE_RUNTIME": "1"}):
+            with patch.dict(os.environ, {"OPEND3_ALLOW_STALE_RUNTIME": "1"}):
                 smoke.verify_runtime_is_current(runtime)
 
             # Keep the existing timestamp tolerance and module checks intact.
             os.utime(runtime / executable, (1009, 1009))
             smoke.verify_runtime_is_current(runtime)
-            os.utime(build / "baseoq4/game-mp.test", (1010, 1010))
+            os.utime(build / "baseod3/game-mp.test", (1010, 1010))
             expect_stale(runtime, None, "game-mp.test")
-            os.utime(runtime / "baseoq4/game-mp.test", (1010, 1010))
+            os.utime(runtime / "baseod3/game-mp.test", (1010, 1010))
             smoke.verify_runtime_is_current(runtime)
 
             # A newer local build must not reject a different worktree's

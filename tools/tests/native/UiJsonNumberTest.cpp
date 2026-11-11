@@ -1,5 +1,5 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
-// JsonCpp number decoding with openQ4's subnormal-numbers.patch. A number
+// JsonCpp number decoding with openD3's subnormal-numbers.patch. A number
 // from_chars cannot take whole and in range falls back to
 // `istringstream >> double`, which JsonCpp 1.9.8 imbues with the classic
 // locale, so it decodes with the platform's own num_get and no test facet can

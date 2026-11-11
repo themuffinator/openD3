@@ -11,8 +11,8 @@
 #if defined(_MSC_VER)
 #include <crtdbg.h>
 #endif
-using namespace openq4::sys;
-using namespace openq4::ui;
+using namespace opend3::sys;
+using namespace opend3::ui;
 static unsigned checks=0;
 static bool denyAllocations=false;
 static int failAllocation=-1;
@@ -261,7 +261,7 @@ int main(){
     _set_abort_behavior(0,_WRITE_ABORT_MSG|_CALL_REPORTFAULT);
     _CrtSetReportMode(_CRT_ASSERT,_CRTDBG_MODE_FILE);_CrtSetReportFile(_CRT_ASSERT,_CRTDBG_FILE_STDERR);
 #endif
-#if !defined(USE_SDL3) || !defined(OPENQ4_SDL3_CHECKED_NATIVE_QUEUE) || !OPENQ4_SDL3_CHECKED_NATIVE_QUEUE
+#if !defined(USE_SDL3) || !defined(OPEND3_SDL3_CHECKED_NATIVE_QUEUE) || !OPEND3_SDL3_CHECKED_NATIVE_QUEUE
     WindowsTextStore* store=nullptr;NativeTextEditorBarrier current{{101,202},{11,22,33,44,55,66,10,"number"},0,1,0,{},false};
     OK(WindowsTextStore::Create(current.native,10,"1",1,1,reinterpret_cast<HWND>(1),&store));
     std::unique_ptr<WindowsTextCollectionBridge> out;std::string error;

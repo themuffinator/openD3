@@ -29,7 +29,7 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef __EVENTLOOP_H__
 #define __EVENTLOOP_H__
 #include "../sys/EventDisposition.h"
-namespace openq4 {
+namespace opend3 {
 class NativeInputRoute;
 class NativeInputCancellationPermit;
 struct NativeInputHead;
@@ -68,9 +68,9 @@ public:
 	// Only the installed driver may feed an exact owned deferred event here.
 	void ContinueNativeInput();
     // Aggregate retirement view/take preserves pushed-before-platform FIFO.
-    sysEventTransfer_t PeekEventForRetirement(openq4::NativeInputHead&) noexcept;
-    sysEventTransfer_t TakeEventForRetirement(openq4::NativeInputRoute&,
-        const openq4::NativeInputCancellationPermit&, sysEvent_t&, sysEventDispositionTag_t&) noexcept;
+    sysEventTransfer_t PeekEventForRetirement(opend3::NativeInputHead&) noexcept;
+    sysEventTransfer_t TakeEventForRetirement(opend3::NativeInputRoute&,
+        const opend3::NativeInputCancellationPermit&, sysEvent_t&, sysEventDispositionTag_t&) noexcept;
 
 					// Dispatches all pending events and returns the current time.
 	int				RunEventLoop( bool commandExecution = true );

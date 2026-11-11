@@ -19,7 +19,7 @@
 ===============================================================================
 */
 
-#ifdef OPENQ4_RENDERER_GLES_MODULE
+#ifdef OPEND3_RENDERER_GLES_MODULE
 
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
@@ -41,7 +41,7 @@ NOT archived, and renamed from r_glesD3ClearColor for that reason. The legacy
 RB_BeginDrawingView (tr_render.cpp:759) never clears colour on a 3D view, and
 there is a good reason: a portal sky renders as a SUBVIEW into this same
 target before the main view runs, so clearing colour here erases it. The D0
-bring-up default was "0.15 0 0.2", CVAR_ARCHIVE wrote it into openQ4Config.cfg,
+bring-up default was "0.15 0 0.2", CVAR_ARCHIVE wrote it into openD3Config.cfg,
 and it kept overriding the "0 0 0" default long after D0 -- every
 game/airdefense1 capture from D0 through D7a has a magenta sky where the
 overcast skybox should be, and it read as a missing texgen rather than as a
@@ -562,4 +562,4 @@ void RB_GLESD3_DrawView( void ) {
 	backEnd.currentScissor.y2 = glConfig.vidHeight - 1;
 }
 
-#endif /* OPENQ4_RENDERER_GLES_MODULE */
+#endif /* OPEND3_RENDERER_GLES_MODULE */

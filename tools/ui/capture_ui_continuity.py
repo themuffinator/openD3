@@ -8,7 +8,7 @@ import capture_retained_screens as capture
 ROOT = Path(__file__).resolve().parents[2]
 
 def accept(ident):
-    return [f'openq4_retainedGui focus {ident.removeprefix("nav_")}', 'openq4_retainedGui menu accept 1', 'openq4_retainedGui menu accept 0']
+    return [f'opend3_retainedGui focus {ident.removeprefix("nav_")}', 'opend3_retainedGui menu accept 1', 'opend3_retainedGui menu accept 0']
 
 def shot(name):
     return f'screenshot "screenshots/{name}.tga"'
@@ -28,7 +28,7 @@ def main():
     args.gate='1';args.timeout=240
     capture.SCENARIOS['menus']=(None,[
         'waitMsec 2000','testGUI guis/loading/initialization.q4ui','waitMsec 500',shot('initialization'),
-        'set ui_retainedReducedMotion 1','openq4_retainedGui event onInit','waitMsec 300',shot('initialization-still'),
+        'set ui_retainedReducedMotion 1','opend3_retainedGui event onInit','waitMsec 300',shot('initialization-still'),
         'testGUI','set ui_retainedReducedMotion 0','campaignMenu','waitMsec 700',*accept('nav_campaign'),
         'waitMsec 700',shot('campaigns'),*accept('nav_newgame'),'waitMsec 130',shot('detail-enter'),
         'waitMsec 700',shot('skill'),*accept('nav_skill4'),*accept('nav_turbo'),'waitMsec 400',shot('skill-warlord'),
@@ -87,7 +87,7 @@ def main():
             assert log.count('RETAINED_CRASH wake ')==3 and log.count('RETAINED_CRASH close ')==2, 'three authored wakes and two blackouts must drive the effect'
         if name in ('death','death-reduced','progression'):
             from PIL import Image,ImageStat
-            black=args.output/name/'save/baseoq4/screenshots/loading-fade-black.png'
+            black=args.output/name/'save/baseod3/screenshots/loading-fade-black.png'
             assert black.is_file() and max(high for low,high in ImageStat.Stat(Image.open(black)).extrema)==0, 'loading handover must be fully black'
             if name.startswith('death'): assert 'RETAINED_GUI_LOADED guis/hud/view_effects.q4ui' in log
             else: assert 'command=campaignSkillStart accepted=1' in log and 'Entering doom_main()' in log

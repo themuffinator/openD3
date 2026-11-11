@@ -5,7 +5,7 @@
 #include <set>
 #include <type_traits>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 bool Fail(std::string& error,const char* message){error=message;return false;}
 bool SameState(const TextEditState& a,const TextEditState& b){return a.text==b.text && a.anchor==b.anchor && a.caret==b.caret;}
@@ -264,4 +264,4 @@ bool NativeTextEditor::Abandon(const NativeTextEditorBarrier& expected) noexcept
 	using std::swap;swap(impl->presentation.anchor,impl->stablePresentation.anchor);swap(impl->presentation.caret,impl->stablePresentation.caret);
 	impl->active=false;impl->awaiting=false;impl->barrier.group=0;impl->barrier.collectionOpen=false;return true;
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

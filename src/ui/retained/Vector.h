@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 struct VectorPoint { double x = 0, y = 0; };
 struct VectorCoordinate {
@@ -102,4 +102,4 @@ bool HitTestPath(const VectorPath& path, const VectorOptions& options,
 // triangles. Use non-antialiased meshes so edge fringes do not enlarge targets.
 bool HitTestPaintedMesh(const VectorMesh& mesh, VectorPoint point);
 
-} // namespace openq4::ui
+} // namespace opend3::ui

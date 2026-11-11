@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""openQ4 performance suite: repeatable frame-time benchmarks on stock Quake 4 maps.
+"""openD3 performance suite: repeatable frame-time benchmarks on stock Quake 4 maps.
 
-The suite launches a staged openQ4 runtime (a release package or `.install`), plays
+The suite launches a staged openD3 runtime (a release package or `.install`), plays
 scripted scenarios on the retail single-player maps and records the time of every
 frame. Nothing is driven by keyboard or mouse: every scenario is a console script
 executed through `g_autoExecAfterMapLoad`, so a run plays back identically on any
@@ -69,9 +69,9 @@ DEFAULT_BASEPATH_CANDIDATES = (
     Path(r"E:\SteamLibrary\steamapps\common\Quake 4"),
     Path(r"C:\Program Files (x86)\Steam\steamapps\common\Quake 4"),
 )
-CLIENT_EXE = "openQ4-client_x64.exe"
-CONFIG_FILE = "openQ4Config.cfg"
-GAME_DIR = "baseoq4"
+CLIENT_EXE = "openD3-client_x64.exe"
+CONFIG_FILE = "openD3Config.cfg"
+GAME_DIR = "baseod3"
 
 
 # ----------------------------------------------------------------------------
@@ -311,7 +311,7 @@ class RunConfig:
 # ----------------------------------------------------------------------------
 
 def default_basepath() -> str:
-    env = os.environ.get("OPENQ4_QUAKE4_BASEPATH")
+    env = os.environ.get("OPEND3_QUAKE4_BASEPATH")
     if env:
         return env
     for candidate in DEFAULT_BASEPATH_CANDIDATES:
@@ -728,7 +728,7 @@ def run_measurement(cfg: RunConfig, scenario: Scenario, round_index: int, passes
         result["cpu_sampler"] = stack_sampler.wait()
     text = log.read_text(encoding="latin-1", errors="replace") if log.exists() else ""
     if log.exists():
-        shutil.copy2(log, launch_dir / "openq4.log")
+        shutil.copy2(log, launch_dir / "opend3.log")
     csvs: dict[str, str] = {}
     for produced in sorted((game_dir / "diagnostics").glob(f"{scenario.id}_*.csv")):
         target = launch_dir / produced.name
@@ -776,7 +776,7 @@ def window_key(match: "re.Match[str]") -> str:
 
 def pass_order(launch_dir: Path) -> dict[str, int]:
     """Position of every measured window in its launch, from the log (toggle ladders are not alphabetical)."""
-    log = launch_dir / "openq4.log"
+    log = launch_dir / "opend3.log"
     if not log.exists():
         return {}
     order: dict[str, int] = {}
@@ -1344,7 +1344,7 @@ def attribution_lines(records: list[dict[str, Any]]) -> list[str]:
                               f"{med('frontEndMs')} | {med('submitMs')} | {med('backendMs')} | {med('presentMs')} | {med('swapUs', 0.001)} | "
                               f"{med('frameFenceWaitUs', 0.001)} | {med('gpuUs', 0.001, 'gpuValid')} ({gpu_valid}) |")
         launch_dir = next((Path(p).parent for p in rec.get("csv", {}).values()), None)
-        log = launch_dir / "openq4.log" if launch_dir else None
+        log = launch_dir / "opend3.log" if launch_dir else None
         if log and log.exists():
             found = [m.groupdict() for m in METRICS_SUMMARY_RE.finditer(log.read_text(encoding="latin-1", errors="replace"))]
             if found:

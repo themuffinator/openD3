@@ -112,7 +112,7 @@ def main() -> int:
     # The stock pages: CAMPAIGN and the campaign page with its chapters.
     # A constant condition never holds in a GUI script, so none guards a
     # button.
-    gui = read("content/baseoq4/pak0/guis/campaign_menu.gui")
+    gui = read("content/baseod3/pak0/guis/campaign_menu.gui")
     for window in ("cm_quake4_card", "cm_awakening_card", "cm_skill0", "cm_skill4", "cm_start", "cm_turbo", "cm_chapters",
                    "cm_chapter_start", "cm_campaigns_back", "cm_campaign_back", "cm_chapter_back", "cm_blocker"):
         require(gui, f"windowDef {window}\n", "the stock campaign pages")
@@ -128,13 +128,13 @@ def main() -> int:
 
     # The retained pages: Campaign's NEW GAME and CHAPTERS, and CHAPTERS'
     # own page with a row for every chapter; the difficulty page has none.
-    campaigns = read("content/baseoq4/pak0/guis/menu/campaigns.q4ui")
+    campaigns = read("content/baseod3/pak0/guis/menu/campaigns.q4ui")
     for needle in ('"id": "newgame"', '"id": "chapters"', '"campaignNew"', '"campaignChapters"', '"detailEnterChapters"'):
         require(campaigns, needle, "Campaign's NEW GAME and CHAPTERS")
-    skill = read("content/baseoq4/pak0/guis/menu/campaign_skill.q4ui")
+    skill = read("content/baseod3/pak0/guis/menu/campaign_skill.q4ui")
     if "chapters-plate" in skill or "campaignChapterStart" in skill:
         raise AssertionError("the difficulty page no longer holds the chapters")
-    page = read("content/baseoq4/pak0/guis/menu/chapters.q4ui")
+    page = read("content/baseod3/pak0/guis/menu/chapters.q4ui")
     rows = len(re.findall(r'"id": "row-\d+",\n\s*"type": "group"', page)) or len(set(re.findall(r'"row-(\d+)"', page)))
     if rows < len(QUAKE4):
         raise AssertionError(f"the CHAPTERS page holds {rows} chapter rows, fewer than Quake 4's {len(QUAKE4)} levels")
@@ -145,9 +145,9 @@ def main() -> int:
 
     # Every new text in every shipped language.
     for language in LANGUAGES:
-        strings = read(f"content/baseoq4/pak0/strings/{language}_openq4.lang")
+        strings = read(f"content/baseod3/pak0/strings/{language}_opend3.lang")
         for key in STRINGS:
-            require(strings, f'\t"{key}"\t"', f"{language}_openq4.lang")
+            require(strings, f'\t"{key}"\t"', f"{language}_opend3.lang")
     guide = read("docs/user/campaigns.md")
     for needle in ("## Chapters", "`campaignChapters`", "`campaignChapter <number>`"):
         require(guide, needle, "the campaign guide")

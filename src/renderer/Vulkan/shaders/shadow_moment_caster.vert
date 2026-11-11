@@ -1,7 +1,7 @@
 #version 450
 #extension GL_GOOGLE_include_directive : require
 
-// openQ4 Vulkan translucent shadow-moment caster for projected lights —
+// openD3 Vulkan translucent shadow-moment caster for projected lights —
 // vertex stage, mirroring GL shadow_proj_translucent_caster.vs. It draws
 // into the moment atlas tile that mirrors the light's depth-atlas block:
 // gl_Position comes from the cascade's light clip matrix over the model

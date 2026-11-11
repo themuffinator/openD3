@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
 		// the file ends in other bytes. LoadOggStream counts it, then every decoder
 		// of the stream seeks with that count and the last positioned page.
 		const bool lengthless = std::strstr(argv[arg], "-lengthless") != nullptr;
-		stb_vorbis_openq4_granule_page page{};
+		stb_vorbis_opend3_granule_page page{};
 		if (lengthless) {
 			Check(stream.Frames() == 0, "lengthless fixture reports no length");
 			Check(!stream.Seek(static_cast<unsigned>(frames) / 2), "an uncounted stream cannot seek");

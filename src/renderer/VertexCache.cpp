@@ -185,7 +185,7 @@ void *idVertexCache::Position( vertCache_t *buffer ) {
 	// addresses when both buffer-object targets are zero. Clear both here:
 	// Apple GL 2.1 deliberately uses a CPU-backed cache, r_useIndexBuffers is
 	// disabled in that mode, and another pass may still have left an EBO bound.
-#ifndef OPENQ4_RENDERER_VK_MODULE
+#ifndef OPEND3_RENDERER_VK_MODULE
 	BindArrayBuffer( 0 );
 	BindIndexBuffer( 0 );
 #endif
@@ -332,7 +332,7 @@ void idVertexCache::Init() {
 		// ARB_vertex_buffer_object.
 		BindArrayBuffer( 0 );
 		BindIndexBuffer( 0 );
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 		// Vulkan uploads this CPU cache through its own device-buffer rings.
 		// The OpenGL client-array fallback warning does not describe that path.
 		common->Printf( "using CPU vertex cache for Vulkan upload staging\n" );
@@ -769,7 +769,7 @@ void idVertexCache::EndFrame() {
 	// Always finish the frame with client-memory-safe bindings. Mixed upload
 	// paths can bind a buffer even while the legacy vertex cache is virtual,
 	// and redundant-state filtering makes the zero-bind free when already set.
-#ifndef OPENQ4_RENDERER_VK_MODULE
+#ifndef OPEND3_RENDERER_VK_MODULE
 	BindArrayBuffer( 0 );
 	BindIndexBuffer( 0 );
 #endif

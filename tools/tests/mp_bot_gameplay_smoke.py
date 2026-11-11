@@ -19,7 +19,7 @@ NAMES = ("Cortez", "Rhodes", "Sledge", "Voss", "Strauss", "Kane", "Morris", "Tet
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
-    parser.add_argument("--executable-name", default="openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    parser.add_argument("--executable-name", default="openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     parser.add_argument("--basepath", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, default=ROOT / ".tmp/mp-bot-gameplay")
     parser.add_argument("--gametype", choices=("DM", "Team DM", "CTF"), default="DM")
@@ -37,7 +37,7 @@ def main() -> int:
     if not exe.is_file() or not (args.basepath / "q4base").is_dir():
         parser.error("the staged client and retail q4base assets are required")
     save = output / "save"
-    game = save / "baseoq4"
+    game = save / "baseod3"
     game.mkdir(parents=True, exist_ok=True)
     map_name = args.map_name or ("mp/q4ctf1" if args.gametype == "CTF" else "mp/q4dm1")
     # Public matches require one active human. The local client supplies that
@@ -45,7 +45,7 @@ def main() -> int:
     script = ["notarget", "god", *[f"addbot {name} 4 exact" for name in NAMES[:args.bots]],
               "waitMsec 3000", "botlist", "echo MP_BOT_SAMPLE_BEGIN"]
     for _ in range(args.seconds // 2):
-        script += ["waitMsec 2000", "openq4_reportMPState"]
+        script += ["waitMsec 2000", "opend3_reportMPState"]
     script += ["echo MP_BOT_SAMPLE_END", "quit"]
     (game / "bot_gameplay_smoke.cfg").write_text("\n".join(script) + "\n", encoding="utf-8")
     cvars = {
@@ -56,7 +56,7 @@ def main() -> int:
         "r_mode": "-1", "r_customWidth": "640", "r_customHeight": "480", "r_renderApi": "gl",
         "r_swapInterval": "0", "com_maxfps": "60",
         "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(save), "fs_devpath": str(save),
-        "fs_game": "baseoq4", "com_gameMode": "MP", "logFile": "2", "logFileName": "logs/openq4.log",
+        "fs_game": "baseod3", "com_gameMode": "MP", "logFile": "2", "logFileName": "logs/opend3.log",
         "developer": "1", "ui_autoJoin": "1", "ui_spectate": "Play", "ui_name": "BotAuditObserver",
         "net_serverDedicated": "0", "net_LANServer": "1",
         "net_allowCheats": "1", "sv_cheats": "1",
@@ -75,7 +75,7 @@ def main() -> int:
     command += ["+spawnServer", map_name]
     assert len(cvars) + 1 <= 64, "engine startup command capacity exceeded"
     (output / "launch.json").write_text(json.dumps(command, indent=2), encoding="utf-8")
-    log_path = game / "logs/openq4.log"
+    log_path = game / "logs/opend3.log"
     started = time.time()
     creationflags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
     with (output / "console.log").open("w", encoding="utf-8") as console:

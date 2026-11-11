@@ -63,17 +63,17 @@ def stages():
     edit = [('edit', 1, 1)]
     # Each edit first brings its row's tab forward (before any dialog, which
     # blocks the tab events).
-    brightness_edit = lambda: tabs.on('settings_brightness') + ['openq4_retainedGui focus "settings_brightness"'] + key('right')
+    brightness_edit = lambda: tabs.on('settings_brightness') + ['opend3_retainedGui focus "settings_brightness"'] + key('right')
     # Home then Accept selects the authored first option (0); no physical input.
     vsync_edit = lambda: tabs.on('settings_vsync') + page.open_choice('settings_vsync') + key('home') + ['wait 3'] + key('accept')
-    add('open', ['openq4_system open'], brightness=1, baseline=1, live=1,
+    add('open', ['opend3_system open'], brightness=1, baseline=1, live=1,
         opening=True, actions=begin, events=onactivate)
     add('discard_draft', brightness_edit(), baseline=1, dirty=1, live=1, actions=edit)
     add('discard_dialog', activate('settings_back'), baseline=1, dirty=1, discard=1,
         live=1, events=back, shot='discard-dialog')
     add('discard_exit', activate('discard_changes'), child=False, live=1,
         actions=[('cancel', 0, 0)], events=[('discard', 2, 1)], dismiss=True)
-    add('reopen_discard', ['openq4_system open'], brightness=1, baseline=1, live=1,
+    add('reopen_discard', ['opend3_system open'], brightness=1, baseline=1, live=1,
         opening=True, actions=begin, events=onactivate)
     add('immediate_draft', brightness_edit(), baseline=1, dirty=1, live=1, actions=edit)
     add('continue_dialog', activate('settings_back'), baseline=1, dirty=1, discard=1,
@@ -86,7 +86,7 @@ def stages():
     add('immediate_exit', activate('discard_apply_changes'), child=False,
         actions=[('applyExit', 0, 0)], events=[('applyexit', 1, 1)],
         exit_event=True, shot='immediate-return')
-    add('reopen_immediate', ['openq4_system open'], opening=True, actions=begin, events=onactivate)
+    add('reopen_immediate', ['opend3_system open'], opening=True, actions=begin, events=onactivate)
     add('display_draft', vsync_edit(), vsync=0, dirty=1, actions=edit, shot='vsync-draft')
     add('display_dialog', activate('settings_back'), vsync=0, dirty=1, discard=1, events=back)
     add('display_confirm', activate('discard_apply_changes'), vsync=0, dirty=1, confirm=True,
@@ -101,7 +101,7 @@ def stages():
         interval=0, restarts=3, actions=[('applyExit', 4, 1)], events=[('applyexit', 1, 1)], display='apply')
     add('keep_exit', activate('settings_keep'), child=False, interval=0, restarts=3,
         actions=[('confirm', 2, 1)], display='keep', exit_event=True, shot='keep-return')
-    add('reopen_kept', ['openq4_system open'], vsync=0, interval=0, restarts=3,
+    add('reopen_kept', ['opend3_system open'], vsync=0, interval=0, restarts=3,
         opening=True, actions=begin, events=onactivate, shot='reopened')
     add('finished', activate('settings_back'), child=False, interval=0, restarts=3,
         events=[('onback', 1, 0)], dismiss=True)
@@ -109,14 +109,14 @@ def stages():
 
 
 def script():
-    lines = ['openq4_assertMenuActivation 10000', 'wait 3']
+    lines = ['opend3_assertMenuActivation 10000', 'wait 3']
     for stage in stages():
         lines += [f'echo {STAGE_MARKER} {stage["name"]}'] + stage['commands']
-        lines += ['wait 12', 'openq4_system report']
+        lines += ['wait 12', 'opend3_system report']
         if stage['child']:
-            lines += [f'openq4_guiGet "{field}"' for field in FIELDS]
-            lines += [f'openq4_retainedGui widget "{control}"' for control in CONTROLS]
-            lines += ['openq4_retainedGui report']
+            lines += [f'opend3_guiGet "{field}"' for field in FIELDS]
+            lines += [f'opend3_retainedGui widget "{control}"' for control in CONTROLS]
+            lines += ['opend3_retainedGui report']
         lines += ['rendererDisplayProbe report']
         if stage['shot']:
             lines += [f'screenshot "screenshots/system-exit-{stage["shot"]}.tga"']
@@ -124,13 +124,13 @@ def script():
 
 
 def source_contract(runtime):
-    source = ROOT / 'content/baseoq4/pak0' / PAGE
+    source = ROOT / 'content/baseod3/pak0' / PAGE
     raw, binding = page.staged_source(runtime)
     if not source.is_file() or source.read_bytes() != raw:
         raise ValueError('Production SYSTEM source must exactly match its effective staged source')
     model = json.loads('\n'.join(line for line in raw.decode('utf-8').splitlines()
                                  if not line.lstrip().startswith('//')))
-    if model.get('id') != 'openq4.system': raise ValueError('Unexpected SYSTEM document identity')
+    if model.get('id') != 'opend3.system': raise ValueError('Unexpected SYSTEM document identity')
     nodes, pending = {}, [model['root']]
     while pending:
         node = pending.pop()
@@ -220,16 +220,16 @@ def qualify(log, mode, renderer):
             current = {'name':match[1], 'lines':[]}; records.append(current)
         elif COMPLETE in line:
             completion.append(stripped)
-        elif line.startswith('OPENQ4_MENU_ACTIVATION '):
+        elif line.startswith('OPEND3_MENU_ACTIVATION '):
             activation.append(line)
             if records: errors.append('Late normal menu activation')
-        elif line.startswith(('OPENQ4_SYSTEM ', 'GUI_VALUE ', 'RETAINED_GUI', 'UI_SETTINGS', 'DISPLAY_PROBE')):
+        elif line.startswith(('OPEND3_SYSTEM ', 'GUI_VALUE ', 'RETAINED_GUI', 'UI_SETTINGS', 'DISPLAY_PROBE')):
             if current is None or completion: errors.append('Observation outside the fixed stage interval')
             else: current['lines'].append(line)
-        if any(word in line for word in ('ERROR:', 'FATAL:', 'openq4_guiGet: unknown', 'usage: openq4_',
-                                         'openq4_retainedGui: requires')):
+        if any(word in line for word in ('ERROR:', 'FATAL:', 'opend3_guiGet: unknown', 'usage: opend3_',
+                                         'opend3_retainedGui: requires')):
             errors.append('Engine error or unsupported semantic command')
-    match = re.fullmatch(r'OPENQ4_MENU_ACTIVATION PASS elapsed=(\d{1,5})ms limit=10000ms',activation[0]) if len(activation)==1 else None
+    match = re.fullmatch(r'OPEND3_MENU_ACTIVATION PASS elapsed=(\d{1,5})ms limit=10000ms',activation[0]) if len(activation)==1 else None
     if not match or int(match[1]) > 10000: errors.append('Missing bounded menu activation after gameplay')
     if completion != [COMPLETE]: errors.append('Missing, malformed or replayed completion')
     expected = stages()
@@ -247,9 +247,9 @@ def qualify(log, mode, renderer):
                 if match:
                     traces[kind].append((i,*match.groups())); matched=True; break
             if matched: continue
-            if line.startswith('OPENQ4_SYSTEM operation='): route_ops.append(line)
-            elif line.startswith('OPENQ4_SYSTEM '):
-                routes.append((i,page._fields(line,'OPENQ4_SYSTEM ',ROUTE_FIELDS))); sequence.append('route')
+            if line.startswith('OPEND3_SYSTEM operation='): route_ops.append(line)
+            elif line.startswith('OPEND3_SYSTEM '):
+                routes.append((i,page._fields(line,'OPEND3_SYSTEM ',ROUTE_FIELDS))); sequence.append('route')
             elif line.startswith('GUI_VALUE '):
                 reads.append(line[10:].split('=',1)); sequence.append('read')
             elif line.startswith('RETAINED_GUI_WIDGET '):
@@ -268,7 +268,7 @@ def qualify(log, mode, renderer):
         wanted_sequence = ['route']*(2 if stage['opening'] else 1)
         if stage['child']: wanted_sequence += ['read']*len(FIELDS)+['widget']*2+['scroll','report']
         if sequence != wanted_sequence+['display']: fail('Settled route/readback/renderer observation order differs')
-        if route_ops != (['OPENQ4_SYSTEM operation=open result=1'] if stage['opening'] else []): fail('Session open failed or replayed')
+        if route_ops != (['OPEND3_SYSTEM operation=open result=1'] if stage['opening'] else []): fail('Session open failed or replayed')
         if loads != (['RETAINED_GUI_LOADED '+PAGE] if stage['opening'] else []): fail('Unexpected page lifetime/load')
         for _,route in routes:
             wanted = dict(enabled='1', active=PAGE if stage['child'] else PARENT,
@@ -289,7 +289,7 @@ def qualify(log, mode, renderer):
         if any(uint(row[4],positive=True) != owner for row in actions): fail('Settings owner changed or is foreign')
         if [row[1:] for row in traces['event']] != [(name,str(count),str(writes)) for name,count,writes in stage['events']]:
             fail('Authored lifecycle/event replay or omission')
-        if [row[1] for row in traces['operation']] != [line.split()[1] for line in stage['commands'] if line.startswith('openq4_retainedGui ')]:
+        if [row[1] for row in traces['operation']] != [line.split()[1] for line in stage['commands'] if line.startswith('opend3_retainedGui ')]:
             fail('Semantic focus/menu/number operation failed or replayed')
         if stage['child']:
             if len(reads) != len(FIELDS): fail('Missing service readbacks')
@@ -493,8 +493,8 @@ def qualify_warnings(log, baseline, mode, renderer):
 
 
 def binary_hashes(runtime):
-    executable=runtime/('openQ4-client_x64.exe' if os.name=='nt' else 'openQ4-client_x64')
-    paths={executable,*runtime.glob('renderer-*'),*(runtime/'baseoq4').glob('game-*')}
+    executable=runtime/('openD3-client_x64.exe' if os.name=='nt' else 'openD3-client_x64')
+    paths={executable,*runtime.glob('renderer-*'),*(runtime/'baseod3').glob('game-*')}
     paths.update(path for path in runtime.iterdir() if path.suffix.lower() in ('.dll','.so','.dylib') or '.so.' in path.name)
     return {str(path.relative_to(runtime)):digest(path) for path in sorted(paths) if path.is_file()}
 
@@ -504,7 +504,7 @@ def launch_command(args, output):
     prefix='(SP) airdefense1 ' if args.mode=='sp' else '(MP) q4dm1 '
     profile=next(row for row in profiles if row['name'].startswith(prefix) and row['name'].endswith('GL'))
     values=dict(fs_basepath=str(args.assets.resolve()),fs_savepath=str(output/'save'),fs_devpath=str(output/'save'),
-        fs_game='baseoq4',logFile='2',logFileName='logs/openq4.log',r_fullscreen='0',r_fullscreenDesktop='0',
+        fs_game='baseod3',logFile='2',logFileName='logs/opend3.log',r_fullscreen='0',r_fullscreenDesktop='0',
         r_borderless='0',r_borderlessDefaultMigrated='1',r_hiddenWindow='1',r_windowWidth='1280',r_windowHeight='720',
         r_mode='-1',r_customWidth='1280',r_customHeight='720',r_renderApi=args.renderer,r_rendererSharedGui='1',
         r_rendererSharedInWorldGui='0',r_multiSamples='0',r_swapInterval='1',r_gamma='1',r_brightness='1',r_shadows='1',
@@ -513,7 +513,7 @@ def launch_command(args, output):
         com_loadingContinueAutoAdvance='1',com_maxfps='60',ui_autoJoin='1' if args.mode=='mp' else '0',
         ui_retainedScale='1',ui_retainedDensity=str(args.density),ui_retainedTrace='1',ui_retained='0',ui_retainedSystem='1',ui_retainedReducedMotion='0')
     values[page.MULTIPLE_INSTANCES]='1'
-    executable=args.runtime.resolve()/('openQ4-client_x64.exe' if os.name=='nt' else 'openQ4-client_x64')
+    executable=args.runtime.resolve()/('openD3-client_x64.exe' if os.name=='nt' else 'openD3-client_x64')
     command=[str(executable)]
     for key,value in values.items(): command+=['+set',key,value]
     original,index=profile['args'],0
@@ -527,7 +527,7 @@ def launch_command(args, output):
 
 def persistence(game):
     errors=[]; record={}
-    journal,lock,config=game/'ui-settings-recovery.dat',game/'.settings-recovery.lock',game/'openQ4Config.cfg'
+    journal,lock,config=game/'ui-settings-recovery.dat',game/'.settings-recovery.lock',game/'openD3Config.cfg'
     record['journal_absent']=not(journal.exists() or journal.is_symlink())
     record['lease_file_present']=lock.is_file() and not lock.is_symlink()
     if not record['journal_absent'] or not record['lease_file_present']: errors.append('Journal cleanup or permanent lease identity differs')
@@ -559,7 +559,7 @@ def capture(args):
     baseline=args.warning_baseline
     baseline_text=re.sub(r'\^[0-9]','',baseline.read_text(encoding='utf-8',errors='replace')) if baseline else ''
     if args.mode=='mp' and not baseline: raise ValueError('MP requires an explicitly reviewed warning baseline log')
-    game=output/'save/baseoq4'; game.mkdir(parents=True)
+    game=output/'save/baseod3'; game.mkdir(parents=True)
     cfg=game/'system-exit.cfg'; cfg.write_text(script(),encoding='utf-8')
     metadata=dict(status='running',mode=args.mode,renderer=args.renderer,profile=profile,command=command,cwd=str(runtime),
         source=source,binaries=binaries,script_sha256=digest(cfg),density=args.density,windowed=True,hidden_window=True,timeout_seconds=timeout,
@@ -584,7 +584,7 @@ def capture(args):
             except subprocess.TimeoutExpired: process.kill(); process.wait()
             metadata['status']='timeout'; save(); return 1
     metadata['seconds']=round(time.monotonic()-started,3)
-    log_path=game/'logs/openq4.log'
+    log_path=game/'logs/opend3.log'
     log=re.sub(r'\^[0-9]','',log_path.read_text(encoding='utf-8',errors='replace')) if log_path.is_file() else ''
     metadata['log_sha256']=digest(log_path) if log_path.is_file() else None
     metadata['process_log_sha256']=digest(output/'process.log')

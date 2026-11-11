@@ -73,7 +73,7 @@ def call_count(source: str, function: str) -> int:
 
 
 def validate_snapshot_is_engine_only() -> None:
-    """CVarSystem.h is mirrored into openQ4-game and hash-pinned, so the
+    """CVarSystem.h is mirrored into openD3-game and hash-pinned, so the
     snapshot lives in its own header that only engine code includes."""
     header = read("src/framework/CVarCompletionSnapshot.h")
     context = "CVarCompletionSnapshot.h"

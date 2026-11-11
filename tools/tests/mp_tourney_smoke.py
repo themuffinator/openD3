@@ -25,26 +25,26 @@ def main() -> int:
     args = parser.parse_args()
     runtime, output = args.runtime_dir.resolve(), args.output_dir.resolve()
     verify_runtime_is_current(runtime, getattr(args, "executable_name", ""))
-    exe = runtime / (args.executable_name or ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64"))
+    exe = runtime / (args.executable_name or ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64"))
     if not exe.is_file() or not args.basepath.is_dir():
         parser.error("a staged runtime and installed Quake 4 assets are required")
     save = output / "save"
-    game = save / "baseoq4"
+    game = save / "baseod3"
     game.mkdir(parents=True, exist_ok=True)
-    log_path, loop = game / "logs/openq4.log", game / "tourney_probe.cfg"
-    idle = ["waitMsec 250", "openq4_reportMPState", "exec tourney_probe.cfg"]
+    log_path, loop = game / "logs/opend3.log", game / "tourney_probe.cfg"
+    idle = ["waitMsec 250", "opend3_reportMPState", "exec tourney_probe.cfg"]
     write_script(loop, idle)
     write_script(game / "tourney_start.cfg", ["addbot Cortez 3 exact", "addbot Rhodes 3 exact",
                  "addbot Sledge 3 exact", "exec tourney_probe.cfg"])
     cvars = {
         "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
         "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(save), "fs_devpath": str(save),
-        "fs_game": "baseoq4", "com_gameMode": "MP", "r_fullscreen": "0", "r_borderless": "0",
+        "fs_game": "baseod3", "com_gameMode": "MP", "r_fullscreen": "0", "r_borderless": "0",
         "r_fullscreenDesktop": "0", "r_borderlessDefaultMigrated": "1", "r_mode": "-1",
         "r_customWidth": "960", "r_customHeight": "540", "r_windowWidth": "960", "r_windowHeight": "540",
         "r_hiddenWindow": "1", "in_mouse": "0", "in_joystick": "0", "s_noSound": "1",
         "r_renderApi": "gl", "com_maxfps": "60", "r_swapInterval": "0",
-        "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1",
+        "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1",
         "net_port": "28851", "net_serverDedicated": "0", "net_LANServer": "1", "si_pure": "0",
         "si_maxPlayers": "8", "si_gameType": "Tourney", "si_minPlayers": "4",
         "si_warmup": "1", "si_useReady": "0", "si_countDown": "4", "si_timeLimit": "1",
@@ -78,7 +78,7 @@ def main() -> int:
                     semifinal_winners = [min(row[3:5]) for row in arenas]
                     losers = [max(row[3:5]) for row in arenas]
                     write_script(game / "tourney_idle.cfg", idle)
-                    write_script(loop, ["echo MP_TOURNEY_SEMIFINALS", "openq4_assertMPClientActive",
+                    write_script(loop, ["echo MP_TOURNEY_SEMIFINALS", "opend3_assertMPClientActive",
                                  'screenshot "screenshots/semifinals.tga"', *[f"kill {slot}" for slot in losers],
                                  "exec tourney_idle.cfg"])
                     stage = 1
@@ -87,14 +87,14 @@ def main() -> int:
                     if sorted(finalists) != sorted(semifinal_winners):
                         failures.append("the semifinal winners did not advance into the final")
                         break
-                    write_script(loop, ["echo MP_TOURNEY_FINAL", "openq4_reportMPState",
-                                 "openq4_assertMPClientActive", 'screenshot "screenshots/final.tga"',
+                    write_script(loop, ["echo MP_TOURNEY_FINAL", "opend3_reportMPState",
+                                 "opend3_assertMPClientActive", 'screenshot "screenshots/final.tga"',
                                  f"kill {max(finalists)}", "exec tourney_idle.cfg"])
                     stage = 2
                 elif stage == 2 and "phase=5 " in current:
-                    write_script(loop, ["echo MP_TOURNEY_REVIEW", "openq4_reportMPState",
+                    write_script(loop, ["echo MP_TOURNEY_REVIEW", "opend3_reportMPState",
                                  'screenshot "screenshots/review.tga"', "waitMsec 18000",
-                                 "echo MP_TOURNEY_ENDED", "openq4_reportMPState", "quit"])
+                                 "echo MP_TOURNEY_ENDED", "opend3_reportMPState", "quit"])
                     stage = 3
                 # Restore the polling file once each one-shot action has run.
                 for marker in ("MP_TOURNEY_SEMIFINALS", "MP_TOURNEY_FINAL"):

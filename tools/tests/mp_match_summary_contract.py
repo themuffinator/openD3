@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Preserved from openQ4-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
+# Preserved from openD3-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
 """Execute the real summary builder without inventing wins from managed scores."""
 
 from __future__ import annotations
@@ -417,7 +417,7 @@ int main() {
 
 def verify_gui() -> None:
     engine = _resolve_engine_root()
-    gui = engine / "content/baseoq4/pak0/guis/summary.gui"
+    gui = engine / "content/baseod3/pak0/guis/summary.gui"
     if not gui.is_file():
         print("mp_match_summary_contract: companion engine GUI check skipped (checkout unavailable)")
         return
@@ -429,7 +429,7 @@ def verify_gui() -> None:
         "summ_marine::rect": "93,109,448,118",
         "summ_strogg::rect": "93,224,448,118",
     }
-    strings = (engine / "content/baseoq4/pak0/strings/english_guis.lang").read_text(encoding="utf-8")
+    strings = (engine / "content/baseod3/pak0/strings/english_guis.lang").read_text(encoding="utf-8")
     assert re.search(r'"#str_200197"\s+"MARINES"', strings)
     assert re.search(r'"#str_200199"\s+"STROGG"', strings)
 

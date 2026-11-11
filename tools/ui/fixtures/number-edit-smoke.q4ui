@@ -1,6 +1,6 @@
 // First-party vector numeric-field rendering/adapter fixture. Native input and full component acceptance remain open.
 {
-  "format": "openq4-ui",
+  "format": "opend3-ui",
   "version": 1,
   "id": "number-edit-smoke",
   "state": {

@@ -2,7 +2,7 @@
 #extension GL_GOOGLE_include_directive : require
 #include "../../PBRMath.h"
 
-// openQ4 Vulkan interaction pipeline â€” fragment stage (Phase F1).
+// openD3 Vulkan interaction pipeline â€” fragment stage (Phase F1).
 //
 // interaction.vfp parity math: DXT5/RXGB bump decode (alpha=x, green=y,
 // blue=z, no renormalization), projected light-falloff and light-projection

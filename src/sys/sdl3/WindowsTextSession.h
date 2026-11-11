@@ -3,7 +3,7 @@
 #if defined(_WIN32)
 #include "WindowsTextCollectionBridge.h"
 
-namespace openq4::sys {
+namespace opend3::sys {
 struct WindowsTextSessionWindow {
     HWND hwnd = nullptr;
     std::uint64_t window = 0, lifetime = 0, moduleEpoch = 0, association = 0, registration = 0;
@@ -131,5 +131,5 @@ private:
     std::unique_ptr<Impl> impl;
     static bool SDLCALL Work(void*, const OQ4_NativeCollectionContext*) noexcept;
 };
-} // namespace openq4::sys
+} // namespace opend3::sys
 #endif

@@ -17,7 +17,7 @@ int restartGeneration=-1,languageGeneration=-1;std::uint64_t languageRevision=0,
     signatures = [
         'bool RegisteredView(', 'bool LoadViewDocument(', 'void ReportViewDiagnostics(', 'bool RefreshResources(',
         'retainedUIView_t* RetainedUI_CreateView(', 'void RetainedUI_DestroyView(',
-        'openq4::ui::Runtime* RetainedUI_ViewRuntime(', 'bool RetainedUI_LoadView(',
+        'opend3::ui::Runtime* RetainedUI_ViewRuntime(', 'bool RetainedUI_LoadView(',
         'bool RetainedUI_PrepareView(', 'bool RetainedUI_QueryEditIdentity(',
         'retainedUIPreparedEdit_t* PrepareViewEdit(', 'retainedUIPreparedEdit_t* RetainedUI_PrepareEdit(',
         'retainedUIPreparedEdit_t* RetainedUI_PrepareHistory(', 'bool RetainedUI_PublishEdit(',

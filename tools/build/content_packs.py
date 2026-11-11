@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Query the openQ4 content pack table.
+"""Query the openD3 content pack table.
 
 Subcommands:
 
@@ -21,9 +21,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from openq4_pak import (
-    OPENQ4_CONTENT_PACKS,
-    OPENQ4_CONTENT_PACKS_BY_NAME,
+from opend3_pak import (
+    OPEND3_CONTENT_PACKS,
+    OPEND3_CONTENT_PACKS_BY_NAME,
     pack_source_digest,
     pack_source_digest_from_tree_listing,
 )
@@ -51,11 +51,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 def selected_specs(names: list[str]):
     if not names:
-        return OPENQ4_CONTENT_PACKS
-    unknown = [name for name in names if name not in OPENQ4_CONTENT_PACKS_BY_NAME]
+        return OPEND3_CONTENT_PACKS
+    unknown = [name for name in names if name not in OPEND3_CONTENT_PACKS_BY_NAME]
     if unknown:
         raise RuntimeError(f"unknown pack(s): {', '.join(unknown)}")
-    return tuple(spec for spec in OPENQ4_CONTENT_PACKS if spec.name in names)
+    return tuple(spec for spec in OPEND3_CONTENT_PACKS if spec.name in names)
 
 
 def write_json(path: str, document: dict) -> None:
@@ -94,11 +94,11 @@ def main(argv: list[str]) -> int:
     args = parse_args(argv)
     try:
         if args.command == "meson-list":
-            for spec in OPENQ4_CONTENT_PACKS:
+            for spec in OPEND3_CONTENT_PACKS:
                 print(f"{spec.name}|{spec.source}|{Path(spec.name).stem}")
             return 0
         if args.command == "bulk-list":
-            for spec in OPENQ4_CONTENT_PACKS:
+            for spec in OPEND3_CONTENT_PACKS:
                 if spec.bulk:
                     print(spec.name)
             return 0

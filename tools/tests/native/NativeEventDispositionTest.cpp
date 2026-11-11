@@ -24,7 +24,7 @@ void operator delete(void* p, std::size_t) noexcept { ::operator delete(p); }
 void operator delete[](void* p, std::size_t) noexcept { ::operator delete(p); }
 #endif
 
-using namespace openq4;
+using namespace opend3;
 static unsigned checks = 0;
 #define CHECK(...) do { ++checks; if (!(__VA_ARGS__)) { std::fprintf(stderr,"FAIL %d: %s\n",__LINE__,#__VA_ARGS__); std::exit(1); } } while (false)
 

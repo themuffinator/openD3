@@ -1,10 +1,10 @@
 // Android/SigmaTouch support by emileb: https://github.com/emileb/openQ4/tree/android
-// Integrated and adapted for current openQ4; licensed under GPL-3.0-or-later.
+// Integrated and adapted for current openD3; licensed under GPL-3.0-or-later.
 
 /*
 ===========================================================================
 
-openQ4 Android platform layer: engine console output -> logcat.
+openD3 Android platform layer: engine console output -> logcat.
 
 ===========================================================================
 */
@@ -19,7 +19,7 @@ openQ4 Android platform layer: engine console output -> logcat.
 // exactly the output you most want after a crash.
 //
 // Writing to liblog directly from Sys_Printf fixes both: this file reassembles
-// whole lines and emits one logcat record each, so "adb logcat -s openQ4" is
+// whole lines and emits one logcat record each, so "adb logcat -s openD3" is
 // greppable line-for-line, and nothing waits in a buffer for a flush that may
 // never come. The pump in game_interface.cpp stays for third-party output
 // (SDL, OpenAL, the C runtime), which still has nowhere else to go.
@@ -29,7 +29,7 @@ openQ4 Android platform layer: engine console output -> logcat.
 
 #include <android/log.h>
 
-#if defined( OPENQ4_SIGMATOUCH )
+#if defined( OPEND3_SIGMATOUCH )
 #include "LogWritter.h"
 #endif
 
@@ -95,7 +95,7 @@ static void Sys_AndroidLogEmitLine( int priority ) {
 	line.text[ line.length ] = '\0';
 	__android_log_write( Sys_AndroidLogLinePriority( priority, line.text ), ANDROID_LOG_TAG, line.text );
 	// same line into the log file the app hands the user
-#if defined( OPENQ4_SIGMATOUCH )
+#if defined( OPEND3_SIGMATOUCH )
 	LogWritter_Write( line.text );
 #endif
 	line.length = 0;

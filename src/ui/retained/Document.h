@@ -14,7 +14,7 @@
 #include "Vector.h"
 #include "ModelScene.h"
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 enum class ValueType { Number, Length, Colour, Keyword, Font, Text, Transform, Image };
 // Colours are straight sRGB RGBA, 0..1. Transform is translation x/y,
@@ -380,4 +380,4 @@ private:
 	std::shared_ptr<const State> initialState;
 };
 
-} // namespace openq4::ui
+} // namespace opend3::ui

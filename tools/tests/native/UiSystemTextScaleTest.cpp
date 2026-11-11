@@ -302,7 +302,7 @@ int main(int argc,char** argv) {
         if(argc==4 && std::string(argv[3])!=locale)continue;
         for(float expansion:{1.f,1.4f}) {
         std::fprintf(stderr,"Text scale locale=%s glyph expansion=%g\n",locale,expansion);
-        View view(source,directory+"/"+locale+"_openq4.lang",1,1280,720,expansion,directory+"/"+locale+"_guis.lang");
+        View view(source,directory+"/"+locale+"_opend3.lang",1,1280,720,expansion,directory+"/"+locale+"_guis.lang");
         // 4:3, 16:9 and 9:16 (the tall single column) at each text size.
         for(float scale:{1.f,1.5f,2.f}){CheckPage(view,640,480,1,scale);CheckPage(view,1280,720,1,scale);}
         CheckPage(view,1280,720,1.25f,2);

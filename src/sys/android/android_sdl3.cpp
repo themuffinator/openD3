@@ -1,5 +1,5 @@
 // Android/SigmaTouch support by emileb: https://github.com/emileb/openQ4/tree/android
-// Integrated and adapted for current openQ4; licensed under GPL-3.0-or-later.
+// Integrated and adapted for current openD3; licensed under GPL-3.0-or-later.
 
 /*
 ===========================================================================
@@ -32,11 +32,11 @@ the Free Software Foundation, either version 3 of the License, or
 // The OpenTouch touch layer (Clibs_OpenTouch/touch_interface_base.cpp) reaches
 // SDL_StartTextInput through this global, which every SDL3 engine in the app is
 // expected to export. Sys_SDL_PumpEvents keeps it pointed at the game window.
-#if defined( OPENQ4_SIGMATOUCH )
+#if defined( OPEND3_SIGMATOUCH )
 extern "C" { SDL_Window *window = NULL; }
 #endif
 
-#define OPENQ4_SDL3_ANDROID_HOST 1
+#define OPEND3_SDL3_ANDROID_HOST 1
 #include "../sdl3/sdl3_backend.cpp"
 
 idCVar sys_videoRam(
@@ -102,7 +102,7 @@ int Sys_GetVideoRam( void ) {
 ===============================================================================
 */
 
-#if defined( OPENQ4_SIGMATOUCH )
+#if defined( OPEND3_SIGMATOUCH )
 // Mirrors touchscreemode_t in Clibs_OpenTouch/game_interface.h.
 enum { TS_BLANK = 0, TS_MENU = 1, TS_GAME = 2, TS_MAP = 3, TS_CONSOLE = 4 };
 

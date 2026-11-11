@@ -44,27 +44,27 @@ class RosterRun(SeriesRun):
 
     def launch(self, role, *, spectator=False):
         if role not in self.games:
-            game = self.output / role / "baseoq4"
+            game = self.output / role / "baseod3"
             game.mkdir(parents=True)
-            self.games[role], self.logs[role] = game, game / "logs/openq4.log"
+            self.games[role], self.logs[role] = game, game / "logs/opend3.log"
             self.command_numbers[role] = 0
             self.loops[role] = game / "series_commands.cfg"
             write_script(self.loops[role], ["// Waiting for the first operation."])
             write_script(game / "series_pump.cfg", ["exec series_commands.cfg", "waitMsec 250",
-                         "openq4_reportMPState", "vstr oq4_series_pump"])
+                         "opend3_reportMPState", "vstr oq4_series_pump"])
             self.start_script(role)
         a = self.args
         port_offset, display_name = ROLES[role]
         cvars = {
             "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
             "fs_basepath": str(a.basepath.resolve()), "fs_savepath": str(self.games[role].parent),
-            "fs_devpath": str(self.games[role].parent), "fs_game": "baseoq4", "com_gameMode": "MP",
+            "fs_devpath": str(self.games[role].parent), "fs_game": "baseod3", "com_gameMode": "MP",
             "r_fullscreen": "0", "r_borderless": "0", "r_fullscreenDesktop": "0",
             "r_borderlessDefaultMigrated": "1", "r_mode": "-1", "r_customWidth": "960",
             "r_customHeight": "540", "r_windowWidth": "960", "r_windowHeight": "540",
             "r_hiddenWindow": "1", "in_mouse": "0", "in_joystick": "0", "s_noSound": "1",
             "r_renderApi": a.renderer, "com_maxfps": "60", "r_swapInterval": "0",
-            "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1",
+            "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1",
             "ui_autoJoin": "1", "ui_spectate": "Spectate" if spectator else "Play",
             "ui_name": display_name, "ui_team": "Marine" if role == "host" else "Strogg",
             "net_allowCheats": "1", "com_skipLoadingContinue": "1",
@@ -99,8 +99,8 @@ class RosterRun(SeriesRun):
         while time.monotonic() < until:
             texts = {role: read_log(path) for role, path in self.logs.items()}
             if re.search(r"FATAL ERROR|ERROR:|Unknown command|Reliable messages overflow|"
-                         r"reliable message queue overflowed|usage: openq4_gui(?:Set|Get)|"
-                         r"openq4_gui(?:Set|Get): unknown|MP_CONTROL action requires|"
+                         r"reliable message queue overflowed|usage: opend3_gui(?:Set|Get)|"
+                         r"opend3_gui(?:Set|Get): unknown|MP_CONTROL action requires|"
                          r"MP_CONTROL rejected", "\n".join(texts.values())):
                 raise RuntimeError("engine or diagnostic failure during " + label)
             if any(p.poll() is not None for p in self.processes.values()):
@@ -122,7 +122,7 @@ class RosterRun(SeriesRun):
         return value
 
     def view(self, role):
-        self.perform(role, "accepted view for " + role, ["waitMsec 350", "openq4_reportMPState"])
+        self.perform(role, "accepted view for " + role, ["waitMsec 350", "opend3_reportMPState"])
         view = self.decoder.decode(self.games[role] / f"match-probe/view-{ROLES[role][0]}.bin")
         if not all(k in view for k in ("generation", "roster_seats", "invitations", "global_proposal")):
             raise RuntimeError("runtime decoder lacks roster/proposal fields; regenerate its pinned decoder")
@@ -133,7 +133,7 @@ class RosterRun(SeriesRun):
         folder = self.output / "views"
         folder.mkdir(exist_ok=True)
         shutil.copy2(self.games[role] / f"match-probe/view-{ROLES[role][0]}.bin", folder / f"{label}.bin")
-        self.perform("host", label + " server state", ["openq4_reportMPState"])
+        self.perform("host", label + " server state", ["opend3_reportMPState"])
         server = read_log(self.logs["host"]).rsplit("\nMP_STATE ", 1)[-1]
         menu = read_log(self.logs[role]).rsplit("\nMP_VIEW ", 1)[-1]
         result = {"role": role, "view": view, "server_state": server, "menu": menu}
@@ -149,20 +149,20 @@ class RosterRun(SeriesRun):
         available = re.search(rf"MP_CONTROL match_op_{re.escape(opcode)}_available=(\d+)", menu)
         if available is None or bool(int(available[1])) == denied:
             raise RuntimeError(f"{role}: unexpected {token} availability (denied={denied})")
-        self.perform(role, token, ["openq4_matchControl action " + ("arm_" if confirm else "") + token,
-                     *(["waitMsec 100", "openq4_matchControl action confirm"] if confirm else []), "waitMsec 750"])
+        self.perform(role, token, ["opend3_matchControl action " + ("arm_" if confirm else "") + token,
+                     *(["waitMsec 100", "opend3_matchControl action confirm"] if confirm else []), "waitMsec 750"])
         self.last_mutation = self.server_time()
 
     def participant_selection(self, actor, participant):
         view = self.view(actor)
         index = next(i for i, p in enumerate(view["participants"]) if p["participant"] == participant)
-        return [f"openq4_matchControl set match_team_rows_sel_0 {2 + index}",
-                "openq4_matchControl action select_team_row"]
+        return [f"opend3_matchControl set match_team_rows_sel_0 {2 + index}",
+                "opend3_matchControl action select_team_row"]
 
     def assign(self, actor, target, role, *, denied=False):
         participant = self.view(target)["participant"]
         self.action(actor, "role_assign", denied=denied, before=[
-            *self.participant_selection(actor, participant), f"openq4_matchControl set match_role_choice {role}"])
+            *self.participant_selection(actor, participant), f"opend3_matchControl set match_role_choice {role}"])
 
     def invite(self, actor, target, role=3):
         participant = self.view(target)["participant"]
@@ -173,9 +173,9 @@ class RosterRun(SeriesRun):
         if replacement is None:
             raise RuntimeError("invitation target is absent from connected replacement choices")
         self.action(actor, "roster_invite", before=[
-            "openq4_matchControl set match_team_rows_sel_0 1", "openq4_matchControl action select_team_row",
-            f"openq4_matchControl set match_replacement_rows_sel_0 {replacement[1]}",
-            "openq4_matchControl action select_replacement_row", f"openq4_matchControl set match_role_choice {role}"])
+            "opend3_matchControl set match_team_rows_sel_0 1", "opend3_matchControl action select_team_row",
+            f"opend3_matchControl set match_replacement_rows_sel_0 {replacement[1]}",
+            "opend3_matchControl action select_replacement_row", f"opend3_matchControl set match_role_choice {role}"])
         issuer = self.view(actor)["participant"]
         view = self.await_view(target, "accepted invitation", lambda v: any(
             i["issuer"] == issuer and i["target"] == participant for i in v["invitations"]))
@@ -188,7 +188,7 @@ class RosterRun(SeriesRun):
         view = self.view(target)
         index = next(i for i, entry in enumerate(view["invitations"]) if entry["id"] == invitation)
         row = 2 + len(view["participants"]) + len(view["roster_seats"]) + index
-        return [f"openq4_matchControl set match_team_rows_sel_0 {row}", "openq4_matchControl action select_team_row"]
+        return [f"opend3_matchControl set match_team_rows_sel_0 {row}", "opend3_matchControl action select_team_row"]
 
     def stop(self, role):
         process = self.processes[role]
@@ -215,8 +215,8 @@ class RosterRun(SeriesRun):
         # A two-seat side has both a captain and a player seat, so demotion
         # below is a valid role change instead of a missing-seat rejection.
         self.action("host", "rules_stage_field", before=[
-            "openq4_matchControl set match_rule_rows_sel_0 9", "openq4_matchControl action select_rule_row",
-            "openq4_matchControl set match_rule_value 2"])
+            "opend3_matchControl set match_rule_rows_sel_0 9", "opend3_matchControl action select_rule_row",
+            "opend3_matchControl set match_rule_value 2"])
         for role in ("host", "client"):
             self.assign("host", role, 2)
             self.sample(role, role + "-captain", lambda v: v["roles"] & CAPTAIN and v["active"])
@@ -243,7 +243,7 @@ class RosterRun(SeriesRun):
             # must not assign a seat even though acceptance is generally a
             # warmup capability for players.
             self.perform("observer", label + " stale acceptance", [
-                "openq4_matchControl action roster_accept", "waitMsec 750"])
+                "opend3_matchControl action roster_accept", "waitMsec 750"])
             self.sample("observer", label + "-stale-accept-denied", lambda v:
                         v["roles"] == 2 and v["side"] == -1 and not v["active"] and not v["invitations"])
             self.assign("host", "client", 2)
@@ -252,27 +252,27 @@ class RosterRun(SeriesRun):
         # The remaining gameplay has one active human per side. Return to
         # that explicit size while all non-captain seats are empty.
         self.action("host", "rules_stage_field", before=[
-            "openq4_matchControl set match_rule_rows_sel_0 9", "openq4_matchControl action select_rule_row",
-            "openq4_matchControl set match_rule_value 1"])
+            "opend3_matchControl set match_rule_rows_sel_0 9", "opend3_matchControl action select_rule_row",
+            "opend3_matchControl set match_rule_value 1"])
 
         # Two active humans keep caller auto-YES below the global threshold.
         # Use different templates to avoid conflating slot cleanup with the
         # separate 30-second cooldown for each proposed opcode.
         self.action("host", "proposal_create", before=[
-            "openq4_matchControl set match_proposal_rows_sel_0 3", "openq4_matchControl action select_proposal_row"])
+            "opend3_matchControl set match_proposal_rows_sel_0 3", "opend3_matchControl action select_proposal_row"])
         first = self.sample("host", "global-proposal-created", lambda v: v["global_proposal"]["present"])
         ballot = first["global_proposal"]
         if ballot["eligible"] != 2 or ballot["yes"] != 1:
             raise RuntimeError("proposal did not retain the expected two-human electorate and single YES")
-        self.action("host", "proposal_cancel", before=["openq4_matchControl set match_proposal_scope_choice global"])
+        self.action("host", "proposal_cancel", before=["opend3_matchControl set match_proposal_scope_choice global"])
         self.sample("host", "global-proposal-cancelled", lambda v: not v["global_proposal"]["present"])
         self.action("host", "proposal_create", before=[
-            "openq4_matchControl set match_profile_rows_sel_0 1", "openq4_matchControl action select_profile_row",
-            "openq4_matchControl set match_proposal_rows_sel_0 1", "openq4_matchControl action select_proposal_row"])
+            "opend3_matchControl set match_profile_rows_sel_0 1", "opend3_matchControl action select_profile_row",
+            "opend3_matchControl set match_proposal_rows_sel_0 1", "opend3_matchControl action select_proposal_row"])
         self.sample("host", "global-proposal-replaced", lambda v:
                     v["global_proposal"]["present"] and v["global_proposal"]["id"] > ballot["id"] and
                     v["global_proposal"]["eligible"] == 2 and v["global_proposal"]["yes"] == 1)
-        self.action("host", "proposal_cancel", before=["openq4_matchControl set match_proposal_scope_choice global"])
+        self.action("host", "proposal_cancel", before=["opend3_matchControl set match_proposal_scope_choice global"])
 
         old = self.sample("client", "captain-before-disconnect")
         self.stop("client")
@@ -322,9 +322,9 @@ class RosterRun(SeriesRun):
         if replacement_row is None:
             raise RuntimeError("review substitution target disappeared")
         self.action("host", "roster_substitute", confirm=True, denied=True, before=[
-            f"openq4_matchControl set match_team_rows_sel_0 {row}", "openq4_matchControl action select_team_row",
-            f"openq4_matchControl set match_replacement_rows_sel_0 {replacement_row[1]}",
-            "openq4_matchControl action select_replacement_row"])
+            f"opend3_matchControl set match_team_rows_sel_0 {row}", "opend3_matchControl action select_team_row",
+            f"opend3_matchControl set match_replacement_rows_sel_0 {replacement_row[1]}",
+            "opend3_matchControl action select_replacement_row"])
         self.sample(captain, "review-substitution-denied", lambda v: v["phase"] == 5 and v["roles"] & CAPTAIN)
         self.sample("observer", "review-substitution-target-unchanged", lambda v:
                     v["phase"] == 5 and v["roles"] == 2 and v["side"] == -1)
@@ -337,8 +337,8 @@ class RosterRun(SeriesRun):
         self.action("host", "force_ready", confirm=True)
         self.sample("host", "second-live-match", lambda v: v["phase"] == 3)
         self.perform("observer", "referee sign in", [
-            'openq4_guiSet match_referee_credential::text "mprostersmokeonly"',
-            "openq4_matchControl action referee_login", "waitMsec 750"])
+            'opend3_guiSet match_referee_credential::text "mprostersmokeonly"',
+            "opend3_matchControl action referee_login", "waitMsec 750"])
         old_ref = self.sample("observer", "referee-before-disconnect", lambda v:
                               v["phase"] == 3 and v["roles"] == REFEREE and bool(v["items"]) and
                               {vital["side"] for vital in v["vitals"]} == {0, 1})
@@ -360,7 +360,7 @@ class RosterRun(SeriesRun):
             # A fresh menu can have curr=0; chooseCurr only routes an outgoing
             # panel. Explicitly finish destination routing for this capture.
             self.perform(role, label + " capture", ["GuiEvent chooseDest", "waitMsec 1500",
-                         "openq4_guiSet desktop::match_tab 0",
+                         "opend3_guiSet desktop::match_tab 0",
                          "waitMsec 750", f'screenshot "screenshots/{label}.tga"'])
             path = self.games[role] / "screenshots" / f"{label}.tga"
             if not path.is_file() or path.stat().st_size <= 18:
@@ -391,7 +391,7 @@ class RosterRun(SeriesRun):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
-    parser.add_argument("--executable-name", default="openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    parser.add_argument("--executable-name", default="openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     parser.add_argument("--output-dir", type=Path, default=ROOT / ".tmp/mp-roster-smoke")
     parser.add_argument("--basepath", type=Path, default=Path(r"C:\Program Files (x86)\Steam\steamapps\common\Quake 4"))
     parser.add_argument("--renderer", choices=("gl", "vulkan"), default="gl")

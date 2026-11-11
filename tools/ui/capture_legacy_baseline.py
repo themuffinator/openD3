@@ -48,28 +48,28 @@ def interaction_script(path: Path, *, managed: bool = False, observe_only: bool 
                 r'ui_retainedCheckpoint (?:save|restore)',
                 r'ui_retainedMenu (?:next|previous|up|down|left|right|accept|back) [01]', r'wait [1-9][0-9]{0,2}']
     if managed:
-        patterns = [r'openq4_retainedGui report',
-                    rf'openq4_retainedGui inspect {identifier}',
-                    rf'openq4_guiGet {alias}',
+        patterns = [r'opend3_retainedGui report',
+                    rf'opend3_retainedGui inspect {identifier}',
+                    rf'opend3_guiGet {alias}',
                     r'wait [1-9][0-9]{0,2}']
         if not observe_only:
             literal = rf'"(?:true|false|{number})"'
             presentation = rf'"(?:true|false|#str_[A-Za-z0-9_.-]+|{number}(?: +{number}){{0,3}}|{number}(?:,{number}){{1,3}})"'
-            patterns += [rf'openq4_retainedGui focus {identifier}',
-                         r'openq4_retainedGui menu (?:next|previous|up|down|left|right|accept|back) [01]',
-                         rf'openq4_retainedGui (?:state|pending) {identifier} {literal}',
-                         rf'openq4_retainedGui event {alias}',
-                         rf'openq4_retainedGui presentation {alias} {presentation} [01]',
-                         r'openq4_retainedGui (?:save|restore|update|trigger)']
+            patterns += [rf'opend3_retainedGui focus {identifier}',
+                         r'opend3_retainedGui menu (?:next|previous|up|down|left|right|accept|back) [01]',
+                         rf'opend3_retainedGui (?:state|pending) {identifier} {literal}',
+                         rf'opend3_retainedGui event {alias}',
+                         rf'opend3_retainedGui presentation {alias} {presentation} [01]',
+                         r'opend3_retainedGui (?:save|restore|update|trigger)']
     lines = [line.strip() for line in source.splitlines() if line.strip() and not line.strip().startswith('//')]
     if len(lines) > 256 or any(not any(re.fullmatch(pattern, line) for pattern in patterns) for line in lines):
         raise ValueError('retained script must contain only semantic control commands and bounded waits')
     if sum(int(line.split()[1]) for line in lines if line.startswith('wait ')) > 3600:
         raise ValueError('retained script waits exceed 3600 frames')
     for line in lines:
-        if line.startswith('openq4_retainedGui event ') and line.split('"')[1].lower().startswith('gui::'):
+        if line.startswith('opend3_retainedGui event ') and line.split('"')[1].lower().startswith('gui::'):
             raise ValueError('managed event names cannot use the reserved gui:: namespace')
-        if line.startswith(('openq4_retainedGui state ', 'openq4_retainedGui pending ', 'openq4_retainedGui presentation ')):
+        if line.startswith(('opend3_retainedGui state ', 'opend3_retainedGui pending ', 'opend3_retainedGui presentation ')):
             value = re.findall(r'"([^"]*)"', line)[1]
             if value not in ('true', 'false') and not value.startswith('#str_'):
                 if any(not math.isfinite(float(part)) or abs(float(part)) > 1e12 for part in re.split(r'[, ]+', value)):
@@ -87,17 +87,17 @@ def retained_commands(args: argparse.Namespace, staged_name: str) -> tuple[str, 
     if args.retained_managed:
         peer = f'ui_retainedPreview "{staged_name}"\n' if args.retained_peer else ''
         commands = 'ui_retainedOwnership\n' + peer + f'testGUI "{staged_name}"\nwait 2\nui_retainedOwnership\n'
-        commands += script + f'wait {settle}\nopenq4_retainedGui report\nui_retainedOwnership\n'
+        commands += script + f'wait {settle}\nopend3_retainedGui report\nui_retainedOwnership\n'
         # Managed instances must survive without action/setup replay. The same
         # read-only resume checks run after each separate resource barrier.
-        resume = interaction_script(args.retained_resume_script, managed=True, observe_only=True) if args.retained_resume_script else 'openq4_retainedGui report\n'
+        resume = interaction_script(args.retained_resume_script, managed=True, observe_only=True) if args.retained_resume_script else 'opend3_retainedGui report\n'
         for enabled, command in ((args.language_reload, 'reloadLanguage'), (args.video_restart, 'vid_restart windowed')):
             if enabled:
                 commands += command + '\nwait 2\n' + resume + f'wait {settle}\nui_retainedOwnership\n'
         # Observe both contexts through the resets, then remove the overlay so
         # the engine screenshot shows this managed instance's actual focus.
         if args.retained_peer:
-            commands += 'ui_retainedClose\nwait 2\nopenq4_retainedGui report\nui_retainedOwnership\n'
+            commands += 'ui_retainedClose\nwait 2\nopend3_retainedGui report\nui_retainedOwnership\n'
         return commands, 'testGUI\nwait 3\nui_retainedOwnership\n', settle
     play = f'ui_retainedPlay "{args.timeline}"\n' if args.timeline else ''
     profile = f'ui_retainedProfile {args.profile_frames}\n' if args.profile_frames else ''
@@ -160,10 +160,10 @@ def managed_evidence(log: str, commands: str, *, peer: bool, resource_resets: in
                             observation_segment=observation_segment))
     operations = [line for line in lines if line.startswith('RETAINED_GUI_OPERATION ')]
     expected_operations = ['RETAINED_GUI_OPERATION ' + match.group(1) + ' passed'
-        for match in re.finditer(r'^openq4_retainedGui (focus|menu|state|pending|save|restore|presentation|update|event|trigger)(?: |$)', commands, re.MULTILINE)]
+        for match in re.finditer(r'^opend3_retainedGui (focus|menu|state|pending|save|restore|presentation|update|event|trigger)(?: |$)', commands, re.MULTILINE)]
     if operations != expected_operations:
         errors.append('managed operation results do not match the submitted script or an operation failed')
-    expected_reports = len(re.findall(r'^openq4_retainedGui report$', commands, re.MULTILINE))
+    expected_reports = len(re.findall(r'^opend3_retainedGui report$', commands, re.MULTILINE))
     if not reports or len(reports) != expected_reports:
         errors.append('managed report count differs from the submitted script')
     loaded = [line for line in lines if line.startswith('RETAINED_GUI_LOADED ')]
@@ -180,11 +180,11 @@ def managed_evidence(log: str, commands: str, *, peer: bool, resource_resets: in
     if peer and 'Retained UI preview loaded:' not in log:
         errors.append('peer preview was not loaded')
     reads = re.findall(r'^GUI_VALUE ([^=]+)=(.*)$', log, re.MULTILINE)
-    expected_reads = re.findall(r'^openq4_guiGet "([^"]+)"$', commands, re.MULTILINE)
+    expected_reads = re.findall(r'^opend3_guiGet "([^"]+)"$', commands, re.MULTILINE)
     managed_reads = [(name, value) for name, value in reads if name in expected_reads]
     if [name for name, _ in managed_reads] != expected_reads:
         errors.append('managed presentation readback sequence differs from the submitted script')
-    if any(line.startswith(('openq4_retainedGui:', 'usage: openq4_retainedGui', 'usage: openq4_guiGet')) for line in lines):
+    if any(line.startswith(('opend3_retainedGui:', 'usage: opend3_retainedGui', 'usage: opend3_guiGet')) for line in lines):
         errors.append('managed diagnostic command was rejected')
     ownership = []
     for line in lines:
@@ -371,9 +371,9 @@ def event_program_evidence(log: str, commands: str, reports: list[dict], reads: 
     expected_order = []
     focus = ''
     for line in commands.splitlines():
-        if line.startswith('openq4_guiGet '):
+        if line.startswith('opend3_guiGet '):
             expected_order.append(('read', line.split('"')[1]))
-        elif line.startswith('openq4_retainedGui '):
+        elif line.startswith('opend3_retainedGui '):
             verb = line.split()[1]
             if verb == 'focus':
                 focus = line.split('"')[1]
@@ -381,7 +381,7 @@ def event_program_evidence(log: str, commands: str, reports: list[dict], reads: 
                 expected_order.append(('event', line.split('"')[1]))
             elif verb == 'trigger':
                 expected_order.append(('event', 'onTrigger'))
-            elif line == 'openq4_retainedGui menu accept 0':
+            elif line == 'opend3_retainedGui menu accept 0':
                 expected_order.append(('event', 'control::' + focus.removeprefix('managed-')))
             expected_order.append(('report', '') if verb == 'report' else ('operation', verb))
     actual_order = []
@@ -466,9 +466,9 @@ def presentation_alias_evidence(log: str, commands: str, reports: list[dict], re
         errors.append('presentation probe focus did not survive save and same-source resource recreation')
     expected_order = []
     for line in commands.splitlines():
-        if line.startswith('openq4_guiGet '):
+        if line.startswith('opend3_guiGet '):
             expected_order.append(('read', line.split('"')[1]))
-        elif line.startswith('openq4_retainedGui '):
+        elif line.startswith('opend3_retainedGui '):
             verb = line.split()[1]
             expected_order.append(('report', '') if verb == 'report' else ('operation', verb))
     actual_order = []
@@ -495,7 +495,7 @@ def capture(args: argparse.Namespace) -> int:
     if output.exists():
         raise ValueError('use a new output directory to preserve previous capture evidence')
     runtime = args.runtime.resolve()
-    executable = runtime / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64')
+    executable = runtime / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64')
     if not executable.is_file():
         raise ValueError(f'missing staged client: {executable}')
     configs = json.loads((ROOT / '.vscode/launch.json').read_text(encoding='utf-8-sig'))['configurations']
@@ -503,7 +503,7 @@ def capture(args: argparse.Namespace) -> int:
     profile = next(c for c in configs if c['name'].startswith(prefix) and c['name'].endswith('GL'))
     savepath = output / 'save'
     stock_only = getattr(args, 'stock_assets_only', False)
-    game_dir = 'q4base' if stock_only else 'baseoq4'
+    game_dir = 'q4base' if stock_only else 'baseod3'
     if stock_only and args.retained_document:
         raise ValueError('original-asset-only capture cannot load a retained document fixture')
     game = savepath / game_dir
@@ -536,11 +536,11 @@ def capture(args: argparse.Namespace) -> int:
         staged_name = 'retained-smoke' + fixture.suffix.lower()
         (game / staged_name).write_bytes(fixture.read_bytes())
         preview, close, settle = retained_commands(args, staged_name)
-    final_inspection = 'openq4_retainedGui inspect "settings-panel"\n' if display_sources else ''
+    final_inspection = 'opend3_retainedGui inspect "settings-panel"\n' if display_sources else ''
     cfg_path.write_text(presentation + preview + legacy_import.commands(import_requests) + 'gfxInfo\nscreenshot "screenshots/ui-baseline.tga"\n' + final_inspection + 'echo UI_BASELINE_CAPTURE_COMPLETE\n' + close + 'quit\n', encoding='utf-8')
     overrides = {
         'fs_basepath': str(args.assets.resolve()), 'fs_savepath': str(savepath), 'fs_devpath': str(savepath),
-        'fs_game': game_dir, 'logFile': '2', 'logFileName': 'logs/openq4.log',
+        'fs_game': game_dir, 'logFile': '2', 'logFileName': 'logs/opend3.log',
         'r_fullscreen': '0', 'r_fullscreenDesktop': '0', 'r_borderless': '0',
         'r_borderlessDefaultMigrated': '1', 'r_hiddenWindow': '1',
         'r_windowWidth': str(args.width), 'r_windowHeight': str(args.height),
@@ -582,7 +582,7 @@ def capture(args: argparse.Namespace) -> int:
     for key, value in overrides.items():
         command.extend(['+set', key, value])
     command.extend(value.replace('${workspaceFolder}', str(ROOT)) for value in retained)
-    binaries = [executable] + sorted((runtime / 'baseoq4').glob('game-*'))
+    binaries = [executable] + sorted((runtime / 'baseod3').glob('game-*'))
     binaries += sorted(runtime.glob('renderer-*'))
     metadata = {
         'status': 'running', 'profile': profile['name'], 'mode': args.mode, 'renderer': args.renderer,
@@ -654,7 +654,7 @@ def capture(args: argparse.Namespace) -> int:
             return 1
     metadata['seconds'] = round(time.monotonic() - started, 3)
     screenshot = game / 'screenshots/ui-baseline.tga'
-    log_path = game / 'logs/openq4.log'
+    log_path = game / 'logs/opend3.log'
     log = log_path.read_text(encoding='utf-8', errors='replace') if log_path.exists() else ''
     plain_log = re.sub(r'\^[0-9]', '', log)
     if import_requests:
@@ -675,8 +675,8 @@ def capture(args: argparse.Namespace) -> int:
             measured = [(name, [float(v) for v in re.split(r'[,\s]+', value.strip())]) for name,value in values]
         except ValueError:
             measured = []
-        missing_reads = plain_log.count('openq4_guiGet: unknown GUI variable')
-        missing_writes = plain_log.count('openq4_guiSet: unknown GUI variable')
+        missing_reads = plain_log.count('opend3_guiGet: unknown GUI variable')
+        missing_writes = plain_log.count('opend3_guiSet: unknown GUI variable')
         passed = measured == expected and missing_reads == 1 and missing_writes == 1
         metadata['presentation_probe'] = {'sources':presentation_sources, 'values':values,
             'unknown_reads':missing_reads, 'unknown_writes':missing_writes, 'passed':passed}
@@ -754,7 +754,7 @@ def main() -> int:
     parser.add_argument('--assets', type=Path, required=True, help='Installation root containing q4base.')
     parser.add_argument('--runtime', type=Path, default=ROOT / '.install')
     parser.add_argument('--stock-interface', action='store_true', help='Pin the legacy interface for an original-asset-only runtime comparison.')
-    parser.add_argument('--stock-assets-only', action='store_true', help='Use the supported q4base search path and stock interface, with the supplied openQ4 binaries; excludes baseoq4 content packs.')
+    parser.add_argument('--stock-assets-only', action='store_true', help='Use the supported q4base search path and stock interface, with the supplied openD3 binaries; excludes baseod3 content packs.')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--width', type=int, default=1280)
     parser.add_argument('--height', type=int, default=720)

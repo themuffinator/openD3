@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Preserved from openQ4-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
+# Preserved from openD3-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
 """Static and native contracts for Match Control presentation projection."""
 
 from __future__ import annotations
@@ -435,10 +435,10 @@ int main() {
 }
 '''
     # This checkout is the engine since the game sources moved into it; a
-    # sibling named openQ4 is only where a companion checkout used to find it.
-    engine_root = Path(os.environ.get("OPENQ4_ENGINE_REPO",
-        ROOT if (ROOT / "src/framework").is_dir() else ROOT.parent / "openQ4"))
-    strings_root = engine_root / "content/baseoq4/pak0/strings"
+    # sibling named openD3 is only where a companion checkout used to find it.
+    engine_root = Path(os.environ.get("OPEND3_ENGINE_REPO",
+        ROOT if (ROOT / "src/framework").is_dir() else ROOT.parent / "openD3"))
+    strings_root = engine_root / "content/baseod3/pak0/strings"
     languages = ("english", "french", "italian", "spanish", "polish", "russian")
     keys = ("#str_42873", "#str_42870", "#str_42871", "#str_201012",
             "#str_201013", "#str_41313", "#str_41315")
@@ -448,7 +448,7 @@ int main() {
     for language in languages:
         entries = dict(re.findall(r'"(#str_\d+)"\s+"([^"\r\n]*)"',
             read(strings_root / f"{language}_guis.lang") + "\n" +
-            read(strings_root / f"{language}_openq4.lang")))
+            read(strings_root / f"{language}_opend3.lang")))
         assert entries[keys[0]].count("%s") == 1
         translations.append([entries[key] for key in keys])
         values = ["", entries[keys[1]], entries[keys[2]], entries[keys[3]], entries[keys[4]],

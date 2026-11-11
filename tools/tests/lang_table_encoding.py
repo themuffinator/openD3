@@ -425,11 +425,11 @@ def validate_code_point_font_path() -> None:
 
     device_context = read("src/ui/DeviceContext.cpp")
     for needle in (
-        "openQ4_NextTextGlyph",
+        "openD3_NextTextGlyph",
         "LangDict_NextCodePoint",
         "R_GlyphForCodePoint",
         "CharWidthForCodePoint",
-        "openQ4_CodePointIsPrintable",
+        "openD3_CodePointIsPrintable",
     ):
         require(device_context, needle, "src/ui/DeviceContext.cpp UTF-8 text iteration")
     if re.search(r"font->glyphs\[\s*\*s\s*\]", device_context):
@@ -638,7 +638,7 @@ def validate_translated_tables() -> None:
                 assert set(map(ord, letters)) <= font_code_points(font), f"{font.name}: missing {language} glyphs"
 
 
-def validate_openq4_placeholders() -> None:
+def validate_opend3_placeholders() -> None:
     """Every language's openD3 table keeps the English printf placeholders in
     order, so a format the engine fills (the SYSTEM display lists) never reads
     the wrong argument. Partly translated tables are checked for their keys."""
@@ -655,7 +655,7 @@ def validate_openq4_placeholders() -> None:
 def validate_ci_smoke() -> None:
     push = read(".github/workflows/push-verification.yml")
     commit = read(".github/workflows/commit-validation.yml")
-    runner = read("tools/validation/openq4_validate.py")
+    runner = read("tools/validation/opend3_validate.py")
 
     for source, context in (
         (push, "push verification workflow"),
@@ -674,7 +674,7 @@ def main() -> None:
     validate_codepage_selection()
     validate_language_menu()
     validate_translated_tables()
-    validate_openq4_placeholders()
+    validate_opend3_placeholders()
     validate_ci_smoke()
     print("lang_table_encoding: ok")
 

@@ -17,7 +17,7 @@ SUPPORT = r'''
 #include <vector>
 // Select extracted Android branches only after parsing the host library.
 // Defining __ANDROID__ on the command line changes libc++'s system headers.
-#if defined(OPENQ4_TEST_ANDROID) && !defined(__ANDROID__)
+#if defined(OPEND3_TEST_ANDROID) && !defined(__ANDROID__)
 #define __ANDROID__ 1
 #endif
 using idStr=std::string;
@@ -59,7 +59,7 @@ static void RM_AdvanceDisplayEpoch(){++epochs;}
 TEST = r'''
 int main(){
  assert(RM_AutomaticApi(false)==rm_platformDefaultApi);
-#if defined(OPENQ4_OPENXR) && !defined(__ANDROID__)
+#if defined(OPEND3_OPENXR) && !defined(__ANDROID__)
  assert(RM_AutomaticApi(true)==RENDER_MODULE_API_GL);
 #else
  assert(RM_AutomaticApi(true)==rm_platformDefaultApi);
@@ -110,7 +110,7 @@ def main():
         cpp.write_text(SUPPORT+bodies+TEST,encoding='utf-8')
         compiler=shutil.which('clang++') or shutil.which('g++')
         environment=dict(os.environ,TEMP=directory,TMP=directory,TMPDIR=directory)
-        for defines in ([],['-DOPENQ4_OPENXR=1'],['-DOPENQ4_OPENXR=1','-DOPENQ4_TEST_ANDROID=1']):
+        for defines in ([],['-DOPEND3_OPENXR=1'],['-DOPEND3_OPENXR=1','-DOPEND3_TEST_ANDROID=1']):
             subprocess.run([compiler,'-std=c++20',*defines,str(cpp),'-o',str(exe)],check=True,cwd=path,env=environment)
             subprocess.run([str(exe)],check=True,cwd=path,env=environment)
 

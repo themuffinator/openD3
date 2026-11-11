@@ -9,10 +9,10 @@ import capture_system_refresh as capture
 
 
 def trace(mode="sp"):
-    lines = ["OPENQ4_MENU_ACTIVATION PASS"]
+    lines = ["OPEND3_MENU_ACTIVATION PASS"]
     for row in capture.stages():
         lines += [f'{capture.MARKER} {row["name"]}',
-                  f"OPENQ4_SYSTEM enabled=1 active={capture.page.PAGE} parent={capture.page.PARENT} "
+                  f"OPEND3_SYSTEM enabled=1 active={capture.page.PAGE} parent={capture.page.PARENT} "
                   f"child=1 guiTest=0 menu=1 map=1 multiplayer={int(mode == 'mp')}"]
         lines += [f"GUI_VALUE {key}={value}" for key, value in zip(capture.FIELDS, row["values"])]
         if row["conflict"] is not None:
@@ -40,7 +40,7 @@ class RefreshEvidence(unittest.TestCase):
             ("conflict=1", "conflict=0"), ("bytes=1 ", "bytes=0 "),
             (f"{capture.MARKER} ultra", f"{capture.MARKER} minimum"),
             ("GUI_VALUE open=1\n", ""),
-            (capture.COMPLETE, ""), ("OPENQ4_MENU_ACTIVATION PASS", ""),
+            (capture.COMPLETE, ""), ("OPEND3_MENU_ACTIVATION PASS", ""),
         ]
         for before, after in mutations:
             with self.subTest(before=before):
@@ -51,16 +51,16 @@ class RefreshEvidence(unittest.TestCase):
 
     def test_window_capture_uses_semantic_commands(self):
         script = capture.script()
-        self.assertIn("openq4_assertMenuActivation 10000", script)
+        self.assertIn("opend3_assertMenuActivation 10000", script)
         self.assertEqual(script.count("screenshot "), 9)
         self.assertEqual(script.count("vid_restart\n"), 2)
         self.assertNotIn("testGUI", script)
         self.assertEqual(script.splitlines()[-1], "quit")
         # The Number answers only on its tab: each stage that focuses it switches first.
         for row in capture.stages():
-            focus = [i for i, command in enumerate(row["commands"]) if command.startswith("openq4_retainedGui focus")]
+            focus = [i for i, command in enumerate(row["commands"]) if command.startswith("opend3_retainedGui focus")]
             if focus:
-                self.assertEqual(row["commands"][focus[0] - 2:focus[0]], ["openq4_retainedGui event tab_image", "wait 3"])
+                self.assertEqual(row["commands"][focus[0] - 2:focus[0]], ["opend3_retainedGui event tab_image", "wait 3"])
 
     def test_effective_renderer_identity(self):
         self.assertEqual(capture.active_renderer("Renderer API: gl (module)\n"), "gl")

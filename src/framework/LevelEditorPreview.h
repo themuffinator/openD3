@@ -1,7 +1,7 @@
 // Copyright (C) 2026 DarkMatter Productions
 // SPDX-License-Identifier: GPL-3.0-or-later
-#ifndef OPENQ4_LEVEL_EDITOR_PREVIEW_H
-#define OPENQ4_LEVEL_EDITOR_PREVIEW_H
+#ifndef OPEND3_LEVEL_EDITOR_PREVIEW_H
+#define OPEND3_LEVEL_EDITOR_PREVIEW_H
 
 #include "../tools/leveleditor/MapDocument.h"
 #include <functional>

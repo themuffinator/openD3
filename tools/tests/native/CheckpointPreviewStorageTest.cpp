@@ -10,7 +10,7 @@ static std::string inputBytes, writtenBytes;
 static int reads, writes;
 enum Fault { None, Missing, FirstRead, Persist, SecondRead, ReadbackMismatch };
 static Fault fault;
-namespace openq4 {
+namespace opend3 {
 enum class DurableReadResult { Missing, Present, Failed };
 static DurableReadResult DurableReadExact(const std::string &path, size_t maxBytes,
     std::string &bytes, std::string &error) {

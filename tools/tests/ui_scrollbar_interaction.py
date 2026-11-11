@@ -8,7 +8,7 @@ def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
  a=argparse.ArgumentParser(description=__doc__);a.add_argument('--compiler',default='clang++');a.add_argument('--msvc',action='store_true');a.add_argument('--sanitize',action='store_true');a.add_argument('--mutations',action='store_true');args=a.parse_args()
  out=Path(tempfile.mkdtemp(prefix='scrollbar-interaction-',dir=ROOT/'.tmp'));core=ROOT/'src/ui/retained';env={**os.environ,'TEMP':str(out),'TMP':str(out),'TMPDIR':str(out)}
- doc=(core/'Document.cpp').read_text(encoding='utf-8');valid=out/'valid.cpp';valid.write_text('#include "Interaction.h"\n#include <cmath>\nnamespace openq4::ui {\n'+function_body(doc,'bool Utf8(')+function_body(doc,'bool ValidStateValue(')+'}\n',newline='\n')
+ doc=(core/'Document.cpp').read_text(encoding='utf-8');valid=out/'valid.cpp';valid.write_text('#include "Interaction.h"\n#include <cmath>\nnamespace opend3::ui {\n'+function_body(doc,'bool Utf8(')+function_body(doc,'bool ValidStateValue(')+'}\n',newline='\n')
  sources=[core/(name+'.cpp') for name in ['Interaction','ScrollGeometry','TextInput','TextEdit','TextEditCommand','NativeTextDocument','NativeTextEditor','Input']]+[valid,ROOT/'tools/tests/native/UiScrollbarInteractionTest.cpp']
  bound=sources+[Path(__file__).resolve(),core/'Document.cpp']+list(core.glob('*.h'))
  before={str(p):sha(p) for p in bound};exe=out/'test.exe'

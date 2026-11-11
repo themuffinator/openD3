@@ -14,7 +14,7 @@ def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
 def main():
  parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--sdl-source',type=Path);parser.add_argument('--compiler',default='clang++');parser.add_argument('--no-mutations',action='store_true');parser.add_argument('--sdl-config',type=Path,help='Optional existing generated SDL config directory for Windows C17 syntax checks');parser.add_argument('--native-compiler',default='clang-cl');args=parser.parse_args()
  (ROOT/'.tmp').mkdir(exist_ok=True);scratch=Path(tempfile.mkdtemp(prefix='sdl-native-fence-',dir=ROOT/'.tmp'))
- bound=[PACKAGE/'include/SDL3/SDL_openq4_native_fence.h',PACKAGE/'src/video/windows/SDL_openq4_native_fence.h',PACKAGE/'src/video/windows/SDL_openq4_native_fence.c',PACKAGE/'dispatch-fence.patch',PACKAGE/'queue-consumer.patch',PACKAGE/'queue-generation.patch',PACKAGE/'text-provenance.patch',ROOT/'tools/tests/native/SdlNativeFenceTest.cpp',Path(__file__),ROOT/'tools/tests/sdl3_clipboard_status.py',ROOT/'subprojects/sdl3.wrap']
+ bound=[PACKAGE/'include/SDL3/SDL_opend3_native_fence.h',PACKAGE/'src/video/windows/SDL_opend3_native_fence.h',PACKAGE/'src/video/windows/SDL_opend3_native_fence.c',PACKAGE/'dispatch-fence.patch',PACKAGE/'queue-consumer.patch',PACKAGE/'queue-generation.patch',PACKAGE/'text-provenance.patch',ROOT/'tools/tests/native/SdlNativeFenceTest.cpp',Path(__file__),ROOT/'tools/tests/sdl3_clipboard_status.py',ROOT/'subprojects/sdl3.wrap']
  before_hashes={str(p.relative_to(ROOT)):sha(p) for p in bound}
  spec=importlib.util.spec_from_file_location('source_helper',ROOT/'tools/tests/sdl3_clipboard_status.py');helper=importlib.util.module_from_spec(spec);spec.loader.exec_module(helper);helper.ROOT=ROOT;helper.FILES=FILES
  wrap=configparser.ConfigParser();wrap.read(ROOT/'subprojects/sdl3.wrap',encoding='utf-8');source,provision,_=helper.provision_source(args.sdl_source,dict(wrap['wrap-file']),scratch)
@@ -44,7 +44,7 @@ def main():
   if applied.returncode:raise RuntimeError(applied.stdout)
  decoded={name:(projection/name).read_text(encoding='utf-8') for name in FILES}
  def write(name,text):(scratch/name).write_text(text,encoding='utf-8',newline='\n')
- public=PACKAGE/'include/SDL3/SDL_openq4_native_fence.h';private=PACKAGE/'src/video/windows/SDL_openq4_native_fence.h';implementation=private.with_suffix('.c')
+ public=PACKAGE/'include/SDL3/SDL_opend3_native_fence.h';private=PACKAGE/'src/video/windows/SDL_opend3_native_fence.h';implementation=private.with_suffix('.c')
  s=public.read_text();write('fence-api.inc',s[s.index('typedef enum OQ4_NativeQueueKind'):s.rindex('#ifdef __cplusplus')])
  s=private.read_text();write('fence-internal.inc',s[s.index('bool OQ4_WIN_'):s.rindex('#endif')])
  s=implementation.read_text();write('fence.inc',s[s.index('#define OQ4_FENCE_MAX_EVENTS'):s.rindex('#endif')])
@@ -53,7 +53,7 @@ def main():
  type_end=events_source.index('} SDL_EventQ =',type_start)
  type_end=events_source.index(';',type_end)+1
  write('queue-types.inc',events_source[type_start:type_end])
- state_start=events_source.index('/* openQ4 private queue guard.')
+ state_start=events_source.index('/* openD3 private queue guard.')
  state_end=events_source.index('static void SDL_CleanupTemporaryMemory',state_start)
  queue_state=events_source[state_start:state_end].rstrip()
  assert queue_state.endswith('#endif');queue_state=queue_state[:-len('#endif')]

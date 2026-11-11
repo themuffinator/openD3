@@ -42,13 +42,13 @@ public:
 	virtual bool KeepForLevelLoad() { return false; }
 	// Only the manager calls these with an already checked outer allocation.
 	// Deferred wrappers forward that identity to their unregistered backend.
-	virtual openq4::ui::TextBrokerContext QueryTextContext(std::uint64_t allocation,
+	virtual opend3::ui::TextBrokerContext QueryTextContext(std::uint64_t allocation,
 		std::uint64_t window, std::uint64_t session) {
-		return {Active() ? openq4::ui::TextBrokerRoute::Legacy : openq4::ui::TextBrokerRoute::Unavailable,
+		return {Active() ? opend3::ui::TextBrokerRoute::Legacy : opend3::ui::TextBrokerRoute::Unavailable,
 			window,session,{}};
 	}
-	virtual bool ApplyTextInput(const openq4::ui::TextBrokerContext& expected,
-		const openq4::ui::TextInputEvent& input, std::string& error) { return false; }
+	virtual bool ApplyTextInput(const opend3::ui::TextBrokerContext& expected,
+		const opend3::ui::TextInputEvent& input, std::string& error) { return false; }
 
 	// Clipboard work leaves every backend method stack before the manager calls
 	// the native service. Take only the front FIFO request for this exact marker.
@@ -57,28 +57,28 @@ public:
 	virtual bool ReplaceClipboardSelection(const uiNumberEditorTarget_t& expected,
 		std::string_view text, std::string& error) { return false; }
 	virtual bool SetClipboardNotice(const uiNumberEditorTarget_t& expected,
-		openq4::ui::NumberEditNotice notice, std::string& error) { return false; }
+		opend3::ui::NumberEditNotice notice, std::string& error) { return false; }
 
 	// Engine-private native owner endpoints. Legacy and unloaded backends refuse.
 	// Prepare and Refresh may call host code; manager re-resolves afterward.
 	// Current, Publish and Retire must not allocate or enter foreign callbacks.
-	virtual bool PrepareNativeText(const openq4::ui::TextEditorIdentity& owner) { return false; }
-	virtual bool AttachNativeText(const openq4::ui::TextEditorIdentity& owner, openq4::ui::NativeTextIdentity native, openq4::ui::NativeTextEditorBarrier& out, std::string& error) { return false; }
-	virtual bool RefreshNativeText(const openq4::ui::NativeTextEditorBarrier& expected, openq4::ui::NativeTextEditorView& out, std::string& error) { return false; }
-	virtual bool CurrentNativeText(const openq4::ui::NativeTextEditorBarrier& expected) const noexcept { return false; }
-	virtual bool BeginNativeText(const openq4::ui::NativeTextEditorBarrier& expected, const openq4::ui::NativeTextCollection& collection, openq4::ui::NativeTextEditorBarrier& out, std::string& error) { return false; }
-	virtual bool ApplyNativeText(const openq4::ui::NativeTextEditorBarrier& expected, const openq4::ui::NativeTextOffer& offer, openq4::ui::NativeTextEditorReceipt& out, std::string& error) { return false; }
-	virtual bool CompleteNativeText(const openq4::ui::NativeTextEditorBarrier& expected, const openq4::ui::NativeTextCollection& collection, openq4::ui::NativeTextEditorBarrier& out, std::string& error) { return false; }
+	virtual bool PrepareNativeText(const opend3::ui::TextEditorIdentity& owner) { return false; }
+	virtual bool AttachNativeText(const opend3::ui::TextEditorIdentity& owner, opend3::ui::NativeTextIdentity native, opend3::ui::NativeTextEditorBarrier& out, std::string& error) { return false; }
+	virtual bool RefreshNativeText(const opend3::ui::NativeTextEditorBarrier& expected, opend3::ui::NativeTextEditorView& out, std::string& error) { return false; }
+	virtual bool CurrentNativeText(const opend3::ui::NativeTextEditorBarrier& expected) const noexcept { return false; }
+	virtual bool BeginNativeText(const opend3::ui::NativeTextEditorBarrier& expected, const opend3::ui::NativeTextCollection& collection, opend3::ui::NativeTextEditorBarrier& out, std::string& error) { return false; }
+	virtual bool ApplyNativeText(const opend3::ui::NativeTextEditorBarrier& expected, const opend3::ui::NativeTextOffer& offer, opend3::ui::NativeTextEditorReceipt& out, std::string& error) { return false; }
+	virtual bool CompleteNativeText(const opend3::ui::NativeTextEditorBarrier& expected, const opend3::ui::NativeTextCollection& collection, opend3::ui::NativeTextEditorBarrier& out, std::string& error) { return false; }
 #ifndef ID_DEDICATED
 	// Client-only: a settlement owns retained models whose destructor the
 	// dedicated server does not link. Optimized MSVC emits that destructor for
 	// any by-value return, even unused, so the dedicated build omits Prepare.
-	virtual std::unique_ptr<openq4::ui::Interaction::NativeSettlement> PrepareNativeTextSettlement(const openq4::ui::NativeTextEditorBarrier& expected, std::string& error) { return nullptr; }
+	virtual std::unique_ptr<opend3::ui::Interaction::NativeSettlement> PrepareNativeTextSettlement(const opend3::ui::NativeTextEditorBarrier& expected, std::string& error) { return nullptr; }
 #endif
-	virtual bool PublishNativeTextSettlement(openq4::ui::Interaction::NativeSettlement& prepared, openq4::ui::NativeTextEditorReceipt& out) noexcept { return false; }
-	virtual openq4::ui::NativeTextPresence QueryNativeTextPresence(openq4::ui::NativeTextIdentity,
-        const openq4::ui::TextEditorIdentity&) const noexcept { return openq4::ui::NativeTextPresence::BusyOrUnknown; }
-	virtual bool RetireNativeTextExact(openq4::ui::NativeTextIdentity native, const openq4::ui::TextEditorIdentity& owner) noexcept { return false; }
+	virtual bool PublishNativeTextSettlement(opend3::ui::Interaction::NativeSettlement& prepared, opend3::ui::NativeTextEditorReceipt& out) noexcept { return false; }
+	virtual opend3::ui::NativeTextPresence QueryNativeTextPresence(opend3::ui::NativeTextIdentity,
+        const opend3::ui::TextEditorIdentity&) const noexcept { return opend3::ui::NativeTextPresence::BusyOrUnknown; }
+	virtual bool RetireNativeTextExact(opend3::ui::NativeTextIdentity native, const opend3::ui::TextEditorIdentity& owner) noexcept { return false; }
 
 	void ClearRefs() { refs = 0; }
 	void AddRef() { refs++; }

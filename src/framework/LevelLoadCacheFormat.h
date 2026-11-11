@@ -1,16 +1,16 @@
 /*
 ===========================================================================
 
-openQ4 hardened level-load cache and preload-manifest format
+openD3 hardened level-load cache and preload-manifest format
 
-Copyright (C) 2026 openQ4 contributors
+Copyright (C) 2026 openD3 contributors
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
 Foundation, either version 3 of the License, or (at your option) any later
 version.
 
-This is an original openQ4 format and implementation.  It deliberately uses
+This is an original openD3 format and implementation.  It deliberately uses
 only fixed-width values and C++ standard-library types so cache validation can
 be tested independently of engine and platform ABIs.
 

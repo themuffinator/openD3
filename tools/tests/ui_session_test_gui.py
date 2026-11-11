@@ -25,7 +25,7 @@ SUPPORT = r'''
 #include <memory>
 #include <string>
 #include <vector>
-namespace openq4 { void NativeInputBeforeSessionChange() noexcept {} }
+namespace opend3 { void NativeInputBeforeSessionChange() noexcept {} }
 
 struct idStr : std::string {
     using std::string::string;

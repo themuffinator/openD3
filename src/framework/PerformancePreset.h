@@ -6,7 +6,7 @@
 #include <variant>
 #include "../renderer/RendererHardware.h"
 
-namespace openq4 {
+namespace opend3 {
 struct PerformancePreset {
 	const char *name;
 	int machineSpec;
@@ -121,8 +121,8 @@ inline constexpr int PerformancePresetMaxDisplayRefreshHz=1000;
 int SanitizePerformancePresetMemoryMB(int raw,int fallback,int maximum) noexcept;
 PerformancePresetDetection DetectPerformancePreset(const PerformancePresetSignals&) noexcept;
 bool ResolveDetectedPerformancePreset(const PerformancePresetDetection&,PerformancePreset&) noexcept;
-} // namespace openq4
+} // namespace opend3
 
 // Engine-private observation, implemented by Common. No setters, commands,
 // renderer restart or settings publication. The pure model needs no engine.
-bool Common_CapturePerformancePresetSignals(openq4::PerformancePresetSignals&,std::string& error);
+bool Common_CapturePerformancePresetSignals(opend3::PerformancePresetSignals&,std::string& error);

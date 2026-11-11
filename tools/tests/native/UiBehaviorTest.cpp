@@ -8,7 +8,7 @@
 #include <sstream>
 #include <stdexcept>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 namespace {
 void Check(bool condition, const char* message) {
 	if (!condition) { std::fprintf(stderr,"FAIL: %s\n",message); std::exit(1); }
@@ -17,7 +17,7 @@ bool Near(double a, double b) { return std::abs(a-b) < .0001; }
 
 const char* Source = R"json(
 {
- "format":"openq4-ui", "version":1, "id":"ordered-behavior",
+ "format":"opend3-ui", "version":1, "id":"ordered-behavior",
  "state":{
   "a":{"type":"number","initial":1}, "b":{"type":"number","initial":10},
   "level":{"type":"number","initial":0.25}, "extent":{"type":"number","initial":100},

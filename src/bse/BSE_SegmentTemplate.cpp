@@ -48,7 +48,7 @@ bool rvSegmentTemplate::GetSmoker()
 
 bool rvSegmentTemplate::DetailCull() const
 {
-	// openQ4: read the cvar object; this is asked per segment on every check
+	// openD3: read the cvar object; this is asked per segment on every check
 	// and render, and the by-name lookup hashed and compared the name each time
 	return (mDetail > 0.0f) && (bse_scale.GetFloat() < mDetail);
 }

@@ -1,6 +1,6 @@
 // Copyright (C) 2026 DarkMatter Productions
-#ifndef OPENQ4_VK_MATERIALPROGRAMS_H
-#define OPENQ4_VK_MATERIALPROGRAMS_H
+#ifndef OPEND3_VK_MATERIALPROGRAMS_H
+#define OPEND3_VK_MATERIALPROGRAMS_H
 #include "../materialprogram/GLSLCompiler.h"
 #include "../materialprogram/ARBTranslator.h"
 #include <vector>

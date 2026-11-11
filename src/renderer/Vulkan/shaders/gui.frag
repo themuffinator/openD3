@@ -2,7 +2,7 @@
 #extension GL_GOOGLE_include_directive : require
 #include "../../PBRMath.h"
 
-// openQ4 Vulkan GUI/2D pipeline â€” fragment stage (Phase D,
+// openD3 Vulkan GUI/2D pipeline â€” fragment stage (Phase D,
 // docs/dev/archive/2026-10-18/plans/2026-07-18-vulkan-phase-d.md).
 //
 // One combined image sampler; component swizzles (fonts' green-alpha,

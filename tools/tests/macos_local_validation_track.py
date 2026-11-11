@@ -24,16 +24,16 @@ def require(haystack: str, needle: str, context: str) -> None:
 
 
 def validate_runner_profile() -> None:
-    runner = read("tools/validation/openq4_validate.py")
+    runner = read("tools/validation/opend3_validate.py")
 
     for token in (
         '"macos-static"',
         "MACOS_STATIC_PROFILE",
         "MACOS_STATIC_SHELL_SYNTAX_FILES",
         "validate_macos_static.sh",
-        "openq4-macos-bootstrap.sh",
-        "openq4-macos-install-quake4-assets.sh",
-        "openq4-macos-sync-build-test.sh",
+        "opend3-macos-bootstrap.sh",
+        "opend3-macos-install-quake4-assets.sh",
+        "opend3-macos-sync-build-test.sh",
         "MACOS_STATIC_DRY_RUN_PROFILES",
         "run_macos_static_shell_syntax_checks",
         "run_macos_static_dry_run_profiles",
@@ -43,7 +43,7 @@ def validate_runner_profile() -> None:
         '"--no-install"',
         '"--dry-run"',
         "if args.runtime and host_is_macos()",
-        "must not run openQ4 on macOS",
+        "must not run openD3 on macOS",
         "Run renderer self-test binaries only on available non-macOS hosts",
         'args.profile == MACOS_STATIC_PROFILE',
     ):
@@ -71,7 +71,7 @@ def validate_wrappers_and_docs() -> None:
         (sh, "POSIX macos-static wrapper"),
     ):
         require(source, "macos-static", context)
-        require(source, "openq4_validate.py", context)
+        require(source, "opend3_validate.py", context)
 
     for source, context in (
         (building, "building guide"),
@@ -79,8 +79,8 @@ def validate_wrappers_and_docs() -> None:
     ):
         require(source, "tools/validation/validate_macos_static.ps1", context)
         require(source, "tools/validation/validate_macos_static.sh", context)
-        require(source, "python tools/validation/openq4_validate.py macos-static", context)
-        require(source, "does not run openQ4 on macOS", context)
+        require(source, "python tools/validation/opend3_validate.py macos-static", context)
+        require(source, "does not run openD3 on macOS", context)
         require(source, "renderer-default-safety-selftest", context)
         require(source, "non-macOS", context)
 

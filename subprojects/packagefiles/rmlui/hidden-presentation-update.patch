@@ -5,7 +5,7 @@
  	/// Updates all elements in the context's documents.
  	/// This must be called before Context::Render, but after any elements have been changed, added, or removed.
 -	bool Update();
-+	/// openQ4: Presentation-only callers without CSS animations or widget updates may
++	/// openD3: Presentation-only callers without CSS animations or widget updates may
 +	/// defer display:none descendants until shown; ordinary contexts keep full updates.
 +	bool Update(bool defer_hidden_descendants = false);
  	/// Renders all visible elements in the context's documents.

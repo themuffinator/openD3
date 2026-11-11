@@ -39,15 +39,15 @@ If you have questions concerning this license or the applicable additional terms
 #include "VRSystemLocal.h"
 #include "../sys/NetworkEndpoint.h"
 #if defined( __has_include )
-#if __has_include( "openq4_savegame_compat_generated.h" )
-#include "openq4_savegame_compat_generated.h"
+#if __has_include( "opend3_savegame_compat_generated.h" )
+#include "opend3_savegame_compat_generated.h"
 #endif
 #endif
-#ifndef OPENQ4_SAVEGAME_COMPAT_SOURCE_HASH
-#define OPENQ4_SAVEGAME_COMPAT_SOURCE_HASH ""
+#ifndef OPEND3_SAVEGAME_COMPAT_SOURCE_HASH
+#define OPEND3_SAVEGAME_COMPAT_SOURCE_HASH ""
 #endif
-#ifndef OPENQ4_SAVEGAME_COMPAT_SOURCE_FILE_COUNT
-#define OPENQ4_SAVEGAME_COMPAT_SOURCE_FILE_COUNT -1
+#ifndef OPEND3_SAVEGAME_COMPAT_SOURCE_FILE_COUNT
+#define OPEND3_SAVEGAME_COMPAT_SOURCE_FILE_COUNT -1
 #endif
 #include "../imagetools/ImageTools.h"
 #include "../ui/RetainedUI.h"
@@ -212,7 +212,7 @@ static int Session_FindPresentationCap( void ) {
 	// Must match the cap Common_ThrottlePresentationFrame actually paces to, not raw
 	// com_maxfps: when the two disagree the pacifier admits frames faster than the
 	// throttle will release them and each one sleeps away the difference.
-	return openQ4_GetRequestedPresentationCap();
+	return openD3_GetRequestedPresentationCap();
 }
 
 // A blocking-load progress animation gains nothing from redrawing at the gameplay
@@ -244,21 +244,21 @@ static float Session_GetBlockingLoadFrameIntervalMsec( void ) {
 
 static void Session_BeginBlockingLoadPresentationFrame( void ) {
 	if ( Session_FindPresentationCap() > 0 ) {
-		openQ4_BeginPresentationFrame();
+		openD3_BeginPresentationFrame();
 	} else {
 		com_frameRealTime = Sys_Milliseconds();
 	}
 }
 
-static const char *Session_GetFramePacingBoundName( openq4FramePacingBound_t boundMode ) {
+static const char *Session_GetFramePacingBoundName( opend3FramePacingBound_t boundMode ) {
 	switch ( boundMode ) {
-		case OPENQ4_FRAME_BOUND_SIMULATION:
+		case OPEND3_FRAME_BOUND_SIMULATION:
 			return "simulation";
-		case OPENQ4_FRAME_BOUND_VSYNC:
+		case OPEND3_FRAME_BOUND_VSYNC:
 			return "vsync";
-		case OPENQ4_FRAME_BOUND_PRESENTATION_CAP:
+		case OPEND3_FRAME_BOUND_PRESENTATION_CAP:
 			return "presentation-cap";
-		case OPENQ4_FRAME_BOUND_UNCAPPED:
+		case OPEND3_FRAME_BOUND_UNCAPPED:
 			return "frame-work";
 		default:
 			return "collecting";
@@ -267,11 +267,11 @@ static const char *Session_GetFramePacingBoundName( openq4FramePacingBound_t bou
 
 // Sub-millisecond: the 240 Hz budget (p95 4.6 ms, p99 6.3 ms) cannot be
 // judged from whole-millisecond bins (PresentationPacing.h).
-float Session_GetFramePacingPercentileMsec( const openq4FramePacingStats_t &stats, int percentile ) {
-	return openq4::FramePacingPercentileMsec( stats.frameIntervalBins, stats.frameSampleCount, percentile, stats.maxFrameMsec );
+float Session_GetFramePacingPercentileMsec( const opend3FramePacingStats_t &stats, int percentile ) {
+	return opend3::FramePacingPercentileMsec( stats.frameIntervalBins, stats.frameSampleCount, percentile, stats.maxFrameMsec );
 }
 
-static void Session_PrintFramePacingSummary( const openq4FramePacingStats_t &stats, const char *reason ) {
+static void Session_PrintFramePacingSummary( const opend3FramePacingStats_t &stats, const char *reason ) {
 	common->Printf(
 		"Frame pacing%s (%s): bound=%s, samples=%d, present=%.2f ms (%.1f Hz), p50=%.2f ms, p95=%.2f ms, p99=%.2f ms, max=%.2f ms, async=%.2f ms (%.1f Hz), ticDelta/frame=%.2f, gameTics/frame=%.2f, wait overshoot=%.2f ms, wake jitter=%.2f ms, swapInterval=%d, cap=%d, refresh=%.1f Hz\n",
 		reason != NULL ? reason : "",
@@ -296,10 +296,10 @@ static void Session_PrintFramePacingSummary( const openq4FramePacingStats_t &sta
 }
 
 #ifndef ID_DEDICATED
-void openQ4_PrintPresentationThrottleStats( const char *reason );
-void openQ4_ResetPresentationThrottleStats( void );
-void openQ4_PrintPresentationLatencyStats( const char *reason );
-void openQ4_ResetPresentationLatencyStats( void );
+void openD3_PrintPresentationThrottleStats( const char *reason );
+void openD3_ResetPresentationThrottleStats( void );
+void openD3_PrintPresentationLatencyStats( const char *reason );
+void openD3_ResetPresentationLatencyStats( void );
 
 static void Session_FramePacingSnapshot_f( const idCmdArgs &args ) {
 	const char *reason = NULL;
@@ -310,14 +310,14 @@ static void Session_FramePacingSnapshot_f( const idCmdArgs &args ) {
 	}
 
 	sessLocal.PrintFramePacingSnapshot( reason );
-	openQ4_PrintPresentationThrottleStats( reasonText.Length() ? va( " snapshot %s", reasonText.c_str() ) : " snapshot" );
-	openQ4_PrintPresentationLatencyStats( reasonText.Length() ? va( " snapshot %s", reasonText.c_str() ) : " snapshot" );
+	openD3_PrintPresentationThrottleStats( reasonText.Length() ? va( " snapshot %s", reasonText.c_str() ) : " snapshot" );
+	openD3_PrintPresentationLatencyStats( reasonText.Length() ? va( " snapshot %s", reasonText.c_str() ) : " snapshot" );
 }
 
 static void Session_FramePacingReset_f( const idCmdArgs &args ) {
 	sessLocal.ResetFramePacingStats();
-	openQ4_ResetPresentationThrottleStats();
-	openQ4_ResetPresentationLatencyStats();
+	openD3_ResetPresentationThrottleStats();
+	openD3_ResetPresentationLatencyStats();
 	common->Printf( "Frame pacing stats reset\n" );
 }
 
@@ -325,7 +325,7 @@ static void Session_FramePacingReset_f( const idCmdArgs &args ) {
 ================
 Session_TestControllerLoss_f
 
-openQ4: testControllerLoss 1|0 stands in for a controller's loss or return
+openD3: testControllerLoss 1|0 stands in for a controller's loss or return
 for the menus' notices (section 13.7), touching no device.
 ================
 */
@@ -341,7 +341,7 @@ static void Session_TestControllerLoss_f( const idCmdArgs &args ) {
 ================
 Session_TestControlsKey_f
 
-openQ4: testControlsKey <key> stands in for a key pressed and released on
+openD3: testControlsKey <key> stands in for a key pressed and released on
 the retained CONTROLS page (a wait for a key, or Delete on a row), touching
 no device.
 ================
@@ -406,12 +406,12 @@ static void Session_TestMessageBox_f( const idCmdArgs &args ) {
 
 // What holds the frame rate (PresentationPacing.h): a cap that is met at any
 // rate, the display's refresh under vsync, game tics, or the frame's own work.
-static openq4FramePacingBound_t Session_ClassifyFramePacing( const openq4FramePacingStats_t &stats ) {
+static opend3FramePacingBound_t Session_ClassifyFramePacing( const opend3FramePacingStats_t &stats ) {
 	if ( !stats.valid ) {
-		return OPENQ4_FRAME_BOUND_UNKNOWN;
+		return OPEND3_FRAME_BOUND_UNKNOWN;
 	}
 
-	openq4::FramePacingBoundInput input;
+	opend3::FramePacingBoundInput input;
 	input.avgFrameMsec = stats.avgFrameMsec;
 	input.presentationCap = stats.presentationCap;
 	input.swapInterval = stats.swapInterval;
@@ -420,17 +420,17 @@ static openq4FramePacingBound_t Session_ClassifyFramePacing( const openq4FramePa
 	input.avgTicsPerFrame = stats.avgTicsPerFrame;
 	input.avgGameTicsPerFrame = stats.avgGameTicsPerFrame;
 	input.waitedForTic = stats.lastRequestedWaitMsec > 0;
-	switch ( openq4::ClassifyFramePacing( input ) ) {
-		case openq4::FramePacingBound::Simulation:
-			return OPENQ4_FRAME_BOUND_SIMULATION;
-		case openq4::FramePacingBound::Vsync:
-			return OPENQ4_FRAME_BOUND_VSYNC;
-		case openq4::FramePacingBound::PresentationCap:
-			return OPENQ4_FRAME_BOUND_PRESENTATION_CAP;
-		case openq4::FramePacingBound::FrameWork:
-			return OPENQ4_FRAME_BOUND_UNCAPPED;
+	switch ( opend3::ClassifyFramePacing( input ) ) {
+		case opend3::FramePacingBound::Simulation:
+			return OPEND3_FRAME_BOUND_SIMULATION;
+		case opend3::FramePacingBound::Vsync:
+			return OPEND3_FRAME_BOUND_VSYNC;
+		case opend3::FramePacingBound::PresentationCap:
+			return OPEND3_FRAME_BOUND_PRESENTATION_CAP;
+		case opend3::FramePacingBound::FrameWork:
+			return OPEND3_FRAME_BOUND_UNCAPPED;
 		default:
-			return OPENQ4_FRAME_BOUND_UNKNOWN;
+			return OPEND3_FRAME_BOUND_UNKNOWN;
 	}
 }
 
@@ -441,26 +441,16 @@ const int PREVIEW_WIDTH = 398;
 const int PREVIEW_HEIGHT = 298;
 
 #ifndef ID_DEDICATED
-static bool Session_IsRetailSaveGameName( const idStr &gameName ) {
-	return gameName.Icmp( SAVEGAME_GAME_NAME_RETAIL ) == 0;
-}
-
 static bool Session_IsDoom3SaveGameName( const idStr &gameName ) {
 	return gameName.Icmp( SAVEGAME_GAME_NAME_DOOM3 ) == 0;
 }
 
-static bool Session_IsLegacyopenQ4SaveGameName( const idStr &gameName ) {
-	return gameName.Icmp( SAVEGAME_GAME_NAME_LEGACY_OPENQ4 ) == 0;
-}
-
 static bool Session_IsSupportedSaveGameName( const idStr &gameName ) {
-	return Session_IsDoom3SaveGameName( gameName ) ||
-		Session_IsRetailSaveGameName( gameName ) ||
-		Session_IsLegacyopenQ4SaveGameName( gameName );
+	return Session_IsDoom3SaveGameName( gameName );
 }
 
 static bool Session_SaveGameHeaderUsesEntityFilter( const idStr &gameName ) {
-	return Session_IsDoom3SaveGameName( gameName ) || Session_IsRetailSaveGameName( gameName );
+	return Session_IsDoom3SaveGameName( gameName );
 }
 
 static void Session_AddUniqueSaveGameSearchDir( idStrList &gameDirs, const char *gameDir ) {
@@ -507,26 +497,26 @@ static const int SESSION_MAX_SAVE_PREVIEW_BYTES = 64 * 1024 * 1024;
 static const int SESSION_SAVE_PREVIEW_DELETE_MAGIC = 'O' | ( 'Q' << 8 ) | ( '4' << 16 ) | ( 'D' << 24 );
 static const int SESSION_SAVE_PREVIEW_DELETE_VERSION = 1;
 static const char *SESSION_SAVEGAME_NO_OVERWRITE_TOKEN = "nooverwrite";
-static const int SESSION_OPENQ4_SAVEGAME_COMPATIBILITY_MAGIC = 'O' | ( 'Q' << 8 ) | ( '4' << 16 ) | ( 'S' << 24 );
-static const int SESSION_OPENQ4_SAVEGAME_COMPATIBILITY_VERSION = 5;
+static const int SESSION_OPEND3_SAVEGAME_COMPATIBILITY_MAGIC = 'O' | ( 'Q' << 8 ) | ( '4' << 16 ) | ( 'S' << 24 );
+static const int SESSION_OPEND3_SAVEGAME_COMPATIBILITY_VERSION = 5;
 // Wire-ABI stamps and integrity trailers were introduced in v3.
-static const int SESSION_OPENQ4_SAVEGAME_TYPED_COMPATIBILITY_VERSION = 3;
-static_assert( SESSION_OPENQ4_SAVEGAME_COMPATIBILITY_VERSION == OPENQ4_SAVEGAME_PORTABLE_VERSION,
+static const int SESSION_OPEND3_SAVEGAME_TYPED_COMPATIBILITY_VERSION = 3;
+static_assert( SESSION_OPEND3_SAVEGAME_COMPATIBILITY_VERSION == OPEND3_SAVEGAME_PORTABLE_VERSION,
 	"the current payload is the portable one" );
 // Oldest v3 layout this build has a verified decoder for: the build that
 // introduced v3. A payload's layout build is the build it carries, or for a
 // release that stamped build 1, its release's build (SaveGameReleases.h); the
 // fields added within v3 are then read by the build that added each. Refuse
 // anything below the floor during preflight, while the session is intact.
-static const int SESSION_OPENQ4_SAVEGAME_MINIMUM_SUPPORTED_BUILD = 640;
-static const int SESSION_OPENQ4_SAVEGAME_FOOTER_MAGIC = 'O' | ( 'Q' << 8 ) | ( '4' << 16 ) | ( 'F' << 24 );
-static const int SESSION_OPENQ4_SAVEGAME_FOOTER_VERSION = 1;
-static const int SESSION_OPENQ4_SAVEGAME_FOOTER_BYTES = 5 * static_cast<int>( sizeof( int ) );
-static const int SESSION_OPENQ4_SAVEGAME_INTEGRITY_MAGIC = 'O' | ( 'Q' << 8 ) | ( '4' << 16 ) | ( 'I' << 24 );
-static const int SESSION_OPENQ4_SAVEGAME_INTEGRITY_VERSION = 1;
-static const int SESSION_OPENQ4_SAVEGAME_INTEGRITY_BYTES = 4 * static_cast<int>( sizeof( int ) );
-static const int SESSION_OPENQ4_SAVEGAME_SOURCE_STAMP_MAX_BYTES = 128;
-static const int SESSION_OPENQ4_SAVEGAME_ABI_STAMP_MAX_BYTES = 96;
+static const int SESSION_OPEND3_SAVEGAME_MINIMUM_SUPPORTED_BUILD = 640;
+static const int SESSION_OPEND3_SAVEGAME_FOOTER_MAGIC = 'O' | ( 'Q' << 8 ) | ( '4' << 16 ) | ( 'F' << 24 );
+static const int SESSION_OPEND3_SAVEGAME_FOOTER_VERSION = 1;
+static const int SESSION_OPEND3_SAVEGAME_FOOTER_BYTES = 5 * static_cast<int>( sizeof( int ) );
+static const int SESSION_OPEND3_SAVEGAME_INTEGRITY_MAGIC = 'O' | ( 'Q' << 8 ) | ( '4' << 16 ) | ( 'I' << 24 );
+static const int SESSION_OPEND3_SAVEGAME_INTEGRITY_VERSION = 1;
+static const int SESSION_OPEND3_SAVEGAME_INTEGRITY_BYTES = 4 * static_cast<int>( sizeof( int ) );
+static const int SESSION_OPEND3_SAVEGAME_SOURCE_STAMP_MAX_BYTES = 128;
+static const int SESSION_OPEND3_SAVEGAME_ABI_STAMP_MAX_BYTES = 96;
 static const char *SESSION_LEGACY_SAVEGAME_WIRE_ABI = "windows-msvcabi-x64-le-raw1";
 
 #ifndef ID_DEDICATED
@@ -591,7 +581,7 @@ static inline bool Session_MoveSaveFileDurably( const std::string &from, const s
 		return std::string( reinterpret_cast<const char *>( bytes.data() ), bytes.size() );
 	};
 	bool moved = false;
-	if ( openq4::DurableMoveExact( native( from ), native( to ), moved, error ) ) return true;
+	if ( opend3::DurableMoveExact( native( from ), native( to ), moved, error ) ) return true;
 	if ( !moved ) return false;
 	durabilityUnconfirmed = error;
 	error.clear();
@@ -1070,7 +1060,7 @@ static bool Session_ValidateSaveGamePayload( idFile *file, const idStr &savePath
 		return false;
 	}
 
-	if ( marker != SESSION_OPENQ4_SAVEGAME_COMPATIBILITY_MAGIC ) {
+	if ( marker != SESSION_OPEND3_SAVEGAME_COMPATIBILITY_MAGIC ) {
 #if defined( OPEND3 )
 		// Doom 3's game library does not write the stamped payload yet: its
 		// payload starts with the build number and carries no footer or
@@ -1084,7 +1074,7 @@ static bool Session_ValidateSaveGamePayload( idFile *file, const idStr &savePath
 #endif
 		if ( !legacyCompatible ) {
 			common->Warning( "Savegame '%s' has unsupported legacy payload build/marker %d (expected build %d or marker 0x%08x)",
-				savePath.c_str(), marker, BUILD_NUMBER, SESSION_OPENQ4_SAVEGAME_COMPATIBILITY_MAGIC );
+				savePath.c_str(), marker, BUILD_NUMBER, SESSION_OPEND3_SAVEGAME_COMPATIBILITY_MAGIC );
 		}
 		if ( file->Seek( payloadOffset, FS_SEEK_SET ) != 0 ) {
 			common->Warning( "Savegame '%s' failed to rewind to payload offset %d", savePath.c_str(), payloadOffset );
@@ -1093,7 +1083,7 @@ static bool Session_ValidateSaveGamePayload( idFile *file, const idStr &savePath
 		return legacyCompatible;
 	}
 
-	const int minimumStampedBytes = 5 * static_cast<int>( sizeof( int ) ) + SESSION_OPENQ4_SAVEGAME_FOOTER_BYTES;
+	const int minimumStampedBytes = 5 * static_cast<int>( sizeof( int ) ) + SESSION_OPEND3_SAVEGAME_FOOTER_BYTES;
 	if ( fileLength - payloadOffset < minimumStampedBytes ) {
 		common->Warning( "Savegame '%s' is too short for a stamped game payload/footer (payload offset %d, length %d)",
 			savePath.c_str(), payloadOffset, fileLength );
@@ -1109,23 +1099,23 @@ static bool Session_ValidateSaveGamePayload( idFile *file, const idStr &savePath
 	bool valid =
 		Session_ReadSaveGameInt( file, payloadVersion, "payload version", savePath.c_str() ) &&
 		Session_ReadSaveGameInt( file, payloadBuild, "payload build", savePath.c_str() ) &&
-		Session_ReadSaveGameString( file, payloadSourceStamp, SESSION_OPENQ4_SAVEGAME_SOURCE_STAMP_MAX_BYTES, "payload source stamp", savePath.c_str() ) &&
+		Session_ReadSaveGameString( file, payloadSourceStamp, SESSION_OPEND3_SAVEGAME_SOURCE_STAMP_MAX_BYTES, "payload source stamp", savePath.c_str() ) &&
 		Session_ReadSaveGameInt( file, payloadSourceFileCount, "payload source file count", savePath.c_str() );
 
-	if ( valid && ( payloadVersion < OPENQ4_SAVEGAME_V2_VERSION ||
-		 payloadVersion > SESSION_OPENQ4_SAVEGAME_COMPATIBILITY_VERSION ) ) {
+	if ( valid && ( payloadVersion < OPEND3_SAVEGAME_V2_VERSION ||
+		 payloadVersion > SESSION_OPEND3_SAVEGAME_COMPATIBILITY_VERSION ) ) {
 		common->Warning( "Savegame '%s' has unsupported payload version %d (supported %d to %d)",
 			savePath.c_str(), payloadVersion,
-			OPENQ4_SAVEGAME_V2_VERSION,
-			SESSION_OPENQ4_SAVEGAME_COMPATIBILITY_VERSION );
+			OPEND3_SAVEGAME_V2_VERSION,
+			SESSION_OPEND3_SAVEGAME_COMPATIBILITY_VERSION );
 		valid = false;
 	}
-	if ( valid && payloadVersion >= SESSION_OPENQ4_SAVEGAME_TYPED_COMPATIBILITY_VERSION ) {
-		valid = Session_ReadSaveGameString( file, payloadWireABI, SESSION_OPENQ4_SAVEGAME_ABI_STAMP_MAX_BYTES,
+	if ( valid && payloadVersion >= SESSION_OPEND3_SAVEGAME_TYPED_COMPATIBILITY_VERSION ) {
+		valid = Session_ReadSaveGameString( file, payloadWireABI, SESSION_OPEND3_SAVEGAME_ABI_STAMP_MAX_BYTES,
 			"payload wire ABI", savePath.c_str() );
 	} else if ( valid ) {
 		// Version 2 predates the stamp; it is the layout v2 shipped.
-		payloadWireABI = OPENQ4_SAVEGAME_V2_WIRE_ABI;
+		payloadWireABI = OPEND3_SAVEGAME_V2_WIRE_ABI;
 	}
 	if ( valid && ( payloadSourceStamp.IsEmpty() || payloadSourceFileCount < 0 ) ) {
 		common->Warning( "Savegame '%s' has invalid payload source file count %d",
@@ -1134,14 +1124,14 @@ static bool Session_ValidateSaveGamePayload( idFile *file, const idStr &savePath
 	}
 
 	if ( valid ) {
-		const openQ4SaveGameRelease_t *release = OpenQ4_FindSaveGameRelease( payloadBuild, payloadSourceStamp.c_str(), payloadSourceFileCount );
-		const int layoutBuild = OpenQ4_SaveGameLayoutBuild( payloadVersion, payloadBuild, payloadSourceStamp.c_str(), payloadSourceFileCount );
-		const int minimumBuild = payloadVersion == OPENQ4_SAVEGAME_V2_VERSION ?
-			OPENQ4_SAVEGAME_V2_FIRST_RELEASE_BUILD : SESSION_OPENQ4_SAVEGAME_MINIMUM_SUPPORTED_BUILD;
+		const openD3SaveGameRelease_t *release = openD3_FindSaveGameRelease( payloadBuild, payloadSourceStamp.c_str(), payloadSourceFileCount );
+		const int layoutBuild = openD3_SaveGameLayoutBuild( payloadVersion, payloadBuild, payloadSourceStamp.c_str(), payloadSourceFileCount );
+		const int minimumBuild = payloadVersion == OPEND3_SAVEGAME_V2_VERSION ?
+			OPEND3_SAVEGAME_V2_FIRST_RELEASE_BUILD : SESSION_OPEND3_SAVEGAME_MINIMUM_SUPPORTED_BUILD;
 		// Version 5 loads on every build in the portable family; earlier
 		// versions only on the wire ABI that wrote them.
-		const char *wireABI = payloadVersion >= OPENQ4_SAVEGAME_PORTABLE_VERSION ?
-			OpenQ4_SaveGamePortableWireABI( Session_GetSaveGameWireABI() ) : Session_GetSaveGameWireABI();
+		const char *wireABI = payloadVersion >= OPEND3_SAVEGAME_PORTABLE_VERSION ?
+			openD3_SaveGamePortableWireABI( Session_GetSaveGameWireABI() ) : Session_GetSaveGameWireABI();
 		if ( payloadOut != NULL ) {
 			payloadOut->version = payloadVersion;
 			payloadOut->layoutBuild = layoutBuild;
@@ -1161,20 +1151,20 @@ static bool Session_ValidateSaveGamePayload( idFile *file, const idStr &savePath
 			common->DPrintf( "Savegame '%s' was written by openD3 %s; reading it as build %d\n",
 				savePath.c_str(), release->version, release->build );
 		} else if ( payloadBuild != BUILD_NUMBER ||
-				OPENQ4_SAVEGAME_COMPAT_SOURCE_FILE_COUNT < 0 ||
-				payloadSourceStamp.Icmp( OPENQ4_SAVEGAME_COMPAT_SOURCE_HASH ) != 0 ||
-				payloadSourceFileCount != OPENQ4_SAVEGAME_COMPAT_SOURCE_FILE_COUNT ) {
+				OPEND3_SAVEGAME_COMPAT_SOURCE_FILE_COUNT < 0 ||
+				payloadSourceStamp.Icmp( OPEND3_SAVEGAME_COMPAT_SOURCE_HASH ) != 0 ||
+				payloadSourceFileCount != OPEND3_SAVEGAME_COMPAT_SOURCE_FILE_COUNT ) {
 			common->DPrintf( "Savegame '%s' was produced by build/source %d/%s (%d files); current schema-compatible build/source is %d/%s (%d files)\n",
 				savePath.c_str(), payloadBuild, payloadSourceStamp.c_str(), payloadSourceFileCount,
-				BUILD_NUMBER, OPENQ4_SAVEGAME_COMPAT_SOURCE_HASH, OPENQ4_SAVEGAME_COMPAT_SOURCE_FILE_COUNT );
+				BUILD_NUMBER, OPEND3_SAVEGAME_COMPAT_SOURCE_HASH, OPEND3_SAVEGAME_COMPAT_SOURCE_FILE_COUNT );
 		}
 	}
 
 	const int compatibilityHeaderEnd = file->Tell();
 	int protectedLength = fileLength;
-	if ( valid && payloadVersion >= SESSION_OPENQ4_SAVEGAME_TYPED_COMPATIBILITY_VERSION ) {
-		const int integrityOffset = fileLength - SESSION_OPENQ4_SAVEGAME_INTEGRITY_BYTES;
-		if ( integrityOffset <= compatibilityHeaderEnd + SESSION_OPENQ4_SAVEGAME_FOOTER_BYTES ||
+	if ( valid && payloadVersion >= SESSION_OPEND3_SAVEGAME_TYPED_COMPATIBILITY_VERSION ) {
+		const int integrityOffset = fileLength - SESSION_OPEND3_SAVEGAME_INTEGRITY_BYTES;
+		if ( integrityOffset <= compatibilityHeaderEnd + SESSION_OPEND3_SAVEGAME_FOOTER_BYTES ||
 			 file->Seek( integrityOffset, FS_SEEK_SET ) != 0 ) {
 			common->Warning( "Savegame '%s' has invalid integrity trailer offset %d", savePath.c_str(), integrityOffset );
 			valid = false;
@@ -1190,13 +1180,13 @@ static bool Session_ValidateSaveGamePayload( idFile *file, const idStr &savePath
 			 !Session_ReadSaveGameUnsignedInt( file, savedChecksum, "integrity checksum", savePath.c_str() ) ) ) {
 			valid = false;
 		}
-		if ( valid && integrityMarker != SESSION_OPENQ4_SAVEGAME_INTEGRITY_MAGIC ) {
+		if ( valid && integrityMarker != SESSION_OPEND3_SAVEGAME_INTEGRITY_MAGIC ) {
 			common->Warning( "Savegame '%s' has invalid integrity marker 0x%08x", savePath.c_str(), integrityMarker );
 			valid = false;
 		}
-		if ( valid && integrityVersion != SESSION_OPENQ4_SAVEGAME_INTEGRITY_VERSION ) {
+		if ( valid && integrityVersion != SESSION_OPEND3_SAVEGAME_INTEGRITY_VERSION ) {
 			common->Warning( "Savegame '%s' has integrity version %d, expected %d",
-				savePath.c_str(), integrityVersion, SESSION_OPENQ4_SAVEGAME_INTEGRITY_VERSION );
+				savePath.c_str(), integrityVersion, SESSION_OPEND3_SAVEGAME_INTEGRITY_VERSION );
 			valid = false;
 		}
 		if ( valid && savedProtectedLength != integrityOffset ) {
@@ -1222,7 +1212,7 @@ static bool Session_ValidateSaveGamePayload( idFile *file, const idStr &savePath
 		protectedLength = savedProtectedLength;
 	}
 
-	const int footerOffset = protectedLength - SESSION_OPENQ4_SAVEGAME_FOOTER_BYTES;
+	const int footerOffset = protectedLength - SESSION_OPEND3_SAVEGAME_FOOTER_BYTES;
 	if ( valid && ( footerOffset <= compatibilityHeaderEnd || file->Seek( footerOffset, FS_SEEK_SET ) != 0 ) ) {
 		common->Warning( "Savegame '%s' has invalid payload footer offset %d (payload offset %d, length %d)",
 			savePath.c_str(), footerOffset, payloadOffset, protectedLength );
@@ -1242,14 +1232,14 @@ static bool Session_ValidateSaveGamePayload( idFile *file, const idStr &savePath
 		valid = false;
 	}
 
-	if ( valid && footerMarker != SESSION_OPENQ4_SAVEGAME_FOOTER_MAGIC ) {
+	if ( valid && footerMarker != SESSION_OPEND3_SAVEGAME_FOOTER_MAGIC ) {
 		common->Warning( "Savegame '%s' has invalid payload footer marker 0x%08x",
 			savePath.c_str(), footerMarker );
 		valid = false;
 	}
-	if ( valid && footerVersion != SESSION_OPENQ4_SAVEGAME_FOOTER_VERSION ) {
+	if ( valid && footerVersion != SESSION_OPEND3_SAVEGAME_FOOTER_VERSION ) {
 		common->Warning( "Savegame '%s' has footer version %d, expected %d",
-			savePath.c_str(), footerVersion, SESSION_OPENQ4_SAVEGAME_FOOTER_VERSION );
+			savePath.c_str(), footerVersion, SESSION_OPEND3_SAVEGAME_FOOTER_VERSION );
 		valid = false;
 	}
 	if ( valid && savedFooterOffset != footerOffset ) {
@@ -1394,9 +1384,9 @@ static bool Session_AppendSaveGameIntegrityTrailer( const idStr &relativePath ) 
 		fileSystem->CloseFile( readFile );
 		return false;
 	}
-	if ( protectedLength > SESSION_MAX_SAVEGAME_BYTES - SESSION_OPENQ4_SAVEGAME_INTEGRITY_BYTES ) {
+	if ( protectedLength > SESSION_MAX_SAVEGAME_BYTES - SESSION_OPEND3_SAVEGAME_INTEGRITY_BYTES ) {
 		common->Warning( "Staged savegame '%s' is %d bytes before its %d-byte integrity trailer (maximum total .save size %d bytes)",
-			relativePath.c_str(), protectedLength, SESSION_OPENQ4_SAVEGAME_INTEGRITY_BYTES, SESSION_MAX_SAVEGAME_BYTES );
+			relativePath.c_str(), protectedLength, SESSION_OPEND3_SAVEGAME_INTEGRITY_BYTES, SESSION_MAX_SAVEGAME_BYTES );
 		fileSystem->CloseFile( readFile );
 		return false;
 	}
@@ -1414,8 +1404,8 @@ static bool Session_AppendSaveGameIntegrityTrailer( const idStr &relativePath ) 
 	}
 
 	const bool written =
-		Session_WriteSaveGameInt( appendFile, SESSION_OPENQ4_SAVEGAME_INTEGRITY_MAGIC, "integrity marker", relativePath.c_str() ) &&
-		Session_WriteSaveGameInt( appendFile, SESSION_OPENQ4_SAVEGAME_INTEGRITY_VERSION, "integrity version", relativePath.c_str() ) &&
+		Session_WriteSaveGameInt( appendFile, SESSION_OPEND3_SAVEGAME_INTEGRITY_MAGIC, "integrity marker", relativePath.c_str() ) &&
+		Session_WriteSaveGameInt( appendFile, SESSION_OPEND3_SAVEGAME_INTEGRITY_VERSION, "integrity version", relativePath.c_str() ) &&
 		Session_WriteSaveGameInt( appendFile, protectedLength, "integrity protected length", relativePath.c_str() ) &&
 		Session_WriteSaveGameUnsignedInt( appendFile, checksum, "integrity checksum", relativePath.c_str() );
 	const bool synced = written && appendFile->Sync();
@@ -1740,10 +1730,10 @@ private:
 void idSessionLocal::ResetFramePacingStats( void ) {
 	memset( &framePacingStats, 0, sizeof( framePacingStats ) );
 	framePacingWindowMsec = 0.0;
-	framePacingStats.boundMode = OPENQ4_FRAME_BOUND_UNKNOWN;
+	framePacingStats.boundMode = OPEND3_FRAME_BOUND_UNKNOWN;
 	framePacingLastFrameClock = 0.0;
 	framePacingLastLatchedTic = -1;
-	framePacingLastLoggedBound = OPENQ4_FRAME_BOUND_UNKNOWN;
+	framePacingLastLoggedBound = OPEND3_FRAME_BOUND_UNKNOWN;
 	framePacingLastLoggedSampleCount = 0;
 }
 
@@ -1775,23 +1765,23 @@ void idSessionLocal::SampleMultiplayerFramePacing( void ) {
 	UpdateFramePacingStats( 0, 0, 0 );
 }
 
-void openQ4_PrintFramePacingSnapshot( const char *reason ) {
+void openD3_PrintFramePacingSnapshot( const char *reason ) {
 	sessLocal.PrintFramePacingSnapshot( reason );
 }
 
-void openQ4_RecordMultiplayerFramePacing( void ) {
+void openD3_RecordMultiplayerFramePacing( void ) {
 	sessLocal.SampleMultiplayerFramePacing();
 }
 
 void idSessionLocal::UpdateFramePacingStats( int requestedWaitMsec, int actualWaitMsec, int gameTicsToRun ) {
-	openq4AsyncTimingStats_t asyncStats;
-	openQ4_GetAsyncTimingStats( asyncStats, 120 );
+	opend3AsyncTimingStats_t asyncStats;
+	openD3_GetAsyncTimingStats( asyncStats, 120 );
 
 	const int sampleCount = Max( framePacingStats.frameSampleCount, 1 );
 
 	// One interval per presentation frame, from the high-resolution stamp the
 	// frame limiter takes as it releases the frame.
-	const double frameStartMsec = openQ4_GetPresentationFrameStartMsec();
+	const double frameStartMsec = openD3_GetPresentationFrameStartMsec();
 	if ( framePacingLastFrameClock > 0.0 && frameStartMsec > framePacingLastFrameClock ) {
 		const double frameDeltaMsec = frameStartMsec - framePacingLastFrameClock;
 		const float frameDelta = static_cast<float>( frameDeltaMsec );
@@ -1804,7 +1794,7 @@ void idSessionLocal::UpdateFramePacingStats( int requestedWaitMsec, int actualWa
 			framePacingStats.minFrameMsec = frameDelta;
 		}
 		framePacingStats.maxFrameMsec = Max( framePacingStats.maxFrameMsec, frameDelta );
-		++framePacingStats.frameIntervalBins[ openq4::FramePacingBin( frameDeltaMsec ) ];
+		++framePacingStats.frameIntervalBins[ opend3::FramePacingBin( frameDeltaMsec ) ];
 	}
 	if ( frameStartMsec > 0.0 ) {
 		framePacingLastFrameClock = frameStartMsec;
@@ -1853,8 +1843,8 @@ void idSessionLocal::UpdateFramePacingStats( int requestedWaitMsec, int actualWa
 #ifndef ID_DEDICATED
 static bool Session_IsCompatibleSaveGameVersion( const int version ) {
 	return version == SAVEGAME_VERSION ||
-		version == LEGACY_OPENQ4_SAVEGAME_VERSION ||
-		version == LEGACY_OPENQ4_SAVEGAME_VERSION_ALT;
+		version == LEGACY_OPEND3_SAVEGAME_VERSION ||
+		version == LEGACY_OPEND3_SAVEGAME_VERSION_ALT;
 }
 #endif
 
@@ -2457,7 +2447,7 @@ static void Session_BlitRGBA( byte *dest, int destWidth, int destHeight, int des
 	}
 }
 
-static bool openQ4_IsSingleplayerGameType( void ) {
+static bool openD3_IsSingleplayerGameType( void ) {
 	const char *gameType = cvarSystem->GetCVarString( "si_gameType" );
 	return !( gameType && gameType[ 0 ] && idStr::Icmp( gameType, "singleplayer" ) != 0 );
 }
@@ -2980,7 +2970,7 @@ void idSessionLocal::SetMainMenuBackgroundMontageGuiVars( void ) {
 			material->SetSort( SS_GUI );
 		}
 		renderSystem->PreloadImage( resolvedPath.c_str() );
-		openQ4_UpdateInitialization();
+		openD3_UpdateInitialization();
 	}
 
 	idMaterial *maskMaterial = const_cast<idMaterial *>( declManager->FindMaterial( menuBackgroundMask ) );
@@ -3230,14 +3220,14 @@ static const char *Session_GetLongMPGameTypeName( const char *gametype ) {
 	if ( !idStr::Icmp( gametype, "DeadZone" ) ) {
 		return common->GetLocalizedString( "#str_122001" );
 	}
-	// openQ4's own modes, by the names mp/GameTypes.cpp gives them.
-	static const char *const openQ4Modes[][2] = {
+	// openD3's own modes, by the names mp/GameTypes.cpp gives them.
+	static const char *const openD3Modes[][2] = {
 		{ "Duel", "#str_41300" }, { "Clan Arena", "#str_41301" }, { "Freeze Tag", "#str_41302" }, { "Red Rover", "#str_41303" },
 		{ "Overload", "#str_41304" }, { "Harvester", "#str_41305" }, { "Domination", "#str_41306" }, { "Attack Defend", "#str_41307" }
 	};
-	for ( int i = 0; i < static_cast<int>( sizeof( openQ4Modes ) / sizeof( openQ4Modes[0] ) ); ++i ) {
-		if ( !idStr::Icmp( gametype, openQ4Modes[i][0] ) ) {
-			return common->GetLocalizedString( openQ4Modes[i][1] );
+	for ( int i = 0; i < static_cast<int>( sizeof( openD3Modes ) / sizeof( openD3Modes[0] ) ); ++i ) {
+		if ( !idStr::Icmp( gametype, openD3Modes[i][0] ) ) {
+			return common->GetLocalizedString( openD3Modes[i][1] );
 		}
 	}
 
@@ -3729,7 +3719,7 @@ static bool Session_ParseLightGridBakeArgs( const idCmdArgs &args, lightGridBake
 
 static void Session_BuildLightGridBakeResumeArgs( const lightGridBakeOptions_t &options, const idList<idStr> &mapTargets,
 	bool bakeAll, bool bakeAllMultiplayer, bool forceBake, bool autoQuit, int resumeIndex, idCmdArgs &reloadArgs ) {
-	reloadArgs.AppendArg( "openq4_resumeBakeLightGrids" );
+	reloadArgs.AppendArg( "opend3_resumeBakeLightGrids" );
 
 	if ( bakeAll ) {
 		reloadArgs.AppendArg( "all" );
@@ -3981,7 +3971,7 @@ static void Session_BakeLightGrids_f( const idCmdArgs &args ) {
 	Session_RunLightGridBake( args );
 }
 
-static void Session_openQ4ResumeBakeLightGrids_f( const idCmdArgs &args ) {
+static void Session_openD3ResumeBakeLightGrids_f( const idCmdArgs &args ) {
 	Session_RunLightGridBake( args );
 }
 
@@ -3996,7 +3986,7 @@ static void Session_CampaignSelect_f( const idCmdArgs &args ) {
     const bool start = args.Argc() == 3 && !idStr::Icmp( args.Argv( 2 ), "start" );
     const bool chapters = args.Argc() == 3 && !idStr::Icmp( args.Argv( 2 ), "chapters" );
     if ( args.Argc() < 2 || args.Argc() > 3 || ( args.Argc() == 3 && !start && !chapters ) ) {
-        common->Printf( "usage: campaignSelect quake4|awakening|arena [start|chapters]\n" ); return;
+        common->Printf( "usage: campaignSelect doom3|arena [start|chapters]\n" ); return;
     }
     sessLocal.SelectCampaign( args.Argv( 1 ), start, chapters );
 }
@@ -4007,10 +3997,8 @@ static void Session_CampaignMenu_f( const idCmdArgs &args ) {
 }
 
 static void Session_CampaignList_f( const idCmdArgs &args ) {
-    const idCampaignContentInfo info = fileSystem->GetAwakeningContentInfo();
-    common->Printf( "CAMPAIGN quake4 available=1 gameDir=baseoq4 module=game_sp\n" );
-    common->Printf( "CAMPAIGN awakening present=%d available=%d gameDir=q4xbase module=game_sp missing=%s\n", info.present, info.ready, info.missing.c_str() );
-    common->Printf( "CAMPAIGN arena available=1 gameDir=baseoq4 module=game_mp active=%s\n", cvarSystem->GetCVarString( "fs_game" ) );
+    common->Printf( "CAMPAIGN doom3 available=1 gameDir=" OPEND3_GAMEDIR " module=game\n" );
+    common->Printf( "CAMPAIGN arena available=1 gameDir=" OPEND3_GAMEDIR " module=game active=%s\n", cvarSystem->GetCVarString( "fs_game" ) );
 }
 
 static void Session_Map_f( const idCmdArgs &args ) {
@@ -4163,12 +4151,12 @@ static void Session_TestMap_f( const idCmdArgs &args ) {
 
 /*
 ==================
-Session_openQ4StartSingleplayer_f
+Session_openD3StartSingleplayer_f
 ==================
 */
-static void Session_openQ4StartSingleplayer_f( const idCmdArgs &args ) {
+static void Session_openD3StartSingleplayer_f( const idCmdArgs &args ) {
 	if ( args.Argc() < 2 ) {
-		common->Printf( "USAGE: openq4_startSingleplayer <map> [devmap] [entityFilter]\n" );
+		common->Printf( "USAGE: opend3_startSingleplayer <map> [devmap] [entityFilter]\n" );
 		return;
 	}
 
@@ -4185,12 +4173,12 @@ static void Session_openQ4StartSingleplayer_f( const idCmdArgs &args ) {
 
 /*
 ==================
-Session_openQ4AssertMapState_f
+Session_openD3AssertMapState_f
 ==================
 */
-static void Session_openQ4AssertMapState_f( const idCmdArgs &args ) {
+static void Session_openD3AssertMapState_f( const idCmdArgs &args ) {
 	if ( args.Argc() < 2 ) {
-		common->Printf( "USAGE: openq4_assertMapState <map> [entityFilter]\n" );
+		common->Printf( "USAGE: opend3_assertMapState <map> [entityFilter]\n" );
 		return;
 	}
 
@@ -4226,28 +4214,28 @@ static void Session_openQ4AssertMapState_f( const idCmdArgs &args ) {
 
 /*
 ==================
-Session_openQ4AssertMPGameplayView_f
+Session_openD3AssertMPGameplayView_f
 ==================
 */
-static void Session_openQ4AssertMPGameplayView_f( const idCmdArgs &args ) {
+static void Session_openD3AssertMPGameplayView_f( const idCmdArgs &args ) {
 	if ( !sessLocal.IsMapSpawned() || !sessLocal.IsMultiplayer() ||
 			sessLocal.GetActiveGUI() != NULL ) {
-		common->Error( "openq4_assertMPGameplayView failed: map=%d multiplayer=%d gui=%d",
+		common->Error( "opend3_assertMPGameplayView failed: map=%d multiplayer=%d gui=%d",
 			sessLocal.IsMapSpawned() ? 1 : 0,
 			sessLocal.IsMultiplayer() ? 1 : 0,
 			sessLocal.GetActiveGUI() != NULL ? 1 : 0 );
 		return;
 	}
 
-	common->Printf( "OPENQ4_STOCK_BASELINE_MP_CLIENT_VIEW gui=0\n" );
+	common->Printf( "OPEND3_STOCK_BASELINE_MP_CLIENT_VIEW gui=0\n" );
 }
 
 /*
 ==================
-Session_openQ4AssertMenuActivation_f
+Session_openD3AssertMenuActivation_f
 ==================
 */
-static void Session_openQ4AssertMenuActivation_f( const idCmdArgs &args ) {
+static void Session_openD3AssertMenuActivation_f( const idCmdArgs &args ) {
 	const int maxMsec = args.Argc() > 1 ? atoi( args.Argv( 1 ) ) : 50;
 	const bool gameMenuRequested = args.Argc() > 2 && idStr::Icmp( args.Argv( 2 ), "game" ) == 0;
 	if ( gameMenuRequested && args.Argc() == 4 && idStr::Icmp( args.Argv( 3 ), "reopen" ) == 0 &&
@@ -4259,7 +4247,7 @@ static void Session_openQ4AssertMenuActivation_f( const idCmdArgs &args ) {
 		sessLocal.SetGUI( NULL, NULL );
 	}
 	if ( maxMsec < 1 || !sessLocal.IsMapSpawned() || sessLocal.GetActiveGUI() != NULL ) {
-		common->Error( "openq4_assertMenuActivation requires active gameplay with no GUI and a positive millisecond limit" );
+		common->Error( "opend3_assertMenuActivation requires active gameplay with no GUI and a positive millisecond limit" );
 		return;
 	}
 
@@ -4267,7 +4255,7 @@ static void Session_openQ4AssertMenuActivation_f( const idCmdArgs &args ) {
 	if ( gameMenuRequested ) {
 		idUserInterface *gameMenu = NULL;
 		if ( game == NULL || game->HandleESC( &gameMenu ) != ESC_GUI || gameMenu == NULL ) {
-			common->Error( "openq4_assertMenuActivation: game did not provide its in-game menu" );
+			common->Error( "opend3_assertMenuActivation: game did not provide its in-game menu" );
 			return;
 		}
 		sessLocal.SetGUI( gameMenu, NULL );
@@ -4276,12 +4264,12 @@ static void Session_openQ4AssertMenuActivation_f( const idCmdArgs &args ) {
 	}
 	const int elapsedMsec = Max( 0, Sys_Milliseconds() - startMsec );
 	if ( sessLocal.GetActiveMenu() == NULL || elapsedMsec > maxMsec ) {
-		common->Error( "openq4_assertMenuActivation failed: active=%d elapsed=%dms limit=%dms",
+		common->Error( "opend3_assertMenuActivation failed: active=%d elapsed=%dms limit=%dms",
 			sessLocal.GetActiveMenu() != NULL ? 1 : 0, elapsedMsec, maxMsec );
 		return;
 	}
 
-	common->Printf( "OPENQ4_MENU_ACTIVATION PASS elapsed=%dms limit=%dms\n", elapsedMsec, maxMsec );
+	common->Printf( "OPEND3_MENU_ACTIVATION PASS elapsed=%dms limit=%dms\n", elapsedMsec, maxMsec );
 }
 #endif
 
@@ -4331,12 +4319,12 @@ void idSessionLocal::Clear() {
 	
 	insideUpdateScreen = false;
 	insidePacifierUpdate = false;
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	insideExecuteMapChange = false;
 	stopDepth = 0;
 	preserveWipeDuringStop = false;
 
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	loadingSaveGame = false;
 	savegameFile = NULL;
 	savegameVersion = 0;
@@ -4397,7 +4385,7 @@ void idSessionLocal::Clear() {
 	cinematicStateValid = false;
 	cinematicActive = false;
 	mapSpawned = false;
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	guiActive = NULL;
 	// uiManager owns and frees these, and an engine reload frees them with it.
 	// Init finds them again; a dedicated server's session leaves them NULL.
@@ -4571,7 +4559,7 @@ idSessionLocal::idSessionLocal
 ===============
 */
 idSessionLocal::idSessionLocal() {
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	guiInGame = guiMainMenu = guiIntro \
 		= guiRestartMenu = guiLoading = guiGameOver = guiActive \
 		= guiTest = guiMsg = guiMsgRestore = guiTakeNotes = guiDemoMenu = guiSubtitles = guiSave = NULL;
@@ -4641,7 +4629,7 @@ void idSessionLocal::StopInternal( bool preserveWipe ) {
 		if ( outermostStop && savegameFile != NULL ) {
 			fileSystem->CloseFile( savegameFile );
 			savegameFile = NULL;
-			openq4::NativeInputBeforeSessionChange();
+			opend3::NativeInputBeforeSessionChange();
 			loadingSaveGame = false;
 		}
 
@@ -4671,7 +4659,7 @@ void idSessionLocal::StopInternal( bool preserveWipe ) {
 		}
 
 		insideUpdateScreen = false;
-		openq4::NativeInputBeforeSessionChange();
+		opend3::NativeInputBeforeSessionChange();
 		insideExecuteMapChange = false;
 		ClearRetainedLoadingHold();
 
@@ -4779,7 +4767,7 @@ bool idSessionLocal::IsIAmTheDukeActive( void ) const {
 }
 
 void idSessionLocal::ToggleIAmTheDuke( void ) {
-	if ( idAsyncNetwork::IsActive() || !openQ4_IsSingleplayerGameType() ) {
+	if ( idAsyncNetwork::IsActive() || !openD3_IsSingleplayerGameType() ) {
 		common->Printf( "iamtheduke is single-player only.\n" );
 		return;
 	}
@@ -4993,7 +4981,7 @@ void idSessionLocal::ShowLoadingGui() {
 	int stop = Sys_Milliseconds() + minShowMsec;
 	int force = minShowMsec > 0 ? 2 : 1;
 	while ( Sys_Milliseconds() < stop || force-- > 0 ) {
-		openQ4_BeginPresentationFrame();
+		openD3_BeginPresentationFrame();
 		com_frameTime = common->GetUserCmdTime( com_ticNumber );
 		session->Frame();
 		session->UpdateScreen( false );
@@ -5001,7 +4989,7 @@ void idSessionLocal::ShowLoadingGui() {
 #else
 	int stop = com_ticNumber + common->GetUserCmdTicsForMsecCeil( 1000 );
 	while ( com_ticNumber < stop ) {
-		openQ4_BeginPresentationFrame();
+		openD3_BeginPresentationFrame();
 		com_frameTime = common->GetUserCmdTime( com_ticNumber );
 		session->Frame();
 		session->UpdateScreen( false );
@@ -5047,10 +5035,10 @@ static idStr Session_BrowserDiagnosticText( const char *source ) {
 	return text;
 }
 
-static void Session_OpenQ4Browser_f( const idCmdArgs &args ) {
+static void Session_openD3Browser_f( const idCmdArgs &args ) {
 	idUserInterface *gui = session->GetActiveGUI();
 	if ( gui == NULL || gui != sessLocal.guiMainMenu || gui != sessLocal.guiActive ) {
-		common->Printf( "openq4_browser requires the active main menu\n" );
+		common->Printf( "opend3_browser requires the active main menu\n" );
 		return;
 	}
 	const char *verb = args.Argv( 1 );
@@ -5118,7 +5106,7 @@ static void Session_OpenQ4Browser_f( const idCmdArgs &args ) {
 	}
 	if ( args.Argc() == 3 && !idStr::Icmp( verb, "source" ) ) {
 		if ( idStr::Icmp( args.Argv( 2 ), "lan" ) && idStr::Icmp( args.Argv( 2 ), "internet" ) ) {
-			common->Printf( "openq4_browser source requires lan or internet\n" );
+			common->Printf( "opend3_browser source requires lan or internet\n" );
 			return;
 		}
 		gui->SetStateBool( "lanSet", !idStr::Icmp( args.Argv( 2 ), "lan" ) );
@@ -5144,7 +5132,7 @@ static void Session_OpenQ4Browser_f( const idCmdArgs &args ) {
 		if ( !valid || row >= 4096 || ( row >= 0 &&
 			( row >= idAsyncNetwork::client.serverList.Num() ||
 			  gui->State().GetString( va( "serverList_item_%d", row ) )[ 0 ] == '\0' ) ) ) {
-			common->Printf( "openq4_browser select requires an existing visible row or -1\n" );
+			common->Printf( "opend3_browser select requires an existing visible row or -1\n" );
 			return;
 		}
 		gui->SetStateInt( "serverList_sel_0", row );
@@ -5170,7 +5158,7 @@ static void Session_OpenQ4Browser_f( const idCmdArgs &args ) {
 			}
 		}
 		if ( !valid || row >= 4096 ) {
-			common->Printf( "openq4_browser hover requires a visible row or -1\n" );
+			common->Printf( "opend3_browser hover requires a visible row or -1\n" );
 			return;
 		}
 		idAsyncNetwork::client.serverList.SetHoverOverride( row );
@@ -5190,21 +5178,21 @@ static void Session_OpenQ4Browser_f( const idCmdArgs &args ) {
 				return;
 			}
 		}
-		common->Printf( "openq4_browser action is not a supported browser operation\n" );
+		common->Printf( "opend3_browser action is not a supported browser operation\n" );
 		return;
 	}
-	common->Printf( "usage: openq4_browser open | report | source <lan|internet> | select <visible-row|-1> | hover <visible-row|-1> | action <browser-operation>\n" );
+	common->Printf( "usage: opend3_browser open | report | source <lan|internet> | select <visible-row|-1> | hover <visible-row|-1> | action <browser-operation>\n" );
 }
 
-static void Session_OpenQ4GuiGet_f( const idCmdArgs &args ) {
+static void Session_openD3GuiGet_f( const idCmdArgs &args ) {
 	idUserInterface *gui = session->GetActiveGUI();
 	if ( args.Argc() != 2 || gui == NULL ) {
-		common->Printf( "usage: openq4_guiGet <window::variable> with an active GUI\n" );
+		common->Printf( "usage: opend3_guiGet <window::variable> with an active GUI\n" );
 		return;
 	}
 	idStr value;
 	if ( !gui->GetPresentationValue( args.Argv( 1 ), value ) ) {
-		common->Printf( "openq4_guiGet: unknown GUI variable\n" );
+		common->Printf( "opend3_guiGet: unknown GUI variable\n" );
 		return;
 	}
 	common->Printf( "GUI_VALUE %s=%s\n", args.Argv( 1 ), value.c_str() );
@@ -5213,16 +5201,16 @@ static void Session_OpenQ4GuiGet_f( const idCmdArgs &args ) {
 // Runs a classic GUI window's onAction (or onBackAction with "back") and
 // dispatches the command it issues, as a click on the window would, so a
 // harness can drive a menu without device input.
-static void Session_OpenQ4GuiAction_f( const idCmdArgs &args ) {
+static void Session_openD3GuiAction_f( const idCmdArgs &args ) {
 	idUserInterface *gui = session->GetActiveGUI();
 	const bool back = args.Argc() == 3 && !idStr::Icmp( args.Argv( 2 ), "back" );
 	if ( gui == NULL || ( args.Argc() != 2 && !back ) ) {
-		common->Printf( "usage: openq4_guiAction <window> [back] with an active classic GUI\n" );
+		common->Printf( "usage: opend3_guiAction <window> [back] with an active classic GUI\n" );
 		return;
 	}
 	idStr command;
 	if ( !UI_RunLegacyWindowAction( gui, args.Argv( 1 ), back, command ) ) {
-		common->Printf( "openq4_guiAction: %s has no reachable %s\n", args.Argv( 1 ), back ? "onBackAction" : "onAction" );
+		common->Printf( "opend3_guiAction: %s has no reachable %s\n", args.Argv( 1 ), back ? "onBackAction" : "onAction" );
 		return;
 	}
 	common->Printf( "GUI_ACTION %s%s cmd=%s\n", args.Argv( 1 ), back ? " back" : "", command.c_str() );
@@ -5233,19 +5221,19 @@ static void Session_OpenQ4GuiAction_f( const idCmdArgs &args ) {
 
 /*
 ================
-Session_OpenQ4GuiFocus_f
+Session_openD3GuiFocus_f
 
-openQ4: openq4_guiFocus [next|previous] steps the active classic GUI's focus
+openD3: opend3_guiFocus [next|previous] steps the active classic GUI's focus
 as a menu's Down or Up arrow does and reports where it stands, touching no
 device; without an argument it only reports.
 ================
 */
-static void Session_OpenQ4GuiFocus_f( const idCmdArgs &args ) {
+static void Session_openD3GuiFocus_f( const idCmdArgs &args ) {
 	idUserInterface *gui = session->GetActiveGUI();
 	const int direction = args.Argc() != 2 ? 0 : !idStr::Icmp( args.Argv( 1 ), "next" ) ? 1 : !idStr::Icmp( args.Argv( 1 ), "previous" ) ? -1 : 0;
 	idStr report;
 	if ( gui == NULL || args.Argc() > 2 || ( args.Argc() == 2 && direction == 0 ) || !UI_StepLegacyFocus( gui, direction, report ) ) {
-		common->Printf( "usage: openq4_guiFocus [next|previous] with an active classic GUI\n" );
+		common->Printf( "usage: opend3_guiFocus [next|previous] with an active classic GUI\n" );
 		return;
 	}
 	common->Printf( "GUI_FOCUS %s\n", report.c_str() );
@@ -5269,11 +5257,11 @@ static void Session_RetainedGui_f( const idCmdArgs &args ) {
 		common->Printf( "RETAINED_GUI_STICK turned=%d rotation=%.2f\n", turned ? 1 : 0, sessLocal.retainedSetupRotation );
 	}
 	if ( UI_RetainedDiagnostic( gui, args ) ) {
-		sessLocal.DispatchCommand( gui, "openq4-retained-actions" );
+		sessLocal.DispatchCommand( gui, "opend3-retained-actions" );
 		return;
 	}
 #endif
-	common->Printf( "openq4_retainedGui: requires a retained test/active GUI and report | inspect <id> | textfit <id> <text> | widget <id> | focus <id> | menu <action> <0|1> | stick <x> <y> <msec> | number <begin|replace|select|preedit|input|undo|redo|commit|keep|reload|cancel> <id> [text or offsets] | state <id> <value> | pending <key> <value> | lines <key> <line> [line ...] | presentation <alias> <value> <override:0|1> | event <name> | trigger | update | save | restore\n" );
+	common->Printf( "opend3_retainedGui: requires a retained test/active GUI and report | inspect <id> | textfit <id> <text> | widget <id> | focus <id> | menu <action> <0|1> | stick <x> <y> <msec> | number <begin|replace|select|preedit|input|undo|redo|commit|keep|reload|cancel> <id> [text or offsets] | state <id> <value> | pending <key> <value> | lines <key> <line> [line ...] | presentation <alias> <value> <override:0|1> | event <name> | trigger | update | save | restore\n" );
 }
 
 // The summary card's chat field without device input: "<text>" types it with
@@ -5282,7 +5270,7 @@ static void Session_RetainedGui_f( const idCmdArgs &args ) {
 static void Session_SummaryChat_f( const idCmdArgs &args ) {
 #ifndef ID_DEDICATED
 	if ( !sessLocal.RetainedSummaryCovers() || args.Argc() < 2 ) {
-		common->Printf( "usage: openq4_summaryChat <text> | caret <n> | stop | send (while the summary card covers the match summary)\n" );
+		common->Printf( "usage: opend3_summaryChat <text> | caret <n> | stop | send (while the summary card covers the match summary)\n" );
 		return;
 	}
 	idUserInterface *summary = sessLocal.GetActiveGUI();
@@ -5312,12 +5300,12 @@ static void Session_SummaryChat_f( const idCmdArgs &args ) {
 static void Session_SystemSettings_f( const idCmdArgs &args ) {
 	if ( args.Argc() == 2 ) {
 		if ( !idStr::Icmp( args.Argv( 1 ), "open" ) ) {
-			common->Printf( "OPENQ4_SYSTEM operation=open result=%d\n", sessLocal.OpenSystemSettings() ? 1 : 0 );
+			common->Printf( "OPEND3_SYSTEM operation=open result=%d\n", sessLocal.OpenSystemSettings() ? 1 : 0 );
 			sessLocal.ReportSystemSettings();
 			return;
 		}
 		if ( !idStr::Icmp( args.Argv( 1 ), "back" ) ) {
-			common->Printf( "OPENQ4_SYSTEM operation=back result=%d\n", sessLocal.ReturnSystemSettings() ? 1 : 0 );
+			common->Printf( "OPEND3_SYSTEM operation=back result=%d\n", sessLocal.ReturnSystemSettings() ? 1 : 0 );
 			sessLocal.ReportSystemSettings();
 			return;
 		}
@@ -5326,7 +5314,7 @@ static void Session_SystemSettings_f( const idCmdArgs &args ) {
 			return;
 		}
 	}
-	common->Printf( "usage: openq4_system open | report | back (requires ui_retained 1 or ui_retainedSystem 1, and the normal main menu)\n" );
+	common->Printf( "usage: opend3_system open | report | back (requires ui_retained 1 or ui_retainedSystem 1, and the normal main menu)\n" );
 }
 
 // Reports the ui_retained gate, the retained screen presenting now and the
@@ -5335,10 +5323,10 @@ static void Session_RetainedStatus_f( const idCmdArgs & ) {
 	sessLocal.ReportRetainedScreens();
 }
 
-static void Session_OpenQ4GuiSet_f( const idCmdArgs &args ) {
+static void Session_openD3GuiSet_f( const idCmdArgs &args ) {
 	idUserInterface *gui = session->GetActiveGUI();
 	if ( args.Argc() != 3 || gui == NULL ) {
-		common->Printf( "usage: openq4_guiSet <window::variable|gui::key> <value> with an active GUI\n" );
+		common->Printf( "usage: opend3_guiSet <window::variable|gui::key> <value> with an active GUI\n" );
 		return;
 	}
 	// gui::<key> is the GUI's own state, a stock list's selection
@@ -5349,7 +5337,7 @@ static void Session_OpenQ4GuiSet_f( const idCmdArgs &args ) {
 		return;
 	}
 	if ( !gui->SetPresentationValue( args.Argv( 1 ), args.Argv( 2 ) ) ) {
-		common->Printf( "openq4_guiSet: unknown GUI variable\n" );
+		common->Printf( "opend3_guiSet: unknown GUI variable\n" );
 		return;
 	}
 	gui->StateChanged( common->GetPresentationTime() );
@@ -5390,14 +5378,14 @@ void idSessionLocal::TestGUI( const char *guiName ) {
 		if ( next == NULL ) { return; }
 	}
 	idUserInterface *previous = guiTest;
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	guiTest = NULL;
 	if ( previous != NULL && previous != guiActive ) {
 		previous->Activate( false, common->GetPresentationTime() );
 		PumpApplicationActions( previous );
 		uiManager->DeAlloc( previous );
 	}
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	guiTest = next;
 	if ( guiTest != NULL ) {
 		guiTest->Activate( true, common->GetPresentationTime() );
@@ -5699,12 +5687,12 @@ bool idSessionLocal::OpenRenderDemoRecordFile() {
 	}
 
 	renderDemoRecordFile->WriteInt( DS_VERSION );
-	renderDemoRecordFile->WriteInt( OPENQ4_RENDERDEMO_CURRENT_VERSION );
+	renderDemoRecordFile->WriteInt( OPEND3_RENDERDEMO_CURRENT_VERSION );
 
 	// What playback needs to find the right content and keep time across levels.
 	idDict header;
 	header.Set( "game", fileSystem->GetActiveGameDir() );
-	header.Set( "campaign", !idStr::Icmp( fileSystem->GetActiveGameDir(), "q4xbase" ) ? "awakening" : "quake4" );
+	header.Set( "campaign", "doom3" );
 	header.Set( "mode", idAsyncNetwork::IsActive() ? "multiplayer" : "singleplayer" );
 	header.SetInt( "userCmdHz", common->GetUserCmdHz() );
 	header.SetInt( "skill", cvarSystem->GetCVarInteger( "g_skill" ) );
@@ -5771,7 +5759,7 @@ void idSessionLocal::StopRecordingRenderDemo() {
 	file->WriteDict( end );
 
 	idDict summary;
-	summary.SetInt( "version", OPENQ4_RENDERDEMO_CURRENT_VERSION );
+	summary.SetInt( "version", OPEND3_RENDERDEMO_CURRENT_VERSION );
 	summary.SetInt( "frames", renderDemoRecordFrames );
 	summary.SetInt( "userCmdHz", common->GetUserCmdHz() );
 	summary.SetInt( "segments", renderDemoRecordSegments.Num() );
@@ -5960,10 +5948,10 @@ void idSessionLocal::StartPlayingRenderDemo( idStr demoName ) {
 		}
 	}
 
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	insideExecuteMapChange = true;
 	UpdateScreen();
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	insideExecuteMapChange = false;
 	guiLoading->SetStateString( "demo", "" );
 
@@ -6021,10 +6009,10 @@ void idSessionLocal::TimeRenderDemo( const char *demoName, bool twice ) {
 		guiLoading->SetStateString( "demo", common->GetLanguageDict()->GetString( "#str_04852" ) );
 		guiLoading->StateChanged( common->GetPresentationTime() );
 		while ( readDemo ) {
-			openq4::NativeInputBeforeSessionChange();
+			opend3::NativeInputBeforeSessionChange();
 			insideExecuteMapChange = true;
 			UpdateScreen();
-			openq4::NativeInputBeforeSessionChange();
+			opend3::NativeInputBeforeSessionChange();
 			insideExecuteMapChange = false;
 			AdvanceRenderDemo( true );
 		}
@@ -6238,7 +6226,7 @@ void idSessionLocal::StartNewGame( const char *mapName, bool devmap, const char 
 		cvarSystem->SetCVarString( "si_gameType", "singleplayer" );
 		cvarSystem->SetCVarString( "com_nextGameModule", "game" );
 		idCmdArgs reloadArgs;
-		reloadArgs.AppendArg( "openq4_startSingleplayer" );
+		reloadArgs.AppendArg( "opend3_startSingleplayer" );
 		reloadArgs.AppendArg( normalizedMapName.c_str() );
 		reloadArgs.AppendArg( devmap ? "1" : "0" );
 		reloadArgs.AppendArg( normalizedEntityFilter.c_str() );
@@ -6413,7 +6401,7 @@ void idSessionLocal::MoveToNewMap( const char *mapName ) {
 		// Autosave at the beginning of the level
 		SaveGame( NULL, ST_AUTO );
 	}
-	// openQ4: the level is a reached chapter of its campaign.
+	// openD3: the level is a reached chapter of its campaign.
 	RecordCampaignChapter();
 
 	SetGUI( NULL, NULL );
@@ -7563,30 +7551,20 @@ struct sessionChapter_t {
 	const char *	entityFilter;
 };
 
-static const sessionChapter_t SESSION_QUAKE4_CHAPTERS[] = {
-	{ "game/airdefense1", "" }, { "game/airdefense2", "" }, { "game/hangar1", "" }, { "game/hangar2", "" },
-	{ "game/mcc_landing", "" }, { "game/mcc_1", "" }, { "game/convoy1", "" }, { "game/building_b", "" },
-	{ "game/convoy2", "" }, { "game/convoy2b", "" }, { "game/hub1", "" }, { "game/hub2", "" },
-	{ "game/medlabs", "" }, { "game/walker", "" }, { "game/dispersal", "" }, { "game/recomp", "" },
-	{ "game/putra", "" }, { "game/waste", "" }, { "game/mcc_2", "" }, { "game/storage1", "first" },
-	{ "game/storage2", "" }, { "game/storage1", "second" }, { "game/tram1", "" }, { "game/tram1b", "" },
-	{ "game/process1", "first" }, { "game/process2", "" }, { "game/process1", "second" }, { "game/network1", "" },
-	{ "game/network2", "" }, { "game/core1", "" }, { "game/core2", "" }
+static const sessionChapter_t SESSION_DOOM3_CHAPTERS[] = {
+	{ "game/mars_city1", "" }, { "game/mc_underground", "" }, { "game/mars_city2", "" }, { "game/admin", "" },
+	{ "game/alphalabs1", "" }, { "game/alphalabs2", "" }, { "game/alphalabs3", "" }, { "game/alphalabs4", "" },
+	{ "game/enpro", "" }, { "game/commoutside", "" }, { "game/communications", "" }, { "game/recycling1", "" },
+	{ "game/recycling2", "" }, { "game/monorail", "" }, { "game/delta1", "" }, { "game/delta2a", "" },
+	{ "game/delta2b", "" }, { "game/delta3", "" }, { "game/delta4", "" }, { "game/hell1", "" },
+	{ "game/delta5", "" }, { "game/cpu", "" }, { "game/cpuboss", "" }, { "game/site3", "" },
+	{ "game/caverns1", "" }, { "game/caverns2", "" }, { "game/hellhole", "" }
 };
 
-static const sessionChapter_t SESSION_AWAKENING_CHAPTERS[] = {
-	{ "game/m01_stranarus_trench1", "" }, { "game/m01_stranarus_trench2", "" }, { "game/m02_trianfac", "" },
-	{ "game/m03_airassault", "" }, { "game/m04_prison", "" }, { "game/m05_bio", "" }, { "game/m06_mcc", "" },
-	{ "game/m06_mcc_invasion", "" }, { "game/m07_race", "" }, { "game/m07_race1", "" }, { "game/m07_race2", "" },
-	{ "game/m08_cryofac", "" }, { "game/m09_valkaryne", "" }
-};
+static idCVar ui_chaptersDoom3( "ui_chaptersDoom3", "1", CVAR_GUI | CVAR_ARCHIVE | CVAR_INTEGER | CVAR_NOCHEAT,
+	"the Doom 3 campaign's chapters reached: bit n is its (n+1)th level in campaign order" );
 
-static idCVar ui_chaptersQuake4( "ui_chaptersQuake4", "1", CVAR_GUI | CVAR_ARCHIVE | CVAR_INTEGER | CVAR_NOCHEAT,
-	"the Quake 4 campaign's chapters reached: bit n is its (n+1)th level in campaign order" );
-static idCVar ui_chaptersAwakening( "ui_chaptersAwakening", "1", CVAR_GUI | CVAR_ARCHIVE | CVAR_INTEGER | CVAR_NOCHEAT,
-	"the Awakening campaign's chapters reached: bit n is its (n+1)th level in campaign order" );
-
-// The chapter labels and their explanations (the *_openq4.lang tables).
+// The chapter labels and their explanations (the *_opend3.lang tables).
 static const char *const SESSION_CHAPTER_STATUS_SAVED = "#str_231283";
 static const char *const SESSION_CHAPTER_STATUS_FRESH = "#str_231284";
 static const char *const SESSION_CHAPTER_STATUS_LOCKED = "#str_231285";
@@ -7596,21 +7574,13 @@ static const char *const SESSION_CHAPTER_DETAIL_FRESH = "#str_231287";
 static const char *const SESSION_CHAPTER_DETAIL_FRESH_CURRENT = "#str_231551";
 static const char *const SESSION_CHAPTER_DETAIL_LOCKED = "#str_231288";
 
-static bool Session_AwakeningCampaignActive() {
-	return !idStr::Icmp( fileSystem->GetActiveGameDir(), "q4xbase" );
-}
-
 static const sessionChapter_t *Session_CampaignChapters( int &count ) {
-	if ( Session_AwakeningCampaignActive() ) {
-		count = static_cast<int>( sizeof( SESSION_AWAKENING_CHAPTERS ) / sizeof( SESSION_AWAKENING_CHAPTERS[0] ) );
-		return SESSION_AWAKENING_CHAPTERS;
-	}
-	count = static_cast<int>( sizeof( SESSION_QUAKE4_CHAPTERS ) / sizeof( SESSION_QUAKE4_CHAPTERS[0] ) );
-	return SESSION_QUAKE4_CHAPTERS;
+	count = static_cast<int>( sizeof( SESSION_DOOM3_CHAPTERS ) / sizeof( SESSION_DOOM3_CHAPTERS[0] ) );
+	return SESSION_DOOM3_CHAPTERS;
 }
 
 static idCVar &Session_CampaignChapterMask() {
-	return Session_AwakeningCampaignActive() ? ui_chaptersAwakening : ui_chaptersQuake4;
+	return ui_chaptersDoom3;
 }
 
 // The active campaign's chapter for a level start, or -1. A segmented level
@@ -8099,7 +8069,7 @@ void idSessionLocal::ExecuteMapChange( bool noFadeWipe ) {
 
 	// cause prints to force screen updates as a pacifier,
 	// and draw the loading gui instead of game draws
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	insideExecuteMapChange = true;
 
 	// if this works out we will probably want all the sizes in a def file although this solution will 
@@ -8170,7 +8140,7 @@ void idSessionLocal::ExecuteMapChange( bool noFadeWipe ) {
 	if ( loadingSaveGame && savegameFile ) {
 		if ( game->InitFromSaveGame( fullMapName, rw, sw, savegameFile ) == false ) {
 			// If the loadgame failed, restart the map with the player persistent data
-			openq4::NativeInputBeforeSessionChange();
+			opend3::NativeInputBeforeSessionChange();
 			loadingSaveGame = false;
 			fileSystem->CloseFile( savegameFile );
 			savegameFile = NULL;
@@ -8349,7 +8319,7 @@ void idSessionLocal::ExecuteMapChange( bool noFadeWipe ) {
 		bool acceptContinueInput = false;
 		bool loadingContinueAutoAdvanced = false;
 		const int loadingContinueStartTime = common->GetPresentationTime();
-		openQ4_SetLoadingContinueInputActive( true );
+		openD3_SetLoadingContinueInputActive( true );
 		while ( waitingForContinue ) {
 			Sys_GenerateEvents();
 
@@ -8403,7 +8373,7 @@ void idSessionLocal::ExecuteMapChange( bool noFadeWipe ) {
 				acceptContinueInput = true;
 			}
 		}
-		openQ4_SetLoadingContinueInputActive( false );
+		openD3_SetLoadingContinueInputActive( false );
 
 		if ( logLoadingContinueGate ) {
 			const int loadingContinueElapsedMsec = Max( 0, common->GetPresentationTime() - loadingContinueStartTime );
@@ -8438,7 +8408,7 @@ void idSessionLocal::ExecuteMapChange( bool noFadeWipe ) {
 	console->ClearNotifyLines();
 
 	// stop drawing the laoding screen
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	insideExecuteMapChange = false;
 	retainedLoadingActive = false;
 
@@ -8765,8 +8735,8 @@ struct sessionSaveCommitFileOps_t {
 };
 
 struct sessionSaveCommitJob_t {
-	std::array<openq4::SaveGameTransactionFile, 3> files;
-	openq4::SaveGameTransactionResult result;
+	std::array<opend3::SaveGameTransactionFile, 3> files;
+	opend3::SaveGameTransactionResult result;
 	std::string durabilityUnconfirmed;
 	bool removePreview = false;
 	double msec = 0.0;
@@ -8780,7 +8750,7 @@ static void Session_CommitCheckpointFiles( const idJobContext& context ) {
 	const auto begin = std::chrono::steady_clock::now();
 	try {
 		sessionSaveCommitFileOps_t ops;
-		commit.result = openq4::CommitSaveGame( commit.files, ops, commit.removePreview );
+		commit.result = opend3::CommitSaveGame( commit.files, ops, commit.removePreview );
 		commit.durabilityUnconfirmed = ops.durabilityUnconfirmed;
 	} catch ( const std::exception& error ) {
 		// The exact paths and recovery sentinels must survive an interrupted job.
@@ -8816,7 +8786,7 @@ static void Session_PersistCheckpointPreview( const idJobContext &context ) {
 	const auto begin = std::chrono::steady_clock::now();
 	constexpr size_t thumbnailBytes = 18 + 320 * 240 * 4;
 	std::string bytes;
-	if ( openq4::DurableReadExact( preview.path, thumbnailBytes, bytes, preview.error ) == openq4::DurableReadResult::Present &&
+	if ( opend3::DurableReadExact( preview.path, thumbnailBytes, bytes, preview.error ) == opend3::DurableReadResult::Present &&
 		bytes.size() == thumbnailBytes ) {
 		const unsigned char *header = reinterpret_cast<const unsigned char *>( bytes.data() );
 		// This proof is deliberately limited to the renderer's uncompressed,
@@ -8824,9 +8794,9 @@ static void Session_PersistCheckpointPreview( const idJobContext &context ) {
 		const bool valid = header[0] == 0 && header[1] == 0 && header[2] == 2 &&
 			( header[12] | ( header[13] << 8 ) ) == 320 &&
 			( header[14] | ( header[15] << 8 ) ) == 240 && header[16] == 32 && header[17] == 0;
-		if ( valid && openq4::DurableReplaceExact( preview.path, bytes, preview.error ) ) {
+		if ( valid && opend3::DurableReplaceExact( preview.path, bytes, preview.error ) ) {
 			std::string verified;
-			preview.success = openq4::DurableReadExact( preview.path, thumbnailBytes, verified, preview.error ) == openq4::DurableReadResult::Present &&
+			preview.success = opend3::DurableReadExact( preview.path, thumbnailBytes, verified, preview.error ) == opend3::DurableReadResult::Present &&
 				verified == bytes;
 		}
 	}
@@ -8858,23 +8828,23 @@ static void Session_WriteCheckpointPayload( const idJobContext &context ) {
 	const unsigned int checksum = CRC32_BlockChecksum( storage.payload.data(), static_cast<int>( size ) );
 	storage.protectedLength = size;
 	storage.checksum = checksum;
-	const unsigned int trailer[] = { SESSION_OPENQ4_SAVEGAME_INTEGRITY_MAGIC,
-		SESSION_OPENQ4_SAVEGAME_INTEGRITY_VERSION, size, checksum };
+	const unsigned int trailer[] = { SESSION_OPEND3_SAVEGAME_INTEGRITY_MAGIC,
+		SESSION_OPEND3_SAVEGAME_INTEGRITY_VERSION, size, checksum };
 	for ( unsigned int value : trailer ) {
 		for ( int shift = 0; shift < 32; shift += 8 ) storage.payload.push_back( static_cast<char>( value >> shift ) );
 	}
-	if ( openq4::DurableReplaceExact( storage.path, storage.payload, storage.error ) ) {
+	if ( opend3::DurableReplaceExact( storage.path, storage.payload, storage.error ) ) {
 		std::string verified;
-		if ( openq4::DurableReadExact( storage.path, storage.payload.size(), verified, storage.error ) == openq4::DurableReadResult::Present ) {
+		if ( opend3::DurableReadExact( storage.path, storage.payload.size(), verified, storage.error ) == opend3::DurableReadResult::Present ) {
 			storage.success = verified == storage.payload;
 			if ( !storage.success ) storage.error = "checkpoint payload readback differs from its snapshot";
 		}
 	}
 	if ( storage.success ) {
-		storage.success = openq4::DurableReplaceExact( storage.descriptionPath, storage.description, storage.error );
+		storage.success = opend3::DurableReplaceExact( storage.descriptionPath, storage.description, storage.error );
 		if ( storage.success ) {
 			std::string verified;
-			storage.success = openq4::DurableReadExact( storage.descriptionPath, storage.description.size(), verified, storage.error ) == openq4::DurableReadResult::Present &&
+			storage.success = opend3::DurableReadExact( storage.descriptionPath, storage.description.size(), verified, storage.error ) == opend3::DurableReadResult::Present &&
 				verified == storage.description;
 			if ( !storage.success && storage.error.empty() ) storage.error = "checkpoint description readback differs from its snapshot";
 		}
@@ -8913,10 +8883,10 @@ public:
 		// Most checkpoints fit the bounded background-storage payload. Allocate
 		// that much on the first write instead of repeatedly copying live-state
 		// bytes while the game thread builds its snapshot.
-		SetGranularity( static_cast<int>( openq4::DurableFileMaxBytes ) );
+		SetGranularity( static_cast<int>( opend3::DurableFileMaxBytes ) );
 	}
 	virtual int Write( const void *buffer, int length ) {
-		const int limit = SESSION_MAX_SAVEGAME_BYTES - SESSION_OPENQ4_SAVEGAME_INTEGRITY_BYTES;
+		const int limit = SESSION_MAX_SAVEGAME_BYTES - SESSION_OPEND3_SAVEGAME_INTEGRITY_BYTES;
 		if ( length > 0 && length > limit - Tell() ) {
 			common->Error( "Savegame snapshot exceeds maximum size %d", limit );
 			return 0;
@@ -9236,7 +9206,7 @@ bool idSessionLocal::SaveGame( const char *saveName, saveType_t saveType ) {
 	std::shared_ptr<sessionSaveStorageJob_t> storage;
 	if ( deferredPreview && jobSystem.IsInitialized() && !jobSystem.IsSynchronous() &&
 		fileOut->Length() > 0 && static_cast<size_t>( fileOut->Length() ) <=
-		openq4::DurableFileMaxBytes - SESSION_OPENQ4_SAVEGAME_INTEGRITY_BYTES ) {
+		opend3::DurableFileMaxBytes - SESSION_OPEND3_SAVEGAME_INTEGRITY_BYTES ) {
 		storage = std::make_shared<sessionSaveStorageJob_t>();
 		storage->path = fileSystem->RelativePathToOSPath( tempGameFile.c_str(), "fs_savepath" );
 		// The former synchronous sidecar open created this directory. A fresh
@@ -9259,12 +9229,12 @@ bool idSessionLocal::SaveGame( const char *saveName, saveType_t saveType ) {
 		int stagedProtectedLength = -1;
 		idFile *stagedSnapshot = storage && storage->snapshot ? storage->snapshot.get() : fileOut;
 		const bool stagedSizeValid = Session_GetBoundedSaveGameLength( stagedSnapshot, tempGameFile, "staged write", stagedProtectedLength ) &&
-			stagedProtectedLength <= SESSION_MAX_SAVEGAME_BYTES - SESSION_OPENQ4_SAVEGAME_INTEGRITY_BYTES;
+			stagedProtectedLength <= SESSION_MAX_SAVEGAME_BYTES - SESSION_OPEND3_SAVEGAME_INTEGRITY_BYTES;
 		if ( !stagedSizeValid ) {
-			if ( stagedProtectedLength > SESSION_MAX_SAVEGAME_BYTES - SESSION_OPENQ4_SAVEGAME_INTEGRITY_BYTES &&
+			if ( stagedProtectedLength > SESSION_MAX_SAVEGAME_BYTES - SESSION_OPEND3_SAVEGAME_INTEGRITY_BYTES &&
 				 stagedProtectedLength <= SESSION_MAX_SAVEGAME_BYTES ) {
 				common->Warning( "Staged savegame '%s' is %d bytes before its %d-byte integrity trailer (maximum total .save size %d bytes)",
-					tempGameFile.c_str(), stagedProtectedLength, SESSION_OPENQ4_SAVEGAME_INTEGRITY_BYTES, SESSION_MAX_SAVEGAME_BYTES );
+					tempGameFile.c_str(), stagedProtectedLength, SESSION_OPEND3_SAVEGAME_INTEGRITY_BYTES, SESSION_MAX_SAVEGAME_BYTES );
 			}
 			fileSystem->CloseFile( fileOut );
 			fileOut = NULL;
@@ -9524,9 +9494,9 @@ bool idSessionLocal::ExecuteSaveGameMapChange( const char *saveName ) {
 	} catch ( const idException &error ) {
 		// GameLib has unwound its owned restore objects. Stop the session with
 		// normal error policy again, close its file and present a fresh menu.
-		openQ4_saveGameRestore.file = NULL;
-		openQ4_saveGameRestore.layoutBuild = 0;
-		openQ4_saveGameRestore.version = 0;
+		openD3_saveGameRestore.file = NULL;
+		openD3_saveGameRestore.layoutBuild = 0;
+		openD3_saveGameRestore.version = 0;
 		common->Warning( "LoadGame '%s': could not restore saved state: %s", saveName, error.error );
 		Stop();
 		loadGameFailure = LOADGAME_FAILURE_RESTORE;
@@ -9619,7 +9589,7 @@ bool idSessionLocal::LoadGame( const char *saveName, const char *preferredGameDi
 		return false;
 	}
 
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	loadingSaveGame = false;
 	savegameFile = NULL;
 
@@ -9645,7 +9615,7 @@ bool idSessionLocal::LoadGame( const char *saveName, const char *preferredGameDi
 	headerValid = headerValid && Session_ReadSaveGameString( loadGameFile, saveMap, MAX_STRING_CHARS, "map name", in.c_str() );
 
 	// retail Quake 4 stores an entity filter after the map name.
-	// Older openQ4 saves omitted it, so only consume it from retail-style headers.
+	// Older openD3 saves omitted it, so only consume it from retail-style headers.
 	if ( headerValid && Session_SaveGameHeaderUsesEntityFilter( gamename ) ) {
 		headerValid = Session_ReadSaveGameString( loadGameFile, entityFilter, MAX_STRING_CHARS, "entity filter", in.c_str() );
 	} else {
@@ -9691,7 +9661,7 @@ bool idSessionLocal::LoadGame( const char *saveName, const char *preferredGameDi
 	}
 	savegameVersion = loadedSavegameVersion;
 
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	loadingSaveGame = true;
 	savegameFile = loadGameFile;
 	loadGameFile = NULL;
@@ -9703,14 +9673,14 @@ bool idSessionLocal::LoadGame( const char *saveName, const char *preferredGameDi
 	// restore ends.
 	struct sessionSaveGameRestoreScope_t {
 		sessionSaveGameRestoreScope_t( const idFile *file, const sessionSaveGamePayload_t &payload ) {
-			openQ4_saveGameRestore.file = file;
-			openQ4_saveGameRestore.layoutBuild = payload.layoutBuild;
-			openQ4_saveGameRestore.version = payload.version;
+			openD3_saveGameRestore.file = file;
+			openD3_saveGameRestore.layoutBuild = payload.layoutBuild;
+			openD3_saveGameRestore.version = payload.version;
 		}
 		~sessionSaveGameRestoreScope_t() {
-			openQ4_saveGameRestore.file = NULL;
-			openQ4_saveGameRestore.layoutBuild = 0;
-			openQ4_saveGameRestore.version = 0;
+			openD3_saveGameRestore.file = NULL;
+			openD3_saveGameRestore.layoutBuild = 0;
+			openD3_saveGameRestore.version = 0;
 		}
 	} saveGameRestoreScope( savegameFile, payload );
 
@@ -9740,7 +9710,7 @@ bool idSessionLocal::LoadGame( const char *saveName, const char *preferredGameDi
 
 	if ( loadingSaveGame ) {
 		fileSystem->CloseFile( savegameFile );
-		openq4::NativeInputBeforeSessionChange();
+		opend3::NativeInputBeforeSessionChange();
 		loadingSaveGame = false;
 		savegameFile = NULL;
 	}
@@ -9808,17 +9778,17 @@ bool idSessionLocal::DeleteGame( const char *saveName, const char *preferredGame
 idSessionLocal::ProcessEvent
 ===============
 */
-bool idSessionLocal::QueryNativeInputPublication(openq4::NativeSessionPublication& out) const noexcept {
+bool idSessionLocal::QueryNativeInputPublication(opend3::NativeSessionPublication& out) const noexcept {
     if (!Sys_EventDispositionBoundThread()) return false;
-    const auto transition = openq4::NativeInputSessionTransition();
-    openq4::NativeSessionPublication value;
+    const auto transition = opend3::NativeInputSessionTransition();
+    opend3::NativeSessionPublication value;
     value.current = reinterpret_cast<std::uintptr_t>(guiTest ? guiTest : guiActive);
     value.transition = transition;
     value.inputAllowed = transition && value.current && !insideExecuteMapChange && !loadingSaveGame &&
-        !com_asyncInput.GetBool() && !openq4::Console_BlocksNativeInput() && !RetainedUI_IsOpen();
+        !com_asyncInput.GetBool() && !opend3::Console_BlocksNativeInput() && !RetainedUI_IsOpen();
     out = value; return true;
 }
-bool openq4::Session_QueryNativeInputPublication(NativeSessionPublication& out) noexcept {
+bool opend3::Session_QueryNativeInputPublication(NativeSessionPublication& out) noexcept {
     return sessLocal.QueryNativeInputPublication(out);
 }
 bool idSessionLocal::IsGUIActive() const {
@@ -9829,7 +9799,7 @@ bool idSessionLocal::ProcessEvent( const sysEvent_t *event ) {
     if (!NativeInput_SessionCurrent()) return false;
 	if ( event->evType == SE_RETAINED_UI ) return RetainedUI_ProcessEvent( event );
 	// hitting escape anywhere brings up the menu
-	// openQ4: except with the console down, where Escape first puts away the
+	// openD3: except with the console down, where Escape first puts away the
 	// console (idConsoleLocal::KeyDownEvent); a second press brings up the menu
 	if ( !guiActive && !guiTest && !RetainedUI_IsOpen() && event->evType == SE_KEY && event->evValue2 == 1 &&
 		( ( event->evValue == K_ESCAPE && !console->Active() ) || event->evValue == K_JOY7 || event->evValue == K_JOY8 ) ) {
@@ -10075,7 +10045,7 @@ void idSessionLocal::AdvanceRenderDemo( bool singleFrameOnly ) {
 			}
 			continue;
 		}
-		if ( ds == DS_SESSION && renderdemoVersion >= OPENQ4_RENDERDEMO_SESSION_VERSION ) {
+		if ( ds == DS_SESSION && renderdemoVersion >= OPEND3_RENDERDEMO_SESSION_VERSION ) {
 			// A campaign recording's header, a level's segment or its clean end.
 			bool finished = false;
 			if ( !ProcessRenderDemoSessionRecord( finished ) ) {
@@ -10126,10 +10096,10 @@ void idSessionLocal::AdvanceRenderDemo( bool singleFrameOnly ) {
 				break;
 			}
 			if ( streamVersion < 1 ||
-				 streamVersion > OPENQ4_RENDERDEMO_CURRENT_VERSION ) {
+				 streamVersion > OPEND3_RENDERDEMO_CURRENT_VERSION ) {
 				common->Warning( "Render demo '%s' uses unsupported stream version %d (supported: 1-%d)",
 					activeRenderDemoName.c_str(), streamVersion,
-					OPENQ4_RENDERDEMO_CURRENT_VERSION );
+					OPEND3_RENDERDEMO_CURRENT_VERSION );
 				Stop();
 				StartMenu( false );
 				break;
@@ -10235,7 +10205,7 @@ idSessionLocal::PacifierUpdate
 ===============
 */
 void idSessionLocal::PacifierUpdate() {
-	if ( openQ4_UpdateInitialization() ) return;
+	if ( openD3_UpdateInitialization() ) return;
 	if ( !insideExecuteMapChange || insidePacifierUpdate ) {
 		return;
 	}
@@ -11195,11 +11165,11 @@ void idSessionLocal::Init() {
 	cmdSystem->AddCommand( "writePrecache", Sess_WritePrecache_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "writes precache commands" );
 
 #ifndef	ID_DEDICATED
-	cmdSystem->AddCommand( "openq4_startSingleplayer", Session_openQ4StartSingleplayer_f, CMD_FL_SYSTEM, "internal helper to start singleplayer after game-module switches" );
-	cmdSystem->AddCommand( "openq4_assertMapState", Session_openQ4AssertMapState_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "asserts the active map and entity filter for validation harnesses" );
-	cmdSystem->AddCommand( "openq4_assertMPGameplayView", Session_openQ4AssertMPGameplayView_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "asserts that multiplayer rendering is not covered by an active session GUI" );
-	cmdSystem->AddCommand( "openq4_assertMenuActivation", Session_openQ4AssertMenuActivation_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "opens the in-game menu and asserts a bounded activation time for validation harnesses" );
-	cmdSystem->AddCommand( "openq4_resumeBakeLightGrids", Session_openQ4ResumeBakeLightGrids_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "internal helper to continue light-grid baking after game-module switches" );
+	cmdSystem->AddCommand( "opend3_startSingleplayer", Session_openD3StartSingleplayer_f, CMD_FL_SYSTEM, "internal helper to start singleplayer after game-module switches" );
+	cmdSystem->AddCommand( "opend3_assertMapState", Session_openD3AssertMapState_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "asserts the active map and entity filter for validation harnesses" );
+	cmdSystem->AddCommand( "opend3_assertMPGameplayView", Session_openD3AssertMPGameplayView_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "asserts that multiplayer rendering is not covered by an active session GUI" );
+	cmdSystem->AddCommand( "opend3_assertMenuActivation", Session_openD3AssertMenuActivation_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "opens the in-game menu and asserts a bounded activation time for validation harnesses" );
+	cmdSystem->AddCommand( "opend3_resumeBakeLightGrids", Session_openD3ResumeBakeLightGrids_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "internal helper to continue light-grid baking after game-module switches" );
 	cmdSystem->AddCommand( "iamtheduke", Session_IAmTheDuke_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "toggles the SP-only iamtheduke cheat text overlay" );
 	cmdSystem->AddCommand( "bakeLightGrids", Session_BakeLightGrids_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "bakes openD3-compatible lightgrid metadata and irradiance atlases for the current map or a batch of maps" );
     cmdSystem->AddCommand( "campaignSelect", Session_CampaignSelect_f, CMD_FL_SYSTEM, "selects a built-in single-player campaign" );
@@ -11243,18 +11213,18 @@ void idSessionLocal::Init() {
 	cmdSystem->AddCommand( "demoShot", Session_DemoShot_f, CMD_FL_SYSTEM, "writes a screenshot for a demo" );
 	cmdSystem->AddCommand( "testGUI", Session_TestGUI_f, CMD_FL_SYSTEM, "tests a gui" );
 #ifndef ID_DEDICATED
-	cmdSystem->AddCommand( "openq4_retainedGui", Session_RetainedGui_f, CMD_FL_SYSTEM, "inspect a normal retained GUI or submit semantic diagnostics without device input" );
-	cmdSystem->AddCommand( "openq4_summaryChat", Session_SummaryChat_f, CMD_FL_SYSTEM, "type, move the caret in, stop or send the match summary card's chat entry without device input" );
-	cmdSystem->AddCommand( "openq4_system", Session_SystemSettings_f, CMD_FL_SYSTEM, "open, return or inspect the opt-in normal SYSTEM child without device input" );
+	cmdSystem->AddCommand( "opend3_retainedGui", Session_RetainedGui_f, CMD_FL_SYSTEM, "inspect a normal retained GUI or submit semantic diagnostics without device input" );
+	cmdSystem->AddCommand( "opend3_summaryChat", Session_SummaryChat_f, CMD_FL_SYSTEM, "type, move the caret in, stop or send the match summary card's chat entry without device input" );
+	cmdSystem->AddCommand( "opend3_system", Session_SystemSettings_f, CMD_FL_SYSTEM, "open, return or inspect the opt-in normal SYSTEM child without device input" );
 	cmdSystem->AddCommand( "ui_retainedStatus", Session_RetainedStatus_f, CMD_FL_SYSTEM, "report the ui_retained gate and the live retained screens" );
 #endif
 #ifndef	ID_DEDICATED
 	cmdSystem->AddCommand( "GuiEvent", Session_GuiEvent_f, CMD_FL_SYSTEM, "sends a named event to the active gui" );
-	cmdSystem->AddCommand( "openq4_guiSet", Session_OpenQ4GuiSet_f, CMD_FL_SYSTEM | CMD_FL_CHEAT, "sets an existing active GUI variable for engine-scripted layout validation" );
-	cmdSystem->AddCommand( "openq4_guiGet", Session_OpenQ4GuiGet_f, CMD_FL_SYSTEM | CMD_FL_CHEAT, "reports an existing active GUI variable for engine-scripted layout validation" );
-	cmdSystem->AddCommand( "openq4_guiAction", Session_OpenQ4GuiAction_f, CMD_FL_SYSTEM | CMD_FL_CHEAT, "runs a classic GUI window's onAction, or onBackAction with back, as a click would, for engine-scripted validation" );
-	cmdSystem->AddCommand( "openq4_guiFocus", Session_OpenQ4GuiFocus_f, CMD_FL_SYSTEM | CMD_FL_CHEAT, "steps a classic GUI's focus as a menu's arrow key does (next, previous) and reports the focused window, for engine-scripted validation" );
-	cmdSystem->AddCommand( "openq4_browser", Session_OpenQ4Browser_f, CMD_FL_SYSTEM | CMD_FL_CHEAT, "reports and exercises main-menu server-browser operations for engine-scripted validation" );
+	cmdSystem->AddCommand( "opend3_guiSet", Session_openD3GuiSet_f, CMD_FL_SYSTEM | CMD_FL_CHEAT, "sets an existing active GUI variable for engine-scripted layout validation" );
+	cmdSystem->AddCommand( "opend3_guiGet", Session_openD3GuiGet_f, CMD_FL_SYSTEM | CMD_FL_CHEAT, "reports an existing active GUI variable for engine-scripted layout validation" );
+	cmdSystem->AddCommand( "opend3_guiAction", Session_openD3GuiAction_f, CMD_FL_SYSTEM | CMD_FL_CHEAT, "runs a classic GUI window's onAction, or onBackAction with back, as a click would, for engine-scripted validation" );
+	cmdSystem->AddCommand( "opend3_guiFocus", Session_openD3GuiFocus_f, CMD_FL_SYSTEM | CMD_FL_CHEAT, "steps a classic GUI's focus as a menu's arrow key does (next, previous) and reports the focused window, for engine-scripted validation" );
+	cmdSystem->AddCommand( "opend3_browser", Session_openD3Browser_f, CMD_FL_SYSTEM | CMD_FL_CHEAT, "reports and exercises main-menu server-browser operations for engine-scripted validation" );
 	cmdSystem->AddCommand( "saveGame", SaveGame_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "saves a game" );
 	cmdSystem->AddCommand( "testAutoSave", TestAutoSave_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "writes a named autosave for developer lifecycle validation" );
 	cmdSystem->AddCommand( "loadGame", LoadGame_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "loads a game", idCmdSystem::ArgCompletion_SaveGame );
@@ -11275,7 +11245,7 @@ void idSessionLocal::Init() {
 	// worlds below and rescanSI, which copies its settings into the map.
 	// This client is a dedicated server too when its engine starts with
 	// net_serverDedicated 1 (launched with it, or reloaded after turning into
-	// one): like openQ4-ded, it gets the worlds and none of the menus.
+	// one): like openD3-ded, it gets the worlds and none of the menus.
 	const bool dedicatedServer = IsDedicatedServer();
 	if ( !dedicatedServer ) {
 		if ( !renderSystem || !renderSystem->IsOpenGLRunning() ) return;
@@ -11347,10 +11317,10 @@ void idSessionLocal::Init() {
 	whiteMaterial = declManager->FindMaterial( "_white" );
 
 	guiInGame = NULL;
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	guiTest = NULL;
 
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	guiActive = NULL;
 	guiHandle = NULL;
 

@@ -39,7 +39,7 @@ If you have questions concerning this license or the applicable additional terms
 idCVar gui_debugScript( "gui_debugScript", "0", CVAR_GUI | CVAR_INTEGER, "log gui script execution details (0=off, 1=key events, 2=verbose, 3=sets/transitions/cmds, 4=state changes, 5=redraw trace)" );
 
 namespace {
-	// openQ4: every live script list, for IsValid. This was an idList searched
+	// openD3: every live script list, for IsValid. This was an idList searched
 	// from the front: Execute asks before every statement it runs, so each
 	// statement cost a walk over every script list of every loaded GUI, and
 	// each list's destruction another to remove itself. Never destroyed, so

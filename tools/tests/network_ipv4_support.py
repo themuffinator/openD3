@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_LIBS_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)).resolve()
+GAME_LIBS_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)).resolve()
 
 
 def read(relative_path: str) -> str:
@@ -167,7 +167,7 @@ def validate_network_contract_wiring() -> None:
                 f"{relative_path} focused regression execution wiring",
             )
 
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     for test_path in test_paths:
         filename = Path(test_path).name
         require(
@@ -1024,41 +1024,41 @@ def validate_async_ipv4_protocol() -> None:
     module_load = function_body(common, "void idCommonLocal::LoadGameDLL", "multiplayer module load")
     require(
         module_load,
-        "openQ4_NormalizeGameTypeForModule( gameModuleBaseName );",
+        "openD3_NormalizeGameTypeForModule( gameModuleBaseName );",
         "pre-load direct-connect game type normalization",
     )
-    if module_load.index("openQ4_NormalizeGameTypeForModule") > module_load.index("sys->DLL_Load"):
+    if module_load.index("openD3_NormalizeGameTypeForModule") > module_load.index("sys->DLL_Load"):
         raise AssertionError("Direct-connect game type must be normalized before loading game_mp")
 
     game_init = function_body(common, "void idCommonLocal::InitGame", "game initialization")
     for token in (
-        "const idStr pendingGameModule = openQ4_SelectGameModuleBaseName();",
-        "openQ4_NormalizeGameTypeForModule( pendingGameModule.c_str() );",
+        "const idStr pendingGameModule = openD3_SelectGameModuleBaseName();",
+        "openD3_NormalizeGameTypeForModule( pendingGameModule.c_str() );",
     ):
         require(game_init, token, "pre-declaration direct-connect game type normalization")
     if not (
         game_init.index("const idStr pendingGameModule")
-        < game_init.index("openQ4_NormalizeGameTypeForModule( pendingGameModule.c_str() );")
+        < game_init.index("openD3_NormalizeGameTypeForModule( pendingGameModule.c_str() );")
         < game_init.index("declManager->Init")
     ):
         raise AssertionError("Direct-connect game type must be normalized before declaration initialization")
 
-    reject(common, "openQ4_StartupRequiresMultiplayerModule", "startup command preselection")
+    reject(common, "openD3_StartupRequiresMultiplayerModule", "startup command preselection")
     common_init = function_body(common, "void idCommonLocal::Init( int argc", "common startup")
     for token in (
         'SetCVarString( "com_nextGameModule", "game_mp" )',
-        'openQ4_NormalizeGameTypeForModule( "game_mp" );',
+        'openD3_NormalizeGameTypeForModule( "game_mp" );',
     ):
         reject(common_init, token, "startup command preselection")
 
     normalize = function_body(
         common,
-        "static void openQ4_NormalizeGameTypeForModule",
+        "static void openD3_NormalizeGameTypeForModule",
         "cross-build multiplayer game type normalization",
     )
     canonicalize = function_body(
         common,
-        "static const char *openQ4_CanonicalMultiplayerGameType",
+        "static const char *openD3_CanonicalMultiplayerGameType",
         "canonical multiplayer game type lookup",
     )
     require(
@@ -1073,17 +1073,17 @@ def validate_async_ipv4_protocol() -> None:
         require(canonicalize, token, "reserved multiplayer game type routing")
     route_probe = function_body(
         common,
-        "static bool openQ4_IsMultiplayerGameType",
+        "static bool openD3_IsMultiplayerGameType",
         "multiplayer game module routing",
     )
     require(
         route_probe,
-        "openQ4_CanonicalMultiplayerGameType( gameType, false )",
+        "openD3_CanonicalMultiplayerGameType( gameType, false )",
         "reserved multiplayer game module routing",
     )
     require(
         normalize,
-        "openQ4_CanonicalMultiplayerGameType( currentGameType, true )",
+        "openD3_CanonicalMultiplayerGameType( currentGameType, true )",
         "reserved multiplayer game type normalization",
     )
     case_compare = normalize.index("idStr::Cmp( currentGameType, canonicalGameType )")
@@ -1100,13 +1100,13 @@ def validate_async_ipv4_protocol() -> None:
     reject(normalize, "until serverInfo", "generic multiplayer game type fallback")
 
     for token, context in (
-        ("static const char *openQ4_CanonicalMultiplayerGameType", "canonical gametype helper"),
-        ("static void openQ4_NormalizeGameTypeForModule", "gametype normalization helper"),
+        ("static const char *openD3_CanonicalMultiplayerGameType", "canonical gametype helper"),
+        ("static void openD3_NormalizeGameTypeForModule", "gametype normalization helper"),
         (
-            "openQ4_NormalizeGameTypeForModule( pendingGameModule.c_str() );",
+            "openD3_NormalizeGameTypeForModule( pendingGameModule.c_str() );",
             "pre-declaration normalization call",
         ),
-        ("openQ4_NormalizeGameTypeForModule( gameModuleBaseName );", "pre-DLL normalization call"),
+        ("openD3_NormalizeGameTypeForModule( gameModuleBaseName );", "pre-DLL normalization call"),
     ):
         position = common.index(token)
         if any("ID_DEDICATED" in directive for directive in preprocessor_stack_at(common, position)):
@@ -1483,7 +1483,7 @@ def validate_postinit_connect_runtime_lane() -> None:
         'payload = f"wait {POSTINIT_CONNECT_WAIT_FRAMES}\\nconnect 127.0.0.1:{port}\\n"',
         "post-init IPv4 connect commands",
     )
-    require(writer, 'for game_dir in ("baseoq4", "q4base"):', "post-init IPv4 game directories")
+    require(writer, 'for game_dir in ("baseod3", "q4base"):', "post-init IPv4 game directories")
     require(writer, "cfg_path.write_text(payload", "post-init IPv4 connect configuration")
 
     reconnect_writer = python_function_body(
@@ -1496,7 +1496,7 @@ def validate_postinit_connect_runtime_lane() -> None:
         'f\'set g_autoExecAfterMapLoad "{capture_cfg}"\\n\'',
         'f"set g_autoExecAfterMapLoadDelayMs {max(0, autoexec_delay_ms)}\\n"',
         '"reconnect\\n"',
-        'for game_dir in ("baseoq4", "q4base"):',
+        'for game_dir in ("baseod3", "q4base"):',
     ):
         require(reconnect_writer, token, "post-init IPv4 reconnect configuration")
 

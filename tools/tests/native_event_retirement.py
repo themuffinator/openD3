@@ -151,10 +151,10 @@ def main():
                 '/I.','/Fo'+str(folder)+os.sep,'/Fe'+str(exe),*units]
             if args.msvc_debug:command+=['/D_DEBUG']
             else:command+=['/D_ITERATOR_DEBUG_LEVEL=0']
-            if target=='posix':command+=['/DOPENQ4_SDL3_POSIX_HOST']
+            if target=='posix':command+=['/DOPEND3_SDL3_POSIX_HOST']
         else:
             command=[compiler,'-std=c++20','-Wall','-Wextra','-Werror','-Wno-unused-parameter','-pthread','-I.',*units,'-o',str(exe)]
-            if target=='posix':command+=['-DOPENQ4_SDL3_POSIX_HOST']
+            if target=='posix':command+=['-DOPEND3_SDL3_POSIX_HOST']
             if args.sanitizers:command[1:1]=['-fsanitize=address,undefined','-fno-omit-frame-pointer','-fno-pie','-no-pie']
         compiled=subprocess.run(command,cwd=folder,env=env,capture_output=True,text=True,timeout=120)
         (folder/'compile.log').write_text(compiled.stdout+compiled.stderr,encoding='utf-8')

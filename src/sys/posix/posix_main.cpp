@@ -70,7 +70,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "posix_public.h"
 
 #if !defined( MACOS_X ) || defined( USE_SDL3 )
-#define OPENQ4_POSIX_OWNS_COMMON_SYS 1
+#define OPEND3_POSIX_OWNS_COMMON_SYS 1
 #endif
 
 #if defined( USE_SDL3 )
@@ -256,7 +256,7 @@ void idSysLocal::StartProcess( const char *exeName, bool quit ) {
 Sys_Quit
 ================
 */
-#if defined( OPENQ4_POSIX_OWNS_COMMON_SYS )
+#if defined( OPEND3_POSIX_OWNS_COMMON_SYS )
 void Sys_Quit(void) {
 	Posix_Exit( EXIT_SUCCESS );
 }
@@ -540,18 +540,18 @@ sysEventTransfer_t Sys_PeekEventDispositionTag(sysEventDispositionTag_t& out) no
     out = eventDispositionTags[eventTail & MASK_QUED_EVENTS];
     return sysEventTransfer_t::Ready;
 }
-sysEventTransfer_t Sys_PeekEventForRetirement(openq4::NativeInputHead& out) noexcept {
+sysEventTransfer_t Sys_PeekEventForRetirement(opend3::NativeInputHead& out) noexcept {
     if (!Sys_EventDispositionBoundThread()) return sysEventTransfer_t::Refused;
     if (eventHead <= eventTail) return sysEventTransfer_t::Empty;
     const unsigned slot = static_cast<unsigned>(eventTail & MASK_QUED_EVENTS);
     if (!eventRetirementSerials[slot] || !eventDispositionTags[slot].ShapeValid()) return sysEventTransfer_t::Refused;
-    out = Sys_EventRetirementHead(openq4::NativeInputLane::Platform, eventRetirementSerials[slot], slot,
+    out = Sys_EventRetirementHead(opend3::NativeInputLane::Platform, eventRetirementSerials[slot], slot,
         eventQue[slot], eventDispositionTags[slot]);
     return sysEventTransfer_t::Ready;
 }
-sysEventTransfer_t Sys_TakeEventForRetirement(openq4::NativeInputRoute& route,
-    const openq4::NativeInputRoute::CancellationPermit& permit, sysEvent_t& event, sysEventDispositionTag_t& tag) noexcept {
-    openq4::NativeInputHead head;
+sysEventTransfer_t Sys_TakeEventForRetirement(opend3::NativeInputRoute& route,
+    const opend3::NativeInputRoute::CancellationPermit& permit, sysEvent_t& event, sysEventDispositionTag_t& tag) noexcept {
+    opend3::NativeInputHead head;
     const auto status = Sys_PeekEventForRetirement(head);
     if (status != sysEventTransfer_t::Ready) return status;
     if (!route.AllowsCancellation(permit, head)) return sysEventTransfer_t::Refused;
@@ -781,7 +781,7 @@ Sys_Init
 Posix_EarlyInit/Posix_LateInit is better
 =================
 */
-#if defined( OPENQ4_POSIX_OWNS_COMMON_SYS )
+#if defined( OPEND3_POSIX_OWNS_COMMON_SYS )
 void Sys_Init( void ) { }
 #endif
 
@@ -880,7 +880,7 @@ const char *Sys_DefaultCDPath( void ) {
 #if defined( __ANDROID__ )
 	// The standalone host extracts packaged overlays into private storage.
 	// Keep the retail install, writable saves and APK native modules separate.
-	const char *contentRoot = getenv( "OPENQ4_CONTENT_ROOT" );
+	const char *contentRoot = getenv( "OPEND3_CONTENT_ROOT" );
 	if ( contentRoot != NULL && contentRoot[0] == '/' ) {
 		return contentRoot;
 	}
@@ -900,7 +900,7 @@ ID_TIME_T Sys_FileTimeStamp(FILE * fp) {
 	return st.st_mtime;
 }
 
-#if defined( OPENQ4_POSIX_OWNS_COMMON_SYS )
+#if defined( OPEND3_POSIX_OWNS_COMMON_SYS )
 void Sys_Sleep(int msec) {
 	if ( msec <= 0 ) {
 		return;
@@ -918,7 +918,7 @@ void Sys_Sleep(int msec) {
 }
 #endif
 
-#if defined( OPENQ4_POSIX_OWNS_COMMON_SYS )
+#if defined( OPEND3_POSIX_OWNS_COMMON_SYS )
 char *Sys_GetClipboardData(void) {
 #if defined( USE_SDL3 )
 	if ( !Posix_IsMainThread() ) {
@@ -956,7 +956,7 @@ char *Sys_GetClipboardData(void) {
 }
 #endif
 
-#if defined( OPENQ4_POSIX_OWNS_COMMON_SYS )
+#if defined( OPEND3_POSIX_OWNS_COMMON_SYS )
 void Sys_SetClipboardData( const char *string ) {
 #if defined( USE_SDL3 )
 	if ( !Posix_IsMainThread() ) {
@@ -1050,7 +1050,7 @@ return in MegaBytes
 ===========
 */
 int Sys_GetDriveFreeSpace( const char *path ) {
-#if defined( __ANDROID__ ) && defined( OPENQ4_SIGMATOUCH )
+#if defined( __ANDROID__ ) && defined( OPEND3_SIGMATOUCH )
 	// Always report plenty. Save paths may be SAF-backed and synthetic
 	// ('/[internal]/...'), so statvfs resolves no component of them and the walk
 	// up below would end on the read-only system mount and report it as (near
@@ -1814,7 +1814,7 @@ void Posix_InitFatalBreadcrumbPath( void ) {
 	}
 
 	idStr directory = savePath;
-	directory.AppendPath( OPENQ4_GAMEDIR );
+	directory.AppendPath( OPEND3_GAMEDIR );
 	Sys_Mkdir( directory.c_str() );
 	directory.AppendPath( "logs" );
 	Sys_Mkdir( directory.c_str() );
@@ -1887,7 +1887,7 @@ void Posix_AppendFatalBreadcrumb( const char *text ) {
 Sys_Error
 ================
 */
-#if defined( OPENQ4_POSIX_OWNS_COMMON_SYS )
+#if defined( OPEND3_POSIX_OWNS_COMMON_SYS )
 void Sys_Error(const char *error, ...) {
 	va_list argptr;
 	char text[MAX_POSIX_PRINT_MSG];

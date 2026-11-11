@@ -45,11 +45,11 @@ def load_module(name: str, path: Path) -> ModuleType:
     return module
 
 
-OPENQ4_PAK = load_module("openq4_pak_safety_test", BUILD_DIR / "openq4_pak.py")
+OPEND3_PAK = load_module("opend3_pak_safety_test", BUILD_DIR / "opend3_pak.py")
 BUILD_PAK0 = load_module("build_pak0_safety_test", BUILD_DIR / "build_pak0.py")
 CHECK_STAGED_CONTENT = load_module("check_staged_content_safety_test", BUILD_DIR / "check_staged_content_edits.py")
 PACKAGE = load_module("package_nightly_safety_test", BUILD_DIR / "package_nightly.py")
-VERSION = load_module("openq4_version_safety_test", BUILD_DIR / "openq4_version.py")
+VERSION = load_module("opend3_version_safety_test", BUILD_DIR / "opend3_version.py")
 WINDOWS_RUNTIME = load_module("windows_runtime_safety_test", BUILD_DIR / "windows_runtime.py")
 MESON_SOURCES = load_module("meson_sources_safety_test", BUILD_DIR / "meson_sources.py")
 CLEAN_RUNTIME_INSTALL = BUILD_DIR / "clean_runtime_install.py"
@@ -104,7 +104,7 @@ def validate_pk4_cross_host_identity() -> None:
     source = WORK / "cross-host-source"
     payload = b"authored package content\n" * 2048
     write_file(source / "materials/example.mtr", payload)
-    original_info = OPENQ4_PAK.ZipInfo
+    original_info = OPEND3_PAK.ZipInfo
     archives = []
     try:
         for host in (0, 3):
@@ -113,14 +113,14 @@ def validate_pk4_cross_host_identity() -> None:
                 info.create_system = host
                 return info
 
-            OPENQ4_PAK.ZipInfo = host_info
+            OPEND3_PAK.ZipInfo = host_info
             output = WORK / f"host-{host}.pk4"
-            OPENQ4_PAK.create_game_pk4(source, output, pak_name="pak0.pk4", required_files=set())
+            OPEND3_PAK.create_game_pk4(source, output, pak_name="pak0.pk4", required_files=set())
             with ZipFile(output) as archive:
                 assert archive.read("materials/example.mtr") == payload
             archives.append(output.read_bytes())
     finally:
-        OPENQ4_PAK.ZipInfo = original_info
+        OPEND3_PAK.ZipInfo = original_info
     if archives[0] != archives[1]:
         raise AssertionError("identical PK4 content produced different Windows/Unix archive checksums")
 
@@ -132,24 +132,24 @@ def validate_pk4_source_containment() -> None:
     write_file(inside / "materials" / "ok.mtr")
     write_file(outside / "materials" / "bad.mtr")
 
-    manifest = OPENQ4_PAK.format_pk4_source_manifest(source_root, inside, "pak0.pk4")
+    manifest = OPEND3_PAK.format_pk4_source_manifest(source_root, inside, "pak0.pk4")
     if "materials/ok.mtr" not in manifest:
         raise AssertionError("safe pack source was not listed in manifest")
 
     expect_runtime_error(
-        lambda: OPENQ4_PAK.format_pk4_source_manifest(source_root, outside, "pak0.pk4"),
+        lambda: OPEND3_PAK.format_pk4_source_manifest(source_root, outside, "pak0.pk4"),
         "must stay under",
         "pack source containment",
     )
     expect_runtime_error(
-        lambda: OPENQ4_PAK.create_game_pk4(source_root / "missing", WORK / "missing.pk4", required_files=set()),
+        lambda: OPEND3_PAK.create_game_pk4(source_root / "missing", WORK / "missing.pk4", required_files=set()),
         "source directory not found",
         "missing pack source",
     )
     linked_source = source_root / "content" / "baseod3" / "linked-pak0"
     if make_symlink(inside, linked_source, target_is_directory=True):
         expect_runtime_error(
-            lambda: OPENQ4_PAK.create_game_pk4(linked_source, WORK / "linked.pk4", required_files=set()),
+            lambda: OPEND3_PAK.create_game_pk4(linked_source, WORK / "linked.pk4", required_files=set()),
             "source directory must not be a symlink",
             "symlinked PK4 source directory",
         )
@@ -209,12 +209,12 @@ def validate_pk4_archive_member_guards() -> None:
         archive_path = WORK / "bad-archives" / f"{name.replace(':', '_').replace('/', '_').replace(chr(92), '_')}.pk4"
         write_zip(archive_path, [(zip_info(name), b"x")])
         expect_runtime_error(
-            lambda archive_path=archive_path: OPENQ4_PAK.inspect_game_pk4(archive_path, required_files=set()),
+            lambda archive_path=archive_path: OPEND3_PAK.inspect_game_pk4(archive_path, required_files=set()),
             message,
             f"unsafe PK4 member {name!r}",
         )
     expect_runtime_error(
-        lambda: OPENQ4_PAK.validate_pk4_arcname("folder\\escape.txt", "pak0.pk4"),
+        lambda: OPEND3_PAK.validate_pk4_arcname("folder\\escape.txt", "pak0.pk4"),
         "unsafe archive path",
         "PK4 backslash member",
     )
@@ -222,7 +222,7 @@ def validate_pk4_archive_member_guards() -> None:
     duplicate_path = WORK / "bad-archives" / "duplicate.pk4"
     write_zip(duplicate_path, [(zip_info("foo.txt"), b"1"), (zip_info("FOO.txt"), b"2")])
     expect_runtime_error(
-        lambda: OPENQ4_PAK.inspect_game_pk4(duplicate_path, required_files=set()),
+        lambda: OPEND3_PAK.inspect_game_pk4(duplicate_path, required_files=set()),
         "duplicate archive path",
         "duplicate PK4 member",
     )
@@ -230,7 +230,7 @@ def validate_pk4_archive_member_guards() -> None:
     symlink_path = WORK / "bad-archives" / "symlink.pk4"
     write_zip(symlink_path, [(zip_info("linked.txt", stat.S_IFLNK | 0o777), b"target")])
     expect_runtime_error(
-        lambda: OPENQ4_PAK.inspect_game_pk4(symlink_path, required_files=set()),
+        lambda: OPEND3_PAK.inspect_game_pk4(symlink_path, required_files=set()),
         "non-regular archive entry",
         "PK4 symlink member",
     )
@@ -238,7 +238,7 @@ def validate_pk4_archive_member_guards() -> None:
     fixture_path = WORK / "bad-archives" / "roadhouse-quick-fixture.pk4"
     write_zip(fixture_path, [(zip_info("script/map_roadhouse_quick.script"), b"dev fixture\n")])
     expect_runtime_error(
-        lambda: OPENQ4_PAK.inspect_game_pk4(fixture_path, required_files=set()),
+        lambda: OPEND3_PAK.inspect_game_pk4(fixture_path, required_files=set()),
         "pure runtime pack",
         "roadhouse_quick fixture must stay out of runtime PK4s",
     )
@@ -254,7 +254,7 @@ def validate_copy_helpers_do_not_follow_destination_symlinks() -> None:
     if not make_symlink(outside, destination):
         return
 
-    copied = OPENQ4_PAK.copy_file_if_changed(source, destination)
+    copied = OPEND3_PAK.copy_file_if_changed(source, destination)
     if not copied:
         raise AssertionError("copy_file_if_changed should replace a destination symlink")
     if outside.read_bytes() != b"outside\n":
@@ -265,7 +265,7 @@ def validate_copy_helpers_do_not_follow_destination_symlinks() -> None:
     source_link = WORK / "copy" / "source-link.txt"
     if make_symlink(source, source_link):
         expect_runtime_error(
-            lambda: OPENQ4_PAK.copy_file_if_changed(source_link, WORK / "copy" / "dest-from-link.txt"),
+            lambda: OPEND3_PAK.copy_file_if_changed(source_link, WORK / "copy" / "dest-from-link.txt"),
             "symlinked source file",
             "copy_file_if_changed source symlink guard",
         )
@@ -280,7 +280,7 @@ def validate_identical_copy_takes_newer_source_timestamp() -> None:
     os.utime(destination, ns=(OLD_MTIME_NS, OLD_MTIME_NS))
     os.utime(source, ns=(source_ns, source_ns))
 
-    if OPENQ4_PAK.copy_file_if_changed(source, destination):
+    if OPEND3_PAK.copy_file_if_changed(source, destination):
         raise AssertionError("copy_file_if_changed recopied an identical file")
     if destination.stat().st_mtime_ns != source_ns:
         raise AssertionError(
@@ -290,7 +290,7 @@ def validate_identical_copy_takes_newer_source_timestamp() -> None:
 
     later_ns = source_ns + 3600 * 1_000_000_000
     os.utime(destination, ns=(later_ns, later_ns))
-    OPENQ4_PAK.copy_file_if_changed(source, destination)
+    OPEND3_PAK.copy_file_if_changed(source, destination)
     if destination.stat().st_mtime_ns != later_ns:
         raise AssertionError("copy_file_if_changed moved an identical copy's timestamp backwards")
 
@@ -305,7 +305,7 @@ def validate_pk4_replace_helper_does_not_preserve_destination_symlink() -> None:
     if not make_symlink(outside, destination):
         return
 
-    OPENQ4_PAK._replace_file_if_changed(source, destination)
+    OPEND3_PAK._replace_file_if_changed(source, destination)
     if outside.read_bytes() != b"same\n":
         raise AssertionError("_replace_file_if_changed followed a destination symlink")
     if destination.is_symlink() or destination.read_bytes() != b"same\n":
@@ -316,22 +316,22 @@ def validate_generated_text_writers_do_not_follow_symlinks() -> None:
     outside = WORK / "generated-text-outside.h"
     write_file(outside, b"outside\n")
 
-    pak_header = WORK / "generated" / "openq4_paks_generated.h"
+    pak_header = WORK / "generated" / "opend3_paks_generated.h"
     pak_header.parent.mkdir(parents=True, exist_ok=True)
     if make_symlink(outside, pak_header):
-        OPENQ4_PAK.write_text_if_changed(pak_header, "inside\n")
+        OPEND3_PAK.write_text_if_changed(pak_header, "inside\n")
         if outside.read_bytes() != b"outside\n":
-            raise AssertionError("openq4_pak.write_text_if_changed followed a destination symlink")
+            raise AssertionError("opend3_pak.write_text_if_changed followed a destination symlink")
         if pak_header.is_symlink() or pak_header.read_text(encoding="utf-8") != "inside\n":
-            raise AssertionError("openq4_pak.write_text_if_changed did not replace the destination symlink")
+            raise AssertionError("opend3_pak.write_text_if_changed did not replace the destination symlink")
 
-    version_header = WORK / "generated" / "openq4_version_generated.h"
+    version_header = WORK / "generated" / "opend3_version_generated.h"
     if make_symlink(outside, version_header):
         VERSION.write_if_changed(version_header, "version\n")
         if outside.read_bytes() != b"outside\n":
-            raise AssertionError("openq4_version.write_if_changed followed a destination symlink")
+            raise AssertionError("opend3_version.write_if_changed followed a destination symlink")
         if version_header.is_symlink() or version_header.read_text(encoding="utf-8") != "version\n":
-            raise AssertionError("openq4_version.write_if_changed did not replace the destination symlink")
+            raise AssertionError("opend3_version.write_if_changed did not replace the destination symlink")
 
 
 def validate_legacy_build_pak0_copy_does_not_follow_symlink() -> None:
@@ -356,10 +356,10 @@ def validate_legacy_build_pak0_cli_guards() -> None:
     source_root = WORK / "build-pak0-cli"
     real_pak0_source = source_root / "real-pak0"
     write_file(real_pak0_source / "materials" / "ok.mtr")
-    for spec in OPENQ4_PAK.OPENQ4_CONTENT_PACKS[1:]:
+    for spec in OPEND3_PAK.OPEND3_CONTENT_PACKS[1:]:
         write_file(source_root / spec.source / "gfx" / "loadscreen.tga")
 
-    pak0_link = source_root / OPENQ4_PAK.OPENQ4_CONTENT_PACKS[0].source
+    pak0_link = source_root / OPEND3_PAK.OPEND3_CONTENT_PACKS[0].source
     pak0_link.parent.mkdir(parents=True, exist_ok=True)
     if make_symlink(real_pak0_source, pak0_link, target_is_directory=True):
         result = run_script(
@@ -369,7 +369,7 @@ def validate_legacy_build_pak0_cli_guards() -> None:
             "--out-dir",
             WORK / "build-pak0-cli" / "out",
             "--header-out",
-            WORK / "build-pak0-cli" / "openq4_paks_generated.h",
+            WORK / "build-pak0-cli" / "opend3_paks_generated.h",
         )
         if result.returncode == 0 or "pak0.pk4 source directory must not be a symlink" not in result.stderr:
             raise AssertionError(f"build_pak0.py accepted a symlinked pak0 source: {result.stderr}")
@@ -825,18 +825,18 @@ def validate_package_name_and_copy_guards() -> None:
     )
     package_output = WORK / "package-root-output"
     package_output.mkdir(parents=True, exist_ok=True)
-    write_file(package_output / "openq4-file")
+    write_file(package_output / "opend3-file")
     expect_value_error(
-        lambda: PACKAGE.resolve_package_root(package_output, "openq4-file"),
+        lambda: PACKAGE.resolve_package_root(package_output, "opend3-file"),
         "not a directory",
         "package root existing file",
     )
     package_link_target = WORK / "package-root-target"
     package_link_target.mkdir(parents=True, exist_ok=True)
-    package_link = package_output / "openq4-link"
+    package_link = package_output / "opend3-link"
     if make_symlink(package_link_target, package_link):
         expect_value_error(
-            lambda: PACKAGE.resolve_package_root(package_output, "openq4-link"),
+            lambda: PACKAGE.resolve_package_root(package_output, "opend3-link"),
             "must not be a symlink",
             "package root symlink",
         )
@@ -863,7 +863,7 @@ def validate_package_name_and_copy_guards() -> None:
         )
 
     share = WORK / "package-share" / "share"
-    write_file(share / "applications" / "openq4.desktop")
+    write_file(share / "applications" / "opend3.desktop")
     if make_symlink(outside, share / "leak.txt"):
         expect_runtime_error(
             lambda: PACKAGE.copy_regular_tree(share, WORK / "package-share" / "dest"),
@@ -988,7 +988,7 @@ def validate_build_pack_and_header_cli_guards() -> None:
     source_link = WORK / "build-pack" / "source-link"
     if make_symlink(pack_source, source_link, target_is_directory=True):
         result = run_script(
-            BUILD_DIR / "build_openq4_pack.py",
+            BUILD_DIR / "build_opend3_pack.py",
             "--pak-name",
             "pak0.pk4",
             "--source-dir",
@@ -997,14 +997,14 @@ def validate_build_pack_and_header_cli_guards() -> None:
             WORK / "build-pack" / "out.pk4",
         )
         if result.returncode == 0 or "source directory must not be a symlink" not in result.stderr:
-            raise AssertionError(f"build_openq4_pack.py accepted a symlinked source dir: {result.stderr}")
+            raise AssertionError(f"build_opend3_pack.py accepted a symlinked source dir: {result.stderr}")
 
     manifest_target = WORK / "build-pack" / "pak0.sources"
     write_file(manifest_target)
     manifest_link = WORK / "build-pack" / "pak0-link.sources"
     if make_symlink(manifest_target, manifest_link):
         result = run_script(
-            BUILD_DIR / "build_openq4_pack.py",
+            BUILD_DIR / "build_opend3_pack.py",
             "--pak-name",
             "pak0.pk4",
             "--source-dir",
@@ -1015,7 +1015,7 @@ def validate_build_pack_and_header_cli_guards() -> None:
             WORK / "build-pack" / "out.pk4",
         )
         if result.returncode == 0 or "source manifest must not be a symlink" not in result.stderr:
-            raise AssertionError(f"build_openq4_pack.py accepted a symlinked manifest: {result.stderr}")
+            raise AssertionError(f"build_opend3_pack.py accepted a symlinked manifest: {result.stderr}")
 
     pak_target = WORK / "pak-header" / "pak0.pk4"
     pak_link = WORK / "pak-header" / "pak0-link.pk4"
@@ -1027,11 +1027,11 @@ def validate_build_pack_and_header_cli_guards() -> None:
             f"pak0.pk4={pak_link}",
             *(
                 argument
-                for pak_name in OPENQ4_PAK.OPENQ4_PACK_NAMES[1:]
+                for pak_name in OPEND3_PAK.OPEND3_PACK_NAMES[1:]
                 for argument in ("--pack", f"{pak_name}={pak_target}")
             ),
             "--header-out",
-            WORK / "pak-header" / "openq4_paks_generated.h",
+            WORK / "pak-header" / "opend3_paks_generated.h",
         )
         if result.returncode == 0 or "pak0.pk4 must not be a symlink" not in result.stderr:
             raise AssertionError(f"generate_pak_header.py accepted a symlinked PK4 input: {result.stderr}")
@@ -1048,9 +1048,9 @@ def validate_unchanged_pack_rebuild_stays_current() -> None:
     """
     root = WORK / "unchanged-pack"
     pack_args: dict[str, tuple[Path | str, ...]] = {}
-    for pak_name in OPENQ4_PAK.OPENQ4_PACK_NAMES:
+    for pak_name in OPEND3_PAK.OPEND3_PACK_NAMES:
         source_dir = root / "source" / Path(pak_name).stem
-        for relative_path in sorted(OPENQ4_PAK.required_files_for_pack(pak_name)):
+        for relative_path in sorted(OPEND3_PAK.required_files_for_pack(pak_name)):
             write_file(source_dir / relative_path, f"{relative_path}\n".encode("utf-8"))
         pack_args[pak_name] = (
             "--pak-name",
@@ -1062,11 +1062,11 @@ def validate_unchanged_pack_rebuild_stays_current() -> None:
             "--stage-out",
             root / "stage" / "baseod3" / pak_name,
         )
-        result = run_script(BUILD_DIR / "build_openq4_pack.py", *pack_args[pak_name])
+        result = run_script(BUILD_DIR / "build_opend3_pack.py", *pack_args[pak_name])
         if result.returncode != 0:
-            raise AssertionError(f"build_openq4_pack.py failed to build {pak_name}: {result.stderr}")
+            raise AssertionError(f"build_opend3_pack.py failed to build {pak_name}: {result.stderr}")
 
-    header_out = root / "out" / "openq4_paks_generated.h"
+    header_out = root / "out" / "opend3_paks_generated.h"
     header_args = (
         *(argument for pak_name in pack_args for argument in ("--pack", f"{pak_name}={root / 'out' / pak_name}")),
         "--header-out",
@@ -1086,9 +1086,9 @@ def validate_unchanged_pack_rebuild_stays_current() -> None:
             os.utime(path, ns=(OLD_MTIME_NS, OLD_MTIME_NS))
 
         started_ns = time.time_ns()
-        result = run_script(BUILD_DIR / "build_openq4_pack.py", *args)
+        result = run_script(BUILD_DIR / "build_opend3_pack.py", *args)
         if result.returncode != 0:
-            raise AssertionError(f"build_openq4_pack.py failed to rebuild {pak_name}: {result.stderr}")
+            raise AssertionError(f"build_opend3_pack.py failed to rebuild {pak_name}: {result.stderr}")
         if pak_out.read_bytes() != pak_bytes or stage_out.read_bytes() != pak_bytes:
             raise AssertionError(f"identical {pak_name} rebuild changed the pack bytes")
         pak_mtime_ns = pak_out.stat().st_mtime_ns
@@ -1167,7 +1167,7 @@ def validate_macos_signing_input_guards() -> None:
                 "macos_signing_mode": "developer-id",
                 "macos_notarize": True,
                 "macos_code_sign_identity": "Developer ID Application: Test",
-                "macos_notary_keychain_profile": "openq4-test",
+                "macos_notary_keychain_profile": "opend3-test",
                 "macos_notary_keychain": str(keychain_link),
             },
         )()
@@ -1185,7 +1185,7 @@ def validate_macos_signing_input_guards() -> None:
             "macos_signing_mode": "developer-id",
             "macos_notarize": True,
             "macos_code_sign_identity": "Developer ID Application: Test",
-            "macos_notary_keychain_profile": "openq4-test",
+            "macos_notary_keychain_profile": "opend3-test",
             "macos_notary_keychain": str(signing_root / "missing.keychain-db"),
         },
     )()
@@ -1492,10 +1492,10 @@ def validate_repository_metadata_manifest() -> None:
         repository_manifest=manifest_path,
     )
     expected = {
-        "openq4_commit": "1" * 40,
-        "openq4_dirty": "false",
-        "openq4_game_commit": "2" * 40,
-        "openq4_game_dirty": "false",
+        "opend3_commit": "1" * 40,
+        "opend3_dirty": "false",
+        "opend3_game_commit": "2" * 40,
+        "opend3_game_dirty": "false",
     }
     if metadata != expected:
         raise AssertionError(f"explicit repository metadata manifest was not consumed: {metadata!r}")
@@ -1508,7 +1508,7 @@ def validate_repository_metadata_manifest() -> None:
 
 
 def validate_validation_wiring() -> None:
-    validator = (ROOT / "tools" / "validation" / "openq4_validate.py").read_text(encoding="utf-8")
+    validator = (ROOT / "tools" / "validation" / "opend3_validate.py").read_text(encoding="utf-8")
     push = (ROOT / ".github" / "workflows" / "push-verification.yml").read_text(encoding="utf-8")
     commit = (ROOT / ".github" / "workflows" / "commit-validation.yml").read_text(encoding="utf-8")
     for context, text in (
@@ -1529,12 +1529,12 @@ def validate_target_repository_metadata() -> None:
         ("macos", "arm64", "gamelibs_stage-darwin-arm64", "4" * 40),
     )
     for platform, arch, directory, revision in targets:
-        manifest = project_root / ".tmp" / directory / "openq4_gamelibs_stage_manifest.json"
+        manifest = project_root / ".tmp" / directory / "opend3_gamelibs_stage_manifest.json"
         manifest.parent.mkdir(parents=True, exist_ok=True)
         manifest.write_text(json.dumps({"gameLibsGitCommit": revision, "gameLibsGitDirty": False}), encoding="utf-8")
     for platform, arch, directory, revision in targets:
         metadata = PACKAGE.read_staged_repository_metadata(project_root, platform, arch)
-        if metadata.get("openq4_game_commit") != revision:
+        if metadata.get("opend3_game_commit") != revision:
             raise AssertionError(f"{platform}/{arch} package read another target's source provenance: {metadata}")
     if PACKAGE.read_staged_repository_metadata(project_root, "macos", "universal2"):
         raise AssertionError("Universal2 must not read an unrelated thin-build stage")
@@ -1544,7 +1544,7 @@ def write_layer_mod_json(path: Path, required: str = "0.13.2", **overrides) -> N
     manifest = {
         "name": "Quake 4: The Awakening",
         "version": "0.1.0",
-        "requiredopenQ4Version": required,
+        "requiredopenD3Version": required,
         "layer": "awakening",
     }
     manifest.update(overrides)

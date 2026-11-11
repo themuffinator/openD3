@@ -1,12 +1,12 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
-#ifndef OPENQ4_BSE_PARTICLE_ORDER_H
-#define OPENQ4_BSE_PARTICLE_ORDER_H
+#ifndef OPEND3_BSE_PARTICLE_ORDER_H
+#define OPEND3_BSE_PARTICLE_ORDER_H
 
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
 
-namespace openq4::bse {
+namespace opend3::bse {
 template<class Particle> struct DrawParticle {
 	Particle* particle;
 	float distance;

@@ -1,6 +1,6 @@
 #version 450
 
-// Native Vulkan port of openQ4's live glprogs/blur.vs postprocess stage.
+// Native Vulkan port of openD3's live glprogs/blur.vs postprocess stage.
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 5) in vec2 inTexCoord;

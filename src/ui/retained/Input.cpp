@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace openq4::ui {
+namespace opend3::ui {
 bool Input::Held(RoutedInput::Kind kind, MenuInput action) const {
 	for (const auto& [id,source] : sources)
 		if (!source.blocked && !source.editorSession && source.kind == kind && source.action == action) return true;
@@ -90,4 +90,4 @@ void Input::ReleaseQuarantined(std::uint32_t source) {
 	const auto found = sources.find(source);
 	if (found != sources.end() && found->second.blocked) sources.erase(found);
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

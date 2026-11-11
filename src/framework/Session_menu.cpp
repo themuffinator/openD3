@@ -53,19 +53,19 @@ If you have questions concerning this license or the applicable additional terms
 static const int LISTEN_SERVER_MAX_PLAYERS = MAX_ASYNC_CLIENTS;
 
 static bool Session_AndroidSetupAvailable() {
-#if defined( __ANDROID__ ) && !defined( OPENQ4_SIGMATOUCH )
+#if defined( __ANDROID__ ) && !defined( OPEND3_SIGMATOUCH )
 	return true;
 #else
 	return false;
 #endif
 }
 
-// OpenQ4Activity's SETUP_PAGE_* arguments: setup's home, or the touch layout editor.
+// openD3Activity's SETUP_PAGE_* arguments: setup's home, or the touch layout editor.
 enum { ANDROID_SETUP_HOME = 0, ANDROID_SETUP_TOUCH_LAYOUT = 1 };
 
 static void Session_OpenAndroidSetup( int page = 0 ) {
-#if defined( __ANDROID__ ) && !defined( OPENQ4_SIGMATOUCH )
-	// SDL posts to OpenQ4Activity's main-thread handler. The existing Android
+#if defined( __ANDROID__ ) && !defined( OPEND3_SIGMATOUCH )
+	// SDL posts to openD3Activity's main-thread handler. The existing Android
 	// lifecycle owns input release, audio suspension and the paused SP return.
 	// Keep the engine and its storage lease alive while setup is in front.
 	if ( !SDL_SendAndroidMessage( 0x8000, page ) ) {
@@ -77,7 +77,7 @@ static void Session_OpenAndroidSetup( int page = 0 ) {
 }
 
 extern idCVar com_skipLogoVideos;
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 extern thread_local glconfig_t glConfig;
 #else
 extern glconfig_t glConfig;
@@ -99,7 +99,7 @@ idCVar ui_retainedMultiplayer( "ui_retainedMultiplayer", "0", CVAR_GUI | CVAR_BO
 // to (see idSessionLocal::FindRetainedGui). While it is 0 no session route
 // creates a retained view and the stock GUIs present every screen. Archived,
 // so an explicit player preference persists across launches.
-// openD3: the retained screens are authored for Quake 4 (content/baseoq4 in openQ4);
+// openD3: the retained screens are authored for Quake 4 (content/baseod3 in openD3);
 // Prey presents its retail GUIs, so the stock interface is the default.
 idCVar ui_retained( "ui_retained", "0", CVAR_GUI | CVAR_BOOL | CVAR_ARCHIVE, "use the retained interface by default; 0 selects the stock interface" );
 idCVar ui_hudScale( "ui_hudScale", "1", CVAR_GUI | CVAR_FLOAT | CVAR_ARCHIVE, "retained status bar scale, independent of menus", .5f, 2.0f );
@@ -2026,7 +2026,7 @@ static void SetMainMenuMPModelVars( idUserInterface *gui ) {
 // The session owns the complete catalog; a bounded choice page does not cap it.
 bool idSessionLocal::PublishRetainedPlayerSetup( idUserInterface *gui, bool rebuild ) {
 #ifndef ID_DEDICATED
-	using namespace openq4::ui;
+	using namespace opend3::ui;
 	if ( !gui || !guiMainMenu || !gameEdit ) return false;
 	const idStr cvar = MainMenuModelCVarName( MainMenuResolveModelTeam() );
 	const idStr language = cvarSystem->GetCVarString( "sys_lang" );
@@ -2103,7 +2103,7 @@ bool idSessionLocal::OpenRetainedPlayerSetup( idUserInterface *gui ) {
 
 void idSessionLocal::HandleRetainedPlayerSetupRequest( idUserInterface *gui, const char *payload ) {
 #ifndef ID_DEDICATED
-	using namespace openq4::ui;
+	using namespace opend3::ui;
 	if ( gui != guiActive || gui != guiRetainedMpPage || !gui->State().GetBool("setup.open") ) return;
 	PlayerSetupRequest request; std::string error;
 	if ( !DecodePlayerSetupRequest(payload,request,error) ) { common->Warning("retained UI: %s",error.c_str()); return; }
@@ -2394,12 +2394,12 @@ void idSessionLocal::SetGUI( idUserInterface *gui, HandleGuiCommand_t handle ) {
 
 	if ( guiActive && guiActive != gui ) {
 		idUserInterface *previous = guiActive;
-		openq4::NativeInputBeforeSessionChange();
+		opend3::NativeInputBeforeSessionChange();
 		guiActive = NULL;
 		previous->Activate( false, common->GetPresentationTime() );
 		PumpApplicationActions( previous );
 	}
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	guiActive = gui;
 	guiHandle = handle;
 	if ( guiMsgRestore ) {
@@ -2453,7 +2453,7 @@ void idSessionLocal::ExitMenu( void ) {
 	}
 	idUserInterface *previous = guiActive;
 	const bool arenaPause = previous != NULL && idStr::Icmp( previous->Name(), "guis/arena_pause.gui" ) == 0;
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	guiActive = NULL;
 	if ( previous ) {
 		previous->Activate( false, common->GetPresentationTime() );
@@ -3345,7 +3345,7 @@ void idSessionLocal::CloseSystemSettings() {
 	// lifecycle action. Manager dispatch permits this targeted drain before free.
 	guiSystem = guiSystemParent = NULL;
 	guiSystemParentHandle = NULL;
-	if ( guiActive == child ) { openq4::NativeInputBeforeSessionChange(); guiActive = NULL; }
+	if ( guiActive == child ) { opend3::NativeInputBeforeSessionChange(); guiActive = NULL; }
 	if ( guiMsgRestore == child ) guiMsgRestore = NULL;
 	const bool previousTransition = systemGuiTransition;
 	systemGuiTransition = true;
@@ -3360,7 +3360,7 @@ void idSessionLocal::ReportSystemSettings() {
 #ifndef ID_DEDICATED
 	canReturn = guiSystem != NULL && UI_RetainedSettingsCanReturn( guiSystem );
 #endif
-	common->Printf( "OPENQ4_SYSTEM enabled=%d active=%s parent=%s child=%d guiTest=%d menu=%d map=%d multiplayer=%d menuSound=%d canReturn=%d\n",
+	common->Printf( "OPEND3_SYSTEM enabled=%d active=%s parent=%s child=%d guiTest=%d menu=%d map=%d multiplayer=%d menuSound=%d canReturn=%d\n",
 		Session_RetainedSystemEnabled() ? 1 : 0, guiActive ? guiActive->Name() : "-",
 		guiSystemParent ? guiSystemParent->Name() : "-", guiSystem != NULL && guiActive == guiSystem ? 1 : 0,
 		guiTest != NULL ? 1 : 0, guiActive != NULL ? 1 : 0, mapSpawned ? 1 : 0, IsMultiplayer() ? 1 : 0,
@@ -3648,20 +3648,17 @@ static bool Session_MenuSkipSaveGameDict( idFile *file, const char *fieldName, c
 }
 
 static bool Session_MenuIsSupportedSaveGameName( const idStr &gameName ) {
-	return gameName.Icmp( SAVEGAME_GAME_NAME_DOOM3 ) == 0 ||
-		gameName.Icmp( SAVEGAME_GAME_NAME_RETAIL ) == 0 ||
-		gameName.Icmp( SAVEGAME_GAME_NAME_LEGACY_OPENQ4 ) == 0;
+	return gameName.Icmp( SAVEGAME_GAME_NAME_DOOM3 ) == 0;
 }
 
 static bool Session_MenuSaveGameHeaderUsesEntityFilter( const idStr &gameName ) {
-	return gameName.Icmp( SAVEGAME_GAME_NAME_DOOM3 ) == 0 ||
-		gameName.Icmp( SAVEGAME_GAME_NAME_RETAIL ) == 0;
+	return gameName.Icmp( SAVEGAME_GAME_NAME_DOOM3 ) == 0;
 }
 
 static bool Session_MenuIsCompatibleSaveGameVersion( const int version ) {
 	return version == SAVEGAME_VERSION ||
-		version == LEGACY_OPENQ4_SAVEGAME_VERSION ||
-		version == LEGACY_OPENQ4_SAVEGAME_VERSION_ALT;
+		version == LEGACY_OPEND3_SAVEGAME_VERSION ||
+		version == LEGACY_OPEND3_SAVEGAME_VERSION_ALT;
 }
 
 // A save's header: its game name, version, map, entity filter and each
@@ -3724,8 +3721,8 @@ static bool Session_MenuReadSaveDetails( const idStr &slotName, sessionMenuSaveD
 	if ( !Session_MenuReadSaveGameHeader( slotName, &player ) ) {
 		return false;
 	}
-	const idKeyValue *skill = player.FindKey( "openq4_skill" );
-	const idKeyValue *played = player.FindKey( "openq4_playSeconds" );
+	const idKeyValue *skill = player.FindKey( "opend3_skill" );
+	const idKeyValue *played = player.FindKey( "opend3_playSeconds" );
 	details.skill = skill != NULL ? idMath::ClampInt( 0, 4, atoi( skill->GetValue() ) ) : -1;
 	details.playSeconds = played != NULL ? Max( 0, atoi( played->GetValue() ) ) : -1;
 	return true;
@@ -4006,7 +4003,7 @@ void idSessionLocal::UpdateModsMenuGuiVars( void ) {
 	guiActive->SetStateString( "mod_release_date", modInfo.releaseDate.c_str() );
 	guiActive->SetStateString( "mod_author", modInfo.author.c_str() );
 	guiActive->SetStateString( "mod_website", modInfo.website.c_str() );
-	guiActive->SetStateString( "mod_required_engine_version", modInfo.requiredopenQ4Version.c_str() );
+	guiActive->SetStateString( "mod_required_engine_version", modInfo.requiredopenD3Version.c_str() );
 	guiActive->SetStateString( "mod_directory", modInfo.directory.c_str() );
 }
 
@@ -4800,11 +4797,10 @@ void idSessionLocal::HandleMainMenuCommands( const char *menuCommand ) {
 			MainMenuApplyNewGameOptions( guiMainMenu );
 			if ( icmd < args.Argc() ) {
 				const char *map = args.Argv( icmd++ );
-                if ( !idStr::Icmp( map, "game/airdefense1" ) && !idStr::Icmp( fileSystem->GetActiveGameDir(), "q4xbase" ) ) map = "game/m01_stranarus_trench1";
                 StartNewGame( map );
 			} else {
 #ifndef ID_DEMO_BUILD
-				StartNewGame( !idStr::Icmp( fileSystem->GetActiveGameDir(), "q4xbase" ) ? "game/m01_stranarus_trench1" : "game/airdefense1" );
+				StartNewGame( "game/mars_city1" );
 #else
 				StartNewGame( "game/demo_mars_city1" );
 #endif
@@ -4819,11 +4815,10 @@ void idSessionLocal::HandleMainMenuCommands( const char *menuCommand ) {
 			MainMenuApplyNewGameOptions( guiMainMenu );
 			if ( icmd < args.Argc() ) {
 				const char *map = args.Argv( icmd++ );
-                if ( !idStr::Icmp( map, "game/airdefense1" ) && !idStr::Icmp( fileSystem->GetActiveGameDir(), "q4xbase" ) ) map = "game/m01_stranarus_trench1";
                 StartNewGame( map );
 			} else {
 #ifndef ID_DEMO_BUILD
-				StartNewGame( !idStr::Icmp( fileSystem->GetActiveGameDir(), "q4xbase" ) ? "game/m01_stranarus_trench1" : "game/airdefense1" );
+				StartNewGame( "game/mars_city1" );
 #else
 				StartNewGame( "game/demo_mars_city1" );
 #endif
@@ -5165,7 +5160,7 @@ void idSessionLocal::HandleMainMenuCommands( const char *menuCommand ) {
 						break;
 					}
 				} else {
-					// openQ4 has no legacy (non-OpenAL) mixer; leave
+					// openD3 has no legacy (non-OpenAL) mixer; leave
 					// s_useOpenAL untouched so IsEAXAvailable() keeps
 					// reporting real capability after re-enabling EAX.
 					cmdSystem->BufferCommandText( CMD_EXEC_NOW, "s_restart\n" );
@@ -5550,7 +5545,7 @@ void idSessionLocal::HandleInGameCommands( const char *menuCommand ) {
 			const char	*cmd;
 			cmd = guiActive->HandleEvent( &ev, common->GetPresentationTime() );
 			guiActive->Activate( false, common->GetPresentationTime() );
-			openq4::NativeInputBeforeSessionChange();
+			opend3::NativeInputBeforeSessionChange();
 			guiActive = NULL;
 		}
 	}
@@ -5560,10 +5555,6 @@ void idSessionLocal::HandleInGameCommands( const char *menuCommand ) {
 // The stock campaign pages: the campaigns (campaign_view 0) and a campaign's
 // own page (1), with its difficulty, turbo option, START and chapters.
 static const char *const STOCK_CAMPAIGN_GUI = "guis/campaign_menu.gui";
-
-static bool Session_AwakeningPageActive() {
-    return !idStr::Icmp( fileSystem->GetActiveGameDir(), "q4xbase" );
-}
 
 // A campaign page's difficulty and its description, the stock New Game
 // page's. The stock page shows text as published, the retained one resolves
@@ -5579,7 +5570,7 @@ static void Session_SetCampaignPageSkill( idUserInterface *gui, int skill, bool 
 // commands alike: a difficulty, turbo, START, a chapter and its start, and
 // BACK to the campaigns (onto CHAPTERS from the retained CHAPTERS page).
 static void Session_HandleCampaignPageRequest( idSessionLocal &session, idUserInterface *gui, const char *request, bool retained ) {
-    const char *campaign = Session_AwakeningPageActive() ? "awakening" : "quake4";
+    const char *campaign = "doom3";
     const bool chaptersBack = !idStr::Icmp( request, "campaignChaptersBack" );
     if ( !idStr::Icmp( request, "campaignSkillBack" ) || chaptersBack ) {
         if ( retained ) session.BeginRetainedCampaignSkill( gui, "", true, chaptersBack ); else session.OpenCampaignSelector( true );
@@ -5640,8 +5631,7 @@ bool idSessionLocal::HandleStockCampaignCommand( idUserInterface *gui, const cha
             continue;
         }
         if ( !idStr::Cmp( command, ";" ) ) continue;
-        if ( !idStr::Icmp( command, "campaignQuake4" ) ) SelectCampaign( "quake4" );
-        else if ( !idStr::Icmp( command, "campaignAwakening" ) ) SelectCampaign( "awakening" );
+        if ( !idStr::Icmp( command, "campaignDoom3" ) ) SelectCampaign( "doom3" );
         else if ( !idStr::Icmp( command, "campaignBack" ) ) OpenCampaignSelector( false );
         else Session_HandleCampaignPageRequest( *this, gui, command, false );
         // Each verb hands the screen on or republishes the page.
@@ -6409,7 +6399,7 @@ const char* idSessionLocal::MessageBox( msgBoxType_t type, const char *message, 
 	msgFireBack[ 0 ] = fire_yes ? fire_yes : "";
 	msgFireBack[ 1 ] = fire_no ? fire_no : "";
 	guiMsgRestore = guiActive;
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	guiActive = guiMsg;
 	guiMsg->SetCursor( 325, 290 );
 	guiActive->Activate( true, common->GetPresentationTime() );
@@ -6544,7 +6534,7 @@ void idSessionLocal::DownloadProgressBox( backgroundDownload_t *bgl, const char 
 	guiMsg->SetStateString( "message", "Connecting.." );
 
 	guiMsgRestore = guiActive;
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	guiActive = guiMsg;
 	msgRunning = true;
 
@@ -6552,7 +6542,7 @@ void idSessionLocal::DownloadProgressBox( backgroundDownload_t *bgl, const char 
 		while ( msgRunning ) {
 			common->GUIFrame( true, false );
 			if ( bgl->completed ) {
-				openq4::NativeInputBeforeSessionChange();
+				opend3::NativeInputBeforeSessionChange();
 				guiActive = guiMsgRestore;
 				guiMsgRestore = NULL;
 				return;
@@ -6611,7 +6601,7 @@ void idSessionLocal::DownloadProgressBox( backgroundDownload_t *bgl, const char 
 		guiMsg->SetStateString( "visible_mid", "0" );
 		// continue looping
 		guiMsgRestore = guiActive;
-		openq4::NativeInputBeforeSessionChange();
+		opend3::NativeInputBeforeSessionChange();
 		guiActive = guiMsg;
 		msgRunning = true;
 	}
@@ -6645,7 +6635,7 @@ void idSessionLocal::HandleMsgCommands( const char *menuCommand ) {
 	// "stop" works even on first frame
 	if ( idStr::Icmp( cmd, "stop" ) == 0 ) {
 		// force hiding the current dialog
-		openq4::NativeInputBeforeSessionChange();
+		opend3::NativeInputBeforeSessionChange();
 		guiActive = guiMsgRestore;
 		guiMsgRestore = NULL;
 		msgRunning = false;
@@ -6656,14 +6646,14 @@ void idSessionLocal::HandleMsgCommands( const char *menuCommand ) {
 		return;
 	}
 	if ( idStr::Icmp( cmd, "mid" ) == 0 || idStr::Icmp( cmd, "left" ) == 0 ) {
-		openq4::NativeInputBeforeSessionChange();
+		opend3::NativeInputBeforeSessionChange();
 		guiActive = guiMsgRestore;
 		guiMsgRestore = NULL;
 		msgRunning = false;
 		msgRetIndex = 0;
 		DispatchCommand( guiActive, msgFireBack[ 0 ].c_str() );
 	} else if ( idStr::Icmp( cmd, "right" ) == 0 ) {
-		openq4::NativeInputBeforeSessionChange();
+		opend3::NativeInputBeforeSessionChange();
 		guiActive = guiMsgRestore;
 		guiMsgRestore = NULL;
 		msgRunning = false;
@@ -6680,7 +6670,7 @@ idSessionLocal::HandleNoteCommands
 #define NOTEDATFILE "C:/notenumber.dat"
 
 void idSessionLocal::HandleNoteCommands( const char *menuCommand ) {
-	openq4::NativeInputBeforeSessionChange();
+	opend3::NativeInputBeforeSessionChange();
 	guiActive = NULL;
 
 	if ( idStr::Icmp( menuCommand,  "note" ) == 0 && mapSpawned ) {
@@ -7274,15 +7264,7 @@ void idSessionLocal::OpenCampaignSelector( bool campaigns, bool fromArena, bool 
     if ( gui == NULL ) return;
     if ( campaigns ) {
         if ( stock ) gui->SetStateInt( "campaign_view", 0 );
-        const idCampaignContentInfo info = fileSystem->GetAwakeningContentInfo();
-        gui->SetStateBool( "awakening_ready", info.ready );
-        gui->SetStateBool( "awakening_present", info.present );
-        // The campaign being played is the chosen one; the retained page's
-        // activation focuses NEW GAME, or CHAPTERS coming back from it.
-        const bool awakening = !idStr::Icmp( fileSystem->GetActiveGameDir(), "q4xbase" );
-        gui->SetStateBool( "awakening_chosen", awakening );
         if ( !stock ) {
-            gui->SetStateBool( "campaign.awakening", awakening && info.ready );
             gui->SetStateBool( "from_chapters", fromChapters );
             Session_PublishCampaignSummaries( gui, this );
         }
@@ -7310,18 +7292,9 @@ static bool Session_CampaignNeedsReload( const char *gameDir ) {
 
 void idSessionLocal::SelectCampaign( const char *campaign, bool start, bool chapters ) {
 #ifndef ID_DEDICATED
-    const bool awakening = !idStr::Icmp( campaign, "awakening" );
     const bool arena = !idStr::Icmp( campaign, "arena" );
-    if ( !awakening && !arena && idStr::Icmp( campaign, "quake4" ) ) return;
-    if ( awakening ) {
-        const idCampaignContentInfo info = fileSystem->GetAwakeningContentInfo();
-        if ( !info.ready ) {
-            common->Warning( "Awakening campaign is unavailable; missing %s", info.missing.c_str() );
-            OpenCampaignSelector( true );
-            return;
-        }
-    }
-    const char *gameDir = awakening ? "q4xbase" : OPENQ4_GAMEDIR;
+    if ( !arena && idStr::Icmp( campaign, "doom3" ) ) return;
+    const char *gameDir = OPEND3_GAMEDIR;
     // Consume one-shot command-line overrides before a full engine restart.
     common->StartupVariable( "si_gameType", true );
     if ( Session_CampaignNeedsReload( gameDir ) ) {
@@ -7340,7 +7313,7 @@ void idSessionLocal::SelectCampaign( const char *campaign, bool start, bool chap
     common->Printf( "CAMPAIGN_SELECTED id=%s gameDir=%s module=%s\n", campaign, gameDir,
         cvarSystem->GetCVarString( "com_activeGameModule" ) );
     if ( start && !arena ) {
-        StartNewGame( awakening ? "game/m01_stranarus_trench1" : "game/airdefense1" );
+        StartNewGame( "game/mars_city1" );
         return;
     }
     if ( !arena && ( chapters ? OpenRetainedCampaignChapters() : OpenRetainedCampaignSkill() ) ) return;
@@ -7352,7 +7325,7 @@ void idSessionLocal::SelectCampaign( const char *campaign, bool start, bool chap
         page->SetStateInt( "campaign_view", 1 );
         Session_SetCampaignPageSkill( page, cvarSystem->GetCVarInteger( "g_skill" ), true );
         page->SetStateBool( "turbo", false );
-        page->SetStateString( "campaign_title", common->GetLanguageDict()->GetString( awakening ? "#str_230040" : "#str_230039" ) );
+        page->SetStateString( "campaign_title", common->GetLanguageDict()->GetString( "#str_230039" ) );
         page->SetStateString( "campaign_crumb", va( "%s  /  %s", common->GetLanguageDict()->GetString( "#str_42000" ),
             common->GetLanguageDict()->GetString( "#str_230038" ) ) );
         PublishCampaignChapters( page );
@@ -7395,7 +7368,7 @@ bool idSessionLocal::OpenRetainedCampaignSkill() {
     if ( !gui ) return false;
     Session_SetCampaignPageSkill( gui, cvarSystem->GetCVarInteger( "g_skill" ), false );
     gui->SetStateBool( "turbo", false );
-    gui->SetStateString( "campaign_title", Session_AwakeningPageActive() ? "#str_230040" : "#str_230039" );
+    gui->SetStateString( "campaign_title", "#str_230039" );
     SetGUI( gui, NULL );
     gui->StateChanged( common->GetPresentationTime() );
     return true;
@@ -7405,7 +7378,7 @@ bool idSessionLocal::OpenRetainedCampaignSkill() {
 void idSessionLocal::BeginRetainedCampaignSkill( idUserInterface *from, const char *campaign, bool back, bool chapters ) {
 #ifndef ID_DEDICATED
     if ( !from || retainedSubpageFrom ) return;
-    if ( !back && idStr::Icmp( campaign, "quake4" ) && idStr::Icmp( campaign, "awakening" ) ) return;
+    if ( !back && idStr::Icmp( campaign, "doom3" ) ) return;
     if ( FindRetainedGui( back ? RETAINED_CAMPAIGNS_GUI : chapters ? RETAINED_CHAPTERS_GUI : RETAINED_SKILL_GUI, true, false ) == NULL ||
          cvarSystem->GetCVarBool( "ui_retainedReducedMotion" ) ) {
         if ( back ) OpenCampaignSelector( true, false, chapters ); else SelectCampaign( campaign, false, chapters );
@@ -7414,7 +7387,7 @@ void idSessionLocal::BeginRetainedCampaignSkill( idUserInterface *from, const ch
     retainedDetailTarget = back ? ( chapters ? 4 : 2 ) : ( chapters ? 3 : 1 );
     retainedDetailCampaign = campaign;
     from->HandleNamedEvent( back ? "detailLeave" : chapters ? "detailEnterChapters" :
-        !idStr::Icmp( campaign, "awakening" ) ? "detailEnterAwakening" : "detailEnterQuake4" );
+        "detailEnterDoom3" );
     PumpApplicationActions( from );
     retainedSubpageFrom = from;
     retainedSubpageDeeper = !back;
@@ -7806,7 +7779,7 @@ void idSessionLocal::PresentRetainedSubpage( bool deeper, retainedSubpage_t subp
 		return;
 	}
 	if ( deeper && arena ) {
-		common->Printf( "CAMPAIGN_SELECTED id=arena gameDir=%s module=%s\n", OPENQ4_GAMEDIR,
+		common->Printf( "CAMPAIGN_SELECTED id=arena gameDir=%s module=%s\n", OPEND3_GAMEDIR,
 			cvarSystem->GetCVarString( "com_activeGameModule" ) );
 		arenaCampaign.OpenBrowser();
 		return;
@@ -8037,14 +8010,14 @@ void idSessionLocal::HandleRetainedSessionRequest( idUserInterface *gui, const c
         if ( !idStr::Icmp( request, "campaigns" ) ) BeginRetainedSubpage( gui, true );
         else if ( !idStr::Icmp( request, "campaignNew" ) || !idStr::Icmp( request, "campaignChapters" ) ) {
             // The chosen campaign's difficulty (NEW GAME) or its levels (CHAPTERS).
-            BeginRetainedCampaignSkill( gui, gui->State().GetBool( "campaign.awakening" ) ? "awakening" : "quake4", false,
+            BeginRetainedCampaignSkill( gui, "doom3", false,
                 !idStr::Icmp( request, "campaignChapters" ) );
         }
         else if ( !idStr::Icmp( request, "campaignArena" ) ) {
             // ARENA leads deeper to the Arena sub-page when the campaign needs
             // no engine reload into its game directory first; else it is
             // selected as before, and the browser presents after the reload.
-            if ( !idStr::Icmp( gui->Name(), RETAINED_SINGLEPLAYER_GUI ) && !Session_CampaignNeedsReload( OPENQ4_GAMEDIR ) &&
+            if ( !idStr::Icmp( gui->Name(), RETAINED_SINGLEPLAYER_GUI ) && !Session_CampaignNeedsReload( OPEND3_GAMEDIR ) &&
                  RetainedArenaPage() != NULL ) {
                 BeginRetainedSubpage( gui, true, RETAINED_SUBPAGE_ARENA );
             } else {
@@ -8984,8 +8957,8 @@ void idSessionLocal::HandleRetainedMultiplayerPageRequest( idUserInterface *gui,
 	if ( retainedMpPageDest != 0 || retainedSubpageFrom != NULL || guiMainMenu == NULL ) {
 		return;
 	}
-	if ( !idStr::Icmpn(request,openq4::ui::PlayerSetupRequestPrefix,sizeof(openq4::ui::PlayerSetupRequestPrefix)-1) ) {
-		HandleRetainedPlayerSetupRequest(gui,request+sizeof(openq4::ui::PlayerSetupRequestPrefix)-1);
+	if ( !idStr::Icmpn(request,opend3::ui::PlayerSetupRequestPrefix,sizeof(opend3::ui::PlayerSetupRequestPrefix)-1) ) {
+		HandleRetainedPlayerSetupRequest(gui,request+sizeof(opend3::ui::PlayerSetupRequestPrefix)-1);
 		return;
 	}
 	if ( !idStr::Icmp(request,"playerSetupClose") ) {
@@ -10422,7 +10395,7 @@ void idSessionLocal::SelectRetainedMod( idUserInterface *gui, int row ) {
 	gui->SetStateInt( "mods.selected", retainedModSelected );
 	gui->SetStateString( "mods.author", info != NULL ? info->author.c_str() : "" );
 	gui->SetStateString( "mods.date", info != NULL ? info->releaseDate.c_str() : "" );
-	gui->SetStateString( "mods.engine", info != NULL ? info->requiredopenQ4Version.c_str() : "" );
+	gui->SetStateString( "mods.engine", info != NULL ? info->requiredopenD3Version.c_str() : "" );
 	gui->SetStateString( "mods.directory", info != NULL ? info->directory.c_str() : "" );
 	gui->StateChanged( common->GetPresentationTime() );
 #endif
@@ -10632,7 +10605,7 @@ void idSessionLocal::HandleRetainedDemosRequest( idUserInterface *gui, const cha
 		// Playback takes the screen; a demo that could not start leaves the
 		// page here to say so.
 		if ( !PlayDemoLibraryEntry( index ) ) {
-			openq4::NativeInputBeforeSessionChange();
+			opend3::NativeInputBeforeSessionChange();
 			guiActive = gui;
 			PublishRetainedDemoSelection( gui, "#str_231120" );
 		}
@@ -10656,14 +10629,14 @@ void idSessionLocal::HandleRetainedDemosRequest( idUserInterface *gui, const cha
 #ifndef ID_DEDICATED
 // A mod that ships its own loading screen under a stock name keeps it: the
 // file comes from the mod's own game directory (fs_game or fs_game_base),
-// not from openQ4, the stock game or the Awakening, whose stock screens the
+// not from openD3, the stock game or the Awakening, whose stock screens the
 // retained one replaces.
 static bool Session_ModSuppliesFile( const char *path ) {
 	const char *const mods[] = { cvarSystem->GetCVarString( "fs_game" ), cvarSystem->GetCVarString( "fs_game_base" ) };
 	for ( int i = 0; i < static_cast<int>( sizeof( mods ) / sizeof( mods[0] ) ); ++i ) {
 		const char *mod = mods[i];
-		if ( mod == NULL || mod[0] == '\0' || !idStr::Icmp( mod, OPENQ4_GAMEDIR ) || !idStr::Icmp( mod, BASE_GAMEDIR ) ||
-				!idStr::Icmp( mod, "q4xbase" ) ) {
+		if ( mod == NULL || mod[0] == '\0' || !idStr::Icmp( mod, OPEND3_GAMEDIR ) || !idStr::Icmp( mod, BASE_GAMEDIR ) ||
+				!idStr::Icmp( mod, OPEND3_EXPANSION_GAMEDIR ) ) {
 			continue;
 		}
 		idFile *file = fileSystem->OpenFileRead( path, false, mod );
@@ -11368,7 +11341,7 @@ void idSessionLocal::HandleGameMenuReturn( const char *cmd ) {
 		if ( Session_IsArenaPause( guiActive ) ) {
 			ExitMenu();
 		} else {
-			openq4::NativeInputBeforeSessionChange();
+			opend3::NativeInputBeforeSessionChange();
 			guiActive = NULL;
 		}
 	} else if ( idStr::Icmp( cmd, "main" ) == 0 ) {
@@ -11912,7 +11885,7 @@ void idSessionLocal::ReportRetainedScreens() {
 	}
 	// multiplayer= is the Escape card's gate, welcome= the Welcome card's; mp=
 	// the card covering the game's menu or summary.
-	common->Printf( "OPENQ4_RETAINED enabled=%d system=%d multiplayer=%d welcome=%d home=%s title=%d pause=%d strogg=%d handoff=%d release=%d mp=%s views=%d stock=%s\n",
+	common->Printf( "OPEND3_RETAINED enabled=%d system=%d multiplayer=%d welcome=%d home=%s title=%d pause=%d strogg=%d handoff=%d release=%d mp=%s views=%d stock=%s\n",
 		Session_RetainedScreensEnabled() ? 1 : 0, Session_RetainedSystemEnabled() ? 1 : 0, Session_RetainedMultiplayerEnabled( false ) ? 1 : 0,
 		Session_RetainedMultiplayerEnabled( true ) ? 1 : 0,
 		guiRetainedHome != NULL ? guiRetainedHome->Name() : "-",

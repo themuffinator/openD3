@@ -8,7 +8,7 @@
 #include <set>
 #include <utility>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 bool Fail(std::string& error, const char* text) { error = text; return false; }
 bool FindAcp(const std::vector<NativeTextBoundary>& map, std::uint32_t acp, std::size_t& out) {
@@ -411,4 +411,4 @@ bool NativeTextDocument::Retire(NativeTextIdentity identity) noexcept {
 	impl->retired=true; impl->frame.reset(); impl->deferredWrite=false; impl->pending.clear(); impl->pendingBytes=0;
 	return true;
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

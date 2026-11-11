@@ -20,10 +20,10 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 RENDERER = ROOT / "src" / "renderer"
-GLPROGS = ROOT / "content" / "baseoq4" / "pak0" / "glprogs"
+GLPROGS = ROOT / "content" / "baseod3" / "pak0" / "glprogs"
 VK_SHADERS = RENDERER / "Vulkan" / "shaders"
 GAME_LIBS_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
 
 GL_INTERACTIONS = (
@@ -535,14 +535,14 @@ def test_render_entity_render_demo_and_module_abi_are_versioned():
         assert_true(match is not None, f"{owner} renderEntity_t must append colour then flags")
 
     session = read(ROOT / "src" / "framework" / "Session.h")
-    current = re.search(r"OPENQ4_RENDERDEMO_CURRENT_VERSION = (\d+);", session)
+    current = re.search(r"OPEND3_RENDERDEMO_CURRENT_VERSION = (\d+);", session)
     assert_true(
         current is not None and int(current.group(1)) >= 10,
         "new render demos must advertise the flat-diffuse payload (v10) and later",
     )
     require(
         session,
-        "OPENQ4_RENDERDEMO_FLAT_DIFFUSE_VERSION = 10",
+        "OPEND3_RENDERDEMO_FLAT_DIFFUSE_VERSION = 10",
         "flat-diffuse demo reads must have their own compatibility gate",
     )
 
@@ -564,7 +564,7 @@ def test_render_entity_render_demo_and_module_abi_are_versioned():
     )
     gate = delimited_body(
         reader,
-        "if ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_FLAT_DIFFUSE_VERSION )",
+        "if ( session->renderdemoVersion >= OPEND3_RENDERDEMO_FLAT_DIFFUSE_VERSION )",
     )
     require(gate, "ent.flatDiffuseColor", "version 10 demos must restore flat colour")
     require(gate, "ent.flatDiffuseFlags", "version 10 demos must restore flat flags")
@@ -610,7 +610,7 @@ def cvar_call(source: str, name: str) -> str:
 def test_both_game_copies_keep_styles_zero_one_and_add_two_three():
     assert_true(
         GAME_LIBS_ROOT.is_dir(),
-        f"companion game-library repo is required (set OPENQ4_GAMELIBS_REPO): {GAME_LIBS_ROOT}",
+        f"companion game-library repo is required (set OPEND3_GAMELIBS_REPO): {GAME_LIBS_ROOT}",
     )
 
     for copy in GAME_COPIES:
@@ -818,7 +818,7 @@ def test_held_weapon_effect_is_opponent_only_world_model_without_sweep():
 
 
 def test_settings_menu_exposes_the_two_client_cvars():
-    menu = read(ROOT / "content" / "baseoq4" / "pak0" / "guis" / "menu" / "settings" / "game.gui")
+    menu = read(ROOT / "content" / "baseod3" / "pak0" / "guis" / "menu" / "settings" / "game.gui")
 
     item_choice = compact(delimited_body(menu, "choiceDef set_game_simpleitems_value"))
     require(item_choice, "cvarg_simpleItems", "the game menu must bind the four item styles")

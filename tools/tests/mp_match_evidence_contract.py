@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Preserved from openQ4-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
+# Preserved from openD3-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
 """Static and executable contracts for the competitive match evidence core."""
 
 from __future__ import annotations
@@ -202,7 +202,7 @@ int main() {
 	metadata.seriesId = 0;
 	metadata.rulesDigest = 0x0123456789abcdefULL;
 	metadata.modeId = 4;
-	metadata.build = "openQ4-0.1.010";
+	metadata.build = "openD3-0.1.010";
 	metadata.map = "maps/mp/test\"arena\\one";
 	metadata.mode = "duel";
 	CHECK( evidence.Reset( metadata ) );

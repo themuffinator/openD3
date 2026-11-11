@@ -19,7 +19,7 @@ public:
 	bool Usable() const;
 	static void Precache();
 	// Takes the frame's captured primitives: it maps them in place.
-	bool Draw(const char* source, std::vector<openq4::ui::HudPrimitive>&& items);
+	bool Draw(const char* source, std::vector<opend3::ui::HudPrimitive>&& items);
 	void Reset();
 	bool DrawSucceeded() const;
 private:
@@ -53,7 +53,7 @@ public:
 	// The definition a GUI is parsed from. The Awakening's HUDs are the stock
 	// HUDs of their day and know no layout, so its on-foot HUD and those of
 	// the dropship's guns, the MCC's side gun and the speeder bike are read
-	// from openQ4's own definitions (tools/ui/build_awakening_legacy_hud.py)
+	// from openD3's own definitions (tools/ui/build_awakening_legacy_hud.py)
 	// unless a mod owns the GUI. Every other GUI is its own definition.
 	static const char* DefinitionFor(const char* source);
 	// A mod that ships its own copy of a stock-named GUI owns its artwork,

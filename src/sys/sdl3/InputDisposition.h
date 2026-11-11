@@ -83,12 +83,12 @@ bool Sys_EndMouseInputWithDisposition(const sysInputDispositionSlice_t&) noexcep
 // Keyboard output retains its reserved deferred child but never queues that child.
 // Footprints use type SE_KEY/SE_MOUSE, value key/action, value2 down/value and
 // original time. That shape does not imply a Session emission or input authority.
-sysEventTransfer_t Sys_PeekKeyboardInputForRetirement(openq4::NativeInputHead&) noexcept;
-sysEventTransfer_t Sys_PeekMouseInputForRetirement(openq4::NativeInputHead&) noexcept;
-sysEventTransfer_t Sys_TakeKeyboardInputForRetirement(openq4::NativeInputRoute&,
-    const openq4::NativeInputRoute::CancellationPermit&, sysKeyboardInputDisposition_t&) noexcept;
-sysEventTransfer_t Sys_TakeMouseInputForRetirement(openq4::NativeInputRoute&,
-    const openq4::NativeInputRoute::CancellationPermit&, sysMouseInputDisposition_t&) noexcept;
+sysEventTransfer_t Sys_PeekKeyboardInputForRetirement(opend3::NativeInputHead&) noexcept;
+sysEventTransfer_t Sys_PeekMouseInputForRetirement(opend3::NativeInputHead&) noexcept;
+sysEventTransfer_t Sys_TakeKeyboardInputForRetirement(opend3::NativeInputRoute&,
+    const opend3::NativeInputRoute::CancellationPermit&, sysKeyboardInputDisposition_t&) noexcept;
+sysEventTransfer_t Sys_TakeMouseInputForRetirement(opend3::NativeInputRoute&,
+    const opend3::NativeInputRoute::CancellationPermit&, sysMouseInputDisposition_t&) noexcept;
 // Empty metadata release only: exact original slice, next==count, original bound
 // thread. Active epoch/continuity may be retired. No remaining entry is discarded,
 // and success proves neither event disposition, provider retirement nor an ACK.

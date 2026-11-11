@@ -3,7 +3,7 @@
 #include "NativeEventDisposition.h"
 #include "../../framework/NativeInputRoute.h"
 
-namespace openq4 {
+namespace opend3 {
 class NativeInputTransfers;
 class NativeInputDisposalReceipt {
 public:
@@ -92,4 +92,4 @@ private:
     std::uint64_t disposalSerial = 0;
     bool calling = false, retired = false, bound = false;
 };
-} // namespace openq4
+} // namespace opend3

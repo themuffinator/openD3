@@ -21,7 +21,7 @@ def verify(folder: Path) -> dict:
     source_ok &= preview['interaction_script']['sha256'] == sha(fixture/'binding-smoke.cfg')
     data_hashes = {row['name']:row['sha256'] for row in preview['state_data']}
     source_ok &= data_hashes == {name:sha(fixture/name) for name in ('binding-first.json','binding-final.json')}
-    log_path = folder/'save/baseoq4/logs/openq4.log'
+    log_path = folder/'save/baseod3/logs/opend3.log'
     source_ok &= capture['log_sha256'] == sha(log_path)
     image_path = folder/capture['screenshot']['path']
     source_ok &= capture['screenshot']['sha256'] == sha(image_path)

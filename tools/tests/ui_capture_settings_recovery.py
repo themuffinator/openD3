@@ -153,7 +153,7 @@ class RecoveryOracle(unittest.TestCase):
         self.assertNotIn('event "keep"', first)
         self.assertNotIn('event "revert"', first)
         self.assertNotIn("testGUI", second)
-        self.assertNotIn("openq4_retainedGui", second)
+        self.assertNotIn("opend3_retainedGui", second)
         for script in (first, second):
             self.assertTrue(script.endswith("quit\n"))
             self.assertNotIn("vid_restart", script)
@@ -192,7 +192,7 @@ class RecoveryOracle(unittest.TestCase):
             root = Path(folder)
             runtime = root / ".install"
             runtime.mkdir()
-            (runtime / ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")).write_bytes(b"fake; never execute")
+            (runtime / ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")).write_bytes(b"fake; never execute")
             (root / ".vscode").mkdir()
             (root / ".vscode/launch.json").write_text(json.dumps({"configurations": [{"name": "(SP) airdefense1 test GL", "args": ["+map", "game/airdefense1"]}]}), encoding="utf-8")
             args = argparse.Namespace(output=root / ".tmp/case", runtime=runtime, assets=root / "assets", mode="sp", renderer="gl",
@@ -202,7 +202,7 @@ class RecoveryOracle(unittest.TestCase):
                 report = json.loads((args.output / "capture.json").read_text(encoding="utf-8"))
                 self.assertEqual(report["status"], "prepared")
                 self.assertEqual(report["phases"], {})
-                self.assertFalse((args.output / "save/baseoq4" / recovery.JOURNAL_NAME).exists())
+                self.assertFalse((args.output / "save/baseod3" / recovery.JOURNAL_NAME).exists())
                 with self.assertRaises(ValueError):
                     recovery.capture(args)
 

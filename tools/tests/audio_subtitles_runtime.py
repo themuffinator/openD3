@@ -33,7 +33,7 @@ def main():
         parser.error('choose a new output directory under the project .tmp')
     verify_runtime_is_current(ROOT / '.install')
     width, height = (int(n) for n in args.size.split('x'))
-    game_dir = 'q4xbase' if args.awakening else 'baseoq4'
+    game_dir = 'q4xbase' if args.awakening else 'baseod3'
     game = root / 'save' / game_dir
     for part in ('sound', 'lipsync', 'strings'):
         (game / part).mkdir(parents=True, exist_ok=True)
@@ -90,12 +90,12 @@ def main():
     steps += ['testRadioChatter oq4_subtitle_a', 'set ui_subtitles 0', 'waitMsec 100']; capture('off')
     steps += ['set ui_subtitles 1', 'set ui_subtitleSpeakers 0', 'waitMsec 100']; capture('no-speaker')
     steps += ['writeConfig "subtitle-settings.cfg"', 'testRadioChatter stop',
-              'testGUI guis/mainmenu.gui', 'waitMsec 1500', 'openq4_guiAction main_b_settings', 'waitMsec 1500',
-              'openq4_guiAction set_b_audio', 'waitMsec 1000',
+              'testGUI guis/mainmenu.gui', 'waitMsec 1500', 'opend3_guiAction main_b_settings', 'waitMsec 1500',
+              'opend3_guiAction set_b_audio', 'waitMsec 1000',
               # The menu opened with testGUI from a running map is the stock one in both
               # UI modes, so its stock Audio page scrolls to the subtitle rows.
               'ui_hudTest guis/mainmenu.gui state gui_set_audio_scroll 6',
-              'openq4_guiAction set_audio_scroll_thumb', 'waitMsec 300',
+              'opend3_guiAction set_audio_scroll_thumb', 'waitMsec 300',
               'ui_hudTest guis/mainmenu.gui get gui_set_audio_scroll']
     capture('settings')
     steps += ['testGUI', 'echo SUBTITLE_COMPLETE', 'quit']
@@ -105,7 +105,7 @@ def main():
     config.write_text('[general]\ndrivers=wave\nchannels=stereo\nhrtf=false\n[wave]\nfile=' + str(root / 'mix.wav') + '\n')
     cvars = {
         'fs_basepath': str(args.assets.resolve(strict=True)), 'fs_savepath': str(root / 'save'), 'fs_devpath': str(root / 'save'),
-        'fs_game': game_dir, 'com_gameMode': 'SP', 'si_gameType': 'singleplayer', 'logFile': '2', 'logFileName': 'logs/openq4.log',
+        'fs_game': game_dir, 'com_gameMode': 'SP', 'si_gameType': 'singleplayer', 'logFile': '2', 'logFileName': 'logs/opend3.log',
         'r_fullscreen': '0', 'r_fullscreenDesktop': '0', 'r_borderless': '0', 'r_borderlessDefaultMigrated': '1',
         'win_allowMultipleInstances': '1', 'r_hiddenWindow': '1', 'r_windowWidth': str(width), 'r_windowHeight': str(height),
         'r_mode': '-1', 'r_customWidth': str(width), 'r_customHeight': str(height), 'r_renderApi': 'gl', 'r_multiSamples': '0',
@@ -116,7 +116,7 @@ def main():
         'sys_lang': args.language, 'g_autoExecAfterMapLoad': 'subtitle-test.cfg', 'g_autoExecAfterMapLoadDelayMs': '3000'}
     if args.awakening:
         cvars['fs_awakeningpath'] = str(args.awakening.resolve(strict=True))
-    exe = ROOT / '.install' / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64')
+    exe = ROOT / '.install' / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64')
     command = [str(exe)]
     for key, value in cvars.items(): command += ['+set', key, value]
     command += ['+map', args.map]
@@ -126,7 +126,7 @@ def main():
         options.update(startupinfo=startup, creationflags=subprocess.CREATE_NO_WINDOW)
     with (root / 'process.log').open('w') as output:
         run = subprocess.run(command, cwd=ROOT / '.install', stdout=output, stderr=subprocess.STDOUT, timeout=args.timeout, **options)
-    log = (game / 'logs/openq4.log').read_text(encoding='utf-8', errors='replace')
+    log = (game / 'logs/opend3.log').read_text(encoding='utf-8', errors='replace')
     phases = {}
     for name, section in re.findall(r'^SUBTITLE_(\w+)\s*\n(.*?)(?=^SUBTITLE_|\Z)', log, re.M | re.S):
         phases[name] = {shader: {'time': int(time), 'duration': int(duration), 'bytes': int(length)} for shader,time,duration,length in
@@ -171,7 +171,7 @@ def main():
               'audio_settings_reached': 'GUI_ACTION set_b_audio ' in log and
                   'HUD_STATE source=guis/mainmenu.gui key=gui_set_audio_scroll value=6' in log,
               'no_document_error': not re.search(r'(?:WARNING|ERROR).*subtitles\.q4ui', log)}
-    saved = root / 'save/baseoq4/subtitle-settings.cfg'
+    saved = root / 'save/baseod3/subtitle-settings.cfg'
     settings = saved.read_text() if saved.exists() else ''
     checks['archived_controls'] = all(f'seta {key} "{value}"' in settings for key,value in
                                      [('ui_subtitles','1'), ('ui_subtitleScale','1.6'), ('ui_subtitleBackground','0.8'), ('ui_subtitleSpeakers','0')])
@@ -183,7 +183,7 @@ def main():
     report = {'checks': checks, 'phases': phases, 'language': args.language, 'size': args.size, 'classic': args.classic,
               'executable_sha256': hashlib.sha256(exe.read_bytes()).hexdigest(), 'harness_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
               'runtime_sha256': {str(p.relative_to(ROOT / '.install')): hashlib.sha256(p.read_bytes()).hexdigest()
-                                 for p in (ROOT / '.install/baseoq4').iterdir() if p.suffix.lower() in ('.dll','.so','.dylib','.pk4')},
+                                 for p in (ROOT / '.install/baseod3').iterdir() if p.suffix.lower() in ('.dll','.so','.dylib','.pk4')},
               'command': command, 'captures': [str(p) for p in captures], 'host_input': False, 'microphone': False,
               'restore_load_msec': load_msec, 'restore_clock_held_msec': held_msec, 'passed': all(checks.values())}
     (root / 'result.json').write_text(json.dumps(report, indent=2) + '\n')

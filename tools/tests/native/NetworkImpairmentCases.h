@@ -2,8 +2,8 @@
 // tools/tests/network_impairment_state.py, which also runs them against
 // single-reversal copies of the header.
 
-#ifndef OPENQ4_NETWORK_IMPAIRMENT_CASES_H
-#define OPENQ4_NETWORK_IMPAIRMENT_CASES_H
+#ifndef OPEND3_NETWORK_IMPAIRMENT_CASES_H
+#define OPEND3_NETWORK_IMPAIRMENT_CASES_H
 
 #include "src/sys/NetworkImpairment.h"
 

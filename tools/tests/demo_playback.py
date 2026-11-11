@@ -82,7 +82,7 @@ def validate_library_contract() -> None:
         "OQ4MVD %u.%u / %u.%u",
         'AMBIGUOUS_MAGIC[] = "Quake4 RDEMO"',
         "probe.OpenForReading( entry.path.c_str(), false, true )",
-        "OPENQ4_RENDERDEMO_CURRENT_VERSION",
+        "OPEND3_RENDERDEMO_CURRENT_VERSION",
         "ValidateCmdDemoFile",
         'memcmp( prefix, "NDMO", 4 )',
         "DEMO_LIBRARY_LEGACY_RENDER",
@@ -311,7 +311,7 @@ def validate_playback_controls() -> None:
     require(session_menu, 'if ( !idStr::Icmp( cmd, "demoOpen" ) )', "main-menu demo dispatch")
 
     for needle in (
-        '#define DEMO_MAGIC_HISTORICAL "OpenQ4 RDEMO"',
+        '#define DEMO_MAGIC_HISTORICAL "openD3 RDEMO"',
         '#define DEMO_MAGIC_QUAKE4 "Quake4 RDEMO"',
         "ambiguousQuake4Wrapper",
         "firstToken != DS_VERSION",
@@ -390,14 +390,14 @@ def validate_playback_controls() -> None:
         "tokenBytes != 0 && tokenBytes != sizeof( ds )",
         "ended before DC_END_FRAME; playback stopped safely",
         "contains invalid token %d; playback stopped safely",
-        "streamVersion > OPENQ4_RENDERDEMO_CURRENT_VERSION",
+        "streamVersion > OPEND3_RENDERDEMO_CURRENT_VERSION",
     ):
         require(session, needle, "nonfatal top-level render-demo decoding")
 
 
 def validate_gui_and_localization() -> None:
-    gui = read("content/baseoq4/pak0/guis/demo_menu.gui")
-    main_menu = read("content/baseoq4/pak0/guis/mainmenu.gui")
+    gui = read("content/baseod3/pak0/guis/demo_menu.gui")
+    main_menu = read("content/baseod3/pak0/guis/mainmenu.gui")
     source = read("src/framework/Session_demo.cpp")
 
     for needle in (
@@ -534,10 +534,10 @@ def validate_gui_and_localization() -> None:
         raise AssertionError(f"Demo string contract is not referenced: {missing_usage}")
 
     lang_paths = sorted(
-        (ROOT / "content/baseoq4/pak0/strings").glob("*_openq4.lang")
+        (ROOT / "content/baseod3/pak0/strings").glob("*_opend3.lang")
     )
     if not lang_paths:
-        raise AssertionError("No openQ4 localization tables found")
+        raise AssertionError("No openD3 localization tables found")
     for path in lang_paths:
         text = path.read_text(encoding="utf-8", errors="replace")
         values = {

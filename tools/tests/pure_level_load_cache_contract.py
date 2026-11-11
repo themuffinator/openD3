@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Pin how a pure lock treats openQ4's generated level-load caches.
+"""Pin how a pure lock treats openD3's generated level-load caches.
 
-With com_levelLoadModernization 1 (experimental, off by default) openQ4 reads
+With com_levelLoadModernization 1 (experimental, off by default) openD3 reads
 derived render-model, render-world and collision caches, and the game modules
 read a derived animation cache, from <fs_savepath>/<gameDir>/generated/. Their
 owners open these files with OpenExplicitFileRead, outside the search paths, so

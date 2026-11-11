@@ -75,7 +75,7 @@ static const int	SSF_CENTER = BIT(15);	// sound through center channel only
 static const int	SSF_HILITE = BIT(16);	// display debug info for this emitter
 // RAVEN END
 
-// OpenQ4-only runtime classifications. Keep these out of the retail flag range
+// openD3-only runtime classifications. Keep these out of the retail flag range
 // because game modules and shipped Q4 data use bits 10/11 for Doppler/no-random-start.
 static const int	SSF_VO =				BIT( 22 ); // VO - direct a portion of the sound through the center channel (set automatically on shaders that contain files that start with "sound/vo/")
 static const int	SSF_VOICEAMPLITUDE =	SSF_VO;	 // Prey jawflap/amplitude-query alias
@@ -437,11 +437,11 @@ public:
 	virtual void			SetSpiritWalkEffect( bool active ) { (void)active; /* TODO: retail Prey DSP parity */ }
 	virtual void			SetVoiceDucker( bool active ) { (void)active; /* TODO: retail Prey DSP parity */ }
 
-	// openQ4: muffles everything while the listener's head is under a liquid surface. Derived from
+	// openD3: muffles everything while the listener's head is under a liquid surface. Derived from
 	// the eye position every frame, so it is deliberately not part of the savegame.
 	virtual void			SetUnderwater( bool active ) = 0;
 
-	// openQ4: lets the sound world ask whether a point is inside a liquid, which only the game
+	// openD3: lets the sound world ask whether a point is inside a liquid, which only the game
 	// knows - liquid lives in the collision world, not the render world. Used to occlude sounds
 	// that have to cross the surface to reach the listener. Called from the same per-emitter
 	// spatialisation path that already does portal tracing, so it must be cheap and main-thread.
@@ -670,6 +670,6 @@ public:
 
 extern idSoundSystem*	soundSystem;
 
-#define OPENQ4_SOUND_HAS_SOUNDWORLD_SKIP 1
+#define OPEND3_SOUND_HAS_SOUNDWORLD_SKIP 1
 
 #endif /* !__SOUND__ */

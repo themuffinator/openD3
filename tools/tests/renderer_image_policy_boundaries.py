@@ -231,7 +231,7 @@ int main(){try{
  Reset();restartOkay=false;Run(false);TEST(references==1&&!releases);restartOkay=true;Run(true);TEST(retains==1&&releases==1);
  Reset();throwRestart=true;{bool threw=false;rendererImagePolicyResult_t output=sentinel;char error[128];try{R_RendererModule_TryImagePolicyRestart(&request,&output,error,sizeof(error));}catch(...){threw=true;}TEST(threw&&!std::memcmp(&output,&sentinel,sizeof(output)));}throwRestart=false;Run(true);TEST(!references&&retains==1);
  Reset();rm_state.interfacesPublished=false;rm_state.status.disposition=RENDER_MODULE_DISPOSITION_BUILTIN;
-#if !defined(OPENQ4_RENDERER_MODULE_ONLY) && !defined(ID_DEDICATED)
+#if !defined(OPEND3_RENDERER_MODULE_ONLY) && !defined(ID_DEDICATED)
  Run(true);TEST(calls==1);
 #else
  Run(false);TEST(!calls&&!retains);
@@ -294,7 +294,7 @@ def build_units(repository, headers):
     module = (renderer / 'RendererModule.cpp').read_text(encoding='utf-8')
     module = MODULE_SUPPORT + method(module, 'static void RM_ReleaseDisplayVideoPin(') + method(module, 'bool R_RendererModule_TryImagePolicyRestart(') + MODULE_MAIN
     return {'vulkan': vulkan, 'entries': ENTRY_SUPPORT + '\n'.join(entries) + ENTRY_MAIN,
-        'module-builtin': module, 'module-only': '#define OPENQ4_RENDERER_MODULE_ONLY\n' + module,
+        'module-builtin': module, 'module-only': '#define OPEND3_RENDERER_MODULE_ONLY\n' + module,
         'module-dedicated': '#define ID_DEDICATED\n' + module}
 
 

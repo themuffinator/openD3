@@ -36,25 +36,25 @@ def main() -> None:
     if not 1024 <= args.port <= 65534:
         parser.error('port must reserve two consecutive unprivileged ports')
     suffix = '.exe' if os.name == 'nt' else ''
-    for name in ('openQ4-client_x64', 'openQ4-ded_x64'):
+    for name in ('openD3-client_x64', 'openD3-ded_x64'):
         verify_runtime_is_current(runtime, name + suffix)
-    games = {role: output / role / 'baseoq4' for role in ('server', 'client')}
+    games = {role: output / role / 'baseod3' for role in ('server', 'client')}
     for game in games.values():
         game.mkdir(parents=True)
-    logs = {role: game / 'logs/openq4.log' for role, game in games.items()}
+    logs = {role: game / 'logs/opend3.log' for role, game in games.items()}
     server_loop = games['server'] / 'hud-network-host.cfg'
     write_script(server_loop, ['echo HUD_NETWORK_HOST_READY', 'waitMsec 250', 'exec "hud-network-host.cfg"'])
     write_script(games['client'] / 'hud-network-client.cfg', [
-        'set g_autoExecAfterMapLoad ""', 'set developer 1', 'waitMsec 1500', 'openq4_assertMPClientActive',
+        'set g_autoExecAfterMapLoad ""', 'set developer 1', 'waitMsec 1500', 'opend3_assertMPClientActive',
         'screenshot "screenshots/network.tga"', 'set ui_retained 0', 'waitMsec 200',
         'screenshot "screenshots/stock.tga"', 'set ui_retained 1', 'waitMsec 300',
         'screenshot "screenshots/restored.tga"', 'echo HUD_NETWORK_COMPLETE', 'quit',
     ])
     common = {
         'win_allowMultipleInstances' if os.name == 'nt' else 'sys_allowMultipleInstances': '1',
-        'fs_basepath': str(args.assets.resolve()), 'fs_game': 'baseoq4', 'com_gameMode': 'MP',
+        'fs_basepath': str(args.assets.resolve()), 'fs_game': 'baseod3', 'com_gameMode': 'MP',
         'si_gameType': 'DM', 'com_nextGameModule': 'game_mp',
-        'logFile': '2', 'logFileName': 'logs/openq4.log', 'developer': '0', 'ui_retained': '1',
+        'logFile': '2', 'logFileName': 'logs/opend3.log', 'developer': '0', 'ui_retained': '1',
         'r_fullscreen': '0', 'r_fullscreenDesktop': '0', 'r_borderless': '0',
         'r_borderlessDefaultMigrated': '1', 'r_hiddenWindow': '1', 'r_mode': '-1',
         'r_customWidth': '1280', 'r_customHeight': '720', 'r_windowWidth': '1280', 'r_windowHeight': '720',
@@ -78,12 +78,12 @@ def main() -> None:
         if role == 'server':
             cvars.update(net_serverDedicated='1', si_pure='0', si_gameType='DM', si_maxPlayers='4',
                          si_minPlayers='1', si_warmup='0', bot_minPlayers='0')
-            command = [str(runtime / ('openQ4-ded_x64' + suffix))]
+            command = [str(runtime / ('openD3-ded_x64' + suffix))]
             actions = ['+spawnServer', 'mp/q4dm1', '+exec', server_loop.name]
         else:
             cvars.update(net_clientLagOMeter='1', net_clientLagOMeterResolution='1',
                          g_autoExecAfterMapLoad='hud-network-client.cfg', g_autoExecAfterMapLoadDelayMs='3000')
-            command = [str(runtime / ('openQ4-client_x64' + suffix))]
+            command = [str(runtime / ('openD3-client_x64' + suffix))]
             actions = ['+connect', f'127.0.0.1:{args.port}']
         for key, value in cvars.items():
             command += ['+set', key, value]
@@ -124,7 +124,7 @@ def main() -> None:
                 ('retained' in line.lower() and ('WARNING' in line or 'ERROR' in line))]
     if set(codes) != {'server', 'client'} or any(codes.values()):
         failures.append(f'unclean exit: {codes}')
-    if 'HUD_NETWORK_COMPLETE' not in client or 'OPENQ4_STOCK_BASELINE_MP_CLIENT_ACTIVE' not in client:
+    if 'HUD_NETWORK_COMPLETE' not in client or 'OPEND3_STOCK_BASELINE_MP_CLIENT_ACTIVE' not in client:
         failures.append('client did not finish active gameplay')
     if not any('source=native/lagometer ' in line for line in traces):
         failures.append('client network graph did not submit retained geometry')

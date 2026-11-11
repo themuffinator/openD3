@@ -1,5 +1,5 @@
 // Android/SigmaTouch support by emileb: https://github.com/emileb/openQ4/tree/android
-// Integrated and adapted for current openQ4; licensed under GPL-3.0-or-later.
+// Integrated and adapted for current openD3; licensed under GPL-3.0-or-later.
 
 #ifndef touch_interface_h
 #define touch_interface_h

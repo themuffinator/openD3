@@ -95,7 +95,7 @@ def validate_runtime_gate() -> None:
     fallback = next(case for case in cases if case["id"] == "renderer-vk-device-fallback-drill")
     runtime = ROOT / ".tmp" / "unused-vulkan-probe-test"
     suffix = ".exe" if matrix.os.name == "nt" else ""
-    expected_client = runtime / f"openQ4-client_{matrix.host_arch()}{suffix}"
+    expected_client = runtime / f"openD3-client_{matrix.host_arch()}{suffix}"
     with patch.object(Path, "exists", autospec=True, side_effect=lambda path: path == expected_client):
         if matrix.find_client_executable(runtime) != expected_client:
             raise AssertionError("runtime override selected a client from another package")

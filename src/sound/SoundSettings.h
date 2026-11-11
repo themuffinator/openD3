@@ -1,6 +1,6 @@
-// First-party openQ4 checked, in-place OpenAL settings boundary. GPL-3.0-or-later.
-#ifndef OPENQ4_SOUND_SETTINGS_H
-#define OPENQ4_SOUND_SETTINGS_H
+// First-party openD3 checked, in-place OpenAL settings boundary. GPL-3.0-or-later.
+#ifndef OPEND3_SOUND_SETTINGS_H
+#define OPEND3_SOUND_SETTINGS_H
 #include <cstdint>
 
 struct SoundSettingsPolicy {

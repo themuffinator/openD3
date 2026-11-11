@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Generate a deterministic, licence-safe temporary PBR runtime fixture.
 
-The texture pixels and material declaration are original openQ4 procedural
+The texture pixels and material declaration are original openD3 procedural
 test data produced entirely by this file; no third-party texture, shader, or
 material asset is read or copied.  The fixture is intentionally constrained to
 the repository's ignored ``.tmp`` tree and is meant to override stock geometry
 on ``maps/tools/mv2`` during opt-in validation.  Generated files remain covered
-by the openQ4 repository licence and must not be committed as content assets.
+by the openD3 repository licence and must not be committed as content assets.
 """
 
 from __future__ import annotations
@@ -24,14 +24,14 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 REPO_TEMP_ROOT = ROOT / ".tmp"
 FIXTURE_SCHEMA_VERSION = 1
-FIXTURE_ID = "openq4-procedural-pbr-packed-orm"
+FIXTURE_ID = "opend3-procedural-pbr-packed-orm"
 DEFAULT_TEXTURE_SIZE = 64
-MATERIAL_NAME = "materials/openq4/pbr_test/procedural_packed"
+MATERIAL_NAME = "materials/opend3/pbr_test/procedural_packed"
 STOCK_MAP = "maps/tools/mv2"
 BENCHMARK_CASE = "sp-mv2-interaction"
-TEXTURE_PREFIX = "textures/openq4/pbrtest/procedural"
-MATERIAL_QPATH = "baseoq4/materials/openq4_pbr_procedural_fixture.mtr"
-MANIFEST_NAME = "openq4-pbr-procedural-fixture.json"
+TEXTURE_PREFIX = "textures/opend3/pbrtest/procedural"
+MATERIAL_QPATH = "baseod3/materials/opend3_pbr_procedural_fixture.mtr"
+MANIFEST_NAME = "opend3-pbr-procedural-fixture.json"
 
 
 def is_link_or_junction(path: Path) -> bool:
@@ -109,9 +109,9 @@ def validate_size(size: int) -> None:
 
 def fixture_paths(runtime_root: Path) -> dict[str, Path]:
     return {
-        "albedo": runtime_root / f"baseoq4/{TEXTURE_PREFIX}_albedo.tga",
-        "normal": runtime_root / f"baseoq4/{TEXTURE_PREFIX}_normal.tga",
-        "orm": runtime_root / f"baseoq4/{TEXTURE_PREFIX}_orm.tga",
+        "albedo": runtime_root / f"baseod3/{TEXTURE_PREFIX}_albedo.tga",
+        "normal": runtime_root / f"baseod3/{TEXTURE_PREFIX}_normal.tga",
+        "orm": runtime_root / f"baseod3/{TEXTURE_PREFIX}_orm.tga",
         "material": runtime_root / MATERIAL_QPATH,
         "manifest": runtime_root / MANIFEST_NAME,
     }
@@ -189,7 +189,7 @@ def procedural_pixels(size: int) -> dict[str, list[tuple[int, int, int]]]:
 
 
 def material_text() -> str:
-    return f"""// Original procedural openQ4 validation fixture; no external assets.
+    return f"""// Original procedural openD3 validation fixture; no external assets.
 // Generated below .tmp by tools/validation/generate_pbr_fixture.py. Do not ship.
 {MATERIAL_NAME}
 {{
@@ -244,7 +244,7 @@ def fixture_manifest(size: int, files: dict[str, str]) -> dict[str, Any]:
             "Original deterministic pixels and material text generated only by "
             "tools/validation/generate_pbr_fixture.py; no third-party assets are incorporated."
         ),
-        "license": "Covered by the openQ4 repository GNU GPL v3 licence.",
+        "license": "Covered by the openD3 repository GNU GPL v3 licence.",
         "generatedAssetsPolicy": "Temporary validation output below .tmp; do not commit as content.",
         "stockMap": STOCK_MAP,
         "benchmarkCase": BENCHMARK_CASE,

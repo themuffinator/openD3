@@ -187,7 +187,7 @@ symbol path, so a module built before this existed simply does not resolve and
 is skipped rather than breaking the load.
 ================================================
 */
-#define MEM_MODULE_STATS_ENTRY_POINT	"openQ4_Mem_GetModuleStats"
+#define MEM_MODULE_STATS_ENTRY_POINT	"openD3_Mem_GetModuleStats"
 
 // 'used' is load-bearing, not decoration: nothing inside the binary calls this
 // -- it is only ever reached by name from the loader -- so without it both
@@ -202,7 +202,7 @@ is skipped rather than breaking the load.
 typedef void ( *memModuleStats_t )( memoryStats_t *stats );
 
 // Exported from every idlib copy. Reports that binary's counters only.
-extern "C" MEM_MODULE_STATS_EXPORT void openQ4_Mem_GetModuleStats( memoryStats_t *stats );
+extern "C" MEM_MODULE_STATS_EXPORT void openD3_Mem_GetModuleStats( memoryStats_t *stats );
 
 void		Mem_Init( void );
 void		Mem_Shutdown( void );
@@ -478,12 +478,12 @@ Declares 'name' as a 'type *'. As with _alloca16, it is valid to the end of the
 enclosing scope; unlike _alloca16, an oversized count is not fatal.
 ================================================
 */
-#define OPENQ4_STACK_SCRATCH_LIMIT		( 256 * 1024 )
+#define OPEND3_STACK_SCRATCH_LIMIT		( 256 * 1024 )
 
-#define OPENQ4_ALLOC16_SCRATCH( type, name, count )										\
+#define OPEND3_ALLOC16_SCRATCH( type, name, count )										\
 	const unsigned int name##_scratchCount = ( unsigned int )( count );					\
 	idTempArray16< type > name##_scratchHeap(											\
-		( ( size_t )name##_scratchCount * sizeof( type ) >= OPENQ4_STACK_SCRATCH_LIMIT )	\
+		( ( size_t )name##_scratchCount * sizeof( type ) >= OPEND3_STACK_SCRATCH_LIMIT )	\
 			? name##_scratchCount : 0 );												\
 	type *name = ( name##_scratchHeap.Num() > 0 )										\
 		? name##_scratchHeap.Ptr()														\

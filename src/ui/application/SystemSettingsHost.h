@@ -3,7 +3,7 @@
 
 #include "SettingsTransaction.h"
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 enum SystemSettingEffect : unsigned {
 	SystemSettingImmediate = 0,
@@ -79,4 +79,4 @@ public:
 	bool NeedsConfirmation(const StateValues& before, const StateValues& target) const override;
 };
 
-} // namespace openq4::ui
+} // namespace opend3::ui

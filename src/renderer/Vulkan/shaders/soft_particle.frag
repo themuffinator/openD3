@@ -3,7 +3,7 @@
 #include "framebuffer_coords.glsl"
 
 // Soft particles: a BSE sprite fades out where it meets the opaque scene
-// behind it. A port of content/baseoq4/pak0/glprogs/soft_particle.fs, which
+// behind it. A port of content/baseod3/pak0/glprogs/soft_particle.fs, which
 // RB_TryDrawSoftParticleStage draws on the OpenGL backend. gui.vert supplies
 // the texture coordinate and tex-independent colour (vertex colour factor
 // times the stage colour), so particle = texture * fragColor is OpenGL's

@@ -3,7 +3,7 @@
 
 #include "TextInputBroker.h"
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 inline constexpr std::uint16_t TextInputBrokerWireVersion = 1;
 inline constexpr std::size_t TextInputBrokerWireHeaderBytes = 80;
@@ -43,4 +43,4 @@ bool EncodeTextInputBrokerRecord(const TextNativeRecord& record,
 bool DecodeTextInputBrokerRecord(std::string_view bytes,
 	TextNativeRecord& out, std::string& error);
 
-} // namespace openq4::ui
+} // namespace opend3::ui

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Measure what stereo costs a frame (VR-04), against the openQ4 OpenXR test
+"""Measure what stereo costs a frame (VR-04), against the openD3 OpenXR test
 runtime (requires a staged client built with OpenXR and retail assets).
 
 One single-player process holds a fixed view of airdefense1 with game time
@@ -7,7 +7,7 @@ stopped (g_stopTime 1), so every sampled frame draws the same world. It records
 the renderer's per-frame timing trace (rendererBenchmarkCapture, 256 frames)
 three times: flat on the desktop, in stereo, and in stereo again after a
 vr_restart, so a cold session does not pass for the steady cost. The test
-runtime runs unpaced (OPENQ4_XR_TEST_RATE 0) and the window does not wait for
+runtime runs unpaced (OPEND3_XR_TEST_RATE 0) and the window does not wait for
 vsync, and the trace's CPU and GPU times exclude the frame limiter, so they
 measure work rather than waiting. It reports CPU frame,
 front-end, back-end and GPU percentiles for each and the stereo/flat ratios,
@@ -86,7 +86,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("--basepath", type=Path, required=True, help="installed retail Quake 4 assets")
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
     parser.add_argument("--build-dir", type=Path, default=ROOT / "builddir",
-                        help="build directory holding openq4_xr_test_runtime.json")
+                        help="build directory holding opend3_xr_test_runtime.json")
     parser.add_argument("--executable-name")
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--timeout", type=int, default=400)
@@ -100,8 +100,8 @@ def main(argv: list[str] | None = None) -> None:
     options = parser.parse_args(argv)
 
     staged = options.runtime_dir.resolve()
-    executable = options.executable_name or ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
-    manifest = (options.build_dir / "openq4_xr_test_runtime.json").resolve()
+    executable = options.executable_name or ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
+    manifest = (options.build_dir / "opend3_xr_test_runtime.json").resolve()
     if not (staged / executable).is_file() or not options.basepath.is_dir():
         parser.error("a staged client and installed Quake 4 assets are required")
     if not options.system_runtime and not manifest.is_file():
@@ -111,11 +111,11 @@ def main(argv: list[str] | None = None) -> None:
     if output == staged or staged in output.parents or output in staged.parents:
         parser.error("output and staged runtime directories must not overlap")
     profile = output / (f"{options.render_api}-{options.preset}" if options.preset else options.render_api)
-    game = profile / "baseoq4"
+    game = profile / "baseod3"
     game.mkdir(parents=True, exist_ok=True)
     for phase in PHASES:
         (game / f"stereo_cost_{phase}.csv").unlink(missing_ok=True)
-    (game / "logs/openq4.log").unlink(missing_ok=True)
+    (game / "logs/opend3.log").unlink(missing_ok=True)
     width, height = options.window.split("x")
 
     # 256 frames fill the trace; 400 more than that keeps the last phase's frames only
@@ -168,14 +168,14 @@ def main(argv: list[str] | None = None) -> None:
     args += ["+map", "game/airdefense1"]
     command = [str(staged / executable), *args]
     (profile / "command.json").write_text(json.dumps(command, indent=2), encoding="utf-8")
-    environment = {k: v for k, v in os.environ.items() if not k.startswith("OPENQ4_XR_TEST_")}
+    environment = {k: v for k, v in os.environ.items() if not k.startswith("OPEND3_XR_TEST_")}
     if not options.system_runtime:
-        environment.update({"XR_RUNTIME_JSON": str(manifest), "OPENQ4_XR_TEST_EYE_SIZE": options.eye_size,
-                            "OPENQ4_XR_TEST_RATE": "0", "OPENQ4_XR_TEST_LOG": str(profile / "xr.jsonl")})
+        environment.update({"XR_RUNTIME_JSON": str(manifest), "OPEND3_XR_TEST_EYE_SIZE": options.eye_size,
+                            "OPEND3_XR_TEST_RATE": "0", "OPEND3_XR_TEST_LOG": str(profile / "xr.jsonl")})
     with (profile / "process.log").open("w", encoding="utf-8") as log:
         result = subprocess.run(command, cwd=staged, stdout=log, stderr=subprocess.STDOUT, env=environment,
                                 timeout=options.timeout)
-    text = (game / "logs/openq4.log").read_text(encoding="utf-8", errors="replace")
+    text = (game / "logs/opend3.log").read_text(encoding="utf-8", errors="replace")
     assert result.returncode == 0 and "VR_COST_COMPLETE" in text, "the measurement did not complete"
     assert "OpenXR: presenting to the headset" in text, "the stereo phases never presented"
 

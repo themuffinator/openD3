@@ -28,8 +28,8 @@ def validate_evidence_index() -> None:
         "-RequireCompletedSignoffChecklist",
         "--require-completed-checklist",
         "Archive SHA-256",
-        "openQ4 commit",
-        "`openQ4-game` commit",
+        "openD3 commit",
+        "`openD3-game` commit",
         "Architecture policy",
         "CPU architecture",
         "OS matrix role",
@@ -62,7 +62,7 @@ def validate_release_completion_gate() -> None:
         "## macOS Evidence Gate",
         "`docs/dev/macos-signoff-evidence.md` has a current release entry",
         "archive SHA-256",
-        "`openQ4-game` commit",
+        "`openD3-game` commit",
         "-RequireCompletedSignoffChecklist",
         "validate_signoff_archive.py <archive> --require-completed-checklist",
         "docs/dev/macos-support-matrix-policy.md",
@@ -94,7 +94,7 @@ def validate_plan_status() -> None:
 
 def validate_workflow_and_archive_contract() -> None:
     workflow_doc = read("docs/dev/macos-vm-testing-workflow.md")
-    guest = read("tools/macos/guest/openq4-macos-sync-build-test.sh")
+    guest = read("tools/macos/guest/opend3-macos-sync-build-test.sh")
     archive_validator = read("tools/macos/validate_signoff_archive.py")
     recorder = read("tools/macos/record_signoff_evidence.py")
 
@@ -147,7 +147,7 @@ def validate_workflow_and_archive_contract() -> None:
 def validate_ci_and_local_wiring() -> None:
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
-    local_runner = read("tools/validation/openq4_validate.py")
+    local_runner = read("tools/validation/opend3_validate.py")
 
     for source, context in (
         (commit, "commit validation workflow"),

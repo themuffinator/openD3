@@ -8,11 +8,11 @@
 // Only the outer registry/Session/window copied publication boundary is counted
 // here; its actual owning methods are exercised by native_input_lifecycle.py.
 static Editor* fields=nullptr;
-static openq4::NativeSessionPublication sessionFacts;
-static openq4::NativeWindowPublication windowFacts;
+static opend3::NativeSessionPublication sessionFacts;
+static opend3::NativeWindowPublication windowFacts;
 static std::uint64_t allocationFact=0,epochFact=2,streamFact=5;
 static bool registryAvailable=true,windowAvailable=true,slotAvailable=true;
-static openq4::NativeInputRoute* registeredRoute=nullptr;
+static opend3::NativeInputRoute* registeredRoute=nullptr;
 static std::uint64_t registeredId=0;
 static unsigned sessionQueries=0,windowQueries=0,allocationQueries=0,presenceQueries=0;
 static bool refuseUnbind=false;
@@ -20,7 +20,7 @@ static std::function<void()> onPresence;
 bool Sys_EventDispositionBoundThread()noexcept{return std::this_thread::get_id()==engineThread;}
 std::uint64_t Sys_EventDispositionEpoch()noexcept{return Sys_EventDispositionBoundThread()?epochFact:0;}
 std::uint64_t Sys_EventQueueToken()noexcept{return streamFact;}
-namespace openq4 {
+namespace opend3 {
 bool Session_QueryNativeInputPublication(NativeSessionPublication& out)noexcept{++sessionQueries;if(!Sys_EventDispositionBoundThread())return false;out=sessionFacts;return true;}
 bool Sys_QueryNativeInputWindow(NativeWindowPublication& out)noexcept{++windowQueries;if(!windowAvailable||!Sys_EventDispositionBoundThread())return false;out=windowFacts;return true;}
 bool UI_QueryNativeInputAllocation(std::uintptr_t current,std::uint64_t& out)noexcept{++allocationQueries;if(!registryAvailable||current!=sessionFacts.current)return false;out=allocationFact;return true;}
@@ -33,7 +33,7 @@ bool NativeInputUnbindPublications(NativeInputRoute& r,std::uint64_t id)noexcept
     registeredRoute=nullptr;registeredId=0;return true;
 }
 }
-openq4::ui::NativeTextPresence UI_NativeTextPresence(openq4::ui::NativeTextIdentity native,const openq4::ui::TextEditorIdentity& owner)noexcept {
+opend3::ui::NativeTextPresence UI_NativeTextPresence(opend3::ui::NativeTextIdentity native,const opend3::ui::TextEditorIdentity& owner)noexcept {
     auto callback=std::exchange(onPresence,nullptr);if(callback)callback();
     ++presenceQueries;return fields?fields->input.QueryNumberNativePresence(native,owner):NativeTextPresence::BusyOrUnknown;
 }
@@ -73,7 +73,7 @@ static void RetirementQueries() {
 }
 // Completed-inventory detach is tested with actual Driver+queues in
 // native_input_driver.py. SDK lifecycle/facts tests must never enter that edge.
-bool openq4::NativeInputDriver::DetachCompletedInventory(openq4::NativeInputEmissionInventory&) noexcept {std::abort();}
+bool opend3::NativeInputDriver::DetachCompletedInventory(opend3::NativeInputEmissionInventory&) noexcept {std::abort();}
 static void SourceFacts() {
     Session f;auto b=Setup(f);WindowsNativeInputRouteSource source(*f.value);std::string error;
     CHECK(source.SetOwner(b,error));CHECK(!source.SetOwner(b,error));CHECK(!source.PumpsRetired());

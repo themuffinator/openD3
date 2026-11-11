@@ -28,7 +28,7 @@ along with openD3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
 /*
 ===============================================================================
 
-	Engine-side answers for idGame/idGameEdit services that upstream openQ4's
+	Engine-side answers for idGame/idGameEdit services that upstream openD3's
 	engine calls but Doom 3's game API (src/game/Game.h) does not export.
 
 	The retained screens, the multiplayer ban list and the background-save

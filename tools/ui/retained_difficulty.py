@@ -4,7 +4,7 @@
 Built by tools/ui/build_retained_screens.py, which writes and checks it with
 the other retained screens. Section 9 "New game": difficulty choices use
 section navigation plates beside a description paragraph, and the primary
-action is the enlarged plate. The layout is the stock p_newgame (openQ4's own
+action is the enlarged plate. The layout is the stock p_newgame (openD3's own
 mainmenu.gui, whose in-game Difficulty page is the same page retitled): five
 b2_dark plates on a 30 u pitch from 21,172 u, the chosen one lit; the chosen
 difficulty's description at 239,181 u in Lowpixel (textscale 0.25) at 0.60;
@@ -197,7 +197,7 @@ def restart_level_document(family: Family = MARINE) -> dict:
     check_fits(tuple((name, family.face, 22.3, U * 186) for name, _ in DIFFICULTIES) +
                (("#str_229983", family.face, PRIMARY_TEXT, U * PRIMARY_LABEL[2]),),
                tuple((text, "lowpixel", DESCRIPTION_TEXT, U * DESCRIPTION[2], lines) for _, text in DIFFICULTIES))
-    doc = Document(f"openq4.restartlevel{family.suffix}")
+    doc = Document(f"opend3.restartlevel{family.suffix}")
     doc.state["restart.skill"] = {"type": "number", "initial": 1}
     doc.session("back", "restartBack")
     doc.session("go", "restartGo")

@@ -11,7 +11,7 @@
 ===============================================================================
 */
 
-#ifdef OPENQ4_RENDERER_GLES_MODULE
+#ifdef OPEND3_RENDERER_GLES_MODULE
 
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
@@ -545,4 +545,4 @@ void R_GLESD3_Programs_RegisterCommands( void ) {
 			"gles_d3: rebuild the shader programs, picking up r_glesD3ShaderPath" );
 }
 
-#endif /* OPENQ4_RENDERER_GLES_MODULE */
+#endif /* OPEND3_RENDERER_GLES_MODULE */

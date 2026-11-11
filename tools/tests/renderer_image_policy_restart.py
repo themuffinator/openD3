@@ -240,7 +240,7 @@ int main(){
  Reset();callback=[](const char* at){if(!std::strcmp(at,"parse")){bool permitted=true;std::thread worker([&]{permitted=R_ImagePolicyContentMutation();});worker.join();TEST(!permitted);}};Run(false);
  Reset();extra.loaded=false;material.pbr.albedo.present=true;material.pbr.albedo.image=&extra;Run(false);
  Reset();callback=[](const char* where){if(!std::strcmp(where,"source"))image_downSize.value=1;};Run(false);TEST(!starts);
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
  Reset();oldPending=true;Run(false);TEST(!starts);
  Reset();finalPending=true;Run(false);TEST(starts==1);
  Reset();callback=[](const char* where){if(!std::strcmp(where,"wait")&&starts)vkCtx.uploadBatchOpen=true;};Run(false);
@@ -336,14 +336,14 @@ def main():
             binary = out / (tag + '.exe')
             command = [compiler, '-std=c++20', '-pthread', '-I', str(repository / 'src/renderer'), '-I', str(headers / 'src/renderer')]
             if backend == 'vk':
-                command += ['-DOPENQ4_RENDERER_VK_MODULE']
+                command += ['-DOPEND3_RENDERER_VK_MODULE']
             if args.sanitize:
                 command += ['-fsanitize=address,undefined', '-fno-omit-frame-pointer', '-g', '-no-pie']
             command += [str(unit), *extra_sources, '-o', str(binary)]
             if Path(compiler).stem.lower() in ('cl', 'clang-cl'):
                 if args.sanitize:
                     raise RuntimeError('sanitizer option requires GCC/Clang Unix-style driver')
-                command = [compiler, '/nologo', '/std:c++20', '/EHsc', '/MTd', '/D_DEBUG', '/D_ITERATOR_DEBUG_LEVEL=2', '/I' + str(repository / 'src/renderer'), '/I' + str(headers / 'src/renderer'), *(['/DOPENQ4_RENDERER_VK_MODULE'] if backend == 'vk' else []), str(unit), *extra_sources, '/Fe:' + str(binary), '/Fo:' + str(out) + os.sep]
+                command = [compiler, '/nologo', '/std:c++20', '/EHsc', '/MTd', '/D_DEBUG', '/D_ITERATOR_DEBUG_LEVEL=2', '/I' + str(repository / 'src/renderer'), '/I' + str(headers / 'src/renderer'), *(['/DOPEND3_RENDERER_VK_MODULE'] if backend == 'vk' else []), str(unit), *extra_sources, '/Fe:' + str(binary), '/Fo:' + str(out) + os.sep]
             for stage, call in (('compile', command), ('run', [str(binary)])):
                 result = subprocess.run(call, cwd=out, env=env, timeout=90, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
                 log = out / (tag + '-' + stage + '.log')

@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <initializer_list>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks = 0;
 static void Check(bool condition, const char* message) {
 	++checks;

@@ -1,7 +1,7 @@
 #version 450
 
 // Rigid-object motion vectors. A port of
-// content/baseoq4/pak0/glprogs/motionvectors.vs (RB_RenderMotionVectorBuffer).
+// content/baseod3/pak0/glprogs/motionvectors.vs (RB_RenderMotionVectorBuffer).
 // currentMvp is this frame's projection * modelview with the Vulkan clip-z
 // fixup; previousMvp is last frame's OpenGL projection * view * model. Only
 // the xy/w of either clip position is used for the vector, and the fixup

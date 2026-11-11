@@ -9,7 +9,7 @@
 #include <memory>
 #include <set>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 
 static void Check(bool condition, const char* message) {
 	if (!condition) { std::fprintf(stderr,"FAIL: %s\n",message); std::exit(1); }
@@ -59,7 +59,7 @@ static Json::Value JsonTrack(const char* node, const char* property, const Json:
 // the real document parser. Only engine services and the final drawing sink
 // are doubled; State, Motion, RmlUi layout/input and persistence stay production.
 static std::string Source(bool legacy = false) {
-	Json::Value source; source["format"] = "openq4-ui"; source["version"] = 1; source["id"] = "presentation-runtime";
+	Json::Value source; source["format"] = "opend3-ui"; source["version"] = 1; source["id"] = "presentation-runtime";
 	for (const auto& [name,initial] : std::map<std::string,double>{{"anchor",10},{"divisor",2},{"otherDivisor",2},{"metaDivisor",2},{"page",22}}) {
 		source["state"][name]["type"] = "number"; source["state"][name]["initial"] = initial;
 	}

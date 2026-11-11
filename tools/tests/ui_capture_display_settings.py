@@ -81,7 +81,7 @@ def write_images(game):
     screenshots=game/'screenshots'
     screenshots.mkdir(parents=True,exist_ok=True)
     (game/'.settings-recovery.lock').write_bytes(b'')
-    (game/'openQ4Config.cfg').write_bytes(b'seta r_windowWidth "960"\r\nseta r_windowHeight "540"\r\n')
+    (game/'openD3Config.cfg').write_bytes(b'seta r_windowWidth "960"\r\nseta r_windowHeight "540"\r\n')
     for name,width,height in (('confirm-a',960,540),('keep',960,540),('confirm-b',1024,576),('revert',960,540)):
         header=bytearray(18);header[2]=2;header[16]=24;struct.pack_into('<HH',header,12,width,height)
         pixels=bytes(component for index in range(257) for component in (index%256,(index*3)%256,(index*7)%256))
@@ -192,7 +192,7 @@ class DisplayCapture(unittest.TestCase):
         finally:path.write_bytes(original)
 
     def test_final_journal_lock_and_archived_dimensions(self):
-        journal=self.game/'ui-settings-recovery.dat';lock=self.game/'.settings-recovery.lock';config=self.game/'openQ4Config.cfg'
+        journal=self.game/'ui-settings-recovery.dat';lock=self.game/'.settings-recovery.lock';config=self.game/'openD3Config.cfg'
         original=config.read_bytes()
         try:
             journal.write_bytes(b'corrupt pending record');self.rejects(synthetic_log());journal.unlink()
@@ -211,13 +211,13 @@ class DisplayCapture(unittest.TestCase):
         commands,close,_=capture.retained_commands(args,'retained-smoke.q4ui')
         shots=re.findall(r'^screenshot "([^"]+)"$',commands,re.MULTILINE)
         self.assertEqual(shots,[f'screenshots/ui-display-{name}.tga' for name in ('confirm-a','keep','confirm-b','revert')])
-        self.assertEqual(commands.count('openq4_guiGet "liveHeight"'),6)
+        self.assertEqual(commands.count('opend3_guiGet "liveHeight"'),6)
         self.assertEqual(close,'testGUI\nwait 3\nui_retainedOwnership\n')
-        pieces=commands.split('openq4_guiGet "liveHeight"\n')[1:]
+        pieces=commands.split('opend3_guiGet "liveHeight"\n')[1:]
         for index,piece in enumerate(pieces):self.assertEqual(piece.startswith('screenshot '),index>=2)
         for name in ('confirm-a','keep','confirm-b','revert'):
-            self.assertIn(f'screenshot "screenshots/ui-display-{name}.tga"\nopenq4_retainedGui inspect "settings-panel"\n',commands)
-        self.assertEqual(commands.count('openq4_retainedGui inspect "settings-panel"'),4)
+            self.assertIn(f'screenshot "screenshots/ui-display-{name}.tga"\nopend3_retainedGui inspect "settings-panel"\n',commands)
+        self.assertEqual(commands.count('opend3_retainedGui inspect "settings-panel"'),4)
         for changes in ({'width':960},{'height':540},{'brightness':1.25},{'retained_peer':True},{'retained_document':None},{'retained_script':None},
                         {'language_reload':True,'retained_resume_script':None}):
             with self.subTest(changes=changes),self.assertRaises(ValueError):probe.sources(options(**changes))
@@ -232,10 +232,10 @@ class DisplayCapture(unittest.TestCase):
         args=options(language_reload=True,video_restart=True,retained_resume_script=Path(str(FIXTURE)+'-resume.cfg'))
         commands,_,_=capture.retained_commands(args,'retained-smoke.q4ui')
         for tail in (commands.split('reloadLanguage\n',1)[1],commands.split('vid_restart windowed\n',1)[1]):
-            self.assertNotIn('openq4_retainedGui event ',tail)
-            self.assertNotIn('openq4_retainedGui menu ',tail)
+            self.assertNotIn('opend3_retainedGui event ',tail)
+            self.assertNotIn('opend3_retainedGui menu ',tail)
             self.assertNotIn('screenshot ',tail)
-        self.assertEqual(commands.count('openq4_guiGet "liveHeight"'),8)
+        self.assertEqual(commands.count('opend3_guiGet "liveHeight"'),8)
 
     def test_cli_conflicts_and_defaults_without_process(self):
         base=['capture','--mode','sp','--renderer','gl','--assets','.', '--output','.tmp/unlaunched','--display-settings-probe']
@@ -252,7 +252,7 @@ class DisplayCapture(unittest.TestCase):
     def test_capture_glue_requires_device_evidence_and_uses_final_size(self):
         with tempfile.TemporaryDirectory(prefix='display-capture-glue-',dir=ROOT/'.tmp') as temporary:
             temp=Path(temporary);runtime=temp/'runtime';runtime.mkdir()
-            (runtime/('openQ4-client_x64.exe' if capture.os.name=='nt' else 'openQ4-client_x64')).write_bytes(b'fake-for-orchestration-test')
+            (runtime/('openD3-client_x64.exe' if capture.os.name=='nt' else 'openD3-client_x64')).write_bytes(b'fake-for-orchestration-test')
             for omit_devices in (False,True):
                 output=temp/('invalid' if omit_devices else 'valid')
                 args=options(output=output,runtime=runtime,assets=temp)
@@ -261,11 +261,11 @@ class DisplayCapture(unittest.TestCase):
                     pid=123
                     def __init__(self,command,**kwargs):
                         captured_command.extend(command)
-                        game=output/'save/baseoq4';(game/'logs').mkdir()
+                        game=output/'save/baseod3';(game/'logs').mkdir()
                         lines=synthetic_log()
                         if omit_devices:lines=[line for line in lines if not line.startswith('UI_SETTINGS_DEVICE ')]
                         lines += ['Renderer API: requested=gl active=gl disposition=builtin','UI_BASELINE_CAPTURE_COMPLETE']
-                        (game/'logs/openq4.log').write_text('\n'.join(lines)+'\n',encoding='utf-8')
+                        (game/'logs/opend3.log').write_text('\n'.join(lines)+'\n',encoding='utf-8')
                         write_images(game)
                         (game/'screenshots/ui-baseline.tga').write_bytes((game/'screenshots/ui-display-revert.tga').read_bytes())
                     def wait(self,timeout):return 0
@@ -288,10 +288,10 @@ class DisplayCapture(unittest.TestCase):
                 self.assertEqual(captured_command[captured_command.index('r_multiSamples')+1],'0')
                 self.assertEqual(captured_command.count('r_multiSamples'),1)
                 self.assertEqual(captured_command[captured_command.index('in_mouse')+1],'0')
-                config=(output/'save/baseoq4/ui-baseline.cfg').read_text(encoding='utf-8')
+                config=(output/'save/baseod3/ui-baseline.cfg').read_text(encoding='utf-8')
                 self.assertEqual(config.count('screenshot "screenshots/ui-display-'),4)
-                self.assertEqual(config.count('openq4_retainedGui inspect "settings-panel"'),5)
-                self.assertIn('screenshot "screenshots/ui-baseline.tga"\nopenq4_retainedGui inspect "settings-panel"\n',config)
+                self.assertEqual(config.count('opend3_retainedGui inspect "settings-panel"'),5)
+                self.assertIn('screenshot "screenshots/ui-baseline.tga"\nopend3_retainedGui inspect "settings-panel"\n',config)
 
 
 if __name__=='__main__':

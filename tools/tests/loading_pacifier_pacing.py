@@ -131,7 +131,7 @@ def validate_read_count_granularity() -> None:
                   "AddToReadCount progress accounting before pacifier offer")
     # Startup is different: the initialization screen paces itself by time, and
     # its small script/decl/GUI reads are the only moments some steps offer.
-    require_order(body, "session->PacifierUpdate();", "openQ4_UpdateInitialization();",
+    require_order(body, "session->PacifierUpdate();", "openD3_UpdateInitialization();",
                   "AddToReadCount offers every main-thread startup read to the initialization screen")
 
     # Progress accuracy must not regress: readCount still advances every chunk.
@@ -148,14 +148,14 @@ def validate_presentation_cap_agreement() -> None:
     or admitted frames sleep away the difference."""
     session = read("src/framework/Session.cpp")
     cap = function_body(session, "static int Session_FindPresentationCap( void ) {")
-    require(cap, "openQ4_GetRequestedPresentationCap()", "Session presentation cap source")
+    require(cap, "openD3_GetRequestedPresentationCap()", "Session presentation cap source")
     refuse(cap, 'cvarSystem->GetCVarInteger( "com_maxfps" )', "Session presentation cap (raw com_maxfps)")
 
     common = read("src/framework/Common.cpp")
-    require(common, "int openQ4_GetRequestedPresentationCap( void ) {", "exported presentation cap accessor")
+    require(common, "int openD3_GetRequestedPresentationCap( void ) {", "exported presentation cap accessor")
 
     header = read("src/framework/Common.h")
-    require(header, "int					openQ4_GetRequestedPresentationCap( void );", "Common.h cap accessor declaration")
+    require(header, "int					openD3_GetRequestedPresentationCap( void );", "Common.h cap accessor declaration")
 
 
 def validate_throttle_spin_is_bounded() -> None:

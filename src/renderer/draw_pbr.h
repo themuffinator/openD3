@@ -1,6 +1,6 @@
 // Copyright (C) 2026 DarkMatter Productions
-#ifndef OPENQ4_DRAW_PBR_H
-#define OPENQ4_DRAW_PBR_H
+#ifndef OPEND3_DRAW_PBR_H
+#define OPEND3_DRAW_PBR_H
 
 // Native per-surface PBR in the classic OpenGL light loop (draw_pbr.cpp):
 // Stage B of docs/dev/archive/2026-10-18/plans/2026-10-04-pbr-production-readiness.md. An

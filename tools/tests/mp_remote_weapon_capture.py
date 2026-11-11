@@ -42,15 +42,15 @@ def main() -> int:
     args = parser.parse_args()
     runtime, output = args.runtime_dir.resolve(), args.output_dir.resolve()
     verify_runtime_is_current(runtime)
-    exe = runtime / ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    exe = runtime / ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     if output.exists() or not exe.is_file() or not (args.basepath / "q4base").is_dir():
         parser.error("use a new output directory, a staged client and installed retail assets")
     output.mkdir(parents=True)
-    paths = [exe, *sorted((runtime / "baseoq4").glob("game-mp*")), *sorted(runtime.glob("renderer-*")),
-             runtime / "baseoq4/pak0.pk4", runtime / "baseoq4/pak1.pk4"]
+    paths = [exe, *sorted((runtime / "baseod3").glob("game-mp*")), *sorted(runtime.glob("renderer-*")),
+             runtime / "baseod3/pak0.pk4", runtime / "baseod3/pak1.pk4"]
     identity = {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
                 for p in paths if p.is_file() and p.suffix not in (".pdb", ".lib", ".exp")}
-    games = {role: output / role / "baseoq4" for role in ("host", "observer")}
+    games = {role: output / role / "baseod3" for role in ("host", "observer")}
     for game in games.values():
         game.mkdir(parents=True)
     # The host keeps playing so the match stays live, but bots ignore it
@@ -60,7 +60,7 @@ def main() -> int:
     host = ['set g_autoExecAfterMapLoad ""', "god", "notarget", f"addbot Sledge {args.bot_skill}", f"addbot Gorge {args.bot_skill}", f"addbot Kane {args.bot_skill}",
             "echo REMOTE_WEAPON_HOST_READY",
             # The server's own camera verdicts (MP_CAMERA ... allowed=) every 5 s.
-            *[step for _ in range(30) for step in ("waitMsec 5000", "openq4_reportMPState")], "quit"]
+            *[step for _ in range(30) for step in ("waitMsec 5000", "opend3_reportMPState")], "quit"]
     shots = []
     # Auto-join can still apply Play after the first frames, so request
     # spectating again once it has settled.
@@ -70,16 +70,16 @@ def main() -> int:
                 # refusal keeps the previous camera, so ask for each bot in turn;
                 # slot 0 is the host, which never fires.
                 "follow 1", "waitMsec 400", "follow 2", "waitMsec 400", "follow 3", "waitMsec 2000",
-                "echo REMOTE_WEAPON_FOLLOWING", "openq4_reportMPState"]
+                "echo REMOTE_WEAPON_FOLLOWING", "opend3_reportMPState"]
     for view in ("first", "third"):
         if view == "third":
             observer += ["set pm_thirdPerson 1", "set pm_thirdPersonRange 120", "waitMsec 1000"]
-        observer += [f"echo REMOTE_WEAPON_BURST {view}", "openq4_reportMPState"]
+        observer += [f"echo REMOTE_WEAPON_BURST {view}", "opend3_reportMPState"]
         for index in range(args.burst):
             name = f"{view}_{index:02d}"
             shots.append(name)
             observer += [f"waitMsec {INTERVAL_MSEC}", f"screenshot screenshots/{name}.tga"]
-        observer += [f"echo REMOTE_WEAPON_BURST_END {view}", "openq4_reportMPState"]
+        observer += [f"echo REMOTE_WEAPON_BURST_END {view}", "opend3_reportMPState"]
     observer += ["echo REMOTE_WEAPON_COMPLETE", "disconnect", "quit"]
     write_script(games["host"] / "remote_weapon.cfg", host)
     write_script(games["observer"] / "remote_weapon.cfg", observer)
@@ -95,10 +95,10 @@ def main() -> int:
                  "r_mode": "-1", "r_customWidth": "960", "r_customHeight": "540", "r_windowWidth": "960",
                  "r_windowHeight": "540", "r_swapInterval": "0", "com_maxfps": "60", "s_noSound": "1",
                  "ui_autoJoin": "1", "ui_spectate": "Play" if role == "host" else "Spectate",
-                 "ui_name": "WeaponHost" if role == "host" else "WeaponObserver", "fs_game": "baseoq4",
+                 "ui_name": "WeaponHost" if role == "host" else "WeaponObserver", "fs_game": "baseod3",
                  "com_gameMode": "MP", "com_nextGameModule": "game_mp",
                  "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(game.parent),
-                 "fs_devpath": str(game.parent), "logFile": "2", "logFileName": "logs/openq4.log",
+                 "fs_devpath": str(game.parent), "logFile": "2", "logFileName": "logs/opend3.log",
                  "developer": "1", "net_allowCheats": "1", "net_serverDedicated": "0", "net_LANServer": "1",
                  "net_port": str(args.port if role == "host" else args.port + 1), "net_ip": "127.0.0.1",
                  "net_enableIPv6": "0", "si_pure": "0", "si_gameType": "DM", "si_minPlayers": "1",
@@ -121,7 +121,7 @@ def main() -> int:
     try:
         launch("host")
         until = time.monotonic() + 90
-        while "REMOTE_WEAPON_HOST_READY" not in read_log(games["host"] / "logs/openq4.log"):
+        while "REMOTE_WEAPON_HOST_READY" not in read_log(games["host"] / "logs/opend3.log"):
             if time.monotonic() > until or processes["host"].poll() is not None:
                 raise RuntimeError("host did not start the bot match")
             time.sleep(0.25)
@@ -140,7 +140,7 @@ def main() -> int:
                 process.wait()
         for stream in streams:
             stream.close()
-    log = re.sub(r"\^[0-9A-Za-z]", "", read_log(games["observer"] / "logs/openq4.log"))
+    log = re.sub(r"\^[0-9A-Za-z]", "", read_log(games["observer"] / "logs/opend3.log"))
     if "REMOTE_WEAPON_COMPLETE" not in log or re.search(r"ERROR:|FATAL:|Unknown command", log):
         failures.append("observer did not complete cleanly")
     if not re.search(rf"Renderer API: {args.renderer} \(", log):
@@ -165,7 +165,7 @@ def main() -> int:
               "identity": identity, "frags": frags, "follow_targets": following[:10],
               "captures": [str(games["observer"] / f"screenshots/{s}.tga") for s in shots],
               "failures": failures,
-              "logs": {role: str(game / "logs/openq4.log") for role, game in games.items()}}
+              "logs": {role: str(game / "logs/opend3.log") for role, game in games.items()}}
     (output / "report.json").write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps({"status": report["status"], "failures": failures, "frags": frags}, indent=2))
     return int(bool(failures))

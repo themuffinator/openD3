@@ -8,7 +8,7 @@
 #include "../../../src/renderer/PBREnvironment.h"
 #include "../../../src/imagetools/SRGB.h"
 
-namespace kernel = openq4PBRMath;
+namespace kernel = opend3PBRMath;
 
 static void Require(bool condition, const char *message) {
     if (!condition) { std::fprintf(stderr, "PBRMathTest: %s\n", message); std::exit(1); }
@@ -27,7 +27,7 @@ static double ReferenceVisibility(double v, double l, double roughness) {
 }
 
 static void EnvironmentTests() {
-    using namespace openq4PBR;
+    using namespace opend3PBR;
     // Independent numeric decoding covers every nonnegative finite binary16
     // value, including subnormals and the mantissa/exponent carry boundaries.
     for (unsigned int half = 0; half <= 0x7bff; ++half) {
@@ -132,7 +132,7 @@ static void EnvironmentTests() {
 // a pass cannot bind it, and compensation must restore a white furnace without
 // letting any F0 gain energy.
 static void EnergyCompensationTests() {
-    using namespace openq4PBR;
+    using namespace opend3PBR;
     double worstInverse = 0;
     for (int ri = 0; ri <= 20; ++ri) {
         const float r = 0.045f + (1.0f - 0.045f) * ri / 20.0f;
@@ -162,7 +162,7 @@ static void EnergyCompensationTests() {
 // for it off the fit grid, and a uniform environment (an ambient light) must
 // keep a white furnace while F0 only ever adds reflection.
 static void UniformEnvironmentTests() {
-    using namespace openq4PBR;
+    using namespace opend3PBR;
     double worstBias = 0, worstDielectric = 0;
     for (int ri = 0; ri < 23; ++ri) {
         const float r = 0.045f + (1.0f - 0.045f) * (ri + 0.37f) / 23.0f;
@@ -319,20 +319,20 @@ int main() {
     for (int i = 0; i <= 255; ++i) {
         const float x = i / 255.0f;
         Require(std::fabs(kernel::PBRLinearToSRGB(kernel::PBRSRGBToLinear(x)) - x) < 2e-7f, "sRGB round trip");
-        Require(std::fabs(openq4SRGB::Decode(x)-kernel::PBRSRGBToLinear(x)) < 2e-7f, "CPU image/shader sRGB agreement");
+        Require(std::fabs(opend3SRGB::Decode(x)-kernel::PBRSRGBToLinear(x)) < 2e-7f, "CPU image/shader sRGB agreement");
     }
     // A checker mip must preserve half the light, while coverage averages
     // linearly. Gamma-correcting alpha incorrectly gives 186 instead of 128.
     const unsigned char checker[16]={0,0,0,0, 255,255,255,255, 255,255,255,255, 0,0,0,0};
     unsigned char mip[4]={};
-    openq4SRGB::Downsample(checker,2,2,mip);
+    opend3SRGB::Downsample(checker,2,2,mip);
     Require(mip[0]==188 && mip[1]==188 && mip[2]==188 && mip[3]==128,"linear-light RGB mip and linear coverage");
-    openq4SRGB::Downsample(checker,1,2,mip);
+    opend3SRGB::Downsample(checker,1,2,mip);
     Require(mip[0]==188 && mip[3]==128,"one-column sRGB mip");
-    openq4SRGB::Downsample(checker,2,1,mip);
+    opend3SRGB::Downsample(checker,2,1,mip);
     Require(mip[0]==188 && mip[3]==128,"one-row sRGB mip");
     const unsigned char toe[8]={0,0,0,17, 20,20,20,239};
-    openq4SRGB::Downsample(toe,2,1,mip);
+    opend3SRGB::Downsample(toe,2,1,mip);
     Require(mip[0]==11 && mip[3]==128,"sRGB toe differs from power-2.2 filtering");
     Require(kernel::PBRVisibilitySmithGGX(0, 1, 0) == 0, "grazing limit");
     Require(kernel::PBRVisibilitySmithGGX(1, -1, 0) == 0, "back-face light");

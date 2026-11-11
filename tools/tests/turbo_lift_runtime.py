@@ -97,7 +97,7 @@ def main():
     leg = cross.parse_args(['write', '--install-root', str(args.install_root.resolve()),
         '--basepath', str(args.basepath.resolve()), '--home', str(output), '--map', 'game/hangar1', '--tag', 'unused',
         '--set', 'r_renderApi', args.renderer, '--set', 'g_turboMode', args.turbo])
-    game = output / 'baseoq4'
+    game = output / 'baseod3'
     cfg = game / cross.CFG_REL
     cfg.parent.mkdir(parents=True, exist_ok=True)
     cfg.write_text('\n'.join(commands()), encoding='utf-8')
@@ -127,7 +127,7 @@ def main():
         expect_stall=args.expect_stall, checks=checks,
         passed=expected and not timed_out and process.returncode == 0,
         runtime={str(path.relative_to(client.parent)): hashlib.sha256(path.read_bytes()).hexdigest()
-                 for path in (client, *sorted((client.parent/'baseoq4').glob('game-*.*')))
+                 for path in (client, *sorted((client.parent/'baseod3').glob('game-*.*')))
                  if path.suffix.lower() in ('.exe', '.dll', '.so', '.dylib')},
         log_sha256=hashlib.sha256(log.read_bytes()).hexdigest() if log.is_file() else None)
     (output / 'report.json').write_text(json.dumps(report, indent=2)+'\n')

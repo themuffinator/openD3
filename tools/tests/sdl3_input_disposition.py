@@ -162,11 +162,11 @@ def main():
                 sources=[str(unit),str(servicepath),str(ROOT/'src/sys/EventQueueContinuity.cpp'),str(ROOT/'src/framework/NativeInputRoute.cpp')]
                 if msvc:
                     command=[compiler,'/nologo','/std:c++20','/EHsc','/W4','/WX','/wd4505','/MTd' if args.msvc_debug else '/MT','/Od' if args.msvc_debug else '/O2']
-                    if host=='posix':command+=['/DOPENQ4_SDL3_POSIX_HOST=1']
+                    if host=='posix':command+=['/DOPEND3_SDL3_POSIX_HOST=1']
                     command+=['/I'+str(variant),'/I'+str(ROOT),*sources,'/Fo'+str(variant)+os.sep,'/Fe'+str(output)]
                 else:
                     command=[compiler,'-std=c++20','-O1' if args.sanitizers else '-O2','-Wall','-Wextra','-Werror','-Wno-unused-function','-Wno-unused-const-variable']
-                    if host=='posix':command+=['-DOPENQ4_SDL3_POSIX_HOST=1']
+                    if host=='posix':command+=['-DOPEND3_SDL3_POSIX_HOST=1']
                     if args.sanitizers:command+=['-fsanitize=address,undefined','-fno-omit-frame-pointer','-g']
                     if os.name!='nt':command+=['-pthread']
                     command+=['-I',str(variant),'-I',str(ROOT),*sources,'-o',str(output)]

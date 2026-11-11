@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 
-openQ4 network endpoint parsing helpers.
+openD3 network endpoint parsing helpers.
 
 These helpers intentionally have no engine dependencies so the address grammar
 used by the platform socket layers can also be covered by the native tests.

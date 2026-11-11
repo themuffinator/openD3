@@ -216,7 +216,7 @@ static void OverflowOrder() {
     Empty(); Sys_ClearEvents(); CheckCleared();
 }
 static void ContinuityCases() {
-    openq4::EventQueueContinuity local(3), unavailable(0);
+    opend3::EventQueueContinuity local(3), unavailable(0);
     Check(local.Matches(1) && !local.Matches(0) && !unavailable.Matches(0),"only nonzero exact continuity tokens are usable");
     local.Invalidate(); Check(local.Matches(2) && !local.Matches(1),"invalidation never matches the prior collection");
     local.Invalidate(); Check(local.Matches(3),"last nonreused token can be observed");

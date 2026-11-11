@@ -28,9 +28,9 @@ import zlib
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / "tools/ui/fixtures/display-settings-smoke.q4ui"
-MAGIC = b"openQ4 settings recovery 1\n"
+MAGIC = b"openD3 settings recovery 1\n"
 JOURNAL_NAME = "ui-settings-recovery.dat"
-CONFIG_NAME = "openQ4Config.cfg"
+CONFIG_NAME = "openD3Config.cfg"
 READS = ("phase", "open", "dirty", "request", "confirmationVisible", "canConfirm",
          "canRevert", "canRetry", "remaining", "draftWidth", "draftHeight",
          "baselineWidth", "baselineHeight", "liveWidth", "liveHeight")
@@ -43,10 +43,10 @@ def digest(path: Path) -> str:
 def scripts() -> tuple[str, str]:
     before = ('rendererDisplayProbe report\n'
               'testGUI "settings-recovery.q4ui"\nwait 2\n'
-              'openq4_retainedGui event "edit"\nwait 2\n'
-              'openq4_retainedGui event "apply"\nwait 12\n'
-              'openq4_retainedGui report\n')
-    before += "".join(f'openq4_guiGet "{name}"\n' for name in READS)
+              'opend3_retainedGui event "edit"\nwait 2\n'
+              'opend3_retainedGui event "apply"\nwait 12\n'
+              'opend3_retainedGui report\n')
+    before += "".join(f'opend3_guiGet "{name}"\n' for name in READS)
     before += ('rendererDisplayProbe report\ngfxInfo\n'
                'screenshot "screenshots/settings-recovery-pending.tga"\n'
                'echo SETTINGS_RECOVERY_PENDING_COMPLETE\nquit\n')
@@ -60,7 +60,7 @@ def command(profile: dict, runtime: Path, assets: Path, save: Path, mode: str,
             renderer: str, phase: str) -> list[str]:
     values = {
         "fs_basepath": str(assets), "fs_savepath": str(save), "fs_devpath": str(save),
-        "fs_game": "baseoq4", "logFile": "2", "logFileName": f"logs/recovery-{phase}.log",
+        "fs_game": "baseod3", "logFile": "2", "logFileName": f"logs/recovery-{phase}.log",
         "r_fullscreen": "0", "r_fullscreenDesktop": "0", "r_borderless": "0",
         "r_borderlessDefaultMigrated": "1", "r_hiddenWindow": "1", "r_screen": "-1",
         "r_windowWidth": "1280", "r_windowHeight": "720", "r_mode": "-1",
@@ -94,7 +94,7 @@ def command(profile: dict, runtime: Path, assets: Path, save: Path, mode: str,
         else:
             tail.append(original[index])
             index += 1
-    executable = runtime / ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    executable = runtime / ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     result = [str(executable)]
     for key, value in values.items():
         result.extend(("+set", key, value))
@@ -378,7 +378,7 @@ def capture(args: argparse.Namespace) -> int:
     prefix = "(SP) airdefense1 " if args.mode == "sp" else "(MP) q4dm1 "
     profile = next(item for item in profiles if item["name"].startswith(prefix) and item["name"].endswith("GL"))
     save = output / "save"
-    game = save / "baseoq4"
+    game = save / "baseod3"
     commands = {phase: command(profile, runtime, assets, save, args.mode, args.renderer, phase) for phase in ("pending", "startup")}
     if not Path(commands["pending"][0]).is_file():
         raise ValueError("staged client is absent")
@@ -390,7 +390,7 @@ def capture(args: argparse.Namespace) -> int:
         path.write_text(script, encoding="utf-8")
         cfgs[phase] = {"path": str(path), "sha256": digest(path), "text": script}
     binary_paths = [Path(commands["pending"][0])]
-    binary_paths += [path for pattern in ("renderer-*", "baseoq4/game-*") for path in runtime.glob(pattern)
+    binary_paths += [path for pattern in ("renderer-*", "baseod3/game-*") for path in runtime.glob(pattern)
                      if path.is_file() and path.suffix.lower() in (".dll", ".so", ".dylib")]
     binaries = {str(path.relative_to(runtime)): digest(path) for path in sorted(binary_paths)}
     sources = source_manifest()

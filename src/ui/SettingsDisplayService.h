@@ -11,14 +11,14 @@
 
 // Native adapter for the application controller. Its lifetime exceeds GUI and
 // renderer resources. Recovery identities on disk never contain process tokens.
-class EngineSettingsDisplayHost final : public openq4::ui::SettingsDisplayHost {
+class EngineSettingsDisplayHost final : public opend3::ui::SettingsDisplayHost {
 public:
-	explicit EngineSettingsDisplayHost(openq4::ui::SystemSettingsHost& host) : settings(host) {}
-	bool Prepare(const openq4::ui::SettingsAttempt&, std::string& error) override;
+	explicit EngineSettingsDisplayHost(opend3::ui::SystemSettingsHost& host) : settings(host) {}
+	bool Prepare(const opend3::ui::SettingsAttempt&, std::string& error) override;
 	bool CancelPreparation(std::string& error) override;
-	bool Restart(bool restoring, openq4::ui::SettingsDisplayObservation&, std::string& error) override;
-	bool Observe(bool restoring, openq4::ui::SettingsDisplayObservation&, std::string& error) override;
-	bool PersistConfirmation(const openq4::ui::SettingsAttempt&, std::string& error) override;
+	bool Restart(bool restoring, opend3::ui::SettingsDisplayObservation&, std::string& error) override;
+	bool Observe(bool restoring, opend3::ui::SettingsDisplayObservation&, std::string& error) override;
+	bool PersistConfirmation(const opend3::ui::SettingsAttempt&, std::string& error) override;
 	bool Finish(bool restoring, std::string& error) override;
 	// Config/preferences have settled. Returns false without deleting evidence.
 	bool Startup(std::string& error);
@@ -49,15 +49,15 @@ public:
 	// classes) proves itself with later presented frames, so it needs a
 	// presenting renderer; one that changes r_renderer also needs the
 	// renderer's selection report.
-	bool SupportsCombined(const openq4::ui::StateValues& baseline, const openq4::ui::StateValues& target) const;
+	bool SupportsCombined(const opend3::ui::StateValues& baseline, const opend3::ui::StateValues& target) const;
 	// The renderer's latest selection report for its current module.
 	bool RendererSelection(renderRendererSelection_t& selection, std::uint64_t& serial) const;
 	// The display lists' inputs. The stamp moves with the display topology, the
 	// window's display and the labels in effect, so the settings service
 	// recaptures only when one of them changes; reading it is cheap.
-	void CatalogStamp(openq4::ui::SystemDisplayCatalogStamp& stamp) const;
-	bool CaptureCatalogInput(const openq4::ui::SystemDisplayCatalogStamp& stamp,
-		openq4::ui::SystemDisplayCatalogInput& input, std::string& error) const;
+	void CatalogStamp(opend3::ui::SystemDisplayCatalogStamp& stamp) const;
+	bool CaptureCatalogInput(const opend3::ui::SystemDisplayCatalogStamp& stamp,
+		opend3::ui::SystemDisplayCatalogInput& input, std::string& error) const;
 
 private:
 	bool Paths(std::string& error);
@@ -66,16 +66,16 @@ private:
 	bool Place(const sysWindowPlacementSnapshot_t& finalState, std::string& error);
 	bool ReleasePlacement(std::string& error);
 	bool FinishJournal(std::string& error);
-	bool ValidateLive(const openq4::ui::StateValues& target, std::string& error);
-	bool ValidateOwned(const openq4::ui::StateValues& owned, const openq4::ui::StateValues& expected, std::string& error);
+	bool ValidateLive(const opend3::ui::StateValues& target, std::string& error);
+	bool ValidateOwned(const opend3::ui::StateValues& owned, const opend3::ui::StateValues& expected, std::string& error);
 	bool CommitConfiguration(std::string& error);
 	bool NewAttemptIdentity(std::string& attempt, std::string& error);
-	bool PrepareDeferred(const openq4::ui::SettingsAttempt&, std::string& error);
-	bool StartupDeferred(const std::string& bytes, const openq4::ui::SettingsEffectRecoveryJournal& saved, std::string& error);
-	bool PrepareRenderer(const openq4::ui::SettingsAttempt&, std::string& error);
-	bool StartupRenderer(const std::string& bytes, const openq4::ui::SettingsEffectRecoveryJournal& record, std::string& error);
-	bool PrepareCombined(const openq4::ui::SettingsAttempt&, std::string& error);
-	bool StartupCombined(const std::string& bytes, const openq4::ui::SettingsEffectRecoveryJournal& record, std::string& error);
+	bool PrepareDeferred(const opend3::ui::SettingsAttempt&, std::string& error);
+	bool StartupDeferred(const std::string& bytes, const opend3::ui::SettingsEffectRecoveryJournal& saved, std::string& error);
+	bool PrepareRenderer(const opend3::ui::SettingsAttempt&, std::string& error);
+	bool StartupRenderer(const std::string& bytes, const opend3::ui::SettingsEffectRecoveryJournal& record, std::string& error);
+	bool PrepareCombined(const opend3::ui::SettingsAttempt&, std::string& error);
+	bool StartupCombined(const std::string& bytes, const opend3::ui::SettingsEffectRecoveryJournal& record, std::string& error);
 	// The display half of a cold start, for the record now held in journal.
 	bool StartupDisplay(const std::string& bytes, bool combined, std::string& error);
 	// The attempt restarts the renderer device; changes the display itself
@@ -93,11 +93,11 @@ private:
 	bool RendererAgrees(const std::string& request, std::uint64_t& serial, std::string& error) const;
 	bool RendererCurrent(bool restoring, std::string& error) const;
 	std::string RendererRequest(bool restoring) const;
-	const openq4::ui::StateValues& SavedDisplay(bool restoring) const;
+	const opend3::ui::StateValues& SavedDisplay(bool restoring) const;
 	void Clear();
-	openq4::ui::SystemSettingsHost& settings;
-	openq4::DurableFileLease processLease;
-	openq4::ui::SettingsRecoveryJournal journal;
+	opend3::ui::SystemSettingsHost& settings;
+	opend3::DurableFileLease processLease;
+	opend3::ui::SettingsRecoveryJournal journal;
 	// A deferred attempt (the next-map light-grid preload) journals a schema-2
 	// record with only its deferred domain; nothing restarts, and a later
 	// presented frame proves the engine still runs before it commits. A
@@ -110,15 +110,15 @@ private:
 	enum class Kind { Display, Deferred, Renderer, Combined };
 	Kind kind = Kind::Display;
 	std::uint64_t selectionSerial = 0; // the selection report the last restart produced
-	openq4::ui::SettingsEffectRecoveryJournal effects;
+	opend3::ui::SettingsEffectRecoveryJournal effects;
 	// A deferred or renderer record, and a combined one that changed no
 	// display, replays catalog values only: the engine starts the normal way,
 	// and the first full frame commits.
 	bool catalogStartup = false;
-	openq4::ui::SystemDisplayPlan targetPlan, restorePlan;
+	opend3::ui::SystemDisplayPlan targetPlan, restorePlan;
 	rendererDisplayState_t baselineDevice{}, currentDevice{};
 	sysWindowPlacementSnapshot_t placement{}, expectedPlacement{}, committedPlacement{};
-	openq4::ui::StateValues startupTarget;
+	opend3::ui::StateValues startupTarget;
 	std::uint64_t placementToken = 0;
 	std::string journalPath, lockPath, writtenBytes, attemptedBytes, recoveryError;
 	bool ownsJournal = false, placed = false, blocked = false, startup = false, startupReady = false;

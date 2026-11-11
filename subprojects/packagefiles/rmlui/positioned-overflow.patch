@@ -14,7 +14,7 @@
  			// Set the offset of the element; the element itself will take care of any RCSS-defined positional offsets.
  			absolute_element->SetOffset(offset, element);
 +
-+			// openQ4: Positioned children are formatted after SubmitBox. Include
++			// openD3: Positioned children are formatted after SubmitBox. Include
 +			// their resolved, unscrolled overflow before the caller encloses this
 +			// box, including overflow through nested non-clipping containers.
 +			// Fixed elements do not extend a scrolling ancestor's content.
@@ -35,7 +35,7 @@
 +				if (!IsScrollContainer())
 +					SetVisibleOverflowSize(Math::Max(GetVisibleOverflowSize(), visible_end));
 +				// This late correction does not rerun layout to add nonzero-size
-+				// native auto scrollbars. Canonical openQ4 documents suppress those
++				// native auto scrollbars. Canonical openD3 documents suppress those
 +				// controls and use semantic scrolling; authored bars remain separate.
 +			}
  		}
@@ -47,7 +47,7 @@
  	if (!SubmitBox(content_box, inner_content_margin_size, box, max_height))
  		return false;
  
-+	// openQ4: Resolve positioned descendants before propagating this box's
++	// openD3: Resolve positioned descendants before propagating this box's
 +	// visible overflow to its parent. OpenBlockBox already established its offset.
 +	ClosePositionedElements();
 +

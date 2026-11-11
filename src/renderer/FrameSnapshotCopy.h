@@ -1,6 +1,6 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
-#ifndef OPENQ4_FRAME_SNAPSHOT_COPY_H
-#define OPENQ4_FRAME_SNAPSHOT_COPY_H
+#ifndef OPEND3_FRAME_SNAPSHOT_COPY_H
+#define OPEND3_FRAME_SNAPSHOT_COPY_H
 
 #include <cstddef>
 #include <cstring>

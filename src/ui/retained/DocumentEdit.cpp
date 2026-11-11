@@ -6,7 +6,7 @@
 #include <atomic>
 #include <string_view>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 struct Refused { const char* reason; };
 void Require(bool condition,const char* reason) { if(!condition)throw Refused{reason}; }
@@ -301,4 +301,4 @@ bool DocumentEdit::Travel(DocumentEditIdentity expected,bool redo,DocumentEditRe
 }
 bool DocumentEdit::Undo(DocumentEditIdentity id,DocumentEditReceipt& out,std::vector<Diagnostic>& diagnostics) noexcept{return Travel(id,false,out,diagnostics);}
 bool DocumentEdit::Redo(DocumentEditIdentity id,DocumentEditReceipt& out,std::vector<Diagnostic>& diagnostics) noexcept{return Travel(id,true,out,diagnostics);}
-} // namespace openq4::ui
+} // namespace opend3::ui

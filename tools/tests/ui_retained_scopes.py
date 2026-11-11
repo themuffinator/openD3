@@ -92,7 +92,7 @@ struct idUserInterface {
     void StateChanged(int time){changed=time;} float GetStateFloat(const char*k)const{return std::atof(state.GetString(k));}
     void HandleNamedEvent(const char*e){events.push_back(e);} bool IsUniqued()const{return unique;}
 };
-struct Cvars {bool retained=true;const char*mod="baseoq4";bool GetCVarBool(const char*){return retained;}const char*GetCVarString(const char*k){return std::string(k)=="fs_game"?mod:"";}} cv;
+struct Cvars {bool retained=true;const char*mod="baseod3";bool GetCVarBool(const char*){return retained;}const char*GetCVarString(const char*k){return std::string(k)=="fs_game"?mod:"";}} cv;
 auto*cvarSystem=&cv;
 struct idFile{};
 struct Files {bool missing=false,modOverride=false;int reads=0;idFile file;int ReadFile(const char*,void*){++reads;return missing?-1:1;}idFile*OpenFileRead(const char*,bool,const char*){return modOverride?&file:nullptr;}void CloseFile(idFile*){}} fs;
@@ -112,24 +112,24 @@ int main(){
     idDict args;args.Set("gui_zoom",stock.c_str());idStr requested;
     idUserInterface old(stock.c_str());old.SetStateString("lockStatus","1");old.SetStateString("lockRange","12.4");
     idUserInterface*gui=&old;cv.retained=false;
-    OpenQ4_UpdateScopeGui(gui,requested,args);assert(gui==&old);
-    cv.retained=true;OpenQ4_UpdateScopeGui(gui,requested,args);
+    openD3_UpdateScopeGui(gui,requested,args);assert(gui==&old);
+    cv.retained=true;openD3_UpdateScopeGui(gui,requested,args);
     assert(gui!=&old && std::string(gui->Name())==retained && gui->changed==101 && gui->unique);
     assert(std::string(gui->State().GetString("name"))==retained && std::string(gui->State().GetString("lockRange"))=="12.4");
     assert(gui->events.size()==1 && gui->events[0]=="lockAquired");
-    int loads=manager.loads,reads=fs.reads;OpenQ4_UpdateScopeGui(gui,requested,args);assert(manager.loads==loads && fs.reads==reads);
+    int loads=manager.loads,reads=fs.reads;openD3_UpdateScopeGui(gui,requested,args);assert(manager.loads==loads && fs.reads==reads);
     // Restore has consumed the serialized GUI, then clears only the transient preference cache.
     requested.Clear();cv.retained=false;int frees=manager.frees;
-    OpenQ4_UpdateScopeGui(gui,requested,args);assert(std::string(gui->Name())==stock && manager.frees==frees+1);
+    openD3_UpdateScopeGui(gui,requested,args);assert(std::string(gui->Name())==stock && manager.frees==frees+1);
     manager.DeAlloc(gui);
     gui=&old;requested.Clear();cv.retained=true;fs.missing=true;
-    OpenQ4_UpdateScopeGui(gui,requested,args);assert(gui==&old);fs.missing=false;
-    requested.Clear();manager.invalid=true;OpenQ4_UpdateScopeGui(gui,requested,args);assert(gui==&old);manager.invalid=false;
-    requested.Clear();cv.mod="custom";fs.modOverride=true;OpenQ4_UpdateScopeGui(gui,requested,args);assert(gui==&old);
-    cv.mod="baseoq4";fs.modOverride=false;
+    openD3_UpdateScopeGui(gui,requested,args);assert(gui==&old);fs.missing=false;
+    requested.Clear();manager.invalid=true;openD3_UpdateScopeGui(gui,requested,args);assert(gui==&old);manager.invalid=false;
+    requested.Clear();cv.mod="custom";fs.modOverride=true;openD3_UpdateScopeGui(gui,requested,args);assert(gui==&old);
+    cv.mod="baseod3";fs.modOverride=false;
  }
  idDict args;args.Set("gui_zoom","guis/modscope.gui");idStr requested;idUserInterface old("guis/modscope.gui");auto*gui=&old;
- int reads=fs.reads;OpenQ4_UpdateScopeGui(gui,requested,args);assert(gui==&old && reads==fs.reads);
+ int reads=fs.reads;openD3_UpdateScopeGui(gui,requested,args);assert(gui==&old && reads==fs.reads);
 }
 '''
 

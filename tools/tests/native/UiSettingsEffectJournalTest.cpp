@@ -13,11 +13,11 @@
 #include <crtdbg.h>
 #endif
 #include "tools/tests/native/FloatFlushMode.h"
-namespace openq4::ui {
+namespace opend3::ui {
 bool BaselineEncodeSettingsJournal(const SettingsRecoveryJournal&,const std::map<std::string,std::size_t>&,std::string&,std::string&);
 bool BaselineDecodeSettingsJournal(const std::string&,const std::map<std::string,std::size_t>&,SettingsRecoveryJournal&,std::string&);
 }
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks,faultPoint;
 #define CHECK(x) do { ++checks; if (!(x)) {std::fprintf(stderr,"FAIL %d: %s\n",__LINE__,#x);std::exit(1);} } while(false)
 static long failAfter=-1;static unsigned allocations=0;
@@ -30,7 +30,7 @@ TEST_NOINLINE void* operator new(std::size_t size) {if(failAfter==0)throw std::b
 TEST_NOINLINE void* operator new[](std::size_t size){return ::operator new(size);}
 TEST_NOINLINE void operator delete(void* p) noexcept {std::free(p);}TEST_NOINLINE void operator delete[](void* p) noexcept {std::free(p);}
 TEST_NOINLINE void operator delete(void* p,std::size_t) noexcept {std::free(p);}TEST_NOINLINE void operator delete[](void* p,std::size_t) noexcept {std::free(p);}
-using FloatMode=openq4::test::FloatFlushMode;
+using FloatMode=opend3::test::FloatFlushMode;
 static StateValues Values() {
  StateValues v;for(const auto& [k,f]:SettingsEffectCatalogV4())v[k]=f.type==0?StateValue(0.0):f.type==1?StateValue(false):StateValue(std::string("original"));
  v["r_windowWidth"]=1280.0;v["r_windowHeight"]=720.0;v["r_customWidth"]=1280.0;v["r_customHeight"]=720.0;v["r_screen"]=-1.0;
@@ -246,7 +246,7 @@ static void SchemaOne() {
  SettingsRecoveryJournal j;j.attempt="0123456789abcdef0123456789abcdef";j.baseline={{"brightness",1.0},{"fullscreen",false},{"mode",std::string("custom")}};j.target=j.baseline;j.target["brightness"]=1.25;j.patch={{"brightness",1.25}};j.displayRestore={{"x",1280.0}};j.displayTarget={{"x",960.0}};j.placement={{"x",0.0}};
  std::string bytes,e;CHECK(EncodeSettingsJournal(j,schema,bytes,e));
  const std::string payload="{\n\"attempt\":\"0123456789abcdef0123456789abcdef\",\n\"baseline.brightness\":1,\n\"baseline.fullscreen\":false,\n\"baseline.mode\":\"custom\",\n\"displayRestore.x\":1280,\n\"displayTarget.x\":960,\n\"patch.brightness\":1.25,\n\"placement.x\":0,\n\"schema\":1,\n\"state\":\"pending\",\n\"target.brightness\":1.25,\n\"target.fullscreen\":false,\n\"target.mode\":\"custom\"\n}\n";
- CHECK(bytes==Checksum("openQ4 settings recovery 1\n00000000\n"+payload));std::string original;CHECK(BaselineEncodeSettingsJournal(j,schema,original,e)&&original==bytes);
+ CHECK(bytes==Checksum("openD3 settings recovery 1\n00000000\n"+payload));std::string original;CHECK(BaselineEncodeSettingsJournal(j,schema,original,e)&&original==bytes);
  SettingsJournalRecord record;CHECK(DecodeSettingsJournalRecord(Encode(Sample(4)),SystemSettingsHost::Schema(),record,e));CHECK(DecodeSettingsJournalRecord(bytes,schema,record,e)&&record.Schema()==1);
  std::string again;CHECK(EncodeSettingsJournalRecord(record,schema,again,e)&&again==bytes);
  // Schema 1's pre-existing 113-byte metadata spelling remains accepted.

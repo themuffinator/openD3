@@ -697,7 +697,7 @@ def check_labels(width: float) -> None:
 def summary_document() -> dict:
     """The summary card (section 14.14), opened at the end of a match with the
     chat field focused; Esc returns to the game, as the stock summary's."""
-    doc = Document("openq4.mp_summary")
+    doc = Document("opend3.mp_summary")
     width, height = card_width(), ESCAPE_H
     check_labels(width - 2 * INSET)
     doc.state.update({

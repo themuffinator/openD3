@@ -298,7 +298,7 @@ def row_node(doc: HudDocument, p: int, r: int, kind) -> dict:
     clan = flow_label(f"{ident}-clan", "#str_230007", "lowpixel", ROW_FACE, [1, 1, 1, 0.6], width=CLAN_W, line=16)
     doc.bind(f"{ident}-clan.text", f"{ident}-clan", "text", field("clan"))
     doc.show(clan["id"], NOT(bot))
-    # openQ4 bots carry a BOT tag in the header-band construction.
+    # openD3 bots carry a BOT tag in the header-band construction.
     tag = ui.group(f"{ident}-bot", {"position": ui.keyword("relative"), "display": ui.keyword("none"), "width": ui.length(CLAN_W),
                                     "height": ui.length(16), "flex-shrink": ui.number(0)}, [
         vec(f"{ident}-bot-plate", [{"id": "t", "fill": ui.solid(rgb("#8B964B", 0.6)), "commands": [
@@ -610,7 +610,7 @@ def bracket_chart(doc: HudDocument) -> dict:
 
 
 def scoreboard_document() -> dict:
-    doc = HudDocument("openq4.hud.remastered.scoreboard")
+    doc = HudDocument("opend3.hud.remastered.scoreboard")
     layout_state(doc)
     doc.number("oq4_sb_pitch", 16)
     doc.boolean("oq4_sb_kills")
@@ -647,4 +647,4 @@ def scoreboard_document() -> dict:
     doc.on("onInit", *doc.joins)
     root = full("scoreboard-root", [anchor(doc, "cc", [board], scale="hud.centerScale")])
     return doc.build(root, {"canvas": {"height": 720, "minWidth": 960},
-                            "extensions": {"openq4": {"reference": "ui-visual-design.md 14.14", "stock": "guis/scoreboard.gui"}}})
+                            "extensions": {"opend3": {"reference": "ui-visual-design.md 14.14", "stock": "guis/scoreboard.gui"}}})

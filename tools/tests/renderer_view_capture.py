@@ -37,7 +37,7 @@ from PIL import Image
 import renderer_image_capture as image_capture
 
 lab = image_capture.lab
-PREFIX = 'textures/openq4/view_capture'
+PREFIX = 'textures/opend3/view_capture'
 DIRECT = {}
 CASES = ('nested', 'nested-control', 'nested-cropped', 'cropped-cube', 'offset-gui', 'nested-restarted')
 FACES = ('px', 'nx', 'py', 'ny', 'pz', 'nz')
@@ -69,7 +69,7 @@ GUI = '''windowDef Desktop
 		rect 360, 250, 240, 180
 		visible 1
 		backcolor 0, 0, 0, 0
-		model "models/openq4/pbr_lab/sphere.ase"
+		model "models/opend3/pbr_lab/sphere.ase"
 		modelOrigin 0, 0, 0, 0
 		viewOffset -160, 0, 0, 0
 		lightOrigin0 -100, -50, 60, 0
@@ -77,7 +77,7 @@ GUI = '''windowDef Desktop
 	}
 }
 '''
-SCREEN = 'spawn func_static name view_screen model "models/openq4/pbr_lab/backface_receiver.ase" shader "{shader}" origin "-200 -700 440" angle 0 solid 0 cameraTarget view_camera'
+SCREEN = 'spawn func_static name view_screen model "models/opend3/pbr_lab/backface_receiver.ase" shader "{shader}" origin "-200 -700 440" angle 0 solid 0 cameraTarget view_camera'
 # The screen covers the left of the frame; the specimen itself stays right of it.
 SCREEN_COLUMNS = slice(0, 520)
 NESTED_CASES = ('nested', 'nested-cropped', 'nested-restarted')
@@ -111,7 +111,7 @@ def profile_commands():
             commands += [SCREEN.format(shader=f'{PREFIX}/{screen[name]}')]
             spawned = True
         if name == 'offset-gui':
-            commands += ['testGUI guis/openq4_view_capture.gui']
+            commands += ['testGUI guis/opend3_view_capture.gui']
         if name == 'nested-restarted':
             commands += ['testGUI', 'vid_restart']
         commands += ['wait 30', 'g_stopTime 1', 'wait 5', f'echo "VIEW_CAPTURE_{name}_BEGIN"',
@@ -129,7 +129,7 @@ def qualify(report, output):
     if not report.get('complete') or not report.get('runtimeUnchanged') or set(rows) != set(CASES):
         failures.append('incomplete sequence, changed runtime or case set')
         return dict(status='fail', failures=failures, checks=checks, files=files)
-    root = output / 'batch/baseoq4'
+    root = output / 'batch/baseod3'
     log = Path(next(iter(rows.values()))['log']).read_text(errors='replace')
     images = {}
     for name, row in rows.items():
@@ -178,7 +178,7 @@ def compare(left, right):
             failures.append('different ' + key)
     files = [report.get('viewCaptureProof', {}).get('files', {}) for report in reports]
     # Resolve captures beside each report, so retained evidence can be moved.
-    roots = [path.resolve().parent / 'batch/baseoq4' for path in (left, right)]
+    roots = [path.resolve().parent / 'batch/baseod3' for path in (left, right)]
     for key in sorted(set(files[0]) | set(files[1])):
         try:
             a, b = (load(root / f[key]['path']) for root, f in zip(roots, files))
@@ -221,8 +221,8 @@ def main():
     original_write = lab.write_capture_commands
 
     def write(path, commands):
-        for name, content in (('materials/openq4_view_capture.mtr', MATERIALS), ('guis/openq4_view_capture.gui', GUI)):
-            target = args.output_dir / 'batch/baseoq4' / name
+        for name, content in (('materials/opend3_view_capture.mtr', MATERIALS), ('guis/opend3_view_capture.gui', GUI)):
+            target = args.output_dir / 'batch/baseod3' / name
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding='utf-8')
             fixtures[name] = lab.digest(target)
@@ -232,7 +232,7 @@ def main():
 
     def startup(cvars, save):
         result = original_startup(cvars, save)
-        with (save / 'baseoq4/autoexec.cfg').open('a') as config:
+        with (save / 'baseod3/autoexec.cfg').open('a') as config:
             for material in ('remote', 'constant'):
                 config.write(f'touch material {PREFIX}/{material}\n')
         return result
@@ -266,7 +266,7 @@ def main():
     path = args.output_dir / 'report.json'
     report = json.loads(path.read_text())
     proof = qualify(report, args.output_dir)
-    if any(lab.digest(args.output_dir / 'batch/baseoq4' / name) != digest for name, digest in fixtures.items()):
+    if any(lab.digest(args.output_dir / 'batch/baseod3' / name) != digest for name, digest in fixtures.items()):
         proof['failures'].append('fixture modified')
         proof['status'] = 'fail'
     report.update(outputDir=str(args.output_dir), viewCaptureProfile=profile, viewCaptureFixtures=fixtures,

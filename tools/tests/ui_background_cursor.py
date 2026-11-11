@@ -164,7 +164,7 @@ def main():
         test_source.write_text(SUPPORT + functions + MAIN, encoding='utf-8')
         for host in ('windows', 'posix'):
             binary = Path(temp) / f'cursor-{host}.exe'
-            flags = ['-DOPENQ4_SDL3_POSIX_HOST'] if host == 'posix' else []
+            flags = ['-DOPEND3_SDL3_POSIX_HOST'] if host == 'posix' else []
             subprocess.run([compiler, '-std=c++17', *flags, str(test_source), '-o', str(binary)], check=True)
             subprocess.run([str(binary)], check=True)
 

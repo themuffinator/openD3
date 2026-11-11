@@ -1,4 +1,4 @@
-# openQ4 integration for the pinned RmlUi 6.3 core. No backend, font engine,
+# openD3 integration for the pinned RmlUi 6.3 core. No backend, font engine,
 # plugins or third-party containers; the engine supplies its own services.
 project('rmlui', 'cpp', version: '6.3', license: 'MIT',
   meson_version: '>=1.6', default_options: ['cpp_std=c++20', 'warning_level=1'])

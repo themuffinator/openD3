@@ -178,7 +178,7 @@ def validate_build_and_ci_wiring() -> None:
     require(meson, "client_link_with = [bse_library, imagetools_library, render_geo_library]", "client render-geometry link")
     require(meson, "link_with: [renderer_idlib_library, imagetools_library, render_geo_library]", "renderer render-geometry link")
 
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     if validator.count("dmap_render_geometry_lifecycle.py") != 1:
         raise AssertionError("Local validation must register the dmap render-geometry test exactly once")
 

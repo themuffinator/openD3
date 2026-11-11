@@ -49,7 +49,7 @@ def prove(report, samples):
         if valid:
             log_text = Path(row['log']).read_text(encoding='utf-8', errors='replace')
             if not (re.search(r'\balphaTest\s+1\b', log_text)
-                    and re.search(r'\balbedoMap\s+textures/openq4/pbr_lab/grey\b', log_text)):
+                    and re.search(r'\balbedoMap\s+textures/opend3/pbr_lab/grey\b', log_text)):
                 failures.append(name + ': constant-alpha material was not loaded')
         if valid:
             values = read_pfm(Path(row['linearScreenshot']))
@@ -109,7 +109,7 @@ def main():
         commands += ['wait 60', 'g_stopTime 1']
         lab.CASES[name], lab.CASE_COMMANDS[name] = settings, commands
         profile[name] = dict(settings={**lab.BASE, **settings}, commands=commands)
-    material_path = args.output_dir / 'batch/baseoq4/materials/openq4_cutout_alpha_test.mtr'
+    material_path = args.output_dir / 'batch/baseod3/materials/opend3_cutout_alpha_test.mtr'
     threshold_cutout = lab.lab.material(MATERIAL, roughness=0.25, coverage='cutout').replace('alphaTest 0.5', 'alphaTest 1')
     write = lab.write_capture_commands
 
@@ -126,7 +126,7 @@ def main():
         # autoexec runs after declaration discovery and before initialization
         # finishes. Touch this unique test material there so it is retained
         # across level loading and spawning does not need a late precache.
-        with (save / 'baseoq4/autoexec.cfg').open('a', encoding='utf-8') as config:
+        with (save / 'baseod3/autoexec.cfg').open('a', encoding='utf-8') as config:
             config.write(f'touch material {lab.lab.PREFIX}/{MATERIAL}\n')
         return args
 

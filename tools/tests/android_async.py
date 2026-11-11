@@ -32,8 +32,8 @@ static bool com_shuttingDown=false,lastTicMsecValid=true,smooth=false,stopReques
 static double lastTicMsec=0;
 static int Sys_Milliseconds(){perCall=0;++asyncCalls;return now;}
 struct Cvar {float value=1;bool GetBool(){return value!=0;}float GetFloat(){return value;}} com_preciseTic,com_timescale;
-static std::atomic<float> openQ4_gameTimeScale{1};
-static bool openQ4_ShouldUseSmoothSingleplayerSlowTime(float){return smooth;}
+static std::atomic<float> openD3_gameTimeScale{1};
+static bool openD3_ShouldUseSmoothSingleplayerSlowTime(float){return smooth;}
 struct idCommonLocal {
     void Async();
     void SingleAsyncTic(){if(++perCall>512)throw std::runtime_error("unbounded asynchronous catch-up");++com_ticNumber;}
@@ -68,7 +68,7 @@ MAIN = r'''
 static void reset(float scale=1,bool smoothTime=false){
     now=com_ticNumber=perCall=asyncCalls=events=0;lastTicMsec=0;lastTicMsecValid=true;
     com_shuttingDown=stopRequested=false;smooth=smoothTime;
-    com_preciseTic.value=1;com_timescale.value=scale;openQ4_gameTimeScale.store(1);
+    com_preciseTic.value=1;com_timescale.value=scale;openD3_gameTimeScale.store(1);
     sleeps.clear();plannedBackground.clear();stopOnSleep=freezeOnSleep=0;
 }
 int main(){try {
@@ -84,7 +84,7 @@ int main(){try {
     // A process can be frozen after foreground was already announced. The
     // clock budget must hold without relying on a currently-backgrounded flag.
     for(float scale:{.1f,.5f,1.0f,2.0f,10.0f})for(float gameScale:{.25f,1.0f,2.0f}){
-        reset(scale);openQ4_gameTimeScale.store(gameScale);now=3600000;common->Async();
+        reset(scale);openD3_gameTimeScale.store(gameScale);now=3600000;common->Async();
         require(perCall>0 && perCall<=10,"Android freeze replayed more than ten tics");
         ++now;common->Async();require(perCall<=1,"Android left a catch-up backlog after resume");
     }

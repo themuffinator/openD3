@@ -105,7 +105,7 @@ SOURCE_CONTRACTS = (
         'guiDemoMenu->SetStateBool( "demo_canMarker",',
         '"demo_uiSeek", "0",\n\tCVAR_SYSTEM | CVAR_GUI | CVAR_FLOAT | CVAR_NOCHEAT,',
     )),
-    ("content/baseoq4/pak0/guis/demo_menu.gui", (
+    ("content/baseod3/pak0/guis/demo_menu.gui", (
         'set "cmd" "play main_menu_selection ; demoMarkerPrev" ;',
         'set "cmd" "play main_menu_selection ; demoMarkerNext" ;',
         'set "cmd" "play main_menu_selection ; demoAutoTrack" ;',

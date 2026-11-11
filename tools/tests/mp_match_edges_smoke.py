@@ -56,8 +56,8 @@ class EdgesRun(RosterRun):
         available = re.search(rf"MP_CONTROL match_op_{re.escape(opcode)}_available=(\d+)", menu)
         if available is None or bool(int(available[1])) == denied:
             raise RuntimeError(f"{role}: unexpected {token} availability (denied={denied})")
-        self.perform(role, token, ["openq4_matchControl action " + ("arm_" if confirm else "") + token,
-                     *(["waitMsec 100", "openq4_matchControl action confirm"] if confirm else []), "waitMsec 750"])
+        self.perform(role, token, ["opend3_matchControl action " + ("arm_" if confirm else "") + token,
+                     *(["waitMsec 100", "opend3_matchControl action confirm"] if confirm else []), "waitMsec 750"])
         self.last_mutation = self.server_time()
 
     def ensure_ready(self, role):
@@ -74,20 +74,20 @@ class EdgesRun(RosterRun):
         seat = next(i for i, s in enumerate(host["roster_seats"])
                     if s["participant"] == outgoing_id and s["occupied"])
         row = 2 + len(host["participants"]) + seat
-        self.perform(actor, "substitution choices", [f"openq4_matchControl set match_team_rows_sel_0 {row}",
-                     "openq4_matchControl action select_team_row"])
+        self.perform(actor, "substitution choices", [f"opend3_matchControl set match_team_rows_sel_0 {row}",
+                     "opend3_matchControl action select_team_row"])
         menu = read_log(self.logs[actor]).rsplit("\nMP_VIEW ", 1)[-1]
         name = re.escape(ROLES[incoming][1])
         replacement = re.search(rf"MP_CONTROL match_replacement_rows_item_(\d+)={name}(?:\t|\r?$)", menu, re.M)
         if replacement is None:
             raise RuntimeError(f"{incoming} is absent from the substitution replacement choices")
         self.action(actor, "roster_substitute", confirm=True, before=[
-            f"openq4_matchControl set match_team_rows_sel_0 {row}", "openq4_matchControl action select_team_row",
-            f"openq4_matchControl set match_replacement_rows_sel_0 {replacement[1]}",
-            "openq4_matchControl action select_replacement_row"])
+            f"opend3_matchControl set match_team_rows_sel_0 {row}", "opend3_matchControl action select_team_row",
+            f"opend3_matchControl set match_replacement_rows_sel_0 {replacement[1]}",
+            "opend3_matchControl action select_replacement_row"])
 
     def cameras(self, label):
-        self.perform("host", label + " camera policy", ["openq4_reportMPState"])
+        self.perform("host", label + " camera policy", ["opend3_reportMPState"])
         state = read_log(self.logs["host"]).rsplit("\nMP_STATE ", 1)[-1]
         return {int(t): (bool(int(a)), bool(int(f))) for t, a, f in
                 re.findall(r"MP_CAMERA observer=2 target=(\d+) allowed=(\d+) following=(\d+)", state)}
@@ -144,7 +144,7 @@ class EdgesRun(RosterRun):
                                   v["engine"] >= entry["expires"] + 1000 and not v["invitations"], timeout=60)
         self.facts["invitation_expiry"]["expired_engine"] = expired["engine"]
         self.sample("observer", "invitation-expired", lambda v: not v["invitations"])
-        self.perform("observer", "expired acceptance", ["openq4_matchControl action roster_accept", "waitMsec 750"])
+        self.perform("observer", "expired acceptance", ["opend3_matchControl action roster_accept", "waitMsec 750"])
         self.sample("observer", "expired-accept-denied", lambda v: v["side"] == -1 and not v["active"] and
                     not v["invitations"] and self.seat_of(v, observer) is None)
 
@@ -168,8 +168,8 @@ class EdgesRun(RosterRun):
         # One remote captain submits twice in one frame. Both requests carry
         # the same accepted revision; the server must charge exactly once.
         self.wait("duplicate timeout cooldown", lambda texts: self.server_time() >= self.last_mutation + 2250)
-        self.perform("client", "duplicate timeout", ["openq4_matchControl action timeout",
-                     "openq4_matchControl action timeout", "waitMsec 750"])
+        self.perform("client", "duplicate timeout", ["opend3_matchControl action timeout",
+                     "opend3_matchControl action timeout", "waitMsec 750"])
         self.last_mutation = self.server_time()
         # The budget is charged when PENDING commits to PAUSED; judge it there.
         paused = self.sample("host", "duplicate-timeout-paused", lambda v: v["pause"] == PAUSED and
@@ -187,7 +187,7 @@ class EdgesRun(RosterRun):
         markers = {}
         for role in ("client", "host"):
             markers[role] = f"MP_EDGES_TIMEOUT_{self.operation + 1}"
-            self.inject(role, ["openq4_matchControl action timeout", "echo " + markers[role], "waitMsec 750"])
+            self.inject(role, ["opend3_matchControl action timeout", "echo " + markers[role], "waitMsec 750"])
         self.wait("simultaneous timeout requests", lambda texts: all(
             "\n" + marker + " " in texts[role] for role, marker in markers.items()))
         winner = self.await_view("host", "simultaneous timeout", lambda v: v["pause"] in (PENDING, PAUSED) and
@@ -213,9 +213,9 @@ class EdgesRun(RosterRun):
         # Every creation template is global. Selecting the side scope first
         # must not turn the captain's proposal into a side ballot.
         self.action("client", "proposal_create", before=[
-            "openq4_matchControl set match_proposal_scope_choice side",
-            f"openq4_matchControl set match_proposal_rows_sel_0 {ABORT_TEMPLATE_ROW}",
-            "openq4_matchControl action select_proposal_row"])
+            "opend3_matchControl set match_proposal_scope_choice side",
+            f"opend3_matchControl set match_proposal_rows_sel_0 {ABORT_TEMPLATE_ROW}",
+            "opend3_matchControl action select_proposal_row"])
         created = self.sample("host", "abort-ballot-open", lambda v: v["global_proposal"]["present"] and
                               v["global_proposal"]["caller"] == client["participant"])
         ballot = created["global_proposal"]
@@ -225,17 +225,17 @@ class EdgesRun(RosterRun):
         if ballot["scope"] != 0 or caller["side_proposal"]["present"] or created["side_proposal"]["present"]:
             raise RuntimeError("the side scope selector created a side ballot")
         self.perform("client", "restore global proposal scope",
-                     ["openq4_matchControl set match_proposal_scope_choice global"])
+                     ["opend3_matchControl set match_proposal_scope_choice global"])
         # An unrelated session change inside the vote: the spectator signs in
         # as referee. Before 23 October this voided the passed ballot.
         self.perform("observer", "referee sign in during vote", [
-            'openq4_guiSet match_referee_credential::text "mprostersmokeonly"',
-            "openq4_matchControl action referee_login", "waitMsec 750"])
+            'opend3_guiSet match_referee_credential::text "mprostersmokeonly"',
+            "opend3_matchControl action referee_login", "waitMsec 750"])
         referee = self.sample("observer", "referee-during-vote", lambda v: v["roles"] == REFEREE and
                               v["global_proposal"]["present"])
         if referee["revision"] <= created["revision"]:
             raise RuntimeError("the referee sign-in did not advance the session revision during the vote")
-        self.action("host", "proposal_yes", before=["openq4_matchControl set match_proposal_scope_choice global"])
+        self.action("host", "proposal_yes", before=["opend3_matchControl set match_proposal_scope_choice global"])
         executed = self.sample("host", "passed-abort-executed", lambda v: v["phase"] == REVIEW and
                                not v["global_proposal"]["present"])
         self.facts["passed_ballot"] = {"id": ballot["id"], "scope": ballot["scope"],
@@ -286,8 +286,8 @@ class EdgesRun(RosterRun):
         self.sample("observer", "unrostered-observer", lambda v: v["side"] == -1 and not v["active"])
         # Two seats per side give each captain an empty seat and a bench.
         self.action("host", "rules_stage_field", before=[
-            "openq4_matchControl set match_rule_rows_sel_0 9", "openq4_matchControl action select_rule_row",
-            "openq4_matchControl set match_rule_value 2"])
+            "opend3_matchControl set match_rule_rows_sel_0 9", "opend3_matchControl action select_rule_row",
+            "opend3_matchControl set match_rule_value 2"])
         for role in ("host", "client"):
             self.assign("host", role, 2)
             self.sample(role, role + "-captain", lambda v: v["roles"] & CAPTAIN and v["active"])
@@ -296,15 +296,15 @@ class EdgesRun(RosterRun):
         # Empty required seats block readiness. Return to one seat per side
         # now that every non-captain seat is vacant.
         self.action("host", "rules_stage_field", before=[
-            "openq4_matchControl set match_rule_rows_sel_0 9", "openq4_matchControl action select_rule_row",
-            "openq4_matchControl set match_rule_value 1"])
+            "opend3_matchControl set match_rule_rows_sel_0 9", "opend3_matchControl action select_rule_row",
+            "opend3_matchControl set match_rule_value 1"])
         self.sample("host", "one-seat-rosters", lambda v: v["readiness"]["vacant_required"] == 0)
         # The default 10-second countdown is shorter than one cooldown-paced
         # menu action, so an unready would race the countdown's own end.
         self.action("host", "rules_stage_field", before=[
-            f"openq4_matchControl set match_rule_rows_sel_0 {COUNTDOWN_RULE_ROW}",
-            "openq4_matchControl action select_rule_row",
-            f"openq4_matchControl set match_rule_value {COUNTDOWN_SECONDS}"])
+            f"opend3_matchControl set match_rule_rows_sel_0 {COUNTDOWN_RULE_ROW}",
+            "opend3_matchControl action select_rule_row",
+            f"opend3_matchControl set match_rule_value {COUNTDOWN_SECONDS}"])
         self.perform("host", "committed countdown rule", [])
         menu = read_log(self.logs["host"]).rsplit("\nMP_VIEW ", 1)[-1]
         if not re.search(rf"MP_CONTROL match_rule_rows_item_{COUNTDOWN_RULE_ROW}=[^\n]*\t{COUNTDOWN_SECONDS}\s*\n", menu):
@@ -347,7 +347,7 @@ class EdgesRun(RosterRun):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
-    parser.add_argument("--executable-name", default="openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    parser.add_argument("--executable-name", default="openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     parser.add_argument("--output-dir", type=Path, default=ROOT / ".tmp/mp-match-edges-smoke")
     parser.add_argument("--basepath", type=Path, default=Path(r"C:\Program Files (x86)\Steam\steamapps\common\Quake 4"))
     parser.add_argument("--renderer", choices=("gl", "vulkan"), default="gl")

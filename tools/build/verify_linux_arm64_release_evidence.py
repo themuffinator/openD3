@@ -90,8 +90,8 @@ REVIEW_KEYS = frozenset(
 )
 CANDIDATE_KEYS = frozenset(
     {
-        "openq4_commit",
-        "openq4_game_commit",
+        "opend3_commit",
+        "opend3_game_commit",
         "release_version",
         "version_tag",
         "release_tag",
@@ -169,8 +169,8 @@ SP_REPORT_KEYS = frozenset(
         "glErrorMarkers",
         "audioErrorMarkers",
         "elapsedSeconds",
-        "openQ4Commit",
-        "openQ4GameCommit",
+        "openD3Commit",
+        "openD3GameCommit",
         "sha256",
         "elf",
         "paths",
@@ -193,7 +193,7 @@ SP_AUDIO_EVIDENCE_KEYS = frozenset(
 SP_HASH_KEYS = frozenset({"client", "gameSp", "retailPak001"})
 SP_ELF_KEYS = frozenset({"client", "gameSp"})
 SP_ENVIRONMENT_KEYS = frozenset(
-    {"SDL_VIDEO_DRIVER", "SDL_VIDEODRIVER", "DISPLAYRemoved", "OPENQ4_FORCE_X11Removed"}
+    {"SDL_VIDEO_DRIVER", "SDL_VIDEODRIVER", "DISPLAYRemoved", "OPEND3_FORCE_X11Removed"}
 )
 SP_LIFECYCLE_COUNT_KEYS = frozenset(
     {"mapInitialization", "firstActiveDraw", "gameMapShutdown"}
@@ -280,8 +280,8 @@ DEDICATED_REPORT_KEYS = frozenset(
         "missingMarkers",
         "fatalMarkers",
         "elapsedSeconds",
-        "openQ4Commit",
-        "openQ4GameCommit",
+        "openD3Commit",
+        "openD3GameCommit",
         "sha256",
         "elf",
         "paths",
@@ -329,17 +329,17 @@ CONTAINER_DISCLOSURE_PATTERN = re.compile(
 )
 
 ARM64_RUNTIME_PATHS: Mapping[str, PurePosixPath] = {
-    "client": PurePosixPath("openQ4-client_arm64"),
-    "dedicated": PurePosixPath("openQ4-ded_arm64"),
-    "game_sp": PurePosixPath("baseoq4/game-sp_arm64.so"),
-    "game_mp": PurePosixPath("baseoq4/game-mp_arm64.so"),
+    "client": PurePosixPath("openD3-client_arm64"),
+    "dedicated": PurePosixPath("openD3-ded_arm64"),
+    "game_sp": PurePosixPath("baseod3/game-sp_arm64.so"),
+    "game_mp": PurePosixPath("baseod3/game-mp_arm64.so"),
 }
 
 
 @dataclass(frozen=True)
 class CandidateMetadata:
-    openq4_commit: str
-    openq4_game_commit: str
+    opend3_commit: str
+    opend3_game_commit: str
     release_version: str
     version_tag: str
     release_tag: str
@@ -536,7 +536,7 @@ def require_package_filename(value: Any, label: str) -> str:
         "/" in value
         or "\\" in value
         or ".." in value
-        or not value.startswith("openq4-")
+        or not value.startswith("opend3-")
         or not valid_suffix
     ):
         raise RuntimeError(
@@ -547,9 +547,9 @@ def require_package_filename(value: Any, label: str) -> str:
 
 def validate_expected_candidate(candidate: CandidateMetadata) -> CandidateMetadata:
     return CandidateMetadata(
-        openq4_commit=require_git_sha(candidate.openq4_commit, "expected openQ4 commit"),
-        openq4_game_commit=require_git_sha(
-            candidate.openq4_game_commit, "expected openQ4-game commit"
+        opend3_commit=require_git_sha(candidate.opend3_commit, "expected openD3 commit"),
+        opend3_game_commit=require_git_sha(
+            candidate.opend3_game_commit, "expected openD3-game commit"
         ),
         release_version=require_release_value(
             candidate.release_version, "expected release version"
@@ -735,9 +735,9 @@ def read_runtime_report(path: Path, label: str) -> tuple[Mapping[str, Any], str]
 def _candidate_from_table(table: Mapping[str, Any]) -> CandidateMetadata:
     _strict_keys(table, CANDIDATE_KEYS, "candidate table")
     return CandidateMetadata(
-        openq4_commit=require_git_sha(table["openq4_commit"], "candidate openQ4 commit"),
-        openq4_game_commit=require_git_sha(
-            table["openq4_game_commit"], "candidate openQ4-game commit"
+        opend3_commit=require_git_sha(table["opend3_commit"], "candidate openD3 commit"),
+        opend3_game_commit=require_git_sha(
+            table["opend3_game_commit"], "candidate openD3-game commit"
         ),
         release_version=require_release_value(
             table["release_version"], "candidate release version"
@@ -1078,12 +1078,12 @@ def _validate_stock_sp_report(
         _require_empty_list(report[key], f"{label}.{key}")
     _require_number(report["elapsedSeconds"], f"{label}.elapsedSeconds")
     _validate_optional_source_commit(
-        report["openQ4Commit"], evidence.candidate.openq4_commit, f"{label}.openQ4Commit"
+        report["openD3Commit"], evidence.candidate.opend3_commit, f"{label}.openD3Commit"
     )
     _validate_optional_source_commit(
-        report["openQ4GameCommit"],
-        evidence.candidate.openq4_game_commit,
-        f"{label}.openQ4GameCommit",
+        report["openD3GameCommit"],
+        evidence.candidate.opend3_game_commit,
+        f"{label}.openD3GameCommit",
     )
     hashes = _validate_report_hashes(
         report["sha256"],
@@ -1108,8 +1108,8 @@ def _validate_stock_sp_report(
         environment["DISPLAYRemoved"], f"{environment_label}.DISPLAYRemoved", expected=True
     )
     _require_bool(
-        environment["OPENQ4_FORCE_X11Removed"],
-        f"{environment_label}.OPENQ4_FORCE_X11Removed",
+        environment["OPEND3_FORCE_X11Removed"],
+        f"{environment_label}.OPEND3_FORCE_X11Removed",
         expected=True,
     )
     return hashes["retailPak001"], container_detected
@@ -1186,12 +1186,12 @@ def _validate_dedicated_report(
     _validate_screenshot_result(report["screenshot"], f"{label}.screenshot")
     _require_number(report["elapsedSeconds"], f"{label}.elapsedSeconds")
     _validate_optional_source_commit(
-        report["openQ4Commit"], evidence.candidate.openq4_commit, f"{label}.openQ4Commit"
+        report["openD3Commit"], evidence.candidate.opend3_commit, f"{label}.openD3Commit"
     )
     _validate_optional_source_commit(
-        report["openQ4GameCommit"],
-        evidence.candidate.openq4_game_commit,
-        f"{label}.openQ4GameCommit",
+        report["openD3GameCommit"],
+        evidence.candidate.opend3_game_commit,
+        f"{label}.openD3GameCommit",
     )
     hashes = _validate_report_hashes(
         report["sha256"],
@@ -1313,8 +1313,8 @@ def parse_evidence(document: Mapping[str, Any], *, require_accepted: bool) -> Ev
 
 def _compare_candidate(actual: CandidateMetadata, expected: CandidateMetadata) -> None:
     for field_name in (
-        "openq4_commit",
-        "openq4_game_commit",
+        "opend3_commit",
+        "opend3_game_commit",
         "release_version",
         "version_tag",
         "release_tag",
@@ -1433,8 +1433,8 @@ def render_pending_candidate(expected: CandidateMetadata, hashes: Mapping[str, s
         'dedicated = "pending"',
         "",
         "[candidate]",
-        f"openq4_commit = {_toml_quote(expected.openq4_commit)}",
-        f"openq4_game_commit = {_toml_quote(expected.openq4_game_commit)}",
+        f"opend3_commit = {_toml_quote(expected.opend3_commit)}",
+        f"opend3_game_commit = {_toml_quote(expected.opend3_game_commit)}",
         f"release_version = {_toml_quote(expected.release_version)}",
         f"version_tag = {_toml_quote(expected.version_tag)}",
         f"release_tag = {_toml_quote(expected.release_tag)}",
@@ -1476,8 +1476,8 @@ def write_candidate(
 
 
 def _add_expected_arguments(parser: argparse.ArgumentParser) -> None:
-    parser.add_argument("--expected-openq4-commit", required=True)
-    parser.add_argument("--expected-openq4-game-commit", required=True)
+    parser.add_argument("--expected-opend3-commit", required=True)
+    parser.add_argument("--expected-opend3-game-commit", required=True)
     parser.add_argument("--expected-release-version", required=True)
     parser.add_argument("--expected-version-tag", required=True)
     parser.add_argument("--expected-release-tag", required=True)
@@ -1508,8 +1508,8 @@ def _runtime_report_paths_from_args(args: argparse.Namespace) -> RuntimeReportPa
 
 def _expected_from_args(args: argparse.Namespace) -> CandidateMetadata:
     return CandidateMetadata(
-        openq4_commit=args.expected_openq4_commit,
-        openq4_game_commit=args.expected_openq4_game_commit,
+        opend3_commit=args.expected_opend3_commit,
+        opend3_game_commit=args.expected_opend3_game_commit,
         release_version=args.expected_release_version,
         version_tag=args.expected_version_tag,
         release_tag=args.expected_release_tag,

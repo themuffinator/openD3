@@ -9,13 +9,13 @@ index 1bf92f3..ce841fb 100644
 +#if __has_include(<charconv>)
 +#include <charconv>
 +#endif
-+// openQ4: std::from_chars decodes an ordinary number without a stream, a
++// openD3: std::from_chars decodes an ordinary number without a stream, a
 +// locale or a copy. libc++ gained floating from_chars only in LLVM 20, so a
 +// library without it keeps the stream path for every number.
 +#if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L
-+#define JSONCPP_OPENQ4_FROM_CHARS 1
++#define JSONCPP_OPEND3_FROM_CHARS 1
 +#else
-+#define JSONCPP_OPENQ4_FROM_CHARS 0
++#define JSONCPP_OPEND3_FROM_CHARS 0
 +#endif
  
  #include <cstdio>
@@ -24,8 +24,8 @@ index 1bf92f3..ce841fb 100644
  
  bool OurReader::decodeDouble(Token& token, Value& decoded) {
    double value = 0;
-+#if JSONCPP_OPENQ4_FROM_CHARS
-+  // openQ4: a number from_chars accepts whole and in range needs no stream.
++#if JSONCPP_OPEND3_FROM_CHARS
++  // openD3: a number from_chars accepts whole and in range needs no stream.
 +  // Anything else (overflow, underflow, a form it rejects) takes the stream
 +  // path below, which keeps its results and diagnostics.
 +  {

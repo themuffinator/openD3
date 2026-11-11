@@ -12,8 +12,8 @@
 #if defined(_WIN32) && defined(_DEBUG)
 #include <crtdbg.h>
 #endif
-using namespace openq4;
-using namespace openq4::ui;
+using namespace opend3;
+using namespace opend3::ui;
 // One-shot allocation failures exercise every actual staged allocation without
 // making error reporting itself impossible. Never changes FP/device state.
 static long failAllocation=-1;

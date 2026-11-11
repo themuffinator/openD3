@@ -63,7 +63,7 @@ PORTABLE_VERSION = 5
 PORTABLE_WIRE_ABI = "le64-portable1"
 LOG_NAME = "savegame-cross-load.log"
 CFG_REL = "savegame_cross_load/after_load.cfg"
-DONE_MARKER = "OPENQ4_CROSS_LOAD_DONE"
+DONE_MARKER = "OPEND3_CROSS_LOAD_DONE"
 
 ERROR_PATTERN = re.compile(r"^(?:\^[0-9])?(?:FATAL )?ERROR:.*$", re.MULTILINE)
 SIGNAL_PATTERN = re.compile(r"signal caught|segmentation fault|Sys_Error:", re.IGNORECASE)
@@ -74,16 +74,16 @@ UNRESOLVED_REFERENCE = re.compile(r"WriteObject FindIndex failed")
 # A restore that fails after map teardown returns to the Load Game page, where
 # the client would wait for input until the timeout.
 RESTORE_FAILED = re.compile(r"could not restore saved state[^\r\n]*")
-RESAVE_MARKER = "OPENQ4_CROSS_LOAD_RESAVE"
+RESAVE_MARKER = "OPEND3_CROSS_LOAD_RESAVE"
 
 
 class Payload:
-    """The openQ4 save payload of a .save file: its stamp and object table."""
+    """The openD3 save payload of a .save file: its stamp and object table."""
 
     def __init__(self, data: bytes) -> None:
         offset = data.find(PAYLOAD_MAGIC)
         if offset < 0:
-            raise ValueError("no openQ4 payload stamp")
+            raise ValueError("no openD3 payload stamp")
         self.data = data
         self.offset = offset
         self.position = offset + 4
@@ -167,8 +167,8 @@ def client_path(install_root: Path) -> Path:
     machine = platform.machine().lower()
     arch = "arm64" if machine in ("arm64", "aarch64") else "x64"
     if sys.platform == "darwin":
-        return install_root / "openQ4.app" / "Contents" / "MacOS" / "openQ4"
-    return install_root / f"openQ4-client_{arch}{'.exe' if sys.platform == 'win32' else ''}"
+        return install_root / "openD3.app" / "Contents" / "MacOS" / "openD3"
+    return install_root / f"openD3-client_{arch}{'.exe' if sys.platform == 'win32' else ''}"
 
 
 def stage_input(source: Path, savegames: Path, slot: str) -> None:
@@ -413,7 +413,7 @@ def self_test() -> int:
 
     # The load leg saves the frozen restore, resumes time, and marks the resave.
     args = argparse.Namespace(mode="load", tag="leg", play_frames=180, settle_frames=240, after_load=[],
-                              basepath=Path("base"), game="baseoq4", set=[], map=None, xvfb=True)
+                              basepath=Path("base"), game="baseod3", set=[], map=None, xvfb=True)
     lines = after_load_lines(args)
     assert lines.index("saveGame leg_frozen") < lines.index("set g_stopTime 0") < lines.index("wait 180") \
         < lines.index(f"echo {RESAVE_MARKER}") < lines.index("saveGame leg") and lines[-2] == "quit", lines
@@ -426,14 +426,14 @@ def self_test() -> int:
     scratch.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="save-cross-load-", dir=scratch) as temp:
         home = Path(temp) / "home"
-        inside = home / "baseoq4" / "savegames" / "x.save"
+        inside = home / "baseod3" / "savegames" / "x.save"
         inside.parent.mkdir(parents=True)
         inside.write_bytes(base)
         install = Path(temp) / "install"
         client = client_path(install)
         client.parent.mkdir(parents=True, exist_ok=True)
         client.write_bytes(b"")
-        leg = argparse.Namespace(mode="load", input=inside, home=home, install_root=install, game="baseoq4", tag="x")
+        leg = argparse.Namespace(mode="load", input=inside, home=home, install_root=install, game="baseod3", tag="x")
         try:
             run_leg(leg)
         except SystemExit as error:
@@ -454,7 +454,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         leg.add_argument("--install-root", type=Path, required=True, help="Staged package root.")
         leg.add_argument("--basepath", type=Path, required=True, help="Retail Quake 4 root (q4base PK4s).")
         leg.add_argument("--home", type=Path, required=True, help="Savepath for this platform; reused across legs.")
-        leg.add_argument("--game", default="baseoq4", help="fs_game: baseoq4, or q4xbase for The Awakening.")
+        leg.add_argument("--game", default="baseod3", help="fs_game: baseod3, or q4xbase for The Awakening.")
         leg.add_argument("--tag", required=True, help="Slot name for the saves this leg writes.")
         leg.add_argument("--timeout", type=float, default=900.0)
         leg.add_argument("--set", nargs=2, action="append", default=[], metavar=("CVAR", "VALUE"))

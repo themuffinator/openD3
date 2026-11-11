@@ -8,7 +8,7 @@ static void CheckSummary(ScreenHost& host, const char* path) {
 	Document document; std::vector<Diagnostic> diagnostics;
 	const bool valid = document.Load(source,diagnostics);
 	for (const auto& diagnostic : diagnostics) std::fprintf(stderr,"mp_summary %s: %s\n",diagnostic.pointer.c_str(),diagnostic.message.c_str());
-	Check(valid && document.Model().id == "openq4.mp_summary" && document.Model().canvasHeight == 720,"the summary card validates");
+	Check(valid && document.Model().id == "opend3.mp_summary" && document.Model().canvasHeight == 720,"the summary card validates");
 	CheckSessionActions(document);
 	const auto& root = document.Model().root;
 	Check(root.children.size() == 3 && root.children[0].id == "scene-softfocus" && root.children[1].id == "scrim" &&

@@ -47,35 +47,35 @@ static const rendererDriverQuirkRule_t rg_driverQuirkRules[] = {
 	},
 #endif
 	{
-		"openQ4Test",
+		"openD3Test",
 		"Missing UBO",
 		"",
 		RENDERER_DRIVER_QUIRK_DISABLE_UBO,
 		"synthetic missing-UBO downgrade"
 	},
 	{
-		"openQ4Test",
+		"openD3Test",
 		"Broken MRT",
 		"",
 		RENDERER_DRIVER_QUIRK_DISABLE_MRT,
 		"synthetic MRT downgrade"
 	},
 	{
-		"openQ4Test",
+		"openD3Test",
 		"Missing Timer Query",
 		"",
 		RENDERER_DRIVER_QUIRK_DISABLE_TIMER_QUERY,
 		"synthetic timer-query fallback"
 	},
 	{
-		"openQ4Test",
+		"openD3Test",
 		"Missing Buffer Storage",
 		"",
 		RENDERER_DRIVER_QUIRK_DISABLE_BUFFER_STORAGE,
 		"synthetic GL45 buffer-storage downgrade"
 	},
 	{
-		"openQ4Test",
+		"openD3Test",
 		"Rejected Debug Context",
 		"",
 		RENDERER_DRIVER_QUIRK_REJECT_DEBUG_CONTEXT,
@@ -1842,11 +1842,11 @@ bool RendererCompatibilityGates_RunSelfTest( void ) {
 	const bool nonAppleVendorMacVBO = !RendererDriverQuirk_HostRunsAppleGLStack();
 
 	const quirkCase_t quirkCasesTable[] = {
-		{ "openQ4Test", "Missing UBO", "1.0", 4, 6, RENDERER_CONTEXT_PROFILE_COMPATIBILITY, true, RENDERER_DRIVER_QUIRK_DISABLE_UBO, RENDERER_TIER_LEGACY_GL2_COMPAT, true, true, true },
-		{ "openQ4Test", "Broken MRT", "1.0", 4, 6, RENDERER_CONTEXT_PROFILE_COMPATIBILITY, true, RENDERER_DRIVER_QUIRK_DISABLE_MRT, RENDERER_TIER_LEGACY_GL2_COMPAT, true, true, true },
-		{ "openQ4Test", "Missing Timer Query", "1.0", 4, 6, RENDERER_CONTEXT_PROFILE_COMPATIBILITY, true, RENDERER_DRIVER_QUIRK_DISABLE_TIMER_QUERY, RENDERER_TIER_TOP_GL46, false, true, true },
-		{ "openQ4Test", "Missing Buffer Storage", "1.0", 4, 6, RENDERER_CONTEXT_PROFILE_COMPATIBILITY, true, RENDERER_DRIVER_QUIRK_DISABLE_BUFFER_STORAGE, RENDERER_TIER_GPU_DRIVEN_GL43, true, true, true },
-		{ "openQ4Test", "Rejected Debug Context", "1.0", 4, 6, RENDERER_CONTEXT_PROFILE_COMPATIBILITY, true, RENDERER_DRIVER_QUIRK_REJECT_DEBUG_CONTEXT, RENDERER_TIER_TOP_GL46, true, false, true },
+		{ "openD3Test", "Missing UBO", "1.0", 4, 6, RENDERER_CONTEXT_PROFILE_COMPATIBILITY, true, RENDERER_DRIVER_QUIRK_DISABLE_UBO, RENDERER_TIER_LEGACY_GL2_COMPAT, true, true, true },
+		{ "openD3Test", "Broken MRT", "1.0", 4, 6, RENDERER_CONTEXT_PROFILE_COMPATIBILITY, true, RENDERER_DRIVER_QUIRK_DISABLE_MRT, RENDERER_TIER_LEGACY_GL2_COMPAT, true, true, true },
+		{ "openD3Test", "Missing Timer Query", "1.0", 4, 6, RENDERER_CONTEXT_PROFILE_COMPATIBILITY, true, RENDERER_DRIVER_QUIRK_DISABLE_TIMER_QUERY, RENDERER_TIER_TOP_GL46, false, true, true },
+		{ "openD3Test", "Missing Buffer Storage", "1.0", 4, 6, RENDERER_CONTEXT_PROFILE_COMPATIBILITY, true, RENDERER_DRIVER_QUIRK_DISABLE_BUFFER_STORAGE, RENDERER_TIER_GPU_DRIVEN_GL43, true, true, true },
+		{ "openD3Test", "Rejected Debug Context", "1.0", 4, 6, RENDERER_CONTEXT_PROFILE_COMPATIBILITY, true, RENDERER_DRIVER_QUIRK_REJECT_DEBUG_CONTEXT, RENDERER_TIER_TOP_GL46, true, false, true },
 #if defined( _WIN32 )
 		{ "ATI Technologies Inc.", "AMD Radeon RX 7900 XTX", "4.6.0 Compatibility Profile Context 26.8.1", 4, 6, RENDERER_CONTEXT_PROFILE_COMPATIBILITY, true, RENDERER_DRIVER_QUIRK_DISABLE_PERSISTENT_UPLOADS, RENDERER_TIER_TOP_GL46, true, true, true },
 		{ "Advanced Micro Devices, Inc.", "AMD Radeon RX 9070 XT", "4.6.0 Compatibility Profile Context", 4, 6, RENDERER_CONTEXT_PROFILE_COMPATIBILITY, true, RENDERER_DRIVER_QUIRK_DISABLE_PERSISTENT_UPLOADS, RENDERER_TIER_TOP_GL46, true, true, true },

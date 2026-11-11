@@ -16,7 +16,7 @@
 #endif
 #undef main
 #include "src/renderer/RendererImageRecovery.h"
-namespace ir=openq4::imageRecovery;
+namespace ir=opend3::imageRecovery;
 static const char* allocationPhase="ordinary";
 static unsigned allocationPoint=0;
 static ir::Data Cohort(size_t count,const std::string& attempt) {
@@ -54,7 +54,7 @@ int main(){
   invalid=j;for(auto* map:{&invalid.displayRestore,&invalid.displayTarget,&invalid.resourceRestore,&invalid.resourceTarget,&invalid.audioRestore,&invalid.audioTarget,&invalid.deferredRestore,&invalid.deferredTarget})
    *map={{"bounded",std::string(SettingsEffectMetadataMaxBytes-7,'\1')}};
   CHECK(!EncodeSettingsEffectJournal(invalid,schema,output,error)&&output=="preserved");
-  invalid=j;invalid.audioRestore={{"codec",std::string("openq4.image-recovery.1")},{"chunk",std::string(65536,'A')}};
+  invalid=j;invalid.audioRestore={{"codec",std::string("opend3.image-recovery.1")},{"chunk",std::string(65536,'A')}};
   CHECK(!EncodeSettingsEffectJournal(invalid,schema,output,error));
  }
  auto small=Cohort(1,"0123456789abcdef0123456789abcdef");std::string raw;CHECK(ir::Encode(small,raw,error));StateValues output{{"untouched",true}};

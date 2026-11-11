@@ -38,7 +38,7 @@ extern "C" {
 #	include "libXNVCtrl/NVCtrlLib.h"
 }
 
-idCVar sys_videoRam( "sys_videoRam", "0", CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_INTEGER, "Texture memory on the video card (in megabytes) - 0: autodetect", 0, OPENQ4_LINUX_MAX_CONFIGURED_VIDEO_RAM_MB );
+idCVar sys_videoRam( "sys_videoRam", "0", CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_INTEGER, "Texture memory on the video card (in megabytes) - 0: autodetect", 0, OPEND3_LINUX_MAX_CONFIGURED_VIDEO_RAM_MB );
 
 Display *dpy = NULL;
 static int scrnum = 0;
@@ -72,16 +72,16 @@ static GLXContext ctx = NULL;
 #endif
 
 typedef GLXContext ( *glXCreateContextAttribsARBProc_t )( Display *, GLXFBConfig, GLXContext, Bool, const int * );
-typedef void ( *openq4GLXSwapIntervalEXTProc_t )( Display *, GLXDrawable, int );
-typedef int ( *openq4GLXSwapIntervalMESAProc_t )( unsigned int );
-typedef int ( *openq4GLXGetSwapIntervalMESAProc_t )( void );
-typedef int ( *openq4GLXSwapIntervalSGIProc_t )( int );
+typedef void ( *opend3GLXSwapIntervalEXTProc_t )( Display *, GLXDrawable, int );
+typedef int ( *opend3GLXSwapIntervalMESAProc_t )( unsigned int );
+typedef int ( *opend3GLXGetSwapIntervalMESAProc_t )( void );
+typedef int ( *opend3GLXSwapIntervalSGIProc_t )( int );
 
 static bool glx_context_create_error = false;
-static openq4GLXSwapIntervalEXTProc_t glx_swap_interval_ext = NULL;
-static openq4GLXSwapIntervalMESAProc_t glx_swap_interval_mesa = NULL;
-static openq4GLXGetSwapIntervalMESAProc_t glx_get_swap_interval_mesa = NULL;
-static openq4GLXSwapIntervalSGIProc_t glx_swap_interval_sgi = NULL;
+static opend3GLXSwapIntervalEXTProc_t glx_swap_interval_ext = NULL;
+static opend3GLXSwapIntervalMESAProc_t glx_swap_interval_mesa = NULL;
+static opend3GLXGetSwapIntervalMESAProc_t glx_get_swap_interval_mesa = NULL;
+static opend3GLXSwapIntervalSGIProc_t glx_swap_interval_sgi = NULL;
 static bool glx_swap_control_tear_available = false;
 
 static bool vidmode_ext = false;
@@ -344,14 +344,14 @@ static void GLX_InitSwapControl( void ) {
 	glx_swap_control_tear_available = GLX_HasExtension( extensions, "GLX_EXT_swap_control_tear" );
 
 	if ( hasExtSwapControl ) {
-		glx_swap_interval_ext = reinterpret_cast<openq4GLXSwapIntervalEXTProc_t>( GLX_GetProcAddressForName( "glXSwapIntervalEXT" ) );
+		glx_swap_interval_ext = reinterpret_cast<opend3GLXSwapIntervalEXTProc_t>( GLX_GetProcAddressForName( "glXSwapIntervalEXT" ) );
 	}
 	if ( hasMesaSwapControl ) {
-		glx_swap_interval_mesa = reinterpret_cast<openq4GLXSwapIntervalMESAProc_t>( GLX_GetProcAddressForName( "glXSwapIntervalMESA" ) );
-		glx_get_swap_interval_mesa = reinterpret_cast<openq4GLXGetSwapIntervalMESAProc_t>( GLX_GetProcAddressForName( "glXGetSwapIntervalMESA" ) );
+		glx_swap_interval_mesa = reinterpret_cast<opend3GLXSwapIntervalMESAProc_t>( GLX_GetProcAddressForName( "glXSwapIntervalMESA" ) );
+		glx_get_swap_interval_mesa = reinterpret_cast<opend3GLXGetSwapIntervalMESAProc_t>( GLX_GetProcAddressForName( "glXGetSwapIntervalMESA" ) );
 	}
 	if ( hasSgiSwapControl ) {
-		glx_swap_interval_sgi = reinterpret_cast<openq4GLXSwapIntervalSGIProc_t>( GLX_GetProcAddressForName( "glXSwapIntervalSGI" ) );
+		glx_swap_interval_sgi = reinterpret_cast<opend3GLXSwapIntervalSGIProc_t>( GLX_GetProcAddressForName( "glXSwapIntervalSGI" ) );
 	}
 
 	common->Printf(
@@ -1064,8 +1064,8 @@ int Sys_GetVideoRam( void ) {
 	// try a few strategies to guess the amount of video ram
 	common->Printf( "guessing video ram ( use +set sys_videoRam to force ) ..\n" );
 	if ( !GLimp_OpenDisplay( ) ) {
-		common->Printf( "guess failed, using conservative modern VRAM setting ( %dMB VRAM )\n", OPENQ4_LINUX_UNKNOWN_VIDEO_RAM_MB );
-		run_once = OPENQ4_LINUX_UNKNOWN_VIDEO_RAM_MB;
+		common->Printf( "guess failed, using conservative modern VRAM setting ( %dMB VRAM )\n", OPEND3_LINUX_UNKNOWN_VIDEO_RAM_MB );
+		run_once = OPEND3_LINUX_UNKNOWN_VIDEO_RAM_MB;
 		return run_once;
 	}
 	l_dpy = dpy;
@@ -1117,8 +1117,8 @@ int Sys_GetVideoRam( void ) {
 			common->Printf( "read /proc/dri/0/umm failed: %s\n", strerror( errno ) );
 		}
 	}
-	common->Printf( "guess failed, using conservative modern VRAM setting ( %dMB VRAM )\n", OPENQ4_LINUX_UNKNOWN_VIDEO_RAM_MB );
-	run_once = OPENQ4_LINUX_UNKNOWN_VIDEO_RAM_MB;
+	common->Printf( "guess failed, using conservative modern VRAM setting ( %dMB VRAM )\n", OPEND3_LINUX_UNKNOWN_VIDEO_RAM_MB );
+	run_once = OPEND3_LINUX_UNKNOWN_VIDEO_RAM_MB;
 	return run_once;
 }
 

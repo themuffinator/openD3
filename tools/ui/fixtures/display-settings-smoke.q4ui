@@ -1,7 +1,7 @@
 // First-party Marine vectors derived from system-settings-smoke.q4ui.
 // Bounded display transaction diagnostic; no production GUI acceptance.
 {
-  "format": "openq4-ui",
+  "format": "opend3-ui",
   "version": 1,
   "id": "display-settings-smoke",
   "tokens": {

@@ -17,7 +17,7 @@ static std::function<void()> onRevoke;
 static const auto originalThread=std::this_thread::get_id();
 bool Sys_EventDispositionBoundThread() noexcept{return originalThread==std::this_thread::get_id();}
 std::uint64_t Sys_EventDispositionEpoch() noexcept{return Sys_EventDispositionBoundThread()?1:0;}
-namespace openq4 {
+namespace opend3 {
 void NativeInputBeforeSessionChange()noexcept{++revokes;++publicationTransition;if(onRevoke)onRevoke();}
 void NativeInputBeforeInputBlockerChange()noexcept{NativeInputBeforeSessionChange();}
 void NativeInputBeforeUiChange(std::uint64_t,std::uint64_t)noexcept{NativeInputBeforeSessionChange();}
@@ -68,12 +68,12 @@ void R_RendererModule_SyncConfiguration() {}
 #include "cvar_methods.inc"
 static idInternalCVar com_asyncInput;
 static bool consoleBlocked=false,previewOpen=false;
-bool openq4::Console_BlocksNativeInput()noexcept{return consoleBlocked;}
+bool opend3::Console_BlocksNativeInput()noexcept{return consoleBlocked;}
 static bool RetainedUI_IsOpen(){return previewOpen;}
 class idUserInterface {};
 struct idSessionLocal {
     idUserInterface *guiTest=nullptr,*guiActive=nullptr;bool insideExecuteMapChange=false,loadingSaveGame=false;
-    bool QueryNativeInputPublication(openq4::NativeSessionPublication&)const noexcept;
+    bool QueryNativeInputPublication(opend3::NativeSessionPublication&)const noexcept;
 };
 #include "session_query.inc"
 struct idUserInterfaceManaged {
@@ -99,11 +99,11 @@ static unsigned windowGetters=0;static std::uint32_t windowId=3;
 static std::uint32_t SDL_GetWindowID(SDL_Window*){++windowGetters;return windowId;}
 #if !defined(_WIN32)
 #define _WIN32
-#define OPENQ4_TEST_UNDEFINE_WIN32
+#define OPEND3_TEST_UNDEFINE_WIN32
 #endif
-#define OPENQ4_SDL3_CHECKED_NATIVE_QUEUE 1
+#define OPEND3_SDL3_CHECKED_NATIVE_QUEUE 1
 #include "window_publications.inc"
-#if defined(OPENQ4_TEST_UNDEFINE_WIN32)
+#if defined(OPEND3_TEST_UNDEFINE_WIN32)
 #undef _WIN32
 #endif
 static void Cvars() {
@@ -131,7 +131,7 @@ static void Cvars() {
     sessionObject.multiplayer=false;idAsyncNetwork::cheats=true;
 }
 static void SessionAndManager() {
-    idSessionLocal s;idUserInterface a,b;s.guiActive=&a;openq4::NativeSessionPublication out;
+    idSessionLocal s;idUserInterface a,b;s.guiActive=&a;opend3::NativeSessionPublication out;
     CHECK(s.QueryNativeInputPublication(out) && out.current==reinterpret_cast<std::uintptr_t>(&a) && out.inputAllowed);
     for(unsigned which=0;which<6;++which) {
         s.insideExecuteMapChange=which==0;s.loadingSaveGame=which==1;consoleBlocked=which==2;previewOpen=which==3;
@@ -160,7 +160,7 @@ static void SessionAndManager() {
     std::thread worker([&]{CHECK(!manager.QueryNativeInputAllocation(address,id));});worker.join();CHECK(id==999);
 }
 static void Windows() {
-    using namespace openq4;
+    using namespace opend3;
     SDL3_PublishNativeWindowIdentity();CHECK(windowGetters==1);NativeWindowPublication claim,out;
     CHECK(Sys_AcquireNativeInputWindowClaim(claim) && claim.registration && claim.association && claim.lifetime);
     CHECK(!Sys_AcquireNativeInputWindowClaim(out));auto expected=claim;

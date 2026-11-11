@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT / 'tools/tests'))
 import renderer_vulkan_material_programs as authored
 import renderer_vulkan_uniform_pressure as pressure
 lab = authored.lab
-PREFIX = 'textures/openq4/pipeline_pressure'
+PREFIX = 'textures/opend3/pipeline_pressure'
 NAMES = ('clear', 'base', 'below', 'pressure', 'recovered', 'reloaded', 'settled', 'restarted')
 EXPECTED = re.compile(r"^WARNING: Vulkan authored GLSL 'tests/oq4_pipeline_\d+\.glsl': material pipeline allocation failed; the stage is skipped$")
 
@@ -61,9 +61,9 @@ shaderTexture Image nearest clamp {authored.PREFIX}/pattern
 ''')
             materials.append(f'{PREFIX}/{i}\n{{\ntranslucent\ntwoSided\nnoShadows\n' + ''.join(stages) + '}\n')
             if i == 0: materials.append(f'{PREFIX}/base\n{{\ntranslucent\ntwoSided\nnoShadows\n' + stages[0] + '}\n')
-        files['materials/openq4_pipeline_pressure.mtr'] = ''.join(materials)
+        files['materials/opend3_pipeline_pressure.mtr'] = ''.join(materials)
         for name, content in files.items():
-            target = args.output_dir / 'batch/baseoq4' / name
+            target = args.output_dir / 'batch/baseod3' / name
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding='utf-8')
             fixture_hashes[name] = lab.digest(target)
@@ -77,7 +77,7 @@ shaderTexture Image nearest clamp {authored.PREFIX}/pattern
     original_startup = lab.startup_args
     def startup(cvars, save):
         result = original_startup(cvars, save)
-        with (save / 'baseoq4/autoexec.cfg').open('a') as config:
+        with (save / 'baseod3/autoexec.cfg').open('a') as config:
             for name in ('base', *range(66)):
                 config.write(f'touch material {PREFIX}/{name}\n')
         return result
@@ -133,7 +133,7 @@ shaderTexture Image nearest clamp {authored.PREFIX}/pattern
             if name == 'clear':
                 if np.count_nonzero(delta > 2) < 1000: failures.append('specimen is not visible')
             elif np.any(delta): failures.append(name + ': identical draw or recovery differs')
-    log = (args.output_dir / 'batch/baseoq4/logs/openq4.log').read_text(errors='replace')
+    log = (args.output_dir / 'batch/baseod3/logs/opend3.log').read_text(errors='replace')
     expected = [line for line in original_diagnostics(log) if EXPECTED.fullmatch(re.sub(r'\^[0-9]', '', line))]
     if args.backend == 'vk':
         if not expected: failures.append('pipeline rejection absent')
@@ -159,7 +159,7 @@ shaderTexture Image nearest clamp {authored.PREFIX}/pattern
                 if not counters or int(counters[-1][0]) == 0 or int(counters[-1][1]) != 0:
                     failures.append(name + ': new program failed after reload')
     if not report.get('complete') or not report.get('runtimeUnchanged'): failures.append('incomplete or modified runtime')
-    if any(lab.digest(args.output_dir / 'batch/baseoq4' / name) != digest for name, digest in fixture_hashes.items()):
+    if any(lab.digest(args.output_dir / 'batch/baseod3' / name) != digest for name, digest in fixture_hashes.items()):
         failures.append('fixture modified')
     assert lab.digest(Path(__file__)) == source
     shutil.copy2(__file__, args.output_dir / 'harness' / Path(__file__).name)

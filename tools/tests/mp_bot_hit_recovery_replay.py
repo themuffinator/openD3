@@ -148,7 +148,7 @@ def main() -> int:
     runtime, output = args.runtime_dir.resolve(), args.output_dir.resolve()
     if output.exists():
         parser.error("use a new output directory to preserve earlier evidence")
-    executable = "openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64"
+    executable = "openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64"
     identity = replay_identity(runtime, executable)
     complete, outcomes, codes = True, [], {}
     for name, (mode, cases) in CASES.items():

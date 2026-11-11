@@ -53,7 +53,7 @@ TEAM_COLUMN = 130.0                 # the players list's team column (dp)
 ACTIONS = (("kick", "mpAdminKick"), ("ban", "mpAdminBan"), ("switch", "mpAdminSwitch"))
 # Kick and Ban ask first in the stock confirmation (section 14.18: destructive
 # actions use the stock modal), titled as their plates and naming the player;
-# the stock page asked nothing. Each modal's question, in openQ4's tables.
+# the stock page asked nothing. Each modal's question, in openD3's tables.
 CONFIRMED = {"kick": ("#str_200230", "#str_231590"), "ban": ("#str_200231", "#str_231591")}
 CONFIRM_W = 480.0
 APPLY = ("apply", "mpAdminApply")

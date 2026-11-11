@@ -7,7 +7,7 @@
 #include <thread>
 #include <type_traits>
 
-namespace openq4 {
+namespace opend3 {
 struct NativeInputWindow {
     std::uintptr_t handle = 0; // Comparison only; never dereferenced or called.
     std::uint64_t window = 0, lifetime = 0, module = 0, association = 0, registration = 0;
@@ -170,4 +170,4 @@ static_assert(std::is_trivially_copyable<NativeInputObservation>::value &&
     std::is_trivially_copyable<NativeInputHead>::value &&
     std::is_trivially_copyable<NativeInputRoute::CancellationPermit>::value,
     "Native route probes and permits must be copied POD data");
-} // namespace openq4
+} // namespace opend3

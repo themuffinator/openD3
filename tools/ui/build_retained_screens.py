@@ -31,7 +31,7 @@ from functools import lru_cache
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-PAK0 = ROOT / "content" / "baseoq4" / "pak0"
+PAK0 = ROOT / "content" / "baseod3" / "pak0"
 OUTPUTS = {
     "title": PAK0 / "guis" / "menu" / "title.q4ui",
     "pause": PAK0 / "guis" / "menu" / "pause.q4ui",
@@ -869,7 +869,7 @@ class Document:
         return ids
 
     def build(self, root: dict, extras: dict | None = None) -> dict:
-        result = {"format": "openq4-ui", "version": 1, "id": self.ident, "canvas": {"height": 720}}
+        result = {"format": "opend3-ui", "version": 1, "id": self.ident, "canvas": {"height": 720}}
         if self.state:
             result["state"] = self.state
         if self.actions:
@@ -1010,7 +1010,7 @@ def link(doc: Document, ident: str, key: str, *, action: str | None = None, even
 
 def merged_text(key: str) -> dict:
     """`key` in every shipped language, as the engine resolves it: a
-    language's openQ4 table, else the stock GUI table openQ4 ships for it."""
+    language's openD3 table, else the stock GUI table openD3 ships for it."""
     found = localized(key)
     for language in LANGUAGES:
         if language not in found:
@@ -2302,7 +2302,7 @@ PAGE_BAR_W = CANVAS_W - PAGE_BAR_LEFT
 
 def engine_text(key: str) -> dict:
     """`key` in every shipped language as the engine resolves it: the last of
-    the language's tables to define it (openQ4's own sort last), else
+    the language's tables to define it (openD3's own sort last), else
     English."""
     texts = {}
     for language in ("english",) + LANGUAGES:
@@ -2803,7 +2803,7 @@ def tall_title(doc: Document, stage: dict, home: dict, nav: dict, base: dict, se
 
 
 def title_document() -> dict:
-    doc = Document("openq4.title")
+    doc = Document("opend3.title")
     doc.state.update({
         "menu_continue": {"type": "boolean", "initial": False},
         "menu_continue_title": {"type": "string", "initial": ""},
@@ -2936,16 +2936,16 @@ def crumb_transform(scale: float = CRUMB_SCALE) -> dict:
                                                        round(scale, 4), round(scale, 4), 0]}
 
 
-STRINGS = ROOT / "content" / "baseoq4" / "pak0" / "strings"
+STRINGS = ROOT / "content" / "baseod3" / "pak0" / "strings"
 LANGUAGES = ("english", "french", "german", "italian", "polish", "russian", "spanish",
              "brazilian", "czech", "hungarian", "turkish", "ukrainian")
 
 
 def localized(key: str) -> dict:
-    """The shipped openQ4 string tables' text for `key`, by sys_lang value."""
+    """The shipped openD3 string tables' text for `key`, by sys_lang value."""
     texts = {}
     for language in LANGUAGES:
-        for line in (STRINGS / f"{language}_openq4.lang").read_text(encoding="utf-8").splitlines():
+        for line in (STRINGS / f"{language}_opend3.lang").read_text(encoding="utf-8").splitlines():
             match = re.match(r'\s*"(#str_\d+)"\s+"(.*)"\s*$', line)
             if match and match.group(1) == key:
                 texts[language] = match.group(2)
@@ -2957,7 +2957,7 @@ def font_metrics(face: str) -> tuple:
     """A shipped face's units per em, each mapped code point's advance in
     font units and the advance of '?', which stands in for a missing glyph;
     read once per face and shared by all localized rows."""
-    data = (ROOT / "content" / "baseoq4" / "pak0" / "fonts" / f"{face}.ttf").read_bytes()
+    data = (ROOT / "content" / "baseod3" / "pak0" / "fonts" / f"{face}.ttf").read_bytes()
     tables = {}
     for index in range(struct.unpack(">H", data[4:6])[0]):
         tag, _, offset, length = struct.unpack(">4sIII", data[12 + 16 * index:28 + 16 * index])
@@ -3066,7 +3066,7 @@ def campaign_document(campaigns: bool) -> dict:
     hidden, so it is never seen moved when it next presents, and a change
     that was cut short never leaves it moved. Under reduced motion the
     session hands over at once and the arrival's 80 ms fade is the change."""
-    doc = Document("openq4.campaigns" if campaigns else "openq4.singleplayer")
+    doc = Document("opend3.campaigns" if campaigns else "opend3.singleplayer")
     back = "campaignBack" if campaigns else "campaignHome"
     doc.session("back", back)
     doc.events["onBack"] = [{"op": "action", "action": "back"}]
@@ -4336,7 +4336,7 @@ def objectives_page(doc: Document, strogg: bool) -> tuple:
 def pause_document(strogg: bool = False) -> dict:
     """The single-player pause (section 13.7). `strogg` builds the Strogg
     pause that the session presents after Kane's stroggification."""
-    doc = Document("openq4.pause_strogg" if strogg else "openq4.pause")
+    doc = Document("opend3.pause_strogg" if strogg else "opend3.pause")
     doc.state.update({
         "pause_level": {"type": "string", "initial": ""},
         "pause_detail": {"type": "string", "initial": ""},
@@ -4548,7 +4548,7 @@ def loading_document() -> dict:
     """Section 14.17: the stock loading screens in their Remastered form: the
     drifting levelshot, the detail line, the progress with the loader's phase,
     and in multiplayer the band kept low under the server card."""
-    doc = Document("openq4.loading")
+    doc = Document("opend3.loading")
     doc.state.update({
         "map_loading": {"type": "number", "initial": 0},
         "loading_levelshot": {"type": "string", "initial": ""},

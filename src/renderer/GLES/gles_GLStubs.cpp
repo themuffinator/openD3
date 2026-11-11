@@ -24,7 +24,7 @@
 ===============================================================================
 */
 
-#ifdef OPENQ4_RENDERER_GLES_MODULE
+#ifdef OPEND3_RENDERER_GLES_MODULE
 
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
@@ -300,4 +300,4 @@ bool RB_LightGridSurfaceModernRepresentable( const struct drawSurf_s *surf, cons
 	return false;
 }
 
-#endif /* OPENQ4_RENDERER_GLES_MODULE */
+#endif /* OPEND3_RENDERER_GLES_MODULE */

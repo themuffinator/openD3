@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Portable adaptation of Emile Belanger's engine-render-target capture harness.
-# Usage: OPENQ4_BASEPATH=/path/to/Quake4 render_shot.sh arb2|glesd3|vulkan [--mode mp ...]
+# Usage: OPEND3_BASEPATH=/path/to/Quake4 render_shot.sh arb2|glesd3|vulkan [--mode mp ...]
 set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 case "${1:-}" in
@@ -11,6 +11,6 @@ case "${1:-}" in
 esac
 shift
 exec python3 "$REPO_ROOT/tools/debug/render_smoke.py" \
-    --runtime "${OPENQ4_RUNTIME:-$REPO_ROOT/.install}" \
-    --basepath "${OPENQ4_BASEPATH:?set OPENQ4_BASEPATH to the retail Quake 4 installation}" \
+    --runtime "${OPEND3_RUNTIME:-$REPO_ROOT/.install}" \
+    --basepath "${OPEND3_BASEPATH:?set OPEND3_BASEPATH to the retail Quake 4 installation}" \
     --render-api "$API" "$@"

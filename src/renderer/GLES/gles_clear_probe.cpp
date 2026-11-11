@@ -1,14 +1,14 @@
 /*
 ===========================================================================
-openQ4 GLES clear probe.
+openD3 GLES clear probe.
 
 Proves the one thing that blocks an OpenGL ES render path on a development
-Mac: that openQ4's *link-time* GL entry points can be made to resolve to an
+Mac: that openD3's *link-time* GL entry points can be made to resolve to an
 OpenGL ES driver instead of Apple's desktop OpenGL.framework.
 
 Why this exists
 ---------------
-openQ4 calls GL 1.x core entry points (glClear, glGetString, glDrawArrays,
+openD3 calls GL 1.x core entry points (glClear, glGetString, glDrawArrays,
 ...) as ordinary linked symbols -- glew.h declares them as plain externs and
 only *extension* entry points go through GLEW's function-pointer dispatch.
 The client therefore imports _glClear/_glGetString/_glDrawArrays from

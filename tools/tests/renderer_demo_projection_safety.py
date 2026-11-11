@@ -116,7 +116,7 @@ def validate_source_contract() -> None:
 def main() -> None:
     validate_projection_model()
     validate_source_contract()
-    require(read("tools/validation/openq4_validate.py"), "renderer_demo_projection_safety.py", "renderer safety validation wiring")
+    require(read("tools/validation/opend3_validate.py"), "renderer_demo_projection_safety.py", "renderer safety validation wiring")
     print("renderer demo/projection safety: ok")
 
 

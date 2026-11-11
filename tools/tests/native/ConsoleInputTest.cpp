@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 
-openQ4 console input native tests
+openD3 console input native tests
 
 Copyright (C) 2026 DarkMatter Productions
 SPDX-License-Identifier: GPL-3.0-or-later

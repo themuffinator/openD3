@@ -5,7 +5,7 @@
 #include <exception>
 #include <utility>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 std::atomic<std::uint64_t> lastRequest{0};
 std::uint64_t NewRequest() {
@@ -635,4 +635,4 @@ SettingsResult SettingsTransaction::Abandon(std::uint64_t requestedOwner) {
 	Close(); return Result(SettingsCode::Ok);
 }
 
-} // namespace openq4::ui
+} // namespace opend3::ui

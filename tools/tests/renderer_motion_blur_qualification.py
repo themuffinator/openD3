@@ -160,7 +160,7 @@ def launch_case(runtime: Path, output: Path, backend: str, case: Case, timeout: 
     run_dir = output / f"{backend}-{case.name}"
     if run_dir.exists():
         shutil.rmtree(run_dir)
-    game_dir = run_dir / "baseoq4"
+    game_dir = run_dir / "baseod3"
     game_dir.mkdir(parents=True)
     cvars = dict(BASE)
     cvars.update(case.cvars)
@@ -173,7 +173,7 @@ def launch_case(runtime: Path, output: Path, backend: str, case: Case, timeout: 
     lines += [f"wait {case.frames}", "rendererMotionBlurStatus", "wait 5", "quit"]
     (game_dir / "motionblur.cfg").write_text("\n".join(lines) + "\n", encoding="ascii")
 
-    exe = runtime / ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    exe = runtime / ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     command = [str(exe)]
 
     def setv(name: str, value) -> None:
@@ -185,7 +185,7 @@ def launch_case(runtime: Path, output: Path, backend: str, case: Case, timeout: 
     setv("developer", 1)
     setv("fs_savepath", run_dir)
     setv("fs_devpath", run_dir)
-    setv("fs_game", "baseoq4")
+    setv("fs_game", "baseod3")
     setv("com_skipLoadingContinue", 1)
     setv("com_loadingContinueAutoAdvance", 1)
     setv("g_autoSkipCinematics", 1)
@@ -224,7 +224,7 @@ def launch_case(runtime: Path, output: Path, backend: str, case: Case, timeout: 
 
 
 def reevaluate_case(output: Path, backend: str, case: Case) -> dict:
-    game_dir = output / f"{backend}-{case.name}" / "baseoq4"
+    game_dir = output / f"{backend}-{case.name}" / "baseod3"
     log_path = game_dir / "logs" / "motionblur.log"
     log_text = log_path.read_text(encoding="utf-8", errors="replace") if log_path.is_file() else ""
     return {

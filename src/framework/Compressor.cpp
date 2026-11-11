@@ -250,7 +250,7 @@ protected:
 	int				readByte;
 	int				readBit;
 	const byte *	readData;
-	bool			readDry;			// openQ4: the last refill from the file came back empty
+	bool			readDry;			// openD3: the last refill from the file came back empty
 
 	int				writeTotalBytes;
 	int				writeLength;
@@ -404,7 +404,7 @@ int idCompressor_BitStream::ReadBits( int numBits ) {
 		if ( readBit == 0 ) {
 			if ( readByte >= readLength ) {
 				if ( readData == buffer ) {
-					// openQ4: an empty refill leaves readLength at 0, so each further
+					// openD3: an empty refill leaves readLength at 0, so each further
 					// byte consumed asks for another refill and only looks at its
 					// first byte. Ask a dry source for that one byte, not the whole
 					// buffer: idFile_BitMsg zero-fills whatever it cannot supply, and
@@ -2286,8 +2286,8 @@ protected:
 
 	// Used by the decompressor
 	int				oldCode;
-	bool			streamCorrupt;		// openQ4: a code the dictionary cannot hold was read
-	bool			corruptReported;	// openQ4: and a reader has been told
+	bool			streamCorrupt;		// openD3: a code the dictionary cannot hold was read
+	bool			corruptReported;	// openD3: and a reader has been told
 };
 
 /*
@@ -2334,7 +2334,7 @@ int idCompressor_LZW::Read( void *outData, int outLength ) {
 
 	for ( n = i = 0; i < outLength; i += n ) {
 		if ( !blockSize ) {
-			// openQ4: say so only when a reader wanted bytes the stream could
+			// openD3: say so only when a reader wanted bytes the stream could
 			// not give. Blocks are decoded ahead of need, and a demo's trailer
 			// sits raw behind its stream, so the decoder meets bytes that are
 			// not codes at the end of an ordinary recording.
@@ -2497,7 +2497,7 @@ void idCompressor_LZW::DecompressBlock() {
 			break;
 		}
 
-		// openQ4: the codes come from the file, and only asserts checked them. A
+		// openD3: the codes come from the file, and only asserts checked them. A
 		// code past the next free entry, or a first code that is not a literal,
 		// made WriteChain follow links through entries nobody had written - out
 		// of the dictionary, or round a loop that ran off the end of its 4 KiB

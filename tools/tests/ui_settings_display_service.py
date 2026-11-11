@@ -27,7 +27,7 @@ BOUNDARIES = r'''
 #include "src/ui/SettingsDisplayService.h"
 #include "src/framework/SettingsPersistence.h"
 #include "src/sound/SoundRestart.h"
-using namespace openq4;
+using namespace opend3;
 static int checks=0;
 static void Check(bool condition,const char* message) {
     ++checks;if(!condition){std::fprintf(stderr,"FAIL: %s\n",message);std::exit(1);}
@@ -47,7 +47,7 @@ struct Common { void Warning(const char*,...){trace.push_back("warning");}
 static bool Traced(const std::string& line){return std::find(trace.begin(),trace.end(),"print:"+line)!=trace.end();}
 static std::map<std::string,std::string> files;
 static std::set<std::string> leases;
-static const std::string journalFile="E:/qualified/baseoq4/ui-settings-recovery.dat", lockFile="E:/qualified/baseoq4/.settings-recovery.lock";
+static const std::string journalFile="E:/qualified/baseod3/ui-settings-recovery.dat", lockFile="E:/qualified/baseod3/.settings-recovery.lock";
 static bool readFailure=false,replaceFailure=false,replacePublishes=false,removeFailure=false,configFailure=false;
 static bool changedSaveRoot=false;
 static int configWrites=0,restarts=0,initializations=0;
@@ -64,7 +64,7 @@ static bool Same(const sysWindowPlacementSnapshot_t& a,const sysWindowPlacementS
         a.normalWidth==b.normalWidth && a.normalHeight==b.normalHeight && a.normalValid==b.normalValid;
 }
 static bool GeometryError(char* error,int size,const char* text) {std::snprintf(error,size,"%s",text);return false;}
-namespace openq4 {
+namespace opend3 {
 struct DurableFileLease::Impl {std::string path;};
 DurableFileLease::DurableFileLease()=default;
 DurableFileLease::~DurableFileLease(){Release();}
@@ -90,7 +90,7 @@ bool DurableRemoveExact(const std::string& path,std::string& error){
     if(removeFailure){error="remove failure";return false;}files.erase(path);error.clear();return true;
 }
 }
-bool Common_SettingsPersistencePaths(std::string& journal,std::string& lock,std::string& error){journal=changedSaveRoot?"E:/other/baseoq4/ui-settings-recovery.dat":journalFile;lock=changedSaveRoot?"E:/other/baseoq4/.settings-recovery.lock":lockFile;error.clear();return true;}
+bool Common_SettingsPersistencePaths(std::string& journal,std::string& lock,std::string& error){journal=changedSaveRoot?"E:/other/baseod3/ui-settings-recovery.dat":journalFile;lock=changedSaveRoot?"E:/other/baseod3/.settings-recovery.lock":lockFile;error.clear();return true;}
 bool Common_WriteSettingsConfiguration(bool owns,std::string& error){
     trace.push_back("config");++configWrites;Check(owns && leases.contains(lockFile),"configuration commit keeps process lease");
     Check(files.contains(journalFile),"configuration commit retains authoritative journal");
@@ -385,7 +385,7 @@ static void CommitOwnershipCases(){
      Check(configWrites==0 && host.RecoveryActive(),"changed save root or journal blocks all configuration writes");
      Check(files.contains(journalFile),"failed commit ownership check keeps recovery evidence");
      if(!pathChange)Check(files.at(journalFile)=="foreign journal before commit","commit cannot replace foreign journal");
-     else Check(!files.contains("E:/other/baseoq4/ui-settings-recovery.dat"),"commit cannot write evidence in changed save root");
+     else Check(!files.contains("E:/other/baseod3/ui-settings-recovery.dat"),"commit cannot write evidence in changed save root");
      host.Shutdown();
     }
 }
@@ -413,7 +413,7 @@ static void UnusedTopologyCases(){
 // Full production catalog with an observed custom ambient subnormal. The host
 // allows restoration of this original, but new edits still enforce float-cache
 // representability; these cases request zero and never introduce a tiny edit.
-struct ExactMode:openq4::test::FloatFlushMode{ExactMode():FloatFlushMode(true){}};
+struct ExactMode:opend3::test::FloatFlushMode{ExactMode():FloatFlushMode(true){}};
 static void SetExactAmbient(std::uint64_t bits){
     std::string text;Check(SettingsNumberText(std::bit_cast<double>(bits),SettingsNumberFormat::FixedShortest,text),"serialize exact observed ambient fixture");
     localCVarSystem.variables.at("r_forceAmbient").value=text;
@@ -951,7 +951,7 @@ static void EmitDeferredJournals(const std::string& directory){
 }
 
 int main(){
-    if(const char* directory=std::getenv("OPENQ4_EMIT_DEFERRED_JOURNALS")){EmitDeferredJournals(directory);std::printf("Deferred recovery journals emitted: %d checks\n",checks);return 0;}
+    if(const char* directory=std::getenv("OPEND3_EMIT_DEFERRED_JOURNALS")){EmitDeferredJournals(directory);std::printf("Deferred recovery journals emitted: %d checks\n",checks);return 0;}
     MultisamplingCapability();VulkanMultisampling();ExactCatalogCases();RuntimeJournal();StartupCases();GeometryAndStartupFailures();StartupClockCases();CommitOwnershipCases();ReindexedStartupRetry();UnusedTopologyCases();DeferredCases();DeferredExactCases();RendererCases();RendererExactCases();CombinedCases();CatalogInputCases();std::printf("UI settings display service passed: %d checks\n",checks);}
 
 '''
@@ -998,7 +998,7 @@ def main(production_mutations=(), emit_directory=None):
     source = out / "service.cpp"
     source.write_text(code, encoding="utf-8")
     values = out / "values.cpp"
-    values.write_text('#include "src/ui/retained/Document.h"\n#include <json/json.h>\n#include <cmath>\n#include <algorithm>\n#include <memory>\nnamespace openq4::ui {\nconstexpr size_t MaxSourceBytes=16*1024*1024;\n' + validation + '\n}\n', encoding="utf-8")
+    values.write_text('#include "src/ui/retained/Document.h"\n#include <json/json.h>\n#include <cmath>\n#include <algorithm>\n#include <memory>\nnamespace opend3::ui {\nconstexpr size_t MaxSourceBytes=16*1024*1024;\n' + validation + '\n}\n', encoding="utf-8")
     executable = out / ("service.exe" if os.name == "nt" else "service")
     jsoncpp = wrap_source("jsoncpp")
     command = [compiler, "-std=c++20", "-DUSE_SDL3", "-I", str(ROOT), "-I", str(jsoncpp / "include"),
@@ -1010,7 +1010,7 @@ def main(production_mutations=(), emit_directory=None):
     environment = dict(os.environ, TEMP=str(out), TMP=str(out), TMPDIR=str(out))
     if emit_directory:
         Path(emit_directory).mkdir(parents=True, exist_ok=True)
-        environment["OPENQ4_EMIT_DEFERRED_JOURNALS"] = str(Path(emit_directory).resolve()).replace("\\", "/")
+        environment["OPEND3_EMIT_DEFERRED_JOURNALS"] = str(Path(emit_directory).resolve()).replace("\\", "/")
     inputs = [Path(__file__), Path(host_test.__file__), Path(display_test.__file__),
               *(ROOT / name for name in (
                   "src/ui/SettingsDisplayService.h", "src/ui/SettingsDisplayService.cpp", "src/sound/SoundRestart.h",
@@ -1036,7 +1036,7 @@ def main(production_mutations=(), emit_directory=None):
                         "scope": "Production service/host/display helpers and real journal codec; native I/O, renderer, SDL and geometry leases are counted doubles."}
             if emit_directory:
                 evidence["scope"] = "Emitted production-encoded deferred recovery journals only; the test cases did not run."
-                evidence["emitted"] = environment["OPENQ4_EMIT_DEFERRED_JOURNALS"]
+                evidence["emitted"] = environment["OPEND3_EMIT_DEFERRED_JOURNALS"]
             if executable.exists():
                 evidence["executable_sha256"] = hashlib.sha256(executable.read_bytes()).hexdigest()
             (out / "result.json").write_text(json.dumps(evidence, indent=2) + '\n', encoding="utf-8")

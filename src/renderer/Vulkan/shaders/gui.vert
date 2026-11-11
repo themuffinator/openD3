@@ -1,6 +1,6 @@
 #version 450
 
-// openQ4 Vulkan GUI/2D pipeline — vertex stage (Phase D,
+// openD3 Vulkan GUI/2D pipeline — vertex stage (Phase D,
 // docs/dev/archive/2026-10-18/plans/2026-07-18-vulkan-phase-d.md).
 //
 // Consumes idDrawVert (64-byte stride): position, byte-normalized color,

@@ -145,8 +145,8 @@ def validate_workflow_matrix_scope() -> None:
 def validate_evidence_contract() -> None:
     evidence = read("docs/dev/macos-signoff-evidence.md")
     workflow_doc = read("docs/dev/macos-vm-testing-workflow.md")
-    host = read("tools/macos/Invoke-openQ4MacOSWorkflow.ps1")
-    guest = read("tools/macos/guest/openq4-macos-sync-build-test.sh")
+    host = read("tools/macos/Invoke-openD3MacOSWorkflow.ps1")
+    guest = read("tools/macos/guest/opend3-macos-sync-build-test.sh")
     validator = read("tools/macos/validate_signoff_archive.py")
     recorder = read("tools/macos/record_signoff_evidence.py")
 
@@ -176,7 +176,7 @@ def validate_evidence_contract() -> None:
         "MacOSOSMatrixRole",
         "floor-candidate",
         "latest-public-macos",
-        "OPENQ4_MACOS_OS_MATRIX_ROLE",
+        "OPEND3_MACOS_OS_MATRIX_ROLE",
     ):
         require(host, token, "macOS host workflow OS matrix role")
 
@@ -217,7 +217,7 @@ def validate_evidence_contract() -> None:
 
 
 def validate_ci_and_local_wiring() -> None:
-    local_runner = read("tools/validation/openq4_validate.py")
+    local_runner = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
     evidence_plumbing = read("tools/tests/macos_evidence_plumbing.py")

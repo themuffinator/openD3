@@ -478,7 +478,7 @@ def check_catalog_declarations():
     slots = f'SystemDisplayDeviceSlots = {catalog.DEVICE_SLOTS}, SystemDisplayModeSlots = {catalog.MODE_SLOTS}, SystemDisplayRefreshSlots = {catalog.REFRESH_SLOTS};'
     assert slots in header, 'the page declares different display list slot counts from the builder'
     # The page declares exactly these keys, with these types and initial values.
-    page = (ROOT / 'content/baseoq4/pak0/guis/menu/settings/system.q4ui').read_text(encoding='utf-8')
+    page = (ROOT / 'content/baseod3/pak0/guis/menu/settings/system.q4ui').read_text(encoding='utf-8')
     state = json.loads(page[page.index('{'):])['state']
     declared = {key: value for key, value in state.items() if key.startswith(catalog.PREFIX)}
     assert declared == catalog.keys(), 'the page declares different display list keys'
@@ -515,7 +515,7 @@ def main(production_mutations=()):
     validation = '\n'.join(function_body(document, name) for name in ('bool Utf8(', 'bool ValidStateValue('))
     production = '\n'.join(line for line in (host + '\n' + display).splitlines() if not line.startswith('#include '))
     code = (host_test.SUPPORT + EXTRA + function_body(cvars, '\nbool CVar_ReadDefault(') +
-            '\nnamespace openq4::ui {\n' + validation + '\n}\n' +
+            '\nnamespace opend3::ui {\n' + validation + '\n}\n' +
             '\n#define min(a,b) (((a)<(b))?(a):(b))\n#define max(a,b) (((a)>(b))?(a):(b))\n' + production +
             '\n#undef min\n#undef max\n' + MAIN)
     compiler = next((p for name in ('clang++', 'g++', 'c++') if (p := shutil.which(name))), None)
@@ -535,16 +535,16 @@ def main(production_mutations=()):
             subprocess.run([str(binary)], check=True, env=environment)
         source.write_text('#define ID_DEDICATED\n#include "src/ui/application/SystemDisplay.h"\n#include <cassert>\n'+
                           '\n'.join(line for line in display.splitlines() if not line.startswith('#include '))+
-                          '\nint main(){openq4::ui::SystemDisplayTopology t;t.primary=9;std::string e;'
-                          'openq4::ui::SystemDisplayPlan p;p.request.parms.width=777;openq4::ui::StateValues v;'
-                          'assert(!openq4::ui::CaptureDisplayTopology(t,e)&&t.primary==9);'
-                          'assert(!openq4::ui::InspectDisplayRecovery(v,p,t,e)&&p.request.parms.width==777&&t.primary==9);'
-                          'assert(!openq4::ui::ValidateDisplayRecoveryPair(v,v,v,e));'
-                          'assert(!openq4::ui::ResolveDisplayRecovery(v,t,p,e)&&p.request.parms.width==777);'
-                          'openq4::ui::SystemDisplayCatalogInput in;openq4::ui::SystemDisplayCatalog c;c.count=5;'
-                          'assert(!openq4::ui::BuildSystemDisplayCatalog(in,v,c,e)&&c.count==5);'
-                          'assert(!openq4::ui::SystemDisplaySelectionPatch(c,openq4::ui::SystemDisplayList::Device,-1,v,e));'
-                          'assert(!openq4::ui::SameSystemDisplay({},{}));}\n', encoding='utf-8')
+                          '\nint main(){opend3::ui::SystemDisplayTopology t;t.primary=9;std::string e;'
+                          'opend3::ui::SystemDisplayPlan p;p.request.parms.width=777;opend3::ui::StateValues v;'
+                          'assert(!opend3::ui::CaptureDisplayTopology(t,e)&&t.primary==9);'
+                          'assert(!opend3::ui::InspectDisplayRecovery(v,p,t,e)&&p.request.parms.width==777&&t.primary==9);'
+                          'assert(!opend3::ui::ValidateDisplayRecoveryPair(v,v,v,e));'
+                          'assert(!opend3::ui::ResolveDisplayRecovery(v,t,p,e)&&p.request.parms.width==777);'
+                          'opend3::ui::SystemDisplayCatalogInput in;opend3::ui::SystemDisplayCatalog c;c.count=5;'
+                          'assert(!opend3::ui::BuildSystemDisplayCatalog(in,v,c,e)&&c.count==5);'
+                          'assert(!opend3::ui::SystemDisplaySelectionPatch(c,opend3::ui::SystemDisplayList::Device,-1,v,e));'
+                          'assert(!opend3::ui::SameSystemDisplay({},{}));}\n', encoding='utf-8')
         binary=temp/'dedicated.exe'
         subprocess.run([compiler,'-std=c++20','-I',str(ROOT),str(source),'-o',str(binary)],check=True,env=environment)
         subprocess.run([str(binary)],check=True,env=environment)

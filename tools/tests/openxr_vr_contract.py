@@ -63,15 +63,15 @@ def check_build() -> None:
     require(meson, "build_openxr = build_engine and use_sdl3_backend and not openxr_option.disabled() \\\n"
                    "  and (host_system == 'windows' or host_system == 'linux')",
             "OpenXR is limited to the SDL3 client on Windows and Linux")
-    snapshot = meson.index("openq4_dedicated_sources = openq4_engine_sources")
-    client_sources = meson.index("openq4_engine_sources += files('src/sys/openxr/OpenXRSystem.cpp')")
+    snapshot = meson.index("opend3_dedicated_sources = opend3_engine_sources")
+    client_sources = meson.index("opend3_engine_sources += files('src/sys/openxr/OpenXRSystem.cpp')")
     if client_sources < snapshot:
         raise AssertionError("OpenXR sources must join the client after the dedicated-server snapshot")
-    require(meson, "client_engine_cpp_args += ['-DOPENQ4_OPENXR=1']", "only the client defines OPENQ4_OPENXR")
+    require(meson, "client_engine_cpp_args += ['-DOPEND3_OPENXR=1']", "only the client defines OPEND3_OPENXR")
     require(meson, "client_deps += openxr_loader_dep", "only the client links the loader")
-    runtime = meson[meson.index("shared_module(\n    'openq4-xr-test-runtime'"):]
+    runtime = meson[meson.index("shared_module(\n    'opend3-xr-test-runtime'"):]
     require(runtime[:600], "install: false", "the OpenXR test runtime is a test fixture")
-    require(meson, "test('openq4-vr-math-core', openq4_vr_math_core_test", "the VR math core has a native test")
+    require(meson, "test('opend3-vr-math-core', opend3_vr_math_core_test", "the VR math core has a native test")
     if "src/sys/openxr" in read("tools/build/meson_sources.py"):
         raise AssertionError("src/sys/openxr must stay outside the engine source globs")
 
@@ -206,7 +206,7 @@ def check_play_space() -> None:
     require(openxr, '"vr_calibrateHeight"', "the standing height can be measured again")
     require(read("src/framework/VRMathCore.h"), "inline vrPlaySpaceChoice_t VR_ChoosePlaySpace( int mode, bool haveStage, bool haveLocalFloor ) {",
             "the play-space choice is pure, natively tested math")
-    require(read("tools/tests/openxr/OpenXRTestRuntime.cpp"), "OPENQ4_XR_TEST_SPACES", "the test runtime can withhold floor-level spaces")
+    require(read("tools/tests/openxr/OpenXRTestRuntime.cpp"), "OPEND3_XR_TEST_SPACES", "the test runtime can withhold floor-level spaces")
     # the headset's own recentre: announced ahead of the frame it applies to
     require(openxr, "if ( spaceChangePending && time >= spaceChangeTime ) {",
             "the VR origin follows a runtime recentre from the frame the space moves, not from its announcement")
@@ -284,7 +284,7 @@ def check_stereo_sharing() -> None:
 
 def check_engine() -> None:
     system = read("src/framework/VRSystem.cpp")
-    require(system, "#if defined( OPENQ4_OPENXR )\nidVRSystem *vrSystem = VR_GetOpenXRSystem();",
+    require(system, "#if defined( OPEND3_OPENXR )\nidVRSystem *vrSystem = VR_GetOpenXRSystem();",
             "OpenXR builds run the OpenXR system")
     require(system, "static idVRSystemNull vrSystemNull;\nidVRSystem *vrSystem = &vrSystemNull;",
             "other builds run the null system")
@@ -310,7 +310,7 @@ def check_engine() -> None:
     require(player, "// the seat follows the vehicle's turns from here, not from the first",
             "the seat's turn carry starts when the player boards")
     # world GUIs, characters and usable things answer the weapon hand where it points
-    require(player, "start = GetEyePosition();\n\t// openQ4 VR: the weapon hand points at world GUIs",
+    require(player, "start = GetEyePosition();\n\t// openD3 VR: the weapon hand points at world GUIs",
             "the focus trace starts where the weapon hand aims")
     require(player, "\tGetVRAimOrigin( start );\n\tend = start + viewAngles.ToForward() * 768.0f;",
             "the focus trace runs from the weapon hand along its aim")
@@ -329,7 +329,7 @@ def check_engine() -> None:
     require(read("src/game/gamesys/WeaponWheel.inl"),
             '( trackedAim || !cvarSystem->GetCVarBool( "ui_retained" ) ) ) {',
             "turning the weapon hand steers the wheel under either interface")
-    require(read("src/framework/UsercmdGen.cpp"), "\tClearAngles();\n\t// openQ4 VR: the tracked aim starts again from the zeroed angles\n\tVR_UsercmdAnglesCleared();",
+    require(read("src/framework/UsercmdGen.cpp"), "\tClearAngles();\n\t// openD3 VR: the tracked aim starts again from the zeroed angles\n\tVR_UsercmdAnglesCleared();",
             "a new map takes the body's yaw again, so its start is not turned by the level before")
     # a seat's turret follows the head, so the HUD hangs on the line of sight
     require(read("src/sys/openxr/OpenXRSystem.cpp"),
@@ -385,10 +385,10 @@ def vrActionTokens() -> list[str]:
 
 def check_strings() -> None:
     for language in LANGUAGES:
-        table = read(f"content/baseoq4/pak0/strings/{language}_openq4.lang")
+        table = read(f"content/baseod3/pak0/strings/{language}_opend3.lang")
         for key in ACTION_STRINGS:
             if not re.search(rf'"{key}"\t"[^"]+"', table):
-                raise AssertionError(f"{language}_openq4.lang lacks {key}")
+                raise AssertionError(f"{language}_opend3.lang lacks {key}")
 
 
 def check_documents() -> None:

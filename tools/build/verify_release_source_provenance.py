@@ -119,7 +119,7 @@ def verify_layer_provenance(
     expected_gamelibs_commit: str,
     expected_layer_commit: str,
 ) -> None:
-    """A game-library layer (openQ4-game-awakening) is staged with the base game into its own
+    """A game-library layer (openD3-game-awakening) is staged with the base game into its own
     stage, whose manifest records all three commits; each must be the approved one."""
     expected_layer_commit = require_full_git_sha(expected_layer_commit, "expected layer commit")
     layer_root = require_repository(layer_root, "game-library layer repository")
@@ -138,7 +138,7 @@ def verify_layer_provenance(
         commit_key="gameLibsGitCommit",
         dirty_key="gameLibsGitDirty",
         expected_commit=expected_gamelibs_commit,
-        label="OpenD3-GameLibs (layer stage)",
+        label="openD3-GameLibs (layer stage)",
     )
     layer = manifest.get("layer")
     if not isinstance(layer, dict):
@@ -166,7 +166,7 @@ def verify_release_source_provenance(
 ) -> None:
     # Canonical releases have one source commit and compile the Prey game
     # library (src/game, src/Prey, src/preyengine) in place. Keep the historical
-    # staged OpenD3-GameLibs verifier for old evidence fixtures.
+    # staged openD3-GameLibs verifier for old evidence fixtures.
     if gamelibs_root is None and stage_manifest is None and expected_gamelibs_commit is None:
         commit = require_full_git_sha(expected_project_commit or "", "expected openD3 commit")
         project_root = require_repository(project_root, "openD3 repository")
@@ -181,7 +181,7 @@ def verify_release_source_provenance(
             path = project_root / relative
             if path.is_symlink() or not path.is_file():
                 raise RuntimeError(f"missing canonical game licensing: {relative}")
-        configured = read_stage_manifest((build_dir or project_root / "builddir") / "openq4_game_sources.json")
+        configured = read_stage_manifest((build_dir or project_root / "builddir") / "opend3_game_sources.json")
         if configured != inventory(project_root):
             raise RuntimeError("configured in-tree game source inventory differs from the clean release checkout; reconfigure and rebuild")
         if any(arg is not None for arg in (layer_root, layer_stage_manifest, expected_layer_commit)):
@@ -194,13 +194,13 @@ def verify_release_source_provenance(
         expected_project_commit, "expected openD3 commit"
     )
     expected_gamelibs_commit = require_full_git_sha(
-        expected_gamelibs_commit, "expected OpenD3-GameLibs commit"
+        expected_gamelibs_commit, "expected openD3-GameLibs commit"
     )
     project_root = require_repository(project_root, "openD3 repository")
-    gamelibs_root = require_repository(gamelibs_root, "OpenD3-GameLibs repository")
+    gamelibs_root = require_repository(gamelibs_root, "openD3-GameLibs repository")
 
     verify_repository_commit(project_root, expected_project_commit, "openD3")
-    verify_repository_commit(gamelibs_root, expected_gamelibs_commit, "OpenD3-GameLibs")
+    verify_repository_commit(gamelibs_root, expected_gamelibs_commit, "openD3-GameLibs")
 
     # The companion staging tool (stage_gamelibs.py) was removed with the
     # in-tree import, so historical manifests are checked for their recorded
@@ -218,7 +218,7 @@ def verify_release_source_provenance(
         commit_key="gameLibsGitCommit",
         dirty_key="gameLibsGitDirty",
         expected_commit=expected_gamelibs_commit,
-        label="OpenD3-GameLibs",
+        label="openD3-GameLibs",
     )
 
     if layer_root is not None:

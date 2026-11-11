@@ -1,4 +1,4 @@
-# openQ4 integration for the pinned Khronos OpenXR SDK loader. Only the loader
+# openD3 integration for the pinned Khronos OpenXR SDK loader. Only the loader
 # library is built, statically, for the client executable; the API layers,
 # samples, tests and conformance suite are not engine content. The loader keeps
 # the runtime-negotiation and manifest-discovery behaviour of the upstream CMake
@@ -41,7 +41,7 @@ elif host_system == 'linux'
 elif host_system == 'darwin'
   loader_args += ['-DXR_OS_APPLE', '-DXR_USE_PLATFORM_MACOS']
 else
-  error('The openQ4 OpenXR loader build supports Windows, Linux and macOS hosts only.')
+  error('The openD3 OpenXR loader build supports Windows, Linux and macOS hosts only.')
 endif
 
 openxr_loader_library = static_library('openxr_loader', files(

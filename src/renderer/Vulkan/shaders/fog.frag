@@ -1,6 +1,6 @@
 #version 450
 
-// openQ4 Vulkan fog light — fragment stage (Phase G2).
+// openD3 Vulkan fog light — fragment stage (Phase G2).
 //
 // The RB_FogPass fixed-function modulate chain (draw_common.cpp:7670-7715):
 // primary color (the light's stage-0 fog color, alpha pinned 1 by

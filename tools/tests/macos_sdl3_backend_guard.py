@@ -51,10 +51,10 @@ def validate_macos_sdl3_source_selection() -> None:
     main = read("src/sys/macos/macos_sdl3_main.cpp")
     sources = read("tools/build/meson_sources.py")
     display = function_body(wrapper, "CGDirectDisplayID Sys_DisplayToUse(void) {")
-    openq4_main = function_body(main, "static int SDLCALL OpenQ4_Main(int argc, char **argv) {")
+    opend3_main = function_body(main, "static int SDLCALL openD3_Main(int argc, char **argv) {")
     entrypoint = function_body(main, "int main(int argc, char **argv) {")
 
-    require(wrapper, "#define OPENQ4_SDL3_DARWIN_HOST 1", "macOS SDL3 wrapper host marker")
+    require(wrapper, "#define OPEND3_SDL3_DARWIN_HOST 1", "macOS SDL3 wrapper host marker")
     require(wrapper, '#include "../sdl3/sdl3_backend.cpp"', "macOS SDL3 wrapper shared backend")
     require(sources, "SDL3_DARWIN_SOURCES", "macOS SDL3 source manifest")
     require(sources, '"sys/macos/macos_sdl3.cpp"', "macOS SDL3 source manifest")
@@ -69,13 +69,13 @@ def validate_macos_sdl3_source_selection() -> None:
     ):
         require(display, token, "macOS SDL3 display fallback")
 
-    require(openq4_main, "argc > 1 && argv != NULL", "macOS SDL3 app argument guard")
+    require(opend3_main, "argc > 1 && argv != NULL", "macOS SDL3 app argument guard")
     require(entrypoint, 'static char emptyArg0[] = "openD3";', "macOS SDL3 app argument guard")
     require(entrypoint, "char *emptyArgv[] = { emptyArg0, NULL };", "macOS SDL3 app argument guard")
     require(entrypoint, "if (argc <= 0 || argv == NULL)", "macOS SDL3 app argument guard")
     require(entrypoint, "argc = 1;", "macOS SDL3 app argument guard")
     require(entrypoint, "argv = emptyArgv;", "macOS SDL3 app argument guard")
-    require(entrypoint, "SDL_RunApp(argc, argv, OpenQ4_Main, NULL)", "macOS SDL3 app argument guard")
+    require(entrypoint, "SDL_RunApp(argc, argv, openD3_Main, NULL)", "macOS SDL3 app argument guard")
 
 
 def validate_macos_process_handoff_guards() -> None:
@@ -402,7 +402,7 @@ def validate_native_vram_probe_guards() -> None:
 
 
 def validate_validation_wiring() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
 

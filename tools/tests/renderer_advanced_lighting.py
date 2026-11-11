@@ -385,19 +385,19 @@ def test_hiz_and_diagnostic_submit_own_complete_framebuffer_targets() -> None:
 def test_native_cpu_and_atlas_tests_are_wired() -> None:
     meson = read("meson.build")
     for token in (
-        "'openq4-advanced-lighting-core-test'",
+        "'opend3-advanced-lighting-core-test'",
         "files('tools/tests/native/AdvancedLightingCoreTest.cpp')",
-        "'openq4-advanced-lighting-core'",
-        "'openq4-advanced-screen-space-core-test'",
+        "'opend3-advanced-lighting-core'",
+        "'opend3-advanced-screen-space-core-test'",
         "files('tools/tests/native/AdvancedScreenSpaceCoreTest.cpp')",
-        "'openq4-advanced-screen-space-core'",
-        "'openq4-specular-probe-atlas-packing-test'",
+        "'opend3-advanced-screen-space-core'",
+        "'opend3-specular-probe-atlas-packing-test'",
         "files('tools/tests/native/ModernSpecularProbeAtlasPackingTest.cpp')",
-        "'openq4-specular-probe-atlas-packing'",
+        "'opend3-specular-probe-atlas-packing'",
     ):
         require(meson, token, "native Milestone F Meson wiring")
 
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     require(validator, 'base.append("-Dbuild_native_tests=true")', "local native-test setup")
     require(validator, "wrapper + test_args(build_dir)", "local native-test execution")
 
@@ -435,7 +435,7 @@ def test_native_cpu_and_atlas_tests_are_wired() -> None:
 
 
 def test_validation_entry_points_include_this_contract() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     if validator.count('root / "tools" / "tests" / "renderer_advanced_lighting.py"') != 1:
         raise AssertionError("local validation must include this contract exactly once")
 

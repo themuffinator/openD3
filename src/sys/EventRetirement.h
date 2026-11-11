@@ -7,7 +7,7 @@
 // its time field is consequently zero. The exact original payload stays owned
 // by storage until a successful Take transfers it to the caller.
 template<class Event>
-inline openq4::NativeInputHead Sys_EventRetirementHead(openq4::NativeInputLane lane,
+inline opend3::NativeInputHead Sys_EventRetirementHead(opend3::NativeInputLane lane,
     std::uint64_t serial, unsigned slot, const Event& event, const sysEventDispositionTag_t& tag) noexcept {
     int type = 0;
     static_assert(sizeof(event.evType) == sizeof(type), "Event type footprint changed");
@@ -24,6 +24,6 @@ inline openq4::NativeInputHead Sys_EventRetirementHead(openq4::NativeInputLane l
 // Take tests the current head against the opaque permit, then transfers event,
 // payload and tag once. Only Ready changes outputs; no alias with storage/inputs.
 // This is cancellation storage ownership, not terminal disposition or any ACK.
-sysEventTransfer_t Sys_PeekEventForRetirement(openq4::NativeInputHead&) noexcept;
-sysEventTransfer_t Sys_TakeEventForRetirement(openq4::NativeInputRoute&,
-    const openq4::NativeInputRoute::CancellationPermit&, sysEvent_t&, sysEventDispositionTag_t&) noexcept;
+sysEventTransfer_t Sys_PeekEventForRetirement(opend3::NativeInputHead&) noexcept;
+sysEventTransfer_t Sys_TakeEventForRetirement(opend3::NativeInputRoute&,
+    const opend3::NativeInputRoute::CancellationPermit&, sysEvent_t&, sysEventDispositionTag_t&) noexcept;

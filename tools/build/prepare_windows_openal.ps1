@@ -205,8 +205,8 @@ Remove-WorkspaceDirectory -Path $buildDir -RepoRoot $repoRoot
 Remove-WorkspaceDirectory -Path $outputRootFull -RepoRoot $repoRoot
 New-Item -ItemType Directory -Path $outputRootFull -Force | Out-Null
 
-$vsTargetArch = if (-not [string]::IsNullOrWhiteSpace($env:OPEND3_VS_TARGET_ARCH)) { $env:OPEND3_VS_TARGET_ARCH.Trim().ToLowerInvariant() } elseif (-not [string]::IsNullOrWhiteSpace($env:OPENQ4_VS_TARGET_ARCH)) { $env:OPENQ4_VS_TARGET_ARCH.Trim().ToLowerInvariant() } else { $Architecture }
-$vsHostArch = if (-not [string]::IsNullOrWhiteSpace($env:OPEND3_VS_HOST_ARCH)) { $env:OPEND3_VS_HOST_ARCH.Trim().ToLowerInvariant() } elseif (-not [string]::IsNullOrWhiteSpace($env:OPENQ4_VS_HOST_ARCH)) { $env:OPENQ4_VS_HOST_ARCH.Trim().ToLowerInvariant() } else { Get-ProcessArch }
+$vsTargetArch = if (-not [string]::IsNullOrWhiteSpace($env:OPEND3_VS_TARGET_ARCH)) { $env:OPEND3_VS_TARGET_ARCH.Trim().ToLowerInvariant() } elseif (-not [string]::IsNullOrWhiteSpace($env:OPEND3_VS_TARGET_ARCH)) { $env:OPEND3_VS_TARGET_ARCH.Trim().ToLowerInvariant() } else { $Architecture }
+$vsHostArch = if (-not [string]::IsNullOrWhiteSpace($env:OPEND3_VS_HOST_ARCH)) { $env:OPEND3_VS_HOST_ARCH.Trim().ToLowerInvariant() } elseif (-not [string]::IsNullOrWhiteSpace($env:OPEND3_VS_HOST_ARCH)) { $env:OPEND3_VS_HOST_ARCH.Trim().ToLowerInvariant() } else { Get-ProcessArch }
 $preparationSource = "source-build"
 try {
     if (-not (Test-Path $downloadPath)) {

@@ -1,6 +1,6 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
-#ifndef OPENQ4_LEGACY_SCOPE_MASK_H
-#define OPENQ4_LEGACY_SCOPE_MASK_H
+#ifndef OPEND3_LEGACY_SCOPE_MASK_H
+#define OPEND3_LEGACY_SCOPE_MASK_H
 
 // This is a scalar distortion field, not colour art. Retail's DXT replacement
 // quantizes its almost-black aperture into 4x4 blocks which become visible when

@@ -1,7 +1,7 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
 // Included after complete extracted production queue/slice methods and actual
 // EventLoop declaration. Only external facts, allocator and engine sinks are doubles.
-using namespace openq4;
+using namespace opend3;
 using Transfer=sysEventTransfer_t;
 using Permit=NativeInputRoute::CancellationPermit;
 static_assert(SDL3_MAX_MOUSE_DELTA_PER_EVENT>=7&&SDL3_MAX_MOUSE_WHEEL_STEPS_PER_EVENT>=1,

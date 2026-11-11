@@ -22,7 +22,7 @@ def main():
     tag = f'{args.renderer}-{args.width}x{args.height}' + ('-stock' if args.stock_gui else '') + ('-dm' if args.gametype == 'DM' else '')
     output = ROOT / '.tmp/chat-gameplay' / tag
     save = output / 'save'
-    game = save / 'baseoq4'
+    game = save / 'baseod3'
     game.mkdir(parents=True, exist_ok=True)
     if args.stock_gui:
         wanted = {'guis/mphud.gui', 'guis/mpmsgmode.gui'}
@@ -41,7 +41,7 @@ def main():
         return ['waitMsec 150', f'echo CHAT_SMOKE_{name}', 'chatHistory status',
                 f'screenshot "screenshots/{name}.tga"']
 
-    commands = ['openq4_assertMPClientActive', 'say "All channel: ready to play."',
+    commands = ['opend3_assertMPClientActive', 'say "All channel: ready to play."',
                 'sayTeam "Team channel: hold the upper route."', *shot('passive'),
                 'set ui_chatTime 0.2', 'waitMsec 1100', *shot('faded'), 'set ui_chatTime 3',
                 'messagemode2', *shot('team_input')]
@@ -58,7 +58,7 @@ def main():
     (game / 'chat_smoke.cfg').write_text('\n'.join(commands) + '\n', encoding='utf-8')
     cvars = {
         'fs_basepath': str(args.basepath), 'fs_savepath': str(save), 'fs_devpath': str(save),
-        'fs_game': 'baseoq4', 'com_gameMode': 'MP', 'logFile': '2', 'logFileName': 'logs/openq4.log',
+        'fs_game': 'baseod3', 'com_gameMode': 'MP', 'logFile': '2', 'logFileName': 'logs/opend3.log',
         'developer': '1', 'r_renderApi': args.renderer, 'r_fullscreen': '0', 'r_borderless': '0',
         'r_fullscreenDesktop': '0', 'r_borderlessDefaultMigrated': '1', 'r_mode': '-1',
         'r_customWidth': str(args.width), 'r_customHeight': str(args.height),
@@ -76,7 +76,7 @@ def main():
         'ui_hudLayout': '0',
         'g_autoExecAfterMapLoad': 'chat_smoke.cfg', 'g_autoExecAfterMapLoadDelayMs': '500',
     }
-    executable = ROOT / '.install/openQ4-client_x64.exe'
+    executable = ROOT / '.install/openD3-client_x64.exe'
     command = [str(executable)]
     for name, value in cvars.items():
         command += ['+set', name, value]
@@ -91,7 +91,7 @@ def main():
             process.kill()
             process.wait()
             raise RuntimeError('chat smoke timed out; inspect ' + str(output))
-    log = (game / 'logs/openq4.log').read_text(encoding='utf-8', errors='replace')
+    log = (game / 'logs/opend3.log').read_text(encoding='utf-8', errors='replace')
     reports = {}
     for section in re.split(r'CHAT_SMOKE_', log)[1:]:
         name = section.splitlines()[0].strip()
@@ -110,7 +110,7 @@ def main():
     for name in ('passive', 'faded', 'team_input', 'full', 'scrolled', 'arrival', 'scaled', 'latest', 'wrapped', 'compact'):
         image = game / f'screenshots/{name}.tga'
         assert image.is_file() and image.stat().st_mtime >= started, name
-    failures = re.findall(r'^.*(?:ERROR:|WARNING:.*<openQ4 chat>).*$', log, re.M)
+    failures = re.findall(r'^.*(?:ERROR:|WARNING:.*<openD3 chat>).*$', log, re.M)
     assert not failures, failures
     (output / 'report.json').write_text(json.dumps(reports, indent=2), encoding='utf-8')
     print('Chat gameplay passed: ' + str(output))

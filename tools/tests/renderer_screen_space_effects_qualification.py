@@ -133,10 +133,10 @@ def run_backend(runtime: Path, output: Path, backend: str, timeout: int) -> dict
     run_dir = output / backend
     if run_dir.exists():
         shutil.rmtree(run_dir)
-    game_dir = run_dir / "baseoq4"
+    game_dir = run_dir / "baseod3"
     game_dir.mkdir(parents=True)
     (game_dir / "screenspace.cfg").write_text(build_cfg(), encoding="ascii")
-    exe = runtime / ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    exe = runtime / ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     command = [str(exe)]
 
     def setv(name, value):
@@ -144,7 +144,7 @@ def run_backend(runtime: Path, output: Path, backend: str, timeout: int) -> dict
 
     setv("win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances", 1)
     for name, value in (("logFile", 2), ("logFileName", "logs/screenspace.log"), ("developer", 1),
-                        ("fs_savepath", run_dir), ("fs_devpath", run_dir), ("fs_game", "baseoq4"),
+                        ("fs_savepath", run_dir), ("fs_devpath", run_dir), ("fs_game", "baseod3"),
                         ("com_skipLoadingContinue", 1), ("com_loadingContinueAutoAdvance", 1),
                         ("g_autoSkipCinematics", 1), ("com_maxfps", 0), ("r_swapInterval", 0),
                         ("r_fullscreen", 0), ("ui_retained", 1), ("ui_autoJoin", 0),

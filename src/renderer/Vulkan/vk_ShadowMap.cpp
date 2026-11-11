@@ -56,7 +56,7 @@
 ===============================================================================
 */
 
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
@@ -7810,4 +7810,4 @@ void VK_ShadowMap_DebugOverlayDraw( const viewDef_t *viewDef ) {
 	VK_Exec_SetViewScissor( draw.cmd, viewDef, fbHeight );
 }
 
-#endif /* OPENQ4_RENDERER_VK_MODULE */
+#endif /* OPEND3_RENDERER_VK_MODULE */

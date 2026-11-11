@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 
-openQ4 multi-view demo recording and playback.
+openD3 multi-view demo recording and playback.
 
 ===========================================================================
 */
@@ -204,8 +204,8 @@ private:
 	idList<indexEntry_t>	recordingIndex;
 	// Format 1.3 navigation. While recording these collect the directories
 	// written at finalization; during playback they hold what was read back.
-	std::vector<openq4_mvd::Marker>	markers;
-	std::vector<openq4_mvd::Keyframe> keyframes;
+	std::vector<opend3_mvd::Marker>	markers;
+	std::vector<opend3_mvd::Keyframe> keyframes;
 	int						markersDropped;
 	int						lastKeyframeGameTime;
 	int						lastMarkerIndex;

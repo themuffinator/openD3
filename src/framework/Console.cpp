@@ -45,7 +45,7 @@ void SCR_DrawTextRightAlign( float &y, const char *text, ... ) id_attribute((for
 #define CON_LINE_STRIDE			256
 #define	CON_MAX_TOTAL_LINES		(CON_TEXTSIZE / CON_LINE_STRIDE)
 #define CON_HISTORY_MAX_CHARS	(CON_TEXTSIZE * 8)
-// openQ4: the history is trimmed back to CON_HISTORY_MAX_CHARS once it has run
+// openD3: the history is trimmed back to CON_HISTORY_MAX_CHARS once it has run
 // this far past it, and its buffer is reserved to hold that plus one long line
 #define CON_HISTORY_TRIM_SLACK	(CON_HISTORY_MAX_CHARS / 8)
 #define CON_HISTORY_RESERVE		(CON_HISTORY_MAX_CHARS + CON_HISTORY_TRIM_SLACK + 4096)
@@ -1194,25 +1194,25 @@ float SCR_DrawMemoryUsage( float y ) {
 	return y;
 }
 
-static const char *SCR_FramePacingBoundLabel( openq4FramePacingBound_t boundMode ) {
+static const char *SCR_FramePacingBoundLabel( opend3FramePacingBound_t boundMode ) {
 	switch ( boundMode ) {
-		case OPENQ4_FRAME_BOUND_SIMULATION:
+		case OPEND3_FRAME_BOUND_SIMULATION:
 			return "simulation";
-		case OPENQ4_FRAME_BOUND_VSYNC:
+		case OPEND3_FRAME_BOUND_VSYNC:
 			return "vsync";
-		case OPENQ4_FRAME_BOUND_PRESENTATION_CAP:
+		case OPEND3_FRAME_BOUND_PRESENTATION_CAP:
 			return "presentation-cap";
-		case OPENQ4_FRAME_BOUND_UNCAPPED:
+		case OPEND3_FRAME_BOUND_UNCAPPED:
 			return "frame-work";
 		default:
 			return "collecting";
 	}
 }
 
-float openQ4_GetPresentationThrottleLatenessP95( void );
+float openD3_GetPresentationThrottleLatenessP95( void );
 
 float SCR_DrawFramePacing( float y ) {
-	const openq4FramePacingStats_t &stats = sessLocal.GetFramePacingStats();
+	const opend3FramePacingStats_t &stats = sessLocal.GetFramePacingStats();
 
 	if ( !stats.valid ) {
 		SCR_DrawTextRightAlign( y, "frame pacing: collecting samples" );
@@ -1254,16 +1254,16 @@ float SCR_DrawFramePacing( float y ) {
 	SCR_DrawTextRightAlign(
 		y,
 		"interval p50/p95/p99/max = %.2f/%.2f/%.2f/%.2f ms, display %.1f Hz, limiter late p95 = %.3f ms",
-		p50, p95, p99, stats.maxFrameMsec, stats.refreshHz, openQ4_GetPresentationThrottleLatenessP95() );
-	const openq4::FramePacingBudget budget = openq4::JudgeFramePacingBudget( stats.presentationCap, p95, p99 );
-	if ( budget != openq4::FramePacingBudget::NotDeclared ) {
+		p50, p95, p99, stats.maxFrameMsec, stats.refreshHz, openD3_GetPresentationThrottleLatenessP95() );
+	const opend3::FramePacingBudget budget = opend3::JudgeFramePacingBudget( stats.presentationCap, p95, p99 );
+	if ( budget != opend3::FramePacingBudget::NotDeclared ) {
 		SCR_DrawTextRightAlign(
 			y,
 			"%d Hz budget p95 <= %.2f, p99 <= %.2f ms: %s",
-			openq4::SUPPORTED_PRESENTATION_CAP,
-			openq4::SUPPORTED_CAP_P95_BUDGET_MSEC,
-			openq4::SUPPORTED_CAP_P99_BUDGET_MSEC,
-			budget == openq4::FramePacingBudget::Met ? "met" : "missed" );
+			opend3::SUPPORTED_PRESENTATION_CAP,
+			opend3::SUPPORTED_CAP_P95_BUDGET_MSEC,
+			opend3::SUPPORTED_CAP_P99_BUDGET_MSEC,
+			budget == opend3::FramePacingBudget::Met ? "met" : "missed" );
 	}
 	SCR_DrawTextRightAlign(
 		y,
@@ -1428,7 +1428,7 @@ idConsoleLocal::Init
 void idConsoleLocal::Init( void ) {
 	int		i;
 
-	openq4::NativeInputBeforeInputBlockerChange();
+	opend3::NativeInputBeforeInputBlockerChange();
 
 	keyCatching = false;
 	procFileOutOfDate = false;
@@ -1555,7 +1555,7 @@ void idConsoleLocal::LoadGraphics() {
 idConsoleLocal::Active
 ================
 */
-bool openq4::Console_BlocksNativeInput() noexcept { return localConsole.NativeInputBlocked(); }
+bool opend3::Console_BlocksNativeInput() noexcept { return localConsole.NativeInputBlocked(); }
 
 bool	idConsoleLocal::Active( void ) {
 	return keyCatching;
@@ -1580,7 +1580,7 @@ idConsoleLocal::Close
 ================
 */
 void	idConsoleLocal::Close() {
-	openq4::NativeInputBeforeInputBlockerChange();
+	opend3::NativeInputBeforeInputBlockerChange();
 	keyCatching = false;
 	SetDisplayFraction( 0 );
 	displayFrac = 0;	// don't scroll to that point, go immediately
@@ -1639,7 +1639,7 @@ void idConsoleLocal::OpenForInput( bool reduced ) {
 	historyLine = nextHistoryLine;
 	historyDraft.Clear();
 	caretClock = 0.0;
-	openq4::NativeInputBeforeInputBlockerChange();
+	opend3::NativeInputBeforeInputBlockerChange();
 	keyCatching = true;
 	focus = CON_FOCUS_INPUT;
 	mouseInitialized = false;
@@ -1889,7 +1889,7 @@ void idConsoleLocal::UpdateDisplayLine( void ) {
 		return;
 	}
 
-	// openQ4: the smoothed row used to close on the target at a constant
+	// openD3: the smoothed row used to close on the target at a constant
 	// con_scrollSmoothSpeed, so a long jump kept the view travelling for as long
 	// as the distance took: seconds after a held Page Up was released, and half
 	// a minute across a full scrollback. The speed is now the floor of an
@@ -2157,7 +2157,7 @@ idConsoleLocal::UpdateScrollbarHoverValue
 ================
 */
 void idConsoleLocal::UpdateScrollbarHoverValue( float &hoverFrac, bool dragging, bool hot ) const {
-	// openQ4: timed, not a fixed step per frame, which grew the bar in 20 ms at
+	// openD3: timed, not a fixed step per frame, which grew the bar in 20 ms at
 	// 240 Hz and 80 ms at 60 Hz
 	hoverFrac = oq4console::HoverAdvance( hoverFrac, dragging || hot, frameSeconds, CON_SCROLLBAR_LERP_SPEED );
 }
@@ -2478,7 +2478,7 @@ void idConsoleLocal::InsertInputChar( int ch ) {
 
 	DeleteInputSelection();
 	cursor = consoleField.GetCursor();
-	// openQ4: measure after the selection is gone. With the length from before,
+	// openD3: measure after the selection is gone. With the length from before,
 	// overstriking a selection that reached the end of the line left the new
 	// character unterminated and the deleted tail came back, and inserting over
 	// a full selected line was refused as if the line were still full.
@@ -2570,7 +2570,7 @@ void idConsoleLocal::PasteClipboardToInput( void ) {
 		return;
 	}
 
-	// openQ4: pasted as a drop is, so a tab or line break between two words
+	// openD3: pasted as a drop is, so a tab or line break between two words
 	// becomes a space where it used to join them
 	DeleteInputSelection();
 	InsertInputTextAt( text, consoleField.GetCursor() );
@@ -2593,7 +2593,7 @@ void idConsoleLocal::InsertInputTextAt( const char *text, int cursor ) {
 		return;
 	}
 
-	// openQ4: one completion query for the whole text. Each inserted character
+	// openD3: one completion query for the whole text. Each inserted character
 	// used to run its own, tens of milliseconds apiece over a large name family,
 	// so a pasted line stalled the frame.
 	completionRebuildHold++;
@@ -4010,7 +4010,7 @@ bool idConsoleLocal::InputKeyDownEvent( int key ) {
 		return true;
 	}
 
-	// openQ4: the popup takes the arrows, the page keys and Enter. Home and End
+	// openD3: the popup takes the arrows, the page keys and Enter. Home and End
 	// stay with the edit line: the popup shows for nearly every half-typed
 	// command, and while it took them too the caret could not be sent to either
 	// end of the line, nor the line selected from the caret with Shift.
@@ -4024,7 +4024,7 @@ bool idConsoleLocal::InputKeyDownEvent( int key ) {
 			case K_KP_DOWNARROW:
 				MoveCompletionSelection( 1 );
 				return true;
-			// openQ4: the wheel works on what the pointer is over. It used to
+			// openD3: the wheel works on what the pointer is over. It used to
 			// walk the popup wherever the pointer was, so the log could not be
 			// scrolled while a completion list was showing, which is whenever a
 			// command is half typed. Over the list it stops at the ends: wrapping
@@ -4379,7 +4379,7 @@ void idConsoleLocal::KeyDownEvent( int key ) {
 		return;
 	}
 
-	// openQ4: Escape puts away what is open, innermost first: the completion
+	// openD3: Escape puts away what is open, innermost first: the completion
 	// list, then the console. The session used to take it before the console
 	// saw it, which in a game closed the console and opened the menu in one
 	// press, and over a menu did nothing at all.
@@ -4392,7 +4392,7 @@ void idConsoleLocal::KeyDownEvent( int key ) {
 		return;
 	}
 
-	// openQ4: Ctrl+Home and Ctrl+End reach the ends of the scrollback. They
+	// openD3: Ctrl+Home and Ctrl+End reach the ends of the scrollback. They
 	// were tested after the edit line had already taken Home and End, so they
 	// never ran. With Shift they still extend a selection.
 	if ( ( key == K_HOME || key == K_END ) && idKeyInput::IsDown( K_CTRL ) && !idKeyInput::IsDown( K_SHIFT ) ) {
@@ -4411,7 +4411,7 @@ void idConsoleLocal::KeyDownEvent( int key ) {
 			return;
 		}
 
-		// openQ4: a command's output prints at the end of the log, so running
+		// openD3: a command's output prints at the end of the log, so running
 		// one from a scrolled-back view returns there instead of leaving the
 		// answer out of sight
 		Bottom();
@@ -4462,7 +4462,7 @@ void idConsoleLocal::KeyDownEvent( int key ) {
 		return;
 	}
 
-	// openQ4: one step per key event. A held key repeats through the system's
+	// openD3: one step per key event. A held key repeats through the system's
 	// own key repeat, which arrives here as further key-down events, like every
 	// other key of the edit line. The engine used to add its own repeat on top,
 	// from 200 ms after the press and once per drawn frame: at 240 Hz that was
@@ -4706,7 +4706,7 @@ void idConsoleLocal::Print( const char *txt ) {
 	}
 
 	UpdateLayoutMetrics();
-	// openQ4: idStr grows 32 bytes at a time and copies itself whenever it does,
+	// openD3: idStr grows 32 bytes at a time and copies itself whenever it does,
 	// so nearly every line printed used to copy the whole history - 1.5 MB once
 	// it was full, and three times that for the trim below, which also ran on
 	// every line. Reserve the buffer once and trim in place a slack's worth at a
@@ -4807,7 +4807,7 @@ void idConsoleLocal::DrawInputText( float x, float y, bool showCursor ) const {
 	DrawInputSelection( x, y, prestep, safeDrawLen );
 	Con_DrawSmallStringExt( x, y, visible, colorWhite, false );
 
-	// openQ4: the blink restarts whenever the line or the caret changes. Timed
+	// openD3: the blink restarts whenever the line or the caret changes. Timed
 	// off the tic counter alone, the caret was hidden half the time it had just
 	// been moved.
 	if ( !showCursor || !oq4console::CaretVisible( caretClock ) ) {
@@ -5061,10 +5061,10 @@ void idConsoleLocal::DrawSolidConsole( float frac ) {
 	renderSystem->DrawStretchPic( 0, y, SCREEN_WIDTH, 2, 0, 0, 1, 1, whiteShader );
 	renderSystem->SetColor( colorWhite );
 
-	// openQ4: the version sits half a row below the edit line, at its right
+	// openD3: the version sits half a row below the edit line, at its right
 	// end, and a long command used to be drawn through it. It steps aside once
 	// the typed text, its caret included, reaches it.
-	idStr version = OPENQ4_PRODUCT_VERSION;
+	idStr version = OPEND3_PRODUCT_VERSION;
 	int inputPrestep, inputDrawLen;
 	GetInputDrawInfo( inputPrestep, inputDrawLen );
 	if ( ( 2 + inputDrawLen + 2 ) * charWidth <= SCREEN_WIDTH - version.Length() * charWidth ) {
@@ -5158,7 +5158,7 @@ void	idConsoleLocal::Draw( bool forceFullScreen ) {
 		// we want the console closed when we go back to a session state
 		Close();
 		// we are however catching keyboard input
-		openq4::NativeInputBeforeInputBlockerChange();
+		opend3::NativeInputBeforeInputBlockerChange();
 		keyCatching = true;
 	}
 

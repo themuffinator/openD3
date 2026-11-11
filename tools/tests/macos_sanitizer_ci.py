@@ -33,7 +33,7 @@ def validate_workflow() -> None:
         "macOS ${{ matrix.bridge_label }} ASan+UBSan",
         "bridge: opengl",
         "bridge: metal",
-        "OPENQ4_GAMELIBS_REPO:",
+        "OPEND3_GAMELIBS_REPO:",
         'MACOSX_DEPLOYMENT_TARGET: "11.0"',
         "ASAN_OPTIONS: halt_on_error=1:abort_on_error=1:detect_leaks=0",
         "UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1",
@@ -49,10 +49,10 @@ def validate_workflow() -> None:
         "-Db_sanitize=address,undefined",
         "bash tools/build/meson_setup.sh compile -C builddir",
         "bash tools/build/meson_setup.sh install -C builddir --no-rebuild --skip-subprojects",
-        ".install/openQ4-client_arm64",
-        ".install/openQ4-ded_arm64",
-        ".install/baseoq4/game-sp_arm64.dylib",
-        ".install/baseoq4/game-mp_arm64.dylib",
+        ".install/openD3-client_arm64",
+        ".install/openD3-ded_arm64",
+        ".install/baseod3/game-sp_arm64.dylib",
+        ".install/baseod3/game-mp_arm64.dylib",
         "lipo -archs",
         "otool -L",
         "libclang_rt.asan_osx_dynamic.dylib",
@@ -65,20 +65,20 @@ def validate_workflow() -> None:
         "ERROR: AddressSanitizer|UndefinedBehaviorSanitizer|runtime error:",
         "Publish sanitizer diagnostics",
         "builddir/meson-logs",
-        "builddir/openq4_game_sources.json",
+        "builddir/opend3_game_sources.json",
         ".tmp/macos-sanitizer-${{ matrix.artifact_suffix }}-runtime",
     ):
         require(workflow, token, "macOS sanitizer workflow")
 
     reject(workflow, "continue-on-error: true", "macOS sanitizer fail-fast behavior")
-    reject(workflow, 'OPENQ4_GAMELIBS_SHA', 'retired companion source input')
+    reject(workflow, 'OPEND3_GAMELIBS_SHA', 'retired companion source input')
     reject(workflow, "| head -", "pipefail-safe sanitizer report truncation")
     reject(workflow, "pull_request:", "manual-only macOS sanitizer trigger")
     reject(workflow, "\n  push:", "manual-only macOS sanitizer trigger")
 
 
 def validate_wiring_and_docs() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
     building = read("BUILDING.md")

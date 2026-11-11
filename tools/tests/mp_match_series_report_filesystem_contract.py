@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Preserved from openQ4-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
+# Preserved from openD3-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
 """Contracts for the fs_savepath-only competition-series report adapter."""
 
 from __future__ import annotations
@@ -20,26 +20,26 @@ SOURCE = MATCH_DIR / "MatchSeriesReportFileSystem.cpp"
 STORAGE_HEADER = MATCH_DIR / "MatchSeriesReportStorage.h"
 STORAGE_SOURCE = MATCH_DIR / "MatchSeriesReportStorage.cpp"
 def _resolve_engine_root() -> Path:
-    """Locate a sibling openQ4 checkout, if the caller has one.
+    """Locate a sibling openD3 checkout, if the caller has one.
 
-    The directory is named "openQ4"; hardcoding "OpenQ4" only ever resolved on
+    The directory is named "openD3"; hardcoding "openD3" only ever resolved on
     case-insensitive filesystems, so on Linux the engine-side assertions were
     skipped even when the engine was checked out beside this repository.
     """
 
-    override = os.environ.get("OPENQ4_ENGINE_REPO", "").strip()
+    override = os.environ.get("OPEND3_ENGINE_REPO", "").strip()
     if override:
         return Path(override)
     # The game sources live in the engine repository now, so this checkout is
-    # the engine. Looking for a sibling named openQ4 first tested a different
+    # the engine. Looking for a sibling named openD3 first tested a different
     # checkout from a worktree, or none at all.
     if (ROOT / "src/framework").is_dir():
         return ROOT
-    for name in ("openQ4", "OpenQ4"):
+    for name in ("openD3", "openD3"):
         candidate = ROOT.parent / name
         if candidate.is_dir():
             return candidate
-    return ROOT.parent / "openQ4"
+    return ROOT.parent / "openD3"
 
 
 ENGINE_ROOT = _resolve_engine_root()

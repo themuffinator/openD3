@@ -41,7 +41,7 @@ def layer_manifest(**overrides: object) -> dict:
             "version": "0.1.0",
             "releaseDate": "2026-09-26",
             "website": "https://example.invalid/",
-            "author": "openQ4 tests",
+            "author": "openD3 tests",
         },
     }
     manifest.update(overrides)
@@ -72,17 +72,17 @@ def validate_manifest_reader(work: Path) -> None:
         raise AssertionError(f"game_layer.py field gameDir: {result.returncode} {result.stdout!r} {result.stderr!r}")
 
     out = work / "out" / "mod.json"
-    result = run(str(LAYER_SCRIPT), "mod-json", str(layer), "--openq4-version", "1.2.3", "--out", str(out))
+    result = run(str(LAYER_SCRIPT), "mod-json", str(layer), "--opend3-version", "1.2.3", "--out", str(out))
     if result.returncode != 0:
         raise AssertionError(f"game_layer.py mod-json failed: {result.stderr}")
     mod = json.loads(out.read_text(encoding="utf-8"))
-    if mod.get("name") != "Test Layer" or mod.get("requiredopenQ4Version") != "1.2.3" or mod.get("layer") != LAYER_ID:
+    if mod.get("name") != "Test Layer" or mod.get("requiredopenD3Version") != "1.2.3" or mod.get("layer") != LAYER_ID:
         raise AssertionError(f"unexpected mod.json: {mod}")
 
     rejected = {
         "format": layer_manifest(format=2),
         "id": layer_manifest(id="Bad-Id"),
-        "reserved gameDir": layer_manifest(gameDir="baseoq4"),
+        "reserved gameDir": layer_manifest(gameDir="baseod3"),
         "escaping source": layer_manifest(sources={"shared": "../outside"}),
         "unknown tree": layer_manifest(sources={"engine": "src/shared"}),
         "missing mod field": layer_manifest(mod={"name": "x", "version": "1.0.0"}),
@@ -207,7 +207,7 @@ def validate_layer_collisions(work: Path) -> None:
     if result.returncode == 0 or "from both" not in result.stderr:
         raise AssertionError(f"a layer providing one staged path twice was accepted: {result.stderr}")
 
-    # a layer never replaces openQ4-game files
+    # a layer never replaces openD3-game files
     write_file(gamelibs_root / "src" / "game" / LAYER_ID / "Existing.cpp", "// base file\n")
     result = stage(project_root, gamelibs_root, stage_root, make_layer(work / "layer"))
     if result.returncode == 0 or "would replace" not in result.stderr:

@@ -304,7 +304,7 @@ idWindow* LegacyExactWindow(idWindow* root, const std::string& path, unsigned& v
 void LegacyFloat(std::string& out, float value) {
 	if (!std::isfinite(value)) { out += "null"; return; }
 	// printf promotes float to double, so %.9g of the double is the float's text.
-	char text[64]; const auto result = openq4::ui::FloatToChars(text,text+sizeof(text),value,std::chars_format::general,std::numeric_limits<float>::max_digits10);
+	char text[64]; const auto result = opend3::ui::FloatToChars(text,text+sizeof(text),value,std::chars_format::general,std::numeric_limits<float>::max_digits10);
 	if (result.ec != std::errc{}) throw std::runtime_error("float formatting failed");
 	out.append(text,result.ptr);
 }

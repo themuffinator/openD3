@@ -1,4 +1,4 @@
-// Copyright (C) 2026 openQ4 contributors. SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 openD3 contributors. SPDX-License-Identifier: GPL-3.0-or-later
 #include "snd_local.h"
 #include "VoiceChat.h"
 #include "VoicePacket.h"

@@ -1,6 +1,6 @@
 #version 450
 
-// openQ4 Vulkan shadow-map debug overlay — point-light cube panel
+// openD3 Vulkan shadow-map debug overlay — point-light cube panel
 // (r_shadowMapDebugOverlay).
 //
 // Identical to the projected panel except that set 0 binding 2 is a

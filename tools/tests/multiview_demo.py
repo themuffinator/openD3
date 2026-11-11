@@ -15,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_LIBS_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
 
 
@@ -585,7 +585,7 @@ def validate_documented_compatibility() -> None:
         "closes the demo and returns to the menu with a",
         "Retail Quake 4 render `.demo`",
         "Retail Quake 4 `.netdemo`",
-        "openQ4 `.cdemo`",
+        "openD3 `.cdemo`",
     ):
         require(developer, needle, "developer MVD compatibility documentation")
 

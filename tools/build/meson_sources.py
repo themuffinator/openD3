@@ -77,7 +77,7 @@ ENGINE_SOURCE_GLOBS = [
 ]
 
 # CPU image utilities shared between the engine and (post module-split) the
-# renderer modules; built as the openq4_imagetools static library
+# renderer modules; built as the opend3_imagetools static library
 IMAGETOOLS_SOURCE_GLOBS = [
     "imagetools/*.cpp",
     "imagetools/Color/*.cpp",
@@ -87,14 +87,14 @@ IMAGETOOLS_SOURCE_GLOBS = [
 ]
 
 # CPU render-geometry shared between the engine (dmap) and the renderer;
-# built as the openq4_render_geo static library
+# built as the opend3_render_geo static library
 RENDER_GEO_SOURCE_GLOBS = [
     "rendergeo/*.cpp",
 ]
 
 # renderer sources for the renderer-gl dynamic module; the loader stays
 # engine-side and the module glue TU (RendererGLModule.cpp) activates via
-# OPENQ4_RENDERER_GL_MODULE
+# OPEND3_RENDERER_GL_MODULE
 RENDERER_GL_SOURCE_GLOBS = [
     "renderer/*.cpp",
     "renderer/OpenGL/*.cpp",

@@ -1,6 +1,6 @@
 #version 450
 
-// openQ4 Vulkan cube-texgen pipeline — fragment stage (Phase E).
+// openD3 Vulkan cube-texgen pipeline — fragment stage (Phase E).
 //
 // Samples the stage's cube map along the interpolated direction. The GL
 // reference feeds the same 3-float texcoords to a GL_TEXTURE_CUBE_MAP and

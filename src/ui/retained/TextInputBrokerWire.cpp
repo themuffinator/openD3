@@ -1,7 +1,7 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
 #include "TextInputBrokerWire.h"
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 bool Fail(std::string& error, const char* message) { error = message; return false; }
 
@@ -181,4 +181,4 @@ bool DecodeTextInputBrokerRecord(std::string_view bytes, TextNativeRecord& out, 
 	out = std::move(candidate); error.clear(); return true;
 }
 
-} // namespace openq4::ui
+} // namespace opend3::ui

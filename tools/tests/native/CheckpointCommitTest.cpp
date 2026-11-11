@@ -52,7 +52,7 @@ static bool Session_IsSavePreviewDeletionMarker(const idStr& p) { return recover
 static bool Session_ValidateStagedSaveGameHeader(const idStr& p) { return recovery->disk.count(p) && (recovery->disk.at(p)=="old2" || recovery->disk.at(p)=="new2"); }
 #include "CheckpointRecoveryUnderTest.inc"
 static auto Files() {
-    std::array<openq4::SaveGameTransactionFile,3> f;
+    std::array<opend3::SaveGameTransactionFile,3> f;
     for(int i=0;i<3;++i) {f[i].final="slot"+std::to_string(i);f[i].temporary=f[i].final+".tmp";f[i].backup=f[i].final+".prev";}
     return f;
 }
@@ -79,18 +79,18 @@ static void TransactionCases() {
     for(int existing=0;existing<8;++existing) {
         for(int first=0;first<=26;++first) for(int second=0;second<=26;++second) {
             Ops ops;ops.disk=Fixture(existing);if(first)ops.failures.insert(first);if(second)ops.failures.insert(second);
-            auto f=Files();auto result=openq4::CommitSaveGame(f,ops,false);
+            auto f=Files();auto result=opend3::CommitSaveGame(f,ops,false);
             if(result.committed)Check(ops.disk.at("slot2")=="new2");
             else Check(!ops.disk.count("slot2") || ops.disk.at("slot2")=="old2");
             RecoverAndCheck(ops.disk,existing);
             for(const auto& crash:ops.interrupted)RecoverAndCheck(crash,existing);
         }
     }
-    Ops blocked;blocked.disk=Fixture(7);blocked.blocked.insert("slot1");auto f=Files();auto result=openq4::CommitSaveGame(f,blocked,false);
+    Ops blocked;blocked.disk=Fixture(7);blocked.blocked.insert("slot1");auto f=Files();auto result=opend3::CommitSaveGame(f,blocked,false);
     Check(!result.committed && blocked.disk==Fixture(7));
-    Ops backup;backup.disk=Fixture(7);backup.disk["slot0.prev"]="older";f=Files();result=openq4::CommitSaveGame(f,backup,false);
+    Ops backup;backup.disk=Fixture(7);backup.disk["slot0.prev"]="older";f=Files();result=opend3::CommitSaveGame(f,backup,false);
     Check(!result.committed && result.recoveryNeeded && backup.disk.at("slot0.prev")=="older");
-    Ops marker;marker.disk=Fixture(7);marker.disk["slot1.tmp"]="delete-preview";f=Files();result=openq4::CommitSaveGame(f,marker,true);
+    Ops marker;marker.disk=Fixture(7);marker.disk["slot1.tmp"]="delete-preview";f=Files();result=opend3::CommitSaveGame(f,marker,true);
     Check(result.committed && result.cleanupComplete && !marker.disk.count("slot1"));
 }
 static void StagingCases() {

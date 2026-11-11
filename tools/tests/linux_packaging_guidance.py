@@ -27,7 +27,7 @@ def validate_building_packager_notes() -> None:
     require(source, "libopenal-dev", "BUILDING OpenAL development dependency")
     require(source, "OPEND3_FORCE_X11=1", "BUILDING project XWayland fallback")
     require(source, "`src/game/`, `src/Prey/` and `src/preyengine/`", "BUILDING canonical game source paths")
-    require(source, "openq4_game_sources.json", "BUILDING canonical source inventory")
+    require(source, "opend3_game_sources.json", "BUILDING canonical source inventory")
     require(source, "tools/build/meson_setup.sh", "BUILDING canonical Linux wrapper")
     require(source, "install -C builddir --no-rebuild --skip-subprojects", "BUILDING package staging command")
     require(source, "opend3-<version-tag>-linux.tar.xz", "BUILDING Linux archive identity")
@@ -43,7 +43,7 @@ def validate_platform_support() -> None:
     require(source, "SDL3 may use Wayland or X11", "platform support display stack")
     require(source, "OPEND3_FORCE_X11=1", "platform support XWayland fallback")
     require(source, "OPEND3_WAYLAND_DISABLE_LIBDECOR=1", "platform support libdecor fallback")
-    require(source, "Legacy `OPENQ4_*` names remain temporary migration aliases only", "platform support migration boundary")
+    require(source, "Legacy `OPEND3_*` names remain temporary migration aliases only", "platform support migration boundary")
 
 
 def validate_plan_status() -> None:
@@ -51,7 +51,7 @@ def validate_plan_status() -> None:
 
     require(source, "## Explicit deferral register", "rebase status ledger")
     require(source, "TODO-RELEASE-LANES", "rebase release-lane deferral")
-    require(source, "OpenD3-GameLibs", "rebase release-lane companion contract")
+    require(source, "openD3-GameLibs", "rebase release-lane companion contract")
     require(source, "baseod3", "rebase release-lane runtime layout")
     require(source, "one `game_<arch>` module", "rebase release-lane module contract")
 
@@ -59,7 +59,7 @@ def validate_plan_status() -> None:
 def validate_ci_wiring() -> None:
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
-    runner = read("tools/validation/openq4_validate.py")
+    runner = read("tools/validation/opend3_validate.py")
 
     for source, context in ((commit, "commit script smoke"), (push, "push script smoke")):
         require(source, "tools/tests/linux_packaging_guidance.py", context)

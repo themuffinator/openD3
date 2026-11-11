@@ -64,7 +64,7 @@ def validate_outdoor_images(save: Path) -> tuple[list[str], dict]:
 
     failures, metrics = [], {}
     for name in OUTDOOR_VIEWS:
-        paths = [save / f"baseoq4/screenshots/outdoor_{name}_{kind}.tga"
+        paths = [save / f"baseod3/screenshots/outdoor_{name}_{kind}.tga"
                  for kind in ("mapped", "stencil", "unshadowed")]
         # Exclude the sky and screen boundary; retain both ground and casters.
         box = (0, 160, 960, 525)
@@ -74,7 +74,7 @@ def validate_outdoor_images(save: Path) -> tuple[list[str], dict]:
             rail_errors, rail_metrics = validate_railing_shadow(paths)
             failures += [f"Outdoor {name}: {error}" for error in rail_errors]
             values.update(rail_metrics)
-        fresh = save / f"baseoq4/screenshots/outdoor_{name}_fresh.tga"
+        fresh = save / f"baseod3/screenshots/outdoor_{name}_fresh.tga"
         if paths[0].is_file() and fresh.is_file():
             with Image.open(paths[0]) as mapped_image, Image.open(fresh) as fresh_image:
                 # Simulation is frozen: cache reuse must preserve the full frame.

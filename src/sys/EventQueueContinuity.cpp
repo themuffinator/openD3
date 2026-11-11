@@ -2,7 +2,7 @@
 #include "EventQueueContinuity.h"
 
 namespace {
-openq4::EventQueueContinuity eventQueueContinuity;
+opend3::EventQueueContinuity eventQueueContinuity;
 }
 
 std::uint64_t Sys_EventQueueToken() { return eventQueueContinuity.Token(); }

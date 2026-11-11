@@ -426,7 +426,7 @@ typedef struct renderView_s {
 #endif
 // RAVEN END
 
-	// openQ4: an off-axis frustum, one eye of a head-mounted display. When set,
+	// openD3: an off-axis frustum, one eye of a head-mounted display. When set,
 	// the projection and the culling frustum come from these half-angle tangents
 	// (fovTanLeft and fovTanDown negative) instead of fov_x/fov_y, which should
 	// still hold the enclosing field of view for consumers that only estimate

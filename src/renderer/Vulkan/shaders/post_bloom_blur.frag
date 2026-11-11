@@ -1,6 +1,6 @@
 #version 450
 
-// Separable bloom blur. A port of content/baseoq4/pak0/glprogs/bloom_blur.fs
+// Separable bloom blur. A port of content/baseod3/pak0/glprogs/bloom_blur.fs
 // (RB_STD_Bloom).
 
 layout(set = 0, binding = 0) uniform sampler2D Scene;

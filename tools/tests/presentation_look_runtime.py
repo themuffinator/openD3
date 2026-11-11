@@ -443,7 +443,7 @@ def summarise(name, scenario, fps, exit_code, started, text, expected_rate, refe
 def reanalyse(output: Path, probe_rate: float) -> int:
     report = json.loads((output / "report.json").read_text(encoding="utf-8"))
     for case in report["cases"]:
-        log = output / case["case"] / "baseoq4/logs/openq4.log"
+        log = output / case["case"] / "baseod3/logs/opend3.log"
         samples = parse(log.read_text(encoding="utf-8", errors="replace"))
         if len(samples) >= 64 and case.get("scenario") in TURNING:
             scale = {"zoom": 0.5, "flick": 10.0}.get(case.get("scenario"), 1.0)
@@ -563,7 +563,7 @@ def main() -> int:
     parser.add_argument("--renderer", choices=("gl", "vulkan"), default="gl")
     parser.add_argument("--fps", type=int, nargs="+", default=[240])
     parser.add_argument("--swap-interval", type=int, default=0, help="r_swapInterval: 0 tears, 1 waits for vsync (with VRR, cap a few Hz under the refresh), -1 adaptive vsync")
-    parser.add_argument("--xr-runtime-json", type=Path, default=ROOT / "builddir" / "openq4_xr_test_runtime.json",
+    parser.add_argument("--xr-runtime-json", type=Path, default=ROOT / "builddir" / "opend3_xr_test_runtime.json",
                         help="the in-tree OpenXR test runtime manifest, for the vr case")
     parser.add_argument("--probe-rate", type=float, default=2000.0, help="synthetic mouse counts per second")
     parser.add_argument("--samples", type=int, default=512)
@@ -593,13 +593,13 @@ def main() -> int:
     runtime, output = args.runtime_dir.resolve(), args.output_dir.resolve()
     verify_runtime_is_current(runtime)
     output.mkdir(parents=True, exist_ok=False)
-    client = runtime / "openQ4-client_x64.exe"
+    client = runtime / "openD3-client_x64.exe"
     # sensitivity 5 x m_yaw 0.022 with no acceleration: degrees per count
     expected_rate = -args.probe_rate * 5.0 * 0.022
     report = {"runtime": str(runtime), "map": args.map, "mpMap": args.mp_map, "renderer": args.renderer,
               "probeRate": args.probe_rate, "reference": args.reference, "cvars": args.cvar, "fullscreen": args.fullscreen, "swapInterval": args.swap_interval,
               "binaries": {name: sha256(runtime / name) for name in
-                           ("openQ4-client_x64.exe", "baseoq4/game-sp_x64.dll", "baseoq4/game-mp_x64.dll",
+                           ("openD3-client_x64.exe", "baseod3/game-sp_x64.dll", "baseod3/game-mp_x64.dll",
                             f"renderer-{args.renderer}_x64.dll")
                            if (runtime / name).is_file()},
               "cases": []}
@@ -736,10 +736,10 @@ def main() -> int:
         return [
             str(client),
             "+set", "fs_basepath", str(args.basepath), "+set", "fs_savepath", str(home),
-            "+set", "fs_game", "baseoq4",
+            "+set", "fs_game", "baseod3",
             "+set", "r_renderApi", args.renderer, "+set", "ui_retained", "1",
             "+set", "sv_cheats", "1", "+set", "developer", "1",
-            "+set", "logFile", "2", "+set", "logFileName", "logs/openq4.log",
+            "+set", "logFile", "2", "+set", "logFileName", "logs/opend3.log",
             "+set", "com_maxfps", str(fps), "+set", "r_swapInterval", str(args.swap_interval),
             # --fullscreen: the native desktop mode, in front of everything else
             "+set", "r_fullscreen", "1" if args.fullscreen else "0", "+set", "r_mode", "-2" if args.fullscreen else "-1",
@@ -761,7 +761,7 @@ def main() -> int:
             for variant, cvars, lines, mode in scenarios[scenario]:
                 name = f"{fps}fps-{variant}"
                 home = output / name
-                game = home / "baseoq4"
+                game = home / "baseod3"
                 game.mkdir(parents=True)
                 body = ["waitMsec 4000"] + lines
                 if scenario in SNAPSHOTS and "framePacingReset" not in lines:
@@ -801,8 +801,8 @@ def main() -> int:
                 else:
                     # a host that stays up for the client's run, then is stopped
                     host_home = output / f"{name}-host"
-                    (host_home / "baseoq4").mkdir(parents=True)
-                    write_script(host_home / "baseoq4" / "host.cfg", ["waitMsec 1000"])
+                    (host_home / "baseod3").mkdir(parents=True)
+                    write_script(host_home / "baseod3" / "host.cfg", ["waitMsec 1000"])
                     host_cmd = command_for(host_home, 60, loopback + ["in_presentationView", "0"], [
                         "+set", "si_gameType", "DM", "+set", "net_serverDedicated", "0",
                         "+set", "net_port", str(args.port), "+spawnServer", args.mp_map], "host.cfg")
@@ -817,9 +817,9 @@ def main() -> int:
                     (home / "xr_script.txt").write_text("", encoding="utf-8")
                     environment = dict(os.environ)
                     environment.update({"XR_RUNTIME_JSON": str(args.xr_runtime_json.resolve()),
-                                        "OPENQ4_XR_TEST_LOG": str(home / "xr_log.jsonl"),
-                                        "OPENQ4_XR_TEST_SCRIPT": str(home / "xr_script.txt"),
-                                        "OPENQ4_XR_TEST_EYE_SIZE": "800x880", "OPENQ4_XR_TEST_RATE": "90"})
+                                        "OPEND3_XR_TEST_LOG": str(home / "xr_log.jsonl"),
+                                        "OPEND3_XR_TEST_SCRIPT": str(home / "xr_script.txt"),
+                                        "OPEND3_XR_TEST_EYE_SIZE": "800x880", "OPEND3_XR_TEST_RATE": "90"})
                 (home / "launch.json").write_text(json.dumps({"cwd": str(runtime), "args": command}, indent=1), encoding="utf-8")
                 started = time.monotonic()
                 try:
@@ -834,7 +834,7 @@ def main() -> int:
                             host.wait(timeout=30)
                         except subprocess.TimeoutExpired:
                             host.kill()
-                log = game / "logs/openq4.log"
+                log = game / "logs/opend3.log"
                 text = log.read_text(encoding="utf-8", errors="replace") if log.is_file() else ""
                 case = summarise(name, scenario, fps, exit_code, started, text,
                                  expected_rate * {"zoom": 0.5, "flick": 10.0}.get(scenario, 1.0), args.reference)

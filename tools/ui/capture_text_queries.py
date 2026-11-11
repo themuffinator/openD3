@@ -26,32 +26,32 @@ LABEL = 'controls_bind_0-value'
 
 
 def activate(node):
-    return [f'openq4_retainedGui focus "{node}"', 'openq4_retainedGui menu accept 1',
-            'openq4_retainedGui menu accept 0', 'waitMsec 1200']
+    return [f'opend3_retainedGui focus "{node}"', 'opend3_retainedGui menu accept 1',
+            'opend3_retainedGui menu accept 0', 'waitMsec 1200']
 
 
 def observe(stage):
-    return [f'echo TEXT_QUERY_STAGE {stage}', 'openq4_retainedGui report',
-            f'openq4_retainedGui inspect "{LABEL}"',
-            f'openq4_guiGet "{LABEL}::text"', f'openq4_retainedGui textfit "{LABEL}" "W"',
-            f'openq4_retainedGui textfit "{LABEL}" "' + 'W' * 160 + '"',
+    return [f'echo TEXT_QUERY_STAGE {stage}', 'opend3_retainedGui report',
+            f'opend3_retainedGui inspect "{LABEL}"',
+            f'opend3_guiGet "{LABEL}::text"', f'opend3_retainedGui textfit "{LABEL}" "W"',
+            f'opend3_retainedGui textfit "{LABEL}" "' + 'W' * 160 + '"',
             f'screenshot "screenshots/{stage}.tga"']
 
 
 def steps(mode):
-    opening = (['openq4_assertMenuActivation 10000 game', 'waitMsec 1500',
-                'openq4_retainedGui event tab_settings', 'waitMsec 500', *activate('settings-mpSettingsControls')]
-               if mode == 'mp' else ['openq4_assertMenuActivation 10000', 'waitMsec 1500',
+    opening = (['opend3_assertMenuActivation 10000 game', 'waitMsec 1500',
+                'opend3_retainedGui event tab_settings', 'waitMsec 500', *activate('settings-mpSettingsControls')]
+               if mode == 'mp' else ['opend3_assertMenuActivation 10000', 'waitMsec 1500',
                                     *activate('nav_settings'), *activate('controls')])
-    closing = (['openq4_guiAction main_b_returnmp', 'waitMsec 1500', 'openq4_assertMPGameplayView']
-               if mode == 'mp' else ['openq4_retainedGui event onBack', 'waitMsec 1200',
-                                    'openq4_retainedGui event onBack', 'waitMsec 1500'])
+    closing = (['opend3_guiAction main_b_returnmp', 'waitMsec 1500', 'opend3_assertMPGameplayView']
+               if mode == 'mp' else ['opend3_retainedGui event onBack', 'waitMsec 1200',
+                                    'opend3_retainedGui event onBack', 'waitMsec 1500'])
     return ['waitMsec 1500', 'screenshot "screenshots/gameplay.tga"', *opening, *observe('initial'),
             *activate('controls_bind_0'), *observe('capture'),
             'testControlsKey f', 'waitMsec 400', *observe('bound'),
             'testControlsKey DEL', 'waitMsec 400', *observe('cleared'),
             'set ui_retainedTextScale 2', 'waitMsec 400', *observe('scaled'),
-            'set ui_retainedTextScale 1', 'openq4_retainedGui event onBack', 'waitMsec 1200',
+            'set ui_retainedTextScale 1', 'opend3_retainedGui event onBack', 'waitMsec 1200',
             *closing,
             'screenshot "screenshots/gameplay-return.tga"']
 
@@ -80,7 +80,7 @@ def qualify(log):
     checks['scaled-query'] = checks['cleared'] and checks['scaled'] and widths['cleared'] > 0 and widths['scaled'] > 0 and \
         abs((fits['scaled'][1][2] + .5) * 2 -
             (fits['cleared'][1][2] + .5) * widths['scaled'] / widths['cleared']) <= 2
-    checks['semantic-commands'] = not re.search(r'RETAINED_GUI_OPERATION .* failed|openq4_retainedGui: requires|openq4_guiGet: unknown|openq4_guiAction: .*no reachable', log)
+    checks['semantic-commands'] = not re.search(r'RETAINED_GUI_OPERATION .* failed|opend3_retainedGui: requires|opend3_guiGet: unknown|opend3_guiAction: .*no reachable', log)
     return checks, labels, fits
 
 
@@ -99,19 +99,19 @@ def main():
         parser.error('choose a new output directory under the project .tmp')
     verify_runtime_is_current(args.runtime)
     args.output.mkdir(parents=True)
-    binaries = [args.runtime / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64'),
+    binaries = [args.runtime / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64'),
                 *args.runtime.glob('renderer-*.dll'), *args.runtime.glob('renderer-*.so'),
-                *args.runtime.glob('renderer-*.dylib'), *sorted((args.runtime / 'baseoq4').glob('game-*'))]
+                *args.runtime.glob('renderer-*.dylib'), *sorted((args.runtime / 'baseod3').glob('game-*'))]
     binaries = [p for p in binaries if p.is_file()]
     identity = {str(p.relative_to(args.runtime)): capture.digest(p) for p in binaries}
     source_paths = ['src/ui/UserInterfaceRetained.cpp', 'src/ui/retained/Runtime.cpp', 'src/ui/retained/Runtime.h',
                     'src/ui/retained/Document.cpp', 'src/ui/retained/Document.h', 'src/framework/Session_menu.cpp',
                     'tools/ui/retained_controls.py', 'tools/ui/capture_text_queries.py',
-                    'content/baseoq4/pak0/guis/menu/settings/controls.q4ui']
+                    'content/baseod3/pak0/guis/menu/settings/controls.q4ui']
     sources = {p: capture.digest(ROOT / p) for p in source_paths}
-    with zipfile.ZipFile(args.runtime / 'baseoq4/pak0.pk4') as pack:
+    with zipfile.ZipFile(args.runtime / 'baseod3/pak0.pk4') as pack:
         document = 'guis/menu/settings/controls.q4ui'
-        if pack.read(document).replace(b'\r\n', b'\n') != (ROOT / 'content/baseoq4/pak0' / document).read_bytes().replace(b'\r\n', b'\n'):
+        if pack.read(document).replace(b'\r\n', b'\n') != (ROOT / 'content/baseod3/pak0' / document).read_bytes().replace(b'\r\n', b'\n'):
             raise RuntimeError('staged CONTROLS document differs from source')
     scenario = 'text-queries'
     capture.SCENARIOS[scenario] = ('mp:mp/q4dm1' if args.mode == 'mp' else 'game/airdefense1', steps(args.mode))

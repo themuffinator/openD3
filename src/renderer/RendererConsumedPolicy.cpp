@@ -5,7 +5,7 @@
 #include "DisplayPresentation.h"
 #include <atomic>
 #include <exception>
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 #include "Vulkan/VulkanDevice.h"
 #endif
 
@@ -70,7 +70,7 @@ bool idImage::GetConsumedPolicy(imageConsumedPolicy_t& output) const {
     R_GetDisplayPresentation(&device);
     if (!device.available || !value.device || value.device != device.generation ||
         value.deviceFailures != device.failureSequence) return false;
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
     if (vkCtx.presentationBlocked || !value.batch || value.batch > vkCtx.uploadBatchCompletedSerial) return false;
 #else
     if (!value.batch || value.batch > completedGL) return false;
@@ -173,7 +173,7 @@ imageConsumedLoad_t::~imageConsumedLoad_t() {
         (candidate.source == ICS_DECODED_CUBE && (candidate.layers != 6 || reduction.sourceWidth != reduction.sourceHeight)))) {
         candidate.completion = ICC_UNSUPPORTED;
     } else {
-#ifndef OPENQ4_RENDERER_VK_MODULE
+#ifndef OPEND3_RENDERER_VK_MODULE
         candidate.batch = candidate.revision;
         if (issuedGL < candidate.batch) issuedGL = candidate.batch;
 #endif
@@ -220,7 +220,7 @@ void imageConsumedLoad_t::Operation(const idImage* target, bool upload, bool suc
         width != Max(1, opts.width >> mip) || height != Max(1, opts.height >> mip)) {
         scope->failed = true; return;
     }
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
     if (!batch) { scope->failed = true; return; }
 #endif
     scope->mips[layer] |= uint32_t(1) << mip;
@@ -239,7 +239,7 @@ bool R_CompleteConsumedImageUploads() {
     completing = true; completionFailed = false;
     struct Close { ~Close() { completing = false; } } close;
     try {
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
     VK_Device_FlushUploadBatch();
     VK_Device_WaitUploadBatch();
     if (vkCtx.presentationBlocked || vkCtx.uploadBatchOpen || vkCtx.uploadBatchInFlight) return false;
@@ -252,7 +252,7 @@ bool R_CompleteConsumedImageUploads() {
     renderDisplayPresentation_t after{}; R_GetDisplayPresentation(&after);
     if (completionFailed || epoch != R_ConsumedPolicyObservationEpoch() ||
         before.generation != after.generation || !after.available || before.failureSequence != after.failureSequence) return false;
-#ifndef OPENQ4_RENDERER_VK_MODULE
+#ifndef OPEND3_RENDERER_VK_MODULE
     completedGL = through;
 #endif
     return true;

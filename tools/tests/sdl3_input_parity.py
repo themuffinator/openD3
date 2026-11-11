@@ -210,12 +210,12 @@ def validate_keyboard_and_mouse_contract() -> None:
         "SDL_EVENT_MOUSE_WHEEL",
         "SDL_StepUTF8",
         "SDL3_ConsumeMouseDelta(event.motion.xrel, s_sdlRelativeMouseRemainderX)",
-        "openQ4_AcceptingLoadingContinueInput()",
+        "openD3_AcceptingLoadingContinueInput()",
     ):
         require(pump, token, "SDL3 keyboard/mouse event pump")
 
     require(poll_mouse, "Sys_SDL_PumpEvents();", "POSIX mouse poll pumps SDL events")
-    require(poll_mouse, "#if defined(OPENQ4_SDL3_POSIX_HOST)", "POSIX-only mouse poll pump")
+    require(poll_mouse, "#if defined(OPEND3_SDL3_POSIX_HOST)", "POSIX-only mouse poll pump")
 
 
 def validate_controller_contract() -> None:
@@ -261,9 +261,9 @@ def validate_controller_contract() -> None:
         'SDL_HINT_JOYSTICK_MFI, "1"',
     ):
         require(controller_hints, token, "SDL3 POSIX controller hint defaults")
-    require(controller_hints, "#if defined(OPENQ4_SDL3_POSIX_HOST)", "SDL3 controller hints stay POSIX-scoped")
-    require(controller_hints, "#if defined(OPENQ4_SDL3_LINUX_HOST)", "SDL3 Linux controller hints")
-    require(controller_hints, "#if defined(OPENQ4_SDL3_DARWIN_HOST)", "SDL3 macOS controller hints")
+    require(controller_hints, "#if defined(OPEND3_SDL3_POSIX_HOST)", "SDL3 controller hints stay POSIX-scoped")
+    require(controller_hints, "#if defined(OPEND3_SDL3_LINUX_HOST)", "SDL3 Linux controller hints")
+    require(controller_hints, "#if defined(OPEND3_SDL3_DARWIN_HOST)", "SDL3 macOS controller hints")
 
     require_order(init_controllers, "SDL3_SetControllerHintDefaults();", "SDL_InitSubSystem(SDL_INIT_GAMEPAD)", "controller hints before gamepad init")
     require(init_controllers, "SDL_InitSubSystem(SDL_INIT_GAMEPAD)", "SDL3 gamepad subsystem init")
@@ -362,7 +362,7 @@ def validate_controller_contract() -> None:
         require(pump, token, "SDL3 touchscreen event pump")
     require(finger, "in_touchscreen.GetBool()", "SDL3 touchscreen cvar")
     require(finger, "SDL3_SetRoutedCursorFromWindowPosition", "SDL3 touchscreen cursor routing")
-    require(finger, "openQ4_AcceptingLoadingContinueInput()", "SDL3 touchscreen loading-continue routing")
+    require(finger, "openD3_AcceptingLoadingContinueInput()", "SDL3 touchscreen loading-continue routing")
 
     for token in (
         "SDL_RumbleGamepad",
@@ -399,7 +399,7 @@ def validate_controller_contract() -> None:
 def validate_docs_and_ci() -> None:
     push = read(".github/workflows/push-verification.yml")
     commit = read(".github/workflows/commit-validation.yml")
-    runner = read("tools/validation/openq4_validate.py")
+    runner = read("tools/validation/opend3_validate.py")
     input_docs = read("docs/user/input-settings.md")
     platform_docs = read("docs/dev/platform-support.md")
     migration = read("docs/dev/archive/2026-10-18/sdl3-linux-macos-migration.md")

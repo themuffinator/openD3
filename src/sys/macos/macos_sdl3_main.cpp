@@ -28,7 +28,7 @@ static void Sys_HandlePendingQuitSignal(void) {
 	common->Quit();
 }
 
-static int SDLCALL OpenQ4_Main(int argc, char **argv) {
+static int SDLCALL openD3_Main(int argc, char **argv) {
 	Posix_EarlyInit();
 
 	if (argc > 1 && argv != NULL) {
@@ -58,5 +58,5 @@ int main(int argc, char **argv) {
 		argc = 1;
 		argv = emptyArgv;
 	}
-	return SDL_RunApp(argc, argv, OpenQ4_Main, NULL);
+	return SDL_RunApp(argc, argv, openD3_Main, NULL);
 }

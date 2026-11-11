@@ -404,7 +404,7 @@ void idCollisionModelManagerLocal::ParseEdges( Lexer *src, idCollisionModelLocal
 
 	src->ExpectTokenString( "{" );
 	model->numEdges = src->ParseInt();
-	// openQ4: the counts and indices in a .cm are the file's own. Nothing
+	// openD3: the counts and indices in a .cm are the file's own. Nothing
 	// checked them, and CalculateEdgeNormals writes a normal through every
 	// polygon's edge numbers as the model loads, so a map's collision file
 	// could write twelve bytes at an offset of its choosing. The generated

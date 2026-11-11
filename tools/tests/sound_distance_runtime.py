@@ -65,7 +65,7 @@ def retail_shaders(base: Path) -> dict:
 
 
 def scripts(output: Path, physical: bool, quadratic: bool) -> tuple[Path, list[dict]]:
-    game = output / "save/baseoq4"
+    game = output / "save/baseod3"
     game.mkdir(parents=True)
     # setviewpos and Teleport each add 0.25 units to the standing eye height.
     view = (LISTENER[0], LISTENER[1], LISTENER[2] - .5)
@@ -203,7 +203,7 @@ def main() -> None:
     game, cases = scripts(output, physical, args.quadratic)
     settings = {
         "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(output / "save"),
-        "fs_devpath": str(output / "save"), "fs_game": "baseoq4",
+        "fs_devpath": str(output / "save"), "fs_game": "baseod3",
         "com_gameMode": "SP", "si_gameType": "singleplayer", "ui_autoJoin": "0", "ui_retained": "1",
         "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
         "r_renderApi": "gl", "r_fullscreen": "0", "r_fullscreenDesktop": "0", "r_borderless": "0",
@@ -214,11 +214,11 @@ def main() -> None:
         "s_volume_dB": "-12" if physical else "0", "s_volume": "1", "s_speakerFraction": ".65",
         "s_quadraticFalloff": "1" if args.quadratic else "0", "s_sourceRadiusScale": ".5",
         "s_useOcclusion": "0", "s_useEAXReverb": "0", "s_airAbsorption": "0",
-        "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1",
+        "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1",
         "com_skipLoadingContinue": "1", "g_autoExecAfterMapLoad": "distance_probe.cfg",
         "g_autoExecAfterMapLoadDelayMs": "500",
     }
-    executable = runtime / ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    executable = runtime / ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     command = [str(executable), *(s for key, value in settings.items() for s in ("+set", key, value)),
                "+devmap", "game/hangar1"]
     env = {**os.environ, "ALSOFT_LOGFILE": str(output / "openal.log"), "ALSOFT_LOGLEVEL": "3"}
@@ -241,12 +241,12 @@ def main() -> None:
                  "src/sound/sound.h", "src/sound/OpenAL/AL_SoundHardware.cpp", "src/sound/OpenAL/AL_SoundVoice.cpp",
                  "tools/tests/sound_distance_runtime.py"):
         report["source_sha256"][name] = sha(ROOT / name)
-    for path in (executable, runtime / "baseoq4/game-sp_x64.dll", runtime / "baseoq4/game-sp_x64.so",
-                 runtime / "OpenAL32.dll", runtime / "baseoq4/pak0.pk4", runtime / "baseoq4/pak1.pk4"):
+    for path in (executable, runtime / "baseod3/game-sp_x64.dll", runtime / "baseod3/game-sp_x64.so",
+                 runtime / "OpenAL32.dll", runtime / "baseod3/pak0.pk4", runtime / "baseod3/pak1.pk4"):
         if path.is_file():
             report["runtime_sha256"][path.relative_to(runtime).as_posix()] = sha(path)
     (output / "runner.py").write_bytes(Path(__file__).read_bytes())
-    log = game / "logs/openq4.log"
+    log = game / "logs/opend3.log"
     try:
         with (output / "console.log").open("w", encoding="utf-8") as console:
             process = subprocess.Popen(command, cwd=runtime, env=env, stdin=subprocess.DEVNULL,

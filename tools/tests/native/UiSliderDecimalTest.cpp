@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks=0;
 #define CHECK(x) do{++checks;if(!(x)){std::fprintf(stderr,"FAIL %d: %s\n",__LINE__,#x);std::exit(1);}}while(false)
 static double Parse(const std::string& text){double value=0;auto r=FloatFromChars(text.data(),text.data()+text.size(),value);CHECK(r.ec==std::errc{}&&r.ptr==text.data()+text.size());return value;}

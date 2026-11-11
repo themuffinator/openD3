@@ -10,7 +10,7 @@ from filesystem_case_segments import function_body
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)).resolve()
+GAME_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)).resolve()
 
 
 def read(path: Path) -> str:
@@ -60,7 +60,7 @@ def validate_mode(directory: str) -> None:
 def main() -> None:
     validate_mode("game")
     validate_mode("mpgame")
-    validation = (ROOT / "tools" / "validation" / "openq4_validate.py").read_text(encoding="utf-8")
+    validation = (ROOT / "tools" / "validation" / "opend3_validate.py").read_text(encoding="utf-8")
     require(validation, "weapon_zoom_view_alignment.py", "zoom presentation regression wiring")
     print("weapon zoom view alignment: ok")
 

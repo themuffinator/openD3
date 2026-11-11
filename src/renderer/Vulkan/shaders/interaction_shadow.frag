@@ -2,7 +2,7 @@
 #extension GL_GOOGLE_include_directive : require
 #include "../../PBRMath.h"
 
-// openQ4 Vulkan shadow-receiving interaction â€” fragment stage (Phase F2a).
+// openD3 Vulkan shadow-receiving interaction â€” fragment stage (Phase F2a).
 //
 // interaction.frag plus the projected shadow sample of the GL
 // shadow_interaction.fs projected CSM contract: view-depth cascade selection

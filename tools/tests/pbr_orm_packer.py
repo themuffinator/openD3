@@ -12,7 +12,7 @@ from typing import Callable
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "tools" / "assets" / "pack_pbr_orm.py"
 TEMP_ROOT = ROOT / ".tmp"
-VALIDATOR = ROOT / "tools" / "validation" / "openq4_validate.py"
+VALIDATOR = ROOT / "tools" / "validation" / "opend3_validate.py"
 WORKFLOWS = (
     ROOT / ".github" / "workflows" / "commit-validation.yml",
     ROOT / ".github" / "workflows" / "push-verification.yml",

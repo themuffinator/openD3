@@ -205,7 +205,7 @@ def main() -> int:
 
     output, runtime = args.output.resolve(), args.runtime_dir.resolve()
     suffix = '.exe' if os.name == 'nt' else ''
-    exe, server_exe = runtime / f'openQ4-client_x64{suffix}', runtime / f'openQ4-ded_x64{suffix}'
+    exe, server_exe = runtime / f'openD3-client_x64{suffix}', runtime / f'openD3-ded_x64{suffix}'
     verify_runtime_is_current(runtime)
     verify_runtime_is_current(runtime, server_exe.name)
     free_commit, commit_limit = system_memory()
@@ -215,8 +215,8 @@ def main() -> int:
     output.mkdir(parents=True, exist_ok=True)
     roles = ('server', 'host', 'peer')
     saves = {role: output / role for role in roles}
-    games = {role: saves[role] / 'baseoq4' for role in roles}
-    tails = {role: LogTail(games[role] / 'logs/openq4.log') for role in roles}
+    games = {role: saves[role] / 'baseod3' for role in roles}
+    tails = {role: LogTail(games[role] / 'logs/opend3.log') for role in roles}
     step_index = {role: 0 for role in roles}
     processes, streams = {}, []
     intervals_path = output / 'intervals.jsonl'
@@ -232,11 +232,11 @@ def main() -> int:
 
     for role in roles:
         games[role].mkdir(parents=True, exist_ok=True)
-        (games[role] / 'logs/openq4.log').unlink(missing_ok=True)
+        (games[role] / 'logs/opend3.log').unlink(missing_ok=True)
         for stale in games[role].glob('soak_cmd_*.cfg'):
             stale.unlink()
         write_script(games[role] / 'soak_loop.cfg', ['waitMsec 250', 'exec soak_poll.cfg', 'exec soak_step.cfg', 'exec soak_loop.cfg'])
-        point(role, 'soak_poll.cfg', 'openq4_reportMPState')
+        point(role, 'soak_poll.cfg', 'opend3_reportMPState')
         point(role, 'soak_step.cfg', '// idle')
         write_script(games[role] / 'soak_start.cfg', ['exec soak_loop.cfg'])
         # Mono 16 kHz keeps hours of rendered float output to ~230 MB/hour.
@@ -244,13 +244,13 @@ def main() -> int:
                                                  str(saves[role] / 'mix.wav') + '\n')
 
     common = {
-        'fs_basepath': str(args.assets.resolve()), 'fs_game': 'baseoq4', 'com_gameMode': 'MP',
+        'fs_basepath': str(args.assets.resolve()), 'fs_game': 'baseod3', 'com_gameMode': 'MP',
         'r_fullscreen': '0', 'r_borderless': '0', 'r_borderlessDefaultMigrated': '1',
         'r_mode': '-1', 'r_customWidth': '640', 'r_customHeight': '360', 'r_windowWidth': '640', 'r_windowHeight': '360',
         'r_hiddenWindow': '1', 'r_renderApi': args.render_api, 'r_multiSamples': '0', 'r_swapInterval': '0', 'com_maxfps': '60',
         'in_mouse': '0', 'in_joystick': '0', 's_noSound': '0', 's_muteUnfocused': '0',
         's_volume': '.5', 's_musicVolume': '0', 's_voiceChatCapture': '0', 's_voiceChatSend': '1', 's_voiceChatReceive': '1',
-        's_voiceChatEcho': '0', 's_voiceVolume': '1', 'logFile': '2', 'logFileName': 'logs/openq4.log', 'developer': '1',
+        's_voiceChatEcho': '0', 's_voiceVolume': '1', 'logFile': '2', 'logFileName': 'logs/opend3.log', 'developer': '1',
         'g_voiceChatDebug': '0', 'ui_retained': '1', 'ui_autoJoin': '1', 'ui_spectate': 'Play', 'ui_ready': 'Ready',
         'net_allowCheats': '1', 'net_ip': '127.0.0.1', 'net_enableIPv6': '0', 'com_skipLoadingContinue': '1',
         'g_autoExecAfterMapLoad': 'soak_start.cfg', 'g_autoExecAfterMapLoadDelayMs': '500',
@@ -470,7 +470,7 @@ def main() -> int:
                        'server_generation': server_rows.get(1, {}).get('generation'),
                        'server_accepted_total': server_end.get(1, {}).get('accepted')}
                 for role in roles:
-                    point(role, 'soak_poll.cfg', 'openq4_reportMPState')
+                    point(role, 'soak_poll.cfg', 'opend3_reportMPState')
                 starts = {role: len(tails[role].poll()) for role in roles}
                 step_index['peer'] += 1
                 name = step_name('peer', step_index['peer'])
@@ -625,7 +625,7 @@ def main() -> int:
         'start_free_commit_gb': round((free_commit or 0) / 2**30, 2), 'commit_limit_gb': round((commit_limit or 0) / 2**30, 2),
         'engine_sha256': hashlib.sha256(exe.read_bytes()).hexdigest(),
         'server_sha256': hashlib.sha256(server_exe.read_bytes()).hexdigest(),
-        'game_sha256': hashlib.sha256((runtime / 'baseoq4/game-mp_x64.dll').read_bytes()).hexdigest() if os.name == 'nt' else None,
+        'game_sha256': hashlib.sha256((runtime / 'baseod3/game-mp_x64.dll').read_bytes()).hexdigest() if os.name == 'nt' else None,
         'harness_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
     }
     (output / 'result.json').write_text(json.dumps(report, indent=2) + '\n')

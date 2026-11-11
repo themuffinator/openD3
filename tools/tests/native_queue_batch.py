@@ -94,14 +94,14 @@ def main():
     if os.name!='nt':flags+=['-pthread']
     if args.sanitizers:flags+=['-fsanitize=address,undefined','-fno-omit-frame-pointer','-g0']
     files=[str(out/n) for n in names if n.endswith('.cpp')]
-    command=flags+['-DUSE_SDL3','-DOPENQ4_SDL3_CHECKED_NATIVE_QUEUE=1']+files+['-o',str(out/'test.exe')]
+    command=flags+['-DUSE_SDL3','-DOPEND3_SDL3_CHECKED_NATIVE_QUEUE=1']+files+['-o',str(out/'test.exe')]
     r=run(command,'compile.log');assert not r.returncode,r.stdout+r.stderr
     r=run([str(out/'test.exe')],'run.log');assert not r.returncode,r.stdout+r.stderr
     checks=int(re.search(r'PASS (\d+) checks',r.stdout)[1])
     # Unsupported providers make no SDL or engine token calls: no symbols are supplied.
     stub=out/'unsupported.cpp'
-    stub.write_text('#include "src/sys/sdl3/NativeQueueSource.h"\n#include <cassert>\nint main(){openq4::SdlNativeQueueSource s(1);openq4::NativeQueueStatus v;std::string e;SDL_Event event{};OQ4_NativeQueueRecord r{};OQ4_NativeFence f{};assert(!s.Observe(v,e));assert(s.Poll(event,r)==-1);assert(!s.CopyFence(event,f));}\n')
-    for label,defines in [('absent',[]),('zero',['-DUSE_SDL3','-DOPENQ4_SDL3_CHECKED_NATIVE_QUEUE=0'])]:
+    stub.write_text('#include "src/sys/sdl3/NativeQueueSource.h"\n#include <cassert>\nint main(){opend3::SdlNativeQueueSource s(1);opend3::NativeQueueStatus v;std::string e;SDL_Event event{};OQ4_NativeQueueRecord r{};OQ4_NativeFence f{};assert(!s.Observe(v,e));assert(s.Poll(event,r)==-1);assert(!s.CopyFence(event,f));}\n')
+    for label,defines in [('absent',[]),('zero',['-DUSE_SDL3','-DOPEND3_SDL3_CHECKED_NATIVE_QUEUE=0'])]:
         r=run(flags+defines+[str(stub),str(out/'src/sys/sdl3/NativeQueueSource.cpp'),'-o',str(out/(label+'.exe'))],label+'-compile.log');assert not r.returncode,r.stderr
         r=run([str(out/(label+'.exe'))],label+'-run.log');assert not r.returncode,r.stderr
     mutations={

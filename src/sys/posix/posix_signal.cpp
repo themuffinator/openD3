@@ -34,7 +34,7 @@ If you have questions concerning this license or the applicable additional terms
 // startup-phase detail rather than reaching into the module from a signal
 // handler
 static const char *Posix_RendererStartupPhaseName( void ) {
-#ifdef OPENQ4_RENDERER_MODULE_ONLY
+#ifdef OPEND3_RENDERER_MODULE_ONLY
 	return "unavailable (module renderer)";
 #else
 	return R_RendererStartupPhaseSignalName();

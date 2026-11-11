@@ -145,7 +145,7 @@ typedef struct glconfig_s {
 // outside of TR since it shouldn't be cleared during ref re-init; the window
 // layer and GUI code read (and, until the renderer-module window seam lands,
 // write) the vid/viewport fields through this public declaration
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 extern thread_local glconfig_t glConfig;
 #else
 extern glconfig_t glConfig;
@@ -847,7 +847,7 @@ public:
 	// renderer may live in a module whose glConfig is a separate object)
 	virtual const glconfig_t &	GetGLConfig( void ) const = 0;
 
-	// openQ4: publishes the underwater view state for this frame. amount is 0 when the eye is out
+	// openD3: publishes the underwater view state for this frame. amount is 0 when the eye is out
 	// of the liquid and rises to 1 fully submerged; tint is the liquid's colour.
 	//
 	// Returns true if the renderer will actually draw the effect. A backend that cannot - the

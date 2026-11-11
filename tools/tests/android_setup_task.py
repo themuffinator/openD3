@@ -13,7 +13,7 @@ from filesystem_case_segments import function_body
 
 ROOT = Path(__file__).resolve().parents[2]
 JAVA = r'''
-package com.darkmatter.openq4;
+package com.darkmatter.opend3;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.*;
@@ -244,10 +244,10 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix='android-setup-task-', dir=ROOT/'.tmp') as temporary:
         scratch = Path(temporary)
         source = scratch/'SetupTaskTest.java'
-        activity = (ROOT/'mobile/android/app/src/main/java/com/darkmatter/openq4/OpenQ4Activity.java').read_text()
+        activity = (ROOT/'mobile/android/app/src/main/java/com/darkmatter/opend3/openD3Activity.java').read_text()
         methods = '\n'.join(function_body(activity, signature) for signature in (
             'protected boolean onUnhandledMessage(', 'protected void onResume('))
-        launcher = (ROOT/'mobile/android/app/src/main/java/com/darkmatter/openq4/LauncherActivity.java').read_text(encoding='utf-8')
+        launcher = (ROOT/'mobile/android/app/src/main/java/com/darkmatter/opend3/LauncherActivity.java').read_text(encoding='utf-8')
         gate = function_body(launcher, 'static Boolean diagnosticLaunch(') + '\n' + function_body(launcher, 'static boolean diagnosticHold(')
         changed = function_body(launcher, 'public void changed(')
         # The launch waits for setup's own successful data check, never bypasses it.
@@ -262,10 +262,10 @@ def main() -> None:
         classes.mkdir()
         javac = Path(args.javac).resolve()
         java = javac.with_name('java.exe' if os.name == 'nt' else 'java')
-        production = ROOT/'mobile/android/app/src/main/java/com/darkmatter/openq4'
+        production = ROOT/'mobile/android/app/src/main/java/com/darkmatter/opend3'
         subprocess.run([str(javac), '--release', '17', '-d', str(classes), str(source),
                         *[str(production/name) for name in ('SetupTask.java','StorageSession.java','SetupLanguage.java')]], check=True)
-        subprocess.run([str(java), '-cp', str(classes), 'com.darkmatter.openq4.SetupTaskTest'], check=True)
+        subprocess.run([str(java), '-cp', str(classes), 'com.darkmatter.opend3.SetupTaskTest'], check=True)
 
 
 if __name__ == '__main__':

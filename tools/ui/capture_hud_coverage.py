@@ -50,7 +50,7 @@ def family(root):
         stages+=events(root,'wristcommShow')
     if root in ('guis/scoreboard.gui','guis/summary.gui'):
         stages+=state(root,gametype=4,playerteam=0,num_players=2,num_total_players=2,num_marine_players=1,num_strogg_players=1,
-            servername='openQ4 HUD verification',servermap='Bloodwork',servergametype='Capture the Flag',
+            servername='openD3 HUD verification',servermap='Bloodwork',servergametype='Capture the Flag',
             serverlimit='Capture limit: 8',servertimelimit='Time limit: 20',marine_score=4,strogg_score=3,timeleft='08:32',
             team_0_scores_item_0='Rhino\t42\t12\t8\t24',team_1_scores_item_0='Strogg\t35\t10\t12\t38',
             summary_names_item_0='Rhino',summary_marine_names_item_0='Rhino',summary_strogg_names_item_0='Strogg',
@@ -107,7 +107,7 @@ def main():
             'screenshot "screenshots/fallback-active.tga"']
     roots=[]
     if a.scenario in ('families','awakening'):
-        registry=json.loads((ROOT/'content/baseoq4/pak0/guis/hud/coverage.json').read_text())
+        registry=json.loads((ROOT/'content/baseod3/pak0/guis/hud/coverage.json').read_text())
         roots=registry['expansionRoots' if a.scenario=='awakening' else 'roots']
         stages+=['set ui_testGuiInGame 1','set g_showHud 0']
         for root in roots:stages+=family(root)
@@ -118,7 +118,7 @@ def main():
     if a.scenario=='awakening':
         if not a.awakening:p.error('--awakening is required for the expansion scenario')
         a.game_dir='q4xbase'
-        capture.SCENARIO_CVARS[a.scenario]={'fs_awakeningpath':str(a.awakening.resolve()),'fs_game_base':'baseoq4',
+        capture.SCENARIO_CVARS[a.scenario]={'fs_awakeningpath':str(a.awakening.resolve()),'fs_game_base':'baseod3',
             'com_gameMode':'SP','si_gameType':'singleplayer','com_nextGameModule':'game_sp'}
     capture.SCENARIOS[a.scenario]=('mp:mp/q4dm1' if a.scenario=='mp' else 'game/m03_airassault' if a.scenario=='awakening' else 'game/recomp' if a.scenario=='strogg' else 'game/airdefense1',stages)
     result=capture.run(a,a.scenario)

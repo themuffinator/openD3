@@ -53,13 +53,13 @@ HARNESS_RELATIVE_PATH = "tools/tests/renderer_vulkan_qualification.py"
 BUDGET_CONTRACT_PATH = ROOT / "tools" / "validation" / "renderer_per_map_budgets.json"
 
 REPORT_SCHEMA_VERSION = 1
-REPORT_KIND = "openq4-vulkan-qualification-report"
+REPORT_KIND = "opend3-vulkan-qualification-report"
 SUITES = ("sp-sweep", "mp-sweep", "soak", "benchmark")
 
-DONE_MARKER = "OPENQ4_VKQ_DONE"
-STOP_MARKER = "OPENQ4_VKQ_STOP"
-RESTART_MARKER = "OPENQ4_VKQ_RESTART"
-MEMORY_MARKER = "OPENQ4_VKQ_MEM"
+DONE_MARKER = "OPEND3_VKQ_DONE"
+STOP_MARKER = "OPEND3_VKQ_STOP"
+RESTART_MARKER = "OPEND3_VKQ_RESTART"
+MEMORY_MARKER = "OPEND3_VKQ_MEM"
 
 STOCK_SP_MAPS = (
     "game/airdefense1", "game/airdefense2", "game/hangar1", "game/hangar2",
@@ -107,7 +107,7 @@ NONDETERMINISTIC_MP_WARNINGS = (
 )
 
 COLOR_ESCAPE = re.compile(r"\^(?:c\d{3}|\d)")
-VERSION_LINE = re.compile(r"^openQ4 (?P<version>\S+)\s*$")
+VERSION_LINE = re.compile(r"^openD3 (?P<version>\S+)\s*$")
 RENDER_API_LINE = re.compile(
     r"^Renderer API: requested=(?P<requested>\S+) active=(?P<active>\S+)"
 )
@@ -743,7 +743,7 @@ class Qualification:
         if run_dir.exists():
             shutil.rmtree(run_dir)
         savepath = run_dir / "savepath"
-        gamepath = savepath / "baseoq4"
+        gamepath = savepath / "baseod3"
         (gamepath / "screenshots").mkdir(parents=True)
         for name, lines in cfgs.items():
             (gamepath / name).write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -756,7 +756,7 @@ class Qualification:
             args += ["+set", name, value]
         multiplayer = map_name.startswith("mp/")
         args += ["+spawnServer" if multiplayer else "+map", map_name]
-        log_path = gamepath / "logs" / f"openq4_validation_{matrix.sanitize_case_id(run_id)}.log"
+        log_path = gamepath / "logs" / f"opend3_validation_{matrix.sanitize_case_id(run_id)}.log"
         executable = matrix.find_client_executable(self.runtime)
         started = time.time()
         sampler = None
@@ -1363,7 +1363,7 @@ def run_self_test() -> int:
 
     log = "\n".join(
         [
-            "openQ4 0.13.2-dev+g1234abcd",
+            "openD3 0.13.2-dev+g1234abcd",
             "Loaded pk4 C:\\Games\\Quake 4\\q4base\\pak001.pk4 with checksum 0xf2cbc998",
             "Vulkan: validation enabled (VK_LAYER_KHRONOS_validation, debug messenger active)",
             "Vulkan: device 0 'Example GPU' (queue family 0, timestampValidBits=64, timestampPeriod=1.000000ns)",
@@ -1404,9 +1404,9 @@ def run_self_test() -> int:
     check(device_identity("vulkan", soft)["physical"] is False, "CPU device type is not physical")
     lavapipe = parse_engine_log(log.replace("driverID 4", "driverID 13"))
     check(device_identity("vulkan", lavapipe)["physical"] is False, "lavapipe is not physical")
-    check(device_identity("vulkan", parse_engine_log("openQ4 1.0")) is None, "missing driver line")
+    check(device_identity("vulkan", parse_engine_log("openD3 1.0")) is None, "missing driver line")
     check(
-        pak_inventory(parsed, "C:\\Games\\Quake 4", Path("C:/openQ4/.install"))[0]["origin"] == "basepath",
+        pak_inventory(parsed, "C:\\Games\\Quake 4", Path("C:/openD3/.install"))[0]["origin"] == "basepath",
         "retail pak origin",
     )
     check(paks_digest([{"name": "a", "checksum": "0x1", "origin": "basepath"}])

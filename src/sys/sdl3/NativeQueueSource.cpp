@@ -1,12 +1,12 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
 #include "NativeQueueSource.h"
-#if defined(USE_SDL3) && defined(OPENQ4_SDL3_CHECKED_NATIVE_QUEUE) && OPENQ4_SDL3_CHECKED_NATIVE_QUEUE
+#if defined(USE_SDL3) && defined(OPEND3_SDL3_CHECKED_NATIVE_QUEUE) && OPEND3_SDL3_CHECKED_NATIVE_QUEUE
 #include <SDL3/SDL_init.h>
 std::uint64_t Sys_EventQueueToken();
 #endif
-namespace openq4 {
+namespace opend3 {
 bool SdlNativeQueueSource::Observe(NativeQueueStatus& out,std::string& error) {
-#if defined(USE_SDL3) && defined(OPENQ4_SDL3_CHECKED_NATIVE_QUEUE) && OPENQ4_SDL3_CHECKED_NATIVE_QUEUE
+#if defined(USE_SDL3) && defined(OPEND3_SDL3_CHECKED_NATIVE_QUEUE) && OPEND3_SDL3_CHECKED_NATIVE_QUEUE
     if(!epoch || !SDL_IsMainThread()) { error="Native queue source requires its bound main thread"; return false; }
     const auto token=Sys_EventQueueToken();
     const bool healthy=OQ4_WindowsNativeFenceHealthy();
@@ -28,17 +28,17 @@ bool SdlNativeQueueSource::Observe(NativeQueueStatus& out,std::string& error) {
 #endif
 }
 int SdlNativeQueueSource::Poll(SDL_Event& event,OQ4_NativeQueueRecord& record) {
-#if defined(USE_SDL3) && defined(OPENQ4_SDL3_CHECKED_NATIVE_QUEUE) && OPENQ4_SDL3_CHECKED_NATIVE_QUEUE
+#if defined(USE_SDL3) && defined(OPEND3_SDL3_CHECKED_NATIVE_QUEUE) && OPEND3_SDL3_CHECKED_NATIVE_QUEUE
     return epoch ? OQ4_WindowsNativeFencePoll(&event,&record) : -1;
 #else
     (void)event; (void)record; return -1;
 #endif
 }
 bool SdlNativeQueueSource::CopyFence(const SDL_Event& event,OQ4_NativeFence& out) {
-#if defined(USE_SDL3) && defined(OPENQ4_SDL3_CHECKED_NATIVE_QUEUE) && OPENQ4_SDL3_CHECKED_NATIVE_QUEUE
+#if defined(USE_SDL3) && defined(OPEND3_SDL3_CHECKED_NATIVE_QUEUE) && OPEND3_SDL3_CHECKED_NATIVE_QUEUE
     return epoch && OQ4_WindowsNativeFenceCopy(&event,&out);
 #else
     (void)event; (void)out; return false;
 #endif
 }
-} // namespace openq4
+} // namespace opend3

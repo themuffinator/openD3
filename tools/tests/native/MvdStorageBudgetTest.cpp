@@ -8,9 +8,9 @@ static void Check( bool value ) { if ( !value ) { std::abort(); } }
 int main( int argc, char **argv ) {
 	Check( argc == 3 );
 	const auto root = std::filesystem::u8path( argv[1] );
-	openq4_mvd::LibraryUsage usage;
+	opend3_mvd::LibraryUsage usage;
 	Check( !std::filesystem::exists( root ) );
-	Check( openq4_mvd::ScanLibrary( root, usage ) && usage.bytes == 0 && usage.recordings == 0 );
+	Check( opend3_mvd::ScanLibrary( root, usage ) && usage.bytes == 0 && usage.recordings == 0 );
 	std::filesystem::create_directories( root / "matches" );
 	const auto write = [&]( const std::filesystem::path &name, const char *text ) {
 		std::ofstream file( root / name, std::ios::binary ); file << text; Check( file.good() );
@@ -20,13 +20,13 @@ int main( int argc, char **argv ) {
 	write( std::filesystem::u8path( "recording-\xe2\x98\x83.MVD" ), "123" );
 	write( "unrelated.part", "not a recording" );
 	write( "one.mvd.backup", "not a recording" );
-	Check( openq4_mvd::ScanLibrary( root, usage ) && usage.bytes == 15 && usage.recordings == 3 );
-	Check( !openq4_mvd::ScanLibrary( root / "one.mvd", usage ) );
+	Check( opend3_mvd::ScanLibrary( root, usage ) && usage.bytes == 15 && usage.recordings == 3 );
+	Check( !opend3_mvd::ScanLibrary( root / "one.mvd", usage ) );
 	const auto linked = std::filesystem::u8path( argv[2] );
 	if ( std::filesystem::exists( linked ) ) {
-		Check( !openq4_mvd::ScanLibrary( linked, usage ) );
+		Check( !opend3_mvd::ScanLibrary( linked, usage ) );
 	}
-	using openq4_mvd::WouldExceedLibraryBudget;
+	using opend3_mvd::WouldExceedLibraryBudget;
 	Check( !WouldExceedLibraryBudget( 800, 100, 0, 1000 ) );
 	Check( WouldExceedLibraryBudget( 801, 100, 0, 1000 ) );
 	Check( !WouldExceedLibraryBudget( 800, 40, 5, 1000 ) );

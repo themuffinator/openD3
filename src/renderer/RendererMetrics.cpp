@@ -9,7 +9,7 @@ static std::recursive_mutex rendererMetricsMutex;
 #include "RendererUpload.h"
 #include "GpuFrameTimingCore.h"
 #include <chrono>
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 #include "Vulkan/VulkanGpuFrameTiming.h"
 #endif
 
@@ -936,7 +936,7 @@ static const char *R_RendererMetrics_FormatGpuMsec( const rendererMetricsFrame_t
 	return buffer;
 }
 
-#ifndef OPENQ4_RENDERER_VK_MODULE
+#ifndef OPEND3_RENDERER_VK_MODULE
 static bool R_RendererMetrics_GlTimestampQueriesSupported( void ) {
 	// EXT_timer_query only provides elapsed queries. Timestamp pairs require
 	// OpenGL 3.3 or ARB_timer_query, regardless of exported loader functions.
@@ -2696,7 +2696,7 @@ void R_RendererMetrics_EndFrame( int frontEndMsec, int backEndMsec, int viewCoun
 
 void R_RendererMetrics_BeginGpuBackendFrame( void ) {
 	std::lock_guard<std::recursive_mutex> metricsLock( rendererMetricsMutex );
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 	// Vulkan brackets its true command-buffer lifetime in vk_GuiExecutor;
 	// the shared command-dispatch hook is intentionally not used there.
 	return;
@@ -2767,7 +2767,7 @@ void R_RendererMetrics_BeginGpuBackendFrame( void ) {
 
 void R_RendererMetrics_EndGpuBackendFrame( void ) {
 	std::lock_guard<std::recursive_mutex> metricsLock( rendererMetricsMutex );
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 	return;
 #else
 	if ( rg_gpuTimerQueryActive ) {
@@ -2843,7 +2843,7 @@ void R_RendererMetrics_ResumeGpuTimer( rendererGpuTimerSlot_t slot, bool resume 
 
 void R_RendererMetrics_ShutdownGpuTimers( void ) {
 	std::lock_guard<std::recursive_mutex> metricsLock( rendererMetricsMutex );
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 	VK_GpuFrameTiming_Shutdown();
 	R_RendererMetrics_SetGpuFrameTimingBackend( RENDER_GPU_TIMING_BACKEND_NONE, false );
 	return;
@@ -2885,7 +2885,7 @@ void R_RendererMetrics_ShutdownGpuTimers( void ) {
 
 bool R_RendererMetrics_GpuTimersAvailable( void ) {
 	std::lock_guard<std::recursive_mutex> metricsLock( rendererMetricsMutex );
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 	return VK_GpuFrameTiming_Available();
 #else
 	return R_RendererMetrics_GlFullFrameTimingAvailable();
@@ -2893,7 +2893,7 @@ bool R_RendererMetrics_GpuTimersAvailable( void ) {
 }
 
 bool RendererGpuTimer_RunSelfTest( void ) {
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 	return VK_GpuFrameTiming_RunSelfTest();
 #else
 	if ( !R_RendererMetrics_GpuTimersAvailable() ) {

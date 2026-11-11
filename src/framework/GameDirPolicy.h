@@ -1,10 +1,10 @@
 /*
 ===========================================================================
 
-openQ4 GPL Source Code
-Copyright (C) 2026 the openQ4 contributors.
+openD3 GPL Source Code
+Copyright (C) 2026 the openD3 contributors.
 
-This file is part of the openQ4 Source Code. See docs/legal for details.
+This file is part of the openD3 Source Code. See docs/legal for details.
 
 ===========================================================================
 */

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name_emulator">Emulador openQ4</string>
-    <string name="setup_title">Configuración de openQ4</string>
+    <string name="app_name_emulator">Emulador openD3</string>
+    <string name="setup_title">Configuración de openD3</string>
     <string name="setup_language">Idioma</string>
     <string name="setup_sample">Prepara los archivos del juego y vuelve al frente.</string>
     <string name="setup_continue">Continuar</string>
     <string name="setup_data">Datos del juego</string>
-    <string name="setup_data_help">Elige la carpeta q4base de tu propia instalación de Quake 4 1.4.2. openQ4 copia y comprueba los archivos; los originales se conservan. Puedes usar una subcarpeta de Descargas o una unidad USB conectada. Esta aplicación no incluye los datos del juego.</string>
+    <string name="setup_data_help">Elige la carpeta q4base de tu propia instalación de Quake 4 1.4.2. openD3 copia y comprueba los archivos; los originales se conservan. Puedes usar una subcarpeta de Descargas o una unidad USB conectada. Esta aplicación no incluye los datos del juego.</string>
     <string name="setup_choose">Elegir carpeta del juego</string>
     <string name="setup_check">Comprobar archivos instalados</string>
     <string name="setup_retry">Reintentar la última operación</string>
@@ -61,8 +61,8 @@
     <string name="setup_export_help">Crea una copia ZIP de tus partidas guardadas, con sus descripciones y vistas previas, o exporta los registros de diagnóstico. Elige el destino en el selector de archivos de Android. Los originales permanecen en la aplicación. Los registros pueden incluir rutas locales y direcciones de servidores; revísalos antes de compartirlos.</string>
     <string name="setup_export_saves">Copiar partidas guardadas</string>
     <string name="setup_export_logs">Exportar registros</string>
-    <string name="setup_saves_filename">openQ4-partidas.zip</string>
-    <string name="setup_logs_filename">openQ4-registros.zip</string>
+    <string name="setup_saves_filename">openD3-partidas.zip</string>
+    <string name="setup_logs_filename">openD3-registros.zip</string>
     <string name="setup_no_document_picker">El selector de archivos del sistema no está disponible. Activa la aplicación Archivos de Android y vuelve a intentarlo.</string>
     <string name="setup_export_picker_cancelled">No se eligió un destino de exportación. Tus archivos no han cambiado.</string>
     <string name="setup_export_no_grant">No se pudo abrir el destino para escribir. Vuelve a intentarlo y elige una ubicación accesible. Tus archivos originales no han cambiado.</string>

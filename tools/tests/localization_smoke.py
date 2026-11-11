@@ -30,10 +30,10 @@ WARMUP_PHASE = "#str_42401"        # Match Control's warmup status
 
 
 def read_staged(runtime: Path, relative: str) -> str | None:
-    loose = runtime / "baseoq4" / relative
+    loose = runtime / "baseod3" / relative
     if loose.is_file():
         return loose.read_text(encoding="utf-8")
-    for archive in sorted((runtime / "baseoq4").glob("*.pk4"), reverse=True):
+    for archive in sorted((runtime / "baseod3").glob("*.pk4"), reverse=True):
         with zipfile.ZipFile(archive) as package:
             if relative in package.namelist():
                 return package.read(relative).decode("utf-8")
@@ -51,7 +51,7 @@ def staged_strings(runtime: Path, language: str) -> dict:
     """The language's dictionary as the engine builds it: its tables in load
     order, later definitions winning."""
     table = {}
-    for category in ("code", "guis", "lips", "maps", "mappack", "openq4"):
+    for category in ("code", "guis", "lips", "maps", "mappack", "opend3"):
         text = read_staged(runtime, f"strings/{language}_{category}.lang")
         if text is not None:
             table.update(ENTRY.findall(text))
@@ -76,7 +76,7 @@ def main(argv: list[str] | None = None) -> None:
     language = options.language.lower()
     staged = options.runtime_dir.resolve()
     output = (options.output_dir or ROOT / ".tmp/localization-smoke" / language).resolve()
-    executable = options.executable_name or ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    executable = options.executable_name or ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     if not (staged / executable).is_file() or not options.basepath.is_dir():
         parser.error("a staged client and installed Quake 4 assets are required")
     if output == staged or staged in output.parents or output in staged.parents:
@@ -90,7 +90,7 @@ def main(argv: list[str] | None = None) -> None:
     mode = options.mode
     backend = "GL" if options.renderer == "gl" else "Vulkan"
     profile = output / f"{mode.lower()}-{options.renderer}"
-    game = profile / "baseoq4"
+    game = profile / "baseod3"
     game.mkdir(parents=True, exist_ok=True)
     runtime = staged
     if mode == "SP":
@@ -100,9 +100,9 @@ def main(argv: list[str] | None = None) -> None:
         # executable keeps a single firewall identity (AGENTS.md, stable test
         # executable paths); it is refreshed from the stage each time.
         runtime = ROOT / ".tmp" / "runtime" / "localization"
-        (runtime / "baseoq4/guis").mkdir(parents=True, exist_ok=True)
-        patterns = (executable, "*.dll", "*.so*", "*.dylib", "baseoq4/*.dll",
-                    "baseoq4/*.so*", "baseoq4/*.dylib", "baseoq4/*.pk4", "baseoq4/mod.json")
+        (runtime / "baseod3/guis").mkdir(parents=True, exist_ok=True)
+        patterns = (executable, "*.dll", "*.so*", "*.dylib", "baseod3/*.dll",
+                    "baseod3/*.so*", "baseod3/*.dylib", "baseod3/*.pk4", "baseod3/mod.json")
         for pattern in patterns:
             for source in staged.glob(pattern):
                 shutil.copy2(source, runtime / source.relative_to(staged))
@@ -133,7 +133,7 @@ def main(argv: list[str] | None = None) -> None:
 '''.replace("ACTION", action)
         start = menu.index("{") + 1
         fixture = menu[:start] + hook + menu[start:]
-        (runtime / "baseoq4/guis/mainmenu.gui").write_text(fixture, encoding="utf-8")
+        (runtime / "baseod3/guis/mainmenu.gui").write_text(fixture, encoding="utf-8")
         (profile / "mainmenu-fixture.gui").write_text(fixture, encoding="utf-8")
 
     launches = json.loads((ROOT / ".vscode/launch.json").read_text(encoding="utf-8"))
@@ -162,12 +162,12 @@ def main(argv: list[str] | None = None) -> None:
     if mode == "MP":
         args += ["+spawnServer"]
         captures += ["match_control"]
-        commands += ["openq4_reportMPState", "openq4_assertMPClientActive",
-                     "openq4_assertMenuActivation 4000 game", "waitMsec 1500",
-                     "openq4_guiSet desktop::active 1", "openq4_guiSet desktop::dest 21",
+        commands += ["opend3_reportMPState", "opend3_assertMPClientActive",
+                     "opend3_assertMenuActivation 4000 game", "waitMsec 1500",
+                     "opend3_guiSet desktop::active 1", "opend3_guiSet desktop::dest 21",
                      "GuiEvent hideMain", "GuiEvent chooseCurr", "GuiEvent resetMain0",
-                     "waitMsec 1500", "openq4_guiSet desktop::match_tab 0",
-                     "waitMsec 350", "openq4_guiGet match_status_values::text",
+                     "waitMsec 1500", "opend3_guiSet desktop::match_tab 0",
+                     "waitMsec 350", "opend3_guiGet match_status_values::text",
                      "screenshot screenshots/match_control.tga"]
     else:
         args += ["+map", "game/airdefense1"]
@@ -175,14 +175,14 @@ def main(argv: list[str] | None = None) -> None:
         # File reparsing can consume the wall-clock wait. Yield frames afterward
         # so the newly activated menu can run its fade-in before the capture.
         settle = ["waitMsec 1500", "wait 2", "waitMsec 750"]
-        commands += ["openq4_assertMenuActivation 4000", "waitMsec 1000",
-                     "openq4_guiGet main_t_b4::text", "screenshot screenshots/menu.tga",
+        commands += ["opend3_assertMenuActivation 4000", "waitMsec 1000",
+                     "opend3_guiGet main_t_b4::text", "screenshot screenshots/menu.tga",
                      "set sys_lang english", "GuiEvent localizationSmokeReload", *settle,
-                     "echo ENGLISH_RELOAD", "sys_lang", "openq4_guiGet main_t_b4::text",
+                     "echo ENGLISH_RELOAD", "sys_lang", "opend3_guiGet main_t_b4::text",
                      f"set sys_lang {language}", "GuiEvent localizationSmokeReload", *settle,
-                     "echo LANGUAGE_RELOAD", "sys_lang", "openq4_guiGet main_t_b4::text",
-                     "openq4_guiGet set_game_language_value::choices",
-                     "openq4_guiGet set_game_language_value::values",
+                     "echo LANGUAGE_RELOAD", "sys_lang", "opend3_guiGet main_t_b4::text",
+                     "opend3_guiGet set_game_language_value::choices",
+                     "opend3_guiGet set_game_language_value::values",
                      "screenshot screenshots/reloaded.tga",
                      "GuiEvent localizationSmokeSettings", "waitMsec 1500",
                      "screenshot screenshots/settings.tga",
@@ -203,11 +203,11 @@ def main(argv: list[str] | None = None) -> None:
     with (profile / "process.log").open("w", encoding="utf-8") as log:
         result = subprocess.run(command, cwd=runtime, stdout=log, stderr=subprocess.STDOUT,
                                 startupinfo=startup, timeout=options.timeout)
-    text = (game / "logs/openq4.log").read_text(encoding="utf-8", errors="replace")
+    text = (game / "logs/opend3.log").read_text(encoding="utf-8", errors="replace")
     assert result.returncode == 0, result.returncode
     assert "LOCALIZATION_SMOKE_COMPLETE" in text, "script did not complete"
     assert "LOCALIZATION_GAMEPLAY_ACTIVE" in text, "gameplay not reached"
-    assert not re.search(r"FATAL|ERROR:|Unknown string id|Unknown command|No language files found|openq4_gui(?:Get|Set): unknown", text)
+    assert not re.search(r"FATAL|ERROR:|Unknown string id|Unknown command|No language files found|opend3_gui(?:Get|Set): unknown", text)
     if mode == "SP":
         english_part = text.partition("ENGLISH_RELOAD")[2].partition("LANGUAGE_RELOAD")[0]
         language_part = text.partition("LANGUAGE_RELOAD")[2]
@@ -215,7 +215,7 @@ def main(argv: list[str] | None = None) -> None:
         assert f"GUI_VALUE main_t_b4::text={translated[SETTINGS_LABEL]}" in language_part
         assert translated[LANGUAGE_NAMES] in language_part
     else:
-        assert "OPENQ4_STOCK_BASELINE_MP_CLIENT_ACTIVE" in text
+        assert "OPEND3_STOCK_BASELINE_MP_CLIENT_ACTIVE" in text
         assert f"GUI_VALUE match_status_values::text={translated[WARMUP_PHASE]}" in text
     for name in captures:
         shot = game / f"screenshots/{name}.tga"

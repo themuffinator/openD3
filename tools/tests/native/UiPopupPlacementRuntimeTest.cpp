@@ -240,7 +240,7 @@ static void ProductionPopup(const std::string& source,const std::string& locales
     unsigned wrappedLines=0,singleLines=~0u;
     for(const char* locale:{"english","french","russian","italian","spanish","polish","german"})for(float expansion:{1.f,1.4f}) {
         std::fprintf(stderr,"popup locale=%s glyph-width=%g\n",locale,expansion);
-        PopupPageHost host;host.Locale(locales+"/"+locale+"_openq4.lang");host.Locale(locales+"/"+locale+"_guis.lang");host.expansion=expansion;Runtime runtime(host);std::vector<Diagnostic> diagnostics;
+        PopupPageHost host;host.Locale(locales+"/"+locale+"_opend3.lang");host.Locale(locales+"/"+locale+"_guis.lang");host.expansion=expansion;Runtime runtime(host);std::vector<Diagnostic> diagnostics;
         const bool loaded=runtime.LoadDocument(source,"guis/menu/settings/system.q4ui",diagnostics);
         for(const auto& d:diagnostics)std::fprintf(stderr,"%s: %s\n",d.pointer.c_str(),d.message.c_str());Check(loaded,"production framed SYSTEM loads");
         std::string error;double time=1;Viewport vp;vp.width=1280;vp.height=720;vp.displayScale=expansion==1?1.25f:2.f;SystemCanvas(vp);
@@ -339,7 +339,7 @@ static void ProductionPopup(const std::string& source,const std::string& locales
 struct WrapCase { std::string label; int width,height; float density,text,expansion; const char* transform; int opens; };
 static void WrappedOpening(const std::string& source,const std::string& locales,const WrapCase& c) {
     std::fprintf(stderr,"wrapped opening %dx%d density=%g text=%g transform=%s\n",c.width,c.height,c.density,c.text,c.transform?c.transform:"none");
-    PopupPageHost host;host.Locale(locales+"/english_openq4.lang");host.Locale(locales+"/english_guis.lang");host.expansion=c.expansion;
+    PopupPageHost host;host.Locale(locales+"/english_opend3.lang");host.Locale(locales+"/english_guis.lang");host.expansion=c.expansion;
     Runtime runtime(host);std::vector<Diagnostic> diagnostics;Check(runtime.LoadDocument(source,"guis/menu/settings/system.q4ui",diagnostics),"production SYSTEM loads");
     std::string error;double time=1;Viewport vp;vp.width=c.width;vp.height=c.height;vp.displayScale=c.density;vp.textScale=c.text;SystemCanvas(vp);
     runtime.SetReducedMotion(true,time);
@@ -380,7 +380,7 @@ static void SequentialOpenings(const std::string& source,const std::string& loca
     // again at the next with the boxes of the last.
     const Size sizes[]={{1024,768,2},{640,480,1},{1366,768,2},{800,600,1.25f},{1280,720,2},{640,480,1},{3440,1440,3},{800,600,1},{1920,1080,2},{640,480,1}};
     for(const char* locale:{"english","german"}) {
-        PopupPageHost host;host.Locale(locales+"/"+locale+"_openq4.lang");host.Locale(locales+"/"+locale+"_guis.lang");host.expansion=1.4f;
+        PopupPageHost host;host.Locale(locales+"/"+locale+"_opend3.lang");host.Locale(locales+"/"+locale+"_guis.lang");host.expansion=1.4f;
         Runtime runtime(host);std::vector<Diagnostic> diagnostics;Check(runtime.LoadDocument(source,"guis/menu/settings/system.q4ui",diagnostics),"production SYSTEM loads");
         std::string error;double time=1;Viewport vp;vp.textScale=2;SystemCanvas(vp);
         runtime.SetReducedMotion(true,time);

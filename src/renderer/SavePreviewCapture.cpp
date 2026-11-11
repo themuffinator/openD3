@@ -1,7 +1,7 @@
 #include "tr_local.h"
 #include "SavePreviewCapture.h"
 
-#ifndef OPENQ4_RENDERER_VK_MODULE
+#ifndef OPEND3_RENDERER_VK_MODULE
 static GLuint savePreviewBuffer = 0;
 static GLsync savePreviewFence = NULL;
 static int savePreviewState = 0; // idle, requested, submitted, mapped; -1 failed

@@ -27,7 +27,7 @@
 #include "android_public.h"
 #include "../posix/posix_public.h"
 
-#if !defined( OPENQ4_SIGMATOUCH )
+#if !defined( OPEND3_SIGMATOUCH )
 
 #include "../../framework/Session_local.h"
 #include "../../framework/Doom3GameCompat.h"
@@ -61,9 +61,9 @@ static idCVar ui_touchCanZoom( "ui_touchCanZoom", "0", CVAR_SYSTEM | CVAR_BOOL |
 // in_touchLookSensitivity 1: a 400 dp drag, about half a phone's width, turns 100 degrees.
 static const float TOUCH_LOOK_DEGREES_PER_DP = 0.25f;
 
-static openq4::touch::Controls	touchControls;
-static openq4::touch::Contacts	touchContacts;
-static openq4::touch::Mesh		touchMesh;
+static opend3::touch::Controls	touchControls;
+static opend3::touch::Contacts	touchContacts;
+static opend3::touch::Mesh		touchMesh;
 static idList<idDrawVert>		touchDrawVerts;
 static idList<glIndex_t>		touchDrawIndexes;
 static float					touchDisplayScale = 1.0f;
@@ -72,7 +72,7 @@ static bool						touchWheelOwned = false;
 static float					touchPlayerScale = -1.0f;
 static int						touchPlayerPreset = -1;
 static idStr					touchLayoutRecord;		// in_touchLayout as last parsed
-static openq4::touch::OrientationEdits	touchLayoutEdits;
+static opend3::touch::OrientationEdits	touchLayoutEdits;
 static bool						touchLayoutValid = false;
 static bool						touchAppActive = false;
 static bool						touchPosted = false;	// some input reached the bridge since the last let-go
@@ -94,12 +94,12 @@ static void Interface_LoadSetup(void) {
 	jclass type = env->GetObjectClass(activity);
 	jmethodID getter = type ? env->GetMethodID(type, "getInterfaceSetup", "()Ljava/lang/String;") : NULL;
 	jstring record = getter ? static_cast<jstring>(env->CallObjectMethod(activity, getter)) : NULL;
-	openq4::android::InterfaceSetup settings;
+	opend3::android::InterfaceSetup settings;
 	bool pending = false;
 	if (!env->ExceptionCheck() && record && env->GetStringUTFLength(record) <= 48) {
 		const char* bytes = env->GetStringUTFChars(record, NULL);
 		if (bytes) {
-			pending = openq4::android::PendingInterfaceSetup(bytes, ui_androidInterfaceApplied.GetString(), settings);
+			pending = opend3::android::PendingInterfaceSetup(bytes, ui_androidInterfaceApplied.GetString(), settings);
 			env->ReleaseStringUTFChars(record, bytes);
 		}
 	}
@@ -130,11 +130,11 @@ static void TouchControls_LoadLayout( void ) {
 	jstring record = getter != NULL ? static_cast<jstring>( env->CallObjectMethod( activity, getter ) ) : NULL;
 	idStr value;
 	bool valid = false;
-	if ( !env->ExceptionCheck() && record != NULL && env->GetStringUTFLength( record ) < openq4::touch::kEditRecordLimit ) {
+	if ( !env->ExceptionCheck() && record != NULL && env->GetStringUTFLength( record ) < opend3::touch::kEditRecordLimit ) {
 		const char *bytes = env->GetStringUTFChars( record, NULL );
 		if ( bytes != NULL ) {
-			openq4::touch::OrientationEdits edits;
-			valid = openq4::touch::ParseLayoutEdits( bytes, edits );
+			opend3::touch::OrientationEdits edits;
+			valid = opend3::touch::ParseLayoutEdits( bytes, edits );
 			value = bytes;
 			env->ReleaseStringUTFChars( record, bytes );
 		}
@@ -201,7 +201,7 @@ static bool TouchControls_Active( void ) {
 			|| sessLocal.guiTest != NULL || sessLocal.IsDemoPlaybackActive() ) {
 		return false;
 	}
-	if ( ( console != NULL && console->Active() ) || RetainedUI_IsOpen() || openQ4_AcceptingLoadingContinueInput() ) {
+	if ( ( console != NULL && console->Active() ) || RetainedUI_IsOpen() || openD3_AcceptingLoadingContinueInput() ) {
 		return false;
 	}
 	return true;
@@ -238,7 +238,7 @@ mouse CPI/acceleration/smoothing and mouse pitch settings have no effect.
 The radial selector receives position directly, without turning the view.
 ====================
 */
-static void TouchControls_Apply( const openq4::touch::Output &out ) {
+static void TouchControls_Apply( const opend3::touch::Output &out ) {
 	if ( out.cancelWeaponWheel ) cvarSystem->SetCVarBool( "ui_radialCancel", true );
 	if ( out.weaponWheel && !touchWheelOwned ) {
 		touchWheelOwned = true;
@@ -260,9 +260,9 @@ static void TouchControls_Apply( const openq4::touch::Output &out ) {
 		( out.jump ? 1u << QUAKE4_BTN_MOVE_UP : 0 ) | ( out.crouch ? 1u << QUAKE4_BTN_MOVE_DOWN : 0 ) |
 		( out.zoom ? 1u << QUAKE4_BTN_ZOOM : 0 ) | ( out.weaponWheel ? 1u << QUAKE4_BTN_WEAPON_WHEEL : 0 ) |
 		( out.scores ? 1u << QUAKE4_BTN_SCORES : 0 );
-	const int controlButtons[] = { openq4::touch::BUTTON_FIRE, openq4::touch::BUTTON_ZOOM,
-		openq4::touch::BUTTON_JUMP, openq4::touch::BUTTON_CROUCH, -1, -1,
-		openq4::touch::BUTTON_WEAPON, openq4::touch::BUTTON_SCORES };
+	const int controlButtons[] = { opend3::touch::BUTTON_FIRE, opend3::touch::BUTTON_ZOOM,
+		opend3::touch::BUTTON_JUMP, opend3::touch::BUTTON_CROUCH, -1, -1,
+		opend3::touch::BUTTON_WEAPON, opend3::touch::BUTTON_SCORES };
 	unsigned canceled = 0;
 	for ( int i = 0; i < QUAKE4_BTN_COUNT; ++i ) {
 		if ( controlButtons[i] >= 0 && ( out.canceledButtons & ( 1u << controlButtons[i] ) ) ) canceled |= 1u << i;
@@ -291,7 +291,7 @@ void AndroidTouchControls_Frame( int windowWidth, int windowHeight, float displa
 		Interface_LoadSetup();
 	}
 	touchAppActive = appActive;
-	const openq4::touch::Layout &previous = touchControls.GetLayout();
+	const opend3::touch::Layout &previous = touchControls.GetLayout();
 	const float requestedScale = in_touchControlsScale.GetFloat();
 	const float scale = std::isfinite( requestedScale ) ? idMath::ClampFloat( 0.75f, 1.5f, requestedScale ) : 1.0f;
 	const int preset = in_touchLayoutPreset.GetInteger();
@@ -299,9 +299,9 @@ void AndroidTouchControls_Frame( int windowWidth, int windowHeight, float displa
 	const bool layoutChanged = touchLayoutRecord.Cmp( in_touchLayout.GetString() ) != 0;
 	if ( layoutChanged ) {
 		touchLayoutRecord = in_touchLayout.GetString();
-		touchLayoutEdits = openq4::touch::OrientationEdits();
+		touchLayoutEdits = opend3::touch::OrientationEdits();
 		touchLayoutValid = touchLayoutRecord.Length() > 0
-			&& openq4::touch::ParseLayoutEdits( touchLayoutRecord.c_str(), touchLayoutEdits );
+			&& opend3::touch::ParseLayoutEdits( touchLayoutRecord.c_str(), touchLayoutEdits );
 		if ( touchLayoutRecord.Length() > 0 && !touchLayoutValid ) {
 			common->Warning( "in_touchLayout is not a valid touch layout; using the preset" );
 		}
@@ -313,7 +313,7 @@ void AndroidTouchControls_Frame( int windowWidth, int windowHeight, float displa
 		touchPlayerScale = scale;
 		touchPlayerPreset = preset;
 		const float width = static_cast<float>( windowWidth ), height = static_cast<float>( windowHeight );
-		const openq4::touch::Layout layout = openq4::touch::ComputeLayout( width, height, density, scale, preset,
+		const opend3::touch::Layout layout = opend3::touch::ComputeLayout( width, height, density, scale, preset,
 			touchLayoutValid ? &touchLayoutEdits.For( width, height ) : NULL );
 		if ( layout.editsRejected ) {
 			common->Printf( "Touch layout edits do not fit a %dx%d window; using the preset\n", windowWidth, windowHeight );
@@ -321,11 +321,11 @@ void AndroidTouchControls_Frame( int windowWidth, int windowHeight, float displa
 		touchControls.SetLayout( layout );
 	}
 	const bool cinematic = TouchControls_InCinematic();
-	unsigned visible = session != NULL && session->IsMultiplayer() ? openq4::touch::kAllButtons : openq4::touch::kSinglePlayerButtons;
-	if ( !ui_touchCanReload.GetBool() ) visible &= ~( 1u << openq4::touch::BUTTON_RELOAD );
-	if ( !ui_touchCanZoom.GetBool() ) visible &= ~( 1u << openq4::touch::BUTTON_ZOOM );
+	unsigned visible = session != NULL && session->IsMultiplayer() ? opend3::touch::kAllButtons : opend3::touch::kSinglePlayerButtons;
+	if ( !ui_touchCanReload.GetBool() ) visible &= ~( 1u << opend3::touch::BUTTON_RELOAD );
+	if ( !ui_touchCanZoom.GetBool() ) visible &= ~( 1u << opend3::touch::BUTTON_ZOOM );
 	visible &= ~touchControls.GetLayout().hidden;
-	touchControls.SetVisibleButtons( cinematic ? ( 1u << openq4::touch::BUTTON_PAUSE ) : visible );
+	touchControls.SetVisibleButtons( cinematic ? ( 1u << opend3::touch::BUTTON_PAUSE ) : visible );
 	touchControls.SetGesturesAllowed( !cinematic );
 	if ( !TouchControls_Active() || !touchControls.GetLayout().available ) {
 		if ( touchPosted || touchControls.HasFingers() || touchWheelOwned ) {
@@ -339,14 +339,14 @@ void AndroidTouchControls_Frame( int windowWidth, int windowHeight, float displa
 }
 
 bool AndroidTouchControls_HandleFinger( androidTouchPhase_t phase, long long device, long long finger, float x, float y ) {
-	const openq4::touch::FingerId id( device, finger );
+	const opend3::touch::FingerId id( device, finger );
 	const bool active = TouchControls_Active();
 	const auto owner = phase == ANDROID_TOUCH_DOWN ? touchContacts.Begin( id, active ) : touchContacts.Get( id );
 	if ( phase == ANDROID_TOUCH_UP || phase == ANDROID_TOUCH_CANCEL ) touchContacts.End( id );
-	if ( owner == openq4::touch::CONTACT_MENU ) return false;
-	if ( owner != openq4::touch::CONTACT_GAME ) return true;
+	if ( owner == opend3::touch::CONTACT_MENU ) return false;
+	if ( owner != opend3::touch::CONTACT_GAME ) return true;
 	if ( !active || !touchControls.GetLayout().available ) { TouchControls_LetGo(); return true; }
-	const openq4::touch::Layout &layout = touchControls.GetLayout();
+	const opend3::touch::Layout &layout = touchControls.GetLayout();
 	const float px = x * layout.width;
 	const float py = y * layout.height;
 	const int64_t now = Sys_Milliseconds();
@@ -383,12 +383,12 @@ void AndroidTouchControls_Release( void ) {
 
 float AndroidTouchControls_HudTop( void ) {
 	if ( touchOverlayHidden || !TouchControls_Active() ) return 0.0f;
-	return openq4::touch::HudTop( touchControls.GetLayout(), touchControls.VisibleButtons() );
+	return opend3::touch::HudTop( touchControls.GetLayout(), touchControls.VisibleButtons() );
 }
 
 float AndroidTouchControls_HudBottomEdge( void ) {
 	if ( touchOverlayHidden || !TouchControls_Active() ) return 0.0f;
-	return openq4::touch::HudBottomEdge( touchControls.GetLayout() );
+	return opend3::touch::HudBottomEdge( touchControls.GetLayout() );
 }
 
 /*
@@ -410,7 +410,7 @@ void AndroidTouchControls_Draw( void ) {
 	// contact, but the ordinary control plates must not cover its slots.
 	const bool pauseOnly = TouchControls_InCinematic() || touchWheelOwned
 		|| cvarSystem->GetCVarInteger( "ui_radialOwner" ) == 1;
-	openq4::touch::BuildOverlay( touchControls, touchMesh, pauseOnly );
+	opend3::touch::BuildOverlay( touchControls, touchMesh, pauseOnly );
 	const int numVerts = static_cast<int>( touchMesh.vertices.size() );
 	const int numIndexes = static_cast<int>( touchMesh.indexes.size() );
 	const idMaterial *material = declManager->FindMaterial( "_retainedSolid" );
@@ -418,12 +418,12 @@ void AndroidTouchControls_Draw( void ) {
 		return;
 	}
 
-	const openq4::touch::Layout &layout = touchControls.GetLayout();
+	const opend3::touch::Layout &layout = touchControls.GetLayout();
 	const float scaleX = static_cast<float>( SCREEN_WIDTH ) / layout.width;
 	const float scaleY = static_cast<float>( SCREEN_HEIGHT ) / layout.height;
 	touchDrawVerts.SetNum( numVerts, false );
 	for ( int i = 0; i < numVerts; i++ ) {
-		const openq4::touch::Vertex &source = touchMesh.vertices[i];
+		const opend3::touch::Vertex &source = touchMesh.vertices[i];
 		idDrawVert &v = touchDrawVerts[i];
 		v.Clear();
 		v.xyz.Set( source.x * scaleX, source.y * scaleY, 0.0f );
@@ -458,28 +458,28 @@ Drives the controls the way SDL's finger events do, for headless tests on
 an emulator: nothing reaches the operating system's input.
 ====================
 */
-static const char *const touchControlNames[openq4::touch::BUTTON_COUNT] = {
+static const char *const touchControlNames[opend3::touch::BUTTON_COUNT] = {
 	"fire", "jump", "crouch", "weapon", "reload", "zoom", "pause", "scores", "chat"
 };
 
 static void TouchControls_Test_f( const idCmdArgs &args ) {
 	const char *verb = args.Argv( 1 );
-	const openq4::touch::Layout &layout = touchControls.GetLayout();
+	const opend3::touch::Layout &layout = touchControls.GetLayout();
 	if ( idStr::Icmp( verb, "layout" ) == 0 ) {
 		common->Printf( "touch controls: %s, %.0fx%.0f px, %.3f px per dp%s\n",
 			TouchControls_Active() ? "active" : "inactive", layout.width, layout.height, layout.dp,
 			layout.edited ? ", edited" : layout.editsRejected ? ", edits rejected" : "" );
-		for ( int i = 0; i < openq4::touch::BUTTON_COUNT; i++ ) {
-			const openq4::touch::Circle &button = layout.buttons[i];
+		for ( int i = 0; i < opend3::touch::BUTTON_COUNT; i++ ) {
+			const opend3::touch::Circle &button = layout.buttons[i];
 			common->Printf( "  %-6s at %.3f %.3f, radius %.3f, opacity %.2f%s\n", touchControlNames[i],
 				button.x / layout.width, button.y / layout.height, button.radius / layout.width,
-				openq4::touch::RestOpacity( layout, i ), ( layout.hidden & ( 1u << i ) ) ? ", hidden" : "" );
+				opend3::touch::RestOpacity( layout, i ), ( layout.hidden & ( 1u << i ) ) ? ", hidden" : "" );
 		}
 		return;
 	}
 	if ( idStr::Icmp( verb, "state" ) == 0 ) {
 		idStr pressed;
-		for ( int i = 0; i < openq4::touch::BUTTON_COUNT; i++ ) {
+		for ( int i = 0; i < opend3::touch::BUTTON_COUNT; i++ ) {
 			if ( touchControls.ButtonPressed( i ) ) {
 				pressed += va( " %s", touchControlNames[i] );
 			}
@@ -504,8 +504,8 @@ static void TouchControls_Test_f( const idCmdArgs &args ) {
 		phase = ANDROID_TOUCH_CANCEL;
 	} else {
 		idStr names;
-		for ( int i = 0; i < openq4::touch::BUTTON_COUNT; i++ ) {
-			names += i == 0 ? "" : ( i + 1 == openq4::touch::BUTTON_COUNT ? " or " : ", " );
+		for ( int i = 0; i < opend3::touch::BUTTON_COUNT; i++ ) {
+			names += i == 0 ? "" : ( i + 1 == opend3::touch::BUTTON_COUNT ? " or " : ", " );
 			names += touchControlNames[i];
 		}
 		common->Printf( "usage: touchControlsTest layout | state\n"
@@ -521,10 +521,10 @@ static void TouchControls_Test_f( const idCmdArgs &args ) {
 		y = atof( args.Argv( 4 ) );
 	} else {
 		int control = 0;
-		while ( control < openq4::touch::BUTTON_COUNT && idStr::Icmp( args.Argv( 3 ), touchControlNames[control] ) != 0 ) {
+		while ( control < opend3::touch::BUTTON_COUNT && idStr::Icmp( args.Argv( 3 ), touchControlNames[control] ) != 0 ) {
 			control++;
 		}
-		if ( control == openq4::touch::BUTTON_COUNT ) {
+		if ( control == opend3::touch::BUTTON_COUNT ) {
 			common->Printf( "touchControlsTest: no control named '%s'\n", args.Argv( 3 ) );
 			return;
 		}
@@ -544,7 +544,7 @@ void AndroidTouchControls_Init( void ) {
 		"drives the built-in touch controls like finger events, for headless tests" );
 }
 
-#else	// OPENQ4_SIGMATOUCH: the host's overlay drives the bridge itself
+#else	// OPEND3_SIGMATOUCH: the host's overlay drives the bridge itself
 
 void AndroidTouchControls_Init( void ) {
 }

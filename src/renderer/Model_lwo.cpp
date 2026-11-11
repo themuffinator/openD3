@@ -2622,7 +2622,7 @@ Fail:
 ======================================================================
 lwIndicesInRange()
 
-openQ4: the point and polygon numbers in an object are the file's own, and
+openD3: the point and polygon numbers in an object are the file's own, and
 the passes that follow count, link and write through them without looking:
 a polygon naming point 0xFFFFFF incremented a counter 16 million points past
 the list. Check them all once, before any of those passes run.
@@ -2939,7 +2939,7 @@ int lwGetPolygonTags( idFile *fp, int cksize, lwTagList *tlist, lwPolygonList *p
 		j = getVX( fp ) + tlist->offset;
 		rlen = get_flen();
 		if ( rlen < 0 || rlen > cksize ) return 0;
-		// openQ4: the polygon number is the file's and is written through below
+		// openD3: the polygon number is the file's and is written through below
 		if ( i < 0 || i >= plist->count ) return 0;
 
 		switch ( type ) {

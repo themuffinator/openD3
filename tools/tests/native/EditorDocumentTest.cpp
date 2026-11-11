@@ -231,7 +231,7 @@ int main( int argc, char **argv ) {
 		Expect( stock.Serialize() == text, "stock map byte-exact round trip" );
 		const auto world = stock.Entities().front().id;
 		const auto start = std::chrono::steady_clock::now();
-		Expect( stock.SetProperty( world, "_openq4_editor_test", "roundtrip", error ), "stock world property edit" );
+		Expect( stock.SetProperty( world, "_opend3_editor_test", "roundtrip", error ), "stock world property edit" );
 		const auto end = std::chrono::steady_clock::now();
 		Expect( stock.Undo( error ) && stock.Serialize() == text, "stock undo byte-exact round trip" );
 		std::printf( "stock map: %s, %zu bytes, %zu entities, property edit %.3f ms\n", argv[i], text.size(), stock.Entities().size(),

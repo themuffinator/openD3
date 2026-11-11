@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 
-openQ4 cryptographic hash primitives
+openD3 cryptographic hash primitives
 Copyright (C) 2026 DarkMatter Productions
 
 This program is free software: you can redistribute it and/or modify it under
@@ -40,7 +40,7 @@ void HMACSHA256( const void *key, std::size_t keyBytes,
 	const void *data, std::size_t dataBytes,
 	std::uint8_t digest[ SHA256_DIGEST_BYTES ] );
 
-// openQ4 only needs one SHA-256-sized PBKDF2 block. Keeping the interface
+// openD3 only needs one SHA-256-sized PBKDF2 block. Keeping the interface
 // bounded prevents accidental unbounded work or counter-wrap mistakes.
 bool PBKDF2HMACSHA256( const void *password, std::size_t passwordBytes,
 	const void *salt, std::size_t saltBytes, std::uint32_t iterations,

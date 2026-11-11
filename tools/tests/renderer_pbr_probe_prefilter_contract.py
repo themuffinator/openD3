@@ -9,7 +9,7 @@ finished RGBA16F tiles over later frames within a fixed per-frame budget. The
 probe set keeps its analytic fallback until the last tile lands; screenshots
 and `pbrProbeSettle` finish everything at once. The jobs are joined before the
 atlas or the renderer module goes away. The gameplay proof is
-renderer_vulkan_pbr_probes.py on both backends; the native openq4-pbr-math
+renderer_vulkan_pbr_probes.py on both backends; the native opend3-pbr-math
 test requires the job's tiles to equal the synchronous filter exactly.
 """
 

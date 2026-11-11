@@ -42,7 +42,7 @@ class idImage;
 class idCinematic;
 class idUserInterface;
 
-// openQ4-only, opt-in physically based material metadata.  This is kept
+// openD3-only, opt-in physically based material metadata.  This is kept
 // separate from the classic stage list so retail Quake 4 materials retain
 // their exact bump/diffuse/specular parsing and rendering contract.
 typedef enum {
@@ -507,20 +507,6 @@ typedef enum {
 	CONTENTS_AAS_SOLID = BIT(13),	// solid for AAS
 	CONTENTS_AAS_OBSTACLE = BIT(14),	// used to compile an obstacle into AAS that can be enabled/disabled
 	CONTENTS_FLASHLIGHT_TRIGGER = BIT(15),	// used for triggers that are activated by the flashlight
-#ifdef HUMANHEAD
-	CONTENTS_FORCEFIELD			= BIT(16),
-	CONTENTS_SPIRITBRIDGE		= BIT(17),
-	CONTENTS_AREAPORTAL			= BIT(18),
-	CONTENTS_NOCSG				= BIT(19),
-	CONTENTS_BLOCK_RADIUSDAMAGE = BIT(20),
-	CONTENTS_SHOOTABLE			= BIT(21),
-	CONTENTS_DEATHVOLUME		= BIT(22),
-	CONTENTS_VEHICLECLIP		= BIT(23),
-	CONTENTS_OWNER_TO_OWNER		= BIT(24),
-	CONTENTS_GAME_PORTAL		= BIT(25),
-	CONTENTS_SHOOTABLEBYARROW	= BIT(26),
-	CONTENTS_HUNTERCLIP			= BIT(27),
-#else
 // RAVEN BEGIN
 // bdube: new clip that blocks monster visibility
 	CONTENTS_SIGHTCLIP			= BIT(16),	// used for blocking sight for actors and cameras
@@ -544,7 +530,6 @@ typedef enum {
 	CONTENTS_LAVA				= BIT(26),
 	CONTENTS_SLIME				= BIT(27),
 // jmarshall end
-#endif
 
 	CONTENTS_REMOVE_UTIL = ~(CONTENTS_AREAPORTAL | CONTENTS_NOCSG)
 } contentsFlags_t;
@@ -553,34 +538,6 @@ typedef enum {
 const int NUM_SURFACE_BITS = 4;
 const int MAX_SURFACE_TYPES = 1 << NUM_SURFACE_BITS;
 
-#ifdef HUMANHEAD
-typedef enum {
-	SURFTYPE_NONE,
-	SURFTYPE_METAL,
-	SURFTYPE_STONE,
-	SURFTYPE_FLESH,
-	SURFTYPE_WOOD,
-	SURFTYPE_CARDBOARD,
-	SURFTYPE_LIQUID,
-	SURFTYPE_GLASS,
-	SURFTYPE_TILE,
-	SURFTYPE_WALLWALK,
-	SURFTYPE_ALTMETAL,
-	SURFTYPE_FORCEFIELD,
-	SURFTYPE_PIPE,
-	SURFTYPE_SPIRIT,
-	SURFTYPE_CHAFF,
-	NUM_SURFACE_TYPES,
-	SURFTYPE_PLASTIC = SURFTYPE_TILE,
-	SURFTYPE_RICOCHET = SURFTYPE_ALTMETAL,
-	SURFTYPE_10 = SURFTYPE_FORCEFIELD,
-	SURFTYPE_11 = SURFTYPE_PIPE,
-	SURFTYPE_12 = SURFTYPE_SPIRIT,
-	SURFTYPE_13 = SURFTYPE_CHAFF,
-	SURFTYPE_14 = SURFTYPE_CHAFF,
-	SURFTYPE_15 = SURFTYPE_CHAFF
-} surfTypes_t;
-#else
 typedef enum {
 	SURFTYPE_NONE,					// default type
 	SURFTYPE_METAL,
@@ -599,7 +556,6 @@ typedef enum {
 	SURFTYPE_14,
 	SURFTYPE_15
 } surfTypes_t;
-#endif
 
 // surface flags
 typedef enum {
@@ -672,7 +628,7 @@ public:
 	bool				HasPBR(void) const { return pbrInfo.enabled; }
 	const pbrMaterialInfo_t& GetPBRInfo(void) const { return pbrInfo; }
 
-	// openQ4-authored light-material metadata. Classic material stages and
+	// openD3-authored light-material metadata. Classic material stages and
 	// every public render-light/game ABI remain unchanged.
 	bool				HasSpecularProbe(void) const { return specularProbeInfo.enabled && !TestMaterialFlag( MF_DEFAULTED ); }
 	const specularProbeMaterialInfo_t& GetSpecularProbeInfo(void) const { return specularProbeInfo; }

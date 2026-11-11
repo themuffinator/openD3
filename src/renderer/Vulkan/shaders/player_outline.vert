@@ -1,7 +1,7 @@
 #version 450
 
 // Silhouette shell for the multiplayer player outline and the cel outline. A
-// port of content/baseoq4/pak0/glprogs/player_outline.vs, which
+// port of content/baseod3/pak0/glprogs/player_outline.vs, which
 // RB_PlayerVisibilityDrawOutlineSurface and RB_CelDrawOutlineSurface draw on
 // the OpenGL backend. The same program, with a width of 0, draws the
 // silhouette mask and the brightskin wash.

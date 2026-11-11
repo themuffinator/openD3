@@ -30,9 +30,9 @@ def validate_loader_fallback() -> None:
     load = common[load_start:load_end]
 
     for token in (
-        "openQ4_BuildGameModuleBinaryNameForArch",
-        "OPENQ4_MODULE_ARCH_TAG",
-        'openQ4_BuildGameModuleBinaryNameForArch( gameModuleBaseName, "universal2"',
+        "openD3_BuildGameModuleBinaryNameForArch",
+        "OPEND3_MODULE_ARCH_TAG",
+        'openD3_BuildGameModuleBinaryNameForArch( gameModuleBaseName, "universal2"',
         "fileSystem->FindDLL( universalGameModuleBinary, dllPath, true )",
         "selectedModuleBinary = universalGameModuleBinary",
         "#if defined( MACOS_X ) || defined( __APPLE__ )",
@@ -46,7 +46,7 @@ def validate_loader_fallback() -> None:
     if not preferred_lookup < fallback_guard < universal_lookup < fatal_guard:
         raise AssertionError("universal2 lookup must follow thin lookup and precede the fatal missing-module guard")
 
-    reject(load, 'openQ4_BuildGameModuleBinaryNameForArch( gameModuleBaseName, "universal2" );', "incomplete universal2 name construction")
+    reject(load, 'openD3_BuildGameModuleBinaryNameForArch( gameModuleBaseName, "universal2" );', "incomplete universal2 name construction")
 
 
 def validate_bundle_integrity_fallback() -> None:
@@ -87,7 +87,7 @@ def validate_module_search_diagnostics() -> None:
         "Game module search failed:",
         "Sys_GetGameModuleRootDirectory",
         "FS_AppendGameModuleSearchPath( attemptedModulePaths, moduleSearchRoots[i], moduleGameDir, dllName );",
-        "FS_AppendGameModuleSearchPath( attemptedModulePaths, moduleSearchRoots[i], OPENQ4_GAMEDIR, dllName );",
+        "FS_AppendGameModuleSearchPath( attemptedModulePaths, moduleSearchRoots[i], OPEND3_GAMEDIR, dllName );",
         "FS_AppendGameModuleSearchPath( attemptedModulePaths, moduleSearchRoots[i], NULL, dllName );",
     ):
         require(contract, token, "trusted game-module search diagnostics")
@@ -118,7 +118,7 @@ def validate_docs_and_wiring() -> None:
     plan = read("docs/dev/archive/2026-10-18/plan/2026-06-30-macos-compatibility-support.md")
     release_completion = read("docs/dev/release-completion.md")
     release_notes = read("docs/dev/releases/v0.8.1.md")
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
 

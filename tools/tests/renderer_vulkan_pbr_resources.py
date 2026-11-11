@@ -43,7 +43,7 @@ def configure(manifest: dict, samples: int, ambient_lights: bool = False) -> dic
                                         '-120 -1000 220', '120 -1000 220')):
                 commands += [f'spawn light name resources_light_{i} origin "{origin}" angle 0 '
                              'light_radius "1000 1000 1000" _color "1 1 1" noshadows 1'
-                             + (' texture "lights/openq4/pbr_lab/ambient"' if ambient_lights else '')]
+                             + (' texture "lights/opend3/pbr_lab/ambient"' if ambient_lights else '')]
         commands += [f'script "$resources_light_{i}.{"On" if i < lights else "Off"}()"'
                      for i in range(4)]
         commands += ['wait 30', 'g_stopTime 1']

@@ -464,10 +464,10 @@ void idRenderWindow::RefreshForLevelLoad() {
     }
 }
 
-void idRenderWindow::ConfigureModelScene( const openq4::ui::ModelScene &scene ) {
+void idRenderWindow::ConfigureModelScene( const opend3::ui::ModelScene &scene ) {
 	const bool rebuild = !sceneConfigured || configuredScene.parts != scene.parts || configuredScene.lights.size() != scene.lights.size();
 	for ( int i = 0; i < MAX_RENDERWINDOW_MODELS; ++i ) {
-		const auto part = i < scene.parts.size() ? scene.parts[i] : openq4::ui::ModelPart{};
+		const auto part = i < scene.parts.size() ? scene.parts[i] : opend3::ui::ModelPart{};
 		modelName[i] = part.model.c_str(); customSkin[i] = part.skin.c_str();
 		animName[i] = part.animation.c_str(); animClass[i] = part.animationClass.c_str(); jointName[i] = part.joint.c_str();
 	}

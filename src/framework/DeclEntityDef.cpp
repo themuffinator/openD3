@@ -201,7 +201,7 @@ bool idDeclEntityDef::Parse( const char *text, const int textLength, bool noCach
 
 	// Keep the retail-style tool-state decision centralized so validation/tool
 	// modes do not drift away from entityDef media-cache behavior.
-	if ( openQ4_ShouldCacheEntityDefMedia( noCaching ) ) {
+	if ( openD3_ShouldCacheEntityDefMedia( noCaching ) ) {
 		game->CacheDictionaryMedia( &dict );
 	}
 

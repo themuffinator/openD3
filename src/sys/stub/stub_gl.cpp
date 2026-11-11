@@ -405,9 +405,9 @@ void GLimp_SwapBuffers() {};
 void *GLimp_BackEndSleep() {return 0;};
 
 extern "C" {
-typedef void ( *openQ4GlewProcAddress_t ) (void);
+typedef void ( *openD3GlewProcAddress_t ) (void);
 
-openQ4GlewProcAddress_t OpenQ4_GlewGetProcAddress( const unsigned char *name ) {
+openD3GlewProcAddress_t openD3_GlewGetProcAddress( const unsigned char *name ) {
 	(void)name;
 	return NULL;
 }

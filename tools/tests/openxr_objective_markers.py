@@ -59,7 +59,7 @@ def main() -> int:
     args.output = args.output.resolve()
     if args.output.exists() or not args.output.is_relative_to((ROOT / '.tmp').resolve()):
         parser.error('use a fresh output under .tmp')
-    manifest = (args.build_dir / 'openq4_xr_test_runtime.json').resolve()
+    manifest = (args.build_dir / 'opend3_xr_test_runtime.json').resolve()
     if not manifest.is_file():
         parser.error('build the OpenXR test runtime first')
     verify_runtime_is_current(args.runtime)
@@ -69,7 +69,7 @@ def main() -> int:
         scenario = f'vr-poi-{mode}'
         profile = args.output / scenario
         profile.mkdir(parents=True)
-        game = profile / 'save/baseoq4'
+        game = profile / 'save/baseod3'
         xr_script, xr_log = profile / 'xr-script.txt', profile / 'xr.jsonl'
         script = []
 
@@ -126,9 +126,9 @@ def main() -> int:
             'vr_enable': '1',
             'win_allowMultipleInstances' if os.name == 'nt' else 'sys_allowMultipleInstances': '1',
         }
-        environment = {'XR_RUNTIME_JSON': str(manifest), 'OPENQ4_XR_TEST_LOG': str(xr_log),
-                       'OPENQ4_XR_TEST_SCRIPT': str(xr_script), 'OPENQ4_XR_TEST_EYE_SIZE': '1200x1320',
-                       'OPENQ4_XR_TEST_RATE': '90', 'OPENQ4_XR_TEST_NO_INPUT': '1'}
+        environment = {'XR_RUNTIME_JSON': str(manifest), 'OPEND3_XR_TEST_LOG': str(xr_log),
+                       'OPEND3_XR_TEST_SCRIPT': str(xr_script), 'OPEND3_XR_TEST_EYE_SIZE': '1200x1320',
+                       'OPEND3_XR_TEST_RATE': '90', 'OPEND3_XR_TEST_NO_INPUT': '1'}
         previous = {key: os.environ.get(key) for key in environment}
         try:
             os.environ.update(environment)
@@ -143,7 +143,7 @@ def main() -> int:
         frames = [event for event in events if event.get('event') == 'end_frame' and
                   [layer['type'] for layer in event['layers']] == ['projection', 'quad']]
         quads = [frame['layers'][1] for frame in frames]
-        log = (game / 'logs/openq4.log').read_text(encoding='utf-8', errors='replace')
+        log = (game / 'logs/opend3.log').read_text(encoding='utf-8', errors='replace')
         diffs = {name: difference(game, name) for name in names
                  if (game / f'screenshots/{name}-on.tga').is_file() and (game / f'screenshots/{name}-off.tga').is_file()}
         result['differences'] = diffs
@@ -165,7 +165,7 @@ def main() -> int:
                                 'more than 64 startup commands' not in log and
                                 len(result['screenshots']) == 22 and len(diffs) == len(names) and parity_ok and
                                 all(diff['pixels'] > 30 for diff in diffs.values()) and
-                                'OPENQ4_STOCK_BASELINE_MP_CLIENT_ACTIVE' in log and re.search(r'MP_STATE .* phase=3 ', log) and
+                                'OPEND3_STOCK_BASELINE_MP_CLIENT_ACTIVE' in log and re.search(r'MP_STATE .* phase=3 ', log) and
                                 'OpenXR: no instance' in log.partition('POI_VR_fallback')[2] and
                                 '"vr_enable" is:"1"' in log and
                                 any(abs(q['width'] - 1.8) < .001 and abs(q['z'] + 2) < .001 and abs(q['y'] + .18) < .001 for q in quads) and
@@ -174,8 +174,8 @@ def main() -> int:
         payload = {'source': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                    'working_tree': subprocess.check_output(['git', 'status', '--short'], cwd=ROOT, text=True),
                    'runtime': {str(path.relative_to(args.runtime)): capture.digest(path)
-                               for path in [args.runtime / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64'),
-                                            *sorted((args.runtime / 'baseoq4').glob('game-mp_*'))] if path.is_file()},
+                               for path in [args.runtime / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64'),
+                                            *sorted((args.runtime / 'baseod3').glob('game-mp_*'))] if path.is_file()},
                    'results': results}
         (args.output / 'report.json').write_text(json.dumps(payload, indent=2) + '\n', encoding='utf-8')
         print(mode, 'PASS' if result['passed'] else 'FAIL', len(frames), 'stereo HUD frames;',

@@ -92,7 +92,7 @@ def settings_page_document() -> dict:
                  in the slot and its content out, so it never presents moved
                  and a return fades it in from nothing."""
     check_settings_fits()
-    doc = Document("openq4.settings")
+    doc = Document("opend3.settings")
     doc.session("back", "settingsBack")
     doc.session("settingsDefaults", "settingsDefaults")
     defaults = confirmation(doc, "defaultsModal", "#str_200086", "#str_200156", None, yes_event="defaultsConfirmed")

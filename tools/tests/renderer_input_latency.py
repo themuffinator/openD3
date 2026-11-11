@@ -49,7 +49,7 @@ int main(){
         assert(commonLookSampleToSwap.count==1 && commonFlashPressToSwap.count==1);
     }
     // A reset excludes receipts for frames handed off before it.
-    openQ4_ResetPresentationLatencyStats();
+    openD3_ResetPresentationLatencyStats();
     Common_RecordFrameInputToSwap(98,97,104);
     assert(commonLookSampleToSwap.count==0 && commonFlashPressToSwap.count==0);
     Common_RecordFrameInputToSwap(now,now+1,now+5);
@@ -74,7 +74,7 @@ def main():
         assert "GLimp_SwapBuffers();" not in executor, path
     source = SUPPORT + function_body(backend, "void R_SwapBuffersWithInputTiming(")
     source += common[common.index("static const int COMMON_INPUT_TO_SWAP_HISTORY"):common.index("static idStr Common_InputToSwapPercentiles")]
-    source += function_body(common, "void openQ4_ResetPresentationLatencyStats(")
+    source += function_body(common, "void openD3_ResetPresentationLatencyStats(")
     source += CASES
     compiler = next((p for name in ("clang++", "g++", "c++") if (p := shutil.which(name))), None)
     if not compiler:

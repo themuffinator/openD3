@@ -8,7 +8,7 @@ ran out of memory), frame-temp vertex data stayed live, and the upload stream ne
 fenced the buffer a later capture reuses. Every capture now ends with EndFrame's
 release calls, without presenting.
 
-openQ4 searches fs_savepath last, so a bake that read its atlases back by name found
+openD3 searches fs_savepath last, so a bake that read its atlases back by name found
 any copy a map ships in pak1 first: re-baking such a map packed the shipped atlases
 and lit bounces 2+ with the shipped grid. The bake now reads its own atlases and
 metadata from the save path, uploads them in the format a by-name load would use,

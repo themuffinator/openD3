@@ -138,11 +138,11 @@ def validate_opend3_version_key_contract() -> None:
     )
 
     require(known_keys, '"requiredopenD3Version"', "primary openD3 manifest key")
-    require(known_keys, '"requiredopenQ4Version"', "legacy manifest key migration alias")
+    require(known_keys, '"requiredopenD3Version"', "legacy manifest key migration alias")
     require_before(
         manifest_parser,
         '!key.Icmp( "requiredopenD3Version" )',
-        '!key.Icmp( "requiredopenQ4Version" )',
+        '!key.Icmp( "requiredopenD3Version" )',
         "primary manifest key before migration alias",
     )
     require(
@@ -159,7 +159,7 @@ def validate_opend3_version_key_contract() -> None:
     require(manifest_reader, "requires openD3 %s or newer", "openD3 compatibility diagnostic")
     require(header, "GetRequiredopenD3Version", "primary openD3 manifest accessor")
     require(manifest_template, '"requiredopenD3Version"', "staged baseod3 manifest template")
-    reject(manifest_template, '"requiredopenQ4Version"', "staged manifest legacy key")
+    reject(manifest_template, '"requiredopenD3Version"', "staged manifest legacy key")
     require(
         package_tool,
         'manifest.get("requiredopenD3Version")',
@@ -173,7 +173,7 @@ def validate_manifest_only_contract() -> None:
     get_mod_info = cpp_function_body(source, "bool idFileSystemLocal::GetModInfo(")
 
     for token in (
-        "OPENQ4_LEGACY_MOD_DESCRIPTION_FILENAME",
+        "OPEND3_LEGACY_MOD_DESCRIPTION_FILENAME",
         "ReadLegacyModInfoFromSearchPath",
         "FS_BuildLegacyModInfo",
         "allowLegacyFallback",
@@ -209,32 +209,32 @@ def validate_game_module_fallback_contract() -> None:
     # FindDLL probes every module search root (executable dir first, then the
     # macOS .app package root when present) for each fallback tier in order.
     active_mod_probe = "FS_OpenGameModuleFromExeDir( this, moduleSearchRoots[i], moduleGameDir, dllName, dllPath )"
-    baseoq4_fallback_probe = "FS_OpenGameModuleFromExeDir( this, moduleSearchRoots[i], OPENQ4_GAMEDIR, dllName, dllPath )"
+    baseod3_fallback_probe = "FS_OpenGameModuleFromExeDir( this, moduleSearchRoots[i], OPEND3_GAMEDIR, dllName, dllPath )"
     root_fallback_probe = "dllPath = moduleSearchRoots[i];"
 
     require(find_dll, active_mod_probe, "active mod game-module probe")
-    require(find_dll, baseoq4_fallback_probe, "baseoq4 game-module fallback")
-    require(find_dll, "idStr::Icmp( moduleGameDir, OPENQ4_GAMEDIR ) != 0", "duplicate baseoq4 fallback guard")
-    require(find_dll, "falling back to '%s'", "baseoq4 fallback diagnostic")
-    require_before(find_dll, active_mod_probe, baseoq4_fallback_probe, "game module fallback order")
-    require_before(find_dll, baseoq4_fallback_probe, root_fallback_probe, "baseoq4 before executable-root fallback")
+    require(find_dll, baseod3_fallback_probe, "baseod3 game-module fallback")
+    require(find_dll, "idStr::Icmp( moduleGameDir, OPEND3_GAMEDIR ) != 0", "duplicate baseod3 fallback guard")
+    require(find_dll, "falling back to '%s'", "baseod3 fallback diagnostic")
+    require_before(find_dll, active_mod_probe, baseod3_fallback_probe, "game module fallback order")
+    require_before(find_dll, baseod3_fallback_probe, root_fallback_probe, "baseod3 before executable-root fallback")
 
 
 def validate_invalid_mod_fallback_contract() -> None:
     source = read("src/framework/FileSystem.cpp")
     warning = "common->Warning( \"Ignoring fs_game '%s': %s\""
-    # An empty fs_game also disables the openQ4 runtime underlay, so a broken
-    # mod manifest must fall back to the default openQ4 game, never to
+    # An empty fs_game also disables the openD3 runtime underlay, so a broken
+    # mod manifest must fall back to the default openD3 game, never to
     # retail-only q4base content.
     require(source, warning, "invalid mod manifest warning")
     fallback = source[source.index(warning):]
     fallback = fallback[:fallback.index("}")]
-    require(fallback, "fs_game.SetString( OPENQ4_GAMEDIR );", "invalid mod falls back to the openQ4 game")
+    require(fallback, "fs_game.SetString( OPEND3_GAMEDIR );", "invalid mod falls back to the openD3 game")
     reject(fallback, "fs_game.SetString( \"\" );", "invalid mod fallback")
 
 
 def validate_validation_coverage() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     require(validator, "filesystem_mod_manifest.py", "validation runner")
 
 

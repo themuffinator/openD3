@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the three native vector scopes from visual specification 14.13.
 
-The authored paths are shared with the openQ4 design atlas, not retail bitmap
+The authored paths are shared with the openD3 design atlas, not retail bitmap
 assets. The 4:3 optical center fits either dimension; edge haze fills the view.
 """
 from __future__ import annotations
@@ -248,7 +248,7 @@ def nailgun(doc):
 
 
 def document(kind):
-    doc = ui.Document('openq4.scope.'+kind)
+    doc = ui.Document('opend3.scope.'+kind)
     doc.state['playerYaw'] = {'type':'number','initial':0}
     doc.events['zoomIn'] = []
     layers = globals()[kind](doc)

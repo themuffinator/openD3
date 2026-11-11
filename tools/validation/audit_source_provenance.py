@@ -260,7 +260,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
 
 
 def render_text(report: dict[str, Any], family_filter: str) -> str:
-    lines = ["openQ4 source provenance inventory"]
+    lines = ["openD3 source provenance inventory"]
     for family_name, family in report["families"].items():
         if family_filter != "all" and family_filter != family_name:
             continue

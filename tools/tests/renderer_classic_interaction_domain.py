@@ -102,7 +102,7 @@ def main() -> None:
     benchmark = read("tools/tests/renderer_gameplay_benchmark.py")
     baseline = read("tools/validation/stock_asset_baseline.py")
     matrix = read("tools/tests/renderer_validation_matrix.py")
-    validation = read("tools/validation/openq4_validate.py")
+    validation = read("tools/validation/opend3_validate.py")
     commit_ci = read(".github/workflows/commit-validation.yml")
     push_ci = read(".github/workflows/push-verification.yml")
     roadmap = read("docs/dev/archive/2026-10-18/idtech5-modernization-roadmap.md")
@@ -1755,7 +1755,7 @@ def main() -> None:
     require(domain_doc, "translucent moment-map casters", "intentional shadow fallback")
     require(domain_doc, "features=static+dynamic+alpha+translucent", "mapped feature diagnostics")
     require(domain_doc, "whole-view fallback", "domain documentation")
-    require(domain_doc, "original openQ4 work", "source provenance statement")
+    require(domain_doc, "original openD3 work", "source provenance statement")
 
     print("renderer_classic_interaction_domain: ok")
 

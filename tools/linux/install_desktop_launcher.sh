@@ -4,11 +4,11 @@ set -euo pipefail
 script_dir="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(CDPATH= cd -- "${script_dir}/../.." && pwd)"
 
-install_root="${OPEND3_INSTALL_ROOT:-${OPENQ4_INSTALL_ROOT:-${repo_root}/.install}}"
-desktop_dir="${OPEND3_DESKTOP_DIR:-${OPENQ4_DESKTOP_DIR:-}}"
-launcher_name="${OPEND3_DESKTOP_LAUNCHER_NAME:-${OPENQ4_DESKTOP_LAUNCHER_NAME:-openD3.desktop}}"
-client_binary="${OPEND3_CLIENT_BINARY:-${OPENQ4_CLIENT_BINARY:-}}"
-basepath="${OPEND3_BASEPATH:-${OPENQ4_BASEPATH:-}}"
+install_root="${OPEND3_INSTALL_ROOT:-${OPEND3_INSTALL_ROOT:-${repo_root}/.install}}"
+desktop_dir="${OPEND3_DESKTOP_DIR:-${OPEND3_DESKTOP_DIR:-}}"
+launcher_name="${OPEND3_DESKTOP_LAUNCHER_NAME:-${OPEND3_DESKTOP_LAUNCHER_NAME:-openD3.desktop}}"
+client_binary="${OPEND3_CLIENT_BINARY:-${OPEND3_CLIENT_BINARY:-}}"
+basepath="${OPEND3_BASEPATH:-${OPEND3_BASEPATH:-}}"
 
 usage() {
     cat <<'EOF'

@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cstring>
 
-namespace openq4::ui {
+namespace opend3::ui {
 inline const char* GuiStateInteger(int value, char (&text)[64]) {
 	const auto result=std::to_chars(text,text+sizeof(text)-1,value);
 	*result.ptr='\0';

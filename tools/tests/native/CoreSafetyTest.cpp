@@ -501,7 +501,7 @@ int main() {
 	ExpectBounded( "12x", 127, false, 0, "non-digit" );
 	ExpectBounded( "0", -1, false, 0, "negative maximum" );
 
-	ExpectGameDirSegment( "baseoq4", true, "ordinary game directory" );
+	ExpectGameDirSegment( "baseod3", true, "ordinary game directory" );
 	ExpectGameDirSegment( "my-mod_2", true, "portable punctuation" );
 	ExpectGameDirSegment( ".hidden-mod", true, "non-dot hidden directory" );
 	ExpectGameDirSegment( nullptr, false, "null game directory" );
@@ -555,7 +555,7 @@ int main() {
 	ExpectAllocation( !TryRoundUpToInt( 1, 0, roundedAmount ), "zero granularity" );
 
 	ExpectOpenURLPolicy( "http://example.com", true, "ordinary HTTP URL" );
-	ExpectOpenURLPolicy( "HTTPS://example.com:443/releases?q=openq4#download", true, "ordinary HTTPS URL" );
+	ExpectOpenURLPolicy( "HTTPS://example.com:443/releases?q=opend3#download", true, "ordinary HTTPS URL" );
 	ExpectOpenURLPolicy( "https://localhost", true, "localhost HTTPS URL" );
 	ExpectOpenURLPolicy( "http://127.0.0.1:8080/path", true, "IPv4 HTTP URL" );
 	ExpectOpenURLPolicy( "https://[2001:db8::1]:65535/path", true, "IPv6 HTTPS URL" );

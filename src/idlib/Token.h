@@ -171,7 +171,7 @@ private:
 
 // RAVEN BEGIN
 // rjohnson: initialized floatvalue to prevent fpu exceptin
-// openQ4: initialize the complete token state so default-constructed parser
+// openD3: initialize the complete token state so default-constructed parser
 // temporaries are deterministic and safe to inspect before a successful read.
 
 ID_INLINE idToken::idToken( void ) :

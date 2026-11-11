@@ -10,7 +10,7 @@ import struct
 from pathlib import Path
 
 from game_layer import PACKAGED_LAYER_GAME_DIRS
-from openq4_pak import OPENQ4_PACK_NAMES, copy_file_if_changed
+from opend3_pak import OPEND3_PACK_NAMES, copy_file_if_changed
 
 
 PRODUCT_NAME = "openD3"
@@ -423,7 +423,7 @@ def stage_build_game_directory(source_root: Path, build_root: Path) -> dict[str,
     build_root = validate_runtime_directory(build_root, "build root", must_exist=True)
     build_generated_game_dir = build_root / "content" / GAME_DIR_NAME
     build_runtime_game_dir = build_root / GAME_DIR_NAME
-    build_game_pk4s = [build_root / name for name in OPENQ4_PACK_NAMES]
+    build_game_pk4s = [build_root / name for name in OPEND3_PACK_NAMES]
     staged_file_count = 0
 
     if not build_generated_game_dir.is_dir() and not any(path.is_file() for path in build_game_pk4s):
@@ -470,7 +470,7 @@ def _copy_file_if_changed(source_path: Path, target_dir: Path) -> Path | None:
 def resolve_openal_runtime_path(source_root: Path, arch: str) -> Path | None:
     override_root_raw = (
         os.environ.get("OPEND3_OPENAL_ROOT", "").strip()
-        or os.environ.get("OPENQ4_OPENAL_ROOT", "").strip()
+        or os.environ.get("OPEND3_OPENAL_ROOT", "").strip()
     )
     if override_root_raw:
         override_root = validate_runtime_directory(

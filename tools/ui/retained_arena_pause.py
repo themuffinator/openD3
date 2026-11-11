@@ -110,7 +110,7 @@ def tall_arena_pause(doc: Document, home: dict, title: dict, nav: dict, block: d
 
 
 def arena_pause_document() -> dict:
-    doc = Document("openq4.arena_pause")
+    doc = Document("opend3.arena_pause")
     doc.state.update({key: {"type": "string", "initial": ""} for key in STATE_KEYS})
     doc.session("resume", "resume")
     doc.session("settings", "settings")

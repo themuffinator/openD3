@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Release tooling for openQ4 content packs (roadmap PKG-01, PKG-02).
+"""Release tooling for openD3 content packs (roadmap PKG-01, PKG-02).
 
 Subcommands:
 
@@ -47,12 +47,12 @@ from content_generations import (
     next_free_overlay_name,
     plan_overlays,
 )
-from openq4_pak import (
+from opend3_pak import (
     CONTENT_PACKS_TABLE_PATH,
     GAME_DIR_NAME,
-    OPENQ4_BULK_PACK_NAMES,
-    OPENQ4_CONTENT_PACKS,
-    OPENQ4_CONTENT_PACKS_BY_NAME,
+    OPEND3_BULK_PACK_NAMES,
+    OPEND3_CONTENT_PACKS,
+    OPEND3_CONTENT_PACKS_BY_NAME,
     copy_file_if_changed,
     create_game_pk4,
     file_md5_hex,
@@ -112,7 +112,7 @@ def reusable_packs(source_root: Path, previous: dict | None) -> dict[str, dict]:
     """Packs whose current source digest equals the previous release's."""
     previous_packs = manifest_packs(previous)
     reusable = {}
-    for spec in OPENQ4_CONTENT_PACKS:
+    for spec in OPEND3_CONTENT_PACKS:
         record = previous_packs.get(spec.name)
         if record is None:
             continue
@@ -125,7 +125,7 @@ def reusable_packs(source_root: Path, previous: dict | None) -> dict[str, dict]:
 def command_plan(args: argparse.Namespace) -> int:
     previous = read_manifest(Path(args.previous_manifest)) if args.previous_manifest else None
     reusable = reusable_packs(Path(args.source_root).resolve(), previous)
-    for spec in OPENQ4_CONTENT_PACKS:
+    for spec in OPEND3_CONTENT_PACKS:
         state = "reuse" if spec.name in reusable else "build"
         print(f"{spec.name} {state}")
     if args.reuse_list:
@@ -142,7 +142,7 @@ def command_build(args: argparse.Namespace) -> int:
     previous_dir = Path(args.previous_packs_dir).resolve() if args.previous_packs_dir else None
 
     packs = []
-    for spec in OPENQ4_CONTENT_PACKS:
+    for spec in OPEND3_CONTENT_PACKS:
         source_digest, file_count = effective_source_digest(source_root, spec)
         destination = out_dir / spec.name
         record = previous_packs.get(spec.name)
@@ -229,25 +229,25 @@ def format_notes(current: dict, previous: dict | None, update_asset_example: str
     ]
     if previous is None:
         lines.append(
-            "This release changes how openQ4's own content is packed, so it is a full download. "
-            "Install a full package, and remove any `baseoq4` folder left by an older openQ4 first."
+            "This release changes how openD3's own content is packed, so it is a full download. "
+            "Install a full package, and remove any `baseod3` folder left by an older openD3 first."
         )
     elif not changed_bulk:
         lines.append(
             f"The light-grid and loadscreen packs did not change since {previous['version_tag']}. If you have that "
             f"release, download only the update archive for your platform (for example `{update_asset_example}`) and "
-            "extract it into your openQ4 folder, replacing files."
+            "extract it into your openD3 folder, replacing files."
         )
     else:
         names = ", ".join(f"`{name}`" for name in changed_bulk)
         lines.append(
             f"{names} changed in this release. To update from {previous['version_tag']}, extract the update archive "
-            f"for your platform into your openQ4 folder and download {names} from this release into its `baseoq4` "
+            f"for your platform into your openD3 folder and download {names} from this release into its `baseod3` "
             "folder, or install a full package."
         )
     lines.append("")
     lines.append(
-        "A dedicated server needs only `pak0.pk4`; the light grids and loadscreens are for clients. If openQ4 reports "
+        "A dedicated server needs only `pak0.pk4`; the light grids and loadscreens are for clients. If openD3 reports "
         "a missing or mismatched pack at startup, download that pack from this release under the same name."
     )
     return "\n".join(lines) + "\n"
@@ -336,7 +336,7 @@ def read_archive(path: Path, wanted=None, rootless: bool = False) -> dict[str, M
 
 
 def pack_member_paths(members: Iterable[str], name: str) -> list[str]:
-    """Every baseoq4/<name> in a package, wherever its baseoq4 sits (app bundle, APK assets)."""
+    """Every baseod3/<name> in a package, wherever its baseod3 sits (app bundle, APK assets)."""
     suffix = f"{GAME_DIR_NAME}/{name}"
     return [member for member in members if member == suffix or member.endswith("/" + suffix)]
 
@@ -351,12 +351,12 @@ def command_verify_update(args: argparse.Namespace) -> int:
     standalone = {}
     for value in args.pack:
         pack_name, _sep, raw = value.partition("=")
-        if pack_name not in OPENQ4_CONTENT_PACKS_BY_NAME or not raw:
+        if pack_name not in OPEND3_CONTENT_PACKS_BY_NAME or not raw:
             raise RuntimeError(f"--pack expects a table pack NAME=PATH, got {value!r}")
         standalone[f"{GAME_DIR_NAME}/{pack_name}"] = Member(f"{GAME_DIR_NAME}/{pack_name}", sha256_hex(Path(raw)), Path(raw).stat().st_size)
 
     failures: list[str] = []
-    for bulk in OPENQ4_BULK_PACK_NAMES:
+    for bulk in OPEND3_BULK_PACK_NAMES:
         for path in pack_member_paths(update, bulk):
             failures.append(f"the update archive carries the bulk pack {path}")
 
@@ -541,7 +541,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     notes = sub.add_parser("notes")
     notes.add_argument("--manifest", required=True)
     notes.add_argument("--previous-manifest", default="")
-    notes.add_argument("--update-asset-example", default="openq4-<version>-windows-x64-update.zip")
+    notes.add_argument("--update-asset-example", default="opend3-<version>-windows-x64-update.zip")
     notes.add_argument("--out", default="")
     notes.add_argument("--append", action="store_true")
 

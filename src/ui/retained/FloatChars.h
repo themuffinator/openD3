@@ -6,11 +6,11 @@
 #include <cstdint>
 #include <system_error>
 
-namespace openq4::ui {
+namespace opend3::ui {
 // Binary64 <-> decimal text with the exact results of std::to_chars and
 // std::from_chars for the fixed, scientific and general formats. libc++ gained
 // floating from_chars only in LLVM 20, and Apple's libc++ gates floating
-// to_chars behind macOS 13.3, above openQ4's macOS 11 floor. Integer-only
+// to_chars behind macOS 13.3, above openD3's macOS 11 floor. Integer-only
 // arithmetic keeps every result independent of the process locale, the
 // rounding mode and FTZ/DAZ. chars_format::hex fails with invalid_argument.
 // As the standard specifies, from_chars leaves value untouched on any error.
@@ -436,4 +436,4 @@ inline std::to_chars_result FloatToChars(char* first, char* last, double value, 
 inline std::from_chars_result FloatFromChars(const char* first, const char* last, double& value, std::chars_format format) noexcept {
 	return float_chars_detail::Parse(first,last,value,format);
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

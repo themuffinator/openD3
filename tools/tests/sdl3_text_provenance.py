@@ -87,9 +87,9 @@ def main() -> int:
         applied=run(['git','-C',str(projection),'apply',str(generation)],'generation-restore.log')
         if applied.returncode: raise RuntimeError(applied.stdout)
     decoded={name:(projection/name).read_bytes().decode('utf-8').replace('\r\n','\n') for name in FILES}
-    public=PACKAGE/'include/SDL3/SDL_openq4_text_provenance.h'
-    internal=PACKAGE/'src/video/windows/SDL_openq4_text_provenance.h'
-    implementation=PACKAGE/'src/video/windows/SDL_openq4_text_provenance.c'
+    public=PACKAGE/'include/SDL3/SDL_opend3_text_provenance.h'
+    internal=PACKAGE/'src/video/windows/SDL_opend3_text_provenance.h'
+    implementation=PACKAGE/'src/video/windows/SDL_opend3_text_provenance.c'
     api=public.read_text(encoding='utf-8');api=api[api.index('typedef enum OQ4_TextKind'):api.rindex('#ifdef __cplusplus')]
     internal_text=internal.read_text(encoding='utf-8');internal_text=internal_text[internal_text.index('typedef struct OQ4_TextScope'):internal_text.rindex('#endif')]
     code=implementation.read_text(encoding='utf-8');code=code[code.index('#define OQ4_TEXT_SLOTS'):code.rindex('#endif')]

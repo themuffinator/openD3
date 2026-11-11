@@ -1406,7 +1406,7 @@ def chat_input(doc: HudDocument) -> dict:
 # ========================================================== match context
 
 def match_context(doc: HudDocument) -> dict:
-    """openQ4's managed-match card under the kill feed (14.9): the phase
+    """openD3's managed-match card under the kill feed (14.9): the phase
     heading, then series, timeouts, readiness and proposals, on a plate with
     an orange edge. Live play uses just the phase and one prioritized summary;
     the scoreboard keeps the full record. The adapter supplies localized lines."""
@@ -2021,7 +2021,7 @@ def mp_document() -> dict:
     the vote at the leading edge, chat and voice at the bottom-leading
     corner, the follow card or the respawn prompt over the status bar, and
     the free camera's name tags over the players in view."""
-    doc = HudDocument("openq4.hud.remastered.mp")
+    doc = HudDocument("opend3.hud.remastered.mp")
     layout_state(doc)
     doc.number("gametype", 1)
     feed = kill_feed(doc)
@@ -2077,7 +2077,7 @@ def mp_document() -> dict:
     # The peer measures whether the chat entry outgrows its view (the probe,
     # the text with its 3 u, is wider than the view) for the mark before it.
     return doc.build(root, {"canvas": {"height": 720, "minWidth": 960},
-                            "extensions": {"openq4": {"reference": "ui-visual-design.md 14.9", "stock": "guis/mphud.gui",
+                            "extensions": {"opend3": {"reference": "ui-visual-design.md 14.9", "stock": "guis/mphud.gui",
                                                       "readbacks": [["oq4.chatClipped", "chatin-probe-text", "chatin-view"],
                                                                     ["oq4.chatPrompts", "chatin-prompts", "@height"],
                                                                     ["oq4.chatFirst", "chatlog", "@firstInside", "chat", "8"]]}}})

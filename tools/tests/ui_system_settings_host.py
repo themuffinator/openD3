@@ -35,11 +35,11 @@ SUPPORT = r'''
 struct idStr : std::string { using std::string::string; using std::string::operator=; };
 enum { CVAR_BOOL=1, CVAR_INTEGER=2, CVAR_FLOAT=4, CVAR_ROM=8, CVAR_INIT=16,
     CVAR_NETWORKSYNC=32, CVAR_CHEAT=64, CVAR_PRIVATE=128 };
-static openq4::PerformancePresetSignals presetSignals;
+static opend3::PerformancePresetSignals presetSignals;
 static bool failPresetSignals=false;
 static int presetSignalReads=0;
 static std::function<void()> presetSignalCallback;
-bool Common_CapturePerformancePresetSignals(openq4::PerformancePresetSignals& output,std::string& error) {
+bool Common_CapturePerformancePresetSignals(opend3::PerformancePresetSignals& output,std::string& error) {
  ++presetSignalReads;if(presetSignalCallback)presetSignalCallback();
  if(failPresetSignals){error="signal read refused";return false;}
  output=presetSignals;return true;
@@ -126,7 +126,7 @@ const renderWindowServices_t* Sys_GetRenderWindowServices() {
 }
 #endif
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 static void Seed() {
     writes=0; refuse.clear();localCVarSystem.variables.clear();
     for(const auto& item:SystemSettingsHost::Catalog()) {
@@ -381,9 +381,9 @@ def source_checks(host_source):
     common = (ROOT / 'src/framework/Common.cpp').read_text(encoding='utf-8')
     model = (ROOT / 'src/framework/PerformancePreset.cpp').read_text(encoding='utf-8')
     preset = model.split('PerformancePresetTargetCount> Targets{{', 1)[1].split('}};', 1)[0]
-    assert 'openq4::PerformancePresetTargets()' in common and 'openq4::ExpandPerformancePreset(preset,expansion,expansionError)' in common
+    assert 'opend3::PerformancePresetTargets()' in common and 'opend3::ExpandPerformancePreset(preset,expansion,expansionError)' in common
     preset_keys = set(re.findall(r'"([a-zA-Z0-9_]+)"', preset))
-    system = (ROOT / 'content/baseoq4/pak0/guis/menu/settings/system.gui').read_text(encoding='utf-8')
+    system = (ROOT / 'content/baseod3/pak0/guis/menu/settings/system.gui').read_text(encoding='utf-8')
     page = set(re.findall(r'\bcvar\s+"?([a-zA-Z_]\w*)', system)) - {'gui_set_sys_scroll'}
     page |= {'r_mode', 'r_skipBump', 'r_skipSky', 'r_skipSpecular'}
     # The retained replacement adds independent interface preferences.
@@ -414,7 +414,7 @@ def main():
     # numeric_limits calls cannot accidentally pass only the portable double.
     windows_macros = '\n#define min(a,b) (((a)<(b))?(a):(b))\n#define max(a,b) (((a)>(b))?(a):(b))\n'
     code = (SUPPORT + function_body(cvars, '\nbool CVar_ReadDefault(') +
-            '\nnamespace openq4::ui {\n' + validation + '\n}\n' + windows_macros + host +
+            '\nnamespace opend3::ui {\n' + validation + '\n}\n' + windows_macros + host +
             '\n#undef min\n#undef max\n' + MAIN)
     compiler = next((found for name in ('clang++', 'g++', 'c++') if (found := shutil.which(name))), None)
     if not compiler:

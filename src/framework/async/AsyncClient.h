@@ -132,7 +132,7 @@ public:
 	bool				SendVoiceMessage( const idBitMsg &msg );
 
 	void				SendVersionCheck( bool fromMenu = false );
-	// Legacy no-op in openQ4 (CD key auth removed).
+	// Legacy no-op in openD3 (CD key auth removed).
 	bool				SendAuthCheck( const char *cdkey, const char *xpkey );
 
 	void				PacifierUpdate( void );
@@ -153,7 +153,7 @@ private:
 	int					clientPredictTime;			// prediction time used to send user commands
 
 	netadr_t			serverAddress;				// IP address of server
-	// openQ4: every address a typed host name resolved to, in the order they are
+	// openD3: every address a typed host name resolved to, in the order they are
 	// tried. While challenges go unanswered SetupConnection moves through them,
 	// so one unreachable record no longer strands the connection.
 	static const int	MAX_CONNECT_CANDIDATES = 8;
@@ -161,9 +161,9 @@ private:
 	int					connectCandidateCount;
 	int					connectCandidateIndex;		// the candidate in serverAddress
 	int					connectChallengesSent;		// challenges sent to it so far
-	// openQ4: the protocol of the server in serverAddress, from its answer to the
+	// openD3: the protocol of the server in serverAddress, from its answer to the
 	// getInfo sent with each challenge. A Quake 4 1.4.x server answers the
-	// challenge itself exactly as an openQ4 server does, game directory included.
+	// challenge itself exactly as an openD3 server does, game directory included.
 	int					connectInfoRequests;		// getInfo requests sent to it so far
 	bool				connectProtocolKnown;		// it answered with our protocol
 	bool				connectChallengeDeferred;	// a challenge answer awaits that

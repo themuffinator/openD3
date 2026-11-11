@@ -1,7 +1,7 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
 #include "WindowsTextCollectionBridge.h"
 #if defined(_WIN32)
-#if defined(USE_SDL3) && defined(OPENQ4_SDL3_CHECKED_NATIVE_QUEUE) && OPENQ4_SDL3_CHECKED_NATIVE_QUEUE
+#if defined(USE_SDL3) && defined(OPEND3_SDL3_CHECKED_NATIVE_QUEUE) && OPEND3_SDL3_CHECKED_NATIVE_QUEUE
 #include <SDL3/SDL_init.h>
 #define OQ4_COLLECTION_PROVIDER 1
 #else
@@ -11,7 +11,7 @@
 #include <thread>
 #include <type_traits>
 
-namespace openq4::sys {
+namespace opend3::sys {
 using namespace ui;
 namespace {
 bool Error(std::string& out,const char* message) noexcept {try {out=message;} catch (...) {out.clear();} return false;}
@@ -244,5 +244,5 @@ bool WindowsTextCollectionBridge::Sync(const NativeTextEditorReceipt& receipt,co
 void WindowsTextCollectionBridge::RetireExact(const NativeTextIdentity& id) noexcept {
     if(impl->Owner() && id==impl->native) impl->Retire();
 }
-} // namespace openq4::sys
+} // namespace opend3::sys
 #endif

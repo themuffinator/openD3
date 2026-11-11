@@ -23,7 +23,7 @@
 #ifndef __GLES_D3_LOCAL_H__
 #define __GLES_D3_LOCAL_H__
 
-#ifdef OPENQ4_RENDERER_GLES_MODULE
+#ifdef OPEND3_RENDERER_GLES_MODULE
 
 /*
 ====================
@@ -170,6 +170,6 @@ void	RB_GLESD3_ResetShadowDrawCount( void );
 void	R_GLESD3_ResetSkipCounts( void );
 void	R_GLESD3_ReportSkipCounts( void );
 
-#endif /* OPENQ4_RENDERER_GLES_MODULE */
+#endif /* OPEND3_RENDERER_GLES_MODULE */
 
 #endif /* !__GLES_D3_LOCAL_H__ */

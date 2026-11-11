@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the editable vector catalog used by every screen-space gameplay HUD.
 
-Symbols are first-party drawings from the openQ4 atlas. Layout, localized text,
+Symbols are first-party drawings from the openD3 atlas. Layout, localized text,
 input and script state stay with the game's GUI. No retail pixels are embedded.
 """
 import argparse
@@ -17,7 +17,7 @@ from build_retained_status_bar import BACK, FILL, ST_BACK, ST_FILL
 from classic_hud_art import gauge_art, gauge_rim
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT/'content/baseoq4/pak0/guis/hud'
+OUT = ROOT/'content/baseod3/pak0/guis/hud'
 SYMBOLS = json.loads(Path(__file__).with_name('hud_symbols.json').read_text())
 WHITE = [1,1,1,1]
 
@@ -155,7 +155,7 @@ def build():
     aliases('frowny','gfx/mp/frowny')
     aliases('item_health','gfx/guis/hud/icons/teammate_health')
     aliases('item_armor','gfx/guis/hud/icons/teammate_armor')
-    aliases('kill_self',*[f'gfx/guis/hud/icons/kill_{v}_openq4' for v in ('drown','slime','lava')])
+    aliases('kill_self',*[f'gfx/guis/hud/icons/kill_{v}_opend3' for v in ('drown','slime','lava')])
     rect='M0 0H128V128H0Z'
     chamfer='M0 0H112L128 16V128H16L0 112Z'
     rounded='M4 0H124Q128 0 128 4V124Q128 128 124 128H4Q0 128 0 124V4Q0 0 4 0Z'
@@ -475,16 +475,16 @@ def build():
         'vehicles/veh_shields1':'gev-shield1','vehicles/veh_shields2':'gev-shield2','vehicles/veh_shields3':'gev-shield3'}.items():aliases(target,'gfx/guis/'+material)
     for material,name in list(materials.items()):
         if not material.endswith('.tga'):materials.setdefault(material+'.tga',name)
-    document=ui.Document('openq4.hud-artwork').build(ui.group('catalog',ui.FULL,list(art.values())))
+    document=ui.Document('opend3.hud-artwork').build(ui.group('catalog',ui.FULL,list(art.values())))
     roots=['hud','hud_strogg','cursor','mphud','wristcomm','wristcomm_strogg','scoreboard','summary','mpmsgmode','cinematic','e3cinematic',
            'vehicles/hud','vehicles/airdef_cannon','vehicles/medchange','vehicles/mdisp','vehicles/strogg_noise','vehicles/blank']
     expansion=['q4xhud','q4xhud_strogg','q4x_cannon_hud','dropshiphealth','mcchealth','introcinematic',
                'vehicles/speederplayerhud','vehicles/gev_hud','vehicles/mcc/cannonplayerhud','vehicles/airassault/turretplayerhud']
-    # HUDs openQ4 itself ships (content/baseoq4), audited from the repository's own files.
+    # HUDs openD3 itself ships (content/baseod3), audited from the repository's own files.
     own=['vehicles/turret_hud']
     registry={'version':1,'roots':['guis/'+n+'.gui' for n in roots],'materials':dict(sorted(materials.items())),'images':sorted(set(images)),
               'expansionRoots':['guis/'+n+'.gui' for n in expansion],
-              'openq4Roots':['guis/'+n+'.gui' for n in own],
+              'opend3Roots':['guis/'+n+'.gui' for n in own],
               'imageAliases':{'gfx/guis/mainmenu/e3_0_add':'q4-add/gfx/guis/mainmenu/e3_0', **dict(sorted(image_aliases.items()))}}
     return {'artwork.q4ui':document,'coverage.json':registry}
 

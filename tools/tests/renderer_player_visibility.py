@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Contract checks for the openQ4 multiplayer player visibility overlays.
+"""Contract checks for the openD3 multiplayer player visibility overlays.
 
 Three effects share one backend pass: an additive brightskin wash, an additive
 rimlight, and a silhouette outline shell. What is pinned here is the part that is
@@ -25,8 +25,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 RENDERER = ROOT / "src" / "renderer"
-GLPROGS = ROOT / "content" / "baseoq4" / "pak0" / "glprogs"
-GAME_LIBS_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)).resolve()
+GLPROGS = ROOT / "content" / "baseod3" / "pak0" / "glprogs"
+GAME_LIBS_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)).resolve()
 
 # Mirror of RB_PLAYER_OUTLINE_MIN/MAX_WIDTH and cl_player_outline_width.
 PLAYER_OUTLINE_MIN_WIDTH = 0.5

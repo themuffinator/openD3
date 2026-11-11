@@ -54,7 +54,7 @@ static idCVar ui_radialStickX( "ui_radialStickX", "0", CVAR_SYSTEM | CVAR_FLOAT 
 static idCVar ui_radialStickY( "ui_radialStickY", "0", CVAR_SYSTEM | CVAR_FLOAT | CVAR_ROM | CVAR_NOCHEAT, "local radial selector vertical stick deflection, independent of look inversion" );
 static idCVar ui_radialOwner( "ui_radialOwner", "0", CVAR_SYSTEM | CVAR_INTEGER | CVAR_ROM | CVAR_NOCHEAT, "local open radial selector: 0 none, 1 weapons, 2 quick chat" );
 static idCVar ui_radialCancel( "ui_radialCancel", "0", CVAR_SYSTEM | CVAR_BOOL | CVAR_ROM | CVAR_NOCHEAT, "local radial Back request, consumed by its owner" );
-// openQ4: the game sets this while the held Remastered scoreboard lists more
+// openD3: the game sets this while the held Remastered scoreboard lists more
 // rows than it shows (ui-visual-design.md 14.14). The weapon-cycle controls
 // and the right stick then scroll it through the game's scoreboardScroll
 // command, on this client alone, and never reach the server as weapon changes.
@@ -412,7 +412,7 @@ public:
 	void			SetGameSensitivityFactor( float factor );
 	void			SetUsercmdButton( int action, bool down );	// not part of idUsercmdGen, see Sys_SetUsercmdButton
 #ifdef __ANDROID__
-	void			SetTouchMotion( const openq4::touch::Motion &motion ) { touchMotion.Submit( motion ); }
+	void			SetTouchMotion( const opend3::touch::Motion &motion ) { touchMotion.Submit( motion ); }
 	void			ResetTouchMotion();
 	void			SetTouchButtons( unsigned buttons );
 #endif
@@ -467,7 +467,7 @@ private:
 	bool			keyState[K_LAST_KEY];
 	bool			directButtonState[UB_MAX_BUTTONS];	// SetUsercmdButton's own held-state, see Key()'s keyState
 #ifdef __ANDROID__
-	openq4::touch::MotionState touchMotion;
+	opend3::touch::MotionState touchMotion;
 #endif
     bool nativeUnknownKeyBlocked[K_LAST_KEY] = {};
     struct nativeHeldSource_t {
@@ -685,7 +685,7 @@ bool idUsercmdGenLocal::Inhibited( void ) {
 ================
 idUsercmdGenLocal::MigrateLegacyRunDefaults
 
-Older openQ4 builds archived in_alwaysRun as 0, which leaves retail Quake 4's
+Older openD3 builds archived in_alwaysRun as 0, which leaves retail Quake 4's
 footstep-authored run animations unused until the player manually corrects the
 setting. Migrate those profiles once so existing installs regain retail input
 and movement behavior automatically.
@@ -862,7 +862,7 @@ idUsercmdGenLocal::GetZoomLookSensitivityScale
 =================
 */
 float idUsercmdGenLocal::GetZoomLookSensitivityScale( void ) const {
-	// openQ4: the game module registers this cvar; find it once it exists
+	// openD3: the game module registers this cvar; find it once it exists
 	// rather than by name for every usercmd and every late-look sample
 	static idCVar *zoomedCVar = NULL;
 	if ( zoomedCVar == NULL ) {
@@ -1163,7 +1163,7 @@ void idUsercmdGenLocal::JoystickMove( void ) {
 	const int moveAxisY = joystickAxis[AXIS_PITCH];
 	cvarSystem->SetCVarBool( "ui_radialStickActive", idKeyInput::LastInputWasController() );
 
-	// openQ4: while the held scoreboard scrolls (ui-visual-design.md 14.14),
+	// openD3: while the held scoreboard scrolls (ui-visual-design.md 14.14),
 	// the right stick scrolls it a row on each push past half its travel, then
 	// every 120 ms while held, the way the stick points whatever the look
 	// inversion, and leaves the view's pitch alone.
@@ -1339,8 +1339,8 @@ void idUsercmdGenLocal::MakeCurrent( void ) {
 
 	oldAngles = viewangles;
 #ifdef __ANDROID__
-	const openq4::touch::Motion touch = touchMotion.Take();
-#ifndef OPENQ4_SIGMATOUCH
+	const opend3::touch::Motion touch = touchMotion.Take();
+#ifndef OPEND3_SIGMATOUCH
 	SetTouchButtons( touch.buttons );
 #endif
 #endif
@@ -1385,7 +1385,7 @@ void idUsercmdGenLocal::MakeCurrent( void ) {
 			viewangles[PITCH] = oldAngles[PITCH] - 90;
 		} 
 
-		// openQ4 VR: the tracked aim pose owns the angles while a headset
+		// openD3 VR: the tracked aim pose owns the angles while a headset
 		// session has input focus
 		vrUsercmdInput_t vrInput;
 		if ( vrSystem != NULL && vrSystem->GetUsercmdInput( viewangles[YAW] - oldAngles[YAW], oldAngles[YAW], vrInput ) ) {
@@ -1482,7 +1482,7 @@ void idUsercmdGenLocal::InitForNewMap( void ) {
 
 	Clear();
 	ClearAngles();
-	// openQ4 VR: the tracked aim starts again from the zeroed angles
+	// openD3 VR: the tracked aim starts again from the zeroed angles
 	VR_UsercmdAnglesCleared();
 }
 
@@ -2092,8 +2092,8 @@ bool idUsercmdGenLocal::GetPresentationViewAngles( float &yaw, float &pitch ) {
 		const double nowMsec = Sys_GetClockTicks() * 1000.0 / Sys_ClockTicksPerSecond();
 		const double elapsedSeconds = ( nowMsec - builtMsec ) * 0.001;
 		const double tickSeconds = common->GetUserCmdSec();
-		yaw += openq4::PresentationRateShare( yawRate, elapsedSeconds, tickSeconds );
-		pitch += openq4::PresentationRateShare( pitchRate, elapsedSeconds, tickSeconds );
+		yaw += opend3::PresentationRateShare( yawRate, elapsedSeconds, tickSeconds );
+		pitch += opend3::PresentationRateShare( pitchRate, elapsedSeconds, tickSeconds );
 	}
 	// the draw freezes its first sample; time that one to the swap
 	if ( usercmdFrameLookSampleClock <= 0.0 ) {

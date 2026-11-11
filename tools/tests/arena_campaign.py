@@ -26,15 +26,15 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_LIBS_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
 
 CAMPAIGN_PATH = (
-    ROOT / "content" / "baseoq4" / "pak0" / "arena" / "openq4_campaign.cfg"
+    ROOT / "content" / "baseod3" / "pak0" / "arena" / "opend3_campaign.cfg"
 )
-STRINGS_DIR = ROOT / "content" / "baseoq4" / "pak0" / "strings"
-MAIN_MENU = ROOT / "content" / "baseoq4" / "pak0" / "guis" / "mainmenu.gui"
-ARENA_MENU = ROOT / "content" / "baseoq4" / "pak0" / "guis" / "arena_menu.gui"
+STRINGS_DIR = ROOT / "content" / "baseod3" / "pak0" / "strings"
+MAIN_MENU = ROOT / "content" / "baseod3" / "pak0" / "guis" / "mainmenu.gui"
+ARENA_MENU = ROOT / "content" / "baseod3" / "pak0" / "guis" / "arena_menu.gui"
 
 EXPECTED_MAPS_AND_MODES = (
     ("mp/q4dm1", "Duel"),
@@ -60,7 +60,7 @@ EXPECTED_MAPS_AND_MODES = (
 )
 
 # Latest official map declarations (pak019) advertise these base entity layouts.
-# Derived openQ4 modes deliberately borrow one of these keys.
+# Derived openD3 modes deliberately borrow one of these keys.
 STOCK_MAP_KEYS = {
     "mp/q4dm1": {"DM", "Team DM"},
     "mp/q4dm2": {"DM", "Team DM"},
@@ -506,7 +506,7 @@ def validate_manifest(campaign: Campaign) -> None:
         )
 
     character_dir = (
-        ROOT / "content" / "baseoq4" / "pak0" / "botfiles" / "characters"
+        ROOT / "content" / "baseod3" / "pak0" / "botfiles" / "characters"
     )
     available_characters = {path.stem.casefold() for path in character_dir.glob("*.bot")}
     for bot_name in sorted(used_roster):
@@ -601,7 +601,7 @@ def parse_language(path: Path) -> dict[str, str]:
 
 def validate_localization(campaign: Campaign) -> None:
     language_paths = {
-        locale: STRINGS_DIR / f"{locale}_openq4.lang"
+        locale: STRINGS_DIR / f"{locale}_opend3.lang"
         for locale in ("english", "french", "italian", "spanish")
     }
     languages = {
@@ -716,7 +716,7 @@ def validate_localization(campaign: Campaign) -> None:
 def validate_menu_hooks() -> None:
     main_menu = read(MAIN_MENU)
     arena_menu = read(ARENA_MENU)
-    mp_hud = read(ROOT / "content" / "baseoq4" / "pak0" / "guis" / "mphud.gui")
+    mp_hud = read(ROOT / "content" / "baseod3" / "pak0" / "guis" / "mphud.gui")
     session_menu = read(ROOT / "src" / "framework" / "Session_menu.cpp")
 
     for needle in (
@@ -1083,16 +1083,16 @@ def validate_engine_hooks() -> None:
 
     smooth_slow_time = function_body(
         common,
-        "static bool openQ4_ShouldUseSmoothSingleplayerSlowTime( float effectiveTimeScale )",
+        "static bool openD3_ShouldUseSmoothSingleplayerSlowTime( float effectiveTimeScale )",
     )
     require(
         common,
-        "static std::atomic<bool> openQ4_singleplayerGameModuleReady( false );",
+        "static std::atomic<bool> openD3_singleplayerGameModuleReady( false );",
         "Arena-safe async module state",
     )
     require(
         smooth_slow_time,
-        "openQ4_singleplayerGameModuleReady.load( std::memory_order_acquire )",
+        "openD3_singleplayerGameModuleReady.load( std::memory_order_acquire )",
         "Arena-safe async module transition",
     )
     require(
@@ -1156,7 +1156,7 @@ def validate_engine_hooks() -> None:
     shutdown_game = function_body(common, "void idCommonLocal::ShutdownGame( bool reloading )")
     require(
         load_game_dll,
-        "openQ4_singleplayerGameModuleReady.store( false, std::memory_order_release );",
+        "openD3_singleplayerGameModuleReady.store( false, std::memory_order_release );",
         "Arena-safe module load transition",
     )
     require(
@@ -1166,14 +1166,14 @@ def validate_engine_hooks() -> None:
     )
     require(
         shutdown_game,
-        "openQ4_singleplayerGameModuleReady.store( false, std::memory_order_release );",
+        "openD3_singleplayerGameModuleReady.store( false, std::memory_order_release );",
         "Arena-safe module shutdown transition",
     )
     if "game->Shutdown();" in unload_game_dll:
         raise AssertionError("Arena binary-only module unload still shuts down the game object")
 
     for token in (
-        'ARENA_CAMPAIGN_FILE = "arena/openq4_campaign.cfg"',
+        'ARENA_CAMPAIGN_FILE = "arena/opend3_campaign.cfg"',
         "ARENA_TIER_COUNT = 5",
         "ARENA_MATCHES_PER_TIER = 4",
         "ARENA_BOSS_MATCH = ARENA_MATCHES_PER_TIER - 1",
@@ -2223,7 +2223,7 @@ def validate_letterbox() -> None:
     entirely, so the world stays visible above and below the frame.
     """
 
-    mp_hud = read(ROOT / "content" / "baseoq4" / "pak0" / "guis" / "mphud.gui")
+    mp_hud = read(ROOT / "content" / "baseod3" / "pak0" / "guis" / "mphud.gui")
     user_interface = read(ROOT / "src" / "ui" / "UserInterface.cpp")
 
     # The engine has to publish the physical aspect; expansion alone cannot
@@ -2336,7 +2336,7 @@ def validate_letterbox() -> None:
 
     # A "$window::var" transition source resolves once at parse time, so it
     # carries the authored value and silently turns a fade into a snap.
-    for gui_path in (ARENA_MENU, ROOT / "content" / "baseoq4" / "pak0" / "guis" / "mphud.gui"):
+    for gui_path in (ARENA_MENU, ROOT / "content" / "baseod3" / "pak0" / "guis" / "mphud.gui"):
         text = read(gui_path)
         for match in re.finditer(r'transition\s+"(oq4_arena|arena)[^"]*"\s+"\$', text):
             raise AssertionError(
@@ -2355,7 +2355,7 @@ def validate_transition_ownership() -> None:
 
     for gui_path in (
         ARENA_MENU,
-        ROOT / "content" / "baseoq4" / "pak0" / "guis" / "mphud.gui",
+        ROOT / "content" / "baseod3" / "pak0" / "guis" / "mphud.gui",
     ):
         text = read(gui_path)
         for name, body in re.findall(
@@ -2371,7 +2371,7 @@ def validate_transition_ownership() -> None:
                         f"{target}; only the Desktop can reach a sibling"
                     )
 
-    mp_hud = read(ROOT / "content" / "baseoq4" / "pak0" / "guis" / "mphud.gui")
+    mp_hud = read(ROOT / "content" / "baseod3" / "pak0" / "guis" / "mphud.gui")
     for event_name, stopped in (
         ("arenaCampaignEntrance", ("oq4_arena_present_victory", "oq4_arena_present_clear")),
         ("arenaCampaignVictory", ("oq4_arena_present_entrance", "oq4_arena_present_clear")),
@@ -2430,7 +2430,7 @@ def validate_docs() -> None:
         "Arena Campaign README link",
     )
     for token in (
-        "arena/openq4_campaign.cfg",
+        "arena/opend3_campaign.cfg",
         "Match indexes 0 through",
         "Only kill-driven modes appear",
     ):
@@ -2441,7 +2441,7 @@ def validate_docs() -> None:
         "Arena Campaign candidate changelog",
     )
     for token in (
-        "# openQ4 0.10.000",
+        "# openD3 0.10.000",
         "A new Arena Campaign joins single-player.",
         "No extra maps or replacement assets are required.",
         "explicit draw results",
@@ -2941,9 +2941,9 @@ def validate_best_results() -> None:
 
     # parse_language holds the CP1252 tables to their font set; here every
     # table, whatever its script, only has to carry the strings.
-    tables = sorted(STRINGS_DIR.glob("*_openq4.lang"))
+    tables = sorted(STRINGS_DIR.glob("*_opend3.lang"))
     if len(tables) != 12:
-        raise AssertionError(f"expected 12 openQ4 language tables, found {len(tables)}")
+        raise AssertionError(f"expected 12 openD3 language tables, found {len(tables)}")
     for path in tables:
         text = path.read_text(encoding="utf-8-sig")
         for key in ("#str_42040", "#str_42165", "#str_42166"):
@@ -3143,7 +3143,7 @@ def validate_ceremony_flow() -> None:
 
     round_modes = read(GAME_LIBS_ROOT / "src" / "mpgame" / "mp" / "RoundModes.cpp")
     round_state = read(GAME_LIBS_ROOT / "src" / "mpgame" / "mp" / "RoundGameState.cpp")
-    mp_hud = read(ROOT / "content" / "baseoq4" / "pak0" / "guis" / "mphud.gui")
+    mp_hud = read(ROOT / "content" / "baseod3" / "pak0" / "guis" / "mphud.gui")
 
     # Freeze Tag: an unattended thaw is the timer giving up, usually because the
     # body is somewhere lethal. Respawning onto it loops the player to death.
@@ -3266,7 +3266,7 @@ def validate_ceremony_presentation() -> None:
     """Pin the 2026-10 Arena audit fixes, each of which shipped broken unnoticed.
 
     The ceremony is host-local and only runs in a real match, so these static
-    pins are the guard between runtime checks (openq4_arenaCeremony drives a
+    pins are the guard between runtime checks (opend3_arenaCeremony drives a
     match end to end without device input).
     """
 
@@ -3277,8 +3277,8 @@ def validate_ceremony_presentation() -> None:
     player = read(GAME_LIBS_ROOT / "src" / "mpgame" / "Player.cpp")
     sys_cmds = read(GAME_LIBS_ROOT / "src" / "mpgame" / "gamesys" / "SysCmds.cpp")
     arena = read(ROOT / "src" / "framework" / "ArenaCampaign.cpp")
-    mp_hud = read(ROOT / "content" / "baseoq4" / "pak0" / "guis" / "mphud.gui")
-    summary = read(ROOT / "content" / "baseoq4" / "pak0" / "guis" / "summary.gui")
+    mp_hud = read(ROOT / "content" / "baseod3" / "pak0" / "guis" / "mphud.gui")
+    summary = read(ROOT / "content" / "baseod3" / "pak0" / "guis" / "summary.gui")
     remastered = read(ROOT / "tools" / "ui" / "remastered_hud_mp.py")
 
     # GameStateChanged runs after Run in the same listen-server frame. Clearing
@@ -3387,7 +3387,7 @@ def validate_ceremony_presentation() -> None:
     require(game_local, "if ( mpGame.ArenaCampaignOwnsEscape() ) return ESC_IGNORE;", "Escape skips the ceremony")
     skip = function_body(game, "void idMultiplayerGame::UpdateArenaCampaignSkipInput( void )")
     require(skip, "ARENA_SKIP_GRACE_MSEC", "a held trigger cannot skip the result")
-    require(sys_cmds, '"openq4_arenaCeremony", Cmd_OpenQ4ArenaCeremony_f, CMD_FL_GAME | CMD_FL_CHEAT',
+    require(sys_cmds, '"opend3_arenaCeremony", Cmd_openD3ArenaCeremony_f, CMD_FL_GAME | CMD_FL_CHEAT',
             "the input-free ceremony driver is a cheat")
 
     # The stats beat has no chat entry and no "return to the game" line.
@@ -3417,7 +3417,7 @@ def validate_pause_menu() -> None:
     arena_header = read(ROOT / "src" / "framework" / "ArenaCampaign.h")
     session_menu = read(ROOT / "src" / "framework" / "Session_menu.cpp")
     adapter = read(ROOT / "src" / "ui" / "UserInterfaceRetained.cpp")
-    pause_gui_path = ROOT / "content" / "baseoq4" / "pak0" / "guis" / "arena_pause.gui"
+    pause_gui_path = ROOT / "content" / "baseod3" / "pak0" / "guis" / "arena_pause.gui"
     pause_gui = read(pause_gui_path)
 
     # The game opens its own pause menu in mainGui's place, only in an Arena match.
@@ -3499,7 +3499,7 @@ def validate_pause_menu() -> None:
             "focus cannot leave an open question for the menu behind it")
 
     # The retained card's verbs and questions.
-    text = (ROOT / "content" / "baseoq4" / "pak0" / "guis" / "menu" / "arena_pause.q4ui").read_text(encoding="utf-8")
+    text = (ROOT / "content" / "baseod3" / "pak0" / "guis" / "menu" / "arena_pause.q4ui").read_text(encoding="utf-8")
     document = json.loads(re.sub(r"^\s*//.*$", "", text, flags=re.M))
     # The card's own verbs; the session's notice layer adds its actions to every retained menu.
     actions = {name: action["arguments"]["command"] for name, action in document["actions"].items()
@@ -3530,13 +3530,13 @@ def validate_pause_menu() -> None:
     own = {f"#str_{value}" for value in range(42180, 42187)}
     if not own <= keys:
         raise AssertionError(f"the pause menu leaves {sorted(own - keys)} unused")
-    for path in sorted(STRINGS_DIR.glob("*_openq4.lang")):
+    for path in sorted(STRINGS_DIR.glob("*_opend3.lang")):
         entries = parse_language(path) if path.stem.startswith(("english", "french", "italian", "spanish")) else dict(
             LANG_ENTRY_RE.findall(path.read_text(encoding="utf-8")))
         missing = sorted(key for key in own if not entries.get(key, "").strip())
         if missing:
             raise AssertionError(f"{relative(path)} lacks Arena pause strings {missing}")
-    english = parse_language(STRINGS_DIR / "english_openq4.lang")
+    english = parse_language(STRINGS_DIR / "english_opend3.lang")
     for key, expected in (("#str_42180", "RESTART MATCH"), ("#str_42181", "LEAVE MATCH"), ("#str_42186", "MATCH PAUSED")):
         if english[key] != expected:
             raise AssertionError(f"English {key} is {english[key]!r}, expected {expected!r}")
@@ -3554,7 +3554,7 @@ def validate_doc_circuit_table(campaign: Campaign) -> None:
     """
 
     user_doc = read(ROOT / "docs" / "user" / "arena-campaign.md")
-    english = parse_language(STRINGS_DIR / "english_openq4.lang")
+    english = parse_language(STRINGS_DIR / "english_opend3.lang")
 
     rows = [
         [cell.strip() for cell in line.strip().strip("|").split("|")]

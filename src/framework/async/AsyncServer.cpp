@@ -112,7 +112,7 @@ static void AsyncServer_ClearChallenges( challenge_t challenges[ MAX_CHALLENGES 
 	}
 }
 
-// openQ4: ceiling on the user info a client may hold on the server. Deltas add
+// openD3: ceiling on the user info a client may hold on the server. Deltas add
 // keys without limit otherwise, every change is rebroadcast to everyone, and a
 // dictionary that no longer fits one message is a fatal overflow the next time
 // the server writes it out whole. The game declares 32 user info cvars.
@@ -132,7 +132,7 @@ static bool AsyncServer_UserInfoWithinLimits( const idDict &info ) {
 	return bytes <= CLIENT_USERINFO_MAX_BYTES;
 }
 
-// openQ4: below this much room in the message channel there is no point building
+// openD3: below this much room in the message channel there is no point building
 // a snapshot - the channel would refuse it and the game would have already
 // consumed the client's unreliable message queue writing it.
 const int MIN_SNAPSHOT_SEND_SIZE		= 1024;
@@ -366,7 +366,7 @@ void idAsyncServer::Kill( void ) {
 ==================
 AsyncServer_WriteConnectRoster
 
-openQ4: the players in the game, bots included, and how many are still
+openD3: the players in the game, bots included, and how many are still
 connecting, for a joining client's loading screen. The block follows a tag
 and its length after the connect response's server info, where a client that
 does not know it stops reading.
@@ -509,7 +509,7 @@ void idAsyncServer::ExecuteMapChange( void ) {
 	}
 #endif
 
-	// openQ4: the loading screen's server card lists the players the new map
+	// openD3: the loading screen's server card lists the players the new map
 	// starts with (bots included), and those still connecting; InitClient
 	// below wipes their user info.
 	sessLocal.ClearRetainedLoadingRoster();
@@ -923,7 +923,7 @@ void idAsyncServer::InitClient( int clientNum, int clientId, int clientRate ) {
 	client.lastEmptyTime = serverTime;
 	client.lastPingTime = serverTime;
 	client.lastSnapshotTime = serverTime;
-	// openQ4: gameFrame restarts at 0 on a map change, so a frame number carried over
+	// openD3: gameFrame restarts at 0 on a map change, so a frame number carried over
 	// from the previous map would sit in the future and suppress everything the game
 	// gates on it until the new map caught up.
 	client.lastSnapshotGameFrame = gameFrame;
@@ -1012,7 +1012,7 @@ void idAsyncServer::DropClient( int clientNum, const char *reason ) {
 	idBitMsg	msg;
 	byte		msgBuf[MAX_MESSAGE_SIZE];
 
-	// openQ4: this is reachable from console commands and from the game, so validate
+	// openD3: this is reachable from console commands and from the game, so validate
 	// before the array access rather than trusting every caller to have done it.
 	if ( clientNum < 0 || clientNum >= MAX_ASYNC_CLIENTS ) {
 		common->DWarning( "idAsyncServer::DropClient: client %d out of range", clientNum );
@@ -1094,7 +1094,7 @@ void idAsyncServer::CheckClientTimeouts( void ) {
 // jmarshall
 		if (client.channel.GetRemoteAddress().type == NA_BOT)
 		{
-			// openQ4: a bot never sends a packet, so lastPacketTime is frozen
+			// openD3: a bot never sends a packet, so lastPacketTime is frozen
 			// and the zombie timeout below can never fire for it.  Without this
 			// every removed bot would hold its client slot for the rest of the
 			// map and the server would eventually run out of slots.
@@ -1497,7 +1497,7 @@ bool idAsyncServer::SendSnapshotToClient( int clientNum ) {
 		common->Printf( "sending snapshot to client %d: gameInitId = %d, gameFrame = %d, gameTime = %d\n", clientNum, gameInitId, gameFrame, gameTime );
 	}
 
-	// openQ4: building a snapshot is destructive - game->ServerWriteSnapshot below
+	// openD3: building a snapshot is destructive - game->ServerWriteSnapshot below
 	// serialises this client's queued unreliable messages (hitscans, effects) and
 	// then clears the queue, and it advances the client's delta baseline.  If the
 	// pending reliable backlog has already eaten the packet budget, the channel
@@ -1519,7 +1519,7 @@ bool idAsyncServer::SendSnapshotToClient( int clientNum ) {
 
 	// write the snapshot
 	msg.Init( msgBuf, sizeof( msgBuf ) );
-	// openQ4: a snapshot carries the game's whole queued unreliable batch as well
+	// openD3: a snapshot carries the game's whole queued unreliable batch as well
 	// as every entity state, and idBitMsg's default answer to running out of room
 	// is common->FatalError - so the busiest moment of a match could take the
 	// server down outright.  Let it overflow, then find out below and drop that one
@@ -1563,7 +1563,7 @@ bool idAsyncServer::SendSnapshotToClient( int clientNum ) {
 	}
 	msg.WriteByte( MAX_ASYNC_CLIENTS );
 
-	// openQ4: an overflowed idBitMsg has already rewound its own write cursor, so
+	// openD3: an overflowed idBitMsg has already rewound its own write cursor, so
 	// what is in the buffer is a mixture of the head and the tail of the snapshot.
 	// Sending it would hand the client an undecodable snapshot and disconnect it.
 	if ( msg.IsOverflowed() ) {
@@ -1576,7 +1576,7 @@ bool idAsyncServer::SendSnapshotToClient( int clientNum ) {
 		return true;
 	}
 
-	// openQ4: a refused send used to look exactly like a successful one.  The
+	// openD3: a refused send used to look exactly like a successful one.  The
 	// snapshot and its unreliable batch are gone either way at this point, but say
 	// so rather than leaving a client quietly starved of entity and effect updates.
 	if ( client.channel.SendMessage( serverPort, serverTime, msg ) == -1 ) {
@@ -1747,7 +1747,7 @@ void idAsyncServer::ProcessUnreliableClientMessage( int clientNum, const idBitMs
 					return;
 				}
 				userCmds[index][clientNum].gameFrame = i;
-				// openQ4: gameTime is authored by the client and reaches the game unchecked, where
+				// openD3: gameTime is authored by the client and reaches the game unchecked, where
 				// anything that measures a command's age against the server clock becomes a dial
 				// the client can turn.  An honest client sends exactly this value, so overwriting
 				// it costs nothing and closes the hole permanently.  Staleness detection is
@@ -1792,7 +1792,7 @@ void idAsyncServer::ProcessReliableClientMessages( int clientNum ) {
 
 	msg.Init( msgBuf, sizeof( msgBuf ) );
 
-	// openQ4: stop once the client has been dropped. A disconnect, a failed pure
+	// openD3: stop once the client has been dropped. A disconnect, a failed pure
 	// check or the game kicking the sender left the rest of the packet's
 	// reliable messages running against the dead slot: a trailing pure message
 	// put the zombie back to SCS_CONNECTED, so the same packet's unreliable part began
@@ -3269,7 +3269,7 @@ void idAsyncServer::SendReliableGameMessage( int clientNum, const idBitMsg &msg,
 	outMsg.WriteByte( SERVER_RELIABLE_MESSAGE_GAME );
 	outMsg.WriteData( msg.GetData(), msg.GetSize() );
 
-	// openQ4: only a negative clientNum means "everyone".  A clientNum at or past
+	// openD3: only a negative clientNum means "everyone".  A clientNum at or past
 	// the end of the client array is the game's server-demo pseudo client
 	// (idGameLocal passes MAX_CLIENTS for it from ServerSendInstanceReliableMessage*
 	// whenever the owner is in instance 0, i.e. every non-tourney match).  This
@@ -3494,7 +3494,7 @@ void idAsyncServer::RunFrame( bool allowBlocking ) {
 
 		// update time
 		gameFrame++;
-		// openQ4: this stamp is handed to the game in every snapshot header and is
+		// openD3: this stamp is handed to the game in every snapshot header and is
 		// then compared against timestamps the game produced itself - projectile
 		// launch times, entity event times - so it has to advance exactly the way
 		// idGameLocal advances gameLocal.time, which is one GetUserCmdMSec() per
@@ -3557,7 +3557,7 @@ void idAsyncServer::RunFrame( bool allowBlocking ) {
 
 		UpdateAsyncStatsAvg();
 
-		// openQ4: this used to be dedicated-only, which meant the one number that
+		// openD3: this used to be dedicated-only, which meant the one number that
 		// explains "clients stop getting effects when it gets busy" - the update
 		// rate a client is actually served, against the rate that was asked for -
 		// could not be read on the listen server most testing happens on.
@@ -3986,7 +3986,7 @@ int idAsyncServer::AllocOpenClientSlotForAI(const char* botName, int maxPlayersO
 	idAsyncServer::SendUserInfoBroadcast(botClientId, spawnArgs, true);
 	game->ServerClientBegin(botClientId);
 
-	// openQ4: hand back the slot that was actually allocated.  The game side
+	// openD3: hand back the slot that was actually allocated.  The game side
 	// needs it to drive this bot's user commands, and it used to get a bare 1.
 	return botClientId;
 }

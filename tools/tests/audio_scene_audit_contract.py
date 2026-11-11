@@ -144,13 +144,13 @@ class SceneAuditTest(unittest.TestCase):
         steps = {'game/test': [('trigger_once', 'a'), ('trigger_once', 'b')]}
         cfg = audit.scene_cfgs([('game/test', 'game/test')], 3, 1000, steps, step_msec=4001, tail=2,
                                move='teleport', fight=True)[0]
-        self.assertEqual(cfg.count('openq4_killHostiles\n'), 3)
-        self.assertIn('teleport "a"\nwaitMsec 2000\nopenq4_killHostiles\nwaitMsec 2001\n', cfg)
+        self.assertEqual(cfg.count('opend3_killHostiles\n'), 3)
+        self.assertIn('teleport "a"\nwaitMsec 2000\nopend3_killHostiles\nwaitMsec 2001\n', cfg)
         last_step = cfg.index('teleport "b"')
-        self.assertLess(cfg.index('openq4_killHostiles\n', cfg.index('openq4_killHostiles\n', last_step) + 1),
+        self.assertLess(cfg.index('opend3_killHostiles\n', cfg.index('opend3_killHostiles\n', last_step) + 1),
                         cfg.index('SCENE_MEMORY'))
         quiet = audit.scene_cfgs([('game/test', 'game/test')], 3, 1000, steps, move='teleport')[0]
-        self.assertNotIn('openq4_killHostiles', quiet)
+        self.assertNotIn('opend3_killHostiles', quiet)
 
     def test_markers_after_unterminated_script_output_still_split_probes(self):
         # process2 prints "colour swap left" without a newline before a probe marker.

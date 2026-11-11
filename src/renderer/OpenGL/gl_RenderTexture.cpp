@@ -8,7 +8,7 @@
 
 static const GLuint INVALID_RENDER_TEXTURE_HANDLE = static_cast<GLuint>( -1 );
 
-// openQ4: the frame's default target (RenderTexture.h). NULL and 0 mean the
+// openD3: the frame's default target (RenderTexture.h). NULL and 0 mean the
 // window; a VR frame stands its eye or virtual-screen target in for it.
 static idRenderTexture *	r_defaultRenderTarget = NULL;
 static GLuint				r_defaultFramebuffer = 0;

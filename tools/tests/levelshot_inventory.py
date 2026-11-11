@@ -2,8 +2,8 @@
 """Validate retail and Raven map-pack levelshot tile coverage.
 
 The checked-in index is derived from the proprietary retail declarations so CI can
-validate openQ4's redistributable output without requiring those declarations. Pass
-``--retail-def-root`` (or set ``OPENQ4_RETAIL_DEF_ROOT``) to independently re-derive
+validate openD3's redistributable output without requiring those declarations. Pass
+``--retail-def-root`` (or set ``OPEND3_RETAIL_DEF_ROOT``) to independently re-derive
 the index from an installed/source asset tree containing ``maps.def`` and
 ``raven_mappack.def``.
 """
@@ -285,7 +285,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--retail-def-root",
         type=Path,
-        default=Path(os.environ["OPENQ4_RETAIL_DEF_ROOT"]) if os.environ.get("OPENQ4_RETAIL_DEF_ROOT") else None,
+        default=Path(os.environ["OPEND3_RETAIL_DEF_ROOT"]) if os.environ.get("OPEND3_RETAIL_DEF_ROOT") else None,
         help="directory containing maps.def and raven_mappack.def for source re-derivation",
     )
     parser.add_argument(

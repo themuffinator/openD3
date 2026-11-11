@@ -128,14 +128,14 @@ def main() -> int:
 
     def write_commands(path, commands):
         authored.write_fixture(save)
-        (save / 'baseoq4' / SOURCE).write_bytes(source(0, args.padding_bytes))
+        (save / 'baseod3' / SOURCE).write_bytes(source(0, args.padding_bytes))
         for version in range(1, args.edits + 1):
-            (save / 'baseoq4' / gate(version)).write_text(f'wait 6\nexec {gate(version)}\n')
+            (save / 'baseod3' / gate(version)).write_text(f'wait 6\nexec {gate(version)}\n')
         return original_write(path, commands)
 
     def startup(cvars, directory):
         result = original_startup(cvars, directory)
-        with (directory / 'baseoq4/autoexec.cfg').open('a') as cfg:
+        with (directory / 'baseod3/autoexec.cfg').open('a') as cfg:
             cfg.write(f'touch material {authored.PREFIX}/base\n')
         return result
 
@@ -159,7 +159,7 @@ def main() -> int:
         def watch():
             try:
                 version = 1
-                log = save / 'baseoq4/logs/openq4.log'
+                log = save / 'baseod3/logs/opend3.log'
                 offset, partial = 0, ''
                 markers = set()
                 while version <= args.edits and not stop.wait(0.02):
@@ -178,12 +178,12 @@ def main() -> int:
                     if f'VK_CAPACITY_EDIT_{version}' not in markers:
                         continue
                     data = source(version, args.padding_bytes)
-                    target = save / 'baseoq4' / SOURCE
+                    target = save / 'baseod3' / SOURCE
                     replace(target, data)
                     continuation = ['reloadGLSLprograms', 'wait 6', 'reportShaderPrograms summary']
                     if version < args.edits:
                         continuation += advance(version + 1)
-                    target = save / 'baseoq4' / gate(version)
+                    target = save / 'baseod3' / gate(version)
                     replace(target, ('\n'.join(continuation) + '\n').encode())
                     journal.append(dict(version=version, sha256=hashlib.sha256(data).hexdigest()))
                     version += 1

@@ -7,11 +7,11 @@
 #include <cstring>
 #include <limits>
 #include "tools/tests/native/FloatFlushMode.h"
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks;
 #define CHECK(x) do{++checks;if(!(x)){std::fprintf(stderr,"FAIL %d: %s\n",__LINE__,#x);std::exit(1);}}while(false)
-using Mode=openq4::test::FloatFlushMode;
-static std::uint64_t FloatingMode(){return openq4::test::FloatFlushMode::Bits();}
+using Mode=opend3::test::FloatFlushMode;
+static std::uint64_t FloatingMode(){return opend3::test::FloatFlushMode::Bits();}
 static const std::map<std::string,size_t> Catalog{{"scalar",0},{"toggle",1}};
 static SettingsRecoveryJournal Journal(double original) {
  SettingsRecoveryJournal j;j.attempt="0123456789abcdef0123456789abcdef";j.baseline={{"scalar",original},{"toggle",false}};

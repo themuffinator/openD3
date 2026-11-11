@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_LIBS_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
 MAX_COMMAND_ARGS = 64
 MAX_COMMAND_STRING = 2 * 4096
@@ -150,7 +150,7 @@ def main() -> None:
     if len(escaped) <= MAX_COMMAND_STRING:
         raise AssertionError("Near-capacity escaping must grow beyond the old fixed buffer")
 
-    validator = (ROOT / "tools/validation/openq4_validate.py").read_text(encoding="utf-8")
+    validator = (ROOT / "tools/validation/opend3_validate.py").read_text(encoding="utf-8")
     if "cmdargs_append_contract.py" not in validator:
         raise AssertionError("Validation runner does not execute the command-argument contract")
 

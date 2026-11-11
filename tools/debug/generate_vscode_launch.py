@@ -10,7 +10,7 @@ Every configuration runs the client that the VS Code build task stages into
 what a launch exercises, so a value left in .home/<game>/openD3Config.cfg
 cannot change it: r_renderApi (each launch is a GL and Vulkan pair),
 ui_retained 0 because Doom 3 runs its stock GUIs (the retained RmlUi
-interface inherited from openQ4 has no Doom 3 documents) and r_fullscreen 0.
+interface inherited from openD3 has no Doom 3 documents) and r_fullscreen 0.
 
 fs_basepath is left unset: the engine finds the installed Doom 3 through
 Steam or GOG, or OPEND3_DOOM3_PATH, so no machine's path is baked in.

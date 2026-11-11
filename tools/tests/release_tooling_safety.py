@@ -48,7 +48,7 @@ def load_module(name: str, path: Path) -> ModuleType:
 CHANGELOG = load_module("release_changelog_under_test", BUILD_DIR / "generate_release_changelog.py")
 DOCS = load_module("release_docs_under_test", BUILD_DIR / "generate_release_docs.py")
 INSTALLER = load_module("windows_installer_under_test", BUILD_DIR / "build_windows_installer.py")
-RELEASE_VERSION = load_module("release_version_under_test", BUILD_DIR / "openq4_release_version.py")
+RELEASE_VERSION = load_module("release_version_under_test", BUILD_DIR / "opend3_release_version.py")
 LINUX_RELEASE_ARTIFACTS = load_module(
     "linux_release_artifacts_under_test",
     BUILD_DIR / "verify_linux_release_artifacts.py",
@@ -62,7 +62,7 @@ RELEASE_ASSET_SET = load_module(
     BUILD_DIR / "verify_release_asset_set.py",
 )
 SYNC_ICONS = load_module("sync_icons_under_test", BUILD_DIR / "sync_icons.py")
-VERSION = load_module("openq4_version_under_test", BUILD_DIR / "openq4_version.py")
+VERSION = load_module("opend3_version_under_test", BUILD_DIR / "opend3_version.py")
 DOC_LINKS = load_module("docs_link_integrity_under_test", ROOT / "tools" / "tests" / "docs_link_integrity.py")
 
 
@@ -98,8 +98,8 @@ def git(repo: Path, *args: str) -> str:
 def make_git_repo(path: Path) -> Path:
     path.mkdir(parents=True, exist_ok=True)
     git(path, "init", "-q")
-    git(path, "config", "user.email", "openq4-tests@example.invalid")
-    git(path, "config", "user.name", "openQ4 Tests")
+    git(path, "config", "user.email", "opend3-tests@example.invalid")
+    git(path, "config", "user.name", "openD3 Tests")
     return path
 
 
@@ -289,7 +289,7 @@ def validate_changelog_output_and_override_guards() -> None:
 
 def validate_withdrawn_release_selection() -> None:
     repo = make_git_repo(WORK / "withdrawn-release-repo")
-    commit_file(repo, "meson.build", "project('openQ4', version: '0.13.2')\n", "released")
+    commit_file(repo, "meson.build", "project('openD3', version: '0.13.2')\n", "released")
     git(repo, "tag", "v0.13.2")
     commit_file(repo, "file.txt", "withdrawn\n", "withdrawn candidate")
     git(repo, "tag", "v0.14.000")
@@ -304,7 +304,7 @@ def validate_withdrawn_release_selection() -> None:
     if CHANGELOG.find_previous_release_tag(repo, "v0.15.000") != "v0.13.2":
         raise AssertionError("changelog omitted changes covered only by a withdrawn release")
 
-    command = [sys.executable, str(BUILD_DIR / "openq4_release_version.py"), "--source-root", str(repo)]
+    command = [sys.executable, str(BUILD_DIR / "opend3_release_version.py"), "--source-root", str(repo)]
     patch = run(command + ["--bump-mode", "patch"], repo)
     minor = run(command + ["--bump-mode", "minor"], repo)
     if "latest_release_tag=v0.13.2\n" not in patch or "release_tag=v0.13.003\n" not in patch:
@@ -339,7 +339,7 @@ def validate_withdrawn_release_selection() -> None:
         raise AssertionError("manual release selection ignored a future valid release")
 
 
-def validate_openq4_version_iteration() -> None:
+def validate_opend3_version_iteration() -> None:
     expect_system_exit(
         lambda: VERSION.resolve_auto_iteration_date("20260231"),
         "real UTC calendar date",
@@ -371,10 +371,10 @@ def validate_version_header_build_refresh_contract() -> None:
         "version_metadata_command + ['--header-out', '@OUTPUT@']",
         "build_always_stale: true",
         "build_by_default: true",
-        "openq4_engine_sources += [openq4_paks_generated_header, generated_version_header]",
+        "opend3_engine_sources += [opend3_paks_generated_header, generated_version_header]",
         "game_sp_sources += [savegame_compat_header, generated_version_header]",
         "game_mp_sources += [savegame_compat_header, generated_version_header]",
-        "openq4_dedicated_sources += [openq4_paks_generated_header, generated_version_header]",
+        "opend3_dedicated_sources += [opend3_paks_generated_header, generated_version_header]",
     ):
         if token not in meson_text:
             raise AssertionError(f"version header build-refresh contract is missing {token!r}")
@@ -396,7 +396,7 @@ def validate_release_build_history() -> None:
             "-c", "user.email=release-test@example.invalid", "commit", "-qm", str(index),
         ], check=True)
     command = [
-        sys.executable, str(BUILD_DIR / "openq4_version.py"),
+        sys.executable, str(BUILD_DIR / "opend3_version.py"),
         "--base-version", "0.13.1", "--track", "stable", "--source-root",
     ]
     full = subprocess.run(command + [str(source)], capture_output=True, text=True, check=True)
@@ -411,7 +411,7 @@ def validate_release_build_history() -> None:
     if rejected.returncode == 0 or "complete Git history" not in rejected.stderr or header.exists():
         raise AssertionError("shallow stable builds must fail before writing unusable save metadata")
     workflow = (ROOT / ".github/workflows/manual-release.yml").read_text(encoding="utf-8")
-    build_checkout = workflow.split("  builds:", 1)[1].split("- name: Fetch pinned openQ4-game", 1)[0]
+    build_checkout = workflow.split("  builds:", 1)[1].split("- name: Fetch pinned openD3-game", 1)[0]
     if "fetch-depth: 0" not in build_checkout or "fetch-depth: 1" in build_checkout:
         raise AssertionError("release compilation must use complete engine history")
     # Push verification publishes the payloads handed to players for testing,
@@ -532,7 +532,7 @@ def validate_release_docs_layout() -> None:
     write_file(source_root / "LICENSING.md", "# Licensing\n\nComponent terms.\n")
     write_file(source_root / "docs" / "user" / "getting-started.md", "# Getting Started\n\nUser guide.\n")
     write_file(source_root / "docs" / "dev" / "platform-support.md", "# Platform Support\n\nDeveloper guide.\n")
-    write_file(source_root / "docs" / "dev" / "roadmap.md", "# openQ4 development roadmap\n\nActive plan.\n")
+    write_file(source_root / "docs" / "dev" / "roadmap.md", "# openD3 development roadmap\n\nActive plan.\n")
     write_file(source_root / "docs" / "dev" / "proposals" / "renderer.md", "# Renderer Proposal\n\nResearch.\n")
     write_file(source_root / "docs" / "dev" / "archive" / "2026-10-18" / "README.md", "# Planning archive\n\nHistorical plans.\n")
     write_file(source_root / "docs" / "dev" / "archive" / "2026-10-18" / "plans" / "renderer.md", "# Old renderer plan\n\nSuperseded.\n")
@@ -816,8 +816,8 @@ def validate_windows_installer_symlink_guards() -> None:
         expect_runtime_error(
             lambda: INSTALLER.validate_output_paths(
                 output_link,
-                output_link / "openq4-0.1.010-windows-x64-setup.iss",
-                output_link / "openq4-0.1.010-windows-x64-setup.exe",
+                output_link / "opend3-0.1.010-windows-x64-setup.iss",
+                output_link / "opend3-0.1.010-windows-x64-setup.exe",
             ),
             "must not be a symlink",
             "installer output directory symlink guard",
@@ -972,7 +972,7 @@ def validate_draft_releases_never_announce() -> None:
 
 
 def validate_validation_wiring() -> None:
-    validator = (ROOT / "tools" / "validation" / "openq4_validate.py").read_text(encoding="utf-8")
+    validator = (ROOT / "tools" / "validation" / "opend3_validate.py").read_text(encoding="utf-8")
     push = (ROOT / ".github" / "workflows" / "push-verification.yml").read_text(encoding="utf-8")
     commit = (ROOT / ".github" / "workflows" / "commit-validation.yml").read_text(encoding="utf-8")
     for context, text in (
@@ -1014,7 +1014,7 @@ def validate_manual_release_optimized_builds() -> None:
     for token in (
         "OPEND3_GAMELIBS_REPO",
         '"src\\game", "src\\Prey", "src\\preyengine"',
-        "OpenD3-GameLibs is consumed directly by the openD3 Meson build.",
+        "openD3-GameLibs is consumed directly by the openD3 Meson build.",
         "meson_setup.ps1 compile -C builddir",
     ):
         if token not in gamelibs:
@@ -1023,7 +1023,7 @@ def validate_manual_release_optimized_builds() -> None:
 
 def validate_manual_release_linux_staged_gate() -> None:
     workflow = (ROOT / ".github" / "workflows" / "manual-release.yml").read_text(encoding="utf-8")
-    validator = (ROOT / "tools" / "validation" / "openq4_validate.py").read_text(encoding="utf-8")
+    validator = (ROOT / "tools" / "validation" / "opend3_validate.py").read_text(encoding="utf-8")
 
     # The gate covers Windows packages as well as Linux ones, but the ordering
     # invariant it enforces is Linux-specific: staged ELF/package validation
@@ -1042,7 +1042,7 @@ def validate_manual_release_linux_staged_gate() -> None:
     gate = workflow[gate_offset:symbols_offset]
     for token in (
         "if: matrix.platform != 'macos'",
-        "python tools/validation/openq4_validate.py push",
+        "python tools/validation/opend3_validate.py push",
         "--skip-build",
         "--install",
         "--skip-python-tests",
@@ -1059,7 +1059,7 @@ def validate_manual_release_linux_staged_gate() -> None:
         "validate_linux_binary_hardening(root, linux_binary_specs)",
         'fields[4] in {"GLOBAL", "WEAK", "UNIQUE"}',
         'fields[5] in {"DEFAULT", "PROTECTED"}',
-        'expected_game_exports = {"GetGameAPI", "openQ4_Mem_GetModuleStats"}',
+        'expected_game_exports = {"GetGameAPI", "openD3_Mem_GetModuleStats"}',
         "len(public_symbols) == len(expected_game_exports)",
         'symbol[:3] == ("FUNC", "GLOBAL", "DEFAULT")',
     ):
@@ -1186,7 +1186,7 @@ def validate_manual_release_linux_runtime_gate() -> None:
         "#define SDL_VIDEO_DRIVER_WAYLAND 1",
         "#define SDL_VIDEO_DRIVER_X11 1",
         "weston --backend=headless-backend.so",
-        "--socket=openq4-release-wayland",
+        "--socket=opend3-release-wayland",
         "unset DISPLAY",
         "SDL_VIDEO_DRIVER=wayland",
         "SDL_VIDEODRIVER=wayland",
@@ -1239,24 +1239,24 @@ def validate_manual_release_linux_runtime_gate() -> None:
 def validate_manual_release_companion_checkout() -> None:
     workflow = (ROOT / ".github/workflows/manual-release.yml").read_text(encoding="utf-8")
     for token in (
-        'openq4_game_sha="${openq4_source_sha}"',
-        "ref: ${{ github.sha }}", "ref: ${{ needs.metadata.outputs.openq4_source_sha }}",
+        'opend3_game_sha="${opend3_source_sha}"',
+        "ref: ${{ github.sha }}", "ref: ${{ needs.metadata.outputs.opend3_source_sha }}",
         "Publishing manual releases must be dispatched from refs/heads/main",
         "Linux ARM64 evidence candidates must be dispatched from a pushed branch",
         "must descend from the current origin/main",
-        'git merge-base --is-ancestor "${openq4_source_sha}" refs/remotes/origin/main',
+        'git merge-base --is-ancestor "${opend3_source_sha}" refs/remotes/origin/main',
         "python tools/build/verify_release_source_provenance.py", "--build-dir builddir",
-        '--expected-project-commit "${{ needs.metadata.outputs.openq4_source_sha }}"',
+        '--expected-project-commit "${{ needs.metadata.outputs.opend3_source_sha }}"',
         "Release publication is bound to the triggering refs/heads/main commit",
         'published_tag_sha="$(git rev-parse --verify "refs/tags/${tag}^{commit}")"',
         "published_release_target",
     ):
         assert token in workflow, f"missing canonical release source gate: {token}"
-    for obsolete in ("openQ4-game.git", "openQ4-game-awakening.git", "inputs.openq4_game_ref", "--require-game-layer q4xbase"):
+    for obsolete in ("openD3-game.git", "openD3-game-awakening.git", "inputs.opend3_game_ref", "--require-game-layer q4xbase"):
         assert obsolete not in workflow, f"release depends on retired source/build: {obsolete}"
 
     if workflow.count('--target "${target}"') != 2:
-        raise AssertionError("manual release create and edit paths must both target the triggering openQ4 SHA")
+        raise AssertionError("manual release create and edit paths must both target the triggering openD3 SHA")
 
     source_resolution_offset = workflow.index("- name: Resolve immutable source revisions")
     build_job_offset = workflow.index("  builds:")
@@ -1265,7 +1265,7 @@ def validate_manual_release_companion_checkout() -> None:
     release_target_gate_offset = workflow.index("- name: Validate release candidate source and tag target")
     release_download_offset = workflow.index("- name: Download packaged artifacts", release_target_gate_offset)
     if source_resolution_offset >= build_job_offset:
-        raise AssertionError("openQ4-game must be resolved once in metadata before matrix builds start")
+        raise AssertionError("openD3-game must be resolved once in metadata before matrix builds start")
     if provenance_offset >= staged_payload_offset:
         raise AssertionError("checked-out/staged source provenance must be verified before payload validation")
     if release_target_gate_offset >= release_download_offset:
@@ -1288,8 +1288,8 @@ def validate_manual_release_companion_checkout() -> None:
         "--print-archive-sha256",
         "--stock-sp-report",
         "--dedicated-report",
-        "--expected-openq4-commit",
-        "--expected-openq4-game-commit",
+        "--expected-opend3-commit",
+        "--expected-opend3-game-commit",
         "--expected-release-version",
         "--expected-version-tag",
         "--expected-release-tag",
@@ -1298,7 +1298,7 @@ def validate_manual_release_companion_checkout() -> None:
         "Write Linux ARM64 first-class evidence candidate",
         "Upload Linux ARM64 first-class evidence candidate",
         "Revalidate accepted Linux ARM64 archive after artifact download",
-        "OPENQ4_ARM64_EVIDENCE_CANDIDATE",
+        "OPEND3_ARM64_EVIDENCE_CANDIDATE",
         "Linux ARM64 first-class evidence candidate",
         "inputs.generate_linux_arm64_evidence_candidate == false",
         "SOURCE_DATE_EPOCH",
@@ -1364,7 +1364,7 @@ def validate_manual_release_companion_checkout() -> None:
         raise AssertionError("ARM64 evidence-candidate generation must not rebuild the package")
 
     candidate_upload_step = workflow[candidate_upload_offset:generic_upload_offset]
-    if "name: openq4-linux-arm64-first-class-evidence-candidate-" not in candidate_upload_step:
+    if "name: opend3-linux-arm64-first-class-evidence-candidate-" not in candidate_upload_step:
         raise AssertionError("ARM64 candidate must use a distinct non-release artifact name")
     generic_upload_end = workflow.index("- name: Upload macOS dSYM symbols", generic_upload_offset)
     if (
@@ -1477,7 +1477,7 @@ def validate_manual_release_companion_checkout() -> None:
 def validate_release_source_provenance_verifier() -> None:
     root = WORK / "source-provenance"
     project = make_git_repo(root / "openD3")
-    gamelibs = make_git_repo(root / "OpenD3-GameLibs")
+    gamelibs = make_git_repo(root / "openD3-GameLibs")
     commit_file(project, ".gitignore", ".tmp/\n", "project source")
     commit_file(gamelibs, "game-source.txt", "game\n", "game source")
     project_sha = git(project, "rev-parse", "HEAD")
@@ -1523,7 +1523,7 @@ def validate_release_source_provenance_verifier() -> None:
             project_sha,
             gamelibs_sha,
         ),
-        "staged OpenD3-GameLibs commit",
+        "staged openD3-GameLibs commit",
         "mismatched staged GameLibs SHA",
     )
 
@@ -1545,9 +1545,9 @@ def validate_release_source_provenance_verifier() -> None:
 
 def validate_release_layer_provenance_verifier() -> None:
     root = WORK / "layer-provenance"
-    project = make_git_repo(root / "openQ4")
-    gamelibs = make_git_repo(root / "openQ4-game")
-    layer = make_git_repo(root / "openQ4-game-awakening")
+    project = make_git_repo(root / "openD3")
+    gamelibs = make_git_repo(root / "openD3-game")
+    layer = make_git_repo(root / "openD3-game-awakening")
     commit_file(project, ".gitignore", ".tmp/\n", "project source")
     commit_file(gamelibs, "game-source.txt", "game\n", "game source")
     commit_file(layer, "layer.json", "{}\n", "layer source")
@@ -1563,9 +1563,9 @@ def validate_release_layer_provenance_verifier() -> None:
         "fileCount": 0,
         "files": [],
     }
-    base_manifest = project / ".tmp" / "gamelibs_stage" / "openq4_gamelibs_stage_manifest.json"
+    base_manifest = project / ".tmp" / "gamelibs_stage" / "opend3_gamelibs_stage_manifest.json"
     write_file(base_manifest, json.dumps(base) + "\n")
-    layer_manifest_path = project / ".tmp" / "gamelibs_stage_awakening" / "openq4_gamelibs_stage_manifest.json"
+    layer_manifest_path = project / ".tmp" / "gamelibs_stage_awakening" / "opend3_gamelibs_stage_manifest.json"
     layer_manifest = dict(base, layer={"id": "awakening", "gameDir": "q4xbase", "gitCommit": layer_sha, "gitDirty": False})
     write_file(layer_manifest_path, json.dumps(layer_manifest) + "\n")
 
@@ -1602,7 +1602,7 @@ def validate_release_layer_provenance_verifier() -> None:
     layer_manifest["layer"] = dict(layer_manifest["layer"], gitDirty=False)
     layer_manifest["gameLibsGitCommit"] = "e" * 40
     write_file(layer_manifest_path, json.dumps(layer_manifest) + "\n")
-    expect_runtime_error(verify, "openQ4-game (layer stage)", "mismatched GameLibs SHA in the layer stage")
+    expect_runtime_error(verify, "openD3-game (layer stage)", "mismatched GameLibs SHA in the layer stage")
 
     del layer_manifest["layer"]
     layer_manifest["gameLibsGitCommit"] = gamelibs_sha
@@ -1622,7 +1622,7 @@ def validate_linux_release_artifact_helper_contracts() -> None:
         if LINUX_RELEASE_ARTIFACTS.FORBIDDEN_DIAGNOSTIC_LIB_RE.search(diagnostic_library) is None:
             raise AssertionError(f"diagnostic dependency was not rejected: {diagnostic_library}")
 
-    binary_path = root / "openQ4-ded_x64"
+    binary_path = root / "openD3-ded_x64"
     binary_path.write_bytes(b"synthetic ELF fixture")
     original_readelf_output = LINUX_RELEASE_ARTIFACTS.staged_validator.readelf_output
     original_which = LINUX_RELEASE_ARTIFACTS.shutil.which
@@ -1672,7 +1672,7 @@ def validate_linux_release_artifact_helper_contracts() -> None:
         LINUX_RELEASE_ARTIFACTS.shutil.which = original_which
         LINUX_RELEASE_ARTIFACTS.subprocess.run = original_run
 
-    filename = "openQ4-client_x64.debug"
+    filename = "openD3-client_x64.debug"
     crc = 0x12345678
     encoded_name = filename.encode("ascii") + b"\0"
     padded_name = encoded_name + b"\0" * ((4 - len(encoded_name) % 4) % 4)
@@ -1706,7 +1706,7 @@ def validate_linux_release_artifact_helper_contracts() -> None:
     if LINUX_RELEASE_ARTIFACTS.gnu_debuglink_crc32(debug_file) != expected_crc:
         raise AssertionError("GNU debuglink CRC helper disagrees with zlib CRC32")
 
-    package_name = "openq4-1.2.3-linux-x64"
+    package_name = "opend3-1.2.3-linux-x64"
     archive_path = root / f"{package_name}.tar.xz"
     payload = b"version metadata\n"
     with tarfile.open(archive_path, "w:xz") as archive:
@@ -1720,9 +1720,9 @@ def validate_linux_release_artifact_helper_contracts() -> None:
     if (extracted / "VERSION.txt").read_bytes() != payload:
         raise AssertionError("bounded Linux archive extractor changed regular-file bytes")
 
-    unsafe_archive = root / "openq4-1.2.4-linux-x64.tar.xz"
+    unsafe_archive = root / "opend3-1.2.4-linux-x64.tar.xz"
     with tarfile.open(unsafe_archive, "w:xz") as archive:
-        info = tarfile.TarInfo("openq4-1.2.4-linux-x64/../escape")
+        info = tarfile.TarInfo("opend3-1.2.4-linux-x64/../escape")
         info.size = len(payload)
         info.mode = 0o644
         archive.addfile(info, io.BytesIO(payload))
@@ -1753,12 +1753,12 @@ def validate_release_asset_set_helper_contracts() -> None:
     artifact_dir = root / "artifacts"
     artifact_dir.mkdir(parents=True)
     expected = [
-        "openq4-1.2.3-linux-x64.tar.xz",
-        "openq4-1.2.3-linux-arm64.tar.xz",
-        "openq4-1.2.3-windows-x64.zip",
-        "openq4-1.2.3-macos-arm64-metal-unsigned.tar.gz",
-        "openq4-1.2.3-android-arm64-experimental.apk",
-        "openq4-1.2.3-android-dependency-sources.tar.xz",
+        "opend3-1.2.3-linux-x64.tar.xz",
+        "opend3-1.2.3-linux-arm64.tar.xz",
+        "opend3-1.2.3-windows-x64.zip",
+        "opend3-1.2.3-macos-arm64-metal-unsigned.tar.gz",
+        "opend3-1.2.3-android-arm64-experimental.apk",
+        "opend3-1.2.3-android-dependency-sources.tar.xz",
     ]
     def write_archive(path: Path) -> None:
         payload = b"verified runtime fixture\n"
@@ -1807,7 +1807,7 @@ def validate_release_asset_set_helper_contracts() -> None:
         "existing release asset manifest output",
     )
 
-    extra = artifact_dir / "openq4-1.2.3-unapproved.txt"
+    extra = artifact_dir / "opend3-1.2.3-unapproved.txt"
     write_file(extra)
     expect_runtime_error(
         lambda: RELEASE_ASSET_SET.verify_asset_set(artifact_dir, expected),
@@ -1825,7 +1825,7 @@ def validate_release_asset_set_helper_contracts() -> None:
     )
     write_archive(missing)
 
-    directory_entry = artifact_dir / "openq4-1.2.3-unapproved-directory"
+    directory_entry = artifact_dir / "opend3-1.2.3-unapproved-directory"
     directory_entry.mkdir()
     expect_runtime_error(
         lambda: RELEASE_ASSET_SET.verify_asset_set(artifact_dir, expected),
@@ -1834,7 +1834,7 @@ def validate_release_asset_set_helper_contracts() -> None:
     )
     directory_entry.rmdir()
 
-    symlink = artifact_dir / "openq4-1.2.3-unapproved-link"
+    symlink = artifact_dir / "opend3-1.2.3-unapproved-link"
     if make_symlink(artifact_dir / expected[0], symlink):
         expect_runtime_error(
             lambda: RELEASE_ASSET_SET.verify_asset_set(artifact_dir, expected),
@@ -1850,7 +1850,7 @@ def validate_release_asset_set_helper_contracts() -> None:
     )
     expect_runtime_error(
         lambda: RELEASE_ASSET_SET.verify_asset_set(
-            artifact_dir, ["../openq4-escape.tar.xz"]
+            artifact_dir, ["../opend3-escape.tar.xz"]
         ),
         "unsafe expected release artifact name",
         "path-like release artifact whitelist entry",
@@ -1864,7 +1864,7 @@ def main() -> None:
         validate_changelog_input_and_markdown_safety()
         validate_changelog_output_and_override_guards()
         validate_withdrawn_release_selection()
-        validate_openq4_version_iteration()
+        validate_opend3_version_iteration()
         validate_version_header_build_refresh_contract()
         validate_release_build_history()
         validate_release_version_floor_and_docs_classification()

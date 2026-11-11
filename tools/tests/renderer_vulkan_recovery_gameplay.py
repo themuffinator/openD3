@@ -26,7 +26,7 @@ def run_case(runtime: Path, output: Path, basepath: Path, stage: int, mode: str,
     evidence = output / case_id
     evidence.mkdir()
     savepath = evidence / "savepath"
-    gamepath = savepath / "baseoq4"
+    gamepath = savepath / "baseod3"
     gamepath.mkdir(parents=True)
     screenshot_name = "screenshots/recovery.tga"
     (gamepath / "screenshots").mkdir()
@@ -56,7 +56,7 @@ def run_case(runtime: Path, output: Path, basepath: Path, stage: int, mode: str,
     exit_code, timed_out, elapsed = gameplay.launch_and_wait(
         matrix.find_client_executable(runtime), args, runtime, stdout, stderr, timeout,
     )
-    log = matrix.find_log(savepath, f"openq4_validation_{case_id}.log")
+    log = matrix.find_log(savepath, f"opend3_validation_{case_id}.log")
     log_text = log.read_text(encoding="utf-8", errors="replace") if log else ""
     diagnostic_text = "\n".join([log_text, stdout.read_text(encoding="utf-8", errors="replace"),
                                  stderr.read_text(encoding="utf-8", errors="replace")])

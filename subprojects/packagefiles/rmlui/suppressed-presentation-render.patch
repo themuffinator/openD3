@@ -4,7 +4,7 @@
  	virtual void OnUpdate();
  	/// Called during render after backgrounds, borders, decorators, but before children, are rendered.
  	virtual void OnRender();
-+	/// openQ4: skip painting this local stacking context, retaining layout/input/update.
++	/// openD3: skip painting this local stacking context, retaining layout/input/update.
 +	virtual bool IsRenderSuppressed() { return false; }
  	/// Called during update if the element size has been changed.
  	virtual void OnResize();

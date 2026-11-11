@@ -4,7 +4,7 @@
  	/// @return True on success, otherwise false.
  	static bool GetBoundingBox(Rectanglef& out_rectangle, Element* element, BoxArea area);
  
-+	/// openQ4: Exact projected border corners in window coordinates, clockwise
++	/// openD3: Exact projected border corners in window coordinates, clockwise
 +	/// from top-left. Refresh geometry before querying. No clipping is performed;
 +	/// nonfinite, nonpositive-w or depth-clipped projection leaves output unchanged.
 +	static bool GetBorderBoxQuad(Array<Vector2f, 4>& out_quad, Element* element);
@@ -29,7 +29,7 @@
 +	return true;
 +}
 +
-+// openQ4 addition, distributed under RmlUi's MIT license. Uses the same
++// openD3 addition, distributed under RmlUi's MIT license. Uses the same
 +// accumulated transform/depth contract as GetBoundingBox without losing corners
 +// to a window-axis bounding rectangle before ancestor-local projection.
 +bool ElementUtilities::GetBorderBoxQuad(Array<Vector2f, 4>& out_quad, Element* element)

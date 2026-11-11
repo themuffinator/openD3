@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <limits>
 
-namespace openq4::ui {
+namespace opend3::ui {
 // Settings snapshots keep exact typed values regardless of renderer FTZ/DAZ.
 // This is a comparison policy, not validation: callers still enforce their
 // schema, finite/range/string budgets and host permissions before publication.
@@ -93,4 +93,4 @@ inline bool SettingsNumberText(double number, SettingsNumberFormat format, std::
 	if (result.ec != std::errc()) return false;
 	std::string candidate(buffer,result.ptr); output = std::move(candidate); return true;
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

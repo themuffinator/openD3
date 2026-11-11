@@ -589,7 +589,7 @@ BOOL CALLBACK AboutDlgProc( HWND hwndDlg,
 				buffer,
 				1024,
 				"openD3 Radiant %s\nCopyright (C) 1999-2004 id Software, Inc. and 2026 DarkMatter Productions\n",
-				OPENQ4_VERSION
+				OPEND3_VERSION
 			);
 //			SetDlgItemText( hwndDlg, IDC_ABOUT_INFO, buffer);
 

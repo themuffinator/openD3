@@ -5,7 +5,7 @@
 #include <memory>
 #include <string>
 
-namespace openq4 {
+namespace opend3 {
 
 enum class DurableReadResult { Missing, Present, Failed };
 enum class DurableCreateResult { Created, Exists, Failed };
@@ -55,7 +55,7 @@ bool DurableMoveExact(const std::string& fromUtf8Path, const std::string& toUtf8
     bool& moved, std::string& error);
 
 // Idempotent exact-name removal. Windows first moves the target to an owned,
-// inert .openq4-durable-*.tmp tombstone with MOVEFILE_WRITE_THROUGH. Its subsequent
+// inert .opend3-durable-*.tmp tombstone with MOVEFILE_WRITE_THROUGH. Its subsequent
 // deletion is checked; a crash can leave an inert tombstone, never a journal at
 // the authoritative name. No enumeration or deletion of other temporary files.
 // Failure after the namespace operation may already have removed the target.
@@ -107,4 +107,4 @@ private:
 // temp, then removes that temp and syncs the directory. It never links an
 // existing source document or installed asset. Unsupported filesystems refuse.
 
-} // namespace openq4
+} // namespace opend3

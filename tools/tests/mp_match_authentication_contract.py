@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Preserved from openQ4-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
+# Preserved from openD3-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
 """Hostile static and executable contracts for referee authentication."""
 
 from __future__ import annotations
@@ -64,8 +64,8 @@ def static_contracts(header: str, source: str) -> None:
         require(combined, token, "bounded authentication API")
 
     for token in (
-        "openQ4/referee/verifier/v1",
-        "openQ4/referee/challenge/v1",
+        "openD3/referee/verifier/v1",
+        "openD3/referee/challenge/v1",
         "HmacSha256",
         "Sha256Transform",
         "MPRefereeAuthDeriveVerifier",

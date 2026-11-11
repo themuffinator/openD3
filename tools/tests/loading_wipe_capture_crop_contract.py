@@ -41,7 +41,7 @@ static void Check(bool ok,const char *what){if(!ok){std::printf("FAIL: %s\n",wha
 int clockMsec=100000;
 int Sys_Milliseconds(){return clockMsec;}
 bool retainedEnabled=false,reducedMotion=false,initializationActive=false;
-bool openQ4_UpdateInitialization(){return initializationActive;}
+bool openD3_UpdateInitialization(){return initializationActive;}
 struct idStr {
     static int Icmp(const char *a,const char *b){
         while(*a && std::tolower(static_cast<unsigned char>(*a))==std::tolower(static_cast<unsigned char>(*b))){++a;++b;}

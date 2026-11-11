@@ -10,7 +10,7 @@ from filesystem_case_segments import function_body
 
 ROOT = Path(__file__).resolve().parents[2]
 JAVA = r'''
-package com.darkmatter.openq4;
+package com.darkmatter.opend3;
 import java.util.*;
 public class TouchSetupTest {
     static void check(boolean value,String message){if(!value)throw new AssertionError(message);}
@@ -211,10 +211,10 @@ def main():
     args = parser.parse_args()
     out = ROOT/'.tmp/android-touch-setup'
     out.mkdir(parents=True, exist_ok=True)
-    production = ROOT/'mobile/android/app/src/main/java/com/darkmatter/openq4'
-    java_source = JAVA.replace('@GETTER@', function_body((production/'OpenQ4Activity.java').read_text(), 'public float[] getTouchSetup('))
+    production = ROOT/'mobile/android/app/src/main/java/com/darkmatter/opend3'
+    java_source = JAVA.replace('@GETTER@', function_body((production/'openD3Activity.java').read_text(), 'public float[] getTouchSetup('))
     java_source = java_source.replace('@SAVE@', function_body((production/'ControlsPage.java').read_text(), 'static boolean saveApplied('))
-    java_source = java_source.replace('@LAYOUT_GETTER@', function_body((production/'OpenQ4Activity.java').read_text(), 'public String getTouchLayout('))
+    java_source = java_source.replace('@LAYOUT_GETTER@', function_body((production/'openD3Activity.java').read_text(), 'public String getTouchLayout('))
     java_source = java_source.replace('@LAYOUT_SAVE@', function_body((production/'TouchLayoutPage.java').read_text(encoding='utf-8'), 'static boolean saveApplied('))
     launcher = (production/'LauncherActivity.java').read_text()
     java_source = java_source.replace('@RETURN@', function_body(launcher, 'private boolean refreshGameReturn('))
@@ -224,7 +224,7 @@ def main():
     classes = out/'classes'; classes.mkdir(exist_ok=True)
     javac = Path(args.javac).resolve()
     subprocess.run([str(javac), '--release', '17', '-d', str(classes), str(production/'TouchSettings.java'), str(production/'TouchLayout.java'), str(unit)], check=True)
-    subprocess.run([str(javac.with_name('java.exe' if os.name=='nt' else 'java')), '-cp', str(classes), 'com.darkmatter.openq4.TouchSetupTest'], check=True)
+    subprocess.run([str(javac.with_name('java.exe' if os.name=='nt' else 'java')), '-cp', str(classes), 'com.darkmatter.opend3.TouchSetupTest'], check=True)
     cpp = out/'jni.cpp'; binary = out/('jni.exe' if os.name=='nt' else 'jni')
     glue = (ROOT/'src/sys/android/android_touch_controls.cpp').read_text()
     cpp.write_text(NATIVE.replace('@FUNCTION@', function_body(glue, 'static void TouchControls_LoadSetup(')), encoding='utf-8')

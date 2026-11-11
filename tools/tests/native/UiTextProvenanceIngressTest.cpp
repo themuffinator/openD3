@@ -2,7 +2,7 @@
 #include "src/sys/sdl3/TextProvenanceIngress.h"
 #include "src/ui/retained/TextInputBrokerWire.h"
 #include "src/ui/retained/TextEdit.h"
-#include <SDL3/SDL_openq4_text_provenance.h>
+#include <SDL3/SDL_opend3_text_provenance.h>
 #include <cstdlib>
 #include <iostream>
 #include <limits>
@@ -10,7 +10,7 @@
 #include <type_traits>
 #include <vector>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 namespace {
 std::size_t checks = 0;
 void Check(bool ok, const char* reason) { ++checks; if (!ok) throw std::runtime_error(reason); }
@@ -36,7 +36,7 @@ void RejectNative(const OQ4_TextRecord& native, std::string_view text) {
 	Check(!ImportTextProvenanceRecord(native, text, out, error), "malformed native record rejected");
 	Check(Equal(out, before) && !error.empty(), "native import failure preserves every output field");
 }
-#if defined(OPENQ4_SDL_TEXT_PROVENANCE)
+#if defined(OPEND3_SDL_TEXT_PROVENANCE)
 TextNativeRecord Import(const OQ4_TextRecord& native, std::string_view text = "") {
 	TextNativeRecord out; std::string error = "old error";
 	Check(ImportTextProvenanceRecord(native, text, out, error), "actual private-header record imports");
@@ -54,7 +54,7 @@ void ProductionHeaderAndUnsupported() {
 	static_assert(sizeof(decltype(OQ4_TextRecord{}.selection_start)) == 4 && std::is_signed_v<decltype(OQ4_TextRecord{}.selection_start)>);
 	Check(OQ4_TEXT_SESSION_BEGIN == 1 && OQ4_TEXT_WINDOW_END == 9, "actual private-header kind constants");
 	Check(OQ4_TEXT_UNKNOWN == 0 && OQ4_TEXT_UNMARKED_CHARACTER == 1 && OQ4_TEXT_OBSERVED_COMPOSITION == 2, "actual private-header origin constants");
-#if defined(OPENQ4_SDL_TEXT_PROVENANCE)
+#if defined(OPEND3_SDL_TEXT_PROVENANCE)
 	Check(TextProvenanceSupported(), "enabled implementation reports compilation support only");
 #else
 	Check(!TextProvenanceSupported(), "unsupported implementation does not advertise provider");
@@ -64,7 +64,7 @@ void ProductionHeaderAndUnsupported() {
 #endif
 }
 
-#if defined(OPENQ4_SDL_TEXT_PROVENANCE)
+#if defined(OPEND3_SDL_TEXT_PROVENANCE)
 void NativeKindsAndMetadata() {
 	for (Uint32 kind : {OQ4_TEXT_SESSION_BEGIN, OQ4_TEXT_SESSION_END, OQ4_TEXT_WINDOW_END}) {
 		auto r = Native(kind); const auto out = Import(r);
@@ -256,7 +256,7 @@ void MarkerLedger() {
 int main() {
 	try {
 		ProductionHeaderAndUnsupported();
-#if defined(OPENQ4_SDL_TEXT_PROVENANCE)
+#if defined(OPEND3_SDL_TEXT_PROVENANCE)
 		NativeKindsAndMetadata(); OffsetsAndMalformed(); ComposedPipeline();
 #endif
 		MarkerLedger();

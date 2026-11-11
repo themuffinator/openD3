@@ -45,9 +45,9 @@ public final class AssetManager {
 package android.util;
 public final class Log {public static int e(String tag,String message,Throwable error){return 0;}}
 ''',
-'com/darkmatter/openq4/SetupFlowTest.java': r'''
-package com.darkmatter.openq4;
-import static com.darkmatter.openq4.DocumentSourceTest.*;
+'com/darkmatter/opend3/SetupFlowTest.java': r'''
+package com.darkmatter.opend3;
+import static com.darkmatter.opend3.DocumentSourceTest.*;
 import android.content.Context;
 import android.content.res.AssetManager;
 import java.io.*;
@@ -79,16 +79,16 @@ public final class SetupFlowTest {
         Context app=new Context();app.files=root.resolve("private").toFile();app.external=root.resolve("external").toFile();
         Context activity=new Context();activity.application=app;
         app.assets=new AssetManager();app.assets.root=root.resolve("assets").toFile();
-        Path save=app.files.toPath().resolve("saves/baseoq4/keep.save");write(save,"original-save".getBytes());
-        StringBuilder manifest=new StringBuilder("openQ4-package-v1\n");
+        Path save=app.files.toPath().resolve("saves/baseod3/keep.save");write(save,"original-save".getBytes());
+        StringBuilder manifest=new StringBuilder("openD3-package-v1\n");
         for(String name:List.of("mod.json","pak0.pk4","pak1.pk4","pak2.pk4")) {
-            byte[] data=("bundled-"+name).getBytes();write(app.assets.root.toPath().resolve("baseoq4/"+name),data);
+            byte[] data=("bundled-"+name).getBytes();write(app.assets.root.toPath().resolve("baseod3/"+name),data);
             manifest.append(sha(data)).append('\t').append(data.length).append('\t').append(name).append('\n');
         }
         byte[] manifestBytes=manifest.toString().getBytes(java.nio.charset.StandardCharsets.US_ASCII);
         String version=sha(manifestBytes);
-        write(app.assets.root.toPath().resolve("openq4-package-manifest.txt"),manifestBytes);
-        write(app.assets.root.toPath().resolve("openq4-package-version.txt"),version.getBytes());
+        write(app.assets.root.toPath().resolve("opend3-package-manifest.txt"),manifestBytes);
+        write(app.assets.root.toPath().resolve("opend3-package-version.txt"),version.getBytes());
         ByteArrayOutputStream bytes=new ByteArrayOutputStream();
         try(ZipOutputStream zip=new ZipOutputStream(bytes)) {zip.putNextEntry(new ZipEntry("fixture.bin"));zip.write(new byte[16384]);zip.closeEntry();}
         byte[] payload=bytes.toByteArray();Path reference=root.resolve("reference.pk4");write(reference,payload);
@@ -121,7 +121,7 @@ public final class SetupFlowTest {
         Files.move(preserved,installed);
         Context unavailable=new Context();unavailable.external=null;unavailable.files=app.files;
         failed(RetailImport.Code.DESTINATION_UNAVAILABLE,()->new SetupWork(unavailable,null,catalogue).run(new Progress()));available();
-        String diagnostics=Files.readString(app.files.toPath().resolve("saves/baseoq4/logs/setup.log"));
+        String diagnostics=Files.readString(app.files.toPath().resolve("saves/baseod3/logs/setup.log"));
         require(diagnostics.contains("Setup cancelled") && diagnostics.contains("Data finding: MISSING_LANGUAGE") &&
                 diagnostics.contains("Setup operation failed") && diagnostics.contains("DESTINATION_UNAVAILABLE"),
                 "release diagnostics omit setup results or recovery failures");
@@ -152,7 +152,7 @@ def resources() -> None:
     ns = '{http://schemas.android.com/apk/res/android}'
     manifest = ET.parse(base/'AndroidManifest.xml')
     activities = {node.get(ns+'name'): node for node in manifest.iter('activity')}
-    assert activities['.OpenQ4Activity'].get(ns+'exported') == 'false', 'native entry bypasses setup'
+    assert activities['.openD3Activity'].get(ns+'exported') == 'false', 'native entry bypasses setup'
     launchers = [name for name, node in activities.items() if any(category.get(ns+'name') == 'android.intent.category.LAUNCHER'
                  for category in node.iter('category'))]
     assert launchers == ['.LauncherActivity'], 'unexpected public launcher'
@@ -178,7 +178,7 @@ def main() -> None:
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text(text, encoding='utf-8')
             paths.append(str(path))
-        production = ROOT/'mobile/android/app/src/main/java/com/darkmatter/openq4'
+        production = ROOT/'mobile/android/app/src/main/java/com/darkmatter/opend3'
         paths.extend(str(production/name) for name in ('Pk4Checksum.java', 'RetailData.java', 'RetailImport.java',
                      'DocumentSource.java', 'PackageStorage.java', 'SetupTask.java', 'StorageSession.java', 'SetupWork.java',
                      'SetupDiagnostics.java'))
@@ -187,7 +187,7 @@ def main() -> None:
         javac = Path(args.javac).resolve()
         java = javac.with_name('java.exe' if os.name == 'nt' else 'java')
         subprocess.run([str(javac), '--release', '17', '-d', str(classes), *paths], check=True)
-        subprocess.run([str(java), '-cp', str(classes), 'com.darkmatter.openq4.SetupFlowTest', str(scratch)], check=True)
+        subprocess.run([str(java), '-cp', str(classes), 'com.darkmatter.opend3.SetupFlowTest', str(scratch)], check=True)
 
 
 if __name__ == '__main__':

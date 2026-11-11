@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_LIBS_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
 
 
@@ -24,7 +24,7 @@ def read(relative_path: str) -> str:
 def read_game(relative_path: str) -> str:
     path = GAME_LIBS_ROOT / relative_path
     if not path.is_file():
-        raise AssertionError(f"Required openQ4-game file not found: {path}")
+        raise AssertionError(f"Required openD3-game file not found: {path}")
     return path.read_text(encoding="utf-8", errors="strict")
 
 
@@ -79,7 +79,7 @@ def validate_crypto_and_native_vectors() -> None:
         "void SecureZero(",
     ):
         require(crypto, token, "engine-owned cryptographic primitives")
-    require(protocol, 'PROOF_DOMAIN[] = "openQ4-rcon2-proof-v1"', "rcon2 domain separation")
+    require(protocol, 'PROOF_DOMAIN[] = "openD3-rcon2-proof-v1"', "rcon2 domain separation")
     require(protocol_header, "PBKDF2_ITERATIONS = 200000", "fixed rcon2 KDF work factor")
     require(protocol_header, "MIN_PASSWORD_BYTES = 12", "minimum rcon2 password length")
 
@@ -208,7 +208,7 @@ def _validate_retail_protocol_refusal(server: str, client: str) -> None:
     require_before(retail, "AllowConnectionlessResponse( from, false )", "PrintOOB( from, SERVER_PRINT_BADPROTOCOL,",
                    "budgeted retail challenge refusal")
     require_before(challenge, "msg.GetRemainingData() == RETAIL_CHALLENGE_REQUEST_BYTES", "msg.GetRemainingData() != 4",
-                   "retail challenge refused before the openQ4 layout is enforced")
+                   "retail challenge refused before the openD3 layout is enforced")
 
     setup = function_body(client, "void idAsyncClient::SetupConnection( void )", "connection setup")
     require_before(setup, 'msg.WriteString( "getInfo" );', 'msg.WriteString( "challenge" );', "protocol query before challenge")
@@ -239,7 +239,7 @@ def validate_retail_protocol_refusal() -> None:
     client = read("src/framework/async/AsyncClient.cpp")
     _validate_retail_protocol_refusal(server, client)
 
-    for path in sorted((ROOT / "content/baseoq4/pak0/strings").glob("*_openq4.lang")):
+    for path in sorted((ROOT / "content/baseod3/pak0/strings").glob("*_opend3.lang")):
         text = path.read_text(encoding="utf-8")
         line = next((entry for entry in text.splitlines() if '"#str_231570"' in entry), "")
         value = line.split('"#str_231570"', 1)[1] if line else ""
@@ -1005,7 +1005,7 @@ def validate_channel_and_message_abuse_bounds() -> None:
         "WriteChain(",
         "LZW code validation before the chain walk",
     )
-    require(meson, "test('openq4-compressor', openq4_compressor_test, timeout: 30)", "native compressor test registration")
+    require(meson, "test('opend3-compressor', opend3_compressor_test, timeout: 30)", "native compressor test registration")
     for token in ("TestZeroRunDrySource", "TestLZWCorrupt", "zero-run output stays within twice its input"):
         require(native, token, "native compressor coverage")
 
@@ -1095,7 +1095,7 @@ def validate_documentation_and_registration() -> None:
         workflow = read(path)
         require(workflow, "tools/tests/network_security.py \\", f"{path} syntax-check registration")
         require(workflow, "python tools/tests/network_security.py", f"{path} execution registration")
-    require(read("tools/validation/openq4_validate.py"), '"network_security.py"', "local validation registration")
+    require(read("tools/validation/opend3_validate.py"), '"network_security.py"', "local validation registration")
 
 
 def validate_network_rate_budget() -> None:

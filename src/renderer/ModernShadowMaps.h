@@ -1,5 +1,5 @@
-#ifndef OPENQ4_MODERN_SHADOW_MAPS_H
-#define OPENQ4_MODERN_SHADOW_MAPS_H
+#ifndef OPEND3_MODERN_SHADOW_MAPS_H
+#define OPEND3_MODERN_SHADOW_MAPS_H
 
 // Current-frame receiver maps. The classic caster rasterizer is shared, but
 // these copies have a separate lifetime from its per-light scratch/cache state.

@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <limits>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks=0;
 static void Check(bool condition,const char* text) {
     ++checks; if (!condition) { std::fprintf(stderr,"FAIL: %s\n",text); std::exit(1); }

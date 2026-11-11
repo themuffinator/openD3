@@ -16,7 +16,7 @@ void operator delete(void* value) noexcept {std::free(value);}
 void operator delete[](void* value) noexcept {std::free(value);}
 void operator delete(void* value,std::size_t) noexcept {std::free(value);}
 void operator delete[](void* value,std::size_t) noexcept {std::free(value);}
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks;
 #define CHECK(value) do {++checks;if(!(value)){std::fprintf(stderr,"FAIL line %d: %s\n",__LINE__,#value);std::exit(1);}}while(false)
 static uiNativeTextRoute_t Probe(void* value) noexcept {return *static_cast<uiNativeTextRoute_t*>(value);}

@@ -3,7 +3,7 @@
 #include <atomic>
 #include <limits>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 std::atomic<std::uint64_t> nextCoordinator{1};
 std::uint64_t Identity() {
@@ -220,8 +220,8 @@ bool NativeTextCollectionCoordinator::CompleteFence(NativeQueueIngress& ingress,
 		phase=Phase::Ready;error.clear();return true;
 	} catch (...) { return reject("Native collection fence callback failure"); }
 }
-} // namespace openq4::ui
+} // namespace opend3::ui
 
-bool openq4::ui::NativeTextCollectionCoordinator::CompletionCurrent(const NativeTextCollectionCompletion& exact) const noexcept {
+bool opend3::ui::NativeTextCollectionCoordinator::CompletionCurrent(const NativeTextCollectionCompletion& exact) const noexcept {
     return std::this_thread::get_id()==thread && !calling && !retired && phase==Phase::AwaitingFence && completion==exact;
 }

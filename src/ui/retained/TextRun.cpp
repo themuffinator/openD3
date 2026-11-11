@@ -8,7 +8,7 @@
 #include <limits>
 #include <list>
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 bool TextRun::CaretPosition(std::size_t byteOffset, float& position) const {
 	const auto it = std::lower_bound(carets.begin(), carets.end(), byteOffset,
@@ -119,4 +119,4 @@ void TextRunCache::Clear() { impl->entries.clear(); impl->bytes = 0; }
 std::size_t TextRunCache::ResidentEntries() const { return impl->entries.size(); }
 std::size_t TextRunCache::ResidentBytes() const { return impl->bytes; }
 
-} // namespace openq4::ui
+} // namespace opend3::ui

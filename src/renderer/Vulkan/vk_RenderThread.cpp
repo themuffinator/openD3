@@ -1,5 +1,5 @@
 // Copyright (C) 2026 DarkMatter Productions
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
 #include "../tr_local.h"
@@ -358,4 +358,4 @@ void R_RenderThread_Init( void ) {
 		"prints render-thread frame counts and the main-thread entries that waited for it; 'reset' clears them" );
 }
 
-#endif // OPENQ4_RENDERER_VK_MODULE
+#endif // OPEND3_RENDERER_VK_MODULE

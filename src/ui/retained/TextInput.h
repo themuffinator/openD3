@@ -7,7 +7,7 @@
 #include <string>
 #include <string_view>
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 // A transport bound, not a field's editing or line-length policy. No truncation,
 // Unicode normalization, control filtering, shaping or grapheme segmentation.
@@ -47,4 +47,4 @@ void MakeTextInputCancel(TextInputEvent& out);
 // a surrogate pair and byte offsets splitting UTF-8 are rejected. This is a
 // logical value codec only: no event wire ABI, owner lease or native IME routing.
 
-} // namespace openq4::ui
+} // namespace opend3::ui

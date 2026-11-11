@@ -16,7 +16,7 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_LIBS_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
 
 
@@ -398,7 +398,7 @@ def validate_filter_behavior() -> None:
 
 
 def validate_runner_wiring() -> None:
-    validator = (ROOT / "tools" / "validation" / "openq4_validate.py").read_text(
+    validator = (ROOT / "tools" / "validation" / "opend3_validate.py").read_text(
         encoding="utf-8"
     )
     require(validator, "idstr_input_safety.py", "validation runner")
@@ -409,8 +409,8 @@ def validate_runner_wiring() -> None:
         encoding="utf-8"
     )
     require(options, "'build_native_tests'", "native test option")
-    require(meson, "'openq4-core-safety-test'", "native test executable")
-    require(meson, "'openq4-core-safety'", "native Meson test")
+    require(meson, "'opend3-core-safety-test'", "native test executable")
+    require(meson, "'opend3-core-safety'", "native Meson test")
     require(meson, "tools/tests/native/CoreSafetyTest.cpp", "native test source wiring")
     require(native_test, "idNumericString::IsDecimal", "native decimal test")
     require(native_test, "idNumericString::ParseUnsignedBounded", "native bounded parser test")

@@ -308,9 +308,9 @@ class DisplayOracleTests(unittest.TestCase):
 
 class DisplayCaptureRestrictionsTests(unittest.TestCase):
     def test_script_has_only_fixed_semantic_operations_engine_screenshots_and_bounded_waits(self):
-        read_commands = [('openq4_guiGet', field) for field in FIELDS]
+        read_commands = [('opend3_guiGet', field) for field in FIELDS]
         expected = [('rendererModuleSelfTest',), ('testGUI', 'display-smoke.q4ui'), ('wait', '3'),
-                    ('openq4_retainedGui', 'event', 'edit'), ('wait', '3')] + read_commands
+                    ('opend3_retainedGui', 'event', 'edit'), ('wait', '3')] + read_commands
         expected += [('rendererDisplayProbe', 'save'), ('rendererDisplayProbe', 'apply', '960', '540', '0', '0'),
                      ('wait', '6'), ('rendererDisplayProbe', 'report'), ('screenshot', 'screenshots/display-applied.tga')]
         expected += read_commands + [('rendererDisplayProbe', 'restore'), ('wait', '6'),
@@ -356,7 +356,7 @@ class DisplayCaptureRestrictionsTests(unittest.TestCase):
                 root = Path(directory)
                 runtime = root / '.install'
                 runtime.mkdir()
-                executable = runtime / ('openQ4-client_x64.exe' if capture.os.name == 'nt' else 'openQ4-client_x64')
+                executable = runtime / ('openD3-client_x64.exe' if capture.os.name == 'nt' else 'openD3-client_x64')
                 executable.write_bytes(b'fake binary; never executed')
                 assets = root / 'assets'
                 (assets / 'q4base').mkdir(parents=True)
@@ -372,11 +372,11 @@ class DisplayCaptureRestrictionsTests(unittest.TestCase):
 
                 def fake_launch(command, **kwargs):
                     calls.append((command, kwargs))
-                    game = output / 'save/baseoq4'
+                    game = output / 'save/baseod3'
                     (game / 'logs').mkdir()
                     rows = observations()
                     if renderer == 'gl': rows[1]['samples'] = rows[2]['samples'] = '4'
-                    (game / 'logs/openq4.log').write_text(trace(rows).replace('active=gl', 'active=' + renderer), encoding='utf-8')
+                    (game / 'logs/opend3.log').write_text(trace(rows).replace('active=gl', 'active=' + renderer), encoding='utf-8')
                     (game / 'screenshots').mkdir()
                     for name, width, height in (('applied', 960, 540), ('restored', 1280, 720), ('recovered', 1280, 720), ('gameplay', 1280, 720)):
                         header = bytearray(18)
@@ -401,7 +401,7 @@ class DisplayCaptureRestrictionsTests(unittest.TestCase):
                     self.assertEqual(values[key.lower()], value)
                 self.assertEqual(command[-2:], gameplay)
                 self.assertEqual(kwargs['cwd'], runtime)
-                self.assertEqual((output / 'save/baseoq4/display-device.cfg').read_text(encoding='utf-8'), capture.script_for_renderer(renderer))
+                self.assertEqual((output / 'save/baseod3/display-device.cfg').read_text(encoding='utf-8'), capture.script_for_renderer(renderer))
                 metadata = json.loads((output / 'capture.json').read_text(encoding='utf-8'))
                 self.assertEqual(metadata['status'], 'captured_pending_visual_review')
                 self.assertFalse(metadata['host_input_injection'])

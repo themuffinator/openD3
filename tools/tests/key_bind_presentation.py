@@ -17,7 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_LIBS_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
 
 
@@ -208,10 +208,10 @@ def validate_procedural_device_presentation() -> None:
     ):
         require(header, declaration, "DeviceContext graphical binding interface")
 
-    decoder = body_of(source, "static bool openQ4_ExtractKeyBindingIcon(", "DeviceContext.cpp")
-    require(decoder, "openQ4_ExtractIconCode", "graphical binding token decoder")
+    decoder = body_of(source, "static bool openD3_ExtractKeyBindingIcon(", "DeviceContext.cpp")
+    require(decoder, "openD3_ExtractIconCode", "graphical binding token decoder")
     require(decoder, "code[0] != 'k'", "reserved graphical binding token subtype")
-    require(decoder, "openQ4_HexDigitValue", "graphical binding hexadecimal decoder")
+    require(decoder, "openD3_HexDigitValue", "graphical binding hexadecimal decoder")
     require(decoder, "0xff", "graphical binding eight-bit key-number bounds")
     require(decoder, "Q4_KEY_BINDING_PROMPT_HEIGHT_RATIO", "emphasized center-prompt height decoding")
     require(decoder, "Q4_KEY_BINDING_INLINE_HEIGHT_RATIO", "normal inline height decoding")
@@ -219,8 +219,8 @@ def validate_procedural_device_presentation() -> None:
     register = body_of(source, "void idDeviceContext::RegisterIcon(", "DeviceContext.cpp")
     guard_high = register.find("code[1] != '\\0'")
     guard_low = register.find("code[2] != '\\0'")
-    decode_high = register.find("openQ4_HexDigitValue( code[1] )")
-    decode_low = register.find("openQ4_HexDigitValue( code[2] )")
+    decode_high = register.find("openD3_HexDigitValue( code[1] )")
+    decode_low = register.find("openD3_HexDigitValue( code[2] )")
     if not (0 <= guard_high < guard_low < decode_high < decode_low):
         raise AssertionError(
             "RegisterIcon must prove both kHH payload bytes exist before decoding the reserved code"
@@ -230,7 +230,7 @@ def validate_procedural_device_presentation() -> None:
         raise AssertionError("RegisterIcon must reject a null code before reading its first byte")
     require(register, "reserved for graphical key bindings", "reserved kHH registration rejection")
 
-    info = body_of(source, "static void openQ4_GetKeyBindingIconInfo(", "DeviceContext.cpp")
+    info = body_of(source, "static void openD3_GetKeyBindingIconInfo(", "DeviceContext.cpp")
     for token in (
         "Q4_KEY_BINDING_KEYBOARD",
         "Q4_KEY_BINDING_MOUSE_BUTTON",
@@ -251,11 +251,11 @@ def validate_procedural_device_presentation() -> None:
     ):
         require(info, token, "keyboard/mouse/controller binding classification")
 
-    arrow_key = body_of(source, "static bool openQ4_IsKeyboardArrowKey(", "DeviceContext.cpp")
+    arrow_key = body_of(source, "static bool openD3_IsKeyboardArrowKey(", "DeviceContext.cpp")
     for token in ("K_UPARROW", "K_DOWNARROW", "K_LEFTARROW", "K_RIGHTARROW"):
         require(arrow_key, token, "directional keyboard-key classification")
     arrow_classification = info[: info.find("if ( keyNum >= K_MOUSE1")]
-    require(arrow_classification, "openQ4_IsKeyboardArrowKey", "arrow-key presentation override")
+    require(arrow_classification, "openD3_IsKeyboardArrowKey", "arrow-key presentation override")
     require(arrow_classification, "info.label.Clear()", "word-free arrow-key legend")
     mouse_classification = info[info.find("if ( keyNum >= K_MOUSE1") :]
     mouse_classification = mouse_classification[: mouse_classification.find("if ( keyNum == K_MWHEELUP")]
@@ -323,8 +323,8 @@ def validate_procedural_device_presentation() -> None:
         reject(info, f'info.label = "{legend}"', "controller-neutral classification")
 
     draw = body_of(source, "void idDeviceContext::DrawKeyBindingIcon(", "DeviceContext.cpp")
-    require(draw, "openQ4_DrawKeycapBase", "procedural keyboard keycap")
-    require(draw, "openQ4_DrawSmoothRoundedFill", "high-sample smooth device shapes")
+    require(draw, "openD3_DrawKeycapBase", "procedural keyboard keycap")
+    require(draw, "openD3_DrawSmoothRoundedFill", "high-sample smooth device shapes")
     require(draw, "Q4_KEY_BINDING_MOUSE_BUTTON", "procedural mouse presentation")
     require(draw, "Q4_KEY_BINDING_MOUSE_WHEEL", "procedural mouse-wheel presentation")
     require(draw, "Q4_KEY_BINDING_PAD_FACE", "controller face-button presentation")
@@ -333,13 +333,13 @@ def validate_procedural_device_presentation() -> None:
     require(draw, "DrawFilledRect", "procedural device shapes")
     require(draw, "TextWidth( info.label", "key label centering")
     require(draw, "availableWidth", "key label fit within bounded keycap")
-    require(draw, "openQ4_FontInkExtents", "vertically centered key label")
+    require(draw, "openD3_FontInkExtents", "vertically centered key label")
     require(draw, "DrawText( labelX", "text over procedural keycap")
 
-    arrow_draw = body_of(source, "static void openQ4_DrawKeyboardArrowGlyph(", "DeviceContext.cpp")
+    arrow_draw = body_of(source, "static void openD3_DrawKeyboardArrowGlyph(", "DeviceContext.cpp")
     for token in ("const int bands = 6", "shaftThickness", "headWidth", "DrawFilledRect"):
         require(arrow_draw, token, "procedural directional arrow character")
-    require(draw, "openQ4_DrawKeyboardArrowGlyph", "square keyboard arrow-key rendering")
+    require(draw, "openD3_DrawKeyboardArrowGlyph", "square keyboard arrow-key rendering")
 
     label_draw_position = draw.rfind("if ( info.label.Length() > 0 )")
     if label_draw_position < 0:
@@ -384,13 +384,13 @@ def validate_procedural_device_presentation() -> None:
         require(face_draw, token, "neutral positional controller face-button cluster")
     require(
         draw,
-        "const idVec4 inactiveFace = openQ4_KeyBindingColor( 0.30f, 0.36f, 0.42f, 0.90f, color.w )",
+        "const idVec4 inactiveFace = openD3_KeyBindingColor( 0.30f, 0.36f, 0.42f, 0.90f, color.w )",
         "legible neutral controller face-button contrast",
     )
     reject(face_draw, "DrawText", "controller-neutral face-button legend")
-    reject(face_draw, "openQ4_KeyBindingColor", "controller-neutral face-button colour mapping")
+    reject(face_draw, "openD3_KeyBindingColor", "controller-neutral face-button colour mapping")
 
-    rounded = body_of(source, "static void openQ4_DrawRoundedFillCore(", "DeviceContext.cpp")
+    rounded = body_of(source, "static void openD3_DrawRoundedFillCore(", "DeviceContext.cpp")
     for token in (
         "Q4_KEY_BINDING_MAX_CURVE_BANDS",
         "radius * 6.0f",
@@ -398,9 +398,9 @@ def validate_procedural_device_presentation() -> None:
         "bandHeight",
     ):
         require(rounded, token, "high-resolution procedural curve sampling")
-    smooth = body_of(source, "static void openQ4_DrawSmoothRoundedFill(", "DeviceContext.cpp")
+    smooth = body_of(source, "static void openD3_DrawSmoothRoundedFill(", "DeviceContext.cpp")
     require(smooth, "edgeColor.w *= 0.38f", "soft procedural edge fringe")
-    require(smooth, "openQ4_DrawRoundedFillCore", "smooth rounded-fill composition")
+    require(smooth, "openD3_DrawRoundedFillCore", "smooth rounded-fill composition")
 
 
 def validate_draw_and_measure_pipeline() -> None:
@@ -408,37 +408,37 @@ def validate_draw_and_measure_pipeline() -> None:
 
     repeat_escape = body_of(
         source,
-        "static bool openQ4_IsRepeatTextEscape(",
+        "static bool openD3_IsRepeatTextEscape(",
         "DeviceContext.cpp",
     )
     require(repeat_escape, "escapeLength > 2", "complete repeat-wrapper recognition")
     require(repeat_escape, "escape[1] == 'N'", "uppercase repeat-wrapper recognition")
     require(repeat_escape, "escape[1] == 'n'", "lowercase repeat-wrapper recognition")
 
-    resolver = body_of(source, "static void openQ4_ResolveTextEscape(", "DeviceContext.cpp")
+    resolver = body_of(source, "static void openD3_ResolveTextEscape(", "DeviceContext.cpp")
     for token in (
-        "openQ4_IsRepeatTextEscape",
+        "openD3_IsRepeatTextEscape",
         "repeatedPayload = source + escapeLength",
-        "openQ4_TextEscapeLength( repeatedPayload",
+        "openD3_TextEscapeLength( repeatedPayload",
         "payload = repeatedPayload",
         "payloadLength = repeatedLength",
         "payloadType = repeatedType",
         "sourceLength += repeatedLength",
-        "repeats = openQ4_TextEscapeRepeatCount( source )",
+        "repeats = openD3_TextEscapeRepeatCount( source )",
     ):
         require(resolver, token, "repeat-wrapper payload resolution")
 
     draw = body_of(source, "int idDeviceContext::DrawText(float x,", "DeviceContext.cpp")
-    require(draw, "openQ4_ExtractKeyBindingIcon", "low-level text draw")
+    require(draw, "openD3_ExtractKeyBindingIcon", "low-level text draw")
     require(draw, "DrawKeyBindingIcon", "low-level text draw")
     require(draw, "GetKeyBindingIconWidth", "low-level text draw advance")
-    if draw.find("openQ4_ExtractKeyBindingIcon") > draw.find("FindIcon("):
+    if draw.find("openD3_ExtractKeyBindingIcon") > draw.find("FindIcon("):
         raise AssertionError("Graphical binding tokens must be decoded before ordinary registered-icon lookup")
     for token in (
         "const char *backgroundScan = text",
-        "openQ4_ResolveTextEscape( backgroundScan",
+        "openD3_ResolveTextEscape( backgroundScan",
         "scanRepeats > 0 && scanPayloadType == S_ESCAPE_ICON",
-        "openQ4_ExtractKeyBindingIcon( scanPayload",
+        "openD3_ExtractKeyBindingIcon( scanPayload",
         "backgroundScan += scanSourceLength",
         "backgroundIndex += scanSourceLength",
     ):
@@ -446,9 +446,9 @@ def validate_draw_and_measure_pipeline() -> None:
 
     width = body_of(source, "int idDeviceContext::TextWidth(", "DeviceContext.cpp")
     for token in (
-        "openQ4_ResolveTextEscape",
+        "openD3_ResolveTextEscape",
         "payloadType == S_ESCAPE_ICON && repeats > 0",
-        "openQ4_ExtractKeyBindingIcon( payload",
+        "openD3_ExtractKeyBindingIcon( payload",
         "GetKeyBindingIconWidth( keyNum, scale, bindingHeightRatio ) * repeats",
         "s += sourceLength",
         "index += sourceLength",
@@ -457,9 +457,9 @@ def validate_draw_and_measure_pipeline() -> None:
 
     height = body_of(source, "int idDeviceContext::TextHeight(", "DeviceContext.cpp")
     for token in (
-        "openQ4_ResolveTextEscape",
+        "openD3_ResolveTextEscape",
         "payloadType == S_ESCAPE_ICON && repeats > 0",
-        "openQ4_ExtractKeyBindingIcon( payload",
+        "openD3_ExtractKeyBindingIcon( payload",
         "GetKeyBindingIconHeight( scale, bindingHeightRatio )",
         "s += sourceLength",
         "index += sourceLength",
@@ -468,13 +468,13 @@ def validate_draw_and_measure_pipeline() -> None:
 
     max_index = body_of(source, "bool idDeviceContext::GetMaxTextIndex(", "DeviceContext.cpp")
     for token in (
-        "openQ4_ResolveTextEscape",
+        "openD3_ResolveTextEscape",
         # A character is one to four UTF-8 bytes, and maxIndex is consumed as a
         # string length, so a plain 1 here would hand the caller a truncated
         # lead byte on any non-ASCII character.
         "const int tokenLength = escapeLength > 0 ? sourceLength : Max( 1, next.bytes )",
         "payloadType == S_ESCAPE_ICON && repeats > 0",
-        "openQ4_ExtractKeyBindingIcon( payload",
+        "openD3_ExtractKeyBindingIcon( payload",
         "bindingWidth * repeats / useScale",
     ):
         require(max_index, token, "repeat-aware atomic line-fit measurement")
@@ -493,13 +493,13 @@ def validate_draw_and_measure_pipeline() -> None:
     )
     for token in (
         "char buff[Q4_TEXT_LINE_BUFFER_SIZE]",
-        "openQ4_ResolveTextEscape( p",
+        "openD3_ResolveTextEscape( p",
         "escapePayloadType == S_ESCAPE_ICON",
         "len + escapeSourceLength < static_cast<int>( sizeof( buff ) )",
         "idStr::Copynz( &buff[len], p, escapeSourceLength + 1 )",
-        "openQ4_ExtractKeyBindingIcon( escapePayload",
+        "openD3_ExtractKeyBindingIcon( escapePayload",
         "GetKeyBindingIconWidth( keyNum, textScale, bindingHeightRatio ) * escapeRepeats",
-        "escapeRepeats * openQ4_ScaledFontUnits",
+        "escapeRepeats * openD3_ScaledFontUnits",
         "!( isIconEscape && len == 0 )",
         "len += escapeSourceLength",
         "p += escapeSourceLength",
@@ -558,10 +558,10 @@ def validate_bind_widget_fit_and_capture() -> None:
     require(draw, "!waitingOnKey", "capture prompt remains at authored text scale")
 
     controls = read(
-        ROOT / "content" / "baseoq4" / "pak0" / "guis" / "menu" / "settings" / "controls.gui"
+        ROOT / "content" / "baseod3" / "pak0" / "guis" / "menu" / "settings" / "controls.gui"
     )
     bind_defs = list(re.finditer(r"\bbindDef\s+([A-Za-z0-9_]+)", controls))
-    # The stock rows plus openQ4's quick-chat row.
+    # The stock rows plus openD3's quick-chat row.
     if len(bind_defs) != 49:
         raise AssertionError(f"Expected 49 controls bindDef rows, found {len(bind_defs)}")
 
@@ -588,11 +588,11 @@ def validate_bind_widget_fit_and_capture() -> None:
 
 def validate_localized_controls_hint() -> None:
     controls = read(
-        ROOT / "content" / "baseoq4" / "pak0" / "guis" / "menu" / "settings" / "controls.gui"
+        ROOT / "content" / "baseod3" / "pak0" / "guis" / "menu" / "settings" / "controls.gui"
     )
     require(controls, 'text\t"#str_200930"', "localized controls hint consumer")
 
-    strings_root = ROOT / "content" / "baseoq4" / "pak0" / "strings"
+    strings_root = ROOT / "content" / "baseod3" / "pak0" / "strings"
     languages = ("english", "french", "italian", "spanish")
     expected_pairs = (
         ("^ik0d", "^ikc7"),
@@ -647,7 +647,7 @@ def validate_bind_menu_and_spectator_consumers() -> None:
     require(bind_draw, "bindName.c_str()", "bindDef graphical value selection")
     require(bind_draw, "dc->DrawText", "bindDef graphical value rendering")
 
-    mphud = read(ROOT / "content" / "baseoq4" / "pak0" / "guis" / "mphud.gui")
+    mphud = read(ROOT / "content" / "baseod3" / "pak0" / "guis" / "mphud.gui")
     require(mphud, '"gui::spectatetext1"', "multiplayer spectator HUD binding prompt")
     ready_prompt_window = body_of(mphud, "windowDef Spectate1", "mphud.gui Spectate1")
     # Classic keeps the stock place; the stock interface's Remastered layout
@@ -657,7 +657,7 @@ def validate_bind_menu_and_spectator_consumers() -> None:
     require(ready_prompt_window, "textscale\t0.31", "stock readiness prompt text scale")
 
     code_strings = read(
-        ROOT / "content" / "baseoq4" / "pak0" / "strings" / "english_code.lang"
+        ROOT / "content" / "baseod3" / "pak0" / "strings" / "english_code.lang"
     )
     for localized_string in ("#str_107710", "#str_107711"):
         if re.search(
@@ -709,11 +709,11 @@ def validate_bind_menu_and_spectator_consumers() -> None:
 
 
 def validate_ready_binding_contract() -> None:
-    default_cfg = read(ROOT / "content" / "baseoq4" / "pak0" / "default.cfg")
+    default_cfg = read(ROOT / "content" / "baseod3" / "pak0" / "default.cfg")
     controls = read(
         ROOT
         / "content"
-        / "baseoq4"
+        / "baseod3"
         / "pak0"
         / "guis"
         / "menu"

@@ -5,7 +5,7 @@
 #include <cmath>
 #include <limits>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 constexpr const char* Magic = "openD3 settings recovery 1\n";
 bool Fail(std::string& error, const char* message) { error = message; return false; }
@@ -382,4 +382,4 @@ bool PackSettingsImageRecovery(const std::string& raw,unsigned direction,const s
 bool UnpackSettingsImageRecovery(const StateValues& fields,unsigned direction,const std::string& attempt,std::string& output) {
  return imageRecovery::Unpack(fields,direction,attempt,output);
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

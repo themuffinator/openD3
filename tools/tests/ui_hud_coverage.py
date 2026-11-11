@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-CATALOG = ROOT / 'content/baseoq4/pak0/guis/hud'
+CATALOG = ROOT / 'content/baseod3/pak0/guis/hud'
 
 
 def main():
@@ -24,7 +24,7 @@ def main():
     registry = json.loads((CATALOG/'coverage.json').read_text())
     catalog = json.loads((CATALOG/'artwork.q4ui').read_text())
     nodes = {n['id']: n for n in catalog['root']['children']}
-    own = registry.get('openq4Roots', [])
+    own = registry.get('opend3Roots', [])
     roots = registry['roots'] + registry['expansionRoots'] + own
     assert len(set(roots)) == len(roots)
     for material, art in registry['materials'].items():
@@ -57,9 +57,9 @@ def main():
             name = material.lower()
             if name not in registry['materials'] and name not in registry['images']:
                 missing.append((str(path), name))
-    # HUDs openQ4 ships itself are audited from the repository, every run.
+    # HUDs openD3 ships itself are audited from the repository, every run.
     for root in own:
-        path = ROOT/'content/baseoq4/pak0'/root
+        path = ROOT/'content/baseod3/pak0'/root
         assert path.is_file(), path
         audit(path)
     for assets, family in ((args.assets, registry['roots']), (args.awakening, registry['expansionRoots'])):

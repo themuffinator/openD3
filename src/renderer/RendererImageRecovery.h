@@ -11,7 +11,7 @@
 // cold preparation must check the complete current inventory, retained material
 // sources, dependencies and exact source bytes before allowing a restart.
 // Never write any C++ object representation or process token to disk.
-namespace openq4::imageRecovery {
+namespace opend3::imageRecovery {
 struct Image {
     Image()=default;
     Image(const Image&)=default;
@@ -55,4 +55,4 @@ bool Encode(const Data&,std::string& raw,std::string& error);
 bool Decode(std::string_view raw,unsigned direction,std::string_view attempt,Record&,std::string& error);
 bool SameImageKey(const Image&,const Image&) noexcept;
 bool SameMaterial(const Material&,const Material&) noexcept;
-} // namespace openq4::imageRecovery
+} // namespace opend3::imageRecovery

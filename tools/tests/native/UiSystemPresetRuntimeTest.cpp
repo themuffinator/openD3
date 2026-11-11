@@ -15,7 +15,7 @@
 #include <iomanip>
 #include <set>
 #include <sstream>
-using namespace openq4;using namespace openq4::ui;
+using namespace opend3;using namespace opend3::ui;
 static unsigned checks=0;
 static void Check(bool ok,const char* why){++checks;if(!ok){std::fprintf(stderr,"FAIL %s\n",why);std::exit(1);}}
 static std::string Read(const std::string& p){std::ifstream f(p,std::ios::binary);Check(bool(f),"bound source readable");return {std::istreambuf_iterator<char>(f),{}};}
@@ -40,7 +40,7 @@ struct View {
  View(const std::string& s,const std::string& locale,float density=1,int width=1280,int height=720,float expansion=1,const std::string& guiLocale={}):source(s){
   host.Locale(locale);if(!guiLocale.empty())host.Locale(guiLocale);
   // The prompt bar's key caps name their keys from the stock code strings.
-  if(const auto at=locale.rfind("_openq4.lang");at!=std::string::npos){const auto code=locale.substr(0,at)+"_code.lang";if(std::ifstream(code))host.Locale(code);}host.expansion=expansion;Json::Value doc;Json::CharReaderBuilder b;auto reader=std::unique_ptr<Json::CharReader>(b.newCharReader());Check(reader->parse(s.data()+s.find('{'),s.data()+s.size(),&doc,&error),error.c_str());
+  if(const auto at=locale.rfind("_opend3.lang");at!=std::string::npos){const auto code=locale.substr(0,at)+"_code.lang";if(std::ifstream(code))host.Locale(code);}host.expansion=expansion;Json::Value doc;Json::CharReaderBuilder b;auto reader=std::unique_ptr<Json::CharReader>(b.newCharReader());Check(reader->parse(s.data()+s.find('{'),s.data()+s.size(),&doc,&error),error.c_str());
   for(auto& k:doc["state"].getMemberNames())if(k.starts_with("settings.draft.")){auto d=doc["state"][k];StateValue v;auto type=d["type"].asString();if(type=="number")v=d["initial"].asDouble();else if(type=="boolean")v=d["initial"].asBool();else v=d["initial"].asString();host.live.emplace(k.substr(15),v);}
   Check(host.live.size()==76,"full authored 76-key typed catalog");host.live["com_performancePreset"]=std::string("balanced");host.live["r_brightness"]=1.375;host.live["r_forceAmbient"]=.1375;host.live["r_renderer"]=std::string("best");Check(tx.Begin(Owner).code==SettingsCode::Ok,"begin real transaction");
   std::vector<Diagnostic> ds;bool loaded=runtime.LoadDocument(s,"guis/menu/settings/system.q4ui",ds);for(auto& d:ds)std::fprintf(stderr,"%s: %s\n",d.pointer.c_str(),d.message.c_str());Check(loaded,"actual SYSTEM compiles and loads");viewport.width=width;viewport.height=height;viewport.displayScale=density;
@@ -277,19 +277,19 @@ static void PendingNumberAcrossTabs(const std::string& source,const std::string&
  }
  Check(v.runtime.DiscardNumberDrafts(d.barrier,v.error,v.time),"discard the typed number");Check(v.host.writes==0,"no setting written");}
 int main(int argc,char** argv){
- Check(argc==3,"page and locale directory args");auto source=Read(argv[1]);std::string dir=argv[2];Semantics(source,dir+"/english_openq4.lang");
- ExternalRefresh(source,dir+"/english_openq4.lang");
+ Check(argc==3,"page and locale directory args");auto source=Read(argv[1]);std::string dir=argv[2];Semantics(source,dir+"/english_opend3.lang");
+ ExternalRefresh(source,dir+"/english_opend3.lang");
  for(auto* locale:{"english","spanish","polish","russian","french","italian","german","brazilian","czech","hungarian","turkish","ukrainian"})for(float expansion:{1.f,1.4f}){
   std::fprintf(stderr,"locale %s expansion=%g\n",locale,expansion);
-  View view(source,dir+"/"+locale+"_openq4.lang",1,1280,720,expansion);
+  View view(source,dir+"/"+locale+"_opend3.lang",1,1280,720,expansion);
   // Reuse the loaded instance across the viewport matrix: this also proves
   // reflow after actual resize/density changes, with stable accepted aliases.
   for(auto dims:{std::array<int,3>{1280,720,100},std::array<int,3>{1280,720,125},std::array<int,3>{1280,720,200},std::array<int,3>{800,600,100}})
    {Opening(view,dims[2]/100.f,dims[0],dims[1],std::string(locale)=="english"&&expansion==1.f);Layout(view,dims[2]/100.f,dims[0],dims[1]);}
  }
  // Last, as they qualify the dialogs' and the tabs' hold on input.
- MenuButton(source,dir+"/english_openq4.lang");
- PendingNumberAcrossTabs(source,dir+"/english_openq4.lang");
+ MenuButton(source,dir+"/english_opend3.lang");
+ PendingNumberAcrossTabs(source,dir+"/english_opend3.lang");
  std::printf("PASS %u checks; actual SYSTEM/RmlUi, twelve locales +40%% width stress, counted transaction host.\n",checks);
  return 0;
 }

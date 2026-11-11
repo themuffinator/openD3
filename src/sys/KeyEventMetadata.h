@@ -3,7 +3,7 @@
 #include <array>
 #include <cstddef>
 
-namespace openq4 {
+namespace opend3 {
 // Optional SE_KEY payload. A fixed byte encoding preserves historical event
 // layout and journals, while binding modifier/repeat state to this event.
 // Other producers may omit it; no process identity or native authority exists.
@@ -22,4 +22,4 @@ inline bool DecodeKeyEventMetadata(const void* bytes, std::size_t length, KeyEve
 	out = {(data[4]&1) != 0,(data[4]&2) != 0,(data[4]&4) != 0,data[5] != 0};
 	return true;
 }
-} // namespace openq4
+} // namespace opend3

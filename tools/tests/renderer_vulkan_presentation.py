@@ -70,7 +70,7 @@ def competing_workloads(own_pid):
             raise OSError('cannot enumerate concurrent game processes')
         while more:
             name = entry.name.lower()
-            game = name.startswith(('openq4-client', 'openq4-ded'))
+            game = name.startswith(('opend3-client', 'opend3-ded'))
             build = name in {'ninja.exe', 'msbuild.exe', 'cl.exe', 'link.exe', 'clang-cl.exe', 'clang++.exe'}
             if entry.pid != own_pid and (game or build):
                 found.append(dict(pid=entry.pid, name=entry.name))
@@ -100,7 +100,7 @@ def analyze(text, focus, budget, competing=(), focus_events=(), require_presente
     if any(event['focused'] is not True for event in focus_events):
         failures.append('a foreground event interrupted the sampling interval')
     if competing:
-        failures.append('other openQ4 or compiler/build workloads were observed during sampling')
+        failures.append('other openD3 or compiler/build workloads were observed during sampling')
     if 'hidden window renders offscreen' in text:
         failures.append('offscreen rendering cannot qualify presentation')
     for marker in ('VK_PACING_BEGIN', 'VK_PACING_END'):
@@ -197,7 +197,7 @@ def main():
             'Presented frames vkpacing: frames=500 interval p50=8 p95=9 p99=10 max=12 ms; '
             'queue p50=1 p95=2 p99=3 max=4 ms; replaced=5 dropped=0\n'
             'Vulkan executor resources: enabled=1 frames=500 imageHits=1000 imageUpdates=5\n'
-            'OPENQ4_FRAME_TIMING_V1 map=game/airdefense1 backend=vulkan profile=baseline '
+            'OPEND3_FRAME_TIMING_V1 map=game/airdefense1 backend=vulkan profile=baseline '
             'cpuSamples=256 cpuP50Us=3000 cpuP95Us=4000 cpuP99Us=5000 '
             'gpuAvailable=1 gpuSamples=256 gpuP50Us=1000 gpuP95Us=1500 gpuP99Us=2000\n')
         assert analyze(text, [True] * 100, 28)['status'] == 'pass'
@@ -280,7 +280,7 @@ def main():
             idle = await_idle(args.idle_seconds, args.idle_timeout)
             name = f'device-{device}-repeat-{repeat + 1}'
             save = output / name
-            game = save / 'baseoq4'
+            game = save / 'baseod3'
             game.mkdir(parents=True)
             script = ['waitMsec 4000', 'god', 'notarget', 'noclip', 'setviewpos 10200 -6800 40 0 170 0',
                 'waitMsec 3000', 'gfxInfo', 'rendererDisplayProbe report']
@@ -317,7 +317,7 @@ def main():
             if sum(argument.startswith('+') for argument in command) > matrix.ENGINE_MAX_STARTUP_COMMANDS:
                 raise ValueError('visible presentation exceeds the engine startup command limit')
             (save / 'command.json').write_text(json.dumps(command, indent=2))
-            log = game / 'logs' / ('openq4_validation_' + matrix.sanitize_case_id(name) + '.log')
+            log = game / 'logs' / ('opend3_validation_' + matrix.sanitize_case_id(name) + '.log')
             start, focus, timed_out, sampled = time.monotonic(), [], False, False
             competing, next_process_check = {}, 0
             initial_power = power_state()
@@ -426,7 +426,7 @@ def main():
             except (OSError, ValueError) as error:
                 result['failures'].append('missing or invalid engine capture: ' + str(error))
             phase_trace = game / 'logs/timing.csv'
-            config = game / 'openQ4Config.cfg'
+            config = game / 'openD3Config.cfg'
             if not phase_trace.is_file() or phase_trace.stat().st_size == 0:
                 result['failures'].append('CPU/GPU phase trace was not written')
             if not config.is_file() or 'seta com_performancePreset "balanced"' not in config.read_text(errors='replace'):

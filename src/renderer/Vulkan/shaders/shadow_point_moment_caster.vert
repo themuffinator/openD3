@@ -1,7 +1,7 @@
 #version 450
 #extension GL_GOOGLE_include_directive : require
 
-// openQ4 Vulkan translucent shadow-moment caster for point lights — vertex
+// openD3 Vulkan translucent shadow-moment caster for point lights — vertex
 // stage, mirroring GL shadow_point_translucent_caster.vs. Each cube face is a
 // tile of the moment atlas, drawn with the same face view, analytic
 // projection and positive-height viewport as the depth cube face

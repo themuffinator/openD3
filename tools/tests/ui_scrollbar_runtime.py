@@ -30,7 +30,7 @@ def main():
     parser.add_argument('--mutations', action='store_true')
     args = parser.parse_args()
     repository = args.repository.resolve()
-    candidate=(args.document or (ROOT/'.tmp/system-candidate.q4ui' if (ROOT/'.tmp/system-candidate.q4ui').is_file() else ROOT/'content/baseoq4/pak0/guis/menu/settings/system.q4ui')).resolve()
+    candidate=(args.document or (ROOT/'.tmp/system-candidate.q4ui' if (ROOT/'.tmp/system-candidate.q4ui').is_file() else ROOT/'content/baseod3/pak0/guis/menu/settings/system.q4ui')).resolve()
     rml = ROOT / 'rml-projection'
     if not rml.is_dir():
         rml = repository / 'subprojects/RmlUi-6.3'
@@ -83,7 +83,7 @@ def main():
         command += ' /Fe"' + str(exe) + '" /link '
         command += ' '.join('"' + str(path) + '"' for path in libraries) + ' /SUBSYSTEM:CONSOLE user32.lib'
         batch = directory / 'compile.cmd'
-        batch.write_text('@echo off\ncall "' + str(repository / 'tools/build/openq4_devcmd.cmd') +
+        batch.write_text('@echo off\ncall "' + str(repository / 'tools/build/opend3_devcmd.cmd') +
                          '"\nif errorlevel 1 exit /b %errorlevel%\n' + command + '\n', encoding='utf-8')
         result = subprocess.run(['cmd', '/c', str(batch)], cwd=directory, env=env, text=True,
                                 encoding='utf-8', errors='replace', capture_output=True)

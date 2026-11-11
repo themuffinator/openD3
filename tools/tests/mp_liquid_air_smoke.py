@@ -27,38 +27,38 @@ def main() -> int:
     args = parser.parse_args()
     runtime, output = args.runtime_dir.resolve(), args.output_dir.resolve()
     verify_runtime_is_current(runtime)
-    exe = runtime / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64')
+    exe = runtime / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64')
     if output.exists() or not exe.is_file() or not (args.basepath / 'q4base').is_dir():
         parser.error('use a new output directory, staged client and installed retail assets')
     output.mkdir(parents=True)
-    paths = [exe, *sorted((runtime / 'baseoq4').glob('game-mp*')), *sorted(runtime.glob('renderer-*')),
-             runtime / 'baseoq4/pak0.pk4', runtime / 'baseoq4/pak1.pk4', runtime / 'baseoq4/mod.json']
+    paths = [exe, *sorted((runtime / 'baseod3').glob('game-mp*')), *sorted(runtime.glob('renderer-*')),
+             runtime / 'baseod3/pak0.pk4', runtime / 'baseod3/pak1.pk4', runtime / 'baseod3/mod.json']
     paths = [p for p in paths if p.is_file() and p.suffix not in ('.pdb', '.lib', '.exp')]
     def identity():
         return {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
     before = identity()
-    games = {role: output / role / 'baseoq4' for role in ('host', 'observer')}
+    games = {role: output / role / 'baseod3' for role in ('host', 'observer')}
     for game in games.values():
         game.mkdir(parents=True)
     host = ['set g_autoExecAfterMapLoad ""', 'notarget', 'god', 'set g_debugLiquid 1',
             'addbot Sledge 2 exact', 'echo LIQUID_AIR_HOST_READY', 'waitMsec 8000',
-            'recordMVD air_state', 'echo LIQUID_AIR_DRY', 'openq4_reportMPState', 'waitMsec 2000',
+            'recordMVD air_state', 'echo LIQUID_AIR_DRY', 'opend3_reportMPState', 'waitMsec 2000',
             'setviewpos -720 420 -200 0', 'waitMsec 3000', 'echo LIQUID_AIR_SUBMERGED',
-            'openq4_reportMPState', 'ui_hudTest guis/hud.gui get player_air',
+            'opend3_reportMPState', 'ui_hudTest guis/hud.gui get player_air',
             's_soundWorlds', 'screenshot screenshots/submerged.tga',
-            'waitMsec 4000', 'echo LIQUID_AIR_DRAINED', 'openq4_reportMPState',
+            'waitMsec 4000', 'echo LIQUID_AIR_DRAINED', 'opend3_reportMPState',
             'setviewpos 0 0 128 0', 'waitMsec 3000', 'echo LIQUID_AIR_SURFACED',
-            'openq4_reportMPState', 's_soundWorlds', 'screenshot screenshots/surfaced.tga',
+            'opend3_reportMPState', 's_soundWorlds', 'screenshot screenshots/surfaced.tga',
             'waitMsec 1500', 'stopMVD', 'disconnect', 'playMVD air_state', 'waitMsec 2000',
             'mvdFollow 0', 'mvdPause 1']
     for i, seconds in enumerate((1, 7, 1, 7)):
         host += [f'mvdSeek {seconds}', 'waitMsec 1500', f'echo LIQUID_AIR_SEEK {i}',
-                 'mvdStatus', 'openq4_reportMPState', 'ui_hudTest guis/hud.gui get player_air',
+                 'mvdStatus', 'opend3_reportMPState', 'ui_hudTest guis/hud.gui get player_air',
                  f'screenshot screenshots/seek_{i}.tga']
     host += ['stopMVD', 'echo LIQUID_AIR_HOST_COMPLETE', 'quit']
     observer = ['set g_autoExecAfterMapLoad ""', 'follow 0']
     for i in range(20):
-        observer += ['waitMsec 1000', f'echo LIQUID_AIR_REMOTE {i}', 'openq4_reportMPState']
+        observer += ['waitMsec 1000', f'echo LIQUID_AIR_REMOTE {i}', 'opend3_reportMPState']
         if i in (7, 12):
             observer += [f'screenshot screenshots/remote_{i}.tga']
     observer += ['echo LIQUID_AIR_OBSERVER_COMPLETE', 'quit']
@@ -74,10 +74,10 @@ def main() -> int:
             'r_windowWidth':'960', 'r_windowHeight':'540', 'r_swapInterval':'0', 'com_maxfps':'60', 's_noSound':'1',
             'ui_retained':str(args.retained), 'ui_hudLayout':str(args.hud_layout), 'ui_autoJoin':'1',
             'ui_spectate':'Play' if role=='host' else 'Spectate',
-            'ui_name':'AirHost' if role=='host' else 'AirObserver', 'fs_game':'baseoq4', 'com_gameMode':'MP',
+            'ui_name':'AirHost' if role=='host' else 'AirObserver', 'fs_game':'baseod3', 'com_gameMode':'MP',
             'com_nextGameModule':'game_mp', 'fs_basepath':str(args.basepath.resolve()),
             'fs_savepath':str(game.parent), 'fs_devpath':str(game.parent),
-            'logFile':'2', 'logFileName':'logs/openq4.log', 'developer':'1', 'net_allowCheats':'1',
+            'logFile':'2', 'logFileName':'logs/opend3.log', 'developer':'1', 'net_allowCheats':'1',
             'net_serverDedicated':'0', 'net_LANServer':'1', 'net_port':str(args.port if role=='host' else args.port+1),
             # Loopback only: no firewall prompt for an unregistered runtime path.
             'net_ip':'127.0.0.1', 'net_enableIPv6':'0',
@@ -96,7 +96,7 @@ def main() -> int:
     try:
         launch('host')
         until = time.monotonic()+60
-        while 'LIQUID_AIR_HOST_READY' not in read_log(games['host']/'logs/openq4.log'):
+        while 'LIQUID_AIR_HOST_READY' not in read_log(games['host']/'logs/opend3.log'):
             if time.monotonic()>until or processes['host'].poll() is not None:
                 raise RuntimeError('host did not enter the liquid lab')
             time.sleep(.25)
@@ -115,7 +115,7 @@ def main() -> int:
                 process.kill(); process.wait()
         for stream in streams:
             stream.close()
-    logs = {role:re.sub(r'\^[0-9A-Za-z]','',read_log(game/'logs/openq4.log')) for role,game in games.items()}
+    logs = {role:re.sub(r'\^[0-9A-Za-z]','',read_log(game/'logs/opend3.log')) for role,game in games.items()}
     remote = re.findall(r'MP_AIR slot=0 reservoir=(\d+) percent=(\d+) serverTime=(-?\d+)',logs['observer'])
     if len(remote)<5 or not any(int(p)<80 and int(t)>0 for _,p,t in remote):
         failures.append('remote spectator did not receive the host air authority')
@@ -144,7 +144,7 @@ def main() -> int:
         failures.append('runtime changed during the workflow')
     report = {'status':'fail' if failures else 'pass','identity':before,'remote_air':remote,'paused_seek_air':seeks,
               'hud_air':hud_values,'hud_layout':args.hud_layout,'retained':args.retained,'renderer':args.renderer,
-              'failures':failures,'logs':{role:str(game/'logs/openq4.log') for role,game in games.items()}}
+              'failures':failures,'logs':{role:str(game/'logs/opend3.log') for role,game in games.items()}}
     (output/'report.json').write_text(json.dumps(report,indent=2)+'\n')
     print(json.dumps({'status':report['status'],'failures':failures,'report':str(output/'report.json')},indent=2))
     return bool(failures)

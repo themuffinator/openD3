@@ -49,7 +49,7 @@ def contract(page):
     roles=lambda role:{id for id,n in nodes.items() if n.get('control',{}).get('role')==role}
     assert roles('slider')==set(PAIRS),'Review the numeric field contract when the slider inventory changes'
     assert roles('number')=={id+'_number' for id in PAIRS}|set(SIZES)
-    assert page['extensions']['openq4']['numberFields']['pairs']=={id:id+'_number' for id in PAIRS}
+    assert page['extensions']['opend3']['numberFields']['pairs']=={id:id+'_number' for id in PAIRS}
     bindings={(b['node'],b['property']):b['value'] for b in page['bindings']}
     timelines={t['id']:t for t in page['timelines']}
     for slider_id,(key,minimum,maximum) in PAIRS.items():
@@ -253,7 +253,7 @@ class PairedNumbers(unittest.TestCase):
         self.assertEqual(self.page['presentationVariables']['numberDraftsPending'],
                          {'type':'boolean','initial':False,'value':{'state':'ui.numberDraftsPending'}})
         self.assertEqual(self.page['aliases']['numberDraftsPending'],{'variable':'numberDraftsPending'})
-        for path in (ROOT/'content/baseoq4/pak0/strings').glob('*_openq4.lang'):
+        for path in (ROOT/'content/baseod3/pak0/strings').glob('*_opend3.lang'):
             text=path.read_text(encoding='utf-8')
             for key in ('#str_230004','#str_230005','#str_230006'):
                 self.assertEqual(len(re.findall('"'+key+'"',text)),1,(path,key))
@@ -261,14 +261,14 @@ class PairedNumbers(unittest.TestCase):
     def test_service_status_keys_resolve_in_each_locale(self):
         service=(ROOT/'src/ui/SettingsService.cpp').read_text(encoding='utf-8')
         keys=set(re.findall(r'"(#str_[0-9]+)"',service))
-        for path in (ROOT/'content/baseoq4/pak0/strings').glob('*_openq4.lang'):
+        for path in (ROOT/'content/baseod3/pak0/strings').glob('*_opend3.lang'):
             entries=re.findall(r'"(#str_[0-9]+)"\s+"([^"\n]*)"',path.read_text(encoding='utf-8'))
             for key in keys:
                 values=[text for candidate,text in entries if candidate==key]
                 self.assertEqual(len(values),1,(path.name,key))
                 self.assertTrue(values[0].strip(),(path.name,key))
         english=dict(re.findall(r'"(#str_[0-9]+)"\s+"([^"\n]*)"',
-            (ROOT/'content/baseoq4/pak0/strings/english_openq4.lang').read_text(encoding='utf-8')))
+            (ROOT/'content/baseod3/pak0/strings/english_opend3.lang').read_text(encoding='utf-8')))
         ready=self.page['state']['ui.numberDraftMessage']['initial']
         self.assertEqual(english[ready],'Ready')
         self.assertIn(ready,keys)

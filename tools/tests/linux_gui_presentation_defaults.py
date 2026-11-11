@@ -36,13 +36,13 @@ def validate_linux_video_ram_defaults() -> None:
     linux_shared_h = read("src/sys/linux/linux_shared.h")
     unknown_vram = require_int_at_least(
         linux_shared_h,
-        r"OPENQ4_LINUX_UNKNOWN_VIDEO_RAM_MB\s*=\s*(\d+)",
+        r"OPEND3_LINUX_UNKNOWN_VIDEO_RAM_MB\s*=\s*(\d+)",
         128,
         "Linux unknown VRAM fallback",
     )
     max_configured = require_int_at_least(
         linux_shared_h,
-        r"OPENQ4_LINUX_MAX_CONFIGURED_VIDEO_RAM_MB\s*=\s*(\d+)",
+        r"OPEND3_LINUX_MAX_CONFIGURED_VIDEO_RAM_MB\s*=\s*(\d+)",
         unknown_vram,
         "Linux configurable VRAM ceiling",
     )
@@ -50,8 +50,8 @@ def validate_linux_video_ram_defaults() -> None:
 
     for relative_path in ("src/sys/linux/glimp.cpp", "src/sys/linux/linux_sdl3.cpp"):
         source = read(relative_path)
-        require(source, "OPENQ4_LINUX_MAX_CONFIGURED_VIDEO_RAM_MB", f"{relative_path} sys_videoRam range")
-        require(source, "OPENQ4_LINUX_UNKNOWN_VIDEO_RAM_MB", f"{relative_path} unknown VRAM fallback")
+        require(source, "OPEND3_LINUX_MAX_CONFIGURED_VIDEO_RAM_MB", f"{relative_path} sys_videoRam range")
+        require(source, "OPEND3_LINUX_UNKNOWN_VIDEO_RAM_MB", f"{relative_path} unknown VRAM fallback")
         require(source, "conservative modern VRAM setting", f"{relative_path} fallback log")
         reject(source, "default low-end VRAM setting", f"{relative_path} fallback log")
         reject(source, "run_once = 64", f"{relative_path} fallback assignment")
@@ -65,7 +65,7 @@ def validate_linux_sdl3_x11_helpers_are_optional() -> None:
     sdl3_backend = read("src/sys/sdl3/sdl3_backend.cpp")
     linux_main = read("src/sys/linux/main.cpp")
 
-    require(linux_sdl3, "OPENQ4_HAVE_X11_HELPERS", "SDL3 Linux optional X11 helper guard")
+    require(linux_sdl3, "OPEND3_HAVE_X11_HELPERS", "SDL3 Linux optional X11 helper guard")
     require(linux_sdl3, '#include "linux_shared.h"', "SDL3 Linux shared defaults")
     require(linux_sdl3, "Sys_QueryDrmSysfsVideoRamMB", "SDL3 Linux DRM sysfs VRAM probe")
     require(linux_sdl3, "Sys_PreferDrmSysfsBeforeX11VideoRam", "SDL3 Linux Wayland-first VRAM probe")
@@ -73,7 +73,7 @@ def validate_linux_sdl3_x11_helpers_are_optional() -> None:
     require(linux_sdl3, 'SDL3_EnvHasValue("WAYLAND_DISPLAY")', "SDL3 Linux pre-video Wayland-session VRAM probe")
     require(
         linux_sdl3,
-        'SDL3_EnvFlagEnabledWithLegacyAlias("OPEND3_FORCE_X11", "OPENQ4_FORCE_X11")',
+        'SDL3_EnvFlagEnabledWithLegacyAlias("OPEND3_FORCE_X11", "OPEND3_FORCE_X11")',
         "SDL3 Linux explicit XWayland VRAM probe",
     )
     require(linux_sdl3, 'Sys_IsWaylandVideoDriverName(getenv("SDL_VIDEO_DRIVER"))', "SDL3 Linux explicit Wayland VRAM probe")
@@ -99,10 +99,10 @@ def validate_linux_sdl3_x11_helpers_are_optional() -> None:
     require(linux_main, "OPEND3_WAYLAND_PREFER_LIBDECOR=1", "Linux Wayland runtime libdecor guidance")
     require(linux_main, "OPEND3_WAYLAND_SYNC_WINDOW_OPS=1", "Linux Wayland runtime sync-window guidance")
     for primary_name, legacy_name in (
-        ("OPEND3_FORCE_X11", "OPENQ4_FORCE_X11"),
-        ("OPEND3_WAYLAND_DISABLE_LIBDECOR", "OPENQ4_WAYLAND_DISABLE_LIBDECOR"),
-        ("OPEND3_WAYLAND_PREFER_LIBDECOR", "OPENQ4_WAYLAND_PREFER_LIBDECOR"),
-        ("OPEND3_WAYLAND_SYNC_WINDOW_OPS", "OPENQ4_WAYLAND_SYNC_WINDOW_OPS"),
+        ("OPEND3_FORCE_X11", "OPEND3_FORCE_X11"),
+        ("OPEND3_WAYLAND_DISABLE_LIBDECOR", "OPEND3_WAYLAND_DISABLE_LIBDECOR"),
+        ("OPEND3_WAYLAND_PREFER_LIBDECOR", "OPEND3_WAYLAND_PREFER_LIBDECOR"),
+        ("OPEND3_WAYLAND_SYNC_WINDOW_OPS", "OPEND3_WAYLAND_SYNC_WINDOW_OPS"),
     ):
         require(sdl3_backend, primary_name, f"SDL3 Linux {primary_name} primary environment control")
         require(sdl3_backend, legacy_name, f"SDL3 Linux {legacy_name} migration alias")
@@ -114,7 +114,7 @@ def validate_linux_sdl3_x11_helpers_are_optional() -> None:
     require(meson_build, "dependency('x11', required: linux_x11_option)", "feature-controlled SDL3 X11 dependency")
     require(meson_build, "dependency('xext', required: linux_x11_option)", "feature-controlled SDL3 Xext dependency")
     require(meson_build, "sdl3_default_options += ['x11=disabled']", "native Wayland-only SDL configuration")
-    require(meson_build, "-DOPENQ4_HAVE_X11_HELPERS=1", "optional X11 helper define")
+    require(meson_build, "-DOPEND3_HAVE_X11_HELPERS=1", "optional X11 helper define")
 
 
 def validate_gui_images_skip_downsize() -> None:

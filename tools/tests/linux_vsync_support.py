@@ -94,9 +94,9 @@ def validate_native_glx_swap_interval() -> None:
     shutdown = function_body(source, "void GLimp_Shutdown() {")
     swap = function_body(source, "void GLimp_SwapBuffers() {")
 
-    require(source, "openq4GLXSwapIntervalEXTProc_t", "native GLX swap-control declarations")
-    require(source, "openq4GLXSwapIntervalMESAProc_t", "native GLX swap-control declarations")
-    require(source, "openq4GLXSwapIntervalSGIProc_t", "native GLX swap-control declarations")
+    require(source, "opend3GLXSwapIntervalEXTProc_t", "native GLX swap-control declarations")
+    require(source, "opend3GLXSwapIntervalMESAProc_t", "native GLX swap-control declarations")
+    require(source, "opend3GLXSwapIntervalSGIProc_t", "native GLX swap-control declarations")
     require(source, "GLX_EXT_swap_control_tear", "native GLX adaptive swap-control detection")
 
     require(init_swap, "GLX_EXT_swap_control", "native GLX swap-control init")
@@ -135,7 +135,7 @@ def validate_shared_metadata() -> None:
 def validate_ci_smoke() -> None:
     push = read(".github/workflows/push-verification.yml")
     commit = read(".github/workflows/commit-validation.yml")
-    runner = read("tools/validation/openq4_validate.py")
+    runner = read("tools/validation/opend3_validate.py")
 
     require(push, "tools/tests/linux_vsync_support.py", "push verification workflow")
     require(push, "python tools/tests/linux_vsync_support.py", "push script-smoke regression check")

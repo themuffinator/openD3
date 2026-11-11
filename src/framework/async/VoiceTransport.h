@@ -1,6 +1,6 @@
-// Copyright (C) 2026 openQ4 contributors. SPDX-License-Identifier: GPL-3.0-or-later
-#ifndef OPENQ4_VOICE_TRANSPORT_H
-#define OPENQ4_VOICE_TRANSPORT_H
+// Copyright (C) 2026 openD3 contributors. SPDX-License-Identifier: GPL-3.0-or-later
+#ifndef OPEND3_VOICE_TRANSPORT_H
+#define OPEND3_VOICE_TRANSPORT_H
 #include <cstdint>
 #include <cstring>
 

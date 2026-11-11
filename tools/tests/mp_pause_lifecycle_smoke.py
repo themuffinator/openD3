@@ -37,10 +37,10 @@ class LifecycleRun(SeriesRun):
     def open_menu(self, role, review=False):
         if self.args.gametype != "Tourney" or review:
             return super().open_menu(role, review)
-        self.perform(role, "Tourney menu", ["openq4_assertMenuActivation 3000 game",
-            "waitMsec 1500", "openq4_guiSet desktop::active 1", "openq4_guiSet desktop::dest 21",
+        self.perform(role, "Tourney menu", ["opend3_assertMenuActivation 3000 game",
+            "waitMsec 1500", "opend3_guiSet desktop::active 1", "opend3_guiSet desktop::dest 21",
             "GuiEvent hideMain", "GuiEvent chooseCurr", "GuiEvent resetMain0", "waitMsec 1500",
-            "openq4_guiSet desktop::match_tab 0"])
+            "opend3_guiSet desktop::match_tab 0"])
 
     def state(self, text):
         latest = text.rsplit("\nMP_STATE ", 1)[-1]
@@ -50,7 +50,7 @@ class LifecycleRun(SeriesRun):
 
     def sample(self, role, label):
         name = f"{label}-{role}"
-        self.perform(role, name, ["openq4_reportMPState", f'screenshot "screenshots/{name}.tga"'])
+        self.perform(role, name, ["opend3_reportMPState", f'screenshot "screenshots/{name}.tga"'])
         text = read_log(self.logs[role])
         state, arenas = self.state(text)
         players = [fields(line) for line in text.rsplit("\nMP_STATE ", 1)[-1].splitlines()
@@ -106,7 +106,7 @@ class LifecycleRun(SeriesRun):
         self.admission()
         for role in self.games:
             self.open_menu(role)
-            self.perform(role, "status tab", ["openq4_guiSet desktop::match_tab 0"])
+            self.perform(role, "status tab", ["opend3_guiSet desktop::match_tab 0"])
         self.action("host", "force_ready", confirm=True)
         self.await_view("host", "match countdown", lambda v: v["phase"] == 2)
         self.hold("match-countdown", 2)
@@ -144,7 +144,7 @@ class LifecycleRun(SeriesRun):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
-    parser.add_argument("--executable-name", default="openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    parser.add_argument("--executable-name", default="openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     parser.add_argument("--output-dir", type=Path, default=ROOT / ".tmp/mp-pause-lifecycle")
     parser.add_argument("--basepath", type=Path, default=Path(r"C:\Program Files (x86)\Steam\steamapps\common\Quake 4"))
     parser.add_argument("--gametype", choices=("Clan Arena", "Tourney"), default="Clan Arena")

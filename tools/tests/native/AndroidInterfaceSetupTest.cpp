@@ -19,8 +19,8 @@
 #undef stricmp
 #undef strcasecmp
 
-using openq4::android::InterfaceSetup;
-using openq4::android::PendingInterfaceSetup;
+using opend3::android::InterfaceSetup;
+using opend3::android::PendingInterfaceSetup;
 
 static void Check( bool condition, const char *message ) {
 	if ( !condition ) {

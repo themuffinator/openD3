@@ -77,7 +77,7 @@ def validate_timeline_model() -> None:
 
 
 def validate_parser_contract(window: str) -> None:
-    helper = between(window, "static bool OpenQ4_ParseTimelineMilliseconds", "bool idWindow::Parse(")
+    helper = between(window, "static bool openD3_ParseTimelineMilliseconds", "bool idWindow::Parse(")
     for token in (
         "uint64 magnitude = 0;",
         "negative ? 2147483648ULL : 2147483647ULL",
@@ -88,7 +88,7 @@ def validate_parser_contract(window: str) -> None:
 
     on_time = between(window, 'else if ( token == "onTime" )', 'else if ( token == "definefloat" )')
     for token in (
-        "OpenQ4_ParseTimelineMilliseconds( timeToken, eventTime )",
+        "openD3_ParseTimelineMilliseconds( timeToken, eventTime )",
         "const int64 combinedTime",
         "combinedTime < idMath::INT_MIN || combinedTime > idMath::INT_MAX",
         "idTimeLineEvent *ev = new idTimeLineEvent;",
@@ -96,7 +96,7 @@ def validate_parser_contract(window: str) -> None:
     ):
         require(on_time, token, "GUI timeline event parser")
     if on_time.index("idTimeLineEvent *ev = new idTimeLineEvent;") < on_time.index(
-        "OpenQ4_ParseTimelineMilliseconds( timeToken, eventTime )"
+        "openD3_ParseTimelineMilliseconds( timeToken, eventTime )"
     ):
         raise AssertionError("GUI timeline event is allocated before its timestamp is validated")
 
@@ -109,10 +109,10 @@ def validate_parser_contract(window: str) -> None:
 
 def validate_save_contract(window: str, header: str, winvar: str, simple: str) -> None:
     for token in (
-        "static ID_INLINE bool OpenQ4_WriteSaveGameBytes",
-        "static ID_INLINE bool OpenQ4_ReadSaveGameBytes",
-        "static ID_INLINE bool OpenQ4_WriteSaveGameField",
-        "static ID_INLINE bool OpenQ4_ReadSaveGameField",
+        "static ID_INLINE bool openD3_WriteSaveGameBytes",
+        "static ID_INLINE bool openD3_ReadSaveGameBytes",
+        "static ID_INLINE bool openD3_WriteSaveGameField",
+        "static ID_INLINE bool openD3_ReadSaveGameField",
         "memset( buffer, 0, len );",
         "value = false;",
         "value = 0;",
@@ -136,7 +136,7 @@ def validate_save_contract(window: str, header: str, winvar: str, simple: str) -
     for token in (
         "savefile == NULL || gui == NULL",
         "refusing non-finite or out-of-range layout state",
-        "OpenQ4_WriteSaveGameField",
+        "openD3_WriteSaveGameField",
         "WriteSaveGameChildReference",
         "incomplete timeline event",
         "incomplete named event",
@@ -156,7 +156,7 @@ def validate_save_contract(window: str, header: str, winvar: str, simple: str) -
         "!focusReadSucceeded || !captureReadSucceeded || !overReadSucceeded",
         "invalid transition count",
         "ValidateRestoredTrackedWindowPointers",
-        "!FixupTransitions( OpenQ4_SaveGameRestoreIsPortable( savefile ) )",
+        "!FixupTransitions( openD3_SaveGameRestoreIsPortable( savefile ) )",
     ):
         require(reader, token, "GUI window save reader")
     if reader.index("cmd = savedCmd;") < reader.index("savedName.Icmp( name ) != 0"):
@@ -165,25 +165,25 @@ def validate_save_contract(window: str, header: str, winvar: str, simple: str) -
     simple_writer = between(simple, "void idSimpleWindow::WriteToSaveGame", "void idSimpleWindow::ReadFromSaveGame")
     for token in (
         "savefile == NULL",
-        "OpenQ4_IsFiniteSimpleWindowRectangle",
-        "OpenQ4_WriteSaveGameField",
-        "OpenQ4_WriteSaveGameInt",
-        "OpenQ4_WriteSaveGameBytes",
+        "openD3_IsFiniteSimpleWindowRectangle",
+        "openD3_WriteSaveGameField",
+        "openD3_WriteSaveGameInt",
+        "openD3_WriteSaveGameBytes",
         "64 * 1024",
     ):
         require(simple_writer, token, "simple GUI window save writer")
     simple_reader = simple[simple.index("void idSimpleWindow::ReadFromSaveGame") :]
     for token in (
         "idRectangle savedDrawRect;",
-        "OpenQ4_ReadSaveGameField",
-        "OpenQ4_IsFiniteSimpleWindowRectangle( savedDrawRect )",
-        "OpenQ4_ReadSaveGameInt",
+        "openD3_ReadSaveGameField",
+        "openD3_IsFiniteSimpleWindowRectangle( savedDrawRect )",
+        "openD3_ReadSaveGameInt",
         "remainingBytes",
         "background = NULL;",
     ):
         require(simple_reader, token, "simple GUI window save reader")
     if simple_reader.index("drawRect = savedDrawRect;") < simple_reader.index(
-        "OpenQ4_IsFiniteSimpleWindowRectangle( savedDrawRect )"
+        "openD3_IsFiniteSimpleWindowRectangle( savedDrawRect )"
     ):
         raise AssertionError("simple GUI window restore commits layout before finite validation")
 
@@ -193,7 +193,7 @@ def main() -> None:
     validate_timeline_model()
     validate_parser_contract(window)
     validate_save_contract(window, read("src/ui/Window.h"), read("src/ui/Winvar.h"), read("src/ui/SimpleWindow.cpp"))
-    require(read("tools/validation/openq4_validate.py"), "ui_window_state_safety.py", "GUI window validation wiring")
+    require(read("tools/validation/opend3_validate.py"), "ui_window_state_safety.py", "GUI window validation wiring")
     print("GUI window state safety: ok")
 
 

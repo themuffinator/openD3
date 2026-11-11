@@ -1,4 +1,4 @@
-// Preserved from openQ4-game; Quake 4 SDK EULA. See docs/dev/game-test-coverage.md.
+// Preserved from openD3-game; Quake 4 SDK EULA. See docs/dev/game-test-coverage.md.
 #include <alloca.h>
 #include <cassert>
 #include <cstdarg>

@@ -5,7 +5,7 @@
 #include "../../renderer/RendererModule.h"
 #include "../../sys/DisplayModeRule.h"
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 struct SystemDisplayMode {
 	int width = 0, height = 0; // Physical pixels, including SDL mode density.
@@ -149,4 +149,4 @@ bool SystemDisplaySelectionPatch(const SystemDisplayCatalog& catalog, SystemDisp
 // Two descriptors name the same monitor: name, bounds and desktop mode.
 bool SameSystemDisplay(const SystemDisplayDescriptor& a, const SystemDisplayDescriptor& b);
 
-} // namespace openq4::ui
+} // namespace opend3::ui

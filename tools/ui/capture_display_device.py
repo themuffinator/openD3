@@ -17,9 +17,9 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / 'tools/ui/fixtures/display-device-smoke.q4ui'
 FIELDS = ('live', 'draft', 'baseline', 'dirty', 'open', 'phase', 'liveWidth', 'draftWidth')
-READS = ''.join(f'openq4_guiGet "{field}"\n' for field in FIELDS)
+READS = ''.join(f'opend3_guiGet "{field}"\n' for field in FIELDS)
 SCRIPT = ('rendererModuleSelfTest\ntestGUI "display-smoke.q4ui"\nwait 3\n'
-          'openq4_retainedGui event "edit"\nwait 3\n' + READS +
+          'opend3_retainedGui event "edit"\nwait 3\n' + READS +
           'rendererDisplayProbe save\nrendererDisplayProbe apply 960 540 0 0\nwait 6\n'
           'rendererDisplayProbe report\nscreenshot "screenshots/display-applied.tga"\n' + READS +
           'rendererDisplayProbe restore\nwait 6\nrendererDisplayProbe report\n'
@@ -157,20 +157,20 @@ def capture(args):
     output, runtime = args.output.resolve(), (ROOT / '.install').resolve()
     if output.exists():
         raise ValueError('Use a new output directory to preserve evidence')
-    executable = runtime / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64')
+    executable = runtime / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64')
     if not executable.is_file() or not (args.assets / 'q4base').is_dir():
         raise ValueError('Staged client and installed q4base assets are required')
     configurations = json.loads((ROOT / '.vscode/launch.json').read_text(encoding='utf-8-sig'))['configurations']
     prefix = '(SP) airdefense1 ' if args.mode == 'sp' else '(MP) q4dm1 '
     profile = next(row for row in configurations if row['name'].startswith(prefix) and row['name'].endswith('GL'))
-    game = output / 'save/baseoq4'
+    game = output / 'save/baseod3'
     game.mkdir(parents=True)
     (game / 'display-smoke.q4ui').write_bytes(FIXTURE.read_bytes())
     cfg = game / 'display-device.cfg'
     cfg.write_text(script_for_renderer(args.renderer), encoding='utf-8')
     overrides = {
         'fs_basepath':str(args.assets.resolve()), 'fs_savepath':str(output/'save'), 'fs_devpath':str(output/'save'),
-        'fs_game':'baseoq4', 'logFile':'2', 'logFileName':'logs/openq4.log',
+        'fs_game':'baseod3', 'logFile':'2', 'logFileName':'logs/opend3.log',
         'r_fullscreen':'0', 'r_fullscreenDesktop':'0', 'r_borderless':'0', 'r_borderlessDefaultMigrated':'1',
         'r_hiddenWindow':'1', 'r_windowWidth':'1280', 'r_windowHeight':'720', 'r_mode':'-1',
         'r_customWidth':'1280', 'r_customHeight':'720', 'r_renderApi':args.renderer, 'r_multiSamples':'0',
@@ -189,7 +189,7 @@ def capture(args):
         if count == 1 or original[index+1].lower() not in {key.lower() for key in overrides}:
             command.extend(value.replace('${workspaceFolder}', str(ROOT)) for value in original[index:index+count])
         index += count
-    binaries = [executable] + sorted(runtime.glob('renderer-*.dll')) + sorted((runtime/'baseoq4').glob('game-*.dll'))
+    binaries = [executable] + sorted(runtime.glob('renderer-*.dll')) + sorted((runtime/'baseod3').glob('game-*.dll'))
     metadata = {'status':'running', 'profile':profile['name'], 'mode':args.mode, 'renderer':args.renderer,
         'command':command, 'cwd':str(runtime), 'windowed':True, 'hidden_window':True, 'host_input_injection':False,
         'capture_method':'engine screenshot command after gameplay and typed display operations',
@@ -213,7 +213,7 @@ def capture(args):
             except subprocess.TimeoutExpired: process.kill(); process.wait()
             metadata['status']='timeout'; save(); return 1
     metadata['seconds'] = round(time.monotonic()-started,3)
-    log_path = game/'logs/openq4.log'
+    log_path = game/'logs/opend3.log'
     log = re.sub(r'\^[0-9]','',log_path.read_text(encoding='utf-8',errors='replace')) if log_path.is_file() else ''
     metadata['log_sha256'] = digest(log_path) if log_path.is_file() else None
     metadata['qualification'] = qualify(log, metadata['requested_samples'])

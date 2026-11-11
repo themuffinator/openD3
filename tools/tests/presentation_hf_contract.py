@@ -9,7 +9,7 @@ state each owner must never write, and the HF-06 guard that makes event
 dispatch, scripts, physics and effect spawns report themselves when they run
 inside a prepared draw, and HF-07's declared frame-rate policy (hidden-window,
 loading-screen and preset caps). Behaviour of the look policy itself is
-executed by openq4-presentation-look (tools/tests/native/PresentationLookTest.cpp).
+executed by opend3-presentation-look (tools/tests/native/PresentationLookTest.cpp).
 Run with --mutations to prove a representative check of each owner fails when
 its production body regresses.
 """
@@ -89,7 +89,7 @@ def check_engine(usercmd_h: str, usercmd_cpp: str, game_h: str, common_cpp: str)
         "Sys_LeaveCriticalSection();",
         "NormalizeMouseDeltasForCpi( mx, my, strafeMx, strafeMy )",
         "CalculateMouseSensitivity( mx, my, NULL, NULL ) * GetZoomLookSensitivityScale()",
-        "openq4::PresentationRateShare( yawRate, elapsedSeconds, tickSeconds )",
+        "opend3::PresentationRateShare( yawRate, elapsedSeconds, tickSeconds )",
     ):
         require(sampler, token, context)
     require_before(sampler, "Sys_EnterCriticalSection();", "Mouse();", f"{context}: drained under the async lock")
@@ -152,7 +152,7 @@ def check_frame_rate_policy(common: str | None = None) -> None:
     context = "HF-07 frame-rate policy"
     cap = function(common, "static int Common_GetRequestedPresentationCap( void )", context)
     require(cap, "vrSystem->IsPacing()", f"{context}: a headset paces itself")
-    require(cap, "openq4::PresentationCapForWindow( com_maxfps.GetInteger(), Common_IsGameWindowShown() )", f"{context}: hidden and minimized windows capped at 60")
+    require(cap, "opend3::PresentationCapForWindow( com_maxfps.GetInteger(), Common_IsGameWindowShown() )", f"{context}: hidden and minimized windows capped at 60")
     pacing = read("src/framework/PresentationPacing.h")
     require(pacing, "constexpr int HIDDEN_WINDOW_PRESENTATION_CAP = 60;", f"{context}: the hidden-window cap is 60")
     require(common, 'com_presentationStallProbe( "com_presentationStallProbe", "0", CVAR_INTEGER | CVAR_SYSTEM | CVAR_CHEAT,', f"{context}: the hitch probe is cheat-gated")
@@ -163,8 +163,8 @@ def check_frame_rate_policy(common: str | None = None) -> None:
     # The bulk of a wait sleeps on SDL's high-resolution timer and the spin covers the
     # measured oversleep (PresentationPacing.h); com_preciseFrameWait 0 is the rollback.
     require(common, 'com_preciseFrameWait( "com_preciseFrameWait", "1", CVAR_BOOL | CVAR_SYSTEM | CVAR_NOCHEAT,', f"{context}: the precise wait has a rollback")
-    require(throttle, "openq4::LimiterSpinMsec( commonLimiterOversleep )", f"{context}: the spin covers the measured oversleep")
-    require(throttle, "openq4::LegacyLimiterSpinMsec( frameMsec )", f"{context}: the legacy wait keeps its fixed spin")
+    require(throttle, "opend3::LimiterSpinMsec( commonLimiterOversleep )", f"{context}: the spin covers the measured oversleep")
+    require(throttle, "opend3::LegacyLimiterSpinMsec( frameMsec )", f"{context}: the legacy wait keeps its fixed spin")
     require(throttle, "commonLimiterOversleep.Add( sleptMsec - sleepMsec );", f"{context}: every precise sleep is measured")
     require(throttle, "spinNowClock >= waitDeadlineClock", f"{context}: the spin keeps its deadline")
     sleep = function(common, "static void Common_PreciseSleep( double msec )", context)
@@ -185,9 +185,9 @@ def check_frame_rate_policy(common: str | None = None) -> None:
     # pacing statistics at 50 us on the limiter's own frame-start stamp
     require(pacing, "constexpr int FRAME_PACING_BIN_USEC = 50;", f"{context}: 50 us interval bins")
     update = function(read("src/framework/Session.cpp"), "void idSessionLocal::UpdateFramePacingStats( int requestedWaitMsec, int actualWaitMsec, int gameTicsToRun )", context)
-    require(update, "openQ4_GetPresentationFrameStartMsec()", f"{context}: intervals use the limiter's high-resolution stamp")
-    require(update, "frameIntervalBins[ openq4::FramePacingBin( frameDeltaMsec ) ]", f"{context}: intervals are binned finely")
-    begin = function(common, "void openQ4_BeginPresentationFrame( void )", context)
+    require(update, "openD3_GetPresentationFrameStartMsec()", f"{context}: intervals use the limiter's high-resolution stamp")
+    require(update, "frameIntervalBins[ opend3::FramePacingBin( frameDeltaMsec ) ]", f"{context}: intervals are binned finely")
+    begin = function(common, "void openD3_BeginPresentationFrame( void )", context)
     require_before(begin, "Common_ThrottlePresentationFrame();", "commonPresentationFrameStartClock = Common_GetPresentationClockNow();", f"{context}: the stamp follows the wait")
     # the engine's 240 Hz budget is the one the runtime harness judges
     harness = read("tools/tests/presentation_look_runtime.py")
@@ -197,10 +197,10 @@ def check_frame_rate_policy(common: str | None = None) -> None:
     require(pacing, f"constexpr float SUPPORTED_CAP_P95_BUDGET_MSEC = {budgets[1]}f;", f"{context}: p95 budget agrees with the harness")
     require(pacing, f"constexpr float SUPPORTED_CAP_P99_BUDGET_MSEC = {budgets[2]}f;", f"{context}: p99 budget agrees with the harness")
     session = read("src/framework/Session.cpp")
-    require(session, "openQ4_PrintPresentationThrottleStats(", f"{context}: framePacingSnapshot reports the limiter's lateness")
+    require(session, "openD3_PrintPresentationThrottleStats(", f"{context}: framePacingSnapshot reports the limiter's lateness")
     require(common, "late p50=%.3f p95=%.3f p99=%.3f max=%.3f ms, spin mean=%.3f ms", f"{context}: and how long it busy-waits")
-    require(session, "openQ4_PrintPresentationLatencyStats(", f"{context}: framePacingSnapshot reports input to swap (HF-08)")
-    require(session, "openQ4_ResetPresentationLatencyStats();", f"{context}: framePacingReset clears it")
+    require(session, "openD3_PrintPresentationLatencyStats(", f"{context}: framePacingSnapshot reports input to swap (HF-08)")
+    require(session, "openD3_ResetPresentationLatencyStats();", f"{context}: framePacingReset clears it")
     renderer = read("src/renderer/RenderSystem.cpp")
     end = function(renderer, "void idRenderSystemLocal::EndFrame(", context)
     require_before(end, "Usercmd_TakeFrameInputClocks(", "R_IssueRenderCommandsOnRenderThread()", f"{context}: freeze input clocks before handoff")
@@ -210,7 +210,7 @@ def check_frame_rate_policy(common: str | None = None) -> None:
     swap = function(renderer, "void R_SwapBuffersWithInputTiming(", context)
     require_before(swap, "GLimp_SwapBuffers();", "sys->GetClockTicks()", f"{context}: stamp after swap, not at handoff")
     require(swap, "afterSwap.presentedSequence > beforeSwap.presentedSequence", f"{context}: failed/withheld frames are not latency samples")
-    require(session, "openQ4_ResetPresentationThrottleStats();", f"{context}: framePacingReset clears it")
+    require(session, "openD3_ResetPresentationThrottleStats();", f"{context}: framePacingReset clears it")
     frame = function(common, "void idCommonLocal::Frame( void )", context)
     require_before(frame, "Common_PresentationStallProbe();", "Sys_GenerateEvents();", f"{context}: the hitch lands in an ordinary frame")
     require(common, 'com_maxfps( "com_maxfps", "240"', f"{context}: 240 default cap")
@@ -287,7 +287,7 @@ def check_tree(tree: str) -> dict[str, str]:
     require(look, "AllowsPresentationLook()", f"{context} look eligibility")
     require(look, "usercmdGen->GetPresentationViewAngles( inputYaw, inputPitch )", f"{context} one input sample per draw")
     require(look, "sample.appliedYaw = presentationCurCmdAngles.yaw;", f"{context} compares with the applied usercmd")
-    require(look, "openq4::ComputePresentationLook( sample )", f"{context} shared policy")
+    require(look, "opend3::ComputePresentationLook( sample )", f"{context} shared policy")
     require(look, "pm_minviewpitch.GetFloat()", f"{context} same pitch clamp as UpdateViewAngles")
     for pattern in (r"\bviewAngles\s*[.\[=]", r"\bdeltaViewAngles\s*[.\[=]", r"\busercmd\s*[.=]", r"\bfirstPersonView(Origin|Axis)\s*="):
         reject_pattern(look, pattern, f"{context} late look never writes authoritative view state")
@@ -310,7 +310,7 @@ def check_tree(tree: str) -> dict[str, str]:
 
     update_state = function(player, "void idPlayer::UpdatePresentationViewState( void )", context)
     require(update_state, "SHORT2ANGLE( usercmd.angles[0] )", f"{context} samples the applied usercmd")
-    require(update_state, "openq4::PresentationLookCoupled(", f"{context} coupling evidence")
+    require(update_state, "opend3::PresentationLookCoupled(", f"{context} coupling evidence")
     require(update_state, "presentationPrevCmdAngles = presentationCurCmdAngles;", f"{context} look endpoints collapse with the camera")
 
     allows = function(player, "bool idPlayer::AllowsPresentationLook( void ) const", context)
@@ -456,8 +456,8 @@ def check_tree(tree: str) -> dict[str, str]:
     require(game_local_h, "~idPresentationRendererScope( void ) { gameLocal.presentationRendererDepth--; }", f"{context} renderer scope unwinds")
     if tree == "src/game":
         render = read(f"{tree}/Game_render.cpp")
-        for signature in ("static void openQ4_RenderSceneDirect( const renderView_t *view, idRenderWorld *renderWorld, idCamera *portalSky, int renderFlags )",
-                          "static void openQ4_RenderSceneWorld( const renderView_t *view, idRenderWorld *renderWorld, idCamera *portalSky, int renderFlags )"):
+        for signature in ("static void openD3_RenderSceneDirect( const renderView_t *view, idRenderWorld *renderWorld, idCamera *portalSky, int renderFlags )",
+                          "static void openD3_RenderSceneWorld( const renderView_t *view, idRenderWorld *renderWorld, idCamera *portalSky, int renderFlags )"):
             body = function(render, signature, context)
             require_before(body, "idPresentationRendererScope rendererScope;", "RenderScene(", f"{context} scene work scoped")
     else:
@@ -539,10 +539,10 @@ def mutations() -> None:
     common = read("src/framework/Common.cpp")
     for name, mutated in {
         "minimized windows present uncapped": common.replace(
-            "openq4::PresentationCapForWindow( com_maxfps.GetInteger(), Common_IsGameWindowShown() )",
-            "openq4::PresentationCapForWindow( com_maxfps.GetInteger(), true )", 1),
+            "opend3::PresentationCapForWindow( com_maxfps.GetInteger(), Common_IsGameWindowShown() )",
+            "opend3::PresentationCapForWindow( com_maxfps.GetInteger(), true )", 1),
         "the limiter spins a fixed slice": common.replace(
-            "? openq4::LimiterSpinMsec( commonLimiterOversleep )", "? openq4::LegacyLimiterSpinMsec( frameMsec )", 1),
+            "? opend3::LimiterSpinMsec( commonLimiterOversleep )", "? opend3::LegacyLimiterSpinMsec( frameMsec )", 1),
     }.items():
         if mutated == common:
             raise AssertionError(f"mutation did not apply: {name}")

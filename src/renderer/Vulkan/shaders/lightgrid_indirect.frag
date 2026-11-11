@@ -3,7 +3,7 @@
 #include "framebuffer_coords.glsl"
 
 // Baked light-grid indirect diffuse. A port of
-// content/baseoq4/pak0/glprogs/lightgrid_indirect.fs: the body below is that
+// content/baseod3/pak0/glprogs/lightgrid_indirect.fs: the body below is that
 // file with its uniforms packed into LightGridBlock (256 bytes, the uniform
 // ring's slice size) and the macros restoring the OpenGL names.
 //

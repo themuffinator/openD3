@@ -60,7 +60,7 @@ idCVar net_enableIPv4( "net_enableIPv4", "1", CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_
 idCVar net_enableIPv6( "net_enableIPv6", "1", CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_BOOL, "bind an IPv6 socket" );
 idCVar net_mcast6addr( "net_mcast6addr", "ff02::1", CVAR_SYSTEM | CVAR_ARCHIVE, "IPv6 multicast group used for LAN server discovery" );
 idCVar net_mcast6iface( "net_mcast6iface", "0", CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_INTEGER, "IPv6 interface index used for LAN server discovery, 0 selects the default route" );
-// openQ4: simulated network conditions for testing on one machine (NetworkImpairment.h),
+// openD3: simulated network conditions for testing on one machine (NetworkImpairment.h),
 // the same set as win_net.cpp; this platform had none before.
 idCVar net_forceLatency( "net_forceLatency", "0", CVAR_SYSTEM | CVAR_INTEGER, "milliseconds latency" );
 idCVar net_forceDrop( "net_forceDrop", "0", CVAR_SYSTEM | CVAR_INTEGER, "percentage packet loss" );
@@ -1137,7 +1137,7 @@ static bool Net_BindDualStack( const char *ipv4Text, const char *ipv6Text, int p
 ==================
 Simulated network conditions
 
-openQ4: each port's two delay lines (NetworkImpairment.h), as in win_net.cpp.
+openD3: each port's two delay lines (NetworkImpairment.h), as in win_net.cpp.
 ==================
 */
 typedef idNetworkImpairment::port_t<netadr_t> netImpairmentPort_t;

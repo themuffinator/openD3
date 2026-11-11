@@ -449,7 +449,7 @@ def data_layers(doc: HudDocument) -> tuple:
 
 def medchange_document() -> dict:
     """guis/vehicles/medchange.gui (14.19)."""
-    doc = HudDocument("openq4.hud.remastered.medchange")
+    doc = HudDocument("opend3.hud.remastered.medchange")
     layout_state(doc)
     doc.boolean("oq4.medActive")
     doc.boolean("oq4.medHurt")
@@ -555,5 +555,5 @@ def medchange_document() -> dict:
     root = gameplay_root(doc, "hud-root", [overlay, hurt, anchor(doc, "tc", [saved], ident="med-tc")])
     joins = join_events(doc, [("all::visible", "activate"), ("quicksave_msg::visible", "saveMessage")])
     return doc.build(root, {"canvas": {"height": 720, "minWidth": 960},
-                            "extensions": {"openq4": {"reference": "ui-visual-design.md 14.19", "stock": "guis/vehicles/medchange.gui",
+                            "extensions": {"opend3": {"reference": "ui-visual-design.md 14.19", "stock": "guis/vehicles/medchange.gui",
                                                       "joinEvents": joins}}})

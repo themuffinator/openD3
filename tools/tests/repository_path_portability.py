@@ -96,7 +96,7 @@ def validate_source_root_directories(paths: list[str]) -> None:
 
 
 def validate_validation_coverage() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     push = read(".github/workflows/push-verification.yml")
     commit = read(".github/workflows/commit-validation.yml")
 

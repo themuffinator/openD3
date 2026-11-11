@@ -51,7 +51,7 @@ struct idFile {
 };
 struct VFS { idFile* OpenFileRead(const char*){return noFile?nullptr:new idFile;} void CloseFile(idFile* file){delete file;} } vfs;
 static VFS* fileSystem=&vfs;
-struct stb_vorbis_openq4_granule_page { unsigned page_start, page_end, granule; };
+struct stb_vorbis_opend3_granule_page { unsigned page_start, page_end, granule; };
 struct SoundVorbisStream {
     static constexpr int ArenaBytes=2*1024*1024, ChunkFrames=4096;
     char cache[64*1024];
@@ -60,7 +60,7 @@ struct SoundVorbisStream {
     bool Open(int(*)(void*,unsigned,void*,int),void*,unsigned){++decoderOpens; cursor=0; return !badDecoder;}
     int Error(){return 1;}
     bool Seek(unsigned frame){++seeks; cursor=frame; return !badSeek;}
-    bool SetCountedLength(unsigned counted,const stb_vorbis_openq4_granule_page& page){
+    bool SetCountedLength(unsigned counted,const stb_vorbis_opend3_granule_page& page){
         if(!counted || page.page_end<=page.page_start) return false; frames=counted; return true; }
     // Mono: each sample is its frame number, so a block shows where it was decoded from.
     int Read(short* out,int count){++reads; int n=std::min<int>(count,static_cast<int>(frames-cursor));

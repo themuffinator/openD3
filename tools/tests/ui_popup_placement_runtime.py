@@ -30,7 +30,7 @@ def main():
     parser.add_argument('--mutations', action='store_true')
     args = parser.parse_args()
     repository = args.repository.resolve()
-    candidate=(args.document or ROOT/'content/baseoq4/pak0/guis/menu/settings/system.q4ui').resolve()
+    candidate=(args.document or ROOT/'content/baseod3/pak0/guis/menu/settings/system.q4ui').resolve()
     rml = repository / 'subprojects/RmlUi-6.3'
     scratch = ROOT / '.tmp'
     scratch.mkdir(exist_ok=True)
@@ -49,7 +49,7 @@ def main():
                  repository / 'builddir/subprojects/libtess2-8dbd6483e920311a58c9af10a10beb278efebc36/libtess2.a']
     headers = [path for base in [ROOT / 'src', rml / 'Include', rml / 'Source', json_include, tess_include]
                for path in base.rglob('*') if path.suffix in ('.h', '.hpp', '.inl', '.tpp')]
-    locales=sorted((ROOT/'content/baseoq4/pak0/strings').glob('*_openq4.lang'))+sorted((ROOT/'content/baseoq4/pak0/strings').glob('*_guis.lang'))
+    locales=sorted((ROOT/'content/baseod3/pak0/strings').glob('*_opend3.lang'))+sorted((ROOT/'content/baseod3/pak0/strings').glob('*_guis.lang'))
     bound = sources + headers + libraries + locales + [Path(__file__).resolve(), candidate, ROOT / "tools/tests/native/UiValueRuntimeTest.cpp"]
     before = {str(path): sha(path) for path in bound}
     reused = {}
@@ -80,7 +80,7 @@ def main():
         command += ' /Fe"' + str(exe) + '" /link '
         command += ' '.join('"' + str(path) + '"' for path in libraries) + ' /SUBSYSTEM:CONSOLE user32.lib'
         batch = directory / 'compile.cmd'
-        batch.write_text('@echo off\ncall "' + str(repository / 'tools/build/openq4_devcmd.cmd') +
+        batch.write_text('@echo off\ncall "' + str(repository / 'tools/build/opend3_devcmd.cmd') +
                          '"\nif errorlevel 1 exit /b %errorlevel%\n' + command + '\n', encoding='utf-8')
         started=time.monotonic()
         result = subprocess.run(['cmd', '/c', str(batch)], cwd=directory, env=env, text=True,
@@ -107,7 +107,7 @@ def main():
     mutations = []
     try:
         exe = build('positive', [source for source in sources if source not in reused], reused.values())
-        run_result = run(exe, args.test_argument if args.test_argument is not None else [str(candidate),str(ROOT/'content/baseoq4/pak0/strings')])
+        run_result = run(exe, args.test_argument if args.test_argument is not None else [str(candidate),str(ROOT/'content/baseod3/pak0/strings')])
         print(run_result.stdout + run_result.stderr, flush=True)
         if args.mutations and run_result.returncode == 0:
             rules=[

@@ -724,7 +724,7 @@ static void CheckRemasteredMpHud(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%s %u:%u %s\n",path,unsigned(d.line),unsigned(d.column),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.hud.remastered.mp","Remastered MP HUD validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.hud.remastered.mp","Remastered MP HUD validates");
 	RemasteredLayoutPreference(host,1);
 	Runtime runtime(host);
 	Check(runtime.Initialize(),"retained runtime");
@@ -1400,7 +1400,7 @@ static void CheckRemasteredVehicleHud(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%s %u:%u %s\n",path,unsigned(d.line),unsigned(d.column),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.hud.remastered.vehicle","Remastered vehicle HUD validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.hud.remastered.vehicle","Remastered vehicle HUD validates");
 	RemasteredLayoutPreference(host,1);
 	Runtime runtime(host);
 	Check(runtime.Initialize(),"retained runtime");
@@ -1569,7 +1569,7 @@ static void CheckRemasteredAirdefHud(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%s %u:%u %s\n",path,unsigned(d.line),unsigned(d.column),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.hud.remastered.airdef","Remastered air-defence HUD validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.hud.remastered.airdef","Remastered air-defence HUD validates");
 	RemasteredLayoutPreference(host,1);
 	Runtime runtime(host);
 	Check(runtime.Initialize(),"retained runtime");
@@ -1641,7 +1641,7 @@ static void CheckRemasteredTurretHud(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%s %u:%u %s\n",path,unsigned(d.line),unsigned(d.column),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.hud.remastered.turret","Remastered space cannon HUD validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.hud.remastered.turret","Remastered space cannon HUD validates");
 	RemasteredLayoutPreference(host,1);
 	Runtime runtime(host);
 	Check(runtime.Initialize(),"retained runtime");
@@ -1704,7 +1704,7 @@ static void CheckRemasteredMccHud(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%s %u:%u %s\n",path,unsigned(d.line),unsigned(d.column),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.hud.remastered.mcc","Remastered MCC cannon HUD validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.hud.remastered.mcc","Remastered MCC cannon HUD validates");
 	RemasteredLayoutPreference(host,1);
 	Runtime runtime(host);
 	Check(runtime.Initialize(),"retained runtime");
@@ -1763,7 +1763,7 @@ static void CheckRemasteredMccHud(ScreenHost& host, const char* path) {
 	runtime.Shutdown();
 }
 
-// openQ4's HUD for the Awakening's chaingun turret (turret_hud.gui, 14.12): the
+// openD3's HUD for the Awakening's chaingun turret (turret_hud.gui, 14.12): the
 // gunner's health and armor gauges, the barrel heat on the gauge where ammunition
 // shows on foot and under the crosshair, warning from vehicle_heatwarn, OVERHEATED
 // while the gun vents, and the HUD prompt's Exit.
@@ -1771,7 +1771,7 @@ static void CheckRemasteredChaingunTurretHud(ScreenHost& host, const char* path)
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%s %u:%u %s\n",path,unsigned(d.line),unsigned(d.column),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.hud.remastered.chaingun_turret","Remastered chaingun turret HUD validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.hud.remastered.chaingun_turret","Remastered chaingun turret HUD validates");
 	RemasteredLayoutPreference(host,1);
 	Runtime runtime(host);
 	Check(runtime.Initialize(),"retained runtime");
@@ -1834,7 +1834,7 @@ static void CheckRemasteredSpeederHud(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%s %u:%u %s\n",path,unsigned(d.line),unsigned(d.column),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.hud.remastered.speeder","Remastered speeder HUD validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.hud.remastered.speeder","Remastered speeder HUD validates");
 	RemasteredLayoutPreference(host,1);
 	Runtime runtime(host);
 	Check(runtime.Initialize(),"retained runtime");
@@ -1966,7 +1966,7 @@ static void CheckRemasteredGevHud(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%s %u:%u %s\n",path,unsigned(d.line),unsigned(d.column),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.hud.remastered.gev","Remastered GEV HUD validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.hud.remastered.gev","Remastered GEV HUD validates");
 	Check(document.Model().canvasHeight == 720 && document.Model().canvasMinWidth == 960,"the GEV HUD uses the 4:3 center-screen canvas");
 	RemasteredLayoutPreference(host,1);
 	Runtime runtime(host);
@@ -2103,7 +2103,7 @@ static void CheckRemasteredMedchangeHud(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%s %u:%u %s\n",path,unsigned(d.line),unsigned(d.column),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.hud.remastered.medchange","Remastered implant overlay validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.hud.remastered.medchange","Remastered implant overlay validates");
 	Check(document.Model().canvasHeight == 720 && document.Model().canvasMinWidth == 960,"the implant overlay uses the 4:3 center-screen canvas");
 	RemasteredLayoutPreference(host,1);
 	Runtime runtime(host);
@@ -2187,7 +2187,7 @@ static void CheckRemasteredObjectivesHud(ScreenHost& host, const char* path, boo
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%s %u:%u %s\n",path,unsigned(d.line),unsigned(d.column),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == std::string("openq4.hud.remastered.objectives")+(strogg ? ".strogg" : ""),
+	Check(diagnostics.empty() && document.Model().id == std::string("opend3.hud.remastered.objectives")+(strogg ? ".strogg" : ""),
 		"Remastered objectives validate");
 	RemasteredLayoutPreference(host,1);
 	Runtime runtime(host);
@@ -2289,7 +2289,7 @@ static void CheckRemasteredScoreboardHud(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%s %u:%u %s\n",path,unsigned(d.line),unsigned(d.column),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.hud.remastered.scoreboard","Remastered scoreboard validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.hud.remastered.scoreboard","Remastered scoreboard validates");
 	RemasteredLayoutPreference(host,1);
 	Runtime runtime(host);
 	Check(runtime.Initialize(),"retained runtime");
@@ -2297,7 +2297,7 @@ static void CheckRemasteredScoreboardHud(ScreenHost& host, const char* path) {
 	std::string error;
 	Runtime::EventEffects effects;
 	StateValues values = RemasteredLayout(1280,720);
-	values.insert({{"servername",std::string("openQ4 Community")},{"serverip",std::string("203.0.113.24:28004")},
+	values.insert({{"servername",std::string("openD3 Community")},{"serverip",std::string("203.0.113.24:28004")},
 		{"servergametype",std::string("Capture the Flag")},{"servermap",std::string("q4ctf1")},{"serverlimit",std::string("Capture Limit: 5")},
 		{"servertimelimit",std::string("Time Limit: 15")},{"timeleft",std::string("7:12")},{"infinity",false},
 		{"oq4_sb_pitch",16.0},{"oq4_sb_kills",true},{"oq4_sb_rank",std::string("3RD OF 13")},
@@ -2317,7 +2317,7 @@ static void CheckRemasteredScoreboardHud(ScreenHost& host, const char* path) {
 	Check(Shown(runtime,"sb-frame") && runtime.GetBounds("sb-card",card) && Near(card.width,744.f,1.f) && Near(card.height,98.f+76+52+52+36,1.f) &&
 		Near(card.x+card.width/2,640.f,1.f) && Near(card.y+card.height/2,360.f,1.f),"the card is as tall as its lists, centred over the view");
 	const auto title = runtime.PresentedValue("sb-title","text"), mode = runtime.PresentedValue("sb-mode","text");
-	Check(Shown(runtime,"sb-title") && title && title->text == "openQ4 Community" && !Shown(runtime,"sb-title-t") && Shown(runtime,"sb-match") &&
+	Check(Shown(runtime,"sb-title") && title && title->text == "openD3 Community" && !Shown(runtime,"sb-title-t") && Shown(runtime,"sb-match") &&
 		mode && mode->text == "Capture the Flag","the header names the server and the match line the mode");
 	Check(Shown(runtime,"sb0") && Shown(runtime,"sb0-band1") && !Shown(runtime,"sb0-band2") && Shown(runtime,"sb1-band2") &&
 		Shown(runtime,"sb2-band3") && Shown(runtime,"sb0-title1") && Shown(runtime,"sb2-title3"),

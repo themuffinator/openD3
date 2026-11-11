@@ -1,9 +1,9 @@
-// Preserved from openQ4-game; Quake 4 SDK EULA. See docs/dev/game-test-coverage.md.
+// Preserved from openD3-game; Quake 4 SDK EULA. See docs/dev/game-test-coverage.md.
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
 
-// openQ4's supported Linux x64 and arm64 targets are little-endian.  Supply
+// openD3's supported Linux x64 and arm64 targets are little-endian.  Supply
 // the two endian helpers normally provided by the engine precompiled header so
 // this probe exercises the production MD5 implementation in isolation.
 static void LittleRevBytes( void *, int, int ) {
@@ -29,7 +29,7 @@ int main() {
 	const checksumVector_t vectors[] = {
 		{ "", 0x3b75655eUL },
 		{ "abc", 0x275fa452UL },
-		{ "openQ4", 0x8a8bae9bUL },
+		{ "openD3", 0x8a8bae9bUL },
 	};
 
 	for ( const checksumVector_t &vector : vectors ) {

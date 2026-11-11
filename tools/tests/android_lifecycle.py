@@ -71,7 +71,7 @@ static void S_SetDevicePaused(bool paused){devicePaused=paused;if(!paused)++resu
 static int trims=0;
 static void S_TrimMemory(const char* reason){require(!std::strcmp(reason,"os low-memory"),"wrong trim reason");require(engineThread,"audio trimmed off the main thread");++trims;}
 struct {bool activeApp=true,movingWindow=false;} win32;
-namespace openq4 {static void NativeInputBeforeWindowChange(){}}
+namespace opend3 {static void NativeInputBeforeWindowChange(){}}
 struct Key {bool down=false;};static Key keyStorage[MAX_KEYS];static Key* keys=keyStorage;
 struct Usercmd {void Clear(){++usercmdClears;}} usercmdValue,*usercmdGen=&usercmdValue;
 struct idKeyInput {
@@ -221,14 +221,14 @@ def source():
         'static bool Session_AndroidSetupAvailable(', 'static void Session_OpenAndroidSetup('))
     checks = '''
     Session_OpenAndroidSetup();setupMessageSucceeds=false;Session_OpenAndroidSetup();
-#if defined(__ANDROID__) && !defined(OPENQ4_SIGMATOUCH)
+#if defined(__ANDROID__) && !defined(OPEND3_SIGMATOUCH)
     require(Session_AndroidSetupAvailable() && setupRequests==2 && setupWarnings==1 && lastSetupPage==0,"Android setup handoff/failure mismatch");
     setupMessageSucceeds=true;Session_OpenAndroidSetup(1);
     require(setupRequests==3 && lastSetupPage==1,"the touch layout editor page was not requested");
 #else
     require(!Session_AndroidSetupAvailable() && setupRequests==0 && setupWarnings==0,"setup advertised outside standalone Android");
 #endif
-#if defined(OPENQ4_SIGMATOUCH)
+#if defined(OPEND3_SIGMATOUCH)
     std::puts("Setup re-entry is unavailable to the separate SigmaTouch host");return 0;
 #endif
 '''
@@ -249,7 +249,7 @@ def main():
         cpp.write_text(source(), encoding='utf-8')
         for platform in ('android', 'desktop', 'sigmatouch'):
             defines = ['-D__ANDROID__=1'] if platform != 'desktop' else []
-            if platform == 'sigmatouch': defines.append('-DOPENQ4_SIGMATOUCH=1')
+            if platform == 'sigmatouch': defines.append('-DOPEND3_SIGMATOUCH=1')
             subprocess.run([compiler, '-std=c++17', *defines, str(cpp), '-o', str(exe)], check=True)
             print(platform, flush=True)
             subprocess.run([str(exe)], check=True)

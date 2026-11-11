@@ -44,7 +44,7 @@ extern idCVar vr_standingHeight;
 extern idCVar vr_pauseOnFocusLoss;
 extern idCVar vr_debug;
 
-// The OpenXR implementation, when the client was built with it (OPENQ4_OPENXR).
+// The OpenXR implementation, when the client was built with it (OPEND3_OPENXR).
 idVRSystem *		VR_GetOpenXRSystem( void );
 
 // True once after a session that had the controllers lost them: the headset

@@ -1,4 +1,4 @@
-// Preserved from openQ4-game; Quake 4 SDK EULA. See docs/dev/game-test-coverage.md.
+// Preserved from openD3-game; Quake 4 SDK EULA. See docs/dev/game-test-coverage.md.
 #include <cstdint>
 #include <cstring>
 #include <type_traits>
@@ -25,7 +25,7 @@ int main() {
 	static_assert( sizeof( signed char ) == 1, "binary tokens require eight-bit signed bytes" );
 	static_assert( sizeof( unsigned int ) == 4, "binary token integer storage must remain 32-bit" );
 
-#if defined( OPENQ4_EXPECT_UNSIGNED_PLAIN_CHAR )
+#if defined( OPEND3_EXPECT_UNSIGNED_PLAIN_CHAR )
 	static_assert( !std::is_signed<char>::value,
 		"the unsigned-plain-char regression mode must emulate Linux AArch64" );
 #endif

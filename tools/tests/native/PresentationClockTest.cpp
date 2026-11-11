@@ -9,7 +9,7 @@
 static bool Near(double a, double b, double epsilon = 0.00001) { return std::abs(a - b) < epsilon; }
 
 static void Boundaries() {
-	openq4::PresentationClock clock;
+	opend3::PresentationClock clock;
 	CHECK(clock.Phase(0, 16, 60, 0.0, false) == 0.0f);
 	CHECK(Near(clock.Phase(0, 16, 60, 0.125, false), 0.0075));
 	CHECK(Near(clock.Phase(0, 16, 60, 0.250, false), 0.015));
@@ -40,7 +40,7 @@ static void Boundaries() {
 }
 
 static void WrapAndMapping() {
-	openq4::PresentationClock clock;
+	opend3::PresentationClock clock;
 	const int maximum = (std::numeric_limits<int>::max)();
 	const int minimum = (std::numeric_limits<int>::min)();
 	const double now = 4294967296.0; // beyond a wrapping 32-bit ms clock
@@ -60,7 +60,7 @@ static void WrapAndMapping() {
 }
 
 static void LongRunAndCaps() {
-	openq4::PresentationClock clock;
+	opend3::PresentationClock clock;
 	for (int tick = 0; tick < 1000000; ++tick) {
 		const double boundary = tick * (1000.0 / 60);
 		CHECK(clock.Phase(tick * 16, 16, 60, boundary, false) < 0.00001f);
@@ -97,7 +97,7 @@ static void LongRunAndCaps() {
 }
 
 static void XRDelta() {
-	openq4::PresentationFrameDelta delta;
+	opend3::PresentationFrameDelta delta;
 	CHECK(delta.Sample(1000000, 1000000) == 0);
 	CHECK(Near(delta.Sample(1000125, 1000000), 0.000125));
 	CHECK(Near(delta.Sample(3000000, 1000000), 0.1));

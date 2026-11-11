@@ -15,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_LIBS_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
 MAX_EDIT_LINE = 256
 FUZZY_STATE_LIMIT = 64 * 1024
@@ -200,10 +200,10 @@ def validate_registration() -> None:
     native_block = meson[meson.find("if get_option('build_native_tests')"):]
     native_block = native_block[: native_block.find("\nendif")]
     require(native_block, "'tools/tests/native/ConsoleCompletionTest.cpp'", "meson.build native tests")
-    require(native_block, "'openq4-console-completion'", "meson.build native tests")
+    require(native_block, "'opend3-console-completion'", "meson.build native tests")
 
-    validator = read("tools/validation/openq4_validate.py")
-    require(validator, '"console_completion_contract.py"', "openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
+    require(validator, '"console_completion_contract.py"', "opend3_validate.py")
 
 
 def main() -> None:

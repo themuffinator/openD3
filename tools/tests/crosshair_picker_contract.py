@@ -21,8 +21,8 @@ ROOT = Path(__file__).resolve().parents[2]
 TEST_PATH = "tools/tests/crosshair_picker_contract.py"
 SESSION_MENU = "src/framework/Session_menu.cpp"
 WINDOW = "src/ui/Window.cpp"
-GAME_GUI = "content/baseoq4/pak0/guis/menu/settings/game.gui"
-GAME_HOVERS_GUI = "content/baseoq4/pak0/guis/menu/settings/game_hovers.gui"
+GAME_GUI = "content/baseod3/pak0/guis/menu/settings/game.gui"
+GAME_HOVERS_GUI = "content/baseod3/pak0/guis/menu/settings/game_hovers.gui"
 
 # player_marine_mp_ui's mtr_crosshair1..20, in file order (def/player.def in the
 # retail paks, not in this repository).
@@ -295,7 +295,7 @@ def run_lookup(finder: str) -> None:
 
 
 def check_ci_wiring() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     if validator.count("crosshair_picker_contract.py") != 1:
         raise AssertionError("Local validation must register the crosshair picker contract exactly once")
     for workflow_path in (".github/workflows/commit-validation.yml", ".github/workflows/push-verification.yml"):

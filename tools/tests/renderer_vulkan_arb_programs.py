@@ -26,7 +26,7 @@ from PIL import Image
 
 import renderer_pbr_laboratory as lab
 
-PREFIX = 'textures/openq4/authored_arb'
+PREFIX = 'textures/opend3/authored_arb'
 
 # Scroll and tint: vertexParm feeds both programs' locals.
 BASIC = '''!!ARBvp1.0
@@ -288,7 +288,7 @@ def tga(width: int, height: int, pixels: bytes) -> bytes:
 
 def write_fixture(save: Path) -> dict:
     files = {f'glprogs/tests/oq4_arb_{name}.vfp': text.encode('utf-8') for name, text in PROGRAMS.items()}
-    files['materials/openq4_authored_arb_test.mtr'] = ''.join(
+    files['materials/opend3_authored_arb_test.mtr'] = ''.join(
         material(name, body) for name, (body, _) in CONTROLS.items()).encode('utf-8')
     # The asymmetric nearest-filtered pattern exposes flipped or offset
     # coordinates and wrong texture binding.
@@ -302,7 +302,7 @@ def write_fixture(save: Path) -> dict:
         files[f'{PREFIX}/cube_{face}.tga'] = tga(4, 4, bytes(color) * 16)
     hashes = {}
     for name, data in files.items():
-        path = save / 'baseoq4' / name
+        path = save / 'baseod3' / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
         hashes[name] = lab.digest(path)
@@ -460,7 +460,7 @@ def main() -> int:
     report['harnessSources'][Path(__file__).name] = source_hash
     report.update(authoredProfile=profile, authoredSources=source_hashes)
     report['authoredSourcesUnchanged'] = all(
-        lab.digest(args.output_dir / 'batch/baseoq4' / name) == expected for name, expected in source_hashes.items())
+        lab.digest(args.output_dir / 'batch/baseod3' / name) == expected for name, expected in source_hashes.items())
     report['authoredProof'] = prove(report)
     path.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(report['authoredProof'], indent=2))

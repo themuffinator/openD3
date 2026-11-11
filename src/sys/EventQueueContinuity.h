@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <limits>
 
-namespace openq4 {
+namespace opend3 {
 
 // Observes loss/explicit invalidation of an event stream, including an empty
 // flush after the final native record was removed. This is not a queue lock,
@@ -25,7 +25,7 @@ private:
 	std::atomic<std::uint64_t> token;
 };
 
-} // namespace openq4
+} // namespace opend3
 
 // One engine-process stream spans both the platform and pushed-event queues.
 // Capture before collection; compare again before each native mutation and ACK.

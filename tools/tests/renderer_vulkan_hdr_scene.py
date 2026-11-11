@@ -56,7 +56,7 @@ def configure_composition(manifest, samples):
             overlay = f'linear_overlay_{len(profile)}' if effect != 'clear' else None
             if overlay:
                 commands += [f'spawn light name {overlay} origin "0 0 400" angle 0 '
-                             f'light_radius "1400 1400 1000" texture "lights/openq4/pbr_lab/{effect.split("-")[0]}" noshadows 1']
+                             f'light_radius "1400 1400 1000" texture "lights/opend3/pbr_lab/{effect.split("-")[0]}" noshadows 1']
             commands += [f'spawn func_static name {specimen} model "{lab.lab.MODEL}" '
                          f'shader "{lab.lab.PREFIX}/{material}" origin "0 -700 380" angle 0 solid 0',
                          'wait 30', 'g_stopTime 1']

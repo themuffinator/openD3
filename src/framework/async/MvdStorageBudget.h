@@ -1,12 +1,12 @@
-#ifndef OPENQ4_MVD_STORAGE_BUDGET_H
-#define OPENQ4_MVD_STORAGE_BUDGET_H
+#ifndef OPEND3_MVD_STORAGE_BUDGET_H
+#define OPEND3_MVD_STORAGE_BUDGET_H
 
 #include <cstdint>
 #include <filesystem>
 #include <limits>
 #include <system_error>
 
-namespace openq4_mvd {
+namespace opend3_mvd {
 
 struct LibraryUsage {
 	std::int64_t bytes = 0;
@@ -68,6 +68,6 @@ inline bool WouldExceedLibraryBudget( std::int64_t current, int additional,
 	return additional > available || reserve > available - additional;
 }
 
-} // namespace openq4_mvd
+} // namespace opend3_mvd
 
 #endif

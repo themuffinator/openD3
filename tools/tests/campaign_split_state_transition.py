@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_LIBS = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT))
+GAME_LIBS = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT))
 
 
 def read(path: Path) -> str:
@@ -54,10 +54,10 @@ def function_body(source: str, signature: str) -> str:
 
 def validate_session_assertion_command() -> None:
     source = read(ROOT / "src/framework/Session.cpp")
-    body = function_body(source, "static void Session_openQ4AssertMapState_f( const idCmdArgs &args ) {")
+    body = function_body(source, "static void Session_openD3AssertMapState_f( const idCmdArgs &args ) {")
     move_body = function_body(source, "void idSessionLocal::MoveToNewMap( const char *mapName ) {")
 
-    require(source, 'cmdSystem->AddCommand( "openq4_assertMapState"', "session command registration")
+    require(source, 'cmdSystem->AddCommand( "opend3_assertMapState"', "session command registration")
     require(body, 'Session_NormalizeMapPathAndEntityFilter( args.Argv( 1 ), Session_GetEntityFilterArg( args ), expectedMap, expectedEntityFilter );', "expected map/filter normalization")
     require(body, 'Session_NormalizeMapDeclPath( sessLocal.mapSpawnData.serverInfo.GetString( "si_map", "" ), actualMap );', "actual map normalization")
     require(body, 'Session_NormalizeEntityFilterToken( sessLocal.mapSpawnData.serverInfo.GetString( "si_entityFilter", "" ), actualEntityFilter );', "actual entity-filter normalization")
@@ -77,15 +77,15 @@ def validate_benchmark_profile() -> None:
     require(source, '"mapStateMismatch": re.compile(r"ERROR:\\s+openD3 map state mismatch|openD3 map state assertion"', "map-state mismatch warning pattern")
 
     expected_sequence = (
-        "openq4_assertMapState game/mcc_2",
+        "opend3_assertMapState game/mcc_2",
         "trigger mcc2_endlevel",
-        "openq4_assertMapState game/storage1 first",
+        "opend3_assertMapState game/storage1 first",
         "trigger endLevel",
-        "openq4_assertMapState game/storage2",
+        "opend3_assertMapState game/storage2",
         "trigger target_endlevel_1",
-        "openq4_assertMapState game/storage1 second",
+        "opend3_assertMapState game/storage1 second",
         "trigger target_endlevel_2",
-        "openq4_assertMapState game/tram1",
+        "opend3_assertMapState game/tram1",
     )
     for token in expected_sequence:
         require(source, token, "MCC2 to Tram1 scripted transition sequence")
@@ -105,7 +105,7 @@ def validate_game_endlevel_command_shape() -> None:
 
 
 def validate_ci_wiring() -> None:
-    validation = read(ROOT / "tools/validation/openq4_validate.py")
+    validation = read(ROOT / "tools/validation/opend3_validate.py")
     push = read(ROOT / ".github/workflows/push-verification.yml")
     commit = read(ROOT / ".github/workflows/commit-validation.yml")
 

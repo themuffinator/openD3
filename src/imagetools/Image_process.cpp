@@ -400,7 +400,7 @@ byte *R_MipMapWithSRGB( const byte *in, int width, int height ) {
 	if ( width < 1 || height < 1 || ( width == 1 && height == 1 ) ) { return NULL; }
 	byte *out = static_cast<byte *>( R_StaticAlloc( Max( 1, width / 2 ) * Max( 1, height / 2 ) * 4 ) );
 	if ( !out ) { return NULL; }
-	openq4SRGB::Downsample( in, width, height, out );
+	opend3SRGB::Downsample( in, width, height, out );
 	return out;
 }
 

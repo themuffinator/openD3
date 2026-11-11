@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the original openQ4 PBR laboratory below .tmp, never in shipped content.
+"""Build the original openD3 PBR laboratory below .tmp, never in shipped content.
 
 This is real map geometry and independently authored materials, not a global
 material override. All textures, cube faces and sphere geometry are generated
@@ -17,23 +17,23 @@ from pathlib import Path
 import generate_pbr_fixture as fixture
 
 ROOT = fixture.ROOT
-MAP = "maps/tools/openq4_pbr_lab"
-PREFIX = "textures/openq4/pbr_lab"
-MODEL = "models/openq4/pbr_lab/sphere.ase"
-SAMPLING_MODEL = "models/openq4/pbr_lab/sphere_tiled.ase"
-BACKFACE_MODEL = "models/openq4/pbr_lab/backface_receiver.ase"
-CONSTANT_NORMAL_MODEL = "models/openq4/pbr_lab/sphere_constant_normal.ase"
-VERTEX_COLOR_MODEL = "models/openq4/pbr_lab/sphere_vertex_color.ase"
-SKINNING_MODEL = "openq4_pbr_lab_skinned"
-SKINNING_MESH = "models/openq4/pbr_lab/skinned.md5mesh"
+MAP = "maps/tools/opend3_pbr_lab"
+PREFIX = "textures/opend3/pbr_lab"
+MODEL = "models/opend3/pbr_lab/sphere.ase"
+SAMPLING_MODEL = "models/opend3/pbr_lab/sphere_tiled.ase"
+BACKFACE_MODEL = "models/opend3/pbr_lab/backface_receiver.ase"
+CONSTANT_NORMAL_MODEL = "models/opend3/pbr_lab/sphere_constant_normal.ase"
+VERTEX_COLOR_MODEL = "models/opend3/pbr_lab/sphere_vertex_color.ase"
+SKINNING_MODEL = "opend3_pbr_lab_skinned"
+SKINNING_MESH = "models/opend3/pbr_lab/skinned.md5mesh"
 # REN-05 skin substitutions on the skinned specimen (CPU and packed MD5R): its
 # authored PBR metal becomes another PBR material, or a classic one.
 # REN-05 mixed-material model: the skinned sphere split into two meshes, PBR
 # metal above its equator and a classic material below, as a mod might author.
-MIXED_MODEL = "openq4_pbr_lab_mixed"
-MIXED_MESH = "models/openq4/pbr_lab/mixed.md5mesh"
+MIXED_MODEL = "opend3_pbr_lab_mixed"
+MIXED_MESH = "models/opend3/pbr_lab/mixed.md5mesh"
 MIXED_SHADERS = (f"{PREFIX}/metal_3", f"{PREFIX}/classic_specular")
-SKINNING_SKINS = {"dielectric": "openq4_pbr_lab/skinned_dielectric", "classic": "openq4_pbr_lab/skinned_classic"}
+SKINNING_SKINS = {"dielectric": "opend3_pbr_lab/skinned_dielectric", "classic": "opend3_pbr_lab/skinned_classic"}
 
 
 def rgba_tga(size: int, pixels: list[tuple[int, int, int, int]]) -> bytes:
@@ -60,7 +60,7 @@ def sphere_ase(segments: int = 48, rings: int = 24, radius: float = 72, uv_scale
                 triangles.append((b, c, d))
     # ASE winding is converted by the engine; include smooth per-corner normals
     # so highlights exercise the tangent basis rather than a faceted proxy.
-    out = ['*3DSMAX_ASCIIEXPORT 200', '*MATERIAL_LIST {', '*MATERIAL_COUNT 1', '*MATERIAL 0 {', '*MAP_DIFFUSE {', f'*BITMAP "//openq4/baseoq4/{PREFIX}/neutral"', '*UVW_U_TILING 1', '*UVW_V_TILING 1', '}', '}', '}', '*GEOMOBJECT {', '*NODE_NAME "PBR_LAB_SPHERE"', '*NODE_TM {', '*TM_ROW0 1 0 0', '*TM_ROW1 0 1 0', '*TM_ROW2 0 0 1', '*TM_ROW3 0 0 0', '}', '*MESH {', f'*MESH_NUMVERTEX {len(vertices)}', f'*MESH_NUMFACES {len(triangles)}', '*MESH_VERTEX_LIST {']
+    out = ['*3DSMAX_ASCIIEXPORT 200', '*MATERIAL_LIST {', '*MATERIAL_COUNT 1', '*MATERIAL 0 {', '*MAP_DIFFUSE {', f'*BITMAP "//opend3/baseod3/{PREFIX}/neutral"', '*UVW_U_TILING 1', '*UVW_V_TILING 1', '}', '}', '}', '*GEOMOBJECT {', '*NODE_NAME "PBR_LAB_SPHERE"', '*NODE_TM {', '*TM_ROW0 1 0 0', '*TM_ROW1 0 1 0', '*TM_ROW2 0 0 1', '*TM_ROW3 0 0 0', '}', '*MESH {', f'*MESH_NUMVERTEX {len(vertices)}', f'*MESH_NUMFACES {len(triangles)}', '*MESH_VERTEX_LIST {']
     out += [f'*MESH_VERTEX {i} {x:.8f} {y:.8f} {z:.8f}' for i, (x, y, z) in enumerate(vertices)]
     out += ['}', '*MESH_FACE_LIST {']
     out += [f'*MESH_FACE {i}: A: {a} B: {b} C: {c} AB: 1 BC: 1 CA: 1 *MESH_SMOOTHING 1 *MESH_MTLID 0' for i, (a, b, c) in enumerate(triangles)]
@@ -93,7 +93,7 @@ def backface_plane_ase() -> str:
 *MATERIAL_COUNT 1
 *MATERIAL 0 {
 *MAP_DIFFUSE {
-*BITMAP "//openq4/baseoq4/textures/openq4/pbr_lab/neutral"
+*BITMAP "//opend3/baseod3/textures/opend3/pbr_lab/neutral"
 *UVW_U_TILING 1
 *UVW_V_TILING 1
 }
@@ -178,7 +178,7 @@ def skinned_sphere(shaders: tuple[str, ...] = (f'{PREFIX}/metal_3',)) -> tuple[s
             # MD5 faces use the engine's clockwise convention directly.
             if j>0: triangles.append((a,b,c))
             if j<rings-1: triangles.append((b,d,c))
-    mesh=['MD5Version 10','commandline "original openQ4 PBR laboratory"','numJoints 2',f'numMeshes {len(shaders)}',
+    mesh=['MD5Version 10','commandline "original openD3 PBR laboratory"','numJoints 2',f'numMeshes {len(shaders)}',
           'joints {','"origin" -1 ( 0 0 0 ) ( 0 0 0 )','"bend" 0 ( 0 0 36 ) ( 0 0 0 )','}']
     split=(rings//2)*segments*2-segments  # triangles of the upper rings (the first ring has one per quad)
     parts=[triangles] if len(shaders)==1 else [triangles[:split], triangles[split:]]
@@ -189,7 +189,7 @@ def skinned_sphere(shaders: tuple[str, ...] = (f'{PREFIX}/metal_3',)) -> tuple[s
         mesh += [f'numweights {len(weights)}']+[f'weight {i} {joint} {weight:.9g} ( {x:.9g} {y:.9g} {z:.9g} )' for i,(joint,weight,x,y,z) in enumerate(weights)]
         mesh += ['}','']
     anim='''MD5Version 10
-commandline "original openQ4 PBR laboratory"
+commandline "original openD3 PBR laboratory"
 numFrames 2
 numJoints 2
 frameRate 24
@@ -209,9 +209,9 @@ baseframe {
 frame 0 { }
 frame 1 { }
 '''
-    model=f'model {SKINNING_MODEL} {{\nmesh {SKINNING_MESH}\nanim idle models/openq4/pbr_lab/idle.md5anim\n}}\n'
+    model=f'model {SKINNING_MODEL} {{\nmesh {SKINNING_MESH}\nanim idle models/opend3/pbr_lab/idle.md5anim\n}}\n'
     if len(shaders)>1:
-        model=f'model {MIXED_MODEL} {{\nmesh {MIXED_MESH}\nanim idle models/openq4/pbr_lab/idle.md5anim\n}}\n'
+        model=f'model {MIXED_MODEL} {{\nmesh {MIXED_MESH}\nanim idle models/opend3/pbr_lab/idle.md5anim\n}}\n'
     return '\n'.join(mesh),anim,model
 
 
@@ -252,7 +252,7 @@ def material(name: str, *, albedo: str = 'grey', metallic: float = 0, roughness:
 def payloads() -> tuple[dict[str, bytes], list[dict]]:
     data: dict[str, bytes] = {}
     def add(qpath: str, value: str | bytes) -> None:
-        data['baseoq4/' + qpath] = value.encode('utf-8') if isinstance(value, str) else value
+        data['baseod3/' + qpath] = value.encode('utf-8') if isinstance(value, str) else value
     size = 64
     for name, rgb in {'grey': (188,188,188), 'copper': (245,160,105), 'dark': (65,65,65), 'cyan': (30,200,255), 'orm': (192,128,102), 'metallic': (102,102,102), 'roughness': (128,128,128), 'ao': (192,192,192)}.items():
         add(f'{PREFIX}/{name}.tga', fixture.tga_bytes(size, size, [rgb]*(size*size)))
@@ -323,11 +323,11 @@ def payloads() -> tuple[dict[str, bytes], list[dict]]:
     add(SAMPLING_MODEL, sphere_ase(uv_scale=16, uv_offset=2.375))
     skin_mesh,skin_anim,skin_def=skinned_sphere()
     add(SKINNING_MESH,skin_mesh)
-    add('models/openq4/pbr_lab/idle.md5anim',skin_anim)
+    add('models/opend3/pbr_lab/idle.md5anim',skin_anim)
     mixed_mesh,_,mixed_def=skinned_sphere(MIXED_SHADERS)
     add(MIXED_MESH,mixed_mesh)
-    add('def/openq4_pbr_lab.def',skin_def+mixed_def)
-    add('skins/openq4_pbr_lab.skin',
+    add('def/opend3_pbr_lab.def',skin_def+mixed_def)
+    add('skins/opend3_pbr_lab.skin',
         f'skin {SKINNING_SKINS["dielectric"]}\n{{\n{PREFIX}/metal_3 {PREFIX}/dielectric_1\n}}\n'
         f'skin {SKINNING_SKINS["classic"]}\n{{\n{PREFIX}/metal_3 {PREFIX}/classic_specular\n}}\n')
 
@@ -340,18 +340,18 @@ def payloads() -> tuple[dict[str, bytes], list[dict]]:
                 for x in range(size):
                     stripe = 1.0 if abs(x-size/2)<size/12 or abs(y-size/2)<size/12 else 0.18 + face*0.06
                     pixels.append(tuple(round(255*min(1, stripe*c)) for c in tint))
-            add(f'env/openq4/pbr_lab/{probe}_{suffix}.tga', fixture.tga_bytes(size,size,pixels))
-        mats.append(f'lights/openq4/pbr_lab/{probe}\n{{\nopenQ4SpecularProbe {{\ncubeMap env/openq4/pbr_lab/{probe}\nintensity 2\nblendFraction 0.5\npriority 8\n}}\n{{ map _white }}\n}}\n')
-    mats.append('lights/openq4/pbr_lab/projected\n{\nlightFalloffImage _white\n{\nmap _white\ncolored\n}\n}\n')
+            add(f'env/opend3/pbr_lab/{probe}_{suffix}.tga', fixture.tga_bytes(size,size,pixels))
+        mats.append(f'lights/opend3/pbr_lab/{probe}\n{{\nopenD3SpecularProbe {{\ncubeMap env/opend3/pbr_lab/{probe}\nintensity 2\nblendFraction 0.5\npriority 8\n}}\n{{ map _white }}\n}}\n')
+    mats.append('lights/opend3/pbr_lab/projected\n{\nlightFalloffImage _white\n{\nmap _white\ncolored\n}\n}\n')
     # Constant authored ambient radiance isolates the PBR diffuse contract
     # from normal direction, roughness, distance falloff and specular IBL.
     for name, stages in (('ambient', 1), ('ambient_double', 2)):
-        mats.append(f'lights/openq4/pbr_lab/{name}\n{{\nambientLight\nnoShadows\nlightFalloffImage _white\n'
+        mats.append(f'lights/opend3/pbr_lab/{name}\n{{\nambientLight\nnoShadows\nlightFalloffImage _white\n'
                     + '{\nmap _white\ncolored\n}\n' * stages + '}\n')
     # Keep receivers visible through the volume: an opaque fog sheet would
     # trivially hide incorrect lighting and cannot prove composition.
-    mats.append('lights/openq4/pbr_lab/fog\n{\nfogLight\nnoShadows\n{\nmap _white\ncolor 0.18, 0.32, 0.48, 6000\n}\n}\n')
-    mats.append('lights/openq4/pbr_lab/blend\n{\nblendLight\nnoShadows\nlightFalloffImage _white\n{\nmap _white\nblend filter\ncolor 0.4, 0.7, 0.2, 1\n}\n}\n')
+    mats.append('lights/opend3/pbr_lab/fog\n{\nfogLight\nnoShadows\n{\nmap _white\ncolor 0.18, 0.32, 0.48, 6000\n}\n}\n')
+    mats.append('lights/opend3/pbr_lab/blend\n{\nblendLight\nnoShadows\nlightFalloffImage _white\n{\nmap _white\nblend filter\ncolor 0.4, 0.7, 0.2, 1\n}\n}\n')
     mats.append(material('noself_shadow', metallic=1, roughness=0.5, no_self_shadow=True))
     mats.append(material('extreme_emissive', albedo='cyan', emissive=1000000))
     mats.append(material('emission_half', albedo='cyan', emissive=0.5))
@@ -381,7 +381,7 @@ def payloads() -> tuple[dict[str, bytes], list[dict]]:
             mats.append(f'{PREFIX}/classic_stage_{mode}_{blend}\n{{\nnoShadows\n{{\n'
                         f'blend {state}\nmap {PREFIX}/{image}\n{keyword}\n'
                         f'{coverage}color parm0, parm1, parm2, parm3\n}}\n}}\n')
-    add('materials/openq4_pbr_lab.mtr', '\n'.join(mats))
+    add('materials/opend3_pbr_lab.mtr', '\n'.join(mats))
     room = [((-820,-1220,-20),(820,420,0)),((-820,-1220,800),(820,420,820)),((-820,-1220,0),(-800,420,800)),((800,-1220,0),(820,420,800)),((-800,-1220,0),(800,-1200,800)),((-800,400,0),(800,420,800))]
     # Keep the backdrop classic: a missing sphere must never pass ownership
     # checks merely because another green PBR surface is visible behind it.
@@ -394,7 +394,7 @@ def payloads() -> tuple[dict[str, bytes], list[dict]]:
     precache += f'"model_constant_normal_test" "{CONSTANT_NORMAL_MODEL}"\n"mtr_aa_normal_test" "{PREFIX}/aa_normal"\n"mtr_aa_geometric_test" "{PREFIX}/aa_geometric"\n'
     precache += ''.join(f'"mtr_{name}_test" "{PREFIX}/{name}"\n' for name in
                        ('emission_half','emission_quarter','emission_cutout','emission_mismatch','cutout_mismatch','emission_extreme_native'))
-    precache += ''.join(f'"mtr_{name}_test" "lights/openq4/pbr_lab/{name}"\n'
+    precache += ''.join(f'"mtr_{name}_test" "lights/opend3/pbr_lab/{name}"\n'
                         for name in ('fog','blend','ambient','ambient_double'))
     precache += ''.join(f'"mtr_baked_normal_{name}" "{PREFIX}/baked_normal_{name}"\n' for name in ('xyz','rg','agb','zero'))
     precache += f'"model_vertex_color_test" "{VERTEX_COLOR_MODEL}"\n'
@@ -410,8 +410,8 @@ def payloads() -> tuple[dict[str, bytes], list[dict]]:
     for name, origin, color in [('key','0 -240 700','3 2.7 2.4'),('blue_fill','-600 -80 400','0.25 0.45 1'),('warm_fill','600 -80 400','1 0.35 0.15')]:
         level += entity(classname='light', name=name, origin=origin, light_radius='1500 1500 1500', _color=color, noshadows='0' if name=='key' else '1')
     for name, x in [('warm',-480),('cool',480)]:
-        level += entity(classname='light', name=f'probe_{name}', texture=f'lights/openq4/pbr_lab/{name}', origin=f'{x} 120 400', light_radius='850 850 850', _color='1 1 1', noshadows='1')
-    level += entity(classname='light', name='lab_projector', texture='lights/openq4/pbr_lab/projected', origin='-250 -500 740', light_target='0 750 -200', light_right='500 0 0', light_up='0 100 375', light_start='0 15 -4', light_end='0 1000 -267', _color='0.5 0.7 1')
+        level += entity(classname='light', name=f'probe_{name}', texture=f'lights/opend3/pbr_lab/{name}', origin=f'{x} 120 400', light_radius='850 850 850', _color='1 1 1', noshadows='1')
+    level += entity(classname='light', name='lab_projector', texture='lights/opend3/pbr_lab/projected', origin='-250 -500 740', light_target='0 750 -200', light_right='500 0 0', light_up='0 100 375', light_start='0 15 -4', light_end='0 1000 -267', _color='0.5 0.7 1')
     add(MAP+'.map', level)
     return data, stations
 
@@ -419,7 +419,7 @@ def payloads() -> tuple[dict[str, bytes], list[dict]]:
 def generate(root: Path, force: bool = False) -> dict:
     root = fixture.validate_runtime_root(root)
     files, stations = payloads()
-    manifest = {'schema': 1, 'id': 'openq4-pbr-laboratory', 'map': MAP, 'model': MODEL, 'source': 'Original procedural openQ4 test data; no incorporated external assets.', 'stations': stations, 'cameras': {'overview': [0,-640,390,0,90,0], 'data': [-200,-260,300,0,90,0], 'normals': [-300,-260,120,0,90,0], 'coverage': [300,-260,120,0,90,0], 'sampling': [0,-1100,380,0,90,0]}, 'sha256': {k:hashlib.sha256(v).hexdigest() for k,v in sorted(files.items())}}
+    manifest = {'schema': 1, 'id': 'opend3-pbr-laboratory', 'map': MAP, 'model': MODEL, 'source': 'Original procedural openD3 test data; no incorporated external assets.', 'stations': stations, 'cameras': {'overview': [0,-640,390,0,90,0], 'data': [-200,-260,300,0,90,0], 'normals': [-300,-260,120,0,90,0], 'coverage': [300,-260,120,0,90,0], 'sampling': [0,-1100,380,0,90,0]}, 'sha256': {k:hashlib.sha256(v).hexdigest() for k,v in sorted(files.items())}}
     for station in stations:
         x,y,z = station['origin']
         manifest['cameras']['station-'+station['name']] = [x,y-800,z,0,90,0]

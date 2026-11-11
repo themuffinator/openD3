@@ -22,7 +22,7 @@
 ===============================================================================
 */
 
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
@@ -11435,7 +11435,7 @@ static bool VK_Exec_DrawGLSLProgramStage( const viewDef_t *viewDef,
 	}
 	// Slots 12..15 are reserved across all embedded material modules for
 	// framebuffer/current-render facts. SniperStretch2 consumes them to
-	// support both the retail and openQ4 override parameter contracts.
+	// support both the retail and openD3 override parameter contracts.
 	parms[ 12 ][ 0 ] = (float)VK_Exec_ActiveFramebufferHeight();
 	parms[ 13 ][ 0 ] = (float)viewDef->viewport.x1;
 	parms[ 13 ][ 1 ] = (float)viewDef->viewport.y1;
@@ -17395,4 +17395,4 @@ void R_RendererVulkanRenderTargetsSelfTest_f( const idCmdArgs &args ) {
 	}
 }
 
-#endif /* OPENQ4_RENDERER_VK_MODULE */
+#endif /* OPEND3_RENDERER_VK_MODULE */

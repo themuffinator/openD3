@@ -13,7 +13,7 @@
 #include "../../ui/retained/NativeTextDocument.h"
 #include <memory>
 
-namespace openq4::sys {
+namespace opend3::sys {
 struct WindowsTextCell {
 	LONG first = 0, last = 0; // Complete UTF-16 scalar interval.
 	RECT ink{};              // Already clipped screen-space bounds.
@@ -164,5 +164,5 @@ private:
 	std::unique_ptr<Impl> impl;
 	template<class F> HRESULT Safe(F&&) noexcept;
 };
-} // namespace openq4::sys
+} // namespace opend3::sys
 #endif

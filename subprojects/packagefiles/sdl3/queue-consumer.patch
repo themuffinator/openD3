@@ -16,7 +16,7 @@
  } SDL_EventQ = { NULL, false, { 0 }, 0, NULL, NULL, NULL };
 +
 +#if defined(SDL_VIDEO_DRIVER_WINDOWS) && !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
-+/* openQ4 private queue guard. All mutable fields below are protected by the
++/* openD3 private queue guard. All mutable fields below are protected by the
 + * event queue lock. Only the atomic health summary is read without that lock. */
 +static bool oq4_queue_polling, oq4_queue_active, oq4_queue_closed, oq4_queue_fence_queued, oq4_queue_verified;
 +static SDL_AtomicInt oq4_queue_health;
@@ -27,7 +27,7 @@
 +{
 +    if (oq4_queue_active) {
 +        SDL_SetAtomicInt(&oq4_queue_health, 0);
-+        SDL_SetError("openQ4 native SDL queue continuity was lost");
++        SDL_SetError("openD3 native SDL queue continuity was lost");
 +    }
 +}
 +static void OQ4_QueueRetireLocked(void)

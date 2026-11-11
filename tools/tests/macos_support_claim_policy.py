@@ -271,7 +271,7 @@ def validate_phase0_plan_status() -> None:
 
 
 def validate_ci_and_local_wiring() -> None:
-    local_runner = read("tools/validation/openq4_validate.py")
+    local_runner = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
 

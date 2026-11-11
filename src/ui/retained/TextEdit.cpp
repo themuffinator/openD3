@@ -6,7 +6,7 @@
 #include <cmath>
 #include <utility>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 bool Fail(std::string& error, const char* message) { error = message; return false; }
 bool Boundary(std::string_view text, std::size_t offset) {
@@ -241,4 +241,4 @@ bool FormatTextNumber(double value, const TextNumberPolicy& policy, std::string&
 	text.assign(buffer,result.ptr); error.clear(); return true;
 }
 
-} // namespace openq4::ui
+} // namespace opend3::ui

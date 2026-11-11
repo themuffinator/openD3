@@ -42,7 +42,7 @@ typedef enum {
 	DS_RENDER,
 	DS_SOUND,
 	DS_VERSION,
-	// openQ4 render demo v11+: session records owned by the engine session,
+	// openD3 render demo v11+: session records owned by the engine session,
 	// which frame the campaign segments of a recording (Session_demo.cpp).
 	DS_SESSION
 } demoSystem_t;

@@ -117,7 +117,7 @@ void idChatWindow::Input_f(const idCmdArgs &args) {
     activeChat->PublishCaret();
 }
 
-// openQ4: in the Remastered layout the multiplayer HUD document draws the
+// openD3: in the Remastered layout the multiplayer HUD document draws the
 // entry (ui-visual-design.md 14.9); the game copies the text from gui::chattext
 // and the caret and overstrike mode from here.
 void idChatWindow::PublishCaret() {
@@ -126,7 +126,7 @@ void idChatWindow::PublishCaret() {
     gui->SetStateBool("oq4_chat_overstrike", dc->GetOverStrike());
 }
 
-// openQ4: the Remastered input shows whole messages (ui-visual-design.md
+// openD3: the Remastered input shows whole messages (ui-visual-design.md
 // 14.9), so its history scrolls by messages, up to the oldest retained: how
 // far back from the newest, which the game reads to send that window of its
 // own log. A page is the input's eight messages less one.

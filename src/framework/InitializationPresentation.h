@@ -3,7 +3,7 @@
 
 #include <algorithm>
 
-namespace openq4 {
+namespace opend3 {
 // Cooperative startup presentation: no sleeping, catch-up frames or worker
 // rendering. Frames run at up to 60 Hz while their smoothed cost stays inside
 // a share of wall time, so expensive presentation cannot consume

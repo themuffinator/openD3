@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 
-openQ4 multi-view demo recording and playback.
+openD3 multi-view demo recording and playback.
 
 The container intentionally does not reuse Quake 4's packet-oriented
 .netdemo format.  MVD records are length-delimited and independently
@@ -1680,7 +1680,7 @@ bool idMultiViewDemo::WouldExceedLimits( int additionalBytes ) const {
 	if ( file == NULL ) {
 		return true;
 	}
-	if ( openq4_mvd::WouldExceedLibraryBudget( file->Length(), additionalBytes,
+	if ( opend3_mvd::WouldExceedLibraryBudget( file->Length(), additionalBytes,
 			recordingIndex.Num(), recordingLibraryByteLimit ) ) {
 		return true;
 	}
@@ -1711,8 +1711,8 @@ bool idMultiViewDemo::StartRecording( const idCmdArgs &args ) {
 
 	const int quotaMB = mvd_libraryQuotaMB.GetInteger();
 	if ( quotaMB > 0 ) {
-		openq4_mvd::LibraryUsage usage;
-		if ( !openq4_mvd::ScanLibrary( std::filesystem::u8path(
+		opend3_mvd::LibraryUsage usage;
+		if ( !opend3_mvd::ScanLibrary( std::filesystem::u8path(
 				fileSystem->RelativePathToOSPath( "demos", "fs_savepath" ) ), usage ) ) {
 			SetRecordingResult( SERVER_MVD_RESULT_FAILED, SERVER_MVD_REASON_START_REJECTED, NULL, NULL );
 			common->Warning( "MVD library quota could not measure the writable recording directory" );
@@ -1981,7 +1981,7 @@ void idMultiViewDemo::CaptureServerFrame( int gameFrame, int gameTime ) {
 
 	const int keyframeInterval = mvd_keyframeInterval.GetInteger();
 	if ( keyframeInterval > 0 && !keyframeWritesDisabled &&
-		 static_cast<int>( keyframes.size() ) < openq4_mvd::MAX_KEYFRAMES &&
+		 static_cast<int>( keyframes.size() ) < opend3_mvd::MAX_KEYFRAMES &&
 		 gameTime - lastKeyframeGameTime >= keyframeInterval * 1000 ) {
 		WriteKeyframeRecord( gameFrame, gameTime );
 	}
@@ -2009,7 +2009,7 @@ bool idMultiViewDemo::WriteKeyframeRecord( int gameFrame, int gameTime ) {
 	if ( !game->ServerWriteServerDemoBaseline( snapshotSequence, &baseline ) ||
 		 !ValidateNetworkStatePayload( reinterpret_cast<const byte *>( networkInfo.GetDataPtr() ),
 			networkInfo.Length(), error ) ||
-		 !openq4_mvd::ValidateBaseline( reinterpret_cast<const std::uint8_t *>( baseline.GetDataPtr() ),
+		 !opend3_mvd::ValidateBaseline( reinterpret_cast<const std::uint8_t *>( baseline.GetDataPtr() ),
 			baseline.Length(), snapshotSequence, MVD_BASELINE_MAX_ENTITIES,
 			MVD_BASELINE_MAX_STATE_BYTES, MVD_BASELINE_PVS_WORDS ) ) {
 		common->Warning( "MVD keyframes disabled for this recording: the game produced no valid baseline%s%s",
@@ -2042,7 +2042,7 @@ bool idMultiViewDemo::WriteKeyframeRecord( int gameFrame, int gameTime ) {
 		StopRecording( failure.c_str(), false );
 		return false;
 	}
-	openq4_mvd::Keyframe keyframe;
+	opend3_mvd::Keyframe keyframe;
 	keyframe.gameTime = gameTime;
 	keyframe.fileOffset = keyframeOffset;
 	keyframe.sequence = snapshotSequence;
@@ -2088,7 +2088,7 @@ bool idMultiViewDemo::RecordMarker( const serverMVDMarker_t &input ) {
 	if ( state != MVD_RECORDING || finalizing ) {
 		return false;
 	}
-	openq4_mvd::Marker marker;
+	opend3_mvd::Marker marker;
 	marker.gameTime = idAsyncNetwork::server.GetGameTime();
 	marker.kind = input.kind;
 	marker.client = input.client;
@@ -2096,24 +2096,24 @@ bool idMultiViewDemo::RecordMarker( const serverMVDMarker_t &input ) {
 	marker.value0 = input.value0;
 	marker.value1 = input.value1;
 	int length = 0;
-	for ( ; length < openq4_mvd::MARKER_TEXT_BYTES && input.text[length] != '\0'; length++ ) {
+	for ( ; length < opend3_mvd::MARKER_TEXT_BYTES && input.text[length] != '\0'; length++ ) {
 		const unsigned char ch = static_cast<unsigned char>( input.text[length] );
 		marker.text[length] = ( ch < 0x20 || ch == 0x7f ) ? ' ' : input.text[length];
 	}
 	marker.text[length] = '\0';
-	if ( !openq4_mvd::MarkerFieldsValid( marker, SERVER_MVD_MARKER_KIND_COUNT, MAX_ASYNC_CLIENTS, MVD_MAX_INSTANCES ) ) {
+	if ( !opend3_mvd::MarkerFieldsValid( marker, SERVER_MVD_MARKER_KIND_COUNT, MAX_ASYNC_CLIENTS, MVD_MAX_INSTANCES ) ) {
 		common->Warning( "Ignoring invalid MVD marker kind %d client %d instance %d",
 			input.kind, input.client, input.instance );
 		return false;
 	}
-	if ( static_cast<int>( markers.size() ) >= openq4_mvd::MAX_MARKERS ) {
+	if ( static_cast<int>( markers.size() ) >= opend3_mvd::MAX_MARKERS ) {
 		markersDropped++;
 		return false;
 	}
 
 	std::vector<std::uint8_t> payload;
-	openq4_mvd::AppendU32( payload, static_cast<std::uint32_t>( idAsyncNetwork::server.GetGameFrame() ) );
-	openq4_mvd::AppendMarkerBody( payload, marker );
+	opend3_mvd::AppendU32( payload, static_cast<std::uint32_t>( idAsyncNetwork::server.GetGameFrame() ) );
+	opend3_mvd::AppendMarkerBody( payload, marker );
 	if ( !WriteRecord( MVD_RECORD_MARKER, 1, 0, payload.data(), static_cast<int>( payload.size() ) ) ) {
 		const idStr failure = lastError;
 		StopRecording( failure.c_str(), false );
@@ -2134,9 +2134,9 @@ end record, where the indexed playback path already reads ahead for the end.
 bool idMultiViewDemo::WriteNavigationRecords() {
 	if ( !markers.empty() ) {
 		std::vector<std::uint8_t> payload;
-		openq4_mvd::AppendU32( payload, static_cast<std::uint32_t>( markers.size() ) );
-		for ( const openq4_mvd::Marker &marker : markers ) {
-			openq4_mvd::AppendMarkerBody( payload, marker );
+		opend3_mvd::AppendU32( payload, static_cast<std::uint32_t>( markers.size() ) );
+		for ( const opend3_mvd::Marker &marker : markers ) {
+			opend3_mvd::AppendMarkerBody( payload, marker );
 		}
 		if ( !WriteRecord( MVD_RECORD_MARKER_TABLE, 1, 0, payload.data(), static_cast<int>( payload.size() ), false ) ) {
 			return false;
@@ -2144,13 +2144,13 @@ bool idMultiViewDemo::WriteNavigationRecords() {
 	}
 	if ( !keyframes.empty() ) {
 		std::vector<std::uint8_t> payload;
-		openq4_mvd::AppendKeyframeTable( payload, keyframes );
+		opend3_mvd::AppendKeyframeTable( payload, keyframes );
 		if ( !WriteRecord( MVD_RECORD_KEYFRAME_TABLE, 1, 0, payload.data(), static_cast<int>( payload.size() ), false ) ) {
 			return false;
 		}
 	}
 	if ( markersDropped > 0 ) {
-		common->Warning( "MVD dropped %d markers beyond its %d-marker limit", markersDropped, openq4_mvd::MAX_MARKERS );
+		common->Warning( "MVD dropped %d markers beyond its %d-marker limit", markersDropped, opend3_mvd::MAX_MARKERS );
 	}
 	return true;
 }
@@ -2169,10 +2169,10 @@ bool idMultiViewDemo::NoteNavigationRecord( const record_t &record, int fileOffs
 		return false;
 	}
 	if ( record.type == MVD_RECORD_MARKER ) {
-		openq4_mvd::Marker marker;
+		opend3_mvd::Marker marker;
 		int gameFrame = 0;
-		if ( static_cast<int>( markers.size() ) >= openq4_mvd::MAX_MARKERS ||
-			 !openq4_mvd::ParseMarkerRecord( record.payload.Ptr(), record.payload.Num(), marker, gameFrame,
+		if ( static_cast<int>( markers.size() ) >= opend3_mvd::MAX_MARKERS ||
+			 !opend3_mvd::ParseMarkerRecord( record.payload.Ptr(), record.payload.Num(), marker, gameFrame,
 				SERVER_MVD_MARKER_KIND_COUNT, MAX_ASYNC_CLIENTS, MVD_MAX_INSTANCES ) ||
 			 ( !markers.empty() && marker.gameTime < markers.back().gameTime ) ) {
 			return false;
@@ -2181,15 +2181,15 @@ bool idMultiViewDemo::NoteNavigationRecord( const record_t &record, int fileOffs
 		return true;
 	}
 	if ( record.type == MVD_RECORD_KEYFRAME ) {
-		openq4_mvd::KeyframeHeader keyframeHeader;
-		if ( static_cast<int>( keyframes.size() ) >= openq4_mvd::MAX_KEYFRAMES ||
-			 !openq4_mvd::ParseKeyframeHeader( record.payload.Ptr(), record.payload.Num(), keyframeHeader ) ||
+		opend3_mvd::KeyframeHeader keyframeHeader;
+		if ( static_cast<int>( keyframes.size() ) >= opend3_mvd::MAX_KEYFRAMES ||
+			 !opend3_mvd::ParseKeyframeHeader( record.payload.Ptr(), record.payload.Num(), keyframeHeader ) ||
 			 ( !keyframes.empty() &&
 			   ( keyframeHeader.gameTime <= keyframes.back().gameTime ||
 				 keyframeHeader.sequence <= keyframes.back().sequence ) ) ) {
 			return false;
 		}
-		openq4_mvd::Keyframe keyframe;
+		opend3_mvd::Keyframe keyframe;
 		keyframe.gameTime = keyframeHeader.gameTime;
 		keyframe.fileOffset = fileOffset;
 		keyframe.sequence = keyframeHeader.sequence;
@@ -2209,11 +2209,11 @@ bool idMultiViewDemo::ParseNavigationTable( const record_t &record, int streamSt
 		return false;
 	}
 	if ( record.type == MVD_RECORD_MARKER_TABLE ) {
-		return openq4_mvd::ParseMarkerTable( record.payload.Ptr(), record.payload.Num(), markers,
+		return opend3_mvd::ParseMarkerTable( record.payload.Ptr(), record.payload.Num(), markers,
 			SERVER_MVD_MARKER_KIND_COUNT, MAX_ASYNC_CLIENTS, MVD_MAX_INSTANCES );
 	}
 	if ( record.type == MVD_RECORD_KEYFRAME_TABLE ) {
-		return openq4_mvd::ParseKeyframeTable( record.payload.Ptr(), record.payload.Num(),
+		return opend3_mvd::ParseKeyframeTable( record.payload.Ptr(), record.payload.Num(),
 			streamStart, tableOffset, keyframes );
 	}
 	return false;
@@ -2756,7 +2756,7 @@ bool idMultiViewDemo::SeekToMS( int relativeTimeMS ) {
 	// A keyframe replaces replay from the start for a backward seek, and for a
 	// forward seek far enough ahead to be worth a map reload.
 	const int keyframeIndex = mvd_useKeyframes.GetBool() ?
-		openq4_mvd::KeyframeAtOrBefore( keyframes, target ) : -1;
+		opend3_mvd::KeyframeAtOrBefore( keyframes, target ) : -1;
 	if ( keyframeIndex >= 0 &&
 		 ( backward ||
 		   keyframes[keyframeIndex].gameTime - static_cast<int>( playbackGameTime ) >= MVD_KEYFRAME_FORWARD_MIN_MS ) ) {
@@ -2812,16 +2812,16 @@ bool idMultiViewDemo::JumpToKeyframe( int index, bool &worldReset ) {
 		lastError = "no such keyframe";
 		return false;
 	}
-	const openq4_mvd::Keyframe entry = keyframes[index];
+	const opend3_mvd::Keyframe entry = keyframes[index];
 	record_t record;
 	if ( file->Seek( entry.fileOffset, FS_SEEK_SET ) != 0 || ReadRecord( file, record ) != MVD_READ_OK ) {
 		lastError = va( "could not read the keyframe at offset %d", entry.fileOffset );
 		return false;
 	}
 	const int resumeOffset = file->Tell();
-	openq4_mvd::KeyframeHeader keyframeHeader;
+	opend3_mvd::KeyframeHeader keyframeHeader;
 	if ( record.type != MVD_RECORD_KEYFRAME || record.version != 1 || record.flags != 0 ||
-		 !openq4_mvd::ParseKeyframeHeader( record.payload.Ptr(), record.payload.Num(), keyframeHeader ) ||
+		 !opend3_mvd::ParseKeyframeHeader( record.payload.Ptr(), record.payload.Num(), keyframeHeader ) ||
 		 keyframeHeader.gameTime != entry.gameTime || keyframeHeader.sequence != entry.sequence ||
 		 keyframeHeader.gameTime < header.startGameTime || keyframeHeader.gameTime > playbackEndGameTime ||
 		 keyframeHeader.gameFrame < header.startGameFrame ) {
@@ -2835,7 +2835,7 @@ bool idMultiViewDemo::JumpToKeyframe( int index, bool &worldReset ) {
 		lastError = error;
 		return false;
 	}
-	if ( !openq4_mvd::ValidateBaseline( payload + keyframeHeader.baselineOffset, keyframeHeader.baselineBytes,
+	if ( !opend3_mvd::ValidateBaseline( payload + keyframeHeader.baselineOffset, keyframeHeader.baselineBytes,
 			keyframeHeader.sequence, MVD_BASELINE_MAX_ENTITIES, MVD_BASELINE_MAX_STATE_BYTES,
 			MVD_BASELINE_PVS_WORDS ) ) {
 		lastError = "invalid keyframe baseline";
@@ -2953,12 +2953,12 @@ bool idMultiViewDemo::SeekToMarker( int direction, int kindFilter ) {
 	}
 	const int leadMS = mvd_markerLeadMS.GetInteger();
 	const int now = seekInProgress ? seekTargetGameTime : static_cast<int>( playbackGameTime );
-	const int index = openq4_mvd::FindMarker( markers, now, direction, kindFilter, leadMS, lastMarkerIndex );
+	const int index = opend3_mvd::FindMarker( markers, now, direction, kindFilter, leadMS, lastMarkerIndex );
 	if ( index < 0 ) {
 		return false;
 	}
 	lastMarkerIndex = index;
-	const openq4_mvd::Marker &marker = markers[index];
+	const opend3_mvd::Marker &marker = markers[index];
 	const int targetRelative = Max( 0, marker.gameTime - leadMS - header.startGameTime );
 	common->Printf( "MVD_MARKER index=%d kind=%s time=%d client=%d value0=%d value1=%d text=\"%s\"\n",
 		index, MVD_MarkerKindName( marker.kind ), marker.gameTime - header.startGameTime,
@@ -3107,8 +3107,8 @@ bool idMultiViewDemo::RecordTimestamp( const record_t &record, int &gameTime ) c
 		}
 	} else if ( record.type == MVD_RECORD_USERINFO || record.type == MVD_RECORD_MARKER ||
 				record.type == MVD_RECORD_KEYFRAME ) {
-		const int minimum = record.type == MVD_RECORD_MARKER ? openq4_mvd::MARKER_FIXED_BYTES :
-			record.type == MVD_RECORD_KEYFRAME ? openq4_mvd::KEYFRAME_FIXED_BYTES : 13;
+		const int minimum = record.type == MVD_RECORD_MARKER ? opend3_mvd::MARKER_FIXED_BYTES :
+			record.type == MVD_RECORD_KEYFRAME ? opend3_mvd::KEYFRAME_FIXED_BYTES : 13;
 		if ( record.version != 1 || record.payload.Num() < minimum ) {
 			return false;
 		}
@@ -3275,9 +3275,9 @@ bool idMultiViewDemo::ProcessPlaybackRecord( const record_t &record, bool &finis
 	}
 
 	if ( record.type == MVD_RECORD_MARKER ) {
-		openq4_mvd::Marker marker;
+		opend3_mvd::Marker marker;
 		int gameFrame = 0;
-		if ( openq4_mvd::ParseMarkerRecord( record.payload.Ptr(), record.payload.Num(), marker, gameFrame,
+		if ( opend3_mvd::ParseMarkerRecord( record.payload.Ptr(), record.payload.Num(), marker, gameFrame,
 				SERVER_MVD_MARKER_KIND_COUNT, MAX_ASYNC_CLIENTS, MVD_MAX_INSTANCES ) &&
 			 marker.kind == SERVER_MVD_MARKER_NOTE && !seekInProgress ) {
 			common->Printf( "MVD note at %s: %s\n",
@@ -3593,14 +3593,14 @@ bool idMultiViewDemo::QueryFileInfo( const char *name, mvdFileInfo_t &info ) {
 					if ( record.flags & MVD_RECORD_FLAG_REQUIRED ) {
 						summaryValid = false;
 					} else if ( record.version == 1 && record.type == MVD_RECORD_MARKER_TABLE ) {
-						std::vector<openq4_mvd::Marker> tableMarkers;
-						if ( openq4_mvd::ParseMarkerTable( record.payload.Ptr(), record.payload.Num(), tableMarkers,
+						std::vector<opend3_mvd::Marker> tableMarkers;
+						if ( opend3_mvd::ParseMarkerTable( record.payload.Ptr(), record.payload.Num(), tableMarkers,
 								SERVER_MVD_MARKER_KIND_COUNT, MAX_ASYNC_CLIENTS, MVD_MAX_INSTANCES ) ) {
 							info.markerCount = static_cast<int>( tableMarkers.size() );
 						}
 					} else if ( record.version == 1 && record.type == MVD_RECORD_KEYFRAME_TABLE ) {
-						std::vector<openq4_mvd::Keyframe> tableKeyframes;
-						if ( openq4_mvd::ParseKeyframeTable( record.payload.Ptr(), record.payload.Num(),
+						std::vector<opend3_mvd::Keyframe> tableKeyframes;
+						if ( opend3_mvd::ParseKeyframeTable( record.payload.Ptr(), record.payload.Num(),
 								firstRecordOffset, static_cast<int>( inspectedHeader.indexOffset ), tableKeyframes ) ) {
 							info.keyframeCount = static_cast<int>( tableKeyframes.size() );
 						}
@@ -4201,8 +4201,8 @@ void idMultiViewDemo::Status_f( const idCmdArgs &args ) {
 }
 
 void idMultiViewDemo::Library_f( const idCmdArgs &args ) {
-	openq4_mvd::LibraryUsage usage;
-	if ( !openq4_mvd::ScanLibrary( std::filesystem::u8path(
+	opend3_mvd::LibraryUsage usage;
+	if ( !opend3_mvd::ScanLibrary( std::filesystem::u8path(
 			fileSystem->RelativePathToOSPath( "demos", "fs_savepath" ) ), usage ) ) {
 		common->Printf( "MVD_LIBRARY unavailable: directory is linked, unreadable or exceeds the scan limit\n" );
 		return;
@@ -4382,8 +4382,8 @@ void idMultiViewDemo::Markers_f( const idCmdArgs &args ) {
 	}
 	int listed = 0;
 	for ( int i = 0; i < static_cast<int>( demo.markers.size() ); i++ ) {
-		const openq4_mvd::Marker &marker = demo.markers[i];
-		if ( !openq4_mvd::MarkerMatches( marker, kindFilter ) ) {
+		const opend3_mvd::Marker &marker = demo.markers[i];
+		if ( !opend3_mvd::MarkerMatches( marker, kindFilter ) ) {
 			continue;
 		}
 		const int relative = marker.gameTime - demo.header.startGameTime;

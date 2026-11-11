@@ -49,8 +49,8 @@ def write_tiles(input_dir: Path, output_dir: Path) -> None:
 
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[2]
-    source_game_dir = repo_root / "content" / "baseoq4"
-    staged_game_dir = repo_root / ".install" / "baseoq4"
+    source_game_dir = repo_root / "content" / "baseod3"
+    staged_game_dir = repo_root / ".install" / "baseod3"
 
     parser = argparse.ArgumentParser(
         description="Split the 3x3 machinegun scope expansion masks into side tiles."

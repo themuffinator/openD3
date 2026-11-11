@@ -85,14 +85,14 @@ def validate_session_gate() -> None:
     # its wait loop with it for clicks to work.
     require_order(
         gate,
-        "openQ4_SetLoadingContinueInputActive( true );",
+        "openD3_SetLoadingContinueInputActive( true );",
         "while ( waitingForContinue ) {",
         "loading-continue gate input-active begin",
     )
     require_order(
         gate,
         "while ( waitingForContinue ) {",
-        "openQ4_SetLoadingContinueInputActive( false );",
+        "openD3_SetLoadingContinueInputActive( false );",
         "loading-continue gate input-active end",
     )
 
@@ -110,10 +110,10 @@ def validate_sdl3_backend_input() -> None:
 
     # Mouse buttons are normally dropped when the mouse is neither captured nor
     # routed to a menu; the loading-continue gate opts back in via the common flag.
-    require(pump, "openQ4_AcceptingLoadingContinueInput()", "SDL3 loading-continue mouse acceptance")
+    require(pump, "openD3_AcceptingLoadingContinueInput()", "SDL3 loading-continue mouse acceptance")
     button_case = pump[pump.find("case SDL_EVENT_MOUSE_BUTTON_DOWN:") :]
     button_case = button_case[: button_case.find("case SDL_EVENT_MOUSE_WHEEL:")]
-    require(button_case, "openQ4_AcceptingLoadingContinueInput()", "SDL3 mouse button gate acceptance")
+    require(button_case, "openD3_AcceptingLoadingContinueInput()", "SDL3 mouse button gate acceptance")
     require(button_case, "SDL3_QueueMouseButtonEvent(key, down, eventTime, routedMouseInput);", "SDL3 mouse button helper queueing")
     require(button_helper, "Sys_QueEvent(eventTime, SE_KEY, key, down ? 1 : 0, 0, NULL);", "SDL3 mouse button SE_KEY queueing")
     require_order(
@@ -128,10 +128,10 @@ def validate_common_flag() -> None:
     header = read("src/framework/Common.h")
     source = read("src/framework/Common.cpp")
 
-    require(header, "void				openQ4_SetLoadingContinueInputActive( bool active );", "Common.h gate flag setter")
-    require(header, "bool				openQ4_AcceptingLoadingContinueInput( void );", "Common.h gate flag getter")
-    require(source, "void openQ4_SetLoadingContinueInputActive( bool active ) {", "Common.cpp gate flag setter")
-    require(source, "bool openQ4_AcceptingLoadingContinueInput( void ) {", "Common.cpp gate flag getter")
+    require(header, "void				openD3_SetLoadingContinueInputActive( bool active );", "Common.h gate flag setter")
+    require(header, "bool				openD3_AcceptingLoadingContinueInput( void );", "Common.h gate flag getter")
+    require(source, "void openD3_SetLoadingContinueInputActive( bool active ) {", "Common.cpp gate flag setter")
+    require(source, "bool openD3_AcceptingLoadingContinueInput( void ) {", "Common.cpp gate flag getter")
 
 
 def validate_input_flush_hook() -> None:
@@ -167,7 +167,7 @@ def validate_platform_sources() -> None:
 def validate_ci_smoke() -> None:
     push = read(".github/workflows/push-verification.yml")
     commit = read(".github/workflows/commit-validation.yml")
-    runner = read("tools/validation/openq4_validate.py")
+    runner = read("tools/validation/opend3_validate.py")
 
     require(push, "python tools/tests/loading_continue_input.py", "push script-smoke regression check")
     require(commit, "python tools/tests/loading_continue_input.py", "commit script-smoke regression check")

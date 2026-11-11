@@ -4,7 +4,7 @@
 #include "WindowsTextStore.h"
 #include "../../ui/application/NativeTextCollectionCoordinator.h"
 
-namespace openq4::sys {
+namespace opend3::sys {
 // One engine-owned native/editor lease within one verified SDL module lifetime.
 // Creation does not register hooks or enable input. Register Hooks() while SDL
 // is disabled; after enabling, bind its externally checked generation BEFORE
@@ -47,5 +47,5 @@ private:
     static bool SDLCALL Prepare(void*, const OQ4_NativeCollectionContext*) noexcept;
     static bool SDLCALL Finish(void*, const OQ4_NativeCollectionContext*, bool) noexcept;
 };
-} // namespace openq4::sys
+} // namespace opend3::sys
 #endif

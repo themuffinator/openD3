@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-using namespace openq4_mvd;
+using namespace opend3_mvd;
 
 static int failures = 0;
 #define CHECK( condition ) do { if ( !( condition ) ) { std::fprintf( stderr, "FAILED line %d: %s\n", __LINE__, #condition ); failures++; } } while ( 0 )

@@ -1,4 +1,4 @@
-// First-party openQ4 portable audio recovery values. GPL-3.0-or-later.
+// First-party openD3 portable audio recovery values. GPL-3.0-or-later.
 #include "SoundRecovery.h"
 #include <bit>
 #include <cstdint>

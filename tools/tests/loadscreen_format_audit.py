@@ -41,7 +41,7 @@ PROFILES = {
 def run(args, profile: str, overrides: dict[str, str]) -> dict:
     home = args.output_dir.resolve() / profile
     shutil.rmtree(home, ignore_errors=True)
-    game = home / "baseoq4"
+    game = home / "baseod3"
     game.mkdir(parents=True)
     shot = args.levelshot
     (game / "audit_loaded.cfg").write_text(
@@ -49,20 +49,20 @@ def run(args, profile: str, overrides: dict[str, str]) -> dict:
         "testImage\nwait 5\nquit\n", encoding="utf-8")
     cvars = {
         "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(home), "fs_devpath": str(home),
-        "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1", "fs_debug": "1", "s_noSound": "1",
+        "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1", "fs_debug": "1", "s_noSound": "1",
         "r_fullscreen": "0", "r_mode": "-1", "r_customWidth": "1920", "r_customHeight": "1080",
         "in_mouse": "0", "ui_retained": "1", "com_skipLoadingContinue": "1", "com_captureLoadingScreen": "1",
         "g_autoExecAfterMapLoad": "audit_loaded.cfg", "g_autoExecAfterMapLoadDelayMs": "1500",
         "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
         **overrides,
     }
-    command = [str(args.runtime_dir.resolve() / f"openQ4-client_x64{SUFFIX}")]
+    command = [str(args.runtime_dir.resolve() / f"openD3-client_x64{SUFFIX}")]
     command += [part for key, value in cvars.items() for part in ("+set", key, value)]
     command += ["+devmap", args.map]
     started = time.monotonic()
     completed = subprocess.run(command, cwd=args.runtime_dir.resolve(), timeout=args.timeout,
                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    log = (game / "logs" / "openq4.log").read_text(encoding="utf-8", errors="replace") if (game / "logs/openq4.log").is_file() else ""
+    log = (game / "logs" / "opend3.log").read_text(encoding="utf-8", errors="replace") if (game / "logs/opend3.log").is_file() else ""
     reads = sorted(set(re.findall(r"OpenFileRead: (gfx/guis/loadscreens/\S+) \(found in '([^']+)'\)", log)))
     loading = sorted(str(p.relative_to(home)) for p in game.glob("screenshots/loading_*.tga"))
     shots = sorted(str(p.relative_to(home)) for p in game.rglob("audit_testimage*"))
@@ -98,7 +98,7 @@ def compare(a: Path, b: Path) -> dict:
         if not pa.is_dir() or not pb.is_dir():
             continue
         pairs = {}
-        for kind, pattern in (("testimage", "baseoq4/audit_testimage*"), ("loading", "baseoq4/screenshots/loading_*.tga")):
+        for kind, pattern in (("testimage", "baseod3/audit_testimage*"), ("loading", "baseod3/screenshots/loading_*.tga")):
             fa, fb = sorted(pa.glob(pattern)), sorted(pb.glob(pattern))
             if fa and fb:
                 pairs[kind] = psnr(fa[0], fb[0])

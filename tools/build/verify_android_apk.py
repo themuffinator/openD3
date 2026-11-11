@@ -5,7 +5,7 @@ Each variant has its own identity, ABI, signing role and manifest shape
 (docs/dev/platform-recovery-review.md, Android selection and package
 matrix). The Quest flavor is the phone build declared as an immersive OpenXR
 headset app: the same native libraries (the OpenXR loader links into the
-client), the openq4-headset marker asset, the head-tracking requirement, the
+client), the opend3-headset marker asset, the head-tracking requirement, the
 OpenXR permission and immersive category and the supported-device list.
 Phone and emulator APKs must carry none of that, and no distributable APK
 may carry the headset-free OpenXR test runtime."""
@@ -35,15 +35,15 @@ class Variant:
 # The Quest identity is the flavor's own until AND-05 settles distribution;
 # it never shares the phone's, so neither APK can replace the other.
 VARIANT_TABLE = {
-    'phone': Variant('arm64-v8a', 'com.darkmatter.openq4', False),
-    'emulator': Variant('x86_64', 'com.darkmatter.openq4.emulator', True),
-    'quest': Variant('arm64-v8a', 'com.darkmatter.openq4.quest', False, headset=True),
+    'phone': Variant('arm64-v8a', 'com.darkmatter.opend3', False),
+    'emulator': Variant('x86_64', 'com.darkmatter.opend3.emulator', True),
+    'quest': Variant('arm64-v8a', 'com.darkmatter.opend3.quest', False, headset=True),
 }
 # (abi, package, debuggable) for existing callers.
 VARIANTS = {name: (v.abi, v.package, v.debuggable) for name, v in VARIANT_TABLE.items()}
 SETUP_FONTS = {'fonts/marine.ttf', 'fonts/lowpixel.ttf'}
-HEADSET_MARKER = 'openq4-headset'
-XR_TEST_RUNTIME = 'libopenq4-xr-test-runtime.so'
+HEADSET_MARKER = 'opend3-headset'
+XR_TEST_RUNTIME = 'libopend3-xr-test-runtime.so'
 # What makes an APK an immersive headset app; a Quest APK needs all of them and
 # a phone or emulator APK none of the first three.
 HEADSET_FEATURE = 'android.hardware.vr.headtracking'
@@ -131,14 +131,14 @@ def verify_payload(apk: Path, stage: Path, version: str, variant: str = 'phone')
     abi, _, _ = variant_settings(variant)
     headset = variant_info(variant).headset
     metadata = json.loads((stage / 'android-build.json').read_text(encoding='utf-8'))
-    mod = json.loads((stage / 'baseoq4/mod.json').read_text(encoding='utf-8'))
+    mod = json.loads((stage / 'baseod3/mod.json').read_text(encoding='utf-8'))
     # Format 1 originally described only phones. Missing variant is accepted
     # solely for those existing stages, never inferred from an emulator ABI.
     if (metadata.get('format') != 1 or metadata.get('abi') != abi
             or metadata.get('variant', 'phone') != variant or metadata.get('androidApi') != 24
             or not re.fullmatch(r'\d+\.\d+\.\d+', str(metadata.get('sdlVersion', '')))):
         raise ValueError(f'Expected {variant} Android {abi} API 24 metadata with an SDL version')
-    if mod.get('version') != version or mod.get('requiredopenQ4Version') != version:
+    if mod.get('version') != version or mod.get('requiredopenD3Version') != version:
         raise ValueError('Staged engine and mod versions do not match the release')
     expected = {}
     libraries = libraries_for_abi(abi)
@@ -150,12 +150,12 @@ def verify_payload(apk: Path, stage: Path, version: str, variant: str = 'phone')
         path = stage / 'lib' / name
         validate_library(path, 24, abi)
         expected[f'lib/{abi}/{name}'] = path
-    for name in (*(f'baseoq4/{pack}' for pack in content_pack_names()), 'baseoq4/mod.json',
+    for name in (*(f'baseod3/{pack}' for pack in content_pack_names()), 'baseod3/mod.json',
                  'licenses/sdl3/LICENSE.txt', 'licenses/openal-soft/COPYING',
                  'licenses/android-ndk/NOTICE.toolchain', 'licenses/QUAKE-4-SDK-EULA.rtf', 'licenses/MD4.txt'):
         if not (stage / name).is_file():
             raise ValueError(f'Missing required packaged file: {name}')
-    for directory in ('baseoq4', 'licenses'):
+    for directory in ('baseod3', 'licenses'):
         for path in (stage / directory).rglob('*'):
             if path.is_file():
                 expected['assets/' + path.relative_to(stage).as_posix()] = path
@@ -167,7 +167,7 @@ def verify_payload(apk: Path, stage: Path, version: str, variant: str = 'phone')
                          else f'Quest stage must carry the {HEADSET_MARKER} marker asset')
     if headset:
         expected['assets/' + HEADSET_MARKER] = marker
-    with zipfile.ZipFile(stage / 'baseoq4/pak0.pk4') as content:
+    with zipfile.ZipFile(stage / 'baseod3/pak0.pk4') as content:
         fonts = {}
         for name in sorted(SETUP_FONTS):
             matches = [entry for entry in content.infolist() if entry.filename == name]
@@ -185,22 +185,22 @@ def verify_payload(apk: Path, stage: Path, version: str, variant: str = 'phone')
             raise ValueError(f'APK must contain exactly the seven matching {abi} native libraries')
         assets = {name for name in names if name.startswith('assets/') and not name.endswith('/')}
         if assets != {name for name in expected if name.startswith('assets/')} | set(fonts) | {
-                'assets/openq4-package-version.txt', 'assets/openq4-package-manifest.txt'}:
-            raise ValueError('APK asset set differs from the staged openQ4 overlays and notices')
+                'assets/opend3-package-version.txt', 'assets/opend3-package-manifest.txt'}:
+            raise ValueError('APK asset set differs from the staged openD3 overlays and notices')
         for name, data in fonts.items():
             if archive.getinfo(name).file_size != len(data) or archive.read(name) != data:
                 raise ValueError(f'APK setup typeface differs from staged pak0: {name}')
-        for name in (f'assets/baseoq4/{pack}' for pack in content_pack_names()):
+        for name in (f'assets/baseod3/{pack}' for pack in content_pack_names()):
             if archive.getinfo(name).compress_type != zipfile.ZIP_STORED:
                 raise ValueError('PK4 archives must be stored without redundant APK compression')
         for name, path in expected.items():
             with archive.open(name) as packaged, path.open('rb') as staged:
                 if digest(packaged) != digest(staged):
                     raise ValueError(f'APK payload differs from validated stage: {name}')
-        manifest = package_manifest(stage / 'baseoq4')
-        if archive.read('assets/openq4-package-manifest.txt') != manifest:
+        manifest = package_manifest(stage / 'baseod3')
+        if archive.read('assets/opend3-package-manifest.txt') != manifest:
             raise ValueError('APK extraction manifest does not match its packaged data')
-        if archive.read('assets/openq4-package-version.txt') != hashlib.sha256(manifest).hexdigest().encode('ascii'):
+        if archive.read('assets/opend3-package-version.txt') != hashlib.sha256(manifest).hexdigest().encode('ascii'):
             raise ValueError('APK extraction revision does not match its packaged data')
         if archive.testzip() is not None:
             raise ValueError('APK ZIP integrity failure')
@@ -223,7 +223,7 @@ def verify_tools(apk: Path, tools: Path, certificate: Path, version: str, varian
     code = sum(int(part) * scale for part, scale in zip(version.split('.'), (1000000, 1000, 1)))
     for token in (f"package: name='{package_id}'", f"versionCode='{code}'", f"versionName='{version}'",
                   "sdkVersion:'24'", "targetSdkVersion:'35'", f"native-code: '{abi}'",
-                  "launchable-activity: name='com.darkmatter.openq4.LauncherActivity'"):
+                  "launchable-activity: name='com.darkmatter.opend3.LauncherActivity'"):
         if token not in badging:
             raise ValueError(f'APK manifest mismatch: {token}')
     if not debuggable and 'application-debuggable' in badging:

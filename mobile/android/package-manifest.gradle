@@ -3,7 +3,7 @@ import groovy.json.JsonSlurper
 import java.security.MessageDigest
 
 // Every runtime pack in tools/build/content_packs.json, in load order.
-ext.openQ4ContentPackNames = {
+ext.openD3ContentPackNames = {
     def table = new JsonSlurper().parse(rootProject.file('../../tools/build/content_packs.json'))
     def names = table.packs.collect { it.name as String }
     if (names.isEmpty() || names.any { !(it ==~ /pak[0-9]\.pk4/) }) {
@@ -14,7 +14,7 @@ ext.openQ4ContentPackNames = {
 
 // Canonical ASCII, sorted by the normalized relative path on every build host.
 // The Activity and release verifier enforce the same bounds and required files.
-ext.openQ4PackageManifest = { File directory ->
+ext.openD3PackageManifest = { File directory ->
     def entries = [:]
     directory.eachFileRecurse { asset ->
         if (java.nio.file.Files.isSymbolicLink(asset.toPath())) {
@@ -29,11 +29,11 @@ ext.openQ4PackageManifest = { File directory ->
             entries[name] = asset
         }
     }
-    if (entries.size() > 4096 || !entries.keySet().containsAll(['mod.json'] + openQ4ContentPackNames())) {
+    if (entries.size() > 4096 || !entries.keySet().containsAll(['mod.json'] + openD3ContentPackNames())) {
         throw new IOException('Invalid package manifest file count or missing required file')
     }
     long total = 0
-    StringBuilder manifest = new StringBuilder('openQ4-package-v1\n')
+    StringBuilder manifest = new StringBuilder('openD3-package-v1\n')
     entries.keySet().sort().each { name ->
         File asset = entries[name]
         long size = asset.length()

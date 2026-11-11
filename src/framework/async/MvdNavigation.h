@@ -1,5 +1,5 @@
-#ifndef OPENQ4_MVD_NAVIGATION_H
-#define OPENQ4_MVD_NAVIGATION_H
+#ifndef OPEND3_MVD_NAVIGATION_H
+#define OPEND3_MVD_NAVIGATION_H
 
 // MVD 1.3 navigation payloads: structured markers, independently restorable
 // keyframes and the two trailing directories that list them. Every parser is
@@ -9,7 +9,7 @@
 #include <cstring>
 #include <vector>
 
-namespace openq4_mvd {
+namespace opend3_mvd {
 
 static const int MARKER_TEXT_BYTES = 120;
 static const int MAX_MARKERS = 20000;
@@ -309,6 +309,6 @@ inline int FindMarker( const std::vector<Marker> &markers, int nowTime, int dire
 	return -1;
 }
 
-} // namespace openq4_mvd
+} // namespace opend3_mvd
 
 #endif

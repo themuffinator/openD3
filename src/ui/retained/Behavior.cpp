@@ -4,7 +4,7 @@
 #include <cmath>
 #include <exception>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 std::optional<Value> Property(const State& state, const Motion& motion, const PropertyKey& key) {
 	const auto bound = state.Properties().find(key);
@@ -218,4 +218,4 @@ bool EvaluateEvent(const DocumentModel& model, const State& state, const Motion&
 	} catch (const std::exception& problem) { error = std::string("Cannot evaluate event: ")+problem.what(); return false; }
 }
 
-} // namespace openq4::ui
+} // namespace opend3::ui

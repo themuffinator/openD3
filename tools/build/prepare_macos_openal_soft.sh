@@ -20,7 +20,7 @@ usage() {
     cat <<'EOF'
 Usage: prepare_macos_openal_soft.sh [options]
 
-Build the pinned OpenAL Soft runtime used by macOS openQ4 packages.
+Build the pinned OpenAL Soft runtime used by macOS openD3 packages.
 
 Options:
   --architecture <arm64|x64>       Target architecture (defaults to host)

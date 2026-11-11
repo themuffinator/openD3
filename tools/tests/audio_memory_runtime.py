@@ -100,8 +100,8 @@ def main():
     # admissions until it fits. The earlier peak is deliberately not reset.
     result.update(checks=checks, phases=phases, rendered_tones=tones, passed=all(checks.values()),
                   physical_microphone=False, host_input=False,
-                  engine_sha256=capture.digest(args.runtime / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64')),
-                  runtime_sha256={str(p.relative_to(args.runtime)): capture.digest(p) for p in (args.runtime / 'baseoq4').iterdir()
+                  engine_sha256=capture.digest(args.runtime / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64')),
+                  runtime_sha256={str(p.relative_to(args.runtime)): capture.digest(p) for p in (args.runtime / 'baseod3').iterdir()
                                   if p.suffix.lower() in ('.dll','.so','.dylib','.pk4')},
                   harness_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
     (args.output / 'result.json').write_text(json.dumps(result, indent=2) + '\n')

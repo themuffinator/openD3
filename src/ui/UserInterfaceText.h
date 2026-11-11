@@ -6,8 +6,8 @@
 class idUserInterface;
 
 struct uiTextDeliveryResult_t {
-	openq4::ui::TextDeliveryOutcome outcome = openq4::ui::TextDeliveryOutcome::Rejected;
-	openq4::ui::TextBrokerContext context;
+	opend3::ui::TextDeliveryOutcome outcome = opend3::ui::TextDeliveryOutcome::Rejected;
+	opend3::ui::TextBrokerContext context;
 	std::string diagnostic;
 };
 
@@ -22,12 +22,12 @@ struct uiTextDeliveryResult_t {
 // it issued delivery; nativeWindow/nativeSession are checked afresh at dispatch.
 // Complete the broker immediately with the observed result, even on rejection;
 // never substitute the old context to hide a failed freshness/receipt check.
-openq4::ui::TextBrokerContext UI_QueryTextContext(idUserInterface* current,
+opend3::ui::TextBrokerContext UI_QueryTextContext(idUserInterface* current,
 	std::uint64_t nativeWindow, std::uint64_t nativeSession);
 uiTextDeliveryResult_t UI_DeliverTextInput(idUserInterface* current,
 	std::uint64_t nativeWindow, std::uint64_t nativeSession,
-	const openq4::ui::TextBrokerContext& authorizedContext,
-	const openq4::ui::TextBrokerDelivery& delivery);
+	const opend3::ui::TextBrokerContext& authorizedContext,
+	const opend3::ui::TextBrokerDelivery& delivery);
 
 // Private checked process-lifetime allocator for retained backend/document
 // identities. Zero is permanent exhaustion, never a valid text owner.

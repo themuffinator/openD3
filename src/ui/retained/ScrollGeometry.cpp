@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 bool Extent(double value) noexcept { return std::isfinite(value) && value >= 0; }
 bool Geometry(const ScrollGeometry& g) noexcept {
@@ -56,4 +56,4 @@ bool ScrollStepOffset(const ScrollGeometry& g, ScrollStep step, double line, dou
         g.offset-std::min(distance,g.offset) : g.offset+std::min(distance,g.range-g.offset);
     return true;
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

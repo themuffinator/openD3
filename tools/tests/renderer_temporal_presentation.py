@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 RENDERER = ROOT / "src" / "renderer"
 GAME_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", str(ROOT))
+    os.environ.get("OPEND3_GAMELIBS_REPO", str(ROOT))
 ).resolve()
 
 
@@ -81,7 +81,7 @@ def main() -> int:
         # automatic TAA: upscales only below native resolution
         'idCVar r_temporalAA( "r_temporalAA", "2"',
         "R_TemporalPresentation_AutomaticTemporalAAWanted(",
-        "defined( OPENQ4_RENDERER_GLES_MODULE )",
+        "defined( OPEND3_RENDERER_GLES_MODULE )",
         "glConfig.GLSL130Available",
         "r_screenFraction.GetInteger() < 100 && ( scaleMode == 1 || scaleMode == 2 )",
         "R_TemporalPresentation_CapturePreviousPositions(",
@@ -403,7 +403,7 @@ def main() -> int:
         "R_TemporalPresentation_PresentSharpness()",
     ):
         require(gl_backend, token, "OpenGL per-pixel temporal ownership")
-    glprogs = ROOT / "content" / "baseoq4" / "pak0" / "glprogs"
+    glprogs = ROOT / "content" / "baseod3" / "pak0" / "glprogs"
     require(read(glprogs / "motionvectors.vs"), "gl_MultiTexCoord1.xyz", "OpenGL posed previous positions")
     require(read(glprogs / "motionvectors.fs"), "gl_FragCoord.z > sceneDepth + depthTolerance",
         "OpenGL reactive coverage depth test")
@@ -431,12 +431,12 @@ def main() -> int:
         "!presentation.temporalAARequested",
         "presentation.captureFrozen",
         "presentation.captureForcedNative",
-        "openQ4_ResolveTemporalPresentation(",
+        "openD3_ResolveTemporalPresentation(",
         "gameRender.temporalHistoryReadIndex = historyWriteIndex;",
     ):
         require(game_render, token, "game temporal scheduling")
     game_resolve = function_body(
-        game_render, "static bool openQ4_ResolveTemporalPresentation("
+        game_render, "static bool openD3_ResolveTemporalPresentation("
     )
     call_at = game_resolve.find("renderSystem->ResolveTemporalPresentation(")
     swap_at = game_resolve.find(
@@ -447,7 +447,7 @@ def main() -> int:
 
     temporal_content = [
         path
-        for path in (ROOT / "content" / "baseoq4").rglob("*")
+        for path in (ROOT / "content" / "baseod3").rglob("*")
         if path.is_file() and "temporal" in path.name.lower()
     ]
     if temporal_content:
@@ -457,8 +457,8 @@ def main() -> int:
         )
 
     meson = read(ROOT / "meson.build")
-    require(meson, "openq4-temporal-presentation-core-test", "controller native test")
-    require(meson, "openq4-temporal-history-core-test", "history native test")
+    require(meson, "opend3-temporal-presentation-core-test", "controller native test")
+    require(meson, "opend3-temporal-history-core-test", "history native test")
 
     print("renderer temporal presentation contracts: PASS")
     return 0

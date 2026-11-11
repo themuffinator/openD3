@@ -3,7 +3,7 @@
 #include <array>
 #include <cstddef>
 
-namespace openq4::ui {
+namespace opend3::ui {
 struct PopupPoint { double x = 0, y = 0; };
 struct PopupRect { double x = 0, y = 0, width = 0, height = 0; };
 struct PopupHalfPlane { double x = 0, y = 0, limit = 0; };
@@ -29,4 +29,4 @@ bool PopupRegionContains(const PopupRegion&, const PopupRect&, double tolerance 
 // then above; overlap the anchor only when neither side has one readable row.
 bool PlacePopup(const PopupRegion&, const PopupRect& anchor, double preferredWidth,
     double minWidth, double desiredHeight, double minHeight, PopupPlacement& out) noexcept;
-} // namespace openq4::ui
+} // namespace opend3::ui

@@ -5,7 +5,7 @@
 #include <cstdlib>
 #include <limits>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 #undef assert
 #define assert(expression) do { if (!(expression)) { std::fprintf(stderr,"Journal check failed at line %d: %s\n",__LINE__,#expression); std::abort(); } } while (false)
 static const std::map<std::string,std::size_t> Catalog{{"brightness",0},{"fullscreen",1},{"mode",2}};

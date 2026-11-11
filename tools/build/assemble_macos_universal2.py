@@ -746,7 +746,7 @@ def signature_normalized_shared_records(
         [codesign, "--verify", "--strict", "--all-architectures", str(source)],
         f"verifying all MoltenVK signature slices for {source}",
     )
-    with tempfile.TemporaryDirectory(prefix="openq4-moltenvk-signature-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="opend3-moltenvk-signature-") as temporary:
         unsigned = Path(temporary) / MOLTENVK_DYLIB_NAME
         shutil.copy2(source, unsigned)
         run_command(

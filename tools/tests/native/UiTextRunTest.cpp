@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <limits>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks = 0, lookups = 0;
 static void Check(bool condition, const char* why) {
 	++checks;

@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <limits>
 
-using namespace openq4::touch;
+using namespace opend3::touch;
 
 static void Check( bool condition, const char *message ) {
 	if ( !condition ) {

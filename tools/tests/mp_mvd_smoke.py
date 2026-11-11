@@ -76,11 +76,11 @@ def main() -> int:
 
     runtime, output = args.runtime_dir.resolve(), args.output_dir.resolve()
     verify_runtime_is_current(runtime, getattr(args, "executable_name", ""))
-    exe = runtime / (args.executable_name or ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64"))
+    exe = runtime / (args.executable_name or ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64"))
     if not exe.is_file():
         parser.error("a staged runtime is required")
     save, failures = output / "save", []
-    game = save / "baseoq4"
+    game = save / "baseod3"
     (game / "demos").mkdir(parents=True, exist_ok=True)
     if (runtime / "manifest.json").is_file():
         shutil.copy2(runtime / "manifest.json", output / "runtime-manifest.json")
@@ -92,21 +92,21 @@ def main() -> int:
     write_script(loop, ["waitMsec 200", "echo MP_MVD_POLL_INITIAL", "mvdStatus", f"exec {loop.name}"])
     write_script(game / "mvd_probe.cfg", [
         f'mvdInfo "{source.name}"', "demoMenu", "waitMsec 1000",
-        *(["openq4_demoLibrary report"] if args.library_play else []),
+        *(["opend3_demoLibrary report"] if args.library_play else []),
         'screenshot "screenshots/library.tga"',
-        "openq4_demoLibrary play" if args.library_play else f'playMVD "{source.name}"',
+        "opend3_demoLibrary play" if args.library_play else f'playMVD "{source.name}"',
         "waitMsec 1500", "mvdPause 1", f"mvdSeek {args.early_seconds}", f"exec {loop.name}",
     ])
     cvars = {
         "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
         "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(save), "fs_devpath": str(save),
-        "fs_game": "baseoq4", "com_gameMode": "MP", "com_nextGameModule": "game_mp",
+        "fs_game": "baseod3", "com_gameMode": "MP", "com_nextGameModule": "game_mp",
         "r_fullscreen": "0", "r_borderless": "0",
         "r_fullscreenDesktop": "0", "r_borderlessDefaultMigrated": "1", "r_mode": "-1",
         "r_customWidth": "960", "r_customHeight": "540", "r_windowWidth": "960", "r_windowHeight": "540",
         "r_hiddenWindow": "1", "in_mouse": "0", "in_joystick": "0", "s_noSound": "1",
         "r_renderApi": "gl", "com_maxfps": "60", "r_swapInterval": "0", "logFile": "2",
-        "logFileName": "logs/openq4.log", "developer": "1", "com_skipLoadingContinue": "1",
+        "logFileName": "logs/opend3.log", "developer": "1", "com_skipLoadingContinue": "1",
         "ui_autoJoin": "1", "net_allowCheats": "1", "g_autoExecAfterMapLoad": "",
     }
     command = [str(exe)]
@@ -116,15 +116,15 @@ def main() -> int:
     (output / "launch.json").write_text(json.dumps(command, indent=2), encoding="utf-8")
     started = time.time()
     deadline = time.monotonic() + args.timeout
-    log_path = game / "logs/openq4.log"
+    log_path = game / "logs/opend3.log"
     phase_number = 0
     camera_states = {}
     startup_seconds = None
     expected_follow = None
 
     def capture(name: str) -> list[str]:
-        return ["echo MP_MVD_" + name.upper(), "mvdStatus", "openq4_reportMPState",
-                "openq4_reportMPWorld player1",
+        return ["echo MP_MVD_" + name.upper(), "mvdStatus", "opend3_reportMPState",
+                "opend3_reportMPWorld player1",
                 f'screenshot "screenshots/{name}.tga"']
 
     def wait_state(label: str, predicate, timeout: int = 45) -> tuple[int, ...]:
@@ -204,7 +204,7 @@ def main() -> int:
             code = process.wait(timeout=max(1, deadline - time.monotonic()))
         except (RuntimeError, subprocess.TimeoutExpired) as error:
             failures.append(str(error))
-            write_script(loop, ["openq4_reportMPState", "mvdStatus", "quit"])
+            write_script(loop, ["opend3_reportMPState", "mvdStatus", "quit"])
             try:
                 code = process.wait(timeout=5)
             except subprocess.TimeoutExpired:

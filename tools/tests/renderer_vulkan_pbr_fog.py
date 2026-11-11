@@ -29,7 +29,7 @@ def configure(manifest: dict, samples: int) -> list[str]:
         commands += ['g_stopTime 0']
         if suffix == 'fog-background':
             commands += ['spawn light name alpha_fog origin "0 0 400" angle 0 '
-                         'light_radius "1400 1400 1000" texture "lights/openq4/pbr_lab/fog" noshadows 1']
+                         'light_radius "1400 1400 1000" texture "lights/opend3/pbr_lab/fog" noshadows 1']
         if suffix == 'clear-restored':
             # This authored fog stage has constant color registers; Off() only
             # changes light parameters and cannot disable those constants.

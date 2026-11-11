@@ -18,7 +18,7 @@
 #include <locale>
 #include <sstream>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 std::string Pixels(float value) {
 	std::ostringstream out; out.imbue(std::locale::classic());
@@ -526,4 +526,4 @@ std::shared_ptr<const TextRun> NumberControlView::CommandRun(const std::string& 
 		if (!plainOffset(glyph.byteStart) || !plainOffset(glyph.byteEnd)) { error="Masked command run is malformed"; return {}; }
 	return run;
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

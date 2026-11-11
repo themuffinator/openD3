@@ -498,13 +498,13 @@ int				Sys_ReturnJoystickInputEvent( const int n, int &axis, int &value );
 void			Sys_EndJoystickInputEvents( void );
 bool			Sys_GetJoystickAxisState( int axis, int &value );
 bool			Sys_SetJoystickRumble( float lowFrequency, float highFrequency, int durationMsec );
-// openQ4 VR: delivers a tracked-controller button exactly like a gamepad
+// openD3 VR: delivers a tracked-controller button exactly like a gamepad
 // button, to the event queue (menus, console) and the key poll queue (usercmd
 // bindings); mouse buttons are the menu pointer's clicks and take the mouse's
 // route instead. Main thread only; implemented by the SDL3 client backend, the
 // only one that builds OpenXR.
 void			Sys_PostVRControllerKey( int key, bool down );
-// openQ4 VR: the controller points at the virtual screen at (u, v), 0..1 left
+// openD3 VR: the controller points at the virtual screen at (u, v), 0..1 left
 // to right and top to bottom, or has left it. Moves the open menu's cursor the
 // way the mouse would; returns false when no menu takes a pointer.
 bool			Sys_PostVRPointer( bool onScreen, float u, float v );
@@ -531,7 +531,7 @@ const char *	Sys_DefaultSavePath( void );
 const char *	Sys_EXEPath( void );
 
 // When the executable is associated with a platform application bundle
-// (macOS openQ4.app), returns true and fills packageRoot with the trusted
+// (macOS openD3.app), returns true and fills packageRoot with the trusted
 // runtime-content root. Self-contained macOS apps use Contents/Resources;
 // legacy adjacent packages return the directory beside the bundle. Returns
 // false on platforms and layouts without a separate package root.

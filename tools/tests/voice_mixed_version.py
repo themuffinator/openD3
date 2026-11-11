@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Mixed-version voice interoperability: a published openQ4 release against this build.
+"""Mixed-version voice interoperability: a published openD3 release against this build.
 
 Two directions, each at si_pure 1 and 0, all on loopback with hidden windows and
 synthetic voice only (no microphone, no host input):
@@ -36,7 +36,7 @@ REJECTION = re.compile(r'(?i)(not in sync|checksum mismatch|missing|pure|rejecte
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--assets', type=Path, required=True)
-    parser.add_argument('--historical', type=Path, required=True, help='extracted older openQ4 release (its exe dir)')
+    parser.add_argument('--historical', type=Path, required=True, help='extracted older openD3 release (its exe dir)')
     parser.add_argument('--output', type=Path, default=ROOT / '.tmp/audio/voice-mixed-version')
     parser.add_argument('--port', type=int, default=28981)
     parser.add_argument('--join-timeout', type=int, default=150)
@@ -46,9 +46,9 @@ def main() -> int:
     runtime, old_runtime = ROOT / '.install', args.historical.resolve()
     suffix = '.exe' if os.name == 'nt' else ''
     verify_runtime_is_current(runtime)
-    verify_runtime_is_current(runtime, f'openQ4-ded_x64{suffix}')
-    binaries = {('new', 'client'): runtime / f'openQ4-client_x64{suffix}', ('new', 'server'): runtime / f'openQ4-ded_x64{suffix}',
-                ('old', 'client'): old_runtime / f'openQ4-client_x64{suffix}', ('old', 'server'): old_runtime / f'openQ4-ded_x64{suffix}'}
+    verify_runtime_is_current(runtime, f'openD3-ded_x64{suffix}')
+    binaries = {('new', 'client'): runtime / f'openD3-client_x64{suffix}', ('new', 'server'): runtime / f'openD3-ded_x64{suffix}',
+                ('old', 'client'): old_runtime / f'openD3-client_x64{suffix}', ('old', 'server'): old_runtime / f'openD3-ded_x64{suffix}'}
     for path in binaries.values():
         if not path.is_file():
             parser.error(f'missing runtime binary {path}')
@@ -69,8 +69,8 @@ def main() -> int:
         port = args.port + number * 20
         roles = scenario['roles']
         saves = {role: base / role for role in roles}
-        games = {role: saves[role] / 'baseoq4' for role in roles}
-        logs = {role: games[role] / 'logs/openq4.log' for role in roles}
+        games = {role: saves[role] / 'baseod3' for role in roles}
+        logs = {role: games[role] / 'logs/opend3.log' for role in roles}
         steps = {role: 0 for role in roles}
         processes, streams = {}, []
         for role in roles:
@@ -79,7 +79,7 @@ def main() -> int:
             for stale in games[role].glob('mix_cmd_*.cfg'):
                 stale.unlink()
             # Same single-use step pointer as voice_chat_soak.py.
-            write_script(games[role] / 'mix_loop.cfg', ['waitMsec 500', 'openq4_reportMPState', 'exec mix_step.cfg', 'exec mix_loop.cfg'])
+            write_script(games[role] / 'mix_loop.cfg', ['waitMsec 500', 'opend3_reportMPState', 'exec mix_step.cfg', 'exec mix_loop.cfg'])
             write_script(games[role] / 'mix_step.cfg', ['// idle'])
             write_script(games[role] / 'mix_start.cfg', ['exec mix_loop.cfg'])
             (saves[role] / 'alsoft.conf').write_text('[general]\ndrivers=null\n')
@@ -92,13 +92,13 @@ def main() -> int:
             server = role == 'server'
             exe = binaries[(version, 'server' if server else 'client')]
             cvars = {
-                'fs_basepath': str(args.assets.resolve()), 'fs_game': 'baseoq4', 'com_gameMode': 'MP',
+                'fs_basepath': str(args.assets.resolve()), 'fs_game': 'baseod3', 'com_gameMode': 'MP',
                 'fs_savepath': str(saves[role]), 'fs_devpath': str(saves[role]),
                 'r_fullscreen': '0', 'r_borderless': '0', 'r_mode': '-1', 'r_customWidth': '640', 'r_customHeight': '360',
                 'r_hiddenWindow': '1', 'r_renderApi': args.render_api, 'r_swapInterval': '0', 'com_maxfps': '60',
                 'in_mouse': '0', 'in_joystick': '0', 's_noSound': '0', 's_muteUnfocused': '0',
                 's_voiceChatCapture': '0', 's_voiceChatSend': '1', 's_voiceChatReceive': '1', 's_voiceChatEcho': '0',
-                'logFile': '2', 'logFileName': 'logs/openq4.log', 'developer': '1', 'ui_retained': '1',
+                'logFile': '2', 'logFileName': 'logs/opend3.log', 'developer': '1', 'ui_retained': '1',
                 'ui_autoJoin': '1', 'ui_spectate': 'Play', 'ui_ready': 'Ready', 'ui_name': f'mix_{version}_{role}',
                 'net_allowCheats': '1', 'net_ip': '127.0.0.1', 'net_enableIPv6': '0', 'net_port': str(port + 1 + list(roles).index(role)),
                 'com_skipLoadingContinue': '1', 'g_autoExecAfterMapLoad': 'mix_start.cfg', 'g_autoExecAfterMapLoadDelayMs': '500',
@@ -196,7 +196,7 @@ def main() -> int:
         record['talker_captured'] = max([int(value) for value in re.findall(r'^VOICE_STATUS .*?captured=(\d+)', texts['talker'], re.M)] or [0])
         record['server_forwards'] = {f'to_{slot}': len(re.findall(rf'^VOICE_FORWARD from=\d+ to={slot} accepted=1', texts['server'], re.M))
                                      for slot in (0, 1)}
-        record['server_build'] = (re.search(r'^openQ4 [^\n]*', texts['server'], re.M) or [''])[0][:160]
+        record['server_build'] = (re.search(r'^openD3 [^\n]*', texts['server'], re.M) or [''])[0][:160]
         record['rejection_lines'] = {role: sorted(set(match[0][:160] for match in REJECTION.finditer(text)))[:12] for role, text in texts.items()
                                      if role != 'server' or not record['joined']}
         results.append(record)
@@ -220,8 +220,8 @@ def main() -> int:
         checks[f'{name}:clean_exit'] = all(code == 0 for role, code in record['exit_codes'].items() if record['ran_console_loop'][role])
     report = {'passed': all(checks.values()), 'checks': checks, 'scenarios': results, 'old_release': old_version,
               'old_sha256': {f'{version}-{kind}': hashlib.sha256(path.read_bytes()).hexdigest() for (version, kind), path in binaries.items()},
-              'old_game_mp_sha256': hashlib.sha256((old_runtime / 'baseoq4/game-mp_x64.dll').read_bytes()).hexdigest() if os.name == 'nt' else None,
-              'new_game_mp_sha256': hashlib.sha256((runtime / 'baseoq4/game-mp_x64.dll').read_bytes()).hexdigest() if os.name == 'nt' else None,
+              'old_game_mp_sha256': hashlib.sha256((old_runtime / 'baseod3/game-mp_x64.dll').read_bytes()).hexdigest() if os.name == 'nt' else None,
+              'new_game_mp_sha256': hashlib.sha256((runtime / 'baseod3/game-mp_x64.dll').read_bytes()).hexdigest() if os.name == 'nt' else None,
               'microphone': False, 'host_input': False,
               'harness_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
     (output / 'result.json').write_text(json.dumps(report, indent=2) + '\n')

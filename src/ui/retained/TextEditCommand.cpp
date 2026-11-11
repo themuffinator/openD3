@@ -5,7 +5,7 @@
 #include <iterator>
 #include <utility>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 bool Fail(std::string& error,const char* message) { error=message;return false; }
 bool ByteBoundary(std::string_view text,std::size_t offset) {
@@ -92,4 +92,4 @@ bool EvaluateTextEditCommand(const TextEditState& state,const TextEditBoundaryMa
 	}
 	out=std::move(candidate);error.clear();return true;
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

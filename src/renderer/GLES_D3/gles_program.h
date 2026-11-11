@@ -16,7 +16,7 @@
 #ifndef __GLES_PROGRAM_H__
 #define __GLES_PROGRAM_H__
 
-#ifdef OPENQ4_RENDERER_GLES_MODULE
+#ifdef OPEND3_RENDERER_GLES_MODULE
 
 /*
 ====================
@@ -202,6 +202,6 @@ void			R_GLESD3_InvalidateProgramState( void );
 const char *	R_GLESD3_EmbeddedShaderSource( glesD3ProgramId_t id, GLenum stage );
 const char *	R_GLESD3_ProgramName( glesD3ProgramId_t id );
 
-#endif /* OPENQ4_RENDERER_GLES_MODULE */
+#endif /* OPEND3_RENDERER_GLES_MODULE */
 
 #endif /* !__GLES_PROGRAM_H__ */

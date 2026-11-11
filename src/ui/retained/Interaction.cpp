@@ -11,7 +11,7 @@
 #include <type_traits>
 #include <tuple>
 
-namespace openq4::ui {
+namespace opend3::ui {
 Interaction::DocumentVacancy Interaction::NativeDocumentVacancy() const noexcept {
     if(candidate || !authority)return DocumentVacancy::BusyOrUnknown;
     if(nativeModel)return DocumentVacancy::Bound;
@@ -1713,4 +1713,4 @@ bool Interaction::Restore(const InteractionSnapshot& snapshot, std::string& erro
 	}
 	return Adopt(std::move(candidate),error);
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

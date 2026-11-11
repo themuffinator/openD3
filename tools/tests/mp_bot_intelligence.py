@@ -18,7 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_LIBS_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
 
 
@@ -27,7 +27,7 @@ def read_game(relative_path: str) -> str:
     if not path.is_file():
         raise AssertionError(
             f"required GameLibs source is missing: {path} "
-            "(set OPENQ4_GAMELIBS_REPO to the companion checkout)"
+            "(set OPEND3_GAMELIBS_REPO to the companion checkout)"
         )
     return path.read_text(encoding="utf-8", errors="replace")
 

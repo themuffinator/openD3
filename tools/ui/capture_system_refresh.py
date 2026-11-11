@@ -35,35 +35,35 @@ def stages():
                     values=(1, dirty, 0, preset, preset, brightness,
                             brightness if baseline is None else baseline, message, local))
     return [
-        row("open", ["applyPerformancePreset balanced", "set r_brightness 1", "openq4_system open"], "balanced"),
+        row("open", ["applyPerformancePreset balanced", "set r_brightness 1", "opend3_system open"], "balanced"),
         row("minimum", ["applyPerformancePreset minimum"], "minimum"),
         row("restart", ["vid_restart"], "minimum"),
         row("ultra", ["applyPerformancePreset ultra"], "ultra"),
-        row("conflict", [*SHOW_NUMBER, f"openq4_retainedGui focus {NUMBER}",
-                         f"openq4_retainedGui number begin {NUMBER}",
-                         f"openq4_retainedGui number select {NUMBER} 0 1",
-                         f'openq4_retainedGui number replace {NUMBER} "1.1"',
-                         f"openq4_retainedGui number commit {NUMBER}", "wait 6",
+        row("conflict", [*SHOW_NUMBER, f"opend3_retainedGui focus {NUMBER}",
+                         f"opend3_retainedGui number begin {NUMBER}",
+                         f"opend3_retainedGui number select {NUMBER} 0 1",
+                         f'opend3_retainedGui number replace {NUMBER} "1.1"',
+                         f"opend3_retainedGui number commit {NUMBER}", "wait 6",
                          "applyPerformancePreset balanced"], "ultra", 1.1,
             baseline=1, dirty=1, message="#str_230011"),
-        row("reopened", ["openq4_retainedGui event onBack", "wait 3",
-                         "openq4_retainedGui event discard", "wait 6", "openq4_system open"], "balanced"),
-        row("local", [*SHOW_NUMBER, f"openq4_retainedGui focus {NUMBER}",
-                      f"openq4_retainedGui number begin {NUMBER}",
-                      f"openq4_retainedGui number select {NUMBER} 0 1",
-                      f'openq4_retainedGui number replace {NUMBER} "-"',
+        row("reopened", ["opend3_retainedGui event onBack", "wait 3",
+                         "opend3_retainedGui event discard", "wait 6", "opend3_system open"], "balanced"),
+        row("local", [*SHOW_NUMBER, f"opend3_retainedGui focus {NUMBER}",
+                      f"opend3_retainedGui number begin {NUMBER}",
+                      f"opend3_retainedGui number select {NUMBER} 0 1",
+                      f'opend3_retainedGui number replace {NUMBER} "-"',
                       "set r_brightness 1.5"], "balanced", 1.5, local=1, conflict=1),
-        row("resolved", [f"openq4_retainedGui number reload {NUMBER}"], "balanced", 1.5, conflict=0),
+        row("resolved", [f"opend3_retainedGui number reload {NUMBER}"], "balanced", 1.5, conflict=0),
         row("final", ["reloadLanguage", "vid_restart"], "balanced", 1.5),
     ]
 
 
 def script():
-    lines = ["openq4_assertMenuActivation 10000", "wait 3"]
+    lines = ["opend3_assertMenuActivation 10000", "wait 3"]
     for stage in stages():
-        lines += [f'echo {MARKER} {stage["name"]}', *stage["commands"], "wait 8", "openq4_system report"]
-        lines += [f'openq4_guiGet "{field}"' for field in FIELDS]
-        lines += [f"openq4_retainedGui widget {NUMBER}", "openq4_retainedGui report",
+        lines += [f'echo {MARKER} {stage["name"]}', *stage["commands"], "wait 8", "opend3_system report"]
+        lines += [f'opend3_guiGet "{field}"' for field in FIELDS]
+        lines += [f"opend3_retainedGui widget {NUMBER}", "opend3_retainedGui report",
                   f'screenshot "screenshots/refresh-{stage["name"]}.tga"']
     lines += [f"echo {COMPLETE}", "quit"]
     return "\n".join(lines) + "\n"
@@ -76,10 +76,10 @@ def qualify(log, mode):
     names = parts[1::2]
     if names != [row["name"] for row in rows]:
         failures.append("missing, duplicated or reordered stages")
-    if COMPLETE not in log or "OPENQ4_MENU_ACTIVATION PASS" not in log:
+    if COMPLETE not in log or "OPEND3_MENU_ACTIVATION PASS" not in log:
         failures.append("missing gameplay/menu completion")
     for stage, name, block in zip(rows, names, parts[2::2]):
-        wanted_route = (f"OPENQ4_SYSTEM enabled=1 active={page.PAGE} parent={page.PARENT} "
+        wanted_route = (f"OPEND3_SYSTEM enabled=1 active={page.PAGE} parent={page.PARENT} "
                         f"child=1 guiTest=0 menu=1 map=1 multiplayer={int(mode == 'mp')}")
         if wanted_route not in block:
             failures.append(name + ": not the normal in-game SYSTEM route")
@@ -103,7 +103,7 @@ def qualify(log, mode):
                 failures.append(name + ": numeric conflict did not match")
             if stage["conflict"] and (not number or "bytes=1 " not in number[0]):
                 failures.append(name + ": unfinished numeric text was discarded")
-        if " failed" in block or "openq4_retainedGui: requires" in block or "openq4_guiGet: unknown" in block:
+        if " failed" in block or "opend3_retainedGui: requires" in block or "opend3_guiGet: unknown" in block:
             failures.append(name + ": semantic diagnostic failed")
     return {"passed": not failures, "stages": len(names), "failures": failures}
 
@@ -117,7 +117,7 @@ def capture(args):
     output, runtime = args.output.resolve(), args.runtime.resolve()
     if output.exists() or not output.is_relative_to((ROOT / ".tmp").resolve()):
         raise ValueError("Use a new output directory under the project's .tmp")
-    executable = runtime / ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    executable = runtime / ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     if not executable.is_file() or not (args.assets / "q4base").is_dir():
         raise ValueError("Staged client and installed Quake 4 assets are required")
     source = page.source_contract(runtime)
@@ -129,12 +129,12 @@ def capture(args):
     profiles = json.loads((ROOT / ".vscode/launch.json").read_text(encoding="utf-8-sig"))["configurations"]
     prefix = "(SP) airdefense1 " if args.mode == "sp" else "(MP) q4dm1 "
     profile = next(p for p in profiles if p["name"].startswith(prefix) and p["name"].endswith("GL"))
-    game = output / "save/baseoq4"
+    game = output / "save/baseod3"
     game.mkdir(parents=True)
     cfg = game / "system-refresh.cfg"
     cfg.write_text(script(), encoding="utf-8")
     overrides = {"fs_basepath": str(args.assets.resolve()), "fs_savepath": str(output / "save"),
-        "fs_devpath": str(output / "save"), "fs_game": "baseoq4", "logFile": "2", "logFileName": "logs/openq4.log",
+        "fs_devpath": str(output / "save"), "fs_game": "baseod3", "logFile": "2", "logFileName": "logs/opend3.log",
         "r_fullscreen": "0", "r_fullscreenDesktop": "0", "r_borderless": "0", "r_borderlessDefaultMigrated": "1",
         "r_hiddenWindow": "1", "r_windowWidth": "1280", "r_windowHeight": "720", "r_mode": "-1",
         "r_customWidth": "1280", "r_customHeight": "720", "r_multiSamples": "0", "r_renderApi": args.renderer,
@@ -153,7 +153,7 @@ def capture(args):
         if count == 1 or original[index + 1].lower() not in {k.lower() for k in overrides}:
             command += [v.replace("${workspaceFolder}", str(ROOT)) for v in original[index:index + count]]
         index += count
-    binaries = [executable, *runtime.glob("renderer-*.dll"), *(runtime / "baseoq4").glob("game-*.dll")]
+    binaries = [executable, *runtime.glob("renderer-*.dll"), *(runtime / "baseod3").glob("game-*.dll")]
     binding = {str(p.relative_to(runtime)): page.digest(p) for p in binaries}
     for path in binaries:
         built = getattr(args, "build", ROOT / "builddir") / path.relative_to(runtime)
@@ -187,7 +187,7 @@ def capture(args):
                 process.kill(); process.wait()
             metadata["status"] = "timeout"; save(); return 1
     metadata["seconds"] = round(time.monotonic() - started, 3)
-    log_path = game / "logs/openq4.log"
+    log_path = game / "logs/opend3.log"
     log = re.sub(r"\^[0-9]", "", log_path.read_text(encoding="utf-8", errors="replace")) if log_path.is_file() else ""
     metadata["log_sha256"] = page.digest(log_path) if log_path.is_file() else None
     metadata["qualification"] = qualify(log, args.mode)

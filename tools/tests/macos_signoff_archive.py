@@ -38,14 +38,14 @@ def report_text(bridge: str, *, completed: bool) -> str:
 - Graphics bridge: {bridge}
 - OpenAL provider: apple_framework
 - Build directory: builddir-{bridge}
-- openQ4 commit: 1111111111111111111111111111111111111111
-- openQ4 dirty: false
-- `openQ4-game` commit: 2222222222222222222222222222222222222222
-- `openQ4-game` dirty: false
-- Asset basepath: /Users/test/openq4-work/Quake4
-- Client: /Users/test/openq4-work/openQ4/.install/openQ4-client_arm64
-- Dedicated server: /Users/test/openq4-work/openQ4/.install/openQ4-ded_arm64
-- Results: /Users/test/openq4-work/results/testrun-signoff-{bridge}
+- openD3 commit: 1111111111111111111111111111111111111111
+- openD3 dirty: false
+- `openD3-game` commit: 2222222222222222222222222222222222222222
+- `openD3-game` dirty: false
+- Asset basepath: /Users/test/opend3-work/Quake4
+- Client: /Users/test/opend3-work/openD3/.install/openD3-client_arm64
+- Dedicated server: /Users/test/opend3-work/openD3/.install/openD3-ded_arm64
+- Results: /Users/test/opend3-work/results/testrun-signoff-{bridge}
 
 ## Automated Evidence
 - [x] Bridge-specific build and staged install completed.
@@ -56,18 +56,18 @@ def report_text(bridge: str, *, completed: bool) -> str:
 - [x] MP game module path is present in the staged payload.
 - [x] macOS-facing renderer validation matrix completed.
 - [x] Desktop launcher was written for Finder/Terminal launch checks.
-- [x] Package layout contract is self-contained app: data in Contents/Resources/baseoq4 and signed game modules in Contents/Frameworks.
-- Renderer smoke output: /Users/test/openq4-work/results/testrun-signoff-{bridge}/renderer-smoke
-- Renderer MP smoke output: /Users/test/openq4-work/results/testrun-signoff-{bridge}/renderer-mp-smoke
-- Renderer matrix output: /Users/test/openq4-work/results/testrun-signoff-{bridge}/renderer-matrix
-- Workflow log: /Users/test/openq4-work/results/testrun-signoff-{bridge}/openq4-macos-workflow.log
+- [x] Package layout contract is self-contained app: data in Contents/Resources/baseod3 and signed game modules in Contents/Frameworks.
+- Renderer smoke output: /Users/test/opend3-work/results/testrun-signoff-{bridge}/renderer-smoke
+- Renderer MP smoke output: /Users/test/opend3-work/results/testrun-signoff-{bridge}/renderer-mp-smoke
+- Renderer matrix output: /Users/test/opend3-work/results/testrun-signoff-{bridge}/renderer-matrix
+- Workflow log: /Users/test/opend3-work/results/testrun-signoff-{bridge}/opend3-macos-workflow.log
 
 ## Manual Hardware Checklist
-- [{checkbox}] Launch openQ4 from Finder or the Desktop launcher and enter a single-player map.
-- [{checkbox}] Launch openQ4.app from the mounted signed/notarized DMG or final release image and enter a single-player map.
-- [{checkbox}] Drag only openQ4.app to /Applications or another user-writable location, launch it there, and enter a single-player map.
+- [{checkbox}] Launch openD3 from Finder or the Desktop launcher and enter a single-player map.
+- [{checkbox}] Launch openD3.app from the mounted signed/notarized DMG or final release image and enter a single-player map.
+- [{checkbox}] Drag only openD3.app to /Applications or another user-writable location, launch it there, and enter a single-player map.
 - [{checkbox}] Copy the whole package payload to a user-writable location and verify the loose client, dedicated server, and support collector still use the sibling app runtime.
-- [{checkbox}] Confirm the copied app contains baseoq4 data under Contents/Resources and signed SP/MP modules under Contents/Frameworks, with no adjacent baseoq4 duplicate.
+- [{checkbox}] Confirm the copied app contains baseod3 data under Contents/Resources and signed SP/MP modules under Contents/Frameworks, with no adjacent baseod3 duplicate.
 - [{checkbox}] Launch the app executable from Terminal with an unrelated working directory.
 - [{checkbox}] Confirm fs_basepath, fs_cdpath, and fs_savepath in logs for Finder/copied package and Terminal launches.
 - [{checkbox}] Confirm Gatekeeper assessment for signed/notarized DMGs, or record unsigned/unnotarized approval friction for development archives.
@@ -131,33 +131,33 @@ Wireless Controller
 
 ## Staged Payload
 ```text
-/Users/test/openq4-work/openQ4/.install/openQ4-client_arm64
-/Users/test/openq4-work/openQ4/.install/openQ4-ded_arm64
-/Users/test/openq4-work/openQ4/.install/baseoq4/game-sp_arm64.dylib
-/Users/test/openq4-work/openQ4/.install/baseoq4/game-mp_arm64.dylib
+/Users/test/opend3-work/openD3/.install/openD3-client_arm64
+/Users/test/opend3-work/openD3/.install/openD3-ded_arm64
+/Users/test/opend3-work/openD3/.install/baseod3/game-sp_arm64.dylib
+/Users/test/opend3-work/openD3/.install/baseod3/game-mp_arm64.dylib
 ```
 
 ## Staged Binary Architectures
 ```text
-/Users/test/openq4-work/openQ4/.install/openQ4-client_arm64: arm64
-/Users/test/openq4-work/openQ4/.install/openQ4-ded_arm64: arm64
-/Users/test/openq4-work/openQ4/.install/baseoq4/game-sp_arm64.dylib: arm64
-/Users/test/openq4-work/openQ4/.install/baseoq4/game-mp_arm64.dylib: arm64
+/Users/test/opend3-work/openD3/.install/openD3-client_arm64: arm64
+/Users/test/opend3-work/openD3/.install/openD3-ded_arm64: arm64
+/Users/test/opend3-work/openD3/.install/baseod3/game-sp_arm64.dylib: arm64
+/Users/test/opend3-work/openD3/.install/baseod3/game-mp_arm64.dylib: arm64
 ```
 """
 
 
 def log_text(bridge: str) -> str:
-    return f"""Configuring openQ4 (debug, backend=sdl3, macos_graphics_bridge={bridge}, macos_openal_provider=apple_framework)
-Compiling openQ4
-Staging openQ4 into .install
+    return f"""Configuring openD3 (debug, backend=sdl3, macos_graphics_bridge={bridge}, macos_openal_provider=apple_framework)
+Compiling openD3
+Staging openD3 into .install
 Validated staged macOS payload for arm64.
-Validated Quake 4 asset basepath: /Users/test/openq4-work/Quake4 (25 q4base PK4 files).
-Running openQ4 macOS renderer smoke
-Running openQ4 macOS multiplayer smoke
+Validated Quake 4 asset basepath: /Users/test/opend3-work/Quake4 (25 q4base PK4 files).
+Running openD3 macOS renderer smoke
+Running openD3 macOS multiplayer smoke
 Running macOS-facing renderer validation matrix
-Installed macOS launcher: /Users/test/Desktop/openQ4.command
-macOS runtime signoff report: /Users/test/openq4-work/results/testrun-signoff-{bridge}/macos-runtime-signoff.md
+Installed macOS launcher: /Users/test/Desktop/openD3.command
+macOS runtime signoff report: /Users/test/opend3-work/results/testrun-signoff-{bridge}/macos-runtime-signoff.md
 """
 
 
@@ -181,7 +181,7 @@ def write_archive(path: Path, *, bridges: tuple[str, ...], completed: bool = Fal
             directory.mode = 0o755
             archive.addfile(directory)
             add_file(archive, f"{root}/macos-runtime-signoff.md", report_text(bridge, completed=completed))
-            add_file(archive, f"{root}/openq4-macos-workflow.log", log_text(bridge))
+            add_file(archive, f"{root}/opend3-macos-workflow.log", log_text(bridge))
             add_file(archive, f"{root}/renderer-smoke/report.json", "{}\n")
             add_file(archive, f"{root}/renderer-mp-smoke/report.json", "{}\n")
             add_file(archive, f"{root}/renderer-matrix/report.md", "# ok\n")
@@ -195,7 +195,7 @@ def write_huge_log_archive(path: Path, *, bridge: str, max_text_member_bytes: in
         directory.mode = 0o755
         archive.addfile(directory)
         add_file(archive, f"{root}/macos-runtime-signoff.md", report_text(bridge, completed=True))
-        add_bytes(archive, f"{root}/openq4-macos-workflow.log", b"x" * (max_text_member_bytes + 1))
+        add_bytes(archive, f"{root}/opend3-macos-workflow.log", b"x" * (max_text_member_bytes + 1))
         add_file(archive, f"{root}/renderer-smoke/report.json", "{}\n")
         add_file(archive, f"{root}/renderer-mp-smoke/report.json", "{}\n")
         add_file(archive, f"{root}/renderer-matrix/report.md", "# ok\n")
@@ -209,7 +209,7 @@ def write_huge_payload_archive(path: Path, *, bridge: str, member_size: int) -> 
         directory.mode = 0o755
         archive.addfile(directory)
         add_file(archive, f"{root}/macos-runtime-signoff.md", report_text(bridge, completed=True))
-        add_file(archive, f"{root}/openq4-macos-workflow.log", log_text(bridge))
+        add_file(archive, f"{root}/opend3-macos-workflow.log", log_text(bridge))
         add_bytes(archive, f"{root}/renderer-smoke/oversized.bin", b"x" * member_size)
         add_file(archive, f"{root}/renderer-mp-smoke/report.json", "{}\n")
         add_file(archive, f"{root}/renderer-matrix/report.md", "# ok\n")
@@ -223,11 +223,11 @@ def write_archive_with_unexpected_top_dir(path: Path) -> None:
         directory.mode = 0o755
         archive.addfile(directory)
         add_file(archive, f"{root}/macos-runtime-signoff.md", report_text("opengl", completed=True))
-        add_file(archive, f"{root}/openq4-macos-workflow.log", log_text("opengl"))
+        add_file(archive, f"{root}/opend3-macos-workflow.log", log_text("opengl"))
         add_file(archive, f"{root}/renderer-smoke/report.json", "{}\n")
         add_file(archive, f"{root}/renderer-mp-smoke/report.json", "{}\n")
         add_file(archive, f"{root}/renderer-matrix/report.md", "# ok\n")
-        add_file(archive, "testrun-build-opengl/openq4-macos-workflow.log", "stale\n")
+        add_file(archive, "testrun-build-opengl/opend3-macos-workflow.log", "stale\n")
 
 
 def write_archive_with_metadata_under_result(path: Path) -> None:
@@ -238,7 +238,7 @@ def write_archive_with_metadata_under_result(path: Path) -> None:
         directory.mode = 0o755
         archive.addfile(directory)
         add_file(archive, f"{root}/macos-runtime-signoff.md", report_text("opengl", completed=True))
-        add_file(archive, f"{root}/openq4-macos-workflow.log", log_text("opengl"))
+        add_file(archive, f"{root}/opend3-macos-workflow.log", log_text("opengl"))
         add_file(archive, f"{root}/renderer-smoke/report.json", "{}\n")
         add_file(archive, f"{root}/renderer-mp-smoke/report.json", "{}\n")
         add_file(archive, f"{root}/renderer-matrix/report.md", "# ok\n")
@@ -253,7 +253,7 @@ def write_archive_with_case_duplicate(path: Path) -> None:
         directory.mode = 0o755
         archive.addfile(directory)
         add_file(archive, f"{root}/macos-runtime-signoff.md", report_text("opengl", completed=True))
-        add_file(archive, f"{root}/openq4-macos-workflow.log", log_text("opengl"))
+        add_file(archive, f"{root}/opend3-macos-workflow.log", log_text("opengl"))
         add_file(archive, f"{root}/renderer-smoke/report.json", "{}\n")
         add_file(archive, f"{root}/renderer-smoke/REPORT.json", "{}\n")
         add_file(archive, f"{root}/renderer-mp-smoke/report.json", "{}\n")
@@ -274,7 +274,7 @@ def write_archive_with_output_dirs_only(path: Path) -> None:
             directory.mode = 0o755
             archive.addfile(directory)
         add_file(archive, f"{root}/macos-runtime-signoff.md", report_text("opengl", completed=True))
-        add_file(archive, f"{root}/openq4-macos-workflow.log", log_text("opengl"))
+        add_file(archive, f"{root}/opend3-macos-workflow.log", log_text("opengl"))
 
 
 def write_archive_with_report(path: Path, *, bridge: str, report: str) -> None:
@@ -285,7 +285,7 @@ def write_archive_with_report(path: Path, *, bridge: str, report: str) -> None:
         directory.mode = 0o755
         archive.addfile(directory)
         add_file(archive, f"{root}/macos-runtime-signoff.md", report)
-        add_file(archive, f"{root}/openq4-macos-workflow.log", log_text(bridge))
+        add_file(archive, f"{root}/opend3-macos-workflow.log", log_text(bridge))
         add_file(archive, f"{root}/renderer-smoke/report.json", "{}\n")
         add_file(archive, f"{root}/renderer-mp-smoke/report.json", "{}\n")
         add_file(archive, f"{root}/renderer-matrix/report.md", "# ok\n")
@@ -299,7 +299,7 @@ def write_archive_with_log(path: Path, *, bridge: str, log: str) -> None:
         directory.mode = 0o755
         archive.addfile(directory)
         add_file(archive, f"{root}/macos-runtime-signoff.md", report_text(bridge, completed=True))
-        add_file(archive, f"{root}/openq4-macos-workflow.log", log)
+        add_file(archive, f"{root}/opend3-macos-workflow.log", log)
         add_file(archive, f"{root}/renderer-smoke/report.json", "{}\n")
         add_file(archive, f"{root}/renderer-mp-smoke/report.json", "{}\n")
         add_file(archive, f"{root}/renderer-matrix/report.md", "# ok\n")
@@ -319,7 +319,7 @@ def write_archive_with_text_control(path: Path, *, bridge: str, report: bool) ->
         else:
             log_body += "\nNUL:\x00\n"
         add_file(archive, f"{root}/macos-runtime-signoff.md", report_body)
-        add_file(archive, f"{root}/openq4-macos-workflow.log", log_body)
+        add_file(archive, f"{root}/opend3-macos-workflow.log", log_body)
         add_file(archive, f"{root}/renderer-smoke/report.json", "{}\n")
         add_file(archive, f"{root}/renderer-mp-smoke/report.json", "{}\n")
         add_file(archive, f"{root}/renderer-matrix/report.md", "# ok\n")
@@ -333,7 +333,7 @@ def write_archive_with_control_character_member(path: Path) -> None:
         directory.mode = 0o755
         archive.addfile(directory)
         add_file(archive, f"{root}/macos-runtime-signoff.md", report_text("opengl", completed=True))
-        add_file(archive, f"{root}/openq4-macos-workflow.log", log_text("opengl"))
+        add_file(archive, f"{root}/opend3-macos-workflow.log", log_text("opengl"))
         add_file(archive, f"{root}/renderer-smoke/report.json", "{}\n")
         add_file(archive, f"{root}/renderer-mp-smoke/report.json", "{}\n")
         add_file(archive, f"{root}/renderer-smoke/bad\nname.txt", "bad\n")
@@ -366,9 +366,9 @@ def expect_error(fragment: str, callback) -> None:
 
 def main() -> int:
     validator = load_validator()
-    with tempfile.TemporaryDirectory(prefix="openq4-macos-signoff-") as temp_root:
+    with tempfile.TemporaryDirectory(prefix="opend3-macos-signoff-") as temp_root:
         temp = Path(temp_root)
-        good = temp / "openq4-macos-results-testrun.tar.gz"
+        good = temp / "opend3-macos-results-testrun.tar.gz"
         write_archive(good, bridges=("opengl", "metal"), completed=False)
         run_id = validator.validate_signoff_archive(
             good,
@@ -380,7 +380,7 @@ def main() -> int:
         if run_id != "testrun":
             raise AssertionError(f"Unexpected inferred run ID: {run_id}")
 
-        symlink_archive = temp / "openq4-macos-results-symlink.tar.gz"
+        symlink_archive = temp / "opend3-macos-results-symlink.tar.gz"
         try:
             symlink_archive.symlink_to(good.name)
         except (OSError, NotImplementedError):
@@ -399,7 +399,7 @@ def main() -> int:
 
         completed_dir = temp / "completed"
         completed_dir.mkdir()
-        completed = completed_dir / "openq4-macos-results-testrun.tar.gz"
+        completed = completed_dir / "opend3-macos-results-testrun.tar.gz"
         write_archive(completed, bridges=("opengl", "metal"), completed=True)
         validator.validate_signoff_archive(
             completed,
@@ -409,7 +409,7 @@ def main() -> int:
             require_completed_checklist=True,
         )
 
-        renamed_completed = temp / "openq4-macos-results-renamed.tar.gz"
+        renamed_completed = temp / "opend3-macos-results-renamed.tar.gz"
         write_archive(renamed_completed, bridges=("opengl", "metal"), completed=True)
         expect_error(
             "file name does not match run ID",
@@ -433,7 +433,7 @@ def main() -> int:
             ),
         )
 
-        missing_metal = temp / "openq4-macos-results-missing.tar.gz"
+        missing_metal = temp / "opend3-macos-results-missing.tar.gz"
         write_archive(missing_metal, bridges=("opengl",), completed=True)
         expect_error(
             "Expected exactly one *-signoff-metal directory",
@@ -446,10 +446,10 @@ def main() -> int:
             ),
         )
 
-        duplicate_member = temp / "openq4-macos-results-duplicate.tar.gz"
+        duplicate_member = temp / "opend3-macos-results-duplicate.tar.gz"
         write_bad_member_archive(
             duplicate_member,
-            "testrun-signoff-opengl/openq4-macos-workflow.log",
+            "testrun-signoff-opengl/opend3-macos-workflow.log",
             duplicate=True,
         )
         expect_error(
@@ -463,7 +463,7 @@ def main() -> int:
             ),
         )
 
-        control_character_member = temp / "openq4-macos-results-control-character.tar.gz"
+        control_character_member = temp / "opend3-macos-results-control-character.tar.gz"
         write_archive_with_control_character_member(control_character_member)
         expect_error(
             "control character",
@@ -476,7 +476,7 @@ def main() -> int:
             ),
         )
 
-        empty_segment = temp / "openq4-macos-results-empty-segment.tar.gz"
+        empty_segment = temp / "opend3-macos-results-empty-segment.tar.gz"
         write_bad_member_archive(empty_segment, "testrun-signoff-opengl//bad.txt")
         expect_error(
             "empty segment",
@@ -489,7 +489,7 @@ def main() -> int:
             ),
         )
 
-        dot_segment = temp / "openq4-macos-results-dot-segment.tar.gz"
+        dot_segment = temp / "opend3-macos-results-dot-segment.tar.gz"
         write_bad_member_archive(dot_segment, "testrun-signoff-opengl/./bad.txt")
         expect_error(
             "dot segment",
@@ -502,7 +502,7 @@ def main() -> int:
             ),
         )
 
-        long_path = temp / "openq4-macos-results-long-path.tar.gz"
+        long_path = temp / "opend3-macos-results-long-path.tar.gz"
         long_path_name = "testrun-signoff-opengl/" + "/".join(("segment%02d" % index) for index in range(70))
         write_bad_member_archive(long_path, f"{long_path_name}/bad.txt")
         expect_error(
@@ -516,7 +516,7 @@ def main() -> int:
             ),
         )
 
-        long_segment = temp / "openq4-macos-results-long-segment.tar.gz"
+        long_segment = temp / "opend3-macos-results-long-segment.tar.gz"
         long_segment_name = "x" * (validator.MAX_ARCHIVE_PATH_SEGMENT_CHARS + 1)
         write_bad_member_archive(long_segment, f"testrun-signoff-opengl/{long_segment_name}/bad.txt")
         expect_error(
@@ -530,10 +530,10 @@ def main() -> int:
             ),
         )
 
-        group_writable_member = temp / "openq4-macos-results-group-writable.tar.gz"
+        group_writable_member = temp / "opend3-macos-results-group-writable.tar.gz"
         write_bad_mode_member_archive(
             group_writable_member,
-            "testrun-signoff-opengl/openq4-macos-workflow.log",
+            "testrun-signoff-opengl/opend3-macos-workflow.log",
             mode=0o664,
         )
         expect_error(
@@ -547,10 +547,10 @@ def main() -> int:
             ),
         )
 
-        special_mode_member = temp / "openq4-macos-results-special-mode.tar.gz"
+        special_mode_member = temp / "opend3-macos-results-special-mode.tar.gz"
         write_bad_mode_member_archive(
             special_mode_member,
-            "testrun-signoff-opengl/openq4-macos-workflow.log",
+            "testrun-signoff-opengl/opend3-macos-workflow.log",
             mode=0o4644,
         )
         expect_error(
@@ -564,7 +564,7 @@ def main() -> int:
             ),
         )
 
-        huge_log = temp / "openq4-macos-results-huge-log.tar.gz"
+        huge_log = temp / "opend3-macos-results-huge-log.tar.gz"
         write_huge_log_archive(huge_log, bridge="opengl", max_text_member_bytes=validator.MAX_TEXT_MEMBER_BYTES)
         expect_error(
             "text member is too large",
@@ -577,7 +577,7 @@ def main() -> int:
             ),
         )
 
-        control_text_report = temp / "openq4-macos-results-control-text-report.tar.gz"
+        control_text_report = temp / "opend3-macos-results-control-text-report.tar.gz"
         write_archive_with_text_control(control_text_report, bridge="opengl", report=True)
         expect_error(
             "unsupported control character",
@@ -590,7 +590,7 @@ def main() -> int:
             ),
         )
 
-        control_text_log = temp / "openq4-macos-results-control-text-log.tar.gz"
+        control_text_log = temp / "opend3-macos-results-control-text-log.tar.gz"
         write_archive_with_text_control(control_text_log, bridge="opengl", report=False)
         expect_error(
             "unsupported control character",
@@ -603,7 +603,7 @@ def main() -> int:
             ),
         )
 
-        huge_payload = temp / "openq4-macos-results-huge-payload.tar.gz"
+        huge_payload = temp / "opend3-macos-results-huge-payload.tar.gz"
         previous_member_cap = validator.MAX_ARCHIVE_MEMBER_BYTES
         validator.MAX_ARCHIVE_MEMBER_BYTES = 32
         try:
@@ -653,12 +653,12 @@ def main() -> int:
         finally:
             validator.MAX_ARCHIVE_TOTAL_BYTES = previous_total_cap
 
-        missing_client_report = temp / "openq4-macos-results-missing-client.tar.gz"
+        missing_client_report = temp / "opend3-macos-results-missing-client.tar.gz"
         write_archive_with_report(
             missing_client_report,
             bridge="opengl",
             report=report_text("opengl", completed=True).replace(
-                "- Client: /Users/test/openq4-work/openQ4/.install/openQ4-client_arm64",
+                "- Client: /Users/test/opend3-work/openD3/.install/openD3-client_arm64",
                 "- Client: not found",
             ),
         )
@@ -673,12 +673,12 @@ def main() -> int:
             ),
         )
 
-        missing_dedicated_report = temp / "openq4-macos-results-missing-dedicated.tar.gz"
+        missing_dedicated_report = temp / "opend3-macos-results-missing-dedicated.tar.gz"
         write_archive_with_report(
             missing_dedicated_report,
             bridge="opengl",
             report=report_text("opengl", completed=True).replace(
-                "- Dedicated server: /Users/test/openq4-work/openQ4/.install/openQ4-ded_arm64",
+                "- Dedicated server: /Users/test/opend3-work/openD3/.install/openD3-ded_arm64",
                 "- Dedicated server: not found",
             ),
         )
@@ -693,13 +693,13 @@ def main() -> int:
             ),
         )
 
-        wrong_smoke_report = temp / "openq4-macos-results-wrong-smoke-report.tar.gz"
+        wrong_smoke_report = temp / "opend3-macos-results-wrong-smoke-report.tar.gz"
         write_archive_with_report(
             wrong_smoke_report,
             bridge="opengl",
             report=report_text("opengl", completed=True).replace(
-                "- Renderer smoke output: /Users/test/openq4-work/results/testrun-signoff-opengl/renderer-smoke",
-                "- Renderer smoke output: /tmp/openq4-wrong-renderer-smoke",
+                "- Renderer smoke output: /Users/test/opend3-work/results/testrun-signoff-opengl/renderer-smoke",
+                "- Renderer smoke output: /tmp/opend3-wrong-renderer-smoke",
             ),
         )
         expect_error(
@@ -713,13 +713,13 @@ def main() -> int:
             ),
         )
 
-        wrong_mp_smoke_report = temp / "openq4-macos-results-wrong-mp-smoke-report.tar.gz"
+        wrong_mp_smoke_report = temp / "opend3-macos-results-wrong-mp-smoke-report.tar.gz"
         write_archive_with_report(
             wrong_mp_smoke_report,
             bridge="opengl",
             report=report_text("opengl", completed=True).replace(
-                "- Renderer MP smoke output: /Users/test/openq4-work/results/testrun-signoff-opengl/renderer-mp-smoke",
-                "- Renderer MP smoke output: /tmp/openq4-wrong-renderer-mp-smoke",
+                "- Renderer MP smoke output: /Users/test/opend3-work/results/testrun-signoff-opengl/renderer-mp-smoke",
+                "- Renderer MP smoke output: /tmp/opend3-wrong-renderer-mp-smoke",
             ),
         )
         expect_error(
@@ -733,13 +733,13 @@ def main() -> int:
             ),
         )
 
-        wrong_report_log = temp / "openq4-macos-results-wrong-report-log.tar.gz"
+        wrong_report_log = temp / "opend3-macos-results-wrong-report-log.tar.gz"
         write_archive_with_log(
             wrong_report_log,
             bridge="opengl",
             log=log_text("opengl").replace(
-                "macOS runtime signoff report: /Users/test/openq4-work/results/testrun-signoff-opengl/macos-runtime-signoff.md",
-                "macOS runtime signoff report: /tmp/openq4-wrong/macos-runtime-signoff.md",
+                "macOS runtime signoff report: /Users/test/opend3-work/results/testrun-signoff-opengl/macos-runtime-signoff.md",
+                "macOS runtime signoff report: /tmp/opend3-wrong/macos-runtime-signoff.md",
             ),
         )
         expect_error(
@@ -802,7 +802,7 @@ def main() -> int:
             lambda: validator.parse_bridges("opengl,opengl"),
         )
 
-        unexpected_top_dir = temp / "openq4-macos-results-unexpected-top-dir.tar.gz"
+        unexpected_top_dir = temp / "opend3-macos-results-unexpected-top-dir.tar.gz"
         write_archive_with_unexpected_top_dir(unexpected_top_dir)
         expect_error(
             "unexpected top-level result directories",
@@ -815,7 +815,7 @@ def main() -> int:
             ),
         )
 
-        metadata_under_result = temp / "openq4-macos-results-metadata.tar.gz"
+        metadata_under_result = temp / "opend3-macos-results-metadata.tar.gz"
         write_archive_with_metadata_under_result(metadata_under_result)
         expect_error(
             "non-runtime macOS metadata",
@@ -828,7 +828,7 @@ def main() -> int:
             ),
         )
 
-        case_duplicate = temp / "openq4-macos-results-case-duplicate.tar.gz"
+        case_duplicate = temp / "opend3-macos-results-case-duplicate.tar.gz"
         write_archive_with_case_duplicate(case_duplicate)
         expect_error(
             "case-insensitive duplicate",
@@ -841,7 +841,7 @@ def main() -> int:
             ),
         )
 
-        output_dirs_only = temp / "openq4-macos-results-output-dirs-only.tar.gz"
+        output_dirs_only = temp / "opend3-macos-results-output-dirs-only.tar.gz"
         write_archive_with_output_dirs_only(output_dirs_only)
         expect_error(
             "missing renderer-smoke output",

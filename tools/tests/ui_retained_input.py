@@ -94,33 +94,33 @@ struct idUsercmdGenLocal {
 };
 template<class T> T Max(T a,T b) { return std::max(a,b); }
 struct FakeRuntime {
-    std::vector<openq4::ui::RoutedInput> received;
-    std::vector<openq4::ui::ControlAction> actions;
+    std::vector<opend3::ui::RoutedInput> received;
+    std::vector<opend3::ui::ControlAction> actions;
     float x=0,y=0;
     int cancels=0;
     void CancelInput(double) { ++cancels; }
-    void PointerButton(bool down,double) { received.push_back({openq4::ui::RoutedInput::Kind::PointerButton,openq4::ui::MenuInput::Accept,down}); }
+    void PointerButton(bool down,double) { received.push_back({opend3::ui::RoutedInput::Kind::PointerButton,opend3::ui::MenuInput::Accept,down}); }
     void PointerMove(float a,float b,double) { x=a;y=b; }
     bool touchPointer=false;
     void SetTouchPointer(bool touch) { touchPointer=touch; }
-    void MenuAction(openq4::ui::MenuInput menu,bool down,double) {
-        received.push_back({openq4::ui::RoutedInput::Kind::Menu,menu,down});
-        if(menu==openq4::ui::MenuInput::Back && down) actions.push_back({openq4::ui::ControlAction::Kind::Back,"doc","",""});
+    void MenuAction(opend3::ui::MenuInput menu,bool down,double) {
+        received.push_back({opend3::ui::RoutedInput::Kind::Menu,menu,down});
+        if(menu==opend3::ui::MenuInput::Back && down) actions.push_back({opend3::ui::ControlAction::Kind::Back,"doc","",""});
     }
     bool PopModal(double) { return false; }
-    std::vector<openq4::ui::ControlAction> TakeActions() { auto result=actions;actions.clear();return result; }
+    std::vector<opend3::ui::ControlAction> TakeActions() { auto result=actions;actions.clear();return result; }
 };
 std::unique_ptr<FakeRuntime> runtime;
 // Editor view lifetime is outside this input-routing fixture.
 struct EditCall {};
-openq4::ui::Input input;
+opend3::ui::Input input;
 bool inputFocused=true,inputSuspended=false,inputResourceSuspended=false,analogNeedsNeutral=true;
 bool InputFocused() { return inputFocused; }
 int analogDirection=-1;
 unsigned inputGeneration=1,closes=0;
 double now=0;
 double PresentationTime() { return now; }
-std::vector<openq4::ui::ControlAction> applicationRequests;
+std::vector<opend3::ui::ControlAction> applicationRequests;
 struct { int uiViewportWidth=1280,uiViewportHeight=720; } engineWindowState;
 struct Common { void Warning(const char*) { assert(false); } } commonObject;
 Common* common=&commonObject;
@@ -142,7 +142,7 @@ bool PreviewReady() {
 
 MAIN = r'''
 int main() {
-    using openq4::ui::MenuInput;
+    using opend3::ui::MenuInput;
     MenuInput action=MenuInput::Back;
     assert(MapMenuKey(K_JOY3,action) && action==MenuInput::Accept);
     assert(MapMenuKey(K_JOY4,action) && action==MenuInput::Back);

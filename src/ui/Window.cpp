@@ -175,7 +175,7 @@ static void AdjustTournamentWarmupLayout( const idUserInterfaceLocal *gui, const
 	}
 }
 
-static rvNamedEvent *openQ4_CreateLegacyCinematicNamedEvent( idWindow *window, const char *eventName ) {
+static rvNamedEvent *openD3_CreateLegacyCinematicNamedEvent( idWindow *window, const char *eventName ) {
 	if ( window == NULL || window->GetGui() == NULL ) {
 		return NULL;
 	}
@@ -1368,7 +1368,7 @@ bool idWindow::DrawRetailTextEffect( const idVec4 &color ) {
 ================
 idWindow::MeasureText
 
-openQ4: "textwidth" and "textlines" for the windows something reads them from,
+openD3: "textwidth" and "textlines" for the windows something reads them from,
 and the "ellipsis" line. The widest of the text's explicit lines, up to the
 text rectangle; a single line too wide for an ellipsis window is shortened to
 fit with "...". Measured again only when the text, its scale, font or spacing
@@ -2815,7 +2815,7 @@ void idWindow::Redraw(float x, float y) {
 	UpdateTabContainerState( true );
 	CalcClientRect(0, 0);
 
-	// openQ4: the stock interface's HUD scale. This window's group scales
+	// openD3: the stock interface's HUD scale. This window's group scales
 	// about its screen anchor for as long as it and its children draw.
 	const bool hudScaled = !( flags & WIN_DESKTOP ) && gui->LegacyScale() != 1.0f;
 	const idLegacyHudGroup hudGroup( hudScaled ? gui : NULL, dc, hudScaled ? HudGroupAnchorX() : -1, hudScaled ? HudGroupAnchorY() : -1 );
@@ -2980,7 +2980,7 @@ void idWindow::InitFromDictionary(idDict *dict, bool byName) {
 ================
 idWindow::HudGroupAnchorX / HudGroupAnchorY
 
-openQ4: the anchor this window gives its HUD scale group on each axis: the one
+openD3: the anchor this window gives its HUD scale group on each axis: the one
 it names (hudanchorx, hudanchory), else the screen edge its alignment moves it
 to, where that alignment applies (CalcClientRect), else its ancestors'.
 ================
@@ -3058,7 +3058,7 @@ void idWindow::CalcClientRect(float xofs, float yofs) {
 		}
 
 		AdjustTournamentWarmupLayout( gui, GetName(), parent != NULL ? parent->GetName() : NULL, xofs, xExpand, drawRect );
-		OpenQ4_ExpandLegacyMessageBackdrop( gui != NULL ? gui->GetSourceFile() : NULL,
+		openD3_ExpandLegacyMessageBackdrop( gui != NULL ? gui->GetSourceFile() : NULL,
 			GetName(), xExpand, yExpand, drawRect );
 	}
 
@@ -4593,10 +4593,10 @@ void idWindow::DrawTabContainerTabs() {
 
 /*
 ================
-OpenQ4_ParseTimelineMilliseconds
+openD3_ParseTimelineMilliseconds
 ================
 */
-static bool OpenQ4_ParseTimelineMilliseconds( const char *text, int &milliseconds ) {
+static bool openD3_ParseTimelineMilliseconds( const char *text, int &milliseconds ) {
 	if ( text == NULL || text[0] == '\0' ) {
 		return false;
 	}
@@ -4926,7 +4926,7 @@ bool idWindow::Parse( idParser *src, bool rebuild) {
 			}
 
 			int eventTime = 0;
-			if ( !OpenQ4_ParseTimelineMilliseconds( timeToken, eventTime ) ) {
+			if ( !openD3_ParseTimelineMilliseconds( timeToken, eventTime ) ) {
 				src->Error( "Invalid onTime value '%s'", timeToken );
 				return false;
 			}
@@ -6045,12 +6045,12 @@ void idWindow::WriteToDemoFile( class idDemoFile *f ) {
 idWindow::WriteString
 ===============
 */
-static bool OpenQ4_IsFiniteSaveGameRectangle( const idRectangle &rect ) {
+static bool openD3_IsFiniteSaveGameRectangle( const idRectangle &rect ) {
 	return std::isfinite( rect.x ) && std::isfinite( rect.y ) &&
 		std::isfinite( rect.w ) && std::isfinite( rect.h );
 }
 
-static bool OpenQ4_IsFiniteSaveGameVec2( const idVec2 &vec ) {
+static bool openD3_IsFiniteSaveGameVec2( const idVec2 &vec ) {
 	return std::isfinite( vec.x ) && std::isfinite( vec.y );
 }
 
@@ -6067,11 +6067,11 @@ bool idWindow::WriteSaveGameString( const char *string, idFile *savefile ) {
 			name.c_str(), gui ? gui->GetSourceFile() : "<null>", len );
 		return false;
 	}
-	if ( !OpenQ4_WriteSaveGameInt( savefile, len, "idWindow::WriteSaveGameString", "length" ) ) {
+	if ( !openD3_WriteSaveGameInt( savefile, len, "idWindow::WriteSaveGameString", "length" ) ) {
 		return false;
 	}
 	if ( len > 0 ) {
-		if ( !OpenQ4_WriteSaveGameBytes( savefile, string, len, "idWindow::WriteSaveGameString", "string" ) ) {
+		if ( !openD3_WriteSaveGameBytes( savefile, string, len, "idWindow::WriteSaveGameString", "string" ) ) {
 			return false;
 		}
 	}
@@ -6083,19 +6083,19 @@ The floats of a transition's interpolator through the typed GUI field helpers,
 as a SaveCodec writer and reader (idlib/SaveCodec.h). The helpers report a
 failed write or a truncated read through common->Error. A GUI expression can
 leave a non-finite value in a transition; it is saved as zero, as
-OpenQ4_SanitizeSaveGameWinVar saves the variables themselves.
+openD3_SanitizeSaveGameWinVar saves the variables themselves.
 */
 struct windowSaveGameFloats_t {
 	idFile *	file;
 	bool		ok;
 
 	void		WriteFloat( float value ) {
-					ok = ok && OpenQ4_WriteSaveGameFloat( file, std::isfinite( value ) ? value : 0.0f,
+					ok = ok && openD3_WriteSaveGameFloat( file, std::isfinite( value ) ? value : 0.0f,
 						"idWindow::WriteSaveGameTransition", "interpolate state" );
 				}
 	void		ReadFloat( float &value ) {
 					value = 0.0f;
-					ok = ok && OpenQ4_ReadSaveGameFloat( file, value, "idWindow::ReadSaveGameTransition", "interpolate state" );
+					ok = ok && openD3_ReadSaveGameFloat( file, value, "idWindow::ReadSaveGameTransition", "interpolate state" );
 				}
 };
 
@@ -6124,7 +6124,7 @@ bool idWindow::WriteSaveGameTransition( idTransitionData &trans, idFile *savefil
 		// inconsistent and keeps failing below.
 		common->DPrintf( "idWindow::WriteSaveGameTransition: dropping transition on non-member var"
 			" for window '%s' in gui '%s'\n", name.c_str(), gui->GetSourceFile() );
-		return OpenQ4_WriteSaveGameInt( savefile, -1, "idWindow::WriteSaveGameTransition", "target offset" );
+		return openD3_WriteSaveGameInt( savefile, -1, "idWindow::WriteSaveGameTransition", "target offset" );
 	}
 	if ( transitionOffset < 0 || transitionOffset > 0x7fffffff || ( dw.win == NULL ) == ( dw.simp == NULL ) ) {
 		common->Error( "idWindow::WriteSaveGameTransition: could not resolve transition target for window '%s' in gui '%s'",
@@ -6145,7 +6145,7 @@ bool idWindow::WriteSaveGameTransition( idTransitionData &trans, idFile *savefil
 		return false;
 	}
 	windowSaveGameFloats_t out = { savefile, true };
-	if ( !OpenQ4_WriteSaveGameInt( savefile, savedTarget, "idWindow::WriteSaveGameTransition", "target field" ) ||
+	if ( !openD3_WriteSaveGameInt( savefile, savedTarget, "idWindow::WriteSaveGameTransition", "target field" ) ||
 		 !WriteSaveGameString( winName, savefile ) ) {
 		return false;
 	}
@@ -6153,7 +6153,7 @@ bool idWindow::WriteSaveGameTransition( idTransitionData &trans, idFile *savefil
 	return out.ok;
 }
 
-openQ4SaveGameRestore_t openQ4_saveGameRestore = { NULL, 0, 0 };
+openD3SaveGameRestore_t openD3_saveGameRestore = { NULL, 0, 0 };
 
 /*
 ===============
@@ -6225,16 +6225,16 @@ int idWindow::TransitionFieldIndex( bool simple, intptr_t offset ) {
 // version 5. Earlier payloads hold raw bytes, and one written before build
 // 1582 has the shorter layout described in SaveGameReleases.h.
 static bool Window_ReadSaveGameTransitionInterpolate( idFile *savefile, idInterpolateAccelDecelLinear<idVec4> &interp ) {
-	if ( OpenQ4_SaveGameRestoreIsPortable( savefile ) ) {
+	if ( openD3_SaveGameRestoreIsPortable( savefile ) ) {
 		windowSaveGameFloats_t saved = { savefile, true };
 		SaveCodec_ReadInterpolate( saved, interp );
 		return saved.ok;
 	}
-	if ( OpenQ4_SaveGameHasInterpolatorCacheFlag( OpenQ4_SaveGameRestoreLayoutBuild( savefile ) ) ) {
-		return OpenQ4_ReadSaveGameRawField( savefile, interp, "idWindow::ReadSaveGameTransition", "interpolate state" );
+	if ( openD3_SaveGameHasInterpolatorCacheFlag( openD3_SaveGameRestoreLayoutBuild( savefile ) ) ) {
+		return openD3_ReadSaveGameRawField( savefile, interp, "idWindow::ReadSaveGameTransition", "interpolate state" );
 	}
-	openQ4SaveGameLegacyInterpolate_t<idVec4> saved;
-	if ( !OpenQ4_ReadSaveGameRawField( savefile, saved, "idWindow::ReadSaveGameTransition", "interpolate state" ) ) {
+	openD3SaveGameLegacyInterpolate_t<idVec4> saved;
+	if ( !openD3_ReadSaveGameRawField( savefile, saved, "idWindow::ReadSaveGameTransition", "interpolate state" ) ) {
 		return false;
 	}
 	saved.ToInterpolate( interp );
@@ -6250,7 +6250,7 @@ bool idWindow::ReadSaveGameTransition( idTransitionData &trans, idFile *savefile
 	int offset = -1;
 	trans.data = NULL;
 
-	if ( !OpenQ4_ReadSaveGameInt( savefile, offset, "idWindow::ReadSaveGameTransition", "offset" ) ) {
+	if ( !openD3_ReadSaveGameInt( savefile, offset, "idWindow::ReadSaveGameTransition", "offset" ) ) {
 		return false;
 	}
 	if ( offset != -1 ) {
@@ -6497,7 +6497,7 @@ bool idWindow::WriteSaveGameChildReference( idWindow *child, idFile *savefile, c
 			return false;
 		}
 	}
-	return OpenQ4_WriteSaveGameInt( savefile, childId, "idWindow::WriteToSaveGame",
+	return openD3_WriteSaveGameInt( savefile, childId, "idWindow::WriteToSaveGame",
 		fieldName ? fieldName : "child reference" );
 }
 
@@ -6510,7 +6510,7 @@ idWindow *idWindow::ReadSaveGameChildReference( idFile *savefile, const char *fi
 	if ( hadSerializedReference != NULL ) {
 		*hadSerializedReference = false;
 	}
-	if ( !OpenQ4_ReadSaveGameInt( savefile, savedChildId, "idWindow::ReadFromSaveGame",
+	if ( !openD3_ReadSaveGameInt( savefile, savedChildId, "idWindow::ReadFromSaveGame",
 			fieldName ? fieldName : "child reference" ) ) {
 		return NULL;
 	}
@@ -6590,48 +6590,48 @@ void idWindow::WriteToSaveGame( idFile *savefile ) {
 	const float savedTextStyleValue = textstyle;
 	const float savedTextSpacing = textspacing;
 	if ( !std::isfinite( actualX ) || !std::isfinite( actualY ) ||
-		 !OpenQ4_IsFiniteSaveGameRectangle( drawRect ) || !OpenQ4_IsFiniteSaveGameRectangle( clientRect ) ||
-		 !OpenQ4_IsFiniteSaveGameRectangle( textRect ) || !OpenQ4_IsFiniteSaveGameVec2( origin ) ||
+		 !openD3_IsFiniteSaveGameRectangle( drawRect ) || !openD3_IsFiniteSaveGameRectangle( clientRect ) ||
+		 !openD3_IsFiniteSaveGameRectangle( textRect ) || !openD3_IsFiniteSaveGameVec2( origin ) ||
 		 !std::isfinite( xOffset ) || !std::isfinite( yOffset ) ||
 		 !std::isfinite( forceAspectWidth ) || !std::isfinite( forceAspectHeight ) ||
 		 !std::isfinite( matScalex ) || !std::isfinite( matScaley ) || !std::isfinite( borderSize ) ||
 		 !std::isfinite( textAlignx ) || !std::isfinite( textAligny ) ||
 		 !std::isfinite( savedTextStyleValue ) || savedTextStyleValue < -128.0f || savedTextStyleValue > 127.0f ||
-		 !std::isfinite( savedTextSpacing ) || !OpenQ4_IsFiniteSaveGameVec2( shear ) ) {
+		 !std::isfinite( savedTextSpacing ) || !openD3_IsFiniteSaveGameVec2( shear ) ) {
 		common->Error( "idWindow::WriteToSaveGame: refusing non-finite or out-of-range layout state for window '%s' in gui '%s'",
 			name.c_str(), gui->GetSourceFile() );
 		return;
 	}
 
 	if ( !WriteSaveGameString( cmd, savefile ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, actualX, "idWindow::WriteToSaveGame", "actualX" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, actualY, "idWindow::WriteToSaveGame", "actualY" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, childID, "idWindow::WriteToSaveGame", "childID" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, flags, "idWindow::WriteToSaveGame", "flags" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, lastTimeRun, "idWindow::WriteToSaveGame", "last time run" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, drawRect, "idWindow::WriteToSaveGame", "draw rect" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, clientRect, "idWindow::WriteToSaveGame", "client rect" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, origin, "idWindow::WriteToSaveGame", "origin" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, fontNum, "idWindow::WriteToSaveGame", "font number" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, timeLine, "idWindow::WriteToSaveGame", "timeline" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, xOffset, "idWindow::WriteToSaveGame", "x offset" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, yOffset, "idWindow::WriteToSaveGame", "y offset" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, cursor, "idWindow::WriteToSaveGame", "cursor" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, forceAspectWidth, "idWindow::WriteToSaveGame", "force aspect width" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, forceAspectHeight, "idWindow::WriteToSaveGame", "force aspect height" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, matScalex, "idWindow::WriteToSaveGame", "material scale x" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, matScaley, "idWindow::WriteToSaveGame", "material scale y" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, borderSize, "idWindow::WriteToSaveGame", "border size" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, textAlign, "idWindow::WriteToSaveGame", "text align" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, textAlignx, "idWindow::WriteToSaveGame", "text align x" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, textAligny, "idWindow::WriteToSaveGame", "text align y" ) ) {
+		 !openD3_WriteSaveGameField( savefile, actualX, "idWindow::WriteToSaveGame", "actualX" ) ||
+		 !openD3_WriteSaveGameField( savefile, actualY, "idWindow::WriteToSaveGame", "actualY" ) ||
+		 !openD3_WriteSaveGameField( savefile, childID, "idWindow::WriteToSaveGame", "childID" ) ||
+		 !openD3_WriteSaveGameField( savefile, flags, "idWindow::WriteToSaveGame", "flags" ) ||
+		 !openD3_WriteSaveGameField( savefile, lastTimeRun, "idWindow::WriteToSaveGame", "last time run" ) ||
+		 !openD3_WriteSaveGameField( savefile, drawRect, "idWindow::WriteToSaveGame", "draw rect" ) ||
+		 !openD3_WriteSaveGameField( savefile, clientRect, "idWindow::WriteToSaveGame", "client rect" ) ||
+		 !openD3_WriteSaveGameField( savefile, origin, "idWindow::WriteToSaveGame", "origin" ) ||
+		 !openD3_WriteSaveGameField( savefile, fontNum, "idWindow::WriteToSaveGame", "font number" ) ||
+		 !openD3_WriteSaveGameField( savefile, timeLine, "idWindow::WriteToSaveGame", "timeline" ) ||
+		 !openD3_WriteSaveGameField( savefile, xOffset, "idWindow::WriteToSaveGame", "x offset" ) ||
+		 !openD3_WriteSaveGameField( savefile, yOffset, "idWindow::WriteToSaveGame", "y offset" ) ||
+		 !openD3_WriteSaveGameField( savefile, cursor, "idWindow::WriteToSaveGame", "cursor" ) ||
+		 !openD3_WriteSaveGameField( savefile, forceAspectWidth, "idWindow::WriteToSaveGame", "force aspect width" ) ||
+		 !openD3_WriteSaveGameField( savefile, forceAspectHeight, "idWindow::WriteToSaveGame", "force aspect height" ) ||
+		 !openD3_WriteSaveGameField( savefile, matScalex, "idWindow::WriteToSaveGame", "material scale x" ) ||
+		 !openD3_WriteSaveGameField( savefile, matScaley, "idWindow::WriteToSaveGame", "material scale y" ) ||
+		 !openD3_WriteSaveGameField( savefile, borderSize, "idWindow::WriteToSaveGame", "border size" ) ||
+		 !openD3_WriteSaveGameField( savefile, textAlign, "idWindow::WriteToSaveGame", "text align" ) ||
+		 !openD3_WriteSaveGameField( savefile, textAlignx, "idWindow::WriteToSaveGame", "text align x" ) ||
+		 !openD3_WriteSaveGameField( savefile, textAligny, "idWindow::WriteToSaveGame", "text align y" ) ) {
 		return;
 	}
 	const signed char savedTextStyle = static_cast<signed char>( static_cast<int>( textstyle ) );
-	if ( !OpenQ4_WriteSaveGameField( savefile, savedTextStyle, "idWindow::WriteToSaveGame", "text style" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, savedTextSpacing, "idWindow::WriteToSaveGame", "text spacing" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, textShadow, "idWindow::WriteToSaveGame", "text shadow" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, static_cast<const idVec2 &>( shear ), "idWindow::WriteToSaveGame", "shear" ) ) {
+	if ( !openD3_WriteSaveGameField( savefile, savedTextStyle, "idWindow::WriteToSaveGame", "text style" ) ||
+		 !openD3_WriteSaveGameField( savefile, savedTextSpacing, "idWindow::WriteToSaveGame", "text spacing" ) ||
+		 !openD3_WriteSaveGameField( savefile, textShadow, "idWindow::WriteToSaveGame", "text shadow" ) ||
+		 !openD3_WriteSaveGameField( savefile, static_cast<const idVec2 &>( shear ), "idWindow::WriteToSaveGame", "shear" ) ) {
 		return;
 	}
 
@@ -6640,17 +6640,17 @@ void idWindow::WriteToSaveGame( idFile *savefile ) {
 	}
 
 	// WinVars
-	OpenQ4_SanitizeSaveGameWinVar( noTime, "idWindow::WriteToSaveGame", name.c_str(), "noTime" );
-	OpenQ4_SanitizeSaveGameWinVar( visible, "idWindow::WriteToSaveGame", name.c_str(), "visible" );
-	OpenQ4_SanitizeSaveGameWinVar( rect, "idWindow::WriteToSaveGame", name.c_str(), "rect" );
-	OpenQ4_SanitizeSaveGameWinVar( backColor, "idWindow::WriteToSaveGame", name.c_str(), "backColor" );
-	OpenQ4_SanitizeSaveGameWinVar( matColor, "idWindow::WriteToSaveGame", name.c_str(), "matColor" );
-	OpenQ4_SanitizeSaveGameWinVar( foreColor, "idWindow::WriteToSaveGame", name.c_str(), "foreColor" );
-	OpenQ4_SanitizeSaveGameWinVar( hoverColor, "idWindow::WriteToSaveGame", name.c_str(), "hoverColor" );
-	OpenQ4_SanitizeSaveGameWinVar( borderColor, "idWindow::WriteToSaveGame", name.c_str(), "borderColor" );
-	OpenQ4_SanitizeSaveGameWinVar( textScale, "idWindow::WriteToSaveGame", name.c_str(), "textScale" );
-	OpenQ4_SanitizeSaveGameWinVar( noEvents, "idWindow::WriteToSaveGame", name.c_str(), "noEvents" );
-	OpenQ4_SanitizeSaveGameWinVar( rotate, "idWindow::WriteToSaveGame", name.c_str(), "rotate" );
+	openD3_SanitizeSaveGameWinVar( noTime, "idWindow::WriteToSaveGame", name.c_str(), "noTime" );
+	openD3_SanitizeSaveGameWinVar( visible, "idWindow::WriteToSaveGame", name.c_str(), "visible" );
+	openD3_SanitizeSaveGameWinVar( rect, "idWindow::WriteToSaveGame", name.c_str(), "rect" );
+	openD3_SanitizeSaveGameWinVar( backColor, "idWindow::WriteToSaveGame", name.c_str(), "backColor" );
+	openD3_SanitizeSaveGameWinVar( matColor, "idWindow::WriteToSaveGame", name.c_str(), "matColor" );
+	openD3_SanitizeSaveGameWinVar( foreColor, "idWindow::WriteToSaveGame", name.c_str(), "foreColor" );
+	openD3_SanitizeSaveGameWinVar( hoverColor, "idWindow::WriteToSaveGame", name.c_str(), "hoverColor" );
+	openD3_SanitizeSaveGameWinVar( borderColor, "idWindow::WriteToSaveGame", name.c_str(), "borderColor" );
+	openD3_SanitizeSaveGameWinVar( textScale, "idWindow::WriteToSaveGame", name.c_str(), "textScale" );
+	openD3_SanitizeSaveGameWinVar( noEvents, "idWindow::WriteToSaveGame", name.c_str(), "noEvents" );
+	openD3_SanitizeSaveGameWinVar( rotate, "idWindow::WriteToSaveGame", name.c_str(), "rotate" );
 	noTime.WriteToSaveGame( savefile );
 	visible.WriteToSaveGame( savefile );
 	rect.WriteToSaveGame( savefile );
@@ -6673,12 +6673,12 @@ void idWindow::WriteToSaveGame( idFile *savefile ) {
 				i, name.c_str(), gui->GetSourceFile() );
 			return;
 		}
-		OpenQ4_SanitizeSaveGameWinVar( *definedVars[i], "idWindow::WriteToSaveGame", name.c_str(),
+		openD3_SanitizeSaveGameWinVar( *definedVars[i], "idWindow::WriteToSaveGame", name.c_str(),
 			definedVars[i]->GetName() );
 		definedVars[i]->WriteToSaveGame( savefile );
 	}
 
-	if ( !OpenQ4_WriteSaveGameField( savefile, textRect, "idWindow::WriteToSaveGame", "text rect" ) ) {
+	if ( !openD3_WriteSaveGameField( savefile, textRect, "idWindow::WriteToSaveGame", "text rect" ) ) {
 		return;
 	}
 
@@ -6710,8 +6710,8 @@ void idWindow::WriteToSaveGame( idFile *savefile ) {
 				i, name.c_str(), gui->GetSourceFile() );
 			return;
 		}
-		if ( !OpenQ4_WriteSaveGameBool( savefile, timeLineEvents[i]->pending, "idWindow::WriteToSaveGame", "timeline pending flag" ) ||
-			 !OpenQ4_WriteSaveGameInt( savefile, timeLineEvents[i]->time, "idWindow::WriteToSaveGame", "timeline event time" ) ) {
+		if ( !openD3_WriteSaveGameBool( savefile, timeLineEvents[i]->pending, "idWindow::WriteToSaveGame", "timeline pending flag" ) ||
+			 !openD3_WriteSaveGameInt( savefile, timeLineEvents[i]->time, "idWindow::WriteToSaveGame", "timeline event time" ) ) {
 			return;
 		}
 		timeLineEvents[i]->event->WriteToSaveGame( savefile, scriptContext.c_str() );
@@ -6720,7 +6720,7 @@ void idWindow::WriteToSaveGame( idFile *savefile ) {
 	// Transitions
 	int num = transitions.Num();
 
-	if ( !OpenQ4_WriteSaveGameInt( savefile, num, "idWindow::WriteToSaveGame", "transition count" ) ) {
+	if ( !openD3_WriteSaveGameInt( savefile, num, "idWindow::WriteToSaveGame", "transition count" ) ) {
 		return;
 	}
 	for ( i = 0; i < transitions.Num(); i++ ) {
@@ -6777,7 +6777,7 @@ bool idWindow::ReadSaveGameString( idStr &string, idFile *savefile ) {
 	int len = 0;
 	const int offset = savefile->Tell();
 
-	if ( !OpenQ4_ReadSaveGameInt( savefile, len, "idWindow::ReadSaveGameString", "length" ) ) {
+	if ( !openD3_ReadSaveGameInt( savefile, len, "idWindow::ReadSaveGameString", "length" ) ) {
 		return false;
 	}
 	const int remainingBytes = Max( 0, savefile->Length() - savefile->Tell() );
@@ -6790,7 +6790,7 @@ bool idWindow::ReadSaveGameString( idStr &string, idFile *savefile ) {
 
 	string.Fill( ' ', len );
 	if ( len > 0 ) {
-		if ( !OpenQ4_ReadSaveGameBytes( savefile, &string[0], len, "idWindow::ReadSaveGameString", "string" ) ) {
+		if ( !openD3_ReadSaveGameBytes( savefile, &string[0], len, "idWindow::ReadSaveGameString", "string" ) ) {
 			string.Clear();
 			return false;
 		}
@@ -6840,31 +6840,31 @@ void idWindow::ReadFromSaveGame( idFile *savefile ) {
 	idVec2 savedShear;
 
 	if ( !ReadSaveGameString( savedCmd, savefile ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedActualX, "idWindow::ReadFromSaveGame", "actualX" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedActualY, "idWindow::ReadFromSaveGame", "actualY" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedChildID, "idWindow::ReadFromSaveGame", "childID" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedFlags, "idWindow::ReadFromSaveGame", "flags" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedLastTimeRun, "idWindow::ReadFromSaveGame", "last time run" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedDrawRect, "idWindow::ReadFromSaveGame", "draw rect" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedClientRect, "idWindow::ReadFromSaveGame", "client rect" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedOrigin, "idWindow::ReadFromSaveGame", "origin" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedFontNum, "idWindow::ReadFromSaveGame", "font number" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedTimeLine, "idWindow::ReadFromSaveGame", "timeline" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedXOffset, "idWindow::ReadFromSaveGame", "x offset" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedYOffset, "idWindow::ReadFromSaveGame", "y offset" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedCursor, "idWindow::ReadFromSaveGame", "cursor" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedForceAspectWidth, "idWindow::ReadFromSaveGame", "force aspect width" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedForceAspectHeight, "idWindow::ReadFromSaveGame", "force aspect height" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedMatScaleX, "idWindow::ReadFromSaveGame", "material scale x" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedMatScaleY, "idWindow::ReadFromSaveGame", "material scale y" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedBorderSize, "idWindow::ReadFromSaveGame", "border size" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedTextAlign, "idWindow::ReadFromSaveGame", "text align" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedTextAlignX, "idWindow::ReadFromSaveGame", "text align x" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedTextAlignY, "idWindow::ReadFromSaveGame", "text align y" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedTextStyle, "idWindow::ReadFromSaveGame", "text style" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedTextSpacing, "idWindow::ReadFromSaveGame", "text spacing" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedTextShadow, "idWindow::ReadFromSaveGame", "text shadow" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedShear, "idWindow::ReadFromSaveGame", "shear" ) ) {
+		 !openD3_ReadSaveGameField( savefile, savedActualX, "idWindow::ReadFromSaveGame", "actualX" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedActualY, "idWindow::ReadFromSaveGame", "actualY" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedChildID, "idWindow::ReadFromSaveGame", "childID" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedFlags, "idWindow::ReadFromSaveGame", "flags" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedLastTimeRun, "idWindow::ReadFromSaveGame", "last time run" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedDrawRect, "idWindow::ReadFromSaveGame", "draw rect" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedClientRect, "idWindow::ReadFromSaveGame", "client rect" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedOrigin, "idWindow::ReadFromSaveGame", "origin" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedFontNum, "idWindow::ReadFromSaveGame", "font number" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedTimeLine, "idWindow::ReadFromSaveGame", "timeline" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedXOffset, "idWindow::ReadFromSaveGame", "x offset" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedYOffset, "idWindow::ReadFromSaveGame", "y offset" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedCursor, "idWindow::ReadFromSaveGame", "cursor" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedForceAspectWidth, "idWindow::ReadFromSaveGame", "force aspect width" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedForceAspectHeight, "idWindow::ReadFromSaveGame", "force aspect height" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedMatScaleX, "idWindow::ReadFromSaveGame", "material scale x" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedMatScaleY, "idWindow::ReadFromSaveGame", "material scale y" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedBorderSize, "idWindow::ReadFromSaveGame", "border size" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedTextAlign, "idWindow::ReadFromSaveGame", "text align" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedTextAlignX, "idWindow::ReadFromSaveGame", "text align x" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedTextAlignY, "idWindow::ReadFromSaveGame", "text align y" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedTextStyle, "idWindow::ReadFromSaveGame", "text style" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedTextSpacing, "idWindow::ReadFromSaveGame", "text spacing" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedTextShadow, "idWindow::ReadFromSaveGame", "text shadow" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedShear, "idWindow::ReadFromSaveGame", "shear" ) ) {
 		return;
 	}
 
@@ -6874,12 +6874,12 @@ void idWindow::ReadFromSaveGame( idFile *savefile ) {
 		return;
 	}
 	if ( !std::isfinite( savedActualX ) || !std::isfinite( savedActualY ) ||
-		 !OpenQ4_IsFiniteSaveGameRectangle( savedDrawRect ) || !OpenQ4_IsFiniteSaveGameRectangle( savedClientRect ) ||
-		 !OpenQ4_IsFiniteSaveGameVec2( savedOrigin ) || !std::isfinite( savedXOffset ) || !std::isfinite( savedYOffset ) ||
+		 !openD3_IsFiniteSaveGameRectangle( savedDrawRect ) || !openD3_IsFiniteSaveGameRectangle( savedClientRect ) ||
+		 !openD3_IsFiniteSaveGameVec2( savedOrigin ) || !std::isfinite( savedXOffset ) || !std::isfinite( savedYOffset ) ||
 		 !std::isfinite( savedForceAspectWidth ) || !std::isfinite( savedForceAspectHeight ) ||
 		 !std::isfinite( savedMatScaleX ) || !std::isfinite( savedMatScaleY ) || !std::isfinite( savedBorderSize ) ||
 		 !std::isfinite( savedTextAlignX ) || !std::isfinite( savedTextAlignY ) ||
-		 !std::isfinite( savedTextSpacing ) || !OpenQ4_IsFiniteSaveGameVec2( savedShear ) ) {
+		 !std::isfinite( savedTextSpacing ) || !openD3_IsFiniteSaveGameVec2( savedShear ) ) {
 		common->Error( "idWindow::ReadFromSaveGame: non-finite layout state for saved window '%s' in gui '%s'",
 			savedName.c_str(), gui->GetSourceFile() );
 		return;
@@ -6957,10 +6957,10 @@ void idWindow::ReadFromSaveGame( idFile *savefile ) {
 	}
 
 	idRectangle savedTextRect;
-	if ( !OpenQ4_ReadSaveGameField( savefile, savedTextRect, "idWindow::ReadFromSaveGame", "text rect" ) ) {
+	if ( !openD3_ReadSaveGameField( savefile, savedTextRect, "idWindow::ReadFromSaveGame", "text rect" ) ) {
 		return;
 	}
-	if ( !OpenQ4_IsFiniteSaveGameRectangle( savedTextRect ) ) {
+	if ( !openD3_IsFiniteSaveGameRectangle( savedTextRect ) ) {
 		common->Error( "idWindow::ReadFromSaveGame: non-finite text rectangle for window '%s' in gui '%s'",
 			name.c_str(), gui->GetSourceFile() );
 		return;
@@ -6997,8 +6997,8 @@ void idWindow::ReadFromSaveGame( idFile *savefile ) {
 				i, name.c_str(), gui->GetSourceFile() );
 			return;
 		}
-		if ( !OpenQ4_ReadSaveGameBool( savefile, timeLineEvents[i]->pending, "idWindow::ReadFromSaveGame", "timeline pending flag" ) ||
-			 !OpenQ4_ReadSaveGameInt( savefile, timeLineEvents[i]->time, "idWindow::ReadFromSaveGame", "timeline event time" ) ) {
+		if ( !openD3_ReadSaveGameBool( savefile, timeLineEvents[i]->pending, "idWindow::ReadFromSaveGame", "timeline pending flag" ) ||
+			 !openD3_ReadSaveGameInt( savefile, timeLineEvents[i]->time, "idWindow::ReadFromSaveGame", "timeline event time" ) ) {
 			return;
 		}
 		timeLineEvents[i]->event->ReadFromSaveGame( savefile );
@@ -7007,7 +7007,7 @@ void idWindow::ReadFromSaveGame( idFile *savefile ) {
 
 	// Transitions
 	int num = 0;
-	if ( !OpenQ4_ReadSaveGameInt( savefile, num, "idWindow::ReadFromSaveGame", "transition count" ) ) {
+	if ( !openD3_ReadSaveGameInt( savefile, num, "idWindow::ReadFromSaveGame", "transition count" ) ) {
 		return;
 	}
 	if ( num < 0 || num > 4096 ) {
@@ -7048,7 +7048,7 @@ void idWindow::ReadFromSaveGame( idFile *savefile ) {
 		}
 
 		if ( matchedIndex == -1 ) {
-			rvNamedEvent *legacyEvent = openQ4_CreateLegacyCinematicNamedEvent( this, savedEventName );
+			rvNamedEvent *legacyEvent = openD3_CreateLegacyCinematicNamedEvent( this, savedEventName );
 			if ( legacyEvent != NULL ) {
 				namedEvents.Insert( legacyEvent, i );
 				matchedIndex = i;
@@ -7097,7 +7097,7 @@ void idWindow::ReadFromSaveGame( idFile *savefile ) {
 		if ( !ValidateRestoredTrackedWindowPointers( hadSavedFocusReference, hadSavedCaptureReference ) ) {
 			return;
 		}
-		if ( !FixupTransitions( OpenQ4_SaveGameRestoreIsPortable( savefile ) ) ) {
+		if ( !FixupTransitions( openD3_SaveGameRestoreIsPortable( savefile ) ) ) {
 			return;
 		}
 	}

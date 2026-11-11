@@ -102,7 +102,7 @@ def validate_wrapper() -> None:
     require(stager, '"renderer-gl_*.dll"', "fast install renderer staging")
     require(stager, '"--temporary-runtime"', "isolated compatibility runtime staging")
     require(stager, 'source_root / ".tmp" / "stock-runtime"', "temporary runtime containment")
-    require(stager, "*OPENQ4_PACK_NAMES,", "fast install stages every table pack")
+    require(stager, "*OPEND3_PACK_NAMES,", "fast install stages every table pack")
     reject(stager, '"*.lib",\n    "pak0.pk4"', "fast install must not copy linker artifacts as runtime content")
 
     windows_runtime = read("tools/build/windows_runtime.py")
@@ -173,7 +173,7 @@ def validate_codex_actions() -> None:
             raise AssertionError(f"{context} runs {kind} {entry!r}, which .vscode does not define exactly once")
         return kind, entry
 
-    environment = tomllib.loads(read(".codex/environments/openq4.toml"))
+    environment = tomllib.loads(read(".codex/environments/opend3.toml"))
     if resolve(environment["setup"]["win32"]["script"], "Codex setup script")[0] != "task":
         raise AssertionError("Codex setup script must run a task")
     names = []
@@ -241,7 +241,7 @@ def validate_mp_autojoin_policy() -> None:
 
 
 def validate_validation_coverage() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     push = read(".github/workflows/push-verification.yml")
     commit = read(".github/workflows/commit-validation.yml")
     for haystack, context in (

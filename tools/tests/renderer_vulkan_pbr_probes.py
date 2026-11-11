@@ -14,9 +14,9 @@ import sys
 
 import renderer_pbr_laboratory as lab
 
-MATERIAL_PREFIX = 'lights/openq4/probe_validation'
-MARKER_PREFIX = 'textures/openq4/probe_validation/marker'
-BAKED_CUBE = 'env/openq4/probe_validation/baked'
+MATERIAL_PREFIX = 'lights/opend3/probe_validation'
+MARKER_PREFIX = 'textures/opend3/probe_validation/marker'
+BAKED_CUBE = 'env/opend3/probe_validation/baked'
 FACES = ('px','nx','py','ny','pz','nz')
 MARKER_COLORS = {'red': (255, 13, 13), 'blue': (13, 13, 255)}
 # Behind the camera, inside the room's back wall at y -1200, so only
@@ -34,44 +34,44 @@ def prepare_fixture(runtime: Path) -> None:
     materials = []
     # Nine image identities with known colors exercise eight-slot residency.
     for i in range(9):
-        cube = f'env/openq4/probe_validation/source{i}'
+        cube = f'env/opend3/probe_validation/source{i}'
         for face in ('px','nx','py','ny','pz','nz'):
-            source = runtime/f'baseoq4/env/openq4/pbr_lab/{"warm" if i%2==0 else "cool"}_{face}.tga'
-            target = lab.fixture.validate_contained_target(runtime, runtime/f'baseoq4/{cube}_{face}.tga')
+            source = runtime/f'baseod3/env/opend3/pbr_lab/{"warm" if i%2==0 else "cool"}_{face}.tga'
+            target = lab.fixture.validate_contained_target(runtime, runtime/f'baseod3/{cube}_{face}.tga')
             target.parent.mkdir(parents=True,exist_ok=True)
             target.write_bytes(source.read_bytes())
             manifest['sha256'][str(target.relative_to(runtime)).replace('\\','/')] = lab.digest(target)
-        materials.append(f'{MATERIAL_PREFIX}/source{i}\n{{\nopenQ4SpecularProbe {{\ncubeMap {cube}\nintensity 2\nblendFraction 0.5\npriority 8\n}}\n{{ map _white }}\n}}\n')
+        materials.append(f'{MATERIAL_PREFIX}/source{i}\n{{\nopenD3SpecularProbe {{\ncubeMap {cube}\nintensity 2\nblendFraction 0.5\npriority 8\n}}\n{{ map _white }}\n}}\n')
     for name,tint,intensity,priority in (('tinted','0.15 1 0.35',1,8),('priority','0.15 1 0.35',1,16)):
-        materials.append(f'{MATERIAL_PREFIX}/{name}\n{{\nopenQ4SpecularProbe {{\ncubeMap env/openq4/pbr_lab/warm\ntint {tint}\nintensity {intensity}\nblendFraction 0.5\npriority {priority}\n}}\n{{ map _white }}\n}}\n')
+        materials.append(f'{MATERIAL_PREFIX}/{name}\n{{\nopenD3SpecularProbe {{\ncubeMap env/opend3/pbr_lab/warm\ntint {tint}\nintensity {intensity}\nblendFraction 0.5\npriority {priority}\n}}\n{{ map _white }}\n}}\n')
     # Box-projected parallax: box_plain is the same warm room without the
     # flag, so a pair differs only in parallax; box_hard narrows the margin.
     for name,blend,box in (('box_plain',0.5,False),('box',0.5,True),('box_hard',0.05,True)):
         flag='boxParallax\n' if box else ''
-        materials.append(f'{MATERIAL_PREFIX}/{name}\n{{\nopenQ4SpecularProbe {{\ncubeMap env/openq4/pbr_lab/warm\nintensity 2\nblendFraction {blend}\npriority 8\n{flag}}}\n{{ map _white }}\n}}\n')
+        materials.append(f'{MATERIAL_PREFIX}/{name}\n{{\nopenD3SpecularProbe {{\ncubeMap env/opend3/pbr_lab/warm\nintensity 2\nblendFraction {blend}\npriority 8\n{flag}}}\n{{ map _white }}\n}}\n')
     # bakeReflectionProbes captures this probe in the engine. The map precaches
     # its material for every laboratory run, so each run loads placeholder
-    # faces for it from its save path. openQ4 searches that path last, so the
+    # faces for it from its save path. openD3 searches that path last, so the
     # capture replaces them; a copy in the runtime would load instead.
     # A second probe far from the specimen makes the bake capture two probes.
-    manifest['saveSeeds']={f'baseoq4/{cube}_{face}.tga':f'baseoq4/env/openq4/pbr_lab/warm_{face}.tga'
+    manifest['saveSeeds']={f'baseod3/{cube}_{face}.tga':f'baseod3/env/opend3/pbr_lab/warm_{face}.tga'
                            for cube in (BAKED_CUBE,BAKED_CUBE+'_far') for face in FACES}
     for name in ('baked','baked_far'):
-        materials.append(f'{MATERIAL_PREFIX}/{name}\n{{\nopenQ4SpecularProbe {{\ncubeMap env/openq4/probe_validation/{name}\nintensity 2\nblendFraction 0.5\npriority 8\n}}\n{{ map _white }}\n}}\n')
+        materials.append(f'{MATERIAL_PREFIX}/{name}\n{{\nopenD3SpecularProbe {{\ncubeMap env/opend3/probe_validation/{name}\nintensity 2\nblendFraction 0.5\npriority 8\n}}\n{{ map _white }}\n}}\n')
     # Unlit markers for the capture, drawn at their color with every light off.
     # The color is the texture's: the modern GL path ignores stage color.
     for color,rgb in MARKER_COLORS.items():
-        target=lab.fixture.validate_contained_target(runtime, runtime/f'baseoq4/{MARKER_PREFIX}_{color}.tga')
+        target=lab.fixture.validate_contained_target(runtime, runtime/f'baseod3/{MARKER_PREFIX}_{color}.tga')
         target.parent.mkdir(parents=True,exist_ok=True)
         target.write_bytes(bytes((0,0,2))+bytes(9)+struct.pack('<HHBB',8,8,24,0)+bytes((rgb[2],rgb[1],rgb[0]))*64)
         manifest['sha256'][str(target.relative_to(runtime)).replace('\\','/')]=lab.digest(target)
         materials.append(f'{MARKER_PREFIX}_{color}\n{{\nnoshadows\n{{\nmap {MARKER_PREFIX}_{color}.tga\n}}\n}}\n')
-    target=runtime/'baseoq4/materials/openq4_probe_validation.mtr'
+    target=runtime/'baseod3/materials/opend3_probe_validation.mtr'
     target.write_text('\n'.join(materials),newline='\n')
     manifest['sha256'][str(target.relative_to(runtime)).replace('\\','/')]=lab.digest(target)
     # Precache these declarations during map loading. Runtime spawn warnings
     # are gate failures; they must not be filtered from the evidence.
-    target=runtime/f'baseoq4/{lab.lab.MAP}.map'
+    target=runtime/f'baseod3/{lab.lab.MAP}.map'
     source=target.read_text()
     source=re.sub(r'^"mtr_probe_validation_[^"]+"[^\n]*\n','',source,flags=re.M)
     names=[*(f'source{i}' for i in range(9)),'tinted','priority','box_plain','box','box_hard','baked','baked_far']
@@ -112,7 +112,7 @@ def configure(manifest: dict, samples: int, backend: str, selected: set[str] | N
         commands += [f'spawn func_static name probe_specimen model "{lab.lab.MODEL}" shader "{lab.lab.PREFIX}/{material}" origin "{specimen_origin}" angle {specimen_angle} solid 0']
         if specimen_rotation: commands[-1] += f' rotation "{specimen_rotation}"'
         for i,source in enumerate(sources):
-            shader = f'lights/openq4/pbr_lab/{source}' if source in ('warm','cool') else f'{MATERIAL_PREFIX}/{source}'
+            shader = f'lights/opend3/pbr_lab/{source}' if source in ('warm','cool') else f'{MATERIAL_PREFIX}/{source}'
             probe_origin = probe_origins[i] if probe_origins else origin
             commands += [f'spawn light name validation_probe_{i} texture "{shader}" origin "{probe_origin}" angle {angle} light_radius "{radius}" _color "1 1 1" noshadows 1']
             if rotation: commands[-1] += f' rotation "{rotation}"'

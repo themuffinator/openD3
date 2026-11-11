@@ -74,11 +74,11 @@ def has_parent_os_path_segment_model(os_path: str) -> bool:
 
 def validate_behavior_model() -> None:
     accepted = (
-        "openq4.cfg",
+        "opend3.cfg",
         "savegames/Quicksave0.save",
         "screenshots/shot00001.tga",
         "generated/rendermodels/maps/game/test.bmd5mesh",
-        "logs/openq4.log",
+        "logs/opend3.log",
         ".cache/generated.bin",
         "savegames/Player 1.save",
         "version..cfg",
@@ -136,10 +136,10 @@ def validate_behavior_model() -> None:
             raise AssertionError(f"Expected rejected relative mutation qpath: {path!r}")
 
     accepted_os_paths = (
-        "/home/player/openQ4.../baseoq4/openQ4Config.cfg",
-        "/mnt/games/build_(openQ4,_Linux,_GOG_Assets...)/userdata/player/openQ4Config.cfg",
-        r"C:\Games\openQ4...\baseoq4\openQ4Config.cfg",
-        r"C:\Games\version..candidate\baseoq4\openQ4Config.cfg",
+        "/home/player/openD3.../baseod3/openD3Config.cfg",
+        "/mnt/games/build_(openD3,_Linux,_GOG_Assets...)/userdata/player/openD3Config.cfg",
+        r"C:\Games\openD3...\baseod3\openD3Config.cfg",
+        r"C:\Games\version..candidate\baseod3\openD3Config.cfg",
     )
     rejected_os_paths = (
         "../outside.cfg",

@@ -120,16 +120,16 @@ def alias_log(args):
             rows.append(f'Retained UI ownership: open=0 suspended=1 session_gui={int(active)} game_time={tick} requests=0')
         elif command in ('reloadLanguage', 'vid_restart windowed'):
             rows.append('RETAINED_GUI_RESOURCE path=retained-smoke.q4ui event=restored')
-        elif command == 'openq4_retainedGui report':
+        elif command == 'opend3_retainedGui report':
             focus = 'managed-shadows' if report >= 2 else ''
             shadows = int(report < 2)
             rows.append(f'RETAINED_GUI path=retained-smoke.q4ui focus={focus} revision=1 active=1 brightness={args.brightness:.6f} shadows={shadows} contexts={1+int(peer)}')
             report += 1
-        elif command.startswith('openq4_retainedGui '):
+        elif command.startswith('opend3_retainedGui '):
             rows.append(f'RETAINED_GUI_OPERATION {command.split()[1]} passed')
-        elif command.startswith('openq4_guiGet '):
+        elif command.startswith('opend3_guiGet '):
             name, value = next(values)
-            assert command == f'openq4_guiGet "{name}"'
+            assert command == f'opend3_guiGet "{name}"'
             text = value if isinstance(value, str) else ' '.join(map(str, value))
             rows.append(f'GUI_VALUE {name}={text}')
     assert next(values, None) is None
@@ -196,12 +196,12 @@ def event_log(args):
             rows.append(f'Retained UI ownership: open=0 suspended=1 session_gui={int(active)} game_time={tick} requests=0')
         elif command in ('reloadLanguage', 'vid_restart windowed'):
             rows.append('RETAINED_GUI_RESOURCE path=retained-smoke.q4ui event=restored')
-        elif command == 'openq4_retainedGui report':
+        elif command == 'opend3_retainedGui report':
             brightness, shadows = hosts[report] if report < len(hosts) else (1.25, 0)
             rows.append(f'RETAINED_GUI path=retained-smoke.q4ui focus={focus} revision=1 active=1 '
                         f'brightness={brightness:.6f} shadows={shadows} contexts={1+int(peer)}')
             report += 1
-        elif command.startswith('openq4_retainedGui '):
+        elif command.startswith('opend3_retainedGui '):
             verb = command.split()[1]
             if verb == 'focus':
                 focus = command.split('"')[1]
@@ -209,12 +209,12 @@ def event_log(args):
                 event(command.split('"')[1])
             elif verb == 'trigger':
                 event('onTrigger')
-            elif command == 'openq4_retainedGui menu accept 0':
+            elif command == 'opend3_retainedGui menu accept 0':
                 event('control::' + focus.removeprefix('managed-'))
             rows.append(f'RETAINED_GUI_OPERATION {verb} passed')
-        elif command.startswith('openq4_guiGet '):
+        elif command.startswith('opend3_guiGet '):
             name, value = next(values)
-            assert command == f'openq4_guiGet "{name}"'
+            assert command == f'opend3_guiGet "{name}"'
             text = value if isinstance(value, str) else ' '.join(map(str, value))
             rows.append(f'GUI_VALUE {name}={text}')
         elif command.startswith('wait '):
@@ -231,15 +231,15 @@ class ManagedCapture(unittest.TestCase):
             return capture.interaction_script(path, **kwargs)
 
     def test_managed_state_is_bounded_and_no_command_eval(self):
-        valid = 'openq4_retainedGui state "brightnessTarget" "1.25"\nopenq4_retainedGui state "shadowsTarget" "false"\n'
+        valid = 'opend3_retainedGui state "brightnessTarget" "1.25"\nopend3_retainedGui state "shadowsTarget" "false"\n'
         self.assertEqual(self.check_script(valid, managed=True), valid)
-        for source in ('openq4_retainedGui state "x" "NaN"',
-                       'openq4_retainedGui state "x" "1e999"',
-                       'openq4_retainedGui state "x" "1000000000001"',
-                       'openq4_retainedGui state "x" "1"; quit',
-                       'openq4_retainedGui state "x" "exec config.cfg"',
-                       'openq4_retainedGui menu accept 2',
-                       'openq4_retainedGui focus "x\ny"',
+        for source in ('opend3_retainedGui state "x" "NaN"',
+                       'opend3_retainedGui state "x" "1e999"',
+                       'opend3_retainedGui state "x" "1000000000001"',
+                       'opend3_retainedGui state "x" "1"; quit',
+                       'opend3_retainedGui state "x" "exec config.cfg"',
+                       'opend3_retainedGui menu accept 2',
+                       'opend3_retainedGui focus "x\ny"',
                        'ui_retainedData "retained-data/test.json"',
                        'wait 999\n' * 4):
             with self.subTest(source=source), self.assertRaises(ValueError):
@@ -247,35 +247,35 @@ class ManagedCapture(unittest.TestCase):
 
     def test_resource_resume_cannot_replay_actions_or_state(self):
         resume = capture.interaction_script(FIXTURES / 'managed-settings-smoke-resume.cfg', managed=True, observe_only=True)
-        self.assertIn('openq4_guiGet "brightness-reading::text"', resume)
+        self.assertIn('opend3_guiGet "brightness-reading::text"', resume)
         for command in ('focus "x"', 'menu accept 1', 'state "x" "1"', 'save', 'restore',
                         'presentation "x" "1" 0', 'update', 'pending "x" "1"', 'event "onInit"', 'trigger'):
             with self.subTest(command=command), self.assertRaises(ValueError):
-                self.check_script('openq4_retainedGui ' + command, managed=True, observe_only=True)
+                self.check_script('opend3_retainedGui ' + command, managed=True, observe_only=True)
 
     def test_inspect_is_bounded_and_read_only(self):
-        command = 'openq4_retainedGui inspect "settings-panel"\n'
+        command = 'opend3_retainedGui inspect "settings-panel"\n'
         for observe_only in (False, True):
             self.assertEqual(self.check_script(command, managed=True, observe_only=observe_only), command)
         for value in ('""', '"' + 'x'*129 + '"', '"x;y"', '"x::y"', '"x\\y"',
                       '"x"; quit', '"x" "y"', '"x\ny"', 'x', '"x" 1'):
             with self.subTest(value=value), self.assertRaises(ValueError):
-                self.check_script('openq4_retainedGui inspect ' + value, managed=True)
+                self.check_script('opend3_retainedGui inspect ' + value, managed=True)
 
     def test_event_commands_are_semantic_bounded_and_resume_is_read_only(self):
-        valid = ('openq4_retainedGui pending "draft" "13"\n'
-                 'openq4_retainedGui pending "gate" "false"\n'
-                 'openq4_retainedGui event "Probe::Main"\nopenq4_retainedGui trigger\n')
+        valid = ('opend3_retainedGui pending "draft" "13"\n'
+                 'opend3_retainedGui pending "gate" "false"\n'
+                 'opend3_retainedGui event "Probe::Main"\nopend3_retainedGui trigger\n')
         self.assertEqual(self.check_script(valid, managed=True), valid)
         for command in ('pending "draft" "1e999"', 'pending "draft" "1e13"',
                         'pending "draft" "exec config.cfg"', 'pending "draft" "1"; quit',
                         'event "x::y::z"', 'event "GUI::state"', 'event ""', 'event "x y"', 'event "onInit"; quit',
                         'event "onInit\nonDeactivate"', 'trigger 1', 'trigger; quit'):
             with self.subTest(command=command), self.assertRaises(ValueError):
-                self.check_script('openq4_retainedGui ' + command, managed=True)
+                self.check_script('opend3_retainedGui ' + command, managed=True)
         self.assertIn('event "Probe::Main"', capture.interaction_script(FIXTURES / 'event-program-smoke.cfg', managed=True))
         resume = capture.interaction_script(FIXTURES / 'event-program-smoke-resume.cfg', managed=True, observe_only=True)
-        self.assertIn('openq4_guiGet "initialized"', resume)
+        self.assertIn('opend3_guiGet "initialized"', resume)
         self.assertNotIn(' event ', resume)
 
     def test_event_fixture_declares_event_controls_localized_art_and_typed_programs(self):
@@ -414,22 +414,22 @@ class ManagedCapture(unittest.TestCase):
                 self.assertFalse(result['event_program_contract']['outgoing_lifecycle_passed'])
 
     def test_alias_semantic_literals_are_bounded_data(self):
-        valid = ('openq4_guiGet "curr"\nopenq4_guiGet "desktop::curr"\n'
-                 'openq4_retainedGui presentation "CuRR" "-1e2" 0\n'
-                 'openq4_retainedGui presentation "panel::rect" "32 32 432 200" 1\n'
-                 'openq4_retainedGui presentation "title::color" "1,0.875,0.5,1" 1\n'
-                 'openq4_retainedGui presentation "title::text" "#str_200009" 1\n'
-                 'openq4_retainedGui presentation "panel::visible" "true" 0\n'
-                 'openq4_retainedGui update\n')
+        valid = ('opend3_guiGet "curr"\nopend3_guiGet "desktop::curr"\n'
+                 'opend3_retainedGui presentation "CuRR" "-1e2" 0\n'
+                 'opend3_retainedGui presentation "panel::rect" "32 32 432 200" 1\n'
+                 'opend3_retainedGui presentation "title::color" "1,0.875,0.5,1" 1\n'
+                 'opend3_retainedGui presentation "title::text" "#str_200009" 1\n'
+                 'opend3_retainedGui presentation "panel::visible" "true" 0\n'
+                 'opend3_retainedGui update\n')
         self.assertEqual(self.check_script(valid, managed=True), valid)
         for literal in ('NaN', 'inf', '1e999', '0 0 1e13 1', '0,0,1e999,1',
                         '1, 2 3', '1 2 3 4 5', '#str_200009; quit', 'exec autoexec.cfg',
                         '<span>text</span>', '1\t2', '1\x002', '1\x1b2', '1\\n2', '"; quit; "'):
             with self.subTest(literal=literal), self.assertRaises(ValueError):
-                self.check_script(f'openq4_retainedGui presentation "curr" "{literal}" 1', managed=True)
-        for command in ('openq4_retainedGui presentation "x::y::z" "1" 0',
-                        'openq4_retainedGui presentation "curr" "1" 2',
-                        'openq4_guiGet "curr"; quit', 'openq4_retainedGui update; quit'):
+                self.check_script(f'opend3_retainedGui presentation "curr" "{literal}" 1', managed=True)
+        for command in ('opend3_retainedGui presentation "x::y::z" "1" 0',
+                        'opend3_retainedGui presentation "curr" "1" 2',
+                        'opend3_guiGet "curr"; quit', 'opend3_retainedGui update; quit'):
             with self.subTest(command=command), self.assertRaises(ValueError):
                 self.check_script(command, managed=True)
 
@@ -458,7 +458,7 @@ class ManagedCapture(unittest.TestCase):
                 visit(child)
         visit(document['root'])
         resume = capture.interaction_script(FIXTURES / 'presentation-alias-smoke-resume.cfg', managed=True, observe_only=True)
-        self.assertIn('openq4_guiGet "curr"', resume)
+        self.assertIn('opend3_guiGet "curr"', resume)
         self.assertNotIn('presentation ', resume)
 
     def test_alias_contract_requires_exact_document_and_script_content(self):
@@ -579,12 +579,12 @@ class ManagedCapture(unittest.TestCase):
     def test_managed_script_loads_peer_first_and_never_replays_setup(self):
         commands, close, settle = capture.retained_commands(options(retained_peer=True), 'retained-smoke.q4ui')
         self.assertTrue(commands.startswith('ui_retainedOwnership\nui_retainedPreview "retained-smoke.q4ui"\ntestGUI "retained-smoke.q4ui"\n'))
-        self.assertEqual(commands.count('openq4_retainedGui save\n'), 1)
-        self.assertEqual(commands.count('openq4_retainedGui menu accept 1\n'), 4)
+        self.assertEqual(commands.count('opend3_retainedGui save\n'), 1)
+        self.assertEqual(commands.count('opend3_retainedGui menu accept 1\n'), 4)
         for tail in commands.split('reloadLanguage\n')[1:]:
-            self.assertNotIn('openq4_retainedGui state', tail)
-            self.assertNotIn('openq4_retainedGui menu', tail)
-        self.assertTrue(commands.endswith('ui_retainedClose\nwait 2\nopenq4_retainedGui report\nui_retainedOwnership\n'))
+            self.assertNotIn('opend3_retainedGui state', tail)
+            self.assertNotIn('opend3_retainedGui menu', tail)
+        self.assertTrue(commands.endswith('ui_retainedClose\nwait 2\nopend3_retainedGui report\nui_retainedOwnership\n'))
         self.assertEqual(close, 'testGUI\nwait 3\nui_retainedOwnership\n')
         self.assertEqual(commands.count('ui_retainedOwnership\n'), 6)
         self.assertEqual(settle, 30)
@@ -624,7 +624,7 @@ class ManagedCapture(unittest.TestCase):
             'binding not live': log.replace('brightness-reading::text=1.25', 'brightness-reading::text=1.50'),
             'focus lost': change_last_report(log, 'focus=managed-shadows', 'focus='),
             'revision changed': change_last_report(log, 'revision=4', 'revision=5'),
-            'unreadable property': log.replace('GUI_VALUE brightness-reading::text=1.25', 'openq4_guiGet: unknown GUI variable', 1),
+            'unreadable property': log.replace('GUI_VALUE brightness-reading::text=1.25', 'opend3_guiGet: unknown GUI variable', 1),
             'nonfinite host': log.replace('brightness=1.250000', 'brightness=nan', 1),
         }
         for name, text in failures.items():

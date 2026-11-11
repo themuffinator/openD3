@@ -11,7 +11,7 @@
 #include <cstdlib>
 #include <limits>
 #include <map>
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks=0;
 static void Check(bool ok,const char* reason){++checks;if(!ok){std::fprintf(stderr,"FAIL %s\n",reason);std::exit(1);}}
 static bool Near(float a,float b,float epsilon=.08f){return std::abs(a-b)<epsilon;}
@@ -28,7 +28,7 @@ static void AddControl(Json::Value& source,Json::Value& node){const auto id=node
     for(unsigned time:{0u,1u}){Json::Value key;key["atMs"]=time;key["value"]=Typed("number",1);track["keys"].append(key);}timeline["tracks"].append(track);source["timelines"].append(timeline);
 }
 static std::string Source(bool nested=false,bool rotated=false,bool oversized=false,bool atEnd=false){
-    Json::Value source;source["format"]="openq4-ui";source["version"]=1;source["id"]="focus-reveal";source["state"]["flag"]["type"]="boolean";source["state"]["flag"]["initial"]=false;
+    Json::Value source;source["format"]="opend3-ui";source["version"]=1;source["id"]="focus-reveal";source["state"]["flag"]["type"]="boolean";source["state"]["flag"]["initial"]=false;
     auto root=Box("root",0,0,640,360),outer=Box("outer",40,40,280,150),content=Box("outer-content",0,0,700,700);
     outer["properties"]["overflow"]=Typed("keyword","auto");outer["properties"]["border-width"]=Typed("length",nested?2:0,"dp");outer["properties"]["padding"]=Typed("length",nested?3:0,"dp");
     auto upper=Box("upper",8,8,80,36);AddControl(source,upper);content["children"].append(upper);
@@ -147,7 +147,7 @@ static void AddButton(Json::Value& source,Json::Value& node){const auto id=node[
     for(unsigned time:{0u,1u}){Json::Value key;key["atMs"]=time;key["value"]=Typed("number",1);track["keys"].append(key);}timeline["tracks"].append(track);source["timelines"].append(timeline);
 }
 static std::string ListSource(bool buttons){
-    Json::Value source;source["format"]="openq4-ui";source["version"]=1;source["id"]="list-paging";source["state"]["flag"]["type"]="boolean";source["state"]["flag"]["initial"]=false;
+    Json::Value source;source["format"]="opend3-ui";source["version"]=1;source["id"]="list-paging";source["state"]["flag"]["type"]="boolean";source["state"]["flag"]["initial"]=false;
     auto root=Box("root",0,0,640,360),list=Box("list",40,40,280,150),content=Box("list-content",0,0,280,600);
     list["properties"]["overflow"]=Typed("keyword","auto");
     for(int i=0;i<20;++i){auto row=Box(("row-"+std::to_string(i)).c_str(),0,30.*i,200,30);if(buttons)AddButton(source,row);else AddControl(source,row);content["children"].append(row);}
@@ -184,7 +184,7 @@ static void ListPaging(){
 // one, one whose content fits and a list of buttons are passed over; focus
 // stays and nothing activates. A document of lists alone has no detail area.
 static std::string DetailSource(){
-    Json::Value source;source["format"]="openq4-ui";source["version"]=1;source["id"]="detail-scroll";source["state"]["flag"]["type"]="boolean";source["state"]["flag"]["initial"]=false;
+    Json::Value source;source["format"]="opend3-ui";source["version"]=1;source["id"]="detail-scroll";source["state"]["flag"]["type"]="boolean";source["state"]["flag"]["initial"]=false;
     auto root=Box("root",0,0,640,360);
     const auto area=[&](const char* id,double x,double contentHeight,bool hidden){
         auto box=Box(id,x,40,120,150);box["properties"]["overflow"]=Typed("keyword","auto");

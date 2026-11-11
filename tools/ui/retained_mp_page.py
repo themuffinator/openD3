@@ -87,7 +87,7 @@ def multiplayer_document() -> dict:
                  in the slot and its content out, so it never presents moved
                  and a return fades it in from nothing."""
     check_multiplayer_fits()
-    doc = Document("openq4.multiplayer")
+    doc = Document("opend3.multiplayer")
     doc.session("back", "multiplayerBack")
     doc.events["onBack"] = [{"op": "if", "condition": {"state": "setup.open"},
                              "then": [{"op": "action", "action": "playerSetupClose"}],

@@ -19,7 +19,7 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 # MoltenVK v1.4.1 (2025-11-24) is the newest release that still runs on
 # macOS 11.0. MoltenVK v1.4.2 raised the runtime floor to macOS 12.0, which is
-# above openQ4's macos_deployment_target / MACOS_MIN_SYSTEM_VERSION of 11.0.
+# above openD3's macos_deployment_target / MACOS_MIN_SYSTEM_VERSION of 11.0.
 # Do NOT "upgrade" this pin to v1.4.2 or later while the project deployment
 # target is still 11.0: it would silently drop macOS 11 users.
 MOLTENVK_VERSION="v1.4.1"
@@ -495,7 +495,7 @@ If MOLTENVK_VERSION was just changed, regenerate the digest with --print-sha256 
 fi
 log "verified ${MOLTENVK_TAR_NAME} sha256=${actual_sha}"
 
-extract_dir="$(mktemp -d "${TMPDIR:-/tmp}/openq4-moltenvk.XXXXXX")"
+extract_dir="$(mktemp -d "${TMPDIR:-/tmp}/opend3-moltenvk.XXXXXX")"
 cleanup_extract_dir() {
     [ -n "${extract_dir:-}" ] || return 0
     case "${extract_dir}" in

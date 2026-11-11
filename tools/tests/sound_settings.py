@@ -21,12 +21,12 @@ def main():
     assert '#include "SoundSettings.h"' in system
     for signature, token in [('void idSoundHardware_OpenAL::Init()', 'if (SoundSettings_BlockAutomaticRestart()) return;'),('void idSoundHardware_OpenAL::Shutdown()', 'SoundSettings_DeviceDestroyed();'),('bool idSoundHardware_OpenAL::UpdateDeviceMonitoring()', 'if (SoundSettings_BlockAutomaticRestart()) return false;')]:
         assert token in body(hardware,signature)
-    assert 'SoundSettings_DeviceEvent();' in body(hardware,'static void ALC_APIENTRY openQ4_OpenALDeviceEventCallback')
+    assert 'SoundSettings_DeviceEvent();' in body(hardware,'static void ALC_APIENTRY openD3_OpenALDeviceEventCallback')
     assert 'if (SoundSettings_BlockAutomaticRestart()) return;' in body(system,'void idSoundSystemLocal::Restart()')
     assert 'soundSettingsSourceGeneration = SoundSettings_SourceCreated();' in body(voice,'void idSoundVoice_OpenAL::Create(')
     assert 'soundSettingsSourceGeneration = 0;' in body(voice,'void idSoundVoice_OpenAL::DestroyInternal()')
     source=text.replace('#include "snd_local.h"','').replace('#include <SDL3/SDL_init.h>','')
-    constants=voice[voice.index('static const float OPENQ4_OPENAL_PORTAL_DIRECT_'):voice.index('/*\n========================\nidSoundVoice_OpenAL::idSoundVoice_OpenAL')]
+    constants=voice[voice.index('static const float OPEND3_OPENAL_PORTAL_DIRECT_'):voice.index('/*\n========================\nidSoundVoice_OpenAL::idSoundVoice_OpenAL')]
     production=source+'\n'+constants+'\n'+body(voice,'bool idSoundVoice_OpenAL::ApplyWetDryRoutingChecked(')+'\n'+body(voice,'void idSoundVoice_OpenAL::DestroyWetDryFilters()')+'\n'+body(hardware,'void idSoundHardware_OpenAL::Update()')+'\n'+body(system,'void idSoundSystemLocal::Render()')
     # Retain the engine's actual 6 dB conversion and nonfinite-bit predicate.
     # Only the elementary idMath ClampFloat/Pow calls use standard math doubles.
@@ -45,10 +45,10 @@ def main():
     # Mutations that restore a borrowed public POD parameter must also change
     # its actual declaration, so they execute instead of merely failing linkage.
     header=paths[1].read_text();header_copy=scratch/'SoundSettings.h';header_copy.write_text(header)
-    cmd=[a.compiler,'-std=c++20','-Wall','-Wextra','-Werror','-Wno-unused-but-set-variable','-DUSE_OPENAL','-DUSE_SDL3','-DOPENQ4_OPENAL_EFX_SUPPORTED=1','-I',str(ROOT/'src/sound'),'-I',str(repo/'subprojects/openal-soft-prebuilt/include'),str(working),str(recovery_source),'-o',str(scratch/'test.exe')]
+    cmd=[a.compiler,'-std=c++20','-Wall','-Wextra','-Werror','-Wno-unused-but-set-variable','-DUSE_OPENAL','-DUSE_SDL3','-DOPEND3_OPENAL_EFX_SUPPORTED=1','-I',str(ROOT/'src/sound'),'-I',str(repo/'subprojects/openal-soft-prebuilt/include'),str(working),str(recovery_source),'-o',str(scratch/'test.exe')]
     if Path(a.compiler).name.lower() in ('cl','cl.exe'):
         cmd=[a.compiler,'/nologo','/std:c++20','/EHsc','/W4','/WX','/permissive-', '/MTd',
-             '/DUSE_OPENAL','/DUSE_SDL3','/DOPENQ4_OPENAL_EFX_SUPPORTED=1',
+             '/DUSE_OPENAL','/DUSE_SDL3','/DOPEND3_OPENAL_EFX_SUPPORTED=1',
              '/I'+str(ROOT/'src/sound'),'/I'+str(repo/'subprojects/openal-soft-prebuilt/include'),str(working),str(recovery_source),
              '/Fe:'+str(scratch/'test.exe'),'/Fo:'+str(scratch)+os.sep]
     elif a.sanitize:cmd[1:1]=['-fsanitize=address,undefined','-fno-omit-frame-pointer','-no-pie']

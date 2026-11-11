@@ -536,8 +536,8 @@ typedef enum {
 	RC_SET_POSTPROCESS_SMAA_QUALITY,
 	RC_SWAP_BUFFERS,	// can't just assume swap at end of list because
 						// of forced list submission before syncs
-	RC_VR_TARGET,		// openQ4: switch the frame's default target (VR eye / virtual screen)
-	RC_PRESENT_SCALED_SCENE	// openQ4: r_resolutionScaleMode upscale of the game's below-native scene
+	RC_VR_TARGET,		// openD3: switch the frame's default target (VR eye / virtual screen)
+	RC_PRESENT_SCALED_SCENE	// openD3: r_resolutionScaleMode upscale of the game's below-native scene
 } renderCommand_t;
 
 typedef struct {
@@ -567,7 +567,7 @@ typedef struct {
 	specialEffectsState_t effects;
 } drawSpecialEffectsCommand_t;
 
-// openQ4 VR: from here on the frame's default target ("the back buffer") is
+// openD3 VR: from here on the frame's default target ("the back buffer") is
 // eye 0/1, or the virtual screen for -1, at width x height.
 typedef struct {
 	renderCommand_t		commandId, *next;
@@ -628,7 +628,7 @@ typedef struct {
 	advancedScreenSpaceConfig_t advancedScreenSpace;
 } resolveTemporalPresentationCommand_t;
 
-// openQ4: the game's finished scene at the below-native scene extent, drawn
+// openD3: the game's finished scene at the below-native scene extent, drawn
 // over the whole native output with the r_resolutionScaleMode filter. The mode
 // and sharpness are the values at enqueue, like every other command snapshot.
 typedef struct {
@@ -730,7 +730,7 @@ void *R_GetCommandBuffer( int bytes );
 	mutations always call R_RenderThread_Sync first. Other modules run the backend on the calling
 	thread, so these are no-ops there.
 */
-#if defined( OPENQ4_RENDERER_VK_MODULE )
+#if defined( OPEND3_RENDERER_VK_MODULE )
 // Backend failures retire on the main thread before common error/teardown.
 void	R_RenderThread_Error( const char *message, bool fatal = false );
 void	R_RenderThread_Init( void );
@@ -1188,7 +1188,7 @@ public:
 	idList<idRenderTexture*> pendingRenderTextureDeletes;
 	bool					useUIViewportFor2D;
 
-	// openQ4: underwater view state, published by the game each frame and consumed by the GL
+	// openD3: underwater view state, published by the game each frame and consumed by the GL
 	// post-process pass. Not part of any render command, because the pass runs on the back buffer
 	// after the view has already been resolved.
 	float					underwaterAmount;
@@ -1199,7 +1199,7 @@ public:
 	bool					suppressLevelshotViewModels;
 	bool					disableLevelshotEntityCulling;
 
-	// openQ4 VR presentation (RenderSystem_vr.cpp, OpenGL/gl_VRPresentation.cpp).
+	// openD3 VR presentation (RenderSystem_vr.cpp, OpenGL/gl_VRPresentation.cpp).
 	// The engine hands vrFrame over for one BeginFrame..EndFrame. While it is
 	// active the frame's output is the virtual screen and SetVRRenderTarget
 	// moves the front end between it and the eyes; the backend presents from
@@ -1272,7 +1272,7 @@ window takes the offset. Ordinary frames have a zero offset.
 */
 ID_INLINE int RB_TileOffsetX( void ) { return backEnd.renderTexture == NULL ? tr.viewportOffset[0] : 0; }
 ID_INLINE int RB_TileOffsetY( void ) { return backEnd.renderTexture == NULL ? tr.viewportOffset[1] : 0; }
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 extern thread_local glconfig_t glConfig;
 #else
 extern glconfig_t			glConfig;		// outside of TR since it shouldn't be cleared during ref re-init
@@ -1283,7 +1283,7 @@ bool R_ViewFovTangentsValid( const renderView_t &renderView );
 extern float				tr_levelshotProjectionShiftX;
 extern float				tr_levelshotProjectionShiftY;
 
-#ifdef OPENQ4_RENDERER_MODULE
+#ifdef OPEND3_RENDERER_MODULE
 int R_RendererGetTimeGroupTime( int timeGroup, int fallbackTime );
 #endif
 
@@ -2315,7 +2315,7 @@ bool RB_DrawSharedAuthoredPostView( const viewDef_t *viewDef,
 void RB_DrawSpecialEffects( const void *data );
 void RB_ApplyResolutionScaleToBackBuffer( void );
 void RB_ApplyCRTToBackBuffer( void );
-// openQ4 VR desktop mirror (draw_common.cpp)
+// openD3 VR desktop mirror (draw_common.cpp)
 void RB_VR_DrawImageRect( idImage *image, int x, int y, int width, int height, float s0, float t0, float s1, float t1 );
 bool RB_UnderwaterViewAvailable( void );
 
@@ -2663,7 +2663,7 @@ void RB_ShutdownDebugTools( void );
 // Vulkan module draws those tools through a fixed-function emulation
 // (Vulkan/vk_DebugTools.cpp) that has to see which image is bound; OpenGL
 // binds it as usual.
-#if defined( OPENQ4_RENDERER_VK_MODULE )
+#if defined( OPEND3_RENDERER_VK_MODULE )
 void VK_DebugGL_BindImage( idImage *image );
 #define RB_BindDebugImage( image )	VK_DebugGL_BindImage( image )
 #define RB_BindNullDebugImage()		VK_DebugGL_BindImage( NULL )

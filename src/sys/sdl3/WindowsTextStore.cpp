@@ -9,7 +9,7 @@
 #include <optional>
 #include <thread>
 
-namespace openq4::sys {
+namespace opend3::sys {
 using namespace ui;
 namespace {
 template<class T> struct Ref {
@@ -578,5 +578,5 @@ HRESULT WindowsTextStore::RequestAttrsAtPosition(LONG position,ULONG count,const
 HRESULT WindowsTextStore::RequestAttrsTransitioningAtPosition(LONG position,ULONG count,const TS_ATTRID* attrs,DWORD flags) {return RequestAttrsAtPosition(position,count,attrs,flags);}
 HRESULT WindowsTextStore::FindNextAttrTransition(LONG first,LONG halt,ULONG count,const TS_ATTRID* attrs,DWORD flags,LONG* next,BOOL* found,LONG* offset) {return Safe([&]() -> HRESULT {if(!next || !found || !offset || (flags&~(TS_ATTR_FIND_BACKWARDS|TS_ATTR_FIND_WANT_OFFSET)) || count>256 || (count && !attrs))return E_INVALIDARG;HRESULT hr=impl->Gate();if(FAILED(hr))return hr;hr=impl->Range(std::min(first,halt),std::max(first,halt));if(FAILED(hr))return hr;*next=halt;*found=FALSE;*offset=0;return S_OK;});}
 HRESULT WindowsTextStore::RetrieveRequestedAttrs(ULONG count,TS_ATTRVAL* out,ULONG* fetched) {return Safe([&]() -> HRESULT {if(!fetched || (count && !out))return E_INVALIDARG;if(!Healthy() || impl->foreign || impl->compositionCallback)return E_UNEXPECTED;*fetched=0;return S_OK;});}
-} // namespace openq4::sys
+} // namespace opend3::sys
 #endif

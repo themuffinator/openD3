@@ -32,7 +32,7 @@ void UI_SettingsRenderFrame::Presented() {}
 #include <set>
 
 namespace {
-using namespace openq4::ui;
+using namespace opend3::ui;
 double Now() {
     return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }

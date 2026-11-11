@@ -35,28 +35,28 @@ If you have questions concerning this license or the applicable additional terms
 #endif
 
 #if defined( _WIN32 )
-#define OPENQ4_RENDERDOC_CC __cdecl
+#define OPEND3_RENDERDOC_CC __cdecl
 #else
-#define OPENQ4_RENDERDOC_CC
+#define OPEND3_RENDERDOC_CC
 #endif
 
 typedef void *RENDERDOC_DevicePointer;
 typedef void *RENDERDOC_WindowHandle;
 
-typedef void ( OPENQ4_RENDERDOC_CC *pRENDERDOC_GetAPIVersion )( int *major, int *minor, int *patch );
-typedef void ( OPENQ4_RENDERDOC_CC *pRENDERDOC_SetCaptureFilePathTemplate )( const char *pathTemplate );
-typedef const char *( OPENQ4_RENDERDOC_CC *pRENDERDOC_GetCaptureFilePathTemplate )( void );
-typedef uint32_t ( OPENQ4_RENDERDOC_CC *pRENDERDOC_GetNumCaptures )( void );
-typedef void ( OPENQ4_RENDERDOC_CC *pRENDERDOC_TriggerCapture )( void );
-typedef void ( OPENQ4_RENDERDOC_CC *pRENDERDOC_TriggerMultiFrameCapture )( uint32_t numFrames );
-typedef uint32_t ( OPENQ4_RENDERDOC_CC *pRENDERDOC_IsTargetControlConnected )( void );
-typedef uint32_t ( OPENQ4_RENDERDOC_CC *pRENDERDOC_LaunchReplayUI )( uint32_t connectTargetControl, const char *cmdLine );
-typedef void ( OPENQ4_RENDERDOC_CC *pRENDERDOC_SetActiveWindow )( RENDERDOC_DevicePointer device, RENDERDOC_WindowHandle wndHandle );
-typedef void ( OPENQ4_RENDERDOC_CC *pRENDERDOC_StartFrameCapture )( RENDERDOC_DevicePointer device, RENDERDOC_WindowHandle wndHandle );
-typedef uint32_t ( OPENQ4_RENDERDOC_CC *pRENDERDOC_IsFrameCapturing )( void );
-typedef uint32_t ( OPENQ4_RENDERDOC_CC *pRENDERDOC_EndFrameCapture )( RENDERDOC_DevicePointer device, RENDERDOC_WindowHandle wndHandle );
-typedef int ( OPENQ4_RENDERDOC_CC *pRENDERDOC_GetAPI )( int version, void **outAPIPointers );
-typedef void ( OPENQ4_RENDERDOC_CC *pRENDERDOC_VoidFn )( void );
+typedef void ( OPEND3_RENDERDOC_CC *pRENDERDOC_GetAPIVersion )( int *major, int *minor, int *patch );
+typedef void ( OPEND3_RENDERDOC_CC *pRENDERDOC_SetCaptureFilePathTemplate )( const char *pathTemplate );
+typedef const char *( OPEND3_RENDERDOC_CC *pRENDERDOC_GetCaptureFilePathTemplate )( void );
+typedef uint32_t ( OPEND3_RENDERDOC_CC *pRENDERDOC_GetNumCaptures )( void );
+typedef void ( OPEND3_RENDERDOC_CC *pRENDERDOC_TriggerCapture )( void );
+typedef void ( OPEND3_RENDERDOC_CC *pRENDERDOC_TriggerMultiFrameCapture )( uint32_t numFrames );
+typedef uint32_t ( OPEND3_RENDERDOC_CC *pRENDERDOC_IsTargetControlConnected )( void );
+typedef uint32_t ( OPEND3_RENDERDOC_CC *pRENDERDOC_LaunchReplayUI )( uint32_t connectTargetControl, const char *cmdLine );
+typedef void ( OPEND3_RENDERDOC_CC *pRENDERDOC_SetActiveWindow )( RENDERDOC_DevicePointer device, RENDERDOC_WindowHandle wndHandle );
+typedef void ( OPEND3_RENDERDOC_CC *pRENDERDOC_StartFrameCapture )( RENDERDOC_DevicePointer device, RENDERDOC_WindowHandle wndHandle );
+typedef uint32_t ( OPEND3_RENDERDOC_CC *pRENDERDOC_IsFrameCapturing )( void );
+typedef uint32_t ( OPEND3_RENDERDOC_CC *pRENDERDOC_EndFrameCapture )( RENDERDOC_DevicePointer device, RENDERDOC_WindowHandle wndHandle );
+typedef int ( OPEND3_RENDERDOC_CC *pRENDERDOC_GetAPI )( int version, void **outAPIPointers );
+typedef void ( OPEND3_RENDERDOC_CC *pRENDERDOC_VoidFn )( void );
 
 enum {
 	eRENDERDOC_API_Version_1_6_0 = 10600
@@ -92,7 +92,7 @@ typedef struct RENDERDOC_API_1_6_0 {
 	pRENDERDOC_VoidFn						SetCaptureTitle;
 } RENDERDOC_API_1_6_0;
 
-struct openq4RenderDocState_t {
+struct opend3RenderDocState_t {
 	void					*moduleHandle;
 	bool					moduleHandleNeedsRelease;
 	bool					apiChecked;
@@ -102,7 +102,7 @@ struct openq4RenderDocState_t {
 	int						apiPatch;
 };
 
-static openq4RenderDocState_t renderDocState;
+static opend3RenderDocState_t renderDocState;
 
 static bool RenderDoc_ModuleLoaded( void ) {
 #if defined( _WIN32 )

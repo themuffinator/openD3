@@ -50,7 +50,7 @@ static const int Q4_LIST_WINDOW_TEXT_SPACING = 0;
 
 // Browser rows contain sanitized network text. Fit complete UTF-8 characters
 // to the stock column width and signal omitted text instead of slicing glyphs.
-static idStr openQ4_FitBrowserCell( idDeviceContext *dc, const idStr &text, float scale, float width ) {
+static idStr openD3_FitBrowserCell( idDeviceContext *dc, const idStr &text, float scale, float width ) {
 	if ( dc->TextWidth( text.c_str(), scale, -1, Q4_LIST_WINDOW_TEXT_SPACING ) <= width ) {
 		return text;
 	}
@@ -74,7 +74,7 @@ static idStr openQ4_FitBrowserCell( idDeviceContext *dc, const idStr &text, floa
 	return ellipsis;
 }
 
-static const idMaterial *openQ4_ListMaterial( const char *name ) {
+static const idMaterial *openD3_ListMaterial( const char *name ) {
 	if ( name == NULL || name[ 0 ] == '\0' ) {
 		return NULL;
 	}
@@ -85,7 +85,7 @@ static const idMaterial *openQ4_ListMaterial( const char *name ) {
 	return mat;
 }
 
-static int openQ4_ClampListTop( int top, int fit, int itemCount ) {
+static int openD3_ClampListTop( int top, int fit, int itemCount ) {
 	if ( fit <= 0 ) {
 		fit = 1;
 	}
@@ -96,8 +96,8 @@ static int openQ4_ClampListTop( int top, int fit, int itemCount ) {
 	return idMath::ClampInt( 0, maxTop, top );
 }
 
-static int openQ4_EnsureSelectionVisible( int top, int fit, int selection, int itemCount ) {
-	top = openQ4_ClampListTop( top, fit, itemCount );
+static int openD3_EnsureSelectionVisible( int top, int fit, int selection, int itemCount ) {
+	top = openD3_ClampListTop( top, fit, itemCount );
 	if ( selection < 0 || selection >= itemCount ) {
 		return top;
 	}
@@ -109,7 +109,7 @@ static int openQ4_EnsureSelectionVisible( int top, int fit, int selection, int i
 	} else if ( selection >= top + fit ) {
 		top = selection - fit + 1;
 	}
-	return openQ4_ClampListTop( top, fit, itemCount );
+	return openD3_ClampListTop( top, fit, itemCount );
 }
 
 void idListWindow::CommonInit() {
@@ -627,10 +627,10 @@ void idListWindow::Draw(int time, float x, float y) {
 		}
 	}
 
-	const idMaterial *matFocus = openQ4_ListMaterial( backgroundFocus.c_str() );
-	const idMaterial *matLine = openQ4_ListMaterial( backgroundLine.c_str() );
-	const idMaterial *matHover = openQ4_ListMaterial( backgroundHover.c_str() );
-	const idMaterial *matGreyed = openQ4_ListMaterial( backgroundGreyed.c_str() );
+	const idMaterial *matFocus = openD3_ListMaterial( backgroundFocus.c_str() );
+	const idMaterial *matLine = openD3_ListMaterial( backgroundLine.c_str() );
+	const idMaterial *matHover = openD3_ListMaterial( backgroundHover.c_str() );
+	const idMaterial *matGreyed = openD3_ListMaterial( backgroundGreyed.c_str() );
 	gui->SetStateInt( va( "%s_hover", listName.c_str() ), -1 );
 	const bool listContainsCursor = !noEvents && Contains( gui->CursorX(), gui->CursorY() );
 	hover = listContainsCursor;
@@ -715,7 +715,7 @@ void idListWindow::Draw(int time, float x, float y) {
 
 				if ( tabInfo[tab].type == TAB_TYPE_TEXT ) {
 					if ( !listName.Icmp( "serverlist" ) ) {
-						work = openQ4_FitBrowserCell( dc, work, tabInfo[tab].textScale, Max( 0.0f, rect.w - 1.0f ) );
+						work = openD3_FitBrowserCell( dc, work, tabInfo[tab].textScale, Max( 0.0f, rect.w - 1.0f ) );
 					}
 					idRectangle textRect = rect;
 					const float textHeight = dc->MaxCharHeight( scale );
@@ -806,7 +806,7 @@ void idListWindow::HandleBuddyUpdate(idWindow *buddy) {
 		lineHeight = 1.0f;
 	}
 	top = scroller->GetValue();
-	top = openQ4_ClampListTop( top, textRect.h / lineHeight, listItems.Num() );
+	top = openD3_ClampListTop( top, textRect.h / lineHeight, listItems.Num() );
 	const idStr topStateName = va( "%s_top", listName.c_str() );
 	gui->SetStateInt( topStateName.c_str(), top );
 }
@@ -848,14 +848,14 @@ void idListWindow::UpdateList() {
 	const bool hasRequestedTop = gui->State().GetInt( topStateName.c_str(), "0", requestedTop );
 	if ( hasRequestedTop ) {
 		if ( requestedTop < 0 ) {
-			value = static_cast<float>( openQ4_EnsureSelectionVisible( idMath::Ftoi( value ), fit, GetCurrentSel(), listItems.Num() ) );
+			value = static_cast<float>( openD3_EnsureSelectionVisible( idMath::Ftoi( value ), fit, GetCurrentSel(), listItems.Num() ) );
 		} else {
 			value = static_cast<float>( requestedTop );
 		}
 	}
-	top = openQ4_ClampListTop( idMath::Ftoi( value ), fit, listItems.Num() );
+	top = openD3_ClampListTop( idMath::Ftoi( value ), fit, listItems.Num() );
 	scroller->SetValue( static_cast<float>( top ) );
-	top = openQ4_ClampListTop( idMath::Ftoi( scroller->GetValue() ), fit, listItems.Num() );
+	top = openD3_ClampListTop( idMath::Ftoi( scroller->GetValue() ), fit, listItems.Num() );
 	gui->SetStateInt( topStateName.c_str(), top );
 
 	typedTime = 0;

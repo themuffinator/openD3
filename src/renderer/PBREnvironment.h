@@ -1,7 +1,7 @@
 // Copyright (C) 2026 DarkMatter Productions
 // Original, deterministic CPU integration of the shared PBR equations.
-#ifndef OPENQ4_PBR_ENVIRONMENT_H
-#define OPENQ4_PBR_ENVIRONMENT_H
+#ifndef OPEND3_PBR_ENVIRONMENT_H
+#define OPEND3_PBR_ENVIRONMENT_H
 
 #include "PBRMath.h"
 #include <algorithm>
@@ -14,8 +14,8 @@
 #include <thread>
 #include <vector>
 
-namespace openq4PBR {
-using namespace openq4PBRMath;
+namespace opend3PBR {
+using namespace opend3PBRMath;
 // Nonnegative finite HDR storage, rounded to nearest with ties to even.
 // The Vulkan uploader consumes native-endian IEEE binary16 bytes.
 inline std::uint16_t RadianceHalf(float value) {

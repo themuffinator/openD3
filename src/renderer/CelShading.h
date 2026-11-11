@@ -9,7 +9,7 @@
 
 	Cel shading policy.
 
-	openQ4's cel look is assembled from three cooperating pieces:
+	openD3's cel look is assembled from three cooperating pieces:
 
 	  1. banded lighting, applied inside the interaction shaders so every
 	     additive light contributes a quantized ramp instead of a smooth one;

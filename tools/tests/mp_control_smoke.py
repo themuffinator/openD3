@@ -41,15 +41,15 @@ def main() -> int:
         parser.error("startup-timeout must be positive")
     runtime, output = args.runtime_dir.resolve(), args.output_dir.resolve()
     verify_runtime_is_current(runtime, getattr(args, "executable_name", ""))
-    exe = runtime / (args.executable_name or ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64"))
+    exe = runtime / (args.executable_name or ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64"))
     if not exe.is_file():
         parser.error("a staged runtime is required")
     output.mkdir(parents=True, exist_ok=True)
     if (runtime / "manifest.json").is_file():
         shutil.copy2(runtime / "manifest.json", output / "runtime-manifest.json")
     roles = ("host", "client", "observer") if args.role_matrix else ("host", "client")
-    games = {role: output / role / "baseoq4" for role in roles}
-    logs = {role: path / "logs/openq4.log" for role, path in games.items()}
+    games = {role: output / role / "baseod3" for role in roles}
+    logs = {role: path / "logs/opend3.log" for role, path in games.items()}
     loops, processes, streams, failures, exits = {}, {}, [], [], {}
     command_numbers = {role: 0 for role in roles}
     decoder, observed_views, observed_follows = None, {}, {}
@@ -61,7 +61,7 @@ def main() -> int:
         # This loop stays immutable. A transient read failure while replacing
         # the selector cannot interrupt reporting or prevent a later quit.
         write_script(game / "control_pump.cfg", ["exec control_commands.cfg", "waitMsec 250",
-                     "openq4_reportMPState", "vstr oq4_control_pump"])
+                     "opend3_reportMPState", "vstr oq4_control_pump"])
         write_script(game / "control_start.cfg", [
             'set oq4_control_cmd_1 "exec control_step_1.cfg"',
             'set oq4_control_pump "exec control_pump.cfg"',
@@ -81,13 +81,13 @@ def main() -> int:
         cvars = {
             "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
             "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(games[role].parent),
-            "fs_devpath": str(games[role].parent), "fs_game": "baseoq4", "com_gameMode": "MP",
+            "fs_devpath": str(games[role].parent), "fs_game": "baseod3", "com_gameMode": "MP",
             "r_fullscreen": "0", "r_borderless": "0", "r_fullscreenDesktop": "0",
             "r_borderlessDefaultMigrated": "1", "r_mode": "-1", "r_customWidth": str(args.width),
             "r_customHeight": str(args.height), "r_windowWidth": str(args.width), "r_windowHeight": str(args.height),
             "r_hiddenWindow": "1", "in_mouse": "0", "in_joystick": "0", "s_noSound": "1",
             "r_renderApi": args.renderer, "com_maxfps": "60", "r_swapInterval": "0", "logFile": "2",
-            "logFileName": "logs/openq4.log", "developer": "1", "ui_autoJoin": "1", "ui_spectate": "Play",
+            "logFileName": "logs/opend3.log", "developer": "1", "ui_autoJoin": "1", "ui_spectate": "Play",
             # The smoke drives and captures the stock in-match menu, which the
             # retained Escape card would cover.
             "ui_retained": "0",
@@ -114,7 +114,7 @@ def main() -> int:
         processes[role] = subprocess.Popen(command, cwd=runtime, stdout=stream, stderr=subprocess.STDOUT)
 
     def report(marker: str) -> list[str]:
-        return ["echo " + marker, "openq4_matchControl report"]
+        return ["echo " + marker, "opend3_matchControl report"]
 
     started, stage = time.time(), "startup"
     deadline = time.monotonic() + args.timeout
@@ -125,7 +125,7 @@ def main() -> int:
         until = min(deadline, time.monotonic() + timeout)
         while time.monotonic() < until:
             texts = {role: read_log(path) for role, path in logs.items()}
-            if re.search(r"FATAL ERROR|ERROR:|Unknown command|openq4_gui(?:Set|Get): unknown|usage: openq4_gui(?:Set|Get)", "\n".join(texts.values())):
+            if re.search(r"FATAL ERROR|ERROR:|Unknown command|opend3_gui(?:Set|Get): unknown|usage: opend3_gui(?:Set|Get)", "\n".join(texts.values())):
                 raise RuntimeError(f"engine or diagnostic command failure during {label}")
             if any(process.poll() is not None for process in processes.values()):
                 raise RuntimeError(f"a process ended during {label}")
@@ -139,7 +139,7 @@ def main() -> int:
         stage = label
         operation_number += 1
         begin, end = f"MP_CONTROL_BEGIN_{operation_number}", f"MP_CONTROL_END_{operation_number}"
-        inject(role, ["echo " + begin, *actions, "openq4_matchControl report", "echo " + end])
+        inject(role, ["echo " + begin, *actions, "opend3_matchControl report", "echo " + end])
         text = wait_for(label, lambda texts: "\n" + end + " " in texts[role])[role]
         return text.partition("\n" + begin + " ")[2].partition("\n" + end + " ")[0]
 
@@ -158,7 +158,7 @@ def main() -> int:
                 raise RuntimeError("missing accepted pause view")
             return tuple(map(int, states[-1]))
 
-        state = view_state(perform(role, kind, ["openq4_matchControl action " + kind, "waitMsec 1000"]))
+        state = view_state(perform(role, kind, ["opend3_matchControl action " + kind, "waitMsec 1000"]))
         until = min(deadline, time.monotonic() + 25)
         while state[1] != 2 and time.monotonic() < until:
             state = view_state(perform(role, "await pause", ["waitMsec 500"]))
@@ -173,7 +173,7 @@ def main() -> int:
         if state[1] != 2 or state[3] != first[3] or state[2] - first[2] < 3000:
             raise RuntimeError(f"{role} paused clock advanced or timed out: {first}, {state}")
         perform(role, "paused capture", [*report("MP_PAUSE_B"), 'screenshot "screenshots/paused.tga"'])
-        state = view_state(perform(role, "resume", ["openq4_matchControl action resume", "waitMsec 1000"]))
+        state = view_state(perform(role, "resume", ["opend3_matchControl action resume", "waitMsec 1000"]))
         until = min(deadline, time.monotonic() + 25)
         while (state[1] != 0 or state[3] <= first[3]) and time.monotonic() < until:
             state = view_state(perform(role, "await resume", ["waitMsec 1000"]))
@@ -204,7 +204,7 @@ def main() -> int:
         menu = perform("observer", label + " capture", [f'screenshot "screenshots/{label}.tga"'])
         if "MP_CONTROL match_follow_visible=1" not in menu:
             raise RuntimeError(f"{label}: live spectator camera controls are hidden")
-        section = perform("host", label + " camera permissions", ["openq4_reportMPState"])
+        section = perform("host", label + " camera permissions", ["opend3_reportMPState"])
         cameras = {int(target): bool(int(allowed)) for target, allowed in
                    re.findall(r"MP_CAMERA observer=2 target=(\d+) allowed=(\d+)", section)}
         if cameras != {0: 0 in visible_sides, 1: 1 in visible_sides, 2: False}:
@@ -218,8 +218,8 @@ def main() -> int:
         if row is None:
             raise RuntimeError("no current observer participant row")
         perform("host", "toggle broadcaster", [
-            f"openq4_matchControl set match_team_rows_sel_0 {row[1]}",
-            "openq4_matchControl action select_team_row", "openq4_matchControl action broadcaster_set"])
+            f"opend3_matchControl set match_team_rows_sel_0 {row[1]}",
+            "opend3_matchControl action select_team_row", "opend3_matchControl action broadcaster_set"])
 
     def follow_camera(label: str, command: str | None, expected: int, permitted: set[int]) -> None:
         nonlocal last_follow_time
@@ -239,7 +239,7 @@ def main() -> int:
         texts = wait_for(label + " cooldown", lambda values: camera_state(values)[0] > last_follow_time + 650)
         issued_at = camera_state(texts)[0]
         if command is not None:
-            perform("observer", label + " command", [command, "waitMsec 500", "openq4_reportMPState"])
+            perform("observer", label + " command", [command, "waitMsec 500", "opend3_reportMPState"])
 
         def accepted(values: dict[str, str]) -> bool:
             server_time, cameras, local = camera_state(values)
@@ -269,14 +269,14 @@ def main() -> int:
         for role in games:
             # Let the menu's initial join-panel animation finish before using
             # the same outgoing/incoming transition as its Match Control button.
-            actions = ["openq4_reportMPState", "openq4_assertMPClientActive",
-                       f"openq4_assertMenuActivation {args.menu_budget_ms} game", "waitMsec 1500",
-                       "openq4_guiSet desktop::active 1", "openq4_guiSet desktop::dest 21",
+            actions = ["opend3_reportMPState", "opend3_assertMPClientActive",
+                       f"opend3_assertMenuActivation {args.menu_budget_ms} game", "waitMsec 1500",
+                       "opend3_guiSet desktop::active 1", "opend3_guiSet desktop::dest 21",
                        "GuiEvent hideMain", "GuiEvent chooseCurr", "GuiEvent resetMain0", "waitMsec 1500"]
             for tab, name in enumerate(("status", "teams", "proposals", "rules", "series", "evidence")):
-                actions += [f"openq4_guiSet desktop::match_tab {tab}", "waitMsec 350",
+                actions += [f"opend3_guiSet desktop::match_tab {tab}", "waitMsec 350",
                             f'screenshot "screenshots/{name}.tga"']
-            actions += ["openq4_guiSet desktop::match_tab 0", *report("MP_CONTROL_INITIALIZED")]
+            actions += ["opend3_guiSet desktop::match_tab 0", *report("MP_CONTROL_INITIALIZED")]
             menu = perform(role, f"{role} panels", actions)
             if "MP_CONTROL match_follow_visible=0" not in menu:
                 raise RuntimeError(f"{role}: active player received spectator camera controls")
@@ -284,8 +284,8 @@ def main() -> int:
         # Captain roles occupy declared roster seats. Configure one active
         # seat per side through the real Rules workflow before assigning them.
         roster = "" if args.duel else perform("host", "configure rosters", [
-            "openq4_matchControl set match_rule_rows_sel_0 9", "openq4_matchControl action select_rule_row",
-            "openq4_matchControl set match_rule_value 1", "openq4_matchControl action rules_stage_field", "waitMsec 500"])
+            "opend3_matchControl set match_rule_rows_sel_0 9", "opend3_matchControl action select_rule_row",
+            "opend3_matchControl set match_rule_value 1", "opend3_matchControl action rules_stage_field", "waitMsec 500"])
         if not args.duel and not re.search(r"MP_CONTROL match_rule_rows_item_9=[^\n]*\t1\s*\n", roster):
             raise RuntimeError("the roster-size rule was not committed")
         for name in (() if args.duel else roles):
@@ -296,26 +296,26 @@ def main() -> int:
                 # Rule changes and role assignment share the two-second
                 # privileged-operation cooldown on the operator connection.
                 "waitMsec 2200",
-                f"openq4_matchControl set match_team_rows_sel_0 {row[1]}",
-                "openq4_matchControl action select_team_row",
-                "openq4_matchControl set match_role_choice " + ("3" if name == "observer" else "2"),
-                "openq4_matchControl action role_assign", "waitMsec 500"])
+                f"opend3_matchControl set match_team_rows_sel_0 {row[1]}",
+                "opend3_matchControl action select_team_row",
+                "opend3_matchControl set match_role_choice " + ("3" if name == "observer" else "2"),
+                "opend3_matchControl action role_assign", "waitMsec 500"])
         recipient = perform("client", "remote contestant view", ["waitMsec 750"])
         expected_recipient = r"MP_VIEW slot=1 side=-1 roles=2 active=1" if args.duel else r"MP_VIEW slot=1 side=1 roles=6 active=1"
         if not re.search(expected_recipient, recipient):
             raise RuntimeError("the remote contestant role was not accepted")
-        perform("host", "force ready", ["waitMsec 2200", "openq4_matchControl action arm_force_ready", "waitMsec 100",
-                "openq4_matchControl action confirm"])
+        perform("host", "force ready", ["waitMsec 2200", "opend3_matchControl action arm_force_ready", "waitMsec 100",
+                "opend3_matchControl action confirm"])
         wait_for("countdown into gameplay", lambda texts: all("phase=3 " in text.rsplit("\nMP_STATE ", 1)[-1]
                                                               for text in texts.values()))
         if args.role_matrix:
             capture_view("coach", 8, 1, {1}, False)
-            follow_camera("coach-free", "openq4_matchControl action follow_free", 2, {1})
+            follow_camera("coach-free", "opend3_matchControl action follow_free", 2, {1})
             follow_camera("coach-teammate", "follow 1", 1, {1})
             follow_camera("coach-opponent-denied", "follow 0", 1, {1})
-            follow_camera("coach-previous", "openq4_matchControl action follow_prev", 1, {1})
-            follow_camera("coach-next", "openq4_matchControl action follow_next", 1, {1})
-            perform("observer", "leave coach roster", ["openq4_matchControl action roster_leave"])
+            follow_camera("coach-previous", "opend3_matchControl action follow_prev", 1, {1})
+            follow_camera("coach-next", "opend3_matchControl action follow_next", 1, {1})
+            perform("observer", "leave coach roster", ["opend3_matchControl action roster_leave"])
             capture_view("spectator", 2, -1, set(), False)
             follow_camera("coach-revoked", None, 2, set())
             follow_camera("spectator-direct-denied", "follow 1", 2, set())
@@ -332,22 +332,22 @@ def main() -> int:
             capture_view("broadcaster-revoked", 2, -1, set(), False)
             follow_camera("broadcaster-revoked", None, 2, set())
             perform("observer", "referee sign in", [
-                f'openq4_guiSet match_referee_credential::text "{referee_credential}"',
-                "openq4_matchControl action referee_login"])
+                f'opend3_guiSet match_referee_credential::text "{referee_credential}"',
+                "opend3_matchControl action referee_login"])
             capture_view("referee", 32, -1, {0, 1}, True)
             follow_camera("referee-direct", "follow 1", 1, {0, 1})
             pause_sequence("observer", "tech_pause")
-            perform("observer", "referee sign out", ["openq4_matchControl action referee_logout"])
+            perform("observer", "referee sign out", ["opend3_matchControl action referee_logout"])
             capture_view("referee-revoked", 2, -1, set(), False)
             follow_camera("referee-revoked", None, 2, set())
         pause_sequence("host", "tech_pause")
         pause_sequence("client", "timeout")
-        summary_report = ["waitMsec 250", "openq4_guiGet summary_result::text"]
+        summary_report = ["waitMsec 250", "opend3_guiGet summary_result::text"]
         if not args.duel:
-            summary_report += ["openq4_guiGet summ_marine_teamname::text",
-                               "openq4_guiGet summ_strogg_teamname::text"]
-        perform("host", "operator abort", ["openq4_matchControl action arm_abort", "waitMsec 100",
-                "openq4_matchControl action confirm", "waitMsec 2000", *report("MP_CONTROL_ABORTED"),
+            summary_report += ["opend3_guiGet summ_marine_teamname::text",
+                               "opend3_guiGet summ_strogg_teamname::text"]
+        perform("host", "operator abort", ["opend3_matchControl action arm_abort", "waitMsec 100",
+                "opend3_matchControl action confirm", "waitMsec 2000", *report("MP_CONTROL_ABORTED"),
                 *summary_report, 'screenshot "screenshots/review.tga"'])
         for role in roles[1:]:
             perform(role, "remote abort result", [*report("MP_CONTROL_ABORTED"), *summary_report,
@@ -376,7 +376,7 @@ def main() -> int:
     menu_activation_ms = {}
     for role, path in logs.items():
         log = read_log(path)
-        activation = re.search(r"OPENQ4_MENU_ACTIVATION PASS elapsed=(\d+)ms limit=(\d+)ms", log)
+        activation = re.search(r"OPEND3_MENU_ACTIVATION PASS elapsed=(\d+)ms limit=(\d+)ms", log)
         menu_activation_ms[role] = int(activation[1]) if activation else None
         if not activation or int(activation[2]) != args.menu_budget_ms:
             failures.append(f"{role} did not open Match Control within the configured menu budget")

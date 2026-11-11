@@ -1,7 +1,7 @@
 #version 450
 #extension GL_GOOGLE_include_directive : require
 
-// openQ4 Vulkan translucent shadow-moment caster for point lights —
+// openD3 Vulkan translucent shadow-moment caster for point lights —
 // fragment stage (GL shadow_point_translucent_caster.fs). The depth is the
 // radial distance over the far envelope; anything outside (0, 1) adds
 // nothing.

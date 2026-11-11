@@ -24,7 +24,7 @@ struct idMath {
 int clockMsec=1000, redraws=0, callbackStage=-1;
 bool throwFromCallback=false;
 bool initializing=false;
-bool openQ4_UpdateInitialization(){return initializing;}
+bool openD3_UpdateInitialization(){return initializing;}
 int Sys_Milliseconds(){return clockMsec;}
 void Sys_GenerateEvents(){}
 float Session_GetBlockingLoadFrameIntervalMsec(){return 16.0f;}

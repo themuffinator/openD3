@@ -1,7 +1,7 @@
 #version 450
 
 // Camera and object motion blur. A port of
-// content/baseoq4/pak0/glprogs/motionblur.fs (RB_STD_MotionBlur). fragUV is
+// content/baseod3/pak0/glprogs/motionblur.fs (RB_STD_MotionBlur). fragUV is
 // OpenGL's texture coordinate; see post_ssao.frag. The velocity buffer is
 // written by post_motionvectors in the same orientation.
 

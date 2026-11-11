@@ -88,7 +88,7 @@ void		Posix_ShutdownConsole( void );
 void		Posix_Shutdown( void );
 
 #if defined( __ANDROID__ )
-// Console output goes to logcat under the tag "openQ4"; see
+// Console output goes to logcat under the tag "openD3"; see
 // sys/android/android_log.cpp for why it does not go through stdout. The
 // values match <android/log.h>'s android_LogPriority, which android_log.cpp
 // static-asserts, so callers here need not include that header.

@@ -5,14 +5,14 @@
 #include <atomic>
 
 namespace {
-openq4::NativeInputDriver* nativeDriver=nullptr;
+opend3::NativeInputDriver* nativeDriver=nullptr;
 std::atomic<bool> nativeDriverOrphaned{false},nativeDriverOwned{false};
 std::uint64_t nativeInputBudgetFrame=0; // Bound engine thread only, never reset.
-openq4::NativeInputDriver* NativeDriverOnThread() noexcept {
+opend3::NativeInputDriver* NativeDriverOnThread() noexcept {
     return Sys_EventDispositionBoundThread()?nativeDriver:nullptr;
 }
 }
-namespace openq4 {
+namespace opend3 {
 struct NativeInputDriver::Guard {NativeInputDriver& d;~Guard(){d.calling=false;}};
 NativeInputDriver::NativeInputDriver(NativeInputRoute& r,std::uint64_t id,const NativeInputBinding& b,
     NativeInputEmissionInventory& i,NativeInputTransfers& t,NativeEventDispositionLedger& l,
@@ -317,7 +317,7 @@ void NativeInputDriver::ContinueDeferred(idEventLoop& expected) noexcept {
     if(&expected!=&loop || std::this_thread::get_id()!=thread){Abort();return;}
     try{loop.ContinueNativeInput();}catch(...){Abort();}Checkpoint();
 }
-} // namespace openq4
+} // namespace opend3
 
 nativeInputSessionResult_t NativeInput_TakeSession(sysEvent_t& out) noexcept {
     return NativeDriverOnThread()?NativeDriverOnThread()->TakeSession(out):(nativeDriverOwned.load() || nativeDriverOrphaned.load())?nativeInputSessionResult_t::Stop:nativeInputSessionResult_t::Legacy;

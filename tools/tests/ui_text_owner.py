@@ -28,13 +28,13 @@ MANAGER_EDITOR = r'''
     bool textAvailable=true,textReject=false,textNoChange=false;
     std::string text;
     std::function<void()> onTextQuery,onTextApply;
-    openq4::ui::TextBrokerContext QueryTextContext(std::uint64_t allocation,std::uint64_t window,std::uint64_t session) override {
+    opend3::ui::TextBrokerContext QueryTextContext(std::uint64_t allocation,std::uint64_t window,std::uint64_t session) override {
         ++textQueries;
-        openq4::ui::TextBrokerContext result{openq4::ui::TextBrokerRoute::Retained,window,session,{}};
-        if(textAvailable)result.editor=openq4::ui::TextEditorIdentity{allocation,textBackend,textDocument,textModal,window,textSession,textRevision,"number"};
+        opend3::ui::TextBrokerContext result{opend3::ui::TextBrokerRoute::Retained,window,session,{}};
+        if(textAvailable)result.editor=opend3::ui::TextEditorIdentity{allocation,textBackend,textDocument,textModal,window,textSession,textRevision,"number"};
         auto callback=onTextQuery;if(callback)callback();return result;
     }
-    bool ApplyTextInput(const openq4::ui::TextBrokerContext&,const openq4::ui::TextInputEvent& input,std::string&) override {
+    bool ApplyTextInput(const opend3::ui::TextBrokerContext&,const opend3::ui::TextInputEvent& input,std::string&) override {
         ++textWrites;
         if(textReject)return false;
         if(!textNoChange) {text=input.text;++textRevision;}
@@ -43,7 +43,7 @@ MANAGER_EDITOR = r'''
 '''
 
 MANAGER_MAIN = r'''
-using namespace openq4::ui;
+using namespace opend3::ui;
 int main() {
     auto& m=uiManagerLocal;
     assert(!UI_QueryTextContext(nullptr,5,7).editor);
@@ -160,7 +160,7 @@ RUNTIME_QUERY_STUB = r'''
 '''
 
 ADAPTER_MAIN = r'''
-using namespace openq4::ui;
+using namespace opend3::ui;
 static Runtime& Live() {assert(views.size()==1);return views.front()->runtime;}
 static void Install() {
     auto& r=Live();r.InstallNumber("number","brightness");r.FocusControl("number",1);
@@ -243,8 +243,8 @@ def manager_source(main=MANAGER_MAIN):
     source = manager.production_source()
     source = '#include "src/ui/UserInterfaceText.h"\n#include <limits>\n' + source
     declarations = '''
-    openq4::ui::TextBrokerContext QueryTextContext(idUserInterface*,std::uint64_t,std::uint64_t);
-    uiTextDeliveryResult_t DeliverTextInput(idUserInterface*,std::uint64_t,std::uint64_t,const openq4::ui::TextBrokerContext&,const openq4::ui::TextBrokerDelivery&);
+    opend3::ui::TextBrokerContext QueryTextContext(idUserInterface*,std::uint64_t,std::uint64_t);
+    uiTextDeliveryResult_t DeliverTextInput(idUserInterface*,std::uint64_t,std::uint64_t,const opend3::ui::TextBrokerContext&,const opend3::ui::TextBrokerDelivery&);
     bool textBoundaryActive=false,textBoundaryFailed=false;
 '''
     source = source.replace('class idUserInterfaceManagerLocal {\npublic:', 'class idUserInterfaceManagerLocal {\npublic:' + declarations)
@@ -252,8 +252,8 @@ def manager_source(main=MANAGER_MAIN):
                             'class idUserInterfaceRetained : public idUserInterfaceLocal {\npublic:' + MANAGER_EDITOR)
 
     production = (ROOT / 'src/ui/UserInterface.cpp').read_text(encoding='utf-8')
-    for signature in ('std::uint64_t UI_NextTextLifetime(', 'openq4::ui::TextBrokerContext UI_QueryTextContext(',
-                      'uiTextDeliveryResult_t UI_DeliverTextInput(', 'openq4::ui::TextBrokerContext idUserInterfaceManagerLocal::QueryTextContext(',
+    for signature in ('std::uint64_t UI_NextTextLifetime(', 'opend3::ui::TextBrokerContext UI_QueryTextContext(',
+                      'uiTextDeliveryResult_t UI_DeliverTextInput(', 'opend3::ui::TextBrokerContext idUserInterfaceManagerLocal::QueryTextContext(',
                       'uiTextDeliveryResult_t idUserInterfaceManagerLocal::DeliverTextInput('):
         source += function_body(production, signature)
     return source + main
@@ -263,7 +263,7 @@ def dedicated_source():
     # Link without the retained runtime/models: dedicated has no native field
     # consumer and must not acquire a client rendering/text dependency.
     return '#define ID_DEDICATED 1\n' + manager_source(r'''
-using namespace openq4::ui;
+using namespace opend3::ui;
 int main() {
     auto* gui=new idUserInterfaceRetained;
     TextEditorIdentity target{1,2,3,4,5,6,7,"number"};
@@ -321,7 +321,7 @@ def runtime_source():
 #include <cstdio>
 #include <functional>
 #include "src/ui/retained/Interaction.h"
-using namespace openq4::ui;
+using namespace opend3::ui;
 '''
     header = (ROOT / 'src/ui/retained/Runtime.h').read_text(encoding='utf-8')
     production = (ROOT / 'src/ui/retained/Runtime.cpp').read_text(encoding='utf-8')

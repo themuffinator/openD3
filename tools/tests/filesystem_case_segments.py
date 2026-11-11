@@ -122,13 +122,13 @@ def validate_game_relative_include_paths() -> None:
     require(os_to_relative, "base == OSPath || c1 == '/' || c1 == '\\\\'", "qpath-at-byte-zero recognition")
     require(os_to_relative, "c2 == '\\0' || c2 == '/' || c2 == '\\\\'", "complete game-directory segment recognition")
 
-    # OpenD3-GameLibs stages gameplay sources only; engine/idlib copies are
+    # openD3-GameLibs stages gameplay sources only; engine/idlib copies are
     # deliberately excluded, so include normalization has one canonical owner.
     context = "engine parser include normalization"
     normalize = function_body(engine_parser, "static void Parser_NormalizeIncludeBase(")
     require(normalize, 'GetCVarString( "fs_game" )', context)
     require(normalize, 'GetCVarString( "fs_game_base" )', context)
-    require(normalize, "Parser_StripLeadingGameDirectory( basePath, OPENQ4_GAMEDIR )", context)
+    require(normalize, "Parser_StripLeadingGameDirectory( basePath, OPEND3_GAMEDIR )", context)
     require(normalize, "Parser_StripLeadingGameDirectory( basePath, BASE_MPGAMEDIR )", context)
     require(normalize, "if ( Parser_IsAbsolutePath( basePath ) )", context)
     require_order(normalize, "if ( Parser_IsAbsolutePath( basePath ) )", "OSPathToRelativePath( basePath )", context)
@@ -144,16 +144,16 @@ def validate_linux_build_path_casing() -> None:
     commit = read(".github/workflows/commit-validation.yml")
 
     require(root_meson, 'game_libs_repo_root = meson.project_source_root()', "canonical game source path")
-    reject(root_meson, "../OpenD3-GameLibs", "retired companion source input")
-    reject(root_meson, 'root / ".." / "OpenD3-GameLibs"', "retired companion source input")
-    reject(root_meson, "../openQ4-game", "retired companion source input")
-    reject(root_meson, 'root / ".." / "OpenQ4-game"', "default GameLibs repository path")
-    reject(root_meson, "../OpenQ4-game", "GameLibs repository diagnostics")
+    reject(root_meson, "../openD3-GameLibs", "retired companion source input")
+    reject(root_meson, 'root / ".." / "openD3-GameLibs"', "retired companion source input")
+    reject(root_meson, "../openD3-game", "retired companion source input")
+    reject(root_meson, 'root / ".." / "openD3-game"', "default GameLibs repository path")
+    reject(root_meson, "../openD3-game", "GameLibs repository diagnostics")
 
     require(root_meson, "assets/linux/openD3-steamdeck.in", "Steam Deck launcher template input")
     require(root_meson, "assets/linux/opend3-steamdeck.desktop.in", "Steam Deck desktop template input")
-    reject(root_meson, "assets/linux/openQ4-steamdeck.in", "Steam Deck launcher template input")
-    reject(root_meson, "assets/linux/openq4-steamdeck.desktop.in", "Steam Deck desktop template input")
+    reject(root_meson, "assets/linux/openD3-steamdeck.in", "Steam Deck launcher template input")
+    reject(root_meson, "assets/linux/opend3-steamdeck.desktop.in", "Steam Deck desktop template input")
     require_exact_child("assets/linux", "openD3-steamdeck.in", "Steam Deck launcher template")
     require_exact_child("assets/linux", "opend3-steamdeck.desktop.in", "Steam Deck desktop template")
 
@@ -162,22 +162,22 @@ def validate_linux_build_path_casing() -> None:
         (commit, "commit validation workflow"),
     ):
         reject(workflow, "OPEND3_GAMELIBS_REPO", context)
-        reject(workflow, "../OpenD3-GameLibs", context)
-        reject(workflow, "OpenD3-GameLibs.git", context)
-        reject(workflow, "../openQ4-game", context)
-        reject(workflow, "openQ4-game.git", context)
-        reject(workflow, "../OpenQ4-game", context)
+        reject(workflow, "../openD3-GameLibs", context)
+        reject(workflow, "openD3-GameLibs.git", context)
+        reject(workflow, "../openD3-game", context)
+        reject(workflow, "openD3-game.git", context)
+        reject(workflow, "../openD3-game", context)
 
 
 def validate_release_note() -> None:
     source = read("docs/dev/release-completion.md")
 
-    require(source, "Canonical companion game sources now stage directly from `OpenD3-GameLibs`", "release completion notes")
+    require(source, "Canonical companion game sources now stage directly from `openD3-GameLibs`", "release completion notes")
     require(source, "`baseod3/game_<arch>`", "release completion notes")
 
 
 def validate_validation_coverage() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     push = read(".github/workflows/push-verification.yml")
     commit = read(".github/workflows/commit-validation.yml")
 

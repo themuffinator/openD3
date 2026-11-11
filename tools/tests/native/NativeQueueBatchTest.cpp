@@ -9,7 +9,7 @@
 #include <iostream>
 #include <limits>
 #include <stdexcept>
-using namespace openq4;
+using namespace opend3;
 static unsigned checks=0;
 #define CHECK(x) do { ++checks; if(!(x)){std::cerr<<"FAIL "<<__LINE__<<": "<<#x<<'\n';std::exit(1);} } while(0)
 static bool mainThread=true,providerHealthy=true,oq4_queue_active=true;

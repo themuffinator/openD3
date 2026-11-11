@@ -13,7 +13,7 @@
 #include <limits>
 #include <sstream>
 #include <tuple>
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks=0;
 static void Check(bool value,const char* why){++checks;if(!value){std::fprintf(stderr,"FAIL %s\n",why);std::exit(1);}}
 static bool Near(double a,double b,double tolerance=1.01){return std::abs(a-b)<=tolerance;}
@@ -23,7 +23,7 @@ static Json::Value Box(const char* id,double x,double y,double w,double h){Json:
  p["left"]=Typed("length",x,"dp");p["top"]=Typed("length",y,"dp");p["width"]=Typed("length",w,"dp");p["height"]=Typed("length",h,"dp");return n;}
 static void Feedback(Json::Value& doc,Json::Value& node){const auto id=node["id"].asString();for(auto* state:{"default","hover","focus","pressed","disabled"})node["control"]["states"][state]=id+"-feedback";
  Json::Value timeline,track;timeline["id"]=id+"-feedback";timeline["durationMs"]=1;track["node"]=id;track["property"]="opacity";for(unsigned time:{0u,1u}){Json::Value k;k["atMs"]=time;k["value"]=Typed("number",1);track["keys"].append(k);}timeline["tracks"].append(track);doc["timelines"].append(timeline);}
-static Json::Value Source(bool horizontal=false,bool transform=false,bool framed=false){Json::Value d;d["format"]="openq4-ui";d["version"]=1;d["id"]="scroll-runtime";d["actions"]["button"]["operation"]="test.button";d["actions"]["button"]["arguments"]=Json::Value(Json::objectValue);
+static Json::Value Source(bool horizontal=false,bool transform=false,bool framed=false){Json::Value d;d["format"]="opend3-ui";d["version"]=1;d["id"]="scroll-runtime";d["actions"]["button"]["operation"]="test.button";d["actions"]["button"]["arguments"]=Json::Value(Json::objectValue);
  auto root=Box("root",0,0,640,360),frame=Box("frame",90,60,380,245),viewport=Box("viewport",0,0,280,180),content=Box("content",0,0,horizontal?1000:280,horizontal?180:1000);
  viewport["properties"]["overflow"]=Typed("keyword","auto");
  if(framed){viewport["properties"]["border-width"]=Typed("length",2,"dp");viewport["properties"]["padding-top"]=Typed("length",6,"dp");viewport["properties"]["padding-left"]=Typed("length",5,"dp");}

@@ -37,7 +37,7 @@ static void Apply(View& v) {
  Check(v.tx.Apply(View::Owner,v.time).code==SettingsCode::Ok,"ordinary Apply commits sizes");Refresh(v);
 }
 static void Run(const std::string& source,const std::string& folder,const char* locale,float expansion) {
- View v(source,folder+"/"+locale+"_openq4.lang",1,1280,720,expansion,folder+"/"+locale+"_guis.lang");v.host.writable=true;
+ View v(source,folder+"/"+locale+"_opend3.lang",1,1280,720,expansion,folder+"/"+locale+"_guis.lang");v.host.writable=true;
  const auto original=v.host.live;Choose(v,"settings_ui_scale",2,true);Choose(v,"settings_text_scale",2,true);
  Check(v.host.writes==0&&SettingsValuesEqual(v.host.live,original),"size drafts do not preview or archive before Apply");
  Check(v.Alias("draftUIScale")=="2"&&v.Alias("baselineUIScale")=="1"&&v.Alias("draftTextScale")=="2","both size readbacks identify draft versus applied");

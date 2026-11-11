@@ -1042,7 +1042,7 @@ static void Parser_NormalizeIncludeBase( idStr& basePath ) {
 
 	if ( Parser_StripLeadingGameDirectory( basePath, configuredGame.c_str() ) ||
 		Parser_StripLeadingGameDirectory( basePath, configuredGameBase.c_str() ) ||
-		Parser_StripLeadingGameDirectory( basePath, OPENQ4_GAMEDIR ) ||
+		Parser_StripLeadingGameDirectory( basePath, OPEND3_GAMEDIR ) ||
 		Parser_StripLeadingGameDirectory( basePath, BASE_GAMEDIR ) ||
 		Parser_StripLeadingGameDirectory( basePath, BASE_MPGAMEDIR ) ) {
 		return;
@@ -2446,7 +2446,7 @@ idParser::DollarDirective_evalfloat
 int idParser::DollarDirective_evalfloat( void ) {
 	double value;
 	idToken token;
-	// openQ4: the evaluator multiplies in doubles and this one formats the
+	// openD3: the evaluator multiplies in doubles and this one formats the
 	// double, so "%1.2f" can run past 300 digits ($evalfloat of
 	// 1e38*1e38*1e38*1e38 already needs 156) and overran the 128 bytes this
 	// used to be. #evalfloat narrows to float first and stays under 50.

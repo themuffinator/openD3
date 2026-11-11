@@ -9,7 +9,7 @@
 #include <functional>
 #include <set>
 
-namespace openq4::ui {
+namespace opend3::ui {
 // Exact original bound lease presence, independent of current input eligibility.
 enum class NativeTextPresence { PresentExact, AbsentOriginal, BusyOrUnknown };
 enum class MenuInput { Next, Previous, Up, Down, Left, Right, Accept, Back, Home, End, PageUp, PageDown };
@@ -459,4 +459,4 @@ private:
     std::uint64_t scrollSource = 0;
     std::vector<ScrollCommand> scrollCommands;
 };
-} // namespace openq4::ui
+} // namespace opend3::ui

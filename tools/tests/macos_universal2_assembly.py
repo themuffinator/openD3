@@ -14,7 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 ASSEMBLER_PATH = ROOT / "tools" / "build" / "assemble_macos_universal2.py"
 PACKAGER_PATH = ROOT / "tools" / "build" / "package_nightly.py"
-VALIDATOR_PATH = ROOT / "tools" / "validation" / "openq4_validate.py"
+VALIDATOR_PATH = ROOT / "tools" / "validation" / "opend3_validate.py"
 
 
 def load_module(path: Path, name: str):
@@ -26,9 +26,9 @@ def load_module(path: Path, name: str):
     return module
 
 
-ASSEMBLER = load_module(ASSEMBLER_PATH, "openq4_macos_universal2_assembler")
-PACKAGER = load_module(PACKAGER_PATH, "openq4_macos_universal2_packager")
-VALIDATOR = load_module(VALIDATOR_PATH, "openq4_macos_universal2_validator")
+ASSEMBLER = load_module(ASSEMBLER_PATH, "opend3_macos_universal2_assembler")
+PACKAGER = load_module(PACKAGER_PATH, "opend3_macos_universal2_packager")
+VALIDATOR = load_module(VALIDATOR_PATH, "opend3_macos_universal2_validator")
 
 
 def write_file(path: Path, data: bytes, mode: int = 0o644) -> None:

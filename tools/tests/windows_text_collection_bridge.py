@@ -18,7 +18,7 @@ def main():
     if os.name!='nt':raise SystemExit('Actual Windows SDK required; no Linux native COM claim.')
     folder=Path(tempfile.mkdtemp(prefix='windows-text-collection-bridge-',dir=ROOT/'.tmp'))
     paths=list((ROOT/'src').rglob('*.h'))+list((ROOT/'src').rglob('*.cpp'))+[
-        ROOT/'subprojects/packagefiles/sdl3/include/SDL3/SDL_openq4_native_fence.h',
+        ROOT/'subprojects/packagefiles/sdl3/include/SDL3/SDL_opend3_native_fence.h',
         ROOT/'tools/tests/native/WindowsTextCollectionBridgeTest.cpp',Path(__file__).resolve()]
     before={str(path.relative_to(ROOT)):sha(path) for path in paths}
     source=ROOT/'src/sys/sdl3/WindowsTextCollectionBridge.cpp';working=folder/source.name
@@ -26,14 +26,14 @@ def main():
     includes=[ROOT/'src',ROOT/'src/sys/sdl3',ROOT/'subprojects/packagefiles/sdl3/include',args.sdl_include]
     files=[working,ROOT/'src/sys/sdl3/WindowsTextStore.cpp',ROOT/'src/ui/retained/NativeTextDocument.cpp',ROOT/'src/ui/retained/TextInput.cpp',ROOT/'tools/tests/native/WindowsTextCollectionBridgeTest.cpp']
     if args.msvc_debug:
-        command=[args.compiler,'/nologo','/std:c++20','/EHsc','/W3','/WX','/MTd','/D_ITERATOR_DEBUG_LEVEL=2','/D_CRT_SECURE_NO_WARNINGS','/DSDL_STATIC_LIB','/DUSE_SDL3','/DOPENQ4_SDL3_CHECKED_NATIVE_QUEUE=1']
+        command=[args.compiler,'/nologo','/std:c++20','/EHsc','/W3','/WX','/MTd','/D_ITERATOR_DEBUG_LEVEL=2','/D_CRT_SECURE_NO_WARNINGS','/DSDL_STATIC_LIB','/DUSE_SDL3','/DOPEND3_SDL3_CHECKED_NATIVE_QUEUE=1']
         command += ['/I'+str(path) for path in includes]+[str(path) for path in files]+['/Fe:'+str(folder/'test.exe'),'/Fo:'+str(folder)+'\\']
     else:
-        command=[args.compiler,'-std=c++20','-Wall','-Wextra','-Werror','-DSDL_STATIC_LIB','-DUSE_SDL3','-DOPENQ4_SDL3_CHECKED_NATIVE_QUEUE=1']
+        command=[args.compiler,'-std=c++20','-Wall','-Wextra','-Werror','-DSDL_STATIC_LIB','-DUSE_SDL3','-DOPEND3_SDL3_CHECKED_NATIVE_QUEUE=1']
         for path in includes:command+=['-I',str(path)]
         command += [str(path) for path in files]+['-o',str(folder/'test.exe')]
     if args.unsupported:
-        command=[arg.replace('OPENQ4_SDL3_CHECKED_NATIVE_QUEUE=1','OPENQ4_SDL3_CHECKED_NATIVE_QUEUE=0') for arg in command]
+        command=[arg.replace('OPEND3_SDL3_CHECKED_NATIVE_QUEUE=1','OPEND3_SDL3_CHECKED_NATIVE_QUEUE=0') for arg in command]
         if not args.msvc_debug:command+=['-Wno-unused-function']
     env=os.environ.copy();env['TEMP']=env['TMP']=env['TMPDIR']=str(folder)
     def run(command,name):

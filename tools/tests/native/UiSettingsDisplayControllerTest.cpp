@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 namespace {
 int checks = 0;
 void Check(bool value, const char* message) {

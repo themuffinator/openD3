@@ -451,30 +451,30 @@ static void Sys_ReportWaylandRuntime( void ) {
 	const char *openPreySyncWindowOps = getenv( "OPEND3_WAYLAND_SYNC_WINDOW_OPS" );
 	// Temporary migration aliases for environments configured before the rebase.
 	if ( openPreyForceX11 == NULL || openPreyForceX11[0] == '\0' ) {
-		openPreyForceX11 = getenv( "OPENQ4_FORCE_X11" );
+		openPreyForceX11 = getenv( "OPEND3_FORCE_X11" );
 	}
 	if ( openPreyDisableLibdecor == NULL || openPreyDisableLibdecor[0] == '\0' ) {
-		openPreyDisableLibdecor = getenv( "OPENQ4_WAYLAND_DISABLE_LIBDECOR" );
+		openPreyDisableLibdecor = getenv( "OPEND3_WAYLAND_DISABLE_LIBDECOR" );
 	}
 	if ( openPreyPreferLibdecor == NULL || openPreyPreferLibdecor[0] == '\0' ) {
-		openPreyPreferLibdecor = getenv( "OPENQ4_WAYLAND_PREFER_LIBDECOR" );
+		openPreyPreferLibdecor = getenv( "OPEND3_WAYLAND_PREFER_LIBDECOR" );
 	}
 	if ( openPreySyncWindowOps == NULL || openPreySyncWindowOps[0] == '\0' ) {
-		openPreySyncWindowOps = getenv( "OPENQ4_WAYLAND_SYNC_WINDOW_OPS" );
+		openPreySyncWindowOps = getenv( "OPEND3_WAYLAND_SYNC_WINDOW_OPS" );
 	}
 	const char *effectiveSdlVideoDriver = ( sdlVideoDriver != NULL && sdlVideoDriver[0] != '\0' )
 		? sdlVideoDriver
 		: legacySdlVideoDriver;
-	const char *effectiveOpenQ4ForceX11 = ( openPreyForceX11 != NULL && openPreyForceX11[0] != '\0' )
+	const char *effectiveopenD3ForceX11 = ( openPreyForceX11 != NULL && openPreyForceX11[0] != '\0' )
 		? openPreyForceX11
 		: "<unset>";
-	const char *effectiveOpenQ4DisableLibdecor = ( openPreyDisableLibdecor != NULL && openPreyDisableLibdecor[0] != '\0' )
+	const char *effectiveopenD3DisableLibdecor = ( openPreyDisableLibdecor != NULL && openPreyDisableLibdecor[0] != '\0' )
 		? openPreyDisableLibdecor
 		: "<unset>";
-	const char *effectiveOpenQ4PreferLibdecor = ( openPreyPreferLibdecor != NULL && openPreyPreferLibdecor[0] != '\0' )
+	const char *effectiveopenD3PreferLibdecor = ( openPreyPreferLibdecor != NULL && openPreyPreferLibdecor[0] != '\0' )
 		? openPreyPreferLibdecor
 		: "<unset>";
-	const char *effectiveOpenQ4SyncWindowOps = ( openPreySyncWindowOps != NULL && openPreySyncWindowOps[0] != '\0' )
+	const char *effectiveopenD3SyncWindowOps = ( openPreySyncWindowOps != NULL && openPreySyncWindowOps[0] != '\0' )
 		? openPreySyncWindowOps
 		: "<unset>";
 
@@ -510,10 +510,10 @@ static void Sys_ReportWaylandRuntime( void ) {
 		waylandDisplay,
 		x11Display,
 		( effectiveSdlVideoDriver != NULL && effectiveSdlVideoDriver[0] != '\0' ) ? effectiveSdlVideoDriver : "<unset>",
-		effectiveOpenQ4ForceX11,
-		effectiveOpenQ4DisableLibdecor,
-		effectiveOpenQ4PreferLibdecor,
-		effectiveOpenQ4SyncWindowOps
+		effectiveopenD3ForceX11,
+		effectiveopenD3DisableLibdecor,
+		effectiveopenD3PreferLibdecor,
+		effectiveopenD3SyncWindowOps
 	);
 #else
 	Sys_Printf(

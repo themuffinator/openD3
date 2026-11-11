@@ -39,12 +39,12 @@ def load_helper() -> ModuleType:
 HELPER = load_helper()
 
 EXPECTED = HELPER.CandidateMetadata(
-    openq4_commit="1" * 40,
-    openq4_game_commit="2" * 40,
+    opend3_commit="1" * 40,
+    opend3_game_commit="2" * 40,
     release_version="0.8.1",
     version_tag="0.8.1",
     release_tag="v0.8.1",
-    package_filename="openq4-0.8.1-linux-arm64.tar.xz",
+    package_filename="opend3-0.8.1-linux-arm64.tar.xz",
 )
 
 FIXTURE_BYTES = {
@@ -162,7 +162,7 @@ def screenshot_result(name: str) -> dict[str, object]:
     bits_per_pixel = 24
     return {
         "status": "pass",
-        "path": f"/tmp/openq4/{name}.tga",
+        "path": f"/tmp/opend3/{name}.tga",
         "bytes": 18 + width * height * (bits_per_pixel // 8),
         "sha256": sha256_bytes(f"synthetic {name} screenshot".encode("utf-8")),
         "width": width,
@@ -178,10 +178,10 @@ def save_result() -> dict[str, object]:
     minimum_bytes = {"save": 4096, "tga": 65536, "txt": 1}
     return {
         "status": "pass",
-        "directory": "/tmp/openq4/baseoq4/savegames",
+        "directory": "/tmp/opend3/baseod3/savegames",
         "files": {
             key: {
-                "path": f"/tmp/openq4/baseoq4/savegames/linux_wayland_roundtrip.{key}",
+                "path": f"/tmp/opend3/baseod3/savegames/linux_wayland_roundtrip.{key}",
                 "bytes": minimum,
                 "minimumBytes": minimum,
                 "sha256": sha256_bytes(f"synthetic {key} save artifact".encode("utf-8")),
@@ -240,21 +240,21 @@ def runtime_report_documents(candidate_hashes: dict[str, str]) -> dict[str, dict
         "glErrorMarkers": [],
         "audioErrorMarkers": [],
         "elapsedSeconds": 1.5,
-        "openQ4Commit": EXPECTED.openq4_commit,
-        "openQ4GameCommit": EXPECTED.openq4_game_commit,
+        "openD3Commit": EXPECTED.opend3_commit,
+        "openD3GameCommit": EXPECTED.opend3_game_commit,
         "sha256": {
             "client": candidate_hashes["client"],
             "gameSp": candidate_hashes["game_sp"],
             "retailPak001": retail_hash,
         },
         "elf": elf_metadata(("client", "gameSp")),
-        "paths": {"installRoot": "/tmp/openq4"},
-        "command": ["/tmp/openq4/openQ4-client_arm64"],
+        "paths": {"installRoot": "/tmp/opend3"},
+        "command": ["/tmp/opend3/openD3-client_arm64"],
         "environmentContract": {
             "SDL_VIDEO_DRIVER": "wayland",
             "SDL_VIDEODRIVER": "wayland",
             "DISPLAYRemoved": True,
-            "OPENQ4_FORCE_X11Removed": True,
+            "OPEND3_FORCE_X11Removed": True,
         },
     }
     dedicated = {
@@ -294,8 +294,8 @@ def runtime_report_documents(candidate_hashes: dict[str, str]) -> dict[str, dict
         "missingMarkers": [],
         "fatalMarkers": [],
         "elapsedSeconds": 2.0,
-        "openQ4Commit": EXPECTED.openq4_commit,
-        "openQ4GameCommit": EXPECTED.openq4_game_commit,
+        "openD3Commit": EXPECTED.opend3_commit,
+        "openD3GameCommit": EXPECTED.opend3_game_commit,
         "sha256": {
             "dedicated": candidate_hashes["dedicated"],
             "client": candidate_hashes["client"],
@@ -303,9 +303,9 @@ def runtime_report_documents(candidate_hashes: dict[str, str]) -> dict[str, dict
             "retailPak001": retail_hash,
         },
         "elf": elf_metadata(("dedicated", "client", "gameMp")),
-        "paths": {"installRoot": "/tmp/openq4"},
-        "serverCommand": ["/tmp/openq4/openQ4-ded_arm64"],
-        "clientCommand": ["/tmp/openq4/openQ4-client_arm64"],
+        "paths": {"installRoot": "/tmp/opend3"},
+        "serverCommand": ["/tmp/opend3/openD3-ded_arm64"],
+        "clientCommand": ["/tmp/opend3/openD3-client_arm64"],
     }
     return {"stock_sp": stock_sp, "dedicated": dedicated}
 
@@ -396,7 +396,7 @@ def main() -> None:
                 f"unknown={sorted(actual_keys - expected_keys)}"
             )
 
-    with tempfile.TemporaryDirectory(prefix="openq4-arm64-release-evidence-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="opend3-arm64-release-evidence-") as temp_dir:
         temp_root = Path(temp_dir)
         runtime_root = temp_root / "runtime"
         package_dir = temp_root / "package"
@@ -431,7 +431,7 @@ def main() -> None:
         if dict(generated_hashes) != expected_hashes or dict(pending.sha256) != expected_hashes:
             raise AssertionError("generated candidate hashes do not match fixture bytes")
 
-        preview_named_archive = temp_root / "openq4-0.8.1-linux-arm64-preview.tar.xz"
+        preview_named_archive = temp_root / "opend3-0.8.1-linux-arm64-preview.tar.xz"
         preview_named_archive.write_bytes(archive_bytes)
         expect_error(
             lambda: HELPER.write_candidate(
@@ -511,10 +511,10 @@ def main() -> None:
                 str(stock_sp_report),
                 "--dedicated-report",
                 str(dedicated_report),
-                "--expected-openq4-commit",
-                EXPECTED.openq4_commit,
-                "--expected-openq4-game-commit",
-                EXPECTED.openq4_game_commit,
+                "--expected-opend3-commit",
+                EXPECTED.opend3_commit,
+                "--expected-opend3-game-commit",
+                EXPECTED.opend3_game_commit,
                 "--expected-release-version",
                 EXPECTED.release_version,
                 "--expected-version-tag",
@@ -1011,12 +1011,12 @@ def main() -> None:
         )
 
         for field_name, mismatched_value in (
-            ("openq4_commit", "3" * 40),
-            ("openq4_game_commit", "4" * 40),
+            ("opend3_commit", "3" * 40),
+            ("opend3_game_commit", "4" * 40),
             ("release_version", "0.8.2"),
             ("version_tag", "0.8.2"),
             ("release_tag", "v0.8.2"),
-            ("package_filename", "openq4-0.8.2-linux-arm64.tar.xz"),
+            ("package_filename", "opend3-0.8.2-linux-arm64.tar.xz"),
         ):
             mismatched_expected = replace(EXPECTED, **{field_name: mismatched_value})
             expect_error(
@@ -1029,7 +1029,7 @@ def main() -> None:
 
         malformed_commit_path = temp_root / "malformed-commit.toml"
         malformed_commit_path.write_text(
-            accepted_text.replace(EXPECTED.openq4_commit, "abc123", 1),
+            accepted_text.replace(EXPECTED.opend3_commit, "abc123", 1),
             encoding="utf-8",
         )
         expect_error(

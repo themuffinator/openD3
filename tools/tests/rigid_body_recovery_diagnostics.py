@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_LIBS_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
 RIGID_BODY_SOURCES = (
     "src/game/physics/Physics_RigidBody.cpp",
@@ -173,7 +173,7 @@ def validate_rigid_body_source(relative_path: str) -> None:
 
 
 def validate_runner_wiring() -> None:
-    validator = read(ROOT / "tools" / "validation" / "openq4_validate.py")
+    validator = read(ROOT / "tools" / "validation" / "opend3_validate.py")
     require(
         validator,
         'root / "tools" / "tests" / "rigid_body_recovery_diagnostics.py",',

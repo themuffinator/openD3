@@ -62,14 +62,14 @@ def main() -> int:
     output, assets = args.output_dir.resolve(), args.basepath.resolve()
     verify_runtime_is_current(runtime)
     paths = {
-        "windows/engine": runtime / "openQ4-client_x64.exe",
-        "windows/game": runtime / "baseoq4/game-mp_x64.dll",
-        "linux/engine": linux / "openQ4-ded_x64",
-        "linux/game": linux / "baseoq4/game-mp_x64.so",
+        "windows/engine": runtime / "openD3-client_x64.exe",
+        "windows/game": runtime / "baseod3/game-mp_x64.dll",
+        "linux/engine": linux / "openD3-ded_x64",
+        "linux/game": linux / "baseod3/game-mp_x64.so",
     }
     for package, root in (("windows", runtime), ("linux", linux)):
         for name in ("pak0.pk4", "pak1.pk4", "mod.json"):
-            paths[package + "/" + name] = root / "baseoq4" / name
+            paths[package + "/" + name] = root / "baseod3" / name
     if any(not path.is_file() for path in paths.values()) or not (assets / "q4base").is_dir():
         parser.error("both complete staged runtimes and retail PK4 assets are required")
     output.mkdir(parents=True, exist_ok=False)
@@ -86,8 +86,8 @@ def main() -> int:
         if report["runtime_sha256"]["windows/" + name] != report["runtime_sha256"]["linux/" + name]:
             report["failures"].append("runtime content differs: " + name)
     processes, streams = {}, []
-    games = {role: output / role / "baseoq4" for role in ("server", "client1", "client2")}
-    logs = {role: path / "logs/openq4.log" for role, path in games.items()}
+    games = {role: output / role / "baseod3" for role in ("server", "client1", "client2")}
+    logs = {role: path / "logs/opend3.log" for role, path in games.items()}
     for game in games.values():
         game.mkdir(parents=True)
     server_selector = games["server"] / "peer_commands.cfg"
@@ -101,7 +101,7 @@ def main() -> int:
     write_script(games["server"] / "peer_pump.cfg", ["exec peer_commands.cfg", "waitMsec 500", "exec peer_pump.cfg"])
     write_script(games["server"] / "peer_start.cfg", ["set developer 1", "echo CROSS_PEER_SERVER_READY", "exec peer_pump.cfg"])
     if args.wsl_case_insensitive:
-        probes = [linux / "baseoq4/mod.json", games["server"] / "peer_start.cfg",
+        probes = [linux / "baseod3/mod.json", games["server"] / "peer_start.cfg",
                   next(iter(sorted((assets / "q4base").glob("*.pk4"))))]
         probe = "import pathlib,sys,json; print(json.dumps([p.with_name(p.name.swapcase()).samefile(p) for p in map(pathlib.Path,sys.argv[1:])]))"
         report["wsl_case_insensitive_probes"] = json.loads(subprocess.check_output(
@@ -109,8 +109,8 @@ def main() -> int:
         if not all(report["wsl_case_insensitive_probes"]):
             raise RuntimeError("case-insensitive lookup requested on a case-sensitive test path")
     common = {
-        "fs_game": "baseoq4", "com_gameMode": "MP", "si_gameType": "DM", "logFile": "2",
-        "logFileName": "logs/openq4.log", "developer": "0", "s_noSound": "1",
+        "fs_game": "baseod3", "com_gameMode": "MP", "si_gameType": "DM", "logFile": "2",
+        "logFileName": "logs/opend3.log", "developer": "0", "s_noSound": "1",
         "in_mouse": "0", "in_joystick": "0", "com_skipLoadingContinue": "1",
         "net_enableIPv4": str(int(address.version == 4)), "net_enableIPv6": str(int(address.version == 6)),
         "net_ip": "0.0.0.0", "net_ip6": "::", "net_allowCheats": "1",
@@ -171,9 +171,9 @@ def main() -> int:
         for number in (1, 2):
             role = f"client{number}"
             write_script(games[role] / "peer_start.cfg", [
-                "set developer 1", "waitMsec 7000", "openq4_assertMPClientActive", "openq4_assertMPGameplayView", "openq4_reportMPState",
-                'screenshot "screenshots/cross_peer.tga"', "waitMsec 1500", "openq4_assertMPClientActive",
-                "openq4_assertMPGameplayView", "echo CROSS_PEER_CLIENT_COMPLETE", "wait 5", "quit",
+                "set developer 1", "waitMsec 7000", "opend3_assertMPClientActive", "opend3_assertMPGameplayView", "opend3_reportMPState",
+                'screenshot "screenshots/cross_peer.tga"', "waitMsec 1500", "opend3_assertMPClientActive",
+                "opend3_assertMPGameplayView", "echo CROSS_PEER_CLIENT_COMPLETE", "wait 5", "quit",
             ])
             client_cvars = dict(common, fs_basepath=str(assets), fs_savepath=str(games[role].parent),
                                 fs_devpath=str(games[role].parent), win_allowMultipleInstances="1",
@@ -250,7 +250,7 @@ def main() -> int:
             report["failures"].append("server did not report " + name)
     for role in ("client1", "client2"):
         text = read_log(logs[role])
-        if len(re.findall(r"OPENQ4_STOCK_BASELINE_MP_CLIENT_VIEW gui=0", text)) != 2:
+        if len(re.findall(r"OPEND3_STOCK_BASELINE_MP_CLIENT_VIEW gui=0", text)) != 2:
             report["failures"].append(role + " did not preserve gameplay view")
     report["elapsed_seconds"] = round(time.monotonic() - started, 2)
     report["status"] = "fail" if report["failures"] else "pass"

@@ -5,7 +5,7 @@ uniform sampler2D uLightFalloffMap;
 uniform sampler2D uLightProjectionMap;
 uniform sampler2D uDiffuseMap;
 uniform sampler2D uSpecularMap;
-#ifdef OPENQ4_POINT_SHADOW_COMPARE
+#ifdef OPEND3_POINT_SHADOW_COMPARE
 uniform samplerCubeShadow uPointShadowMap;
 #else
 uniform samplerCube uPointShadowMap;
@@ -306,7 +306,7 @@ float DecodePointShadowDepth( vec4 encodedDepth ) {
 }
 
 float PointShadowCompareDepth(vec3 direction, float compareDepth) {
-#ifdef OPENQ4_POINT_SHADOW_COMPARE
+#ifdef OPEND3_POINT_SHADOW_COMPARE
     return texture(uPointShadowMap, vec4(direction, compareDepth));
 #else
     float storedDepth = DecodePointShadowDepth(textureCube(uPointShadowMap, direction));
@@ -409,7 +409,7 @@ float PointShadowFilteredCompare(vec3 direction, float depth, float bias, float 
 }
 
 float SamplePointShadowCompare( vec3 direction, float depth ) {
-#ifdef OPENQ4_POINT_SHADOW_COMPARE
+#ifdef OPEND3_POINT_SHADOW_COMPARE
     bool hardwareCompare = true;
 #else
     bool hardwareCompare = false;
@@ -418,14 +418,14 @@ float SamplePointShadowCompare( vec3 direction, float depth ) {
 }
 
 float RawPointShadowDepth( vec3 direction ) {
-#ifdef OPENQ4_POINT_SHADOW_COMPARE
+#ifdef OPEND3_POINT_SHADOW_COMPARE
 	return texture( uPointShadowMap, vec4( direction, 0.5 ) );
 #else
 	return DecodePointShadowDepth( textureCube( uPointShadowMap, direction ) );
 #endif
 }
 
-#ifdef OPENQ4_POINT_SHADOW_COMPARE
+#ifdef OPEND3_POINT_SHADOW_COMPARE
 // The default kernel: nine bilinear comparisons on a grid one texel apart.
 // Together they read a four-by-four block of texels, weighted
 // ( 1-f, 1, 1, f ) along each axis. Where the bias covers the depth the
@@ -506,7 +506,7 @@ float SamplePointShadow() {
 	if ( filterRadius <= 0.0 || uPointShadowTexelScale <= 0.0 ) {
 		return SamplePointShadowCompare( direction, depth );
 	}
-#ifdef OPENQ4_POINT_SHADOW_COMPARE
+#ifdef OPEND3_POINT_SHADOW_COMPARE
 	// nine fixed taps at a one-texel radius: the shipped default
 	if ( uShadowFilterMode < 0.5 && uShadowFilterTaps > 5.0 && uShadowFilterTaps <= 9.0
 			&& abs( filterRadius - 1.0 ) < 0.01 ) {
@@ -646,25 +646,25 @@ vec3 SamplePointTranslucentShadow() {
 		ResolveTranslucentShadowMoments( SampleFilteredPointMoments( uPointTranslucentShadowMapB, direction ), depth ) );
 }
 
-#ifdef OPENQ4_PBR
+#ifdef OPEND3_PBR
 // Native PBR shading for one light, given its shadow visibility; draw_pbr.cpp
 // appends the library that defines it to this source.
-vec3 OpenQ4PBRDirect( vec3 shadow );
+vec3 openD3PBRDirect( vec3 shadow );
 // The coverage of a translucent owner's replayed light; zero otherwise.
-float OpenQ4PBRAlpha();
+float openD3PBRAlpha();
 #endif
 
 void main() {
     vec3 receiverNormal = cross(dFdx(vPointShadowVector), dFdy(vPointShadowVector));
     receiverNormal *= inversesqrt(max(dot(receiverNormal, receiverNormal), 1.0e-20));
     gPointReceiverPlane = vec4(receiverNormal, dot(receiverNormal, vPointShadowVector) / max(uPointShadowFar, 1.0));
-#ifdef OPENQ4_PBR
+#ifdef OPEND3_PBR
 	vec3 pbrShadow = vec3( 1.0 ) * SamplePointShadow() * SamplePointTranslucentShadow();
 	if ( ShadowVisualDebugMode() ) {
 		gl_FragColor = PointShadowDebugOutput();
 		return;
 	}
-	gl_FragColor = vec4( OpenQ4PBRDirect( pbrShadow ), OpenQ4PBRAlpha() );
+	gl_FragColor = vec4( openD3PBRDirect( pbrShadow ), openD3PBRAlpha() );
 	return;
 #endif
 	vec4 bumpSample = texture2D( uBumpMap, vBumpTexCoord );

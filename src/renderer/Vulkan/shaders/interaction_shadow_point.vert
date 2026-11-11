@@ -3,7 +3,7 @@
 #include "pbr_vertex.glsl"
 #include "point_shadow_math.glsl"
 
-// openQ4 Vulkan point-shadow-receiving interaction — vertex stage (Phase
+// openD3 Vulkan point-shadow-receiving interaction — vertex stage (Phase
 // F2b, docs/dev/archive/2026-10-18/plans/2026-07-19-vulkan-phase-f.md).
 //
 // interaction.vert plus the point-light cube shadow vector of the GL

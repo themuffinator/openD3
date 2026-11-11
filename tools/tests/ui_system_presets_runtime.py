@@ -50,10 +50,10 @@ def main():
                  repository / 'builddir/subprojects/libtess2-8dbd6483e920311a58c9af10a10beb278efebc36/libtess2.a']
     headers = [path for base in [ROOT / 'src', rml / 'Include', rml / 'Source', json_include, tess_include]
                for path in base.rglob('*') if path.suffix in ('.h', '.hpp', '.inl', '.tpp')]
-    # The fixture reads each locale's openQ4 table and its stock code table (the
+    # The fixture reads each locale's openD3 table and its stock code table (the
     # prompt bar's key names).
-    strings = ROOT/'content/baseoq4/pak0/strings'
-    bound = sources + headers + libraries + [Path(__file__).resolve(), ROOT/'content/baseoq4/pak0/guis/menu/settings/system.q4ui'] + list(strings.glob('*_openq4.lang')) + list(strings.glob('*_code.lang'))
+    strings = ROOT/'content/baseod3/pak0/strings'
+    bound = sources + headers + libraries + [Path(__file__).resolve(), ROOT/'content/baseod3/pak0/guis/menu/settings/system.q4ui'] + list(strings.glob('*_opend3.lang')) + list(strings.glob('*_code.lang'))
     before = {str(path): sha(path) for path in bound}
     reused = {}
     if args.reuse:
@@ -83,7 +83,7 @@ def main():
         command += ' /Fe"' + str(exe) + '" /link '
         command += ' '.join('"' + str(path) + '"' for path in libraries) + ' /SUBSYSTEM:CONSOLE user32.lib'
         batch = directory / 'compile.cmd'
-        batch.write_text('@echo off\ncall "' + str(repository / 'tools/build/openq4_devcmd.cmd') +
+        batch.write_text('@echo off\ncall "' + str(repository / 'tools/build/opend3_devcmd.cmd') +
                          '"\nif errorlevel 1 exit /b %errorlevel%\n' + command + '\n', encoding='utf-8')
         result = subprocess.run(['cmd', '/c', str(batch)], cwd=directory, env=env, text=True,
                                 encoding='utf-8', errors='replace', capture_output=True)
@@ -107,7 +107,7 @@ def main():
     mutations = []
     try:
         exe = build('baseline' if args.baseline else 'positive', [source for source in sources if source not in reused], reused.values())
-        run_result = run(exe, [str(ROOT/'content/baseoq4/pak0/guis/menu/settings/system.q4ui'), str(ROOT/'content/baseoq4/pak0/strings')])
+        run_result = run(exe, [str(ROOT/'content/baseod3/pak0/guis/menu/settings/system.q4ui'), str(ROOT/'content/baseod3/pak0/strings')])
         print(run_result.stdout + run_result.stderr, flush=True)
     except Exception as failure:
         error = str(failure)

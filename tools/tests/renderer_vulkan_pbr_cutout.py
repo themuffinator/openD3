@@ -22,7 +22,7 @@ from PIL import Image
 import renderer_pbr_laboratory as lab
 from renderer_hdr_linear_capture import read_pfm
 
-MODEL = 'models/openq4/pbr_lab/cutout_mip_sphere.ase'
+MODEL = 'models/opend3/pbr_lab/cutout_mip_sphere.ase'
 CASES = ('near', 'minified', 'opaque', 'restored', 'image-reload',
          'partial-restart', 'full-restart', 'near-restored')
 
@@ -156,7 +156,7 @@ def main():
         commands += ['wait 60', 'g_stopTime 1']
         lab.CASES[name], lab.CASE_COMMANDS[name] = settings, commands
         profile[name] = dict(settings={**lab.BASE, **settings}, commands=commands)
-    model_path = args.output_dir / 'batch/baseoq4' / MODEL
+    model_path = args.output_dir / 'batch/baseod3' / MODEL
     write = lab.write_capture_commands
     def write_commands(path, commands):
         model_path.parent.mkdir(parents=True, exist_ok=True)

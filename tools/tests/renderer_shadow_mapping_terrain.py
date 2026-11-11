@@ -17,7 +17,7 @@ TERRAIN_REGIONS = {
 
 
 def validate_terrain_images(save: Path, map_name: str) -> tuple[list[str], dict]:
-    paths = [save / f"baseoq4/screenshots/{kind}.tga"
+    paths = [save / f"baseod3/screenshots/{kind}.tga"
              for kind in ("mapped", "stencil", "unshadowed")]
     return validate_shadow_images(paths, *TERRAIN_REGIONS[map_name])
 

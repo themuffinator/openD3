@@ -40,7 +40,7 @@
 #include <unordered_map>
 #include <utility>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 bool SnapshotFields(const Json::Value& value, std::initializer_list<const char*> fields) {
 	if (!value.isObject() || value.size() != fields.size()) return false;
@@ -1562,7 +1562,7 @@ private:
 	std::map<std::string, std::unique_ptr<Face>> faces;
 };
 
-// openQ4: a canonical load builds its elements from the model with typed
+// openD3: a canonical load builds its elements from the model with typed
 // inline properties, without deriving markup and having RmlUi parse it. Each
 // property is what RmlUi's parser produces from the value's CSS: the parser
 // reads one representative declaration per property name and kind (a
@@ -3006,7 +3006,7 @@ struct Runtime::Impl {
 			if (opacity && lazy && static_cast<VectorElement*>(element)->ReplayOpacity()) { lazy = false; string = "opacity("+value.Css()+")"; }
 			if (opacity && !lazy && string!="none" && static_cast<VectorElement*>(element)->ReplayOpacity()) string.insert(0,"q4-");
 			if (input.cssApplied && input.InstalledCss(string)) { input.Set(keyPointer,animated,owned,element); return true; }
-			// openQ4: the load built this very value; record it as applied
+			// openD3: the load built this very value; record it as applied
 			// instead of parsing it a second time.
 			if (lazy) { input.Set(keyPointer,animated,owned,element); input.css.clear(); input.cssApplied = true; input.cssAuthored = true; return true; }
 			{
@@ -3034,11 +3034,11 @@ struct Runtime::Impl {
 			return true;
 		};
 		if (incremental) {
-			// openQ4: after a complete pass, a frame applies only the values
+			// openD3: after a complete pass, a frame applies only the values
 			// motion wrote since and, when the state changed, the properties
 			// bindings own: a HUD's running trace or a changed readout walks
 			// those, not every authored value.
-			// openQ4: a state change reaches only the bound properties whose
+			// openD3: a state change reaches only the bound properties whose
 			// values changed (all of them after a full evaluation).
 			std::sort(changedKeys.begin(),changedKeys.end());
 			changedKeys.erase(std::unique(changedKeys.begin(),changedKeys.end()),changedKeys.end());
@@ -3222,7 +3222,7 @@ bool Runtime::Initialize() {
 	impl->services = services;
 	ContextClock clock(*impl->services,impl->time,impl->strictPreparation?&impl->preparationFailed:nullptr);
 	impl->backend = impl->services->AcquireBackend();
-	impl->contextName = "openq4-retained-"+std::to_string(++nextContext);
+	impl->contextName = "opend3-retained-"+std::to_string(++nextContext);
 	impl->context = Rml::CreateContext(impl->contextName, {1280,720}, &impl->backend->renderer);
 	if (!impl->context) {
 		impl->services->ReleaseBackend(*impl->backend); impl->backend = nullptr;
@@ -3410,7 +3410,7 @@ bool Runtime::LoadCanonical(std::unique_ptr<Document> candidate, const std::stri
 	return true;
 }
 bool Runtime::SetHudPresentation(const std::vector<HudPrimitive>& items,const Viewport& viewport,std::string& error) {
-	if (!Mutate() || !impl->canonical || !impl->document || impl->canonical->Model().id != "openq4.hud-artwork") {
+	if (!Mutate() || !impl->canonical || !impl->document || impl->canonical->Model().id != "opend3.hud-artwork") {
 		error="HUD presentation requires its canonical artwork catalog"; return false;
 	}
 	ContextClock clock(*impl->services,impl->time,impl->strictPreparation?&impl->preparationFailed:nullptr);
@@ -3435,7 +3435,7 @@ bool Runtime::SetState(const StateValues& changes, std::string& error, double se
 
 	if (!impl->canonical) { error = "State updates require a canonical document"; return false; }
 	if (!impl->interaction.HasAuthoredModals()) {
-		// openQ4: Set is transactional on its own, and without authored modals
+		// openD3: Set is transactional on its own, and without authored modals
 		// there is nothing else to validate: a HUD's frequent updates no longer
 		// copy the whole state.
 		if (!impl->state.Set(changes,error)) return false;
@@ -3496,7 +3496,7 @@ bool Runtime::SaveSnapshot(std::string& snapshot, std::string& error, double sec
 		if (!motion.Restore(playback,now,error,true)) return false;
 		const auto input = interaction.Capture();
 		Json::Value root(Json::objectValue);
-		root["format"] = "openq4-ui-instance"; root["version"] = authoredModals ? 4 : widgets.widgets.empty() ? 2 : 3;
+		root["format"] = "opend3-ui-instance"; root["version"] = authoredModals ? 4 : widgets.widgets.empty() ? 2 : 3;
 		root["application"] = Json::Value(Json::objectValue);
 		for (const auto& [id,value] : snapshotState.Variables()) if (!snapshotState.Declarations().at(id).HostSourced())
 			std::visit([&](const auto& primitive) { root["application"][id] = primitive; },value);
@@ -3603,7 +3603,7 @@ bool Runtime::RestoreSnapshot(const std::string& snapshot, std::string& error, d
 		builder["allowSpecialFloats"] = false; builder["stackLimit"] = 32; builder["skipBom"] = false;
 		std::unique_ptr<Json::CharReader> reader(builder.newCharReader()); Json::Value root;
 		if (!reader->parse(snapshot.data(),snapshot.data()+snapshot.size(),&root,nullptr)) return reject("Invalid instance snapshot JSON");
-		if (root["format"] != "openq4-ui-instance" || !root["version"].isUInt() || root["version"].asUInt() < 1 || root["version"].asUInt() > 4)
+		if (root["format"] != "opend3-ui-instance" || !root["version"].isUInt() || root["version"].asUInt() < 1 || root["version"].asUInt() > 4)
 			return reject("Unsupported instance snapshot schema");
 		const bool authoredModals = root["version"].asUInt() == 4;
 		if (authoredModals != impl->interaction.HasAuthoredModals()) return reject("Instance snapshot modal schema does not match the document");
@@ -3835,7 +3835,7 @@ bool Runtime::RunEvent(const std::string& name, double seconds, EventEffects& ef
 	// Timelines that ended by this event's time complete before its program,
 	// and any the program completes at once (reduced motion) after it. All of
 	// it commits with the event, and their writes are published with its own.
-	// openQ4: the live motion samples this time in place, undoably, so the
+	// openD3: the live motion samples this time in place, undoably, so the
 	// transactional copies below share its values until the program writes
 	// one. A rejected event rolls the sample back once those copies are gone.
 	struct Undo {
@@ -4522,4 +4522,4 @@ std::vector<ControlAction> Runtime::TakeActions() {
 	return impl->interaction.TakeActions();
 }
 
-} // namespace openq4::ui
+} // namespace opend3::ui

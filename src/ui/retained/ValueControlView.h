@@ -5,7 +5,7 @@
 #include <memory>
 
 namespace Rml { class Element; class ElementDocument; }
-namespace openq4::ui {
+namespace opend3::ui {
 struct PointerPartResult {
 	std::string control, option;
 	std::optional<double> fraction;
@@ -47,4 +47,4 @@ private:
 	struct Impl;
 	std::unique_ptr<Impl> impl;
 };
-} // namespace openq4::ui
+} // namespace opend3::ui

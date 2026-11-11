@@ -35,7 +35,7 @@ static std::vector<Event> events;
 static int nextId=0;
 static double PresentationTime();
 static void Record(const char* kind,int id=0,double time=-1) { events.push_back({kind,id,time}); }
-namespace openq4::ui {
+namespace opend3::ui {
 struct Viewport { int width=0,height=0; float displayScale=1,userScale=1,pixelDensityX=1,pixelDensityY=1,originX=0,originY=0,textScale=1;
     float safeLeft=0,safeTop=0,safeRight=0,safeBottom=0;
     int fits=0;float minimumWidth=0,minimumHeight=0;
@@ -51,7 +51,7 @@ struct DocumentEditReceipt {};
 struct DocumentEditOperation {};
 class DocumentEdit {public:class Prepared {};};
 }
-static std::vector<openq4::ui::Runtime*> runtimes;
+static std::vector<opend3::ui::Runtime*> runtimes;
 class EngineHost {
 public:
     int viewportWidth=640,viewportHeight=480,resets=0;
@@ -67,7 +67,7 @@ public:
     void Reset();
     void SetGeneratedImageProbe(bool){}
 };
-namespace openq4::ui {
+namespace opend3::ui {
 class Runtime {
 public:
     class PreparedDocument {};
@@ -160,9 +160,9 @@ bool WindowFocused() { return true; }
 static int softFocusUpdates=0;
 bool UpdateSoftFocus() { ++softFocusUpdates; return true; }
 static int rootProfileRecords=0;
-void RecordRootProfile(std::uint64_t,std::chrono::steady_clock::time_point,double,const openq4::ui::RuntimeStatistics&,const std::string&) { ++rootProfileRecords; }
+void RecordRootProfile(std::uint64_t,std::chrono::steady_clock::time_point,double,const opend3::ui::RuntimeStatistics&,const std::string&) { ++rootProfileRecords; }
 struct Owner {
-    openq4::ui::Runtime* runtime=nullptr;
+    opend3::ui::Runtime* runtime=nullptr;
     int before=0,restored=0,failed=0;
 };
 void OwnerEvent(void* opaque,retainedUIViewEvent_t event) {
@@ -218,7 +218,7 @@ int main() {
     runtime=RetainedUI_ViewRuntime(previewView);
     auto* previewRuntime=runtime;
     left.runtime=RetainedUI_ViewRuntime(a); right.runtime=RetainedUI_ViewRuntime(b);
-    std::vector<openq4::ui::Diagnostic> diagnostics;
+    std::vector<opend3::ui::Diagnostic> diagnostics;
     assert(RetainedUI_LoadView(a,"document-a","a.q4ui",diagnostics));
     assert(RetainedUI_LoadView(b,"document-b","b.q4ui",diagnostics));
     assert(RetainedUI_LoadView(previewView,"preview","preview.q4ui",diagnostics));
@@ -254,7 +254,7 @@ int main() {
         assert(RetainedUI_LoadView(a,"document-a","a.q4ui",diagnostics));
         left.runtime->state=11;
     }
-    openq4::ui::Viewport viewport;
+    opend3::ui::Viewport viewport;
     assert(RetainedUI_DefaultViewport(viewport));
     assert(viewport.width==1920 && viewport.originX==80 && viewport.displayScale==1.25f && viewport.userScale==1.5f);
     assert(viewport.pixelDensityX==2);
@@ -343,7 +343,7 @@ def main():
         'bool RefreshResources()',
         'retainedUIView_t* RetainedUI_CreateView(',
         'void RetainedUI_DestroyView(',
-        'openq4::ui::Runtime* RetainedUI_ViewRuntime(',
+        'opend3::ui::Runtime* RetainedUI_ViewRuntime(',
         'bool RetainedUI_LoadView(',
         'bool RetainedUI_PrepareView(',
         'bool RetainedUI_DefaultViewport(',

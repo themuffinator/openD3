@@ -4,7 +4,7 @@
 #include "TextInput.h"
 #include <vector>
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 struct TextEditPolicy {
 	std::size_t maxBytes = TextInputMaxBytes;
@@ -91,4 +91,4 @@ TextNumberStatus ParseTextNumber(std::string_view text, const TextNumberPolicy& 
 // them instead of silently clamping them. It does not validate a proposal.
 bool FormatTextNumber(double value, const TextNumberPolicy& policy, std::string& text, std::string& error);
 
-} // namespace openq4::ui
+} // namespace opend3::ui

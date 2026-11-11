@@ -246,7 +246,7 @@ def validate_caster_images(save) -> tuple[list[str], dict]:
 
     failures, metrics = [], {}
     for phase in ("empty", "twelve", "six", "removed"):
-        paths = {kind: save / f"baseoq4/screenshots/{phase}_{kind}.tga" for kind in ("cached", "fresh", "fresh_repeat")}
+        paths = {kind: save / f"baseod3/screenshots/{phase}_{kind}.tga" for kind in ("cached", "fresh", "fresh_repeat")}
         if not all(path.is_file() for path in paths.values()):
             continue  # The common runner reports missing captures.
         frames = {kind: Image.open(path).convert("RGB") for kind, path in paths.items()}

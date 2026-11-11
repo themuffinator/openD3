@@ -78,7 +78,7 @@ def main() -> int:
     parser.add_argument("--port", type=int, default=29345)
     args = parser.parse_args()
     runtime, output = args.runtime_dir.resolve(), args.output_dir.resolve()
-    executable = "openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64"
+    executable = "openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64"
     before = replay_identity(runtime, executable)
     complete, log, code = replay_session(runtime, executable, args.basepath.resolve(), output,
                                          "mp/q4ctf3", "CTF", [TRIAL], args.port, 300)

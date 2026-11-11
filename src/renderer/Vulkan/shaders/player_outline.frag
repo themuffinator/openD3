@@ -1,6 +1,6 @@
 #version 450
 
-// A port of content/baseoq4/pak0/glprogs/player_outline.fs: one flat colour.
+// A port of content/baseod3/pak0/glprogs/player_outline.fs: one flat colour.
 // The brightskin wash uses it too, with the colour OpenGL sets through
 // glColor on its fixed-function path.
 

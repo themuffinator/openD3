@@ -20,15 +20,16 @@ This file describes project goals, rules and workflow expectations for anyone wo
 - Keep one runtime game directory, `baseod3/`, for openD3's own modules and content.
 
 **Rules**
-- The game library is canonical in this repository. `OpenD3-GameLibs` is historical; its history is a merge parent of the import commit (see `docs/dev/game-source-provenance.md`). Do not edit it and do not stage sources from it.
+- The game library is canonical in this repository. `openD3-GameLibs` is historical; its history is a merge parent of the import commit (see `docs/dev/game-source-provenance.md`). Do not edit it and do not stage sources from it.
 - `src/game/` and `src/d3xp/` are the same game with and without `_D3XP`/`CTF`. A fix that applies to both goes into both trees.
 - Engine and game are both GPLv3. Never copy code from openQ4's or openPREY's game trees (`src/game`, `src/mpgame`, `src/Prey`, `src/preyengine` there): those are under SDK licences. Their engine code is GPL and may be ported.
 - Sync engine work by merging `openq4-upstream/main`. Keep openD3's side for the game trees, `content/baseod3/`, the openD3 identity and the `OPEND3` sites. Never import `src/mpgame`, upstream's `src/game` or `content/baseoq4/`.
 - The game API is Doom 3's (`GAME_API_VERSION` 8, `src/game/Game.h`). Where new upstream engine code calls a Quake 4-only `idGame` method, adapt it to Doom 3's API or gate it with an `OPEND3-GATED(D9)` marker as `docs/dev/doom3-rebase.md` describes.
 - Mark engine sites that differ from upstream for Doom 3's sake with the `OPEND3` define, and keep such sites few and small.
-- Engine identifiers shared with upstream keep upstream's names (`OPENQ4_*`, `openQ4_*`, `openq4_*`). Everything a user or packager sees says openD3. New environment variables are `OPEND3_*`.
+- The source uses openD3's name throughout: `OPEND3_*`, `openD3_*`, `opend3_*`, `baseod3`. Upstream's name appears only in prose about the upstream project, its URLs and the `openq4-upstream` remote. After merging upstream, run `python tools/build/rebrand_upstream.py` (with `--check` first) to rename what the merge brought in; see "Syncing with upstream" in the rebase record.
 - Use `docs/dev/doom3-rebase.md` as the record of what works, how it was verified and what is open. Update it with any change to those facts. Do not present anything as working that the "Verified" section does not cover.
-- Most of `docs/` and `tools/tests`, `tools/validation` and the packaging tools are inherited from openQ4 and describe or test Quake 4. Treat them as upstream reference until they are adapted, and say so when relying on them.
+- `tools/tests`, `tools/validation` and the packaging tools are inherited from openQ4 and still test or package Quake 4 content. Treat them as unadapted until someone has run them for openD3, and say so when relying on them.
+- Remove handling that exists only for one retail product other than Doom 3 (a Quake 4 or Prey map, expansion or asset workaround). Keep engine features that custom content or mods could use, such as BSE, MD5R, light grids and the retained interface.
 - Never launch openD3 in fullscreen from agent workflows; force windowed mode with `+set r_fullscreen 0`.
 - Launch with `ui_retained 0`. The retained RmlUi interface inherited from openQ4 has no Doom 3 documents.
 - Develop against the installed Doom 3 assets. Fix compatibility in the engine, game, parser or loader rather than shipping replacement content.
@@ -49,7 +50,7 @@ This file describes project goals, rules and workflow expectations for anyone wo
 
 **Runtime Modules**
 - `game_<arch>`: Doom 3, built from `src/game/`.
-- `game-d3xp_<arch>`: Resurrection of Evil, built from `src/d3xp/`; selected when `d3xp` is `fs_game` or `fs_game_base`. It builds but is not playable yet (see the rebase record).
+- `game-d3xp_<arch>`: Resurrection of Evil, built from `src/d3xp/`; selected when `d3xp` is `fs_game` or `fs_game_base`. It loads and initialises, but no expansion map has been run (see the rebase record).
 - `renderer-gl_<arch>` and `renderer-vk_<arch>`: the renderer modules, chosen with `r_renderApi`.
 - The retail `gamex86` binaries in a Doom 3 install are never loaded.
 
@@ -69,7 +70,7 @@ This file describes project goals, rules and workflow expectations for anyone wo
 - Sibling port with the same engine layer, for Prey: `E:\Repositories\openPREY`
 - id Software's GPL Doom 3 release, unmodified: `E:\_SOURCE\_CODE\DOOM-3-master`
 - dhewm3, behaviour reference: `E:\_SOURCE\_CODE\dhewm3-master`
-- Historical game-library repository (read-only): `E:\Repositories\OpenD3-GameLibs`
+- Historical game-library repository (read-only): `E:\Repositories\openD3-GameLibs`
 - Doom 3 installation (Steam): `E:\SteamLibrary\steamapps\common\Doom 3`
 
 **Upstream Credits**

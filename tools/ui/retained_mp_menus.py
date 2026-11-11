@@ -31,7 +31,7 @@ from build_retained_screens import (EASE_OUT, FULL, MARKER, OLIVE, ORANGE, RAIL_
                                     stroke, track, transform, typeface, vector)
 
 ROOT = Path(__file__).resolve().parents[2]
-STRINGS = ROOT / "content" / "baseoq4" / "pak0" / "strings"
+STRINGS = ROOT / "content" / "baseod3" / "pak0" / "strings"
 # The maps a game type offers the Vote and Admin pages' map choices: the
 # game's own cap (idMultiplayerGame::RETAINED_VOTE_MAPS), so the two agree.
 MAP_CATALOG = int(re.search(r"static const int RETAINED_VOTE_MAPS = (\d+);",
@@ -80,16 +80,16 @@ MAIN_MENU, DISCONNECT, DISCONNECT_BODY = "#str_200188", "#str_200006", "#str_200
 
 
 def table_text(key: str) -> dict:
-    """`key`'s text in every shipped language's openQ4 table."""
+    """`key`'s text in every shipped language's openD3 table."""
     texts = {}
     for language in b.LANGUAGES:
-        for line in (STRINGS / f"{language}_openq4.lang").read_text(encoding="utf-8").splitlines():
+        for line in (STRINGS / f"{language}_opend3.lang").read_text(encoding="utf-8").splitlines():
             match = re.match(r'\s*"(#str_\d+)"\s+"(.*)"\s*$', line)
             if match and match.group(1) == key:
                 texts[language] = match.group(2)
     missing = sorted(set(b.LANGUAGES) - set(texts))
     if missing:
-        raise SystemExit(f"{key} is missing from the {', '.join(missing)} openQ4 tables")
+        raise SystemExit(f"{key} is missing from the {', '.join(missing)} openD3 tables")
     return texts
 
 
@@ -3247,7 +3247,7 @@ def welcome_document() -> dict:
     panel's settings for now. It takes the Escape card's specified 648 x 477 dp
     rather than its own 570 x 402: the Players and Server pages it shares need
     the room."""
-    doc = Document("openq4.mp_welcome")
+    doc = Document("opend3.mp_welcome")
     width = fitted_card_width([key for _, key, _ in WELCOME_TABS], (VERB_SPECTATE, [MAIN_MENU, LEAVE_SERVER]))
     height = ESCAPE_H
     doc.state.update({
@@ -3289,7 +3289,7 @@ def escape_document() -> dict:
     """The Escape card (section 14.18), opened with the menu key during a
     match, Resume leading its prompt bar. Every page is built: Team, Players,
     Vote, Match, Settings, Voice, Server and Admin (retained_mp_admin)."""
-    doc = Document("openq4.mp_escape")
+    doc = Document("opend3.mp_escape")
     width, height = fitted_card_width([key for _, key, _ in ESCAPE_TABS], (VERB_RESUME, [MAIN_MENU, DISCONNECT])), ESCAPE_H
     doc.state.update({
         "card.tab": {"type": "number", "initial": 0},

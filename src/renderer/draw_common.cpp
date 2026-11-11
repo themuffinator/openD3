@@ -2228,7 +2228,7 @@ static void RB_EndFullscreenPostProcessPass( void ) {
 ====================
 RB_VR_DrawImageRect
 
-openQ4 VR desktop mirror: draws texture coordinates [s0,t0]-[s1,t1] of an
+openD3 VR desktop mirror: draws texture coordinates [s0,t0]-[s1,t1] of an
 image into a pixel rectangle of the bound framebuffer. The window may be
 multisampled, which rules out a blit.
 ====================
@@ -3543,7 +3543,7 @@ static int RB_CompareMovingEntityHistory( const void *a, const void *b ) {
 // view weapon included), one entry per entity, sorted for the lookups above.
 static void RB_CollectMovingEntityHistory( drawSurf_t **drawSurfs, int numDrawSurfs,
 		idList<rbMotionBlurEntityHistory_t> &history ) {
-	// openQ4: empty the list but keep its storage. Clear() freed it, so each
+	// openD3: empty the list but keep its storage. Clear() freed it, so each
 	// frame regrew the list 16 entries at a time from nothing, and the Clear()
 	// after each Swap below then freed the previous frame's buffer as well.
 	history.SetNum( 0, false );
@@ -6725,7 +6725,7 @@ static void RB_InitCRTStage( void ) {
 	rbCRTStageInitialized = true;
 }
 
-// openQ4 BEGIN
+// openD3 BEGIN
 /*
 =====================
 Underwater view
@@ -6978,7 +6978,7 @@ static void RB_STD_Underwater( void ) {
 
 	backEnd.currentRenderCopied = false;
 }
-// openQ4 END
+// openD3 END
 
 void RB_ApplyCRTToBackBuffer( void ) {
 	if ( r_skipPostProcess.GetBool() || !r_crt.GetBool() ) {
@@ -16887,11 +16887,11 @@ void	RB_STD_DrawView( void ) {
 	// Isolate and blur authored glowStage passes while the complete scene is
 	// still in the active scene target; presentation happens below.
 	RB_STD_GlowOverlay();
-// openQ4 BEGIN
+// openD3 BEGIN
 	// Last thing that touches the world, so everything in it is seen through the water - but still
 	// inside the 3D view, so the HUD, menus and debug tools stay dry.
 	RB_STD_Underwater();
-// openQ4 END
+// openD3 END
 	RB_RenderDebugTools( drawSurfs, numDrawSurfs );
 
 	// Restore frontend-native view and packet scissors before the temporal pass

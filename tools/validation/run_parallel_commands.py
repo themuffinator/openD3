@@ -3,7 +3,7 @@
 
 Reads one command per line from standard input (blank lines and lines starting
 with # are ignored). A leading "python" runs under this interpreter. Commands
-run at once up to --jobs (default: OPENQ4_PYTHON_TEST_JOBS or the CPU count),
+run at once up to --jobs (default: OPEND3_PYTHON_TEST_JOBS or the CPU count),
 each with its own captured output, which is printed in the input order once that
 command finishes, so the log reads as a sequential run. Exits non-zero when any
 command failed, after listing every failure.
@@ -36,7 +36,7 @@ def positive_int(value: str) -> int:
 
 
 def default_jobs() -> int:
-    configured = os.environ.get("OPENQ4_PYTHON_TEST_JOBS", "").strip()
+    configured = os.environ.get("OPEND3_PYTHON_TEST_JOBS", "").strip()
     if configured:
         return positive_int(configured)
     return os.cpu_count() or 1

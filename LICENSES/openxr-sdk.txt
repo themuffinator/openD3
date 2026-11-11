@@ -1,7 +1,7 @@
 OpenXR SDK (Khronos Group), release-1.1.65
 https://github.com/KhronosGroup/OpenXR-SDK/tree/release-1.1.65
 
-openQ4 builds the OpenXR loader from this release statically into its client
+openD3 builds the OpenXR loader from this release statically into its client
 executable (subprojects/openxr.wrap, subprojects/packagefiles/openxr) and
 compiles against its OpenXR API headers. The loader sources are licensed under
 the Apache License, Version 2.0; the API headers and generated dispatch
@@ -12,7 +12,7 @@ Copyright (c) 2017-2026 The Khronos Group Inc.
 Copyright (c) 2017-2019 Valve Corporation
 Copyright (c) 2017-2019 LunarG, Inc.
 
-The loader's bundled JsonCpp copy is not used: openQ4 links the loader against
+The loader's bundled JsonCpp copy is not used: openD3 links the loader against
 its own JsonCpp build (see JsonCpp.txt).
 
 ========================================================================

@@ -1,7 +1,7 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
 #include "src/framework/NativeInputPublications.h"
 static unsigned routeInvalidations=0;
-namespace openq4 { void NativeInputBeforeUiChange(std::uint64_t,std::uint64_t) noexcept {++routeInvalidations;} }
+namespace opend3 { void NativeInputBeforeUiChange(std::uint64_t,std::uint64_t) noexcept {++routeInvalidations;} }
 // Actual SDK controller/store/bridge/coordinator/Interaction and owned ingress.
 // Counted COM factory and SDL provider only: no activation, windows, or input.
 #include "sys/sdl3/WindowsTextSession.h"
@@ -15,9 +15,9 @@ namespace openq4 { void NativeInputBeforeUiChange(std::uint64_t,std::uint64_t) n
 #if defined(_MSC_VER)
 #include <crtdbg.h>
 #endif
-using namespace openq4;
-using namespace openq4::ui;
-using namespace openq4::sys;
+using namespace opend3;
+using namespace opend3::ui;
+using namespace opend3::sys;
 static unsigned checks=0;
 static unsigned requestEditSessions=0;
 static bool denyAllocations=false;

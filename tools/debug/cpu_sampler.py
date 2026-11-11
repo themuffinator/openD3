@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sample the CPU stacks of a running openQ4 client on Windows, without admin rights.
+"""Sample the CPU stacks of a running openD3 client on Windows, without admin rights.
 
 ETW sampling (xperf/WPR) needs an elevated shell. This profiler instead
 suspends the busiest thread(s) of a process for a few hundred microseconds,

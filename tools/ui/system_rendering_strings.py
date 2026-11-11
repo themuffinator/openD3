@@ -155,7 +155,7 @@ TEXT = {
 def main():
     for locale, entries in TEXT.items():
         assert len(entries) == 16
-        path = ROOT / 'content/baseoq4/pak0/strings' / (locale + '_openq4.lang')
+        path = ROOT / 'content/baseod3/pak0/strings' / (locale + '_opend3.lang')
         source = path.read_text(encoding='utf-8')
         for i, value in enumerate(entries, 230141):
             key = '#str_' + str(i)

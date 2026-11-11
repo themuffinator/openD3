@@ -7,7 +7,7 @@
 #include <RmlUi/Core/Decorator.h>
 #include <RmlUi/Core/Texture.h>
 
-namespace openq4::ui {
+namespace opend3::ui {
 class Host;
 struct Node;
 struct Value;
@@ -140,4 +140,4 @@ public:
 	Rml::SharedPtr<Rml::Decorator> InstanceDecorator(const Rml::String&, const Rml::PropertyDictionary&,
 		const Rml::DecoratorInstancerInterface&) override;
 };
-} // namespace openq4::ui
+} // namespace opend3::ui

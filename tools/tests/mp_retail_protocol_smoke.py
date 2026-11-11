@@ -5,20 +5,20 @@ Two scenarios, each on IPv4 loopback with hidden windows and no input:
 
 * retail server: the installed `Quake4Ded.exe` hosts q4dm1 under `fs_game q4mp`,
   bound to 127.0.0.1 with its writable files redirected into the output
-  directory. An openQ4 client LAN-scans (the retail server must be ignored for
+  directory. An openD3 client LAN-scans (the retail server must be ignored for
   its protocol, not listed) and then connects to it directly. The client must
   refuse the server for its protocol, and must not follow it into q4mp,
   restart its engine or send a connect request;
-* retail client: an openQ4 dedicated server receives the challenge request a
+* retail client: an openD3 dedicated server receives the challenge request a
   1.4.2 `Quake4.exe` sends (its layout read from that executable: the client id
   and one byte), and must answer with the protocol print that client shows.
-  An openQ4 challenge on the same server must still be answered normally.
+  An openD3 challenge on the same server must still be answered normally.
 
 By default the retail client itself is not run, because it opens a visible
 game window; its packet is reproduced byte for byte instead.
 `--retail-client-binary` additionally starts the installed `Quake4.exe`
 windowed, bound to loopback with its writable files redirected into the output
-directory, connects it to the openQ4 server and requires the protocol refusal
+directory, connects it to the openD3 server and requires the protocol refusal
 in its own console log. The harness stops it afterwards; no input is sent.
 """
 from __future__ import annotations
@@ -39,7 +39,7 @@ from mp_round_remote_smoke import read_log, verify_runtime_is_current, write_scr
 
 ROOT = Path(__file__).resolve().parents[2]
 SUFFIX = ".exe" if os.name == "nt" else ""
-OPENQ4_PROTOCOL = (2, 41)
+OPEND3_PROTOCOL = (2, 41)
 RETAIL_PROTOCOL = (2, 85)
 
 
@@ -106,16 +106,16 @@ def main() -> int:
     parser.add_argument("--startup-timeout", type=int, default=420)
     parser.add_argument("--timeout", type=int, default=90)
     parser.add_argument("--retail-client-binary", action="store_true",
-                        help="also run the real Quake4.exe (a visible window) against the openQ4 server")
+                        help="also run the real Quake4.exe (a visible window) against the openD3 server")
     args = parser.parse_args()
     if os.name != "nt":
         parser.error("the retail binaries are Windows executables")
     runtime, output, retail = args.runtime_dir.resolve(), args.output_dir.resolve(), args.basepath.resolve()
     verify_runtime_is_current(runtime)
     paths = {
-        "engine": runtime / f"openQ4-client_x64{SUFFIX}", "dedicated": runtime / f"openQ4-ded_x64{SUFFIX}",
-        "game_mp": runtime / "baseoq4/game-mp_x64.dll", "pak0": runtime / "baseoq4/pak0.pk4",
-        "pak1": runtime / "baseoq4/pak1.pk4",
+        "engine": runtime / f"openD3-client_x64{SUFFIX}", "dedicated": runtime / f"openD3-ded_x64{SUFFIX}",
+        "game_mp": runtime / "baseod3/game-mp_x64.dll", "pak0": runtime / "baseod3/pak0.pk4",
+        "pak1": runtime / "baseod3/pak1.pk4",
     }
     retail_paths = {"Quake4Ded.exe": retail / "Quake4Ded.exe", "Quake4.exe": retail / "Quake4.exe",
                     **{f"q4mp/{p.name}": p for p in sorted((retail / "q4mp").glob("game*.pk4"))}}
@@ -125,7 +125,7 @@ def main() -> int:
     free = [port for port in LAN_PORTS if port not in busy]
     if len(free) < 2 or args.client_port in busy:
         parser.error("two free LAN discovery ports and a free client port are required")
-    retail_port, openq4_port = free[0], free[1]
+    retail_port, opend3_port = free[0], free[1]
     output.mkdir(parents=True, exist_ok=False)
     report = {
         "status": "fail", "transport": "IPv4 loopback",
@@ -134,7 +134,7 @@ def main() -> int:
                                                      cwd=ROOT, text=True)),
         "runtime_dir": str(runtime), "runtime_sha256": {key: digest(path) for key, path in paths.items()},
         "retail_sha256": {key: digest(path) for key, path in retail_paths.items()},
-        "retail_server": {"port": retail_port}, "retail_client": {"port": openq4_port},
+        "retail_server": {"port": retail_port}, "retail_client": {"port": opend3_port},
         "commands": {}, "failures": [],
     }
     processes, streams = {}, []
@@ -171,10 +171,10 @@ def main() -> int:
     started = time.monotonic()
     rcon = secrets.token_hex(8)
     retail_save = output / "retail-server"
-    client_game = output / "client" / "baseoq4"
-    client_log = client_game / "logs/openq4.log"
-    server_game = output / "openq4-server" / "baseoq4"
-    server_log = server_game / "logs/openq4.log"
+    client_game = output / "client" / "baseod3"
+    client_log = client_game / "logs/opend3.log"
+    server_game = output / "opend3-server" / "baseod3"
+    server_log = server_game / "logs/opend3.log"
     probe = None
     try:
         # Scenario 1: the real retail dedicated server.
@@ -214,8 +214,8 @@ def main() -> int:
             f'connect "{endpoint}"', "echo RETAIL_CONNECT_ISSUED"])
         cvars = {
             "fs_basepath": str(retail), "fs_savepath": str(client_game.parent), "fs_devpath": str(client_game.parent),
-            "fs_game": "baseoq4", "com_gameMode": "MP", "si_gameType": "DM", "logFile": "2",
-            "logFileName": "logs/openq4.log", "developer": "1", "s_noSound": "1", "in_mouse": "0",
+            "fs_game": "baseod3", "com_gameMode": "MP", "si_gameType": "DM", "logFile": "2",
+            "logFileName": "logs/opend3.log", "developer": "1", "s_noSound": "1", "in_mouse": "0",
             "in_joystick": "0", "win_allowMultipleInstances": "1", "net_enableIPv4": "1", "net_enableIPv6": "0",
             "net_ip": "127.0.0.1", "net_port": str(args.client_port), "net_LANServer": "1",
             "net_clientDownload": "0", "ui_name": "RetailProbe", "r_renderApi": "gl", "r_fullscreen": "0",
@@ -232,7 +232,7 @@ def main() -> int:
         while time.monotonic() < deadline:
             text = read_log(client_log)
             if processes["client"].poll() is not None:
-                raise RuntimeError("the openQ4 client exited during the retail connection")
+                raise RuntimeError("the openD3 client exited during the retail connection")
             if "RETAIL_CONNECT_ISSUED" in text and (refusal.search(text) or mod_refusal.search(text) or "Restarting.." in text):
                 outcome_at = outcome_at or time.monotonic()
                 # Watch a little longer for retries after the outcome.
@@ -277,48 +277,48 @@ def main() -> int:
         probe.close()
         probe = None
 
-        # Scenario 2: a 1.4.2 client's challenge against an openQ4 server.
+        # Scenario 2: a 1.4.2 client's challenge against an openD3 server.
         server_game.mkdir(parents=True)
         commands = server_game / "retail_server_cmd.cfg"
         write_script(commands, ["// idle"])
         write_script(server_game / "retail_server_pump.cfg", ["exec retail_server_cmd.cfg", "waitMsec 500", "exec retail_server_pump.cfg"])
-        write_script(server_game / "retail_server_start.cfg", ["echo RETAIL_OPENQ4_SERVER_READY", "exec retail_server_pump.cfg"])
+        write_script(server_game / "retail_server_start.cfg", ["echo RETAIL_OPEND3_SERVER_READY", "exec retail_server_pump.cfg"])
         server = {
             "fs_basepath": str(retail), "fs_savepath": str(server_game.parent), "fs_devpath": str(server_game.parent),
-            "fs_game": "baseoq4", "com_gameMode": "MP", "si_gameType": "DM", "logFile": "2",
-            "logFileName": "logs/openq4.log", "developer": "1", "win_allowMultipleInstances": "1",
-            "net_enableIPv4": "1", "net_enableIPv6": "0", "net_ip": "127.0.0.1", "net_port": str(openq4_port),
+            "fs_game": "baseod3", "com_gameMode": "MP", "si_gameType": "DM", "logFile": "2",
+            "logFileName": "logs/opend3.log", "developer": "1", "win_allowMultipleInstances": "1",
+            "net_enableIPv4": "1", "net_enableIPv6": "0", "net_ip": "127.0.0.1", "net_port": str(opend3_port),
             "net_serverDedicated": "1", "net_LANServer": "1", "si_pure": "1", "si_maxPlayers": "4",
             "bot_minPlayers": "0", "g_autoExecAfterMapLoad": "retail_server_start.cfg",
             "g_autoExecAfterMapLoadDelayMs": "500",
         }
-        launch("openq4_server", [str(paths["dedicated"]), *[part for key, value in server.items() for part in ("+set", key, value)],
+        launch("opend3_server", [str(paths["dedicated"]), *[part for key, value in server.items() for part in ("+set", key, value)],
                                  "+spawnServer", "mp/q4dm1"], runtime)
         deadline = time.monotonic() + args.startup_timeout
-        while "RETAIL_OPENQ4_SERVER_READY" not in read_log(server_log):
-            if processes["openq4_server"].poll() is not None or time.monotonic() > deadline:
-                raise RuntimeError("the openQ4 server did not start")
+        while "RETAIL_OPEND3_SERVER_READY" not in read_log(server_log):
+            if processes["opend3_server"].poll() is not None or time.monotonic() > deadline:
+                raise RuntimeError("the openD3 server did not start")
             time.sleep(0.5)
-        probe = Probe(openq4_port)
+        probe = Probe(opend3_port)
         client_id = 0x1234
         # Quake4.exe 1.4.2 idAsyncClient::SetupConnection: WriteShort(-1),
         # WriteString("challenge"), WriteLong(clientId), WriteByte(net_serverDedicated == 1).
         retail_challenge = b"\xff\xff" + wstr("challenge") + struct.pack("<iB", client_id, 0)
-        answer = probe.ask(retail_challenge, "print", 5, alive("openq4_server"))
+        answer = probe.ask(retail_challenge, "print", 5, alive("opend3_server"))
         if answer is None:
             report["retail_client"]["retail_challenge"] = "no answer"
-            report["failures"].append("the openQ4 server did not answer a 1.4.2 client's challenge")
+            report["failures"].append("the openD3 server did not answer a 1.4.2 client's challenge")
         else:
             opcode, text = parse_print(answer)
             report["retail_client"]["retail_challenge"] = {"opcode": opcode, "text": text}
-            if opcode != 1 or text.strip() != "server uses protocol %d.%d" % OPENQ4_PROTOCOL:
+            if opcode != 1 or text.strip() != "server uses protocol %d.%d" % OPEND3_PROTOCOL:
                 report["failures"].append(f"unexpected answer to a 1.4.2 challenge: {opcode} {text!r}")
         normal = probe.ask(b"\xff\xff" + wstr("challenge") + struct.pack("<i", client_id + 1), "challengeResponse", 5,
-                           alive("openq4_server"))
-        report["retail_client"]["openq4_challenge_answered"] = normal is not None
+                           alive("opend3_server"))
+        report["retail_client"]["opend3_challenge_answered"] = normal is not None
         if normal is None:
-            report["failures"].append("the openQ4 server stopped answering openQ4 challenges")
-        info = probe.ask(b"\xff\xff" + wstr("getInfo") + struct.pack("<i", 7), "infoResponse", 5, alive("openq4_server"))
+            report["failures"].append("the openD3 server stopped answering openD3 challenges")
+        info = probe.ask(b"\xff\xff" + wstr("getInfo") + struct.pack("<i", 7), "infoResponse", 5, alive("opend3_server"))
         if info is not None:
             _, offset = rstr(info, 2)
             _, protocol = struct.unpack_from("<ii", info, offset)
@@ -336,7 +336,7 @@ def main() -> int:
                     "+set", "fs_savepath", str(client_home).lower(), "+set", "r_fullscreen", "0",
                     "+set", "r_mode", "3", "+set", "s_noSound", "1", "+set", "logFile", "2",
                     "+set", "net_ip", "127.0.0.1", "+set", "net_port", str(args.client_port),
-                    "+set", "com_allowConsole", "1", "+connect", f"127.0.0.1:{openq4_port}"], retail)
+                    "+set", "com_allowConsole", "1", "+connect", f"127.0.0.1:{opend3_port}"], retail)
                 binary_started = True
             except OSError as error:
                 # The Steam 1.4.2 Quake4.exe demands elevation (WinError 740).
@@ -346,7 +346,7 @@ def main() -> int:
                     "it requires elevation; run this check from an elevated prompt"
                     if getattr(error, "winerror", None) == 740 else str(error)))
         if binary_started:
-            refusal = "server uses protocol %d.%d" % OPENQ4_PROTOCOL
+            refusal = "server uses protocol %d.%d" % OPEND3_PROTOCOL
             deadline = time.monotonic() + args.timeout
             retail_client_log = None
             while time.monotonic() < deadline and processes["retail_client_binary"].poll() is None:
@@ -363,18 +363,18 @@ def main() -> int:
                 binary["version"] = next(iter(re.findall(r"Quake4 [^\n]*1\.4\.2[^\n]*", text)), None)
                 binary["protocol_lines"] = [line for line in text.splitlines() if "protocol" in line][:8]
             if not binary["refusal_logged"]:
-                report["failures"].append("the real Quake4.exe did not log the openQ4 protocol refusal")
+                report["failures"].append("the real Quake4.exe did not log the openD3 protocol refusal")
         write_script(commands, ["quit"])
-        processes["openq4_server"].wait(timeout=30)
-        report["retail_client"]["server_exit_code"] = processes["openq4_server"].returncode
-        if processes["openq4_server"].returncode:
-            report["failures"].append("the openQ4 server exited unsuccessfully")
+        processes["opend3_server"].wait(timeout=30)
+        report["retail_client"]["server_exit_code"] = processes["opend3_server"].returncode
+        if processes["opend3_server"].returncode:
+            report["failures"].append("the openD3 server exited unsuccessfully")
     except (RuntimeError, OSError, subprocess.TimeoutExpired) as error:
         report["failures"].append(str(error))
     finally:
         if probe is not None:
             probe.close()
-        if "openq4_server" in processes:
+        if "opend3_server" in processes:
             write_script(server_game / "retail_server_cmd.cfg", ["quit"])
         for role, process in processes.items():
             if process.poll() is None:

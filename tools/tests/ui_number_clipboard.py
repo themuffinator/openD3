@@ -22,7 +22,7 @@ static bool readOkay=true,writeOkay=true;
 static std::string pasted="1.75",written;
 static std::function<void()> nativeCallback;
 static std::vector<std::string> order;
-namespace openq4 {
+namespace opend3 {
 bool SDL3_ReadTextClipboard(std::string& value,std::string& error) {
     assert(backendStack==0);++reads;order.push_back("read");auto callback=nativeCallback;if(callback)callback();
     if(!readOkay){error="native sensitive failure";return false;}value=pasted;return true;
@@ -36,11 +36,11 @@ bool SDL3_WriteTextClipboard(const std::string& value,std::string& error) {
 BACKEND=r'''
 class idUserInterfaceRetained : public idUserInterfaceLocal {
 public:
-    using Notice=openq4::ui::NumberEditNotice;
+    using Notice=opend3::ui::NumberEditNotice;
     static inline std::uint64_t next=100;
     struct Stack { Stack(){++backendStack;}~Stack(){--backendStack;} };
     uiNumberEditorTarget_t target{++next,++next,++next,"number",{++next,++next}};
-    openq4::ui::TextEditBuffer buffer;
+    opend3::ui::TextEditBuffer buffer;
     Notice notice=Notice::None;
     bool eligible=true,conflict=false,pending=false,interactiveOverride=false,masked=false;
     int replacements=0,notices=0;
@@ -65,7 +65,7 @@ public:
     }
     bool QueryClipboardEditor(uiNumberEditorSnapshot_t& out,std::string&)override{
         Stack stack;if(!eligible || !active || conflict || pending || buffer.Composition())return false;
-        openq4::ui::NumberEditView view;view.active=true;view.identity=target.edit;view.state=buffer.State();view.notice=notice;view.masked=masked;
+        opend3::ui::NumberEditView view;view.active=true;view.identity=target.edit;view.state=buffer.State();view.notice=notice;view.masked=masked;
         view.canUndo=buffer.CanUndo();view.canRedo=buffer.CanRedo();out={target,view};return true;
     }
     bool ReplaceClipboardSelection(const uiNumberEditorTarget_t& expected,std::string_view text,std::string& error)override{
@@ -79,7 +79,7 @@ public:
 };
 '''
 MANAGER_MAIN=r'''
-using namespace openq4::ui;
+using namespace opend3::ui;
 static void Drain(idUserInterface* gui,bool expectedClose=false){bool close=false;assert(UI_DispatchApplicationActions(gui,"retained-pending",close));assert(close==expectedClose);}
 static void NativeReset(){reads=writes=0;readOkay=writeOkay=true;nativeCallback={};pasted="1.75";written.clear();order.clear();}
 int main(){
@@ -161,7 +161,7 @@ int main(){
 
 def manager_source():
     source=manager.production_source()
-    stub='namespace openq4 { bool SDL3_ReadTextClipboard(std::string&,std::string&) { return false; } bool SDL3_WriteTextClipboard(const std::string&,std::string&) { return false; } }\n'
+    stub='namespace opend3 { bool SDL3_ReadTextClipboard(std::string&,std::string&) { return false; } bool SDL3_WriteTextClipboard(const std::string&,std::string&) { return false; } }\n'
     assert stub in source;source=source.replace(stub,'')
     at=source.index('class idUserInterfaceManagerLocal {');source=source[:at]+NATIVE+source[at:]
     old=function_body(source,'class idUserInterfaceRetained : public idUserInterfaceLocal {')+';'
@@ -179,9 +179,9 @@ static void CheckClipboardKeys() {
         idUserInterfaceRetained gui;assert(gui.InitFromFile("test.q4ui"));gui.Activate(true,0);gui.Redraw(0);
         auto& runtime=Live();runtime.InstallNumber("root","number.set");runtime.InstallNumber("other","number.set");runtime.selected="root";
         std::string error;assert(runtime.BeginNumberEdit("root",error,0));
-        const auto captured=[&](int key,bool down,openq4::KeyEventMetadata modifiers){
-            auto bytes=openq4::EncodeKeyEventMetadata(modifiers);sysEvent_t event{SE_KEY,key,down};event.evPtr=bytes.data();event.evPtrLength=bytes.size();return std::string(gui.HandleEvent(&event,0,nullptr));};
-        const auto request=[&](int key,openq4::KeyEventMetadata modifiers,uiClipboardOperation_t operation){
+        const auto captured=[&](int key,bool down,opend3::KeyEventMetadata modifiers){
+            auto bytes=opend3::EncodeKeyEventMetadata(modifiers);sysEvent_t event{SE_KEY,key,down};event.evPtr=bytes.data();event.evPtrLength=bytes.size();return std::string(gui.HandleEvent(&event,0,nullptr));};
+        const auto request=[&](int key,opend3::KeyEventMetadata modifiers,uiClipboardOperation_t operation){
             const auto before=runtime.widgets.at("root").number->identity;
             assert(captured(key,true,modifiers)==ActionMarker);uiClipboardRequest_t out;
             assert(gui.TakeClipboardRequest(ActionMarker,out) && out.operation==operation && out.target.edit==before && out.target.control=="root");
@@ -236,10 +236,10 @@ static void CheckClipboardKeys() {
 def adapter_source():
     source=owner.adapter_source();old=owner.ADAPTER_MAIN;assert source.endswith(old);source=source[:-len(old)]
     init=adapter.MAIN[adapter.MAIN.index('int main() {'):adapter.MAIN.index('    CheckPresentationBridge();')]
-    return source+'using namespace openq4::ui;\nstatic Runtime& Live(){assert(views.size()==1);return views.front()->runtime;}\n'+ADAPTER_MAIN+init+'\n    CheckClipboardKeys();\n}\n'
+    return source+'using namespace opend3::ui;\nstatic Runtime& Live(){assert(views.size()==1);return views.front()->runtime;}\n'+ADAPTER_MAIN+init+'\n    CheckClipboardKeys();\n}\n'
 
 INTERACTION_MAIN=r"""
-using namespace openq4::ui;
+using namespace opend3::ui;
 int main(){
     DocumentModel model;model.id="notice";model.root.id="root";Node number;number.id="number";
     number.control=Control{};number.control->role=ControlRole::Number;number.control->action="edit";
@@ -273,7 +273,7 @@ int main(){
 
 def interaction_source():
     document=(ROOT/'src/ui/retained/Document.cpp').read_text(encoding='utf-8')
-    return '#include "src/ui/retained/Interaction.h"\n#include <cassert>\n#include <cmath>\n#include <cstdio>\nnamespace openq4::ui {\n'+function_body(document,'bool Utf8(')+function_body(document,'bool ValidStateValue(')+'}\n'+INTERACTION_MAIN
+    return '#include "src/ui/retained/Interaction.h"\n#include <cassert>\n#include <cmath>\n#include <cstdio>\nnamespace opend3::ui {\n'+function_body(document,'bool Utf8(')+function_body(document,'bool ValidStateValue(')+'}\n'+INTERACTION_MAIN
 
 
 def validation_source():
@@ -287,10 +287,10 @@ def validation_source():
 #include "src/ui/retained/FloatChars.h"
 #include <cassert>
 #include <cstdio>
-namespace openq4::ui {
+namespace opend3::ui {
 """+range_text+r"""
 }
-using namespace openq4::ui;
+using namespace opend3::ui;
 struct Mock {
     struct String {std::string text;};
     std::map<std::string,std::map<std::string,String>> authored{{"validation",{{"text",{"#str_authored"}}}}};
@@ -330,7 +330,7 @@ def main():
     env={**os.environ,'TEMP':str(temp),'TMP':str(temp),'TMPDIR':str(temp)}
     digest=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
     paths=[p for p in (ROOT/'src/ui').rglob('*') if p.is_file()]+[ROOT/'tools/tests/ui_number_clipboard.py',ROOT/'tools/tests/ui_manager_lifecycle.py',ROOT/'tools/tests/ui_retained_adapter.py',ROOT/'tools/tests/ui_text_owner.py']
-    paths += list((ROOT/'content/baseoq4/pak0/strings').glob('*_openq4.lang'))
+    paths += list((ROOT/'content/baseod3/pak0/strings').glob('*_opend3.lang'))
     for language in paths:
         if language.suffix=='.lang':
             text=language.read_text(encoding='utf-8')
@@ -339,12 +339,12 @@ def main():
     manager_code,adapter_code=manager_source(),adapter_source()
     cases=[('manager',manager_code,False),('adapter',adapter_code,False),('interaction',interaction_source(),False),('validation',validation_source(),False)]
     mutations=[
-        ('manager-cut-after-refused-write',manager_code,'succeeded = openq4::SDL3_WriteTextClipboard(selection,error);','openq4::SDL3_WriteTextClipboard(selection,error); succeeded = true;'),
+        ('manager-cut-after-refused-write',manager_code,'succeeded = opend3::SDL3_WriteTextClipboard(selection,error);','opend3::SDL3_WriteTextClipboard(selection,error); succeeded = true;'),
         ('manager-empty-paste-deletes',manager_code,'request.operation == uiClipboardOperation_t::Paste && !paste.empty()','request.operation == uiClipboardOperation_t::Paste'),
         ('manager-allocation-reused',manager_code,'allocations[i] == gui && allocations[i]->allocationId == allocation','allocations[i] == gui'),
         ('manager-owner-not-checked',manager_code,'out.target == request.target &&','true &&'),
         ('manager-postquery-skipped',manager_code,'if (!query(after) || after.editor.state.text != state.text ||','after = before; if (false || after.editor.state.text != state.text ||'),
-        ('manager-native-error-is-success',manager_code,'succeeded = openq4::SDL3_ReadTextClipboard(paste,error);','openq4::SDL3_ReadTextClipboard(paste,error); succeeded = true;'),
+        ('manager-native-error-is-success',manager_code,'succeeded = opend3::SDL3_ReadTextClipboard(paste,error);','opend3::SDL3_ReadTextClipboard(paste,error); succeeded = true;'),
         ('manager-masked-copy-transfers',manager_code,'if (before.editor.masked && request.operation != uiClipboardOperation_t::Paste) {','if (false) {'),
         ('manager-reentry-not-retired',manager_code,'if (clipboardBoundaryActive || nativeBoundaryActive) { clipboardBoundaryFailed = true; if(nativeBoundaryActive)nativeBoundaryFailed=true; return true; }','if (clipboardBoundaryActive || nativeBoundaryActive) { return true; }'),
         ('adapter-repeat-transfers',adapter_code,'else if (claim == Input::TextKey::Press)','else if (true)'),

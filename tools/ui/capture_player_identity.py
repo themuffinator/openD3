@@ -21,50 +21,50 @@ from mp_round_remote_smoke import verify_runtime_is_current
 
 
 def activate(control):
-    return [f'openq4_retainedGui focus "{control}"', 'openq4_retainedGui menu accept 1',
-            'openq4_retainedGui menu accept 0', 'waitMsec 300']
+    return [f'opend3_retainedGui focus "{control}"', 'opend3_retainedGui menu accept 1',
+            'opend3_retainedGui menu accept 0', 'waitMsec 300']
 
 
 def observe(stage):
     nodes = ('players-a-0-chosen', 'players-a-1-chosen', 'players-a-1-friend', 'players-a-1-speaker-slash')
-    return [f'echo "PLAYER_IDENTITY_STAGE {stage}"', 'openq4_retainedGui report',
-            *[f'openq4_retainedGui inspect "{node}"' for node in nodes], f'screenshot "screenshots/{stage}.tga"']
+    return [f'echo "PLAYER_IDENTITY_STAGE {stage}"', 'opend3_retainedGui report',
+            *[f'opend3_retainedGui inspect "{node}"' for node in nodes], f'screenshot "screenshots/{stage}.tga"']
 
 
 def observe_admin(stage):
     nodes = ('admin-player-1', 'admin-player-1-chosen', 'admin-player-1-c0', 'admin-kick-reason')
-    return [f'echo "PLAYER_IDENTITY_STAGE {stage}"', 'openq4_retainedGui report',
-            *[f'openq4_retainedGui inspect "{node}"' for node in nodes], f'screenshot "screenshots/{stage}.tga"']
+    return [f'echo "PLAYER_IDENTITY_STAGE {stage}"', 'opend3_retainedGui report',
+            *[f'opend3_retainedGui inspect "{node}"' for node in nodes], f'screenshot "screenshots/{stage}.tga"']
 
 
 def steps():
     return ['waitMsec 5000', 'addbot IdentityOriginal', 'waitMsec 3000',
-            'screenshot "screenshots/gameplay.tga"', 'openq4_assertMenuActivation 4000 game',
-            'waitMsec 500', 'openq4_retainedGui event tab_players', 'waitMsec 500',
+            'screenshot "screenshots/gameplay.tga"', 'opend3_assertMenuActivation 4000 game',
+            'waitMsec 500', 'opend3_retainedGui event tab_players', 'waitMsec 500',
             *activate('players-a-1'), *activate('players-friend'), *activate('players-mute'), *observe('marked'),
             # The press belongs to the first connection. Replacement and fresh
             # publication before release must cancel it and reset the selection.
-            'openq4_retainedGui focus "players-a-1"', 'openq4_retainedGui menu accept 1',
+            'opend3_retainedGui focus "players-a-1"', 'opend3_retainedGui menu accept 1',
             'removebot IdentityOriginal', 'waitMsec 300', 'addbot IdentityReplacement', 'waitMsec 1500',
-            'openq4_retainedGui menu accept 0', 'waitMsec 500', *observe('replaced'),
+            'opend3_retainedGui menu accept 0', 'waitMsec 500', *observe('replaced'),
             *activate('players-a-1'), *activate('players-friend'), *activate('players-mute'), *observe('fresh-marks'),
             # Queue the current row's event, then replace it before the next
             # session/game dispatch. Frozen operands must reject that request.
-            'openq4_retainedGui event players_a1', 'removebot IdentityReplacement', 'waitMsec 300',
+            'opend3_retainedGui event players_a1', 'removebot IdentityReplacement', 'waitMsec 300',
             'addbot IdentityFinal', 'waitMsec 1500', *observe('queued-replaced'),
             *activate('players-a-1'), *observe('fresh-selection'),
             # Admin buttons must also retire a held action and freeze its
             # selected target before later session dispatch.
-            'openq4_retainedGui event tab_admin', 'waitMsec 500',
+            'opend3_retainedGui event tab_admin', 'waitMsec 500',
             *activate('admin-player-1'), *observe_admin('admin-selected'),
-            'openq4_retainedGui focus "admin-kick"', 'openq4_retainedGui menu accept 1',
+            'opend3_retainedGui focus "admin-kick"', 'opend3_retainedGui menu accept 1',
             'removebot IdentityFinal', 'waitMsec 300', 'addbot AdminReplacement', 'waitMsec 1500',
-            'openq4_retainedGui menu accept 0', 'waitMsec 500', *observe_admin('admin-held-replaced'),
-            *activate('admin-player-1'), 'openq4_retainedGui event admin_kick',
+            'opend3_retainedGui menu accept 0', 'waitMsec 500', *observe_admin('admin-held-replaced'),
+            *activate('admin-player-1'), 'opend3_retainedGui event admin_kick',
             'removebot AdminReplacement', 'waitMsec 300', 'addbot AdminFinal', 'waitMsec 1500',
             *observe_admin('admin-queued-replaced'),
             *activate('admin-player-1'), *activate('admin-kick'), 'waitMsec 1000', *observe_admin('admin-fresh-kick'),
-            'openq4_retainedGui event onBack', 'waitMsec 500', 'screenshot "screenshots/gameplay-return.tga"']
+            'opend3_retainedGui event onBack', 'waitMsec 500', 'screenshot "screenshots/gameplay-return.tga"']
 
 
 def qualify(log):
@@ -89,7 +89,7 @@ def qualify(log):
         checks[stage] = nodes.get('admin-player-1') == ('none' if stage == 'admin-fresh-kick' else 'block') and \
             nodes.get('admin-player-1-chosen') == ('block' if stage == 'admin-selected' else 'none')
     checks['admin-slot-reused'] = re.findall(r"addbot: 'Admin(?:Replacement|Final)' joined as client (\d+)", log) == ['1', '1']
-    checks['semantic-operations'] = not re.search(r'RETAINED_GUI_OPERATION .* failed|openq4_retainedGui: requires', log)
+    checks['semantic-operations'] = not re.search(r'RETAINED_GUI_OPERATION .* failed|opend3_retainedGui: requires', log)
     return checks
 
 
@@ -106,8 +106,8 @@ def main():
         parser.error('choose a new output directory under the project .tmp')
     verify_runtime_is_current(args.runtime)
     args.output.mkdir(parents=True)
-    binaries = [args.runtime / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64'),
-                *sorted(args.runtime.glob('renderer-*')), *sorted((args.runtime / 'baseoq4').glob('game-*'))]
+    binaries = [args.runtime / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64'),
+                *sorted(args.runtime.glob('renderer-*')), *sorted((args.runtime / 'baseod3').glob('game-*'))]
     binaries = [p for p in binaries if p.is_file()]
     bindings = {str(p.relative_to(args.runtime)): capture.digest(p) for p in binaries}
     sources = ['src/mpgame/Player.cpp', 'src/mpgame/Player.h', 'src/mpgame/MultiplayerGame.cpp',
@@ -115,11 +115,11 @@ def main():
                'tools/ui/retained_mp_admin.py',
                'src/ui/UserInterfaceRetained.cpp', 'src/framework/Session_menu.cpp',
                'src/ui/retained/Interaction.cpp', 'src/ui/retained/State.cpp', 'tools/ui/capture_player_identity.py',
-               'content/baseoq4/pak0/guis/menu/mp_escape.q4ui']
+               'content/baseod3/pak0/guis/menu/mp_escape.q4ui']
     source_bindings = {p: capture.digest(ROOT / p) for p in sources}
-    with zipfile.ZipFile(args.runtime / 'baseoq4/pak0.pk4') as pack:
+    with zipfile.ZipFile(args.runtime / 'baseod3/pak0.pk4') as pack:
         document = 'guis/menu/mp_escape.q4ui'
-        if pack.read(document).replace(b'\r\n', b'\n') != (ROOT / 'content/baseoq4/pak0' / document).read_bytes().replace(b'\r\n', b'\n'):
+        if pack.read(document).replace(b'\r\n', b'\n') != (ROOT / 'content/baseod3/pak0' / document).read_bytes().replace(b'\r\n', b'\n'):
             raise RuntimeError('staged Players document differs from source')
     capture.SCENARIOS['player-identity'] = ('mp:mp/q4dm1', steps())
     capture.SCENARIO_CVARS['player-identity'] = {'net_ip': '127.0.0.1', 'net_port': '28984', 'ui_autoJoin': '1',

@@ -13,7 +13,7 @@ from filesystem_case_segments import function_body
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT))
+GAME_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT))
 
 SUPPORT = r'''
 #include <algorithm>
@@ -28,7 +28,7 @@ SUPPORT = r'''
 #include <vector>
 #define BASE_GAMEDIR "q4base"
 #define BASE_MPGAMEDIR "q4mp"
-#define OPENQ4_GAMEDIR "baseoq4"
+#define OPEND3_GAMEDIR "baseod3"
 static const int MAX_STRING_CHARS = 1024;
 class idStr {
     std::string value;
@@ -78,7 +78,7 @@ struct CVar {
     explicit CVar(const char *text) : value(text) {}
     const char *GetString() const { return value.c_str(); }
     int GetInteger() const { return 0; }
-} fs_game("baseoq4"), fs_game_base(""), fs_debug("0");
+} fs_game("baseod3"), fs_game_base(""), fs_debug("0");
 struct Common {
     int warnings = 0;
     template<class... T> void Warning(const char *, T...) { ++warnings; }
@@ -86,7 +86,7 @@ struct Common {
 } commonValue, *common = &commonValue;
 struct idFileSystemLocal {
     const char *OSPathToRelativePath(const char *path);
-    bool UsesOpenQ4RuntimeUnderlay(void) const;
+    bool UsesopenD3RuntimeUnderlay(void) const;
 };
 struct CVarSystem {
     const char *GetCVarString(const char *name) const {
@@ -164,33 +164,33 @@ static void Include(const char *source, const char *token, const char *expected,
 }
 int main() {
     const char *roots[] = {
-        "E:/Repositories/openQ4/.tmp/runtime/baseoq4/mapcycle.scriptcfg",
-        "e:\\Repositories\\openQ4\\.tmp\\runtime\\baseoq4\\mapcycle.scriptcfg",
-        "/home/Player/OpenQ4/baseoq4/mapcycle.scriptcfg",
-        "\\\\Host\\Games\\baseoq4\\mapcycle.scriptcfg",
-        "baseoq4/mapcycle.scriptcfg", "mapcycle.scriptcfg",
+        "E:/Repositories/openD3/.tmp/runtime/baseod3/mapcycle.scriptcfg",
+        "e:\\Repositories\\openD3\\.tmp\\runtime\\baseod3\\mapcycle.scriptcfg",
+        "/home/Player/openD3/baseod3/mapcycle.scriptcfg",
+        "\\\\Host\\Games\\baseod3\\mapcycle.scriptcfg",
+        "baseod3/mapcycle.scriptcfg", "mapcycle.scriptcfg",
         "E:/Quake4/q4base/mapcycle.scriptcfg", "q4base/mapcycle.scriptcfg",
-        "q4mp/mapcycle.scriptcfg", "/games/baseoq4/pak001.pk4/mapcycle.scriptcfg",
+        "q4mp/mapcycle.scriptcfg", "/games/baseod3/pak001.pk4/mapcycle.scriptcfg",
         "E:\\Quake4\\q4base\\pak001.PK4\\mapcycle.scriptcfg"
     };
     for (const auto *path : roots) Include(path, "scripts/defs.script", "scripts/defs.script");
-    Include("E:/Games/baseoq4/scripts/main.script", "defs.script", "scripts/defs.script");
-    Include("/home/Player/baseoq4/scripts/main.script", "scripts/defs.script", "scripts/defs.script");
+    Include("E:/Games/baseod3/scripts/main.script", "defs.script", "scripts/defs.script");
+    Include("/home/Player/baseod3/scripts/main.script", "scripts/defs.script", "scripts/defs.script");
     Include("scripts/main.script", "scripts/defs.script", "scripts/defs.script");
     Include("/games/q4base/pak002.pk4/scripts/maps/start.script", "actors.script", "scripts/maps/actors.script");
-    Include("E:\\Games\\baseoq4\\scripts\\maps\\start.script", "actors.script", "scripts/maps/actors.script");
-    fs_game.value = "coop"; fs_game_base.value = "baseoq4";
+    Include("E:\\Games\\baseod3\\scripts\\maps\\start.script", "actors.script", "scripts/maps/actors.script");
+    fs_game.value = "coop"; fs_game_base.value = "baseod3";
     Include("/home/Player/coop/mapcycle.scriptcfg", "scripts/defs.script", "scripts/defs.script");
-    Include("/home/Player/baseoq4/mapcycle.scriptcfg", "scripts/defs.script", "scripts/defs.script");
-    // A mod with no fs_game_base still runs over the openQ4 runtime directory.
+    Include("/home/Player/baseod3/mapcycle.scriptcfg", "scripts/defs.script", "scripts/defs.script");
+    // A mod with no fs_game_base still runs over the openD3 runtime directory.
     fs_game_base.value.clear();
-    Include("/home/Player/baseoq4/mapcycle.scriptcfg", "scripts/defs.script", "scripts/defs.script");
-    Include("E:\\Games\\baseoq4\\scripts\\main.script", "defs.script", "scripts/defs.script");
+    Include("/home/Player/baseod3/mapcycle.scriptcfg", "scripts/defs.script", "scripts/defs.script");
+    Include("E:\\Games\\baseod3\\scripts\\main.script", "defs.script", "scripts/defs.script");
     Include("/home/Player/coop/scripts/main.script", "defs.script", "scripts/defs.script");
-    fs_game.value = "baseoq4"; fs_game_base.value.clear();
+    fs_game.value = "baseod3"; fs_game_base.value.clear();
     // Failed/unmapped conversion must not silently become the valid VFS root.
     const char *unmapped[] = {"D:/External/mapcycle.scriptcfg", "/tmp/external/mapcycle.scriptcfg",
-        "/games/baseoq4-extra/mapcycle.scriptcfg", "//Host/External/mapcycle.scriptcfg"};
+        "/games/baseod3-extra/mapcycle.scriptcfg", "//Host/External/mapcycle.scriptcfg"};
     for (const auto *path : unmapped) {
         commonValue.warnings = 0;
         idStr original(path), normalized(path);
@@ -202,7 +202,7 @@ int main() {
     // Missing local sibling still finds the ordinary explicit include path.
     idLexer::attempts.clear(); idLexer::files.clear();
     idLexer::files["shared/defs.script"] = "shared/defs.script";
-    idParser fallback; fallback.source.filename = "/games/baseoq4/scripts/start.script";
+    idParser fallback; fallback.source.filename = "/games/baseod3/scripts/start.script";
     fallback.includepath = "shared/"; fallback.tokens.emplace_back("defs.script");
     // Every candidate reaches the parser's source observer, the missing ones
     // without data and the loaded one with its text, so a cache of the sources
@@ -229,7 +229,7 @@ def main() -> None:
         raise RuntimeError("A C++ compiler is required for parser include-path regressions")
     filesystem = (ROOT / "src/framework/FileSystem.cpp").read_text(encoding="utf-8")
     conversion = function_body(filesystem, "const char *idFileSystemLocal::OSPathToRelativePath(")
-    conversion += "\n" + function_body(filesystem, "bool idFileSystemLocal::UsesOpenQ4RuntimeUnderlay(") + "\n"
+    conversion += "\n" + function_body(filesystem, "bool idFileSystemLocal::UsesopenD3RuntimeUnderlay(") + "\n"
     # This legacy file contains a raw byte character table; the extracted
     # StripFilename definition is ASCII and must not depend on that table's codec.
     string_source = (ROOT / "src/idlib/Str.cpp").read_text(encoding="latin-1")
@@ -250,7 +250,7 @@ def main() -> None:
                 command = [compiler, "/nologo", "/std:c++17", "/EHsc", str(probe), f"/Fe:{executable}"]
             else:
                 command = [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", str(probe), "-o", str(executable)]
-                if os.environ.get("OPENQ4_TEST_SANITIZERS") == "1":
+                if os.environ.get("OPEND3_TEST_SANITIZERS") == "1":
                     command += ["-fsanitize=address,undefined", "-fno-omit-frame-pointer"]
             subprocess.run(command, cwd=temporary, check=True)
             subprocess.run([str(executable)], cwd=temporary, check=True)

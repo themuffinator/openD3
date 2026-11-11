@@ -1,10 +1,10 @@
 // Android/SigmaTouch support by emileb: https://github.com/emileb/openQ4/tree/android
-// Integrated and adapted for current openQ4; licensed under GPL-3.0-or-later.
+// Integrated and adapted for current openD3; licensed under GPL-3.0-or-later.
 
 /*
 ===========================================================================
 
-openQ4 Android platform layer.
+openD3 Android platform layer.
 
 ===========================================================================
 */
@@ -15,13 +15,13 @@ openQ4 Android platform layer.
 // Absolute path of the APK's native library directory, exported by the host
 // app's JNI glue before the engine starts. Sibling modules (game-sp,
 // renderer-gles) are loaded from there.
-#define OPENQ4_ANDROID_NATIVE_LIBS_ENV	"OPENQ4_NATIVE_LIBS"
+#define OPEND3_ANDROID_NATIVE_LIBS_ENV	"OPEND3_NATIVE_LIBS"
 
 // Match early native diagnostics to the host's +set fs_savepath, before the
 // file system and command-line CVars are initialized.
-#define OPENQ4_ANDROID_SAVE_ROOT_ENV	"OPENQ4_SAVE_ROOT"
+#define OPEND3_ANDROID_SAVE_ROOT_ENV	"OPEND3_SAVE_ROOT"
 
-// OpenQ4_AndroidMain plus the whole touch-input bridge live here; the header
+// openD3_AndroidMain plus the whole touch-input bridge live here; the header
 // is engine-type-free on purpose so mobile/ can include it too.
 #include "../../../mobile/quake4_bridge.h"
 

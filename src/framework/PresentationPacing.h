@@ -3,7 +3,7 @@
 
 #include <cmath>
 
-namespace openq4 {
+namespace opend3 {
 
 // HF-07 frame-pacing policy shared by the engine's frame limiter, its pacing
 // statistics and their native test (tools/tests/native/PresentationPacingTest.cpp).
@@ -206,4 +206,4 @@ inline FramePacingBound ClassifyFramePacing(const FramePacingBoundInput &in) {
 	return FramePacingBound::FrameWork;
 }
 
-}	// namespace openq4
+}	// namespace opend3

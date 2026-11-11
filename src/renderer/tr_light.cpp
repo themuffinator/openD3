@@ -40,7 +40,7 @@ static ID_INLINE float R_CalcViewAndLightDistance( const viewDef_t *viewDef, con
 }
 #include "ShadowMapClassification.h"
 #include "../sound/sound.h"
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 #include "Vulkan/vk_MaterialPrograms.h"
 #endif
 
@@ -1606,7 +1606,7 @@ static idRenderModel *R_ViewLightPrelightModel( viewLight_t *vLight ) {
 	return prelightModel;
 }
 
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 // whether any surface with geometry of a model, drawn with an entity's skin
 // and custom shader, uses authored GLSL lighting
 static bool R_ModelReceiverNeedsStencil( const idRenderModel *model, const renderEntity_t &parms ) {
@@ -1764,7 +1764,7 @@ Vulkan front end asks for it.
 =================
 */
 void R_ShadowMapNoteEntityModel( idRenderEntityLocal *def, const idRenderModel *model ) {
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 	// nothing asks while no light can shed its volumes; an entity first seen
 	// then is unknown for the one view after they can
 	if ( def == NULL || model == NULL || !r_shadowMapSkipStencilShadows.GetBool()
@@ -2020,7 +2020,7 @@ bool R_ShadowMapLightWillUseShadowMaps( const idRenderLightLocal *lightDef, cons
 		return false;
 	}
 	if ( !RB_ShadowMapResourcesKnownGood( pointLightPath ) ) { return false; }
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 	// Lights with an authored-lighting receiver keep their stencil chain.
 	if ( !R_ShadowMapReceiversAllowMaps( lightDef ) ) { return false; }
 #endif
@@ -2695,7 +2695,7 @@ void R_AddDrawSurf( const srfTriangles_t *tri, const viewEntity_t *space, const 
 	const float oldFloatTime = tr.viewDef->floatTime;
 	const int oldRenderTime = tr.viewDef->renderView.time;
 	if ( renderEntity != NULL && renderEntity->timeGroup != 0 ) {
-#ifdef OPENQ4_RENDERER_MODULE
+#ifdef OPEND3_RENDERER_MODULE
 		const int groupTime = R_RendererGetTimeGroupTime( renderEntity->timeGroup, oldRenderTime );
 #else
 		const int groupTime = game != NULL ? game->GetTimeGroupTime( renderEntity->timeGroup ) : oldRenderTime;

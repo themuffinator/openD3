@@ -85,10 +85,10 @@ def validate_workflow() -> None:
     require(source, "--cross-file tools/cross/linux-arm64.ini", "Meson cross setup")
     require(source, "-Dplatform_backend=sdl3", "SDL3 ARM64 cross setup")
     require(source, "-Dlinux_x11=disabled", "Wayland-only ARM64 cross setup")
-    require(source, "builddir-arm64-cross/openQ4-client_arm64", "ARM64 client verification")
-    require(source, "builddir-arm64-cross/openQ4-ded_arm64", "ARM64 dedicated verification")
-    require(source, "builddir-arm64-cross/baseoq4/game-sp_arm64.so", "ARM64 SP module verification")
-    require(source, "builddir-arm64-cross/baseoq4/game-mp_arm64.so", "ARM64 MP module verification")
+    require(source, "builddir-arm64-cross/openD3-client_arm64", "ARM64 client verification")
+    require(source, "builddir-arm64-cross/openD3-ded_arm64", "ARM64 dedicated verification")
+    require(source, "builddir-arm64-cross/baseod3/game-sp_arm64.so", "ARM64 SP module verification")
+    require(source, "builddir-arm64-cross/baseod3/game-mp_arm64.so", "ARM64 MP module verification")
     require(source, "Machine:[[:space:]]+AArch64", "ARM64 ELF header verification")
     require(source, "Wayland-only ARM64 artifact unexpectedly depends on X11/GLX", "ARM64 Wayland-only dependency verification")
     require(source, "libX11|libXext|libGLX", "ARM64 Wayland-only forbidden dependency set")
@@ -96,13 +96,13 @@ def validate_workflow() -> None:
     require(source, '($6 == "DEFAULT" || $6 == "PROTECTED")', "ARM64 public symbol visibility verification")
     require(source, '$7 != "UND" &&', "ARM64 defined module export verification")
     require(source, '$4 == "FUNC" && $5 == "GLOBAL" && $6 == "DEFAULT" && $8 == "GetGameAPI"', "ARM64 function export verification")
-    require(source, '$4 == "FUNC" && $5 == "GLOBAL" && $6 == "DEFAULT" && $8 == "openQ4_Mem_GetModuleStats"', "ARM64 memory-counter function export")
+    require(source, '$4 == "FUNC" && $5 == "GLOBAL" && $6 == "DEFAULT" && $8 == "openD3_Mem_GetModuleStats"', "ARM64 memory-counter function export")
     require(source, "count != 2 || api != 1 || stats != 1 || unexpected != 0", "only API and per-module memory counters are public")
     require(source, 'cmp -s "${artifacts[2]}" "${artifacts[3]}"', "ARM64 SP/MP module separation")
     require(source, "meson_setup.sh install -C builddir-arm64-cross --no-rebuild --skip-subprojects", "ARM64 package staging")
-    require(source, "python tools/validation/openq4_validate.py push", "ARM64 staged package validation")
+    require(source, "python tools/validation/opend3_validate.py push", "ARM64 staged package validation")
     require(source, "--build-dir builddir-arm64-cross", "ARM64 staged package build directory")
-    require(source, '--game-libs-repo "${OPENQ4_GAMELIBS_REPO}"', "ARM64 staged game-source validation")
+    require(source, '--game-libs-repo "${OPEND3_GAMELIBS_REPO}"', "ARM64 staged game-source validation")
     require(source, "--skip-python-tests", "ARM64 focused staged package validation")
     require(source, "--skip-build", "ARM64 post-build staged package validation")
     require(source, "--install", "ARM64 staged package validation")
@@ -110,7 +110,7 @@ def validate_workflow() -> None:
 
 def validate_build_machine_generators() -> None:
     meson = read("meson.build")
-    baseoq4_meson = read("content/baseoq4/meson.build")
+    baseod3_meson = read("content/baseod3/meson.build")
     swap_h = read("src/idlib/Swap.h")
     sdl_meson = read("subprojects/packagefiles/sdl3/meson.build")
     sdl_hidapi_meson = read("subprojects/packagefiles/sdl3/src/hidapi/meson.build")
@@ -123,24 +123,24 @@ def validate_build_machine_generators() -> None:
     reject(sdl_meson, "host_machine.subsystem()", "SDL host OS detection")
     reject(sdl_hidapi_meson, "host_machine.subsystem()", "SDL HIDAPI host OS detection")
 
-    require(baseoq4_meson, "game_sp_module_target = shared_module(", "SP linker target capture")
-    require(baseoq4_meson, "game_mp_module_target = shared_module(", "MP linker target capture")
+    require(baseod3_meson, "game_sp_module_target = shared_module(", "SP linker target capture")
+    require(baseod3_meson, "game_mp_module_target = shared_module(", "MP linker target capture")
     # two Linux targets plus the two darwin targets, which hide their symbols
     # for the same reason (issue #90)
-    if baseoq4_meson.count("gnu_symbol_visibility: 'hidden'") != 4:
+    if baseod3_meson.count("gnu_symbol_visibility: 'hidden'") != 4:
         raise AssertionError("Linux and darwin SP and MP modules must hide non-API symbols")
     require(meson, "gnu_symbol_visibility: host_system == 'windows' ? 'default' : 'hidden'", "integrated game idlib visibility")
-    require(meson, "'openq4_stage_game_sp_direct_run'", "SP direct-run staging target")
+    require(meson, "'opend3_stage_game_sp_direct_run'", "SP direct-run staging target")
     require(meson, "input: game_sp_module_target", "SP direct-run staging dependency")
-    require(meson, "'openq4_stage_game_mp_direct_run'", "MP direct-run staging target")
+    require(meson, "'opend3_stage_game_mp_direct_run'", "MP direct-run staging target")
     require(meson, "input: game_mp_module_target", "MP direct-run staging dependency")
     require(meson, "'stage_direct_run_game_module.py'", "direct-run staging command")
     require(meson, "build_always_stale: true", "deleted direct-run module restoration")
-    require(baseoq4_meson, "'openq4_stage_mod_manifest_direct_run'", "direct-run mod manifest target")
-    require(baseoq4_meson, "input: baseoq4_manifest", "direct-run mod manifest dependency")
+    require(baseod3_meson, "'opend3_stage_mod_manifest_direct_run'", "direct-run mod manifest target")
+    require(baseod3_meson, "input: baseod3_manifest", "direct-run mod manifest dependency")
     require(
-        baseoq4_meson,
-        "meson.project_build_root() / 'baseoq4' / 'mod.json'",
+        baseod3_meson,
+        "meson.project_build_root() / 'baseod3' / 'mod.json'",
         "direct-run mod manifest destination",
     )
     require(swap_h, "static constexpr uint32_t idSwapBig32( const uint32_t value )", "single-evaluation BIG32 helper")
@@ -160,7 +160,7 @@ def validate_direct_run_module_staging() -> None:
     with tempfile.TemporaryDirectory(prefix="arm64-module-stage-", dir=temporary_root) as work:
         work_root = Path(work)
         source = work_root / "linked" / "game-sp_arm64.so"
-        destination = work_root / "builddir" / "baseoq4" / source.name
+        destination = work_root / "builddir" / "baseod3" / source.name
         stamp = work_root / "builddir" / "stage-game-sp-arm64.stamp"
         source.parent.mkdir(parents=True)
 

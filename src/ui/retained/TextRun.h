@@ -6,7 +6,7 @@
 #include <optional>
 #include <string_view>
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 struct TextRunGlyph {
 	std::size_t byteStart = 0, byteEnd = 0;
@@ -68,4 +68,4 @@ private:
 	std::unique_ptr<Impl> impl;
 };
 
-} // namespace openq4::ui
+} // namespace opend3::ui

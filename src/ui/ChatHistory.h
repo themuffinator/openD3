@@ -1,7 +1,7 @@
 // Copyright (C) 2026 DarkMatter Productions
 // SPDX-License-Identifier: GPL-3.0-or-later
-#ifndef OPENQ4_CHAT_HISTORY_H
-#define OPENQ4_CHAT_HISTORY_H
+#ifndef OPEND3_CHAT_HISTORY_H
+#define OPEND3_CHAT_HISTORY_H
 
 #include <algorithm>
 #include <cstdint>

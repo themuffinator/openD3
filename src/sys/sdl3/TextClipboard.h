@@ -3,11 +3,11 @@
 
 #include <string>
 
-namespace openq4 {
+namespace opend3 {
 
 // Engine-private checked UTF-8 clipboard services. These preserve all text,
 // including newlines; field filtering belongs to the editor. Client SDL3, its
-// main thread and build capability OPENQ4_SDL3_CHECKED_CLIPBOARD=1 are required.
+// main thread and build capability OPEND3_SDL3_CHECKED_CLIPBOARD=1 are required.
 // Only a provider verified to contain the package clipboard-status.patch may
 // advertise that capability; a matching version number is insufficient. Other
 // providers fail without SDL calls. The read publishes nothing on failure; empty
@@ -26,4 +26,4 @@ bool SDL3_WriteTextClipboard(const std::string& text, std::string& error);
 // after a successful write. Legacy Sys_*ClipboardData ABI is unchanged. Nothing
 // here activates SDL input, calls RmlUi, handles fields or installs a live route.
 
-} // namespace openq4
+} // namespace opend3

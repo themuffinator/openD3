@@ -23,7 +23,7 @@
 ===============================================================================
 */
 
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
@@ -445,8 +445,8 @@ void glViewport(GLint x, GLint y, GLsizei width, GLsizei height){};
 
 // GLEW SDL3-loader hook: never called (glewInit is not reached under the
 // Vulkan backend), present so the dedicated GLEW flavor links
-typedef void ( *openQ4GlewProcAddress_t ) (void);
-extern "C" openQ4GlewProcAddress_t OpenQ4_GlewGetProcAddress(const unsigned char *name) {
+typedef void ( *openD3GlewProcAddress_t ) (void);
+extern "C" openD3GlewProcAddress_t openD3_GlewGetProcAddress(const unsigned char *name) {
 	(void)name;
 	return NULL;
 }
@@ -483,4 +483,4 @@ void QGL_Shutdown( void ) {
 // RB_UnderwaterViewAvailable lives with the Vulkan underwater pass in
 // vk_PostProcess.cpp.
 
-#endif /* OPENQ4_RENDERER_VK_MODULE */
+#endif /* OPEND3_RENDERER_VK_MODULE */

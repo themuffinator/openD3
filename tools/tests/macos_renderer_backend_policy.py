@@ -31,7 +31,7 @@ def validate_policy_doc() -> None:
         "`platform_backend=sdl3`",
         "`macos_graphics_bridge=opengl`",
         "`macos_graphics_bridge=metal`",
-        "stock-compatible openQ4 OpenGL renderer",
+        "stock-compatible openD3 OpenGL renderer",
         "not a native Metal renderer",
         "Release-facing package names and docs must use `OpenGL` and `Metal bridge`",
         "`renderer-smoke`, `renderer-mp-smoke`, and `renderer-matrix`",
@@ -147,7 +147,7 @@ def validate_workflow_scope() -> None:
 
 
 def validate_ci_and_local_wiring() -> None:
-    local_runner = read("tools/validation/openq4_validate.py")
+    local_runner = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
 

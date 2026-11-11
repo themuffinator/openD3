@@ -2,7 +2,7 @@
 #pragma once
 #include "State.h"
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 // Validation is pure: no host writes, dispatch, callbacks into the runtime or
 // retained references to the candidate invocation. Host effects happen only
@@ -32,4 +32,4 @@ bool EvaluateEvent(const DocumentModel& model, const State& state, const Motion&
 	const std::string& name, double seconds, EventResult& result, std::string& error,
 	const ActionValidator& validate = {}, size_t maxActions = 256);
 
-} // namespace openq4::ui
+} // namespace opend3::ui

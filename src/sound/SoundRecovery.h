@@ -1,4 +1,4 @@
-// First-party openQ4 portable audio recovery values. GPL-3.0-or-later.
+// First-party openD3 portable audio recovery values. GPL-3.0-or-later.
 #pragma once
 #include "SoundSettings.h"
 #include <cstddef>

@@ -143,10 +143,10 @@ def validate_prey_filesystem_api(source: str) -> None:
 
 def validate_user_diagnostics(source: str) -> None:
     for stale in (
-        '"openQ4 runtime',
+        '"openD3 runtime',
         '"Retail Quake 4',
         '"Required official Quake 4',
-        '"openQ4 startup config',
+        '"openD3 startup config',
     ):
         reject(source, stale, "active FileSystem diagnostics")
     require(source, "Required official Prey media pk4 files", "Prey retail validation diagnostic")

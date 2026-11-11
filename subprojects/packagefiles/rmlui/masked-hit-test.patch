@@ -5,7 +5,7 @@
  	/// @param[in] element Used internally.
  	/// @return The element under the point, or nullptr if nothing is.
 -	Element* GetElementAtPoint(Vector2f point, const Element* ignore_element = nullptr, Element* element = nullptr) const;
-+	/// openQ4: Optional application filter, evaluated for each candidate before projection.
++	/// openD3: Optional application filter, evaluated for each candidate before projection.
 +	/// Rejected candidates do not occlude eligible elements behind them.
 +	Element* GetElementAtPoint(Vector2f point, const Element* ignore_element = nullptr, Element* element = nullptr,
 +		const Function<bool(Element*)>& hit_test_filter = {}) const;

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Preserved from openQ4-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
+# Preserved from openD3-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
 """Static contract checks for high-refresh player/viewmodel presentation."""
 
 from __future__ import annotations
@@ -130,7 +130,7 @@ def check_source_root(source_root: str) -> dict[str, str]:
     light_cpp = read(f"{source_root}/Light.cpp")
     projectile_cpp = read(f"{source_root}/Projectile.cpp")
 
-    require(game_local_h, "mutable openq4::PresentationClock presentationClock", context)
+    require(game_local_h, "mutable opend3::PresentationClock presentationClock", context)
     require(game_local_h, "presentationClockSample", context)
     clear = function(game_local_cpp, "void idGameLocal::Clear( void )", context)
     require(clear, "presentationClock.Reset();", context)

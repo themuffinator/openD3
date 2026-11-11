@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)).resolve()
+GAME_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)).resolve()
 ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 DECODE = {character: index for index, character in enumerate(ALPHABET)}
 WHITESPACE = " \n\r\t"
@@ -179,7 +179,7 @@ def main() -> None:
     validate_repository(ROOT)
     validate_repository(GAME_ROOT)
     validate_decode_model()
-    validation = read(ROOT / "tools" / "validation" / "openq4_validate.py")
+    validation = read(ROOT / "tools" / "validation" / "opend3_validate.py")
     require(validation, "base64_input_safety.py", "Base64 validation wiring")
     print("base64 input safety: ok")
 

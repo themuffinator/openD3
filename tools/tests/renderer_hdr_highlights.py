@@ -63,7 +63,7 @@ def main() -> int:
         parser.error("installed Quake 4 assets and an evidence directory outside the runtime are required")
     output.mkdir(parents=True, exist_ok=False)
     save = output / "savepath"
-    game = save / "baseoq4"
+    game = save / "baseod3"
     (game / "screenshots").mkdir(parents=True)
     case_id = "hdr-highlights-" + args.backend
     settings = {
@@ -97,7 +97,7 @@ def main() -> int:
     before = gameplay.collect_runtime_files(runtime)
     exit_code, timeout, elapsed = gameplay.launch_and_wait(matrix.find_client_executable(runtime), launch,
         runtime, output / "stdout.txt", output / "stderr.txt", 360)
-    log_path = matrix.find_log(save, "openq4_validation_" + case_id + ".log")
+    log_path = matrix.find_log(save, "opend3_validation_" + case_id + ".log")
     log = log_path.read_text(encoding="utf-8", errors="replace") if log_path else ""
     diagnostics = "\n".join([log, (output / "stdout.txt").read_text(encoding="utf-8", errors="replace"),
         (output / "stderr.txt").read_text(encoding="utf-8", errors="replace")])

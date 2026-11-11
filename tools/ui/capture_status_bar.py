@@ -44,7 +44,7 @@ def main():
         if scenario=='missing': capture.OVERRIDES[scenario]={path:lambda runtime:''}
         if scenario=='invalid': capture.OVERRIDES[scenario]={path:lambda runtime:'{"format":"invalid"}'}
         if scenario=='custom':
-            capture.OVERRIDES[scenario]={'guis/hud.gui':lambda runtime: (ROOT/'content/baseoq4/pak0/guis/hud.gui').read_text()}
+            capture.OVERRIDES[scenario]={'guis/hud.gui':lambda runtime: (ROOT/'content/baseod3/pak0/guis/hud.gui').read_text()}
         result=capture.run(args,scenario);results.append(result)
         log=(ROOT/result['log']).read_text(encoding='utf-8',errors='replace')
         traces=re.findall(r'STATUS_BAR gui=(\S+) health=(\d+) armor=(\d+) ammo=(-?\d+) clip=(-?\d+) maximum=(-?\d+) drawn=(\d+)',log)

@@ -172,38 +172,38 @@ class SystemSettingsCapture(unittest.TestCase):
         args = options()
         setup = capture.interaction_script(args.retained_script, managed=True)
         resume = capture.interaction_script(args.retained_resume_script, managed=True, observe_only=True)
-        self.assertEqual(re.findall(r'^openq4_guiGet "([^"]+)"$', setup, re.MULTILINE), list(FIELDS) * 12)
-        self.assertEqual(re.findall(r'^openq4_guiGet "([^"]+)"$', resume, re.MULTILINE), list(FIELDS))
-        self.assertEqual(re.findall(r'^openq4_retainedGui event "([^"]+)"$', setup, re.MULTILINE),
+        self.assertEqual(re.findall(r'^opend3_guiGet "([^"]+)"$', setup, re.MULTILINE), list(FIELDS) * 12)
+        self.assertEqual(re.findall(r'^opend3_guiGet "([^"]+)"$', resume, re.MULTILINE), list(FIELDS))
+        self.assertEqual(re.findall(r'^opend3_retainedGui event "([^"]+)"$', setup, re.MULTILINE),
                          ['edit', 'apply', 'later', 'defaults', 'revert', 'cancel', 'begin', 'invalid',
                           'device', 'apply', 'revert', 'later', 'external', 'apply', 'cancel', 'begin', 'edit', 'apply', 'later'])
-        self.assertIn('openq4_retainedGui pending "settings.draft.r_brightness" "1.9"', setup)
-        self.assertIn('openq4_retainedGui pending "spare" "9"', setup)
-        self.assertLess(setup.index('openq4_retainedGui save'), setup.index('openq4_retainedGui restore'))
+        self.assertIn('opend3_retainedGui pending "settings.draft.r_brightness" "1.9"', setup)
+        self.assertIn('opend3_retainedGui pending "spare" "9"', setup)
+        self.assertLess(setup.index('opend3_retainedGui save'), setup.index('opend3_retainedGui restore'))
         commands, close, _ = capture.retained_commands(args, 'retained-smoke.q4ui')
         self.assertEqual(commands.count(setup), 1)
         self.assertTrue(commands.startswith('ui_retainedOwnership\ntestGUI "retained-smoke.q4ui"'))
         for part in commands.split('reloadLanguage\n')[1:] + commands.split('vid_restart windowed\n')[1:]:
             self.assertIn(resume, part)
-            self.assertNotIn('openq4_retainedGui event ', part)
-            self.assertNotIn('openq4_retainedGui pending ', part)
-            self.assertNotIn('openq4_retainedGui restore', part)
+            self.assertNotIn('opend3_retainedGui event ', part)
+            self.assertNotIn('opend3_retainedGui pending ', part)
+            self.assertNotIn('opend3_retainedGui restore', part)
         self.assertEqual(close, 'testGUI\nwait 3\nui_retainedOwnership\n')
         source = args.retained_document.read_text(encoding='utf-8')
         model = json.loads(source[source.index('{'):])
         self.assertEqual(model['events']['onActivate'], [{'op': 'action', 'action': 'begin'}])
         self.assertEqual(model['actions']['device']['arguments'], {'r_windowWidth': 960})
         self.assertEqual(model['actions']['invalid']['arguments'], {'r_brightness': 2.5})
-        self.assertFalse(model['extensions']['openq4.fixture']['replacementAcceptance'])
+        self.assertFalse(model['extensions']['opend3.fixture']['replacementAcceptance'])
 
     def test_resume_cannot_hide_setup_replay_or_device_commands(self):
         with tempfile.TemporaryDirectory(dir=ROOT / '.tmp', prefix='ui-system-probe-') as temp:
             path = Path(temp) / 'resume.cfg'
-            for command in ('openq4_retainedGui event "begin"', 'openq4_retainedGui pending "spare" "9"',
-                            'openq4_retainedGui state "settings.draft.r_brightness" "1.9"',
-                            'openq4_retainedGui restore', 'openq4_retainedGui menu accept 1',
+            for command in ('opend3_retainedGui event "begin"', 'opend3_retainedGui pending "spare" "9"',
+                            'opend3_retainedGui state "settings.draft.r_brightness" "1.9"',
+                            'opend3_retainedGui restore', 'opend3_retainedGui menu accept 1',
                             'vid_restart windowed', 'r_brightness 1.5', 'exec "setup.cfg"',
-                            'openq4_guiGet "live"; quit'):
+                            'opend3_guiGet "live"; quit'):
                 path.write_text(command + '\n', encoding='utf-8')
                 with self.subTest(command=command), self.assertRaises(ValueError):
                     capture.interaction_script(path, managed=True, observe_only=True)

@@ -213,7 +213,7 @@ private:
 	idWindow *					bindHandler;
 
 	idStr						source;
-	// openQ4: the file the windows were parsed from (idLegacyHudLayout::DefinitionFor),
+	// openD3: the file the windows were parsed from (idLegacyHudLayout::DefinitionFor),
 	// and whether to parse the named file itself: a save's earlier definition.
 	idStr						definition;
 	bool						literalDefinition = false;
@@ -257,7 +257,7 @@ class idUserInterfaceManagerLocal : public idUserInterfaceManager {
 
 public:
 	void CaptureLegacyText(const char* text, const char* family, float scale, float width, float height,
-		int align, bool clip, std::vector<openq4::ui::HudPrimitive>& output) {
+		int align, bool clip, std::vector<opend3::ui::HudPrimitive>& output) {
 		dc.CaptureLegacyText(text,family,scale,width,height,align,clip,output);
 	}
 
@@ -285,40 +285,40 @@ public:
 	bool TakeSessionRequest( idUserInterface *gui, const char *command, idStr &request );
 	void RunTimeEvents( idUserInterface *gui, int time );
 	void PumpApplicationActions( UI_ApplicationCommandCallback callback, void *context, idUserInterface *only );
-	openq4::ui::TextBrokerContext QueryTextContext(idUserInterface* current,
+	opend3::ui::TextBrokerContext QueryTextContext(idUserInterface* current,
 		std::uint64_t nativeWindow, std::uint64_t nativeSession);
 	uiTextDeliveryResult_t DeliverTextInput(idUserInterface* current,
 		std::uint64_t nativeWindow, std::uint64_t nativeSession,
-		const openq4::ui::TextBrokerContext& authorizedContext,
-		const openq4::ui::TextBrokerDelivery& delivery);
+		const opend3::ui::TextBrokerContext& authorizedContext,
+		const opend3::ui::TextBrokerDelivery& delivery);
 
-bool NativeTextAttach(uiNativeTextRouteProbe_t,void*,const openq4::ui::TextEditorIdentity&,
-	openq4::ui::NativeTextIdentity,openq4::ui::NativeTextEditorBarrier&,std::string&);
-bool NativeTextRefresh(uiNativeTextRouteProbe_t,void*,const openq4::ui::NativeTextEditorBarrier&,
-	openq4::ui::NativeTextEditorView&,std::string&);
-bool NativeTextCurrent(uiNativeTextRouteProbe_t,void*,const openq4::ui::NativeTextEditorBarrier&) noexcept;
-bool NativeTextBegin(uiNativeTextRouteProbe_t,void*,const openq4::ui::NativeTextEditorBarrier&,
-	const openq4::ui::NativeTextCollection&,openq4::ui::NativeTextEditorBarrier&,std::string&);
-bool NativeTextApply(uiNativeTextRouteProbe_t,void*,const openq4::ui::NativeTextEditorBarrier&,
-	const openq4::ui::NativeTextOffer&,openq4::ui::NativeTextEditorReceipt&,std::string&);
-bool NativeTextComplete(uiNativeTextRouteProbe_t,void*,const openq4::ui::NativeTextEditorBarrier&,
-	const openq4::ui::NativeTextCollection&,openq4::ui::NativeTextEditorBarrier&,std::string&);
+bool NativeTextAttach(uiNativeTextRouteProbe_t,void*,const opend3::ui::TextEditorIdentity&,
+	opend3::ui::NativeTextIdentity,opend3::ui::NativeTextEditorBarrier&,std::string&);
+bool NativeTextRefresh(uiNativeTextRouteProbe_t,void*,const opend3::ui::NativeTextEditorBarrier&,
+	opend3::ui::NativeTextEditorView&,std::string&);
+bool NativeTextCurrent(uiNativeTextRouteProbe_t,void*,const opend3::ui::NativeTextEditorBarrier&) noexcept;
+bool NativeTextBegin(uiNativeTextRouteProbe_t,void*,const opend3::ui::NativeTextEditorBarrier&,
+	const opend3::ui::NativeTextCollection&,opend3::ui::NativeTextEditorBarrier&,std::string&);
+bool NativeTextApply(uiNativeTextRouteProbe_t,void*,const opend3::ui::NativeTextEditorBarrier&,
+	const opend3::ui::NativeTextOffer&,opend3::ui::NativeTextEditorReceipt&,std::string&);
+bool NativeTextComplete(uiNativeTextRouteProbe_t,void*,const opend3::ui::NativeTextEditorBarrier&,
+	const opend3::ui::NativeTextCollection&,opend3::ui::NativeTextEditorBarrier&,std::string&);
 #ifndef ID_DEDICATED
-std::unique_ptr<openq4::ui::Interaction::NativeSettlement> NativeTextPrepareSettlement(
-	uiNativeTextRouteProbe_t,void*,const openq4::ui::NativeTextEditorBarrier&,std::string&);
+std::unique_ptr<opend3::ui::Interaction::NativeSettlement> NativeTextPrepareSettlement(
+	uiNativeTextRouteProbe_t,void*,const opend3::ui::NativeTextEditorBarrier&,std::string&);
 #endif
 bool NativeTextPublishSettlement(uiNativeTextRouteProbe_t,void*,
-	openq4::ui::Interaction::NativeSettlement&,openq4::ui::NativeTextEditorReceipt&) noexcept;
-bool NativeTextRetireExact(openq4::ui::NativeTextIdentity,const openq4::ui::TextEditorIdentity&) noexcept;
-openq4::ui::NativeTextPresence NativeTextPresence(openq4::ui::NativeTextIdentity,const openq4::ui::TextEditorIdentity&) const noexcept;
+	opend3::ui::Interaction::NativeSettlement&,opend3::ui::NativeTextEditorReceipt&) noexcept;
+bool NativeTextRetireExact(opend3::ui::NativeTextIdentity,const opend3::ui::TextEditorIdentity&) noexcept;
+opend3::ui::NativeTextPresence NativeTextPresence(opend3::ui::NativeTextIdentity,const opend3::ui::TextEditorIdentity&) const noexcept;
 
 private:
 	bool NativeTextEnter() noexcept;
 public:
 	bool QueryNativeInputAllocation(std::uintptr_t,std::uint64_t&) const noexcept;
 private:
-	idUserInterfaceManaged* NativeTextResolve(uiNativeTextRouteProbe_t,void*,const openq4::ui::TextEditorIdentity&) const noexcept;
-	bool NativeTextCheck(uiNativeTextRouteProbe_t,void*,const openq4::ui::NativeTextEditorBarrier&) const noexcept;
+	idUserInterfaceManaged* NativeTextResolve(uiNativeTextRouteProbe_t,void*,const opend3::ui::TextEditorIdentity&) const noexcept;
+	bool NativeTextCheck(uiNativeTextRouteProbe_t,void*,const opend3::ui::NativeTextEditorBarrier&) const noexcept;
 	void						ReloadGuis( bool all, bool levelLoad );
 	void						RegisterAllocation( idUserInterfaceManaged *gui );
 	void						RegisterGui( idUserInterfaceManaged *gui );

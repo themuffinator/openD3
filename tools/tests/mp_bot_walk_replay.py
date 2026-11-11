@@ -25,7 +25,7 @@ def main() -> int:
     runtime, output = args.runtime_dir.resolve(), args.output_dir.resolve()
     if output.exists() or not (args.basepath / "q4base").is_dir() or not 1024 <= args.port <= 65535:
         parser.error("use a new evidence directory, installed retail assets and an unprivileged port")
-    executable = "openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64"
+    executable = "openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64"
     verify_runtime_is_current(runtime, executable)
     trials = []
     # These first two grounded poses precede the retained unhit match death.
@@ -40,9 +40,9 @@ def main() -> int:
             trials.append({"name": name + ("Jump" if approach else "Walk"),
                 "command": f"bot_probeWalk 1 {state} {target}" + (" 508 580 328.25" if approach else ""),
                 "setup": ["bot_probeHealth 1 111", "set bot_debug 3", "navmesh probe 628 700 328.25"]})
-    paths = [runtime / executable, *sorted((runtime / "baseoq4").glob("game-mp*")),
-        *sorted(runtime.glob("renderer-*")), runtime / "baseoq4/pak0.pk4", runtime / "baseoq4/pak1.pk4",
-        runtime / "baseoq4/mod.json"]
+    paths = [runtime / executable, *sorted((runtime / "baseod3").glob("game-mp*")),
+        *sorted(runtime.glob("renderer-*")), runtime / "baseod3/pak0.pk4", runtime / "baseod3/pak1.pk4",
+        runtime / "baseod3/mod.json"]
     paths = [p for p in paths if p.is_file() and p.suffix not in (".pdb", ".lib", ".exp")]
     def identity():
         return {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}

@@ -14,7 +14,7 @@ import renderer_vulkan_material_programs as authored
 lab = authored.lab
 NAMES = ('clear', 'base', 'below', 'pressure', 'recovered', 'settled', 'reloaded', 'restarted')
 PROGRAM = 'tests/oq4_uniform_pressure.glsl'
-PREFIX = 'textures/openq4/uniform_pressure'
+PREFIX = 'textures/opend3/uniform_pressure'
 EXPECTED = (
     re.compile(r"^WARNING: Vulkan authored GLSL 'tests/oq4_uniform_pressure\.glsl': material uniform ring exhausted; the stage is skipped$"),
     re.compile(r'^WARNING: Vulkan: frame uniform ring overflow \(\d+ \+ \d+ > 4194304; \d+ frames so far\); the draw is skipped$'),
@@ -86,11 +86,11 @@ shaderTexture Image nearest clamp {authored.PREFIX}/pattern
 '''
         files = {f'glprogs/{PROGRAM}vp': authored.VERTEX,
                  f'glprogs/{PROGRAM}fp': authored.FRAGMENT,
-                 'materials/openq4_uniform_pressure.mtr': ''.join(
+                 'materials/opend3_uniform_pressure.mtr': ''.join(
                      f'{PREFIX}/{name}\n{{\ntranslucent\ntwoSided\nnoShadows\n' + stage * count + '}\n'
                      for name, count in (('base', 1), ('many', 128)))}
         for name, content in files.items():
-            target = args.output_dir / 'batch/baseoq4' / name
+            target = args.output_dir / 'batch/baseod3' / name
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding='utf-8')
             fixture_hashes[name] = lab.digest(target)
@@ -104,7 +104,7 @@ shaderTexture Image nearest clamp {authored.PREFIX}/pattern
     original_startup = lab.startup_args
     def startup(cvars, save):
         result = original_startup(cvars, save)
-        with (save / 'baseoq4/autoexec.cfg').open('a') as config:
+        with (save / 'baseod3/autoexec.cfg').open('a') as config:
             for name in ('base', 'many'):
                 config.write(f'touch material {PREFIX}/{name}\n')
         return result
@@ -159,7 +159,7 @@ shaderTexture Image nearest clamp {authored.PREFIX}/pattern
             if name == 'clear':
                 if np.count_nonzero(delta > 2) < 1000: failures.append('specimen is not visible')
             elif np.any(delta): failures.append(name + ': identical draw or recovery differs')
-    log = (args.output_dir / 'batch/baseoq4/logs/openq4.log').read_text(errors='replace')
+    log = (args.output_dir / 'batch/baseod3/logs/opend3.log').read_text(errors='replace')
     diagnostics = original_diagnostics(log)
     expected = [line for line in diagnostics if expected_diagnostic(line)]
     if args.backend == 'vk':
@@ -184,7 +184,7 @@ shaderTexture Image nearest clamp {authored.PREFIX}/pattern
             failures.append('capacity warning outside the pressure interval')
     elif diagnostics: failures.append('OpenGL diagnostics')
     if not report.get('complete') or not report.get('runtimeUnchanged'): failures.append('incomplete or modified runtime')
-    if any(lab.digest(args.output_dir / 'batch/baseoq4' / name) != digest for name, digest in fixture_hashes.items()):
+    if any(lab.digest(args.output_dir / 'batch/baseod3' / name) != digest for name, digest in fixture_hashes.items()):
         failures.append('fixture modified')
     assert lab.digest(Path(__file__)) == source
     shutil.copy2(__file__, args.output_dir / 'harness' / Path(__file__).name)

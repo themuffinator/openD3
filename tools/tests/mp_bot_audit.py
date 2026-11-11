@@ -38,7 +38,7 @@ ROOT = Path(__file__).resolve().parents[2]
 NAMES = ("Cortez", "Rhodes", "Sledge", "Voss", "Strauss", "Kane", "Morris", "Tetzlaff",
          "Marsh", "Hollenbeck", "Sorg", "Gunner")
 
-# player.def's obituary texts and openQ4's liquid deaths (strings/*_openq4.lang).
+# player.def's obituary texts and openD3's liquid deaths (strings/*_opend3.lang).
 OBITUARY_KILLED_BY = (r"^(\S+) was (?:pummeled|machinegunned|hyperblasted|nailed|railed|toasted|killed|"
                       r"telefragged|compressed into a singularity) by (\S+)$")
 OBITUARY_POSSESSIVE = r"^(\S+) (?:ate|rode|accepted) (\S+?)'s (?:boomstick|pineapple|rocket|discharge)$"
@@ -150,7 +150,7 @@ def log_has_fatal(log_path: Path) -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
-    parser.add_argument("--executable-name", default="openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    parser.add_argument("--executable-name", default="openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     parser.add_argument("--basepath", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, default=ROOT / ".tmp/mp-bot-audit")
     parser.add_argument("--gametype", default="DM")
@@ -180,7 +180,7 @@ def main() -> int:
     parser.add_argument("--max-nav-build-ms", type=int,
                         help="maximum one-time navigation generation cost")
     parser.add_argument("--require-uncontended", action="store_true",
-                        help="fail timing qualification if another openQ4 runtime or compiler is observed")
+                        help="fail timing qualification if another openD3 runtime or compiler is observed")
     parser.add_argument("--speeds", action="store_true", help="log com_speeds frame timings")
     parser.add_argument("--set", action="append", default=[], metavar="CVAR=VALUE",
                         help="extra server cvar, e.g. si_warmup=1 for Tourney's bracket; repeatable")
@@ -210,16 +210,16 @@ def main() -> int:
     if not exe.is_file() or not (args.basepath / "q4base").is_dir():
         parser.error("the staged client and retail q4base assets are required")
     verify_runtime_is_current(runtime, args.executable_name)
-    identity_paths = [exe, *sorted((runtime / "baseoq4").glob("game-mp*")),
-                      runtime / "baseoq4/pak0.pk4", runtime / "baseoq4/pak1.pk4"]
+    identity_paths = [exe, *sorted((runtime / "baseod3").glob("game-mp*")),
+                      runtime / "baseod3/pak0.pk4", runtime / "baseod3/pak1.pk4"]
     runtime_identity = {str(path): file_sha256(path)
                         for path in identity_paths
                         if path.is_file() and path.suffix.lower() not in (".pdb", ".lib", ".exp")}
 
     save = output / "save"
-    game = save / "baseoq4"
+    game = save / "baseod3"
     game.mkdir(parents=True, exist_ok=True)
-    log_path = game / "logs/openq4.log"
+    log_path = game / "logs/opend3.log"
     if log_path.exists():
         log_path.unlink()
 
@@ -231,14 +231,14 @@ def main() -> int:
     if args.speeds:
         script.append("set com_speeds 1")
     for _ in range(args.seconds // 5):
-        script += ["waitMsec 5000", "openq4_reportMPState"]
+        script += ["waitMsec 5000", "opend3_reportMPState"]
     finish = (["set com_speeds 0"] if args.speeds else []) + ["echo MP_BOT_AUDIT_END", "quit"]
     finish_path = game / "bot_audit_finish.cfg"
     if args.extend_to_min_sim:
         # The launcher publishes completion only after reading sufficient
         # server time. Missing logs or a stalled clock reach the normal hard
         # timeout and fail; neither can shorten or waive the duration gate.
-        write_script(finish_path, ["waitMsec 5000", "openq4_reportMPState", "exec bot_audit_finish.cfg"])
+        write_script(finish_path, ["waitMsec 5000", "opend3_reportMPState", "exec bot_audit_finish.cfg"])
         script.append("exec bot_audit_finish.cfg")
     else:
         script += finish
@@ -252,7 +252,7 @@ def main() -> int:
         "r_mode": "-1", "r_customWidth": "640", "r_customHeight": "480", "r_renderApi": "gl",
         "r_swapInterval": "0", "com_maxfps": "60", "ui_retained": "0",
         "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(save), "fs_devpath": str(save),
-        "fs_game": "baseoq4", "com_gameMode": "MP", "logFile": "2", "logFileName": "logs/openq4.log",
+        "fs_game": "baseod3", "com_gameMode": "MP", "logFile": "2", "logFileName": "logs/opend3.log",
         "developer": "1", "ui_autoJoin": "1", "ui_spectate": "Play", "ui_name": "BotAuditObserver",
         "net_serverDedicated": "0", "net_LANServer": "1", "net_ip": "127.0.0.1", "net_enableIPv6": "0",
         "net_allowCheats": "1", "sv_cheats": "1",
@@ -297,7 +297,7 @@ def main() -> int:
                 for other in psutil.process_iter(["pid", "name"]):
                     name = (other.info["name"] or "").lower().removesuffix(".exe")
                     if other.info["pid"] != process.pid and (
-                            name.startswith("openq4-client") or name.startswith("openq4-ded") or
+                            name.startswith("opend3-client") or name.startswith("opend3-ded") or
                             name in ("cl", "clang", "clang++", "cc1", "cc1plus", "ninja", "link", "ld", "ld.lld")):
                         competing_workloads.add((other.info["pid"], other.info["name"]))
                         try:
@@ -363,7 +363,7 @@ def main() -> int:
     bot_names = set(NAMES[:args.bots])
     # Console obituaries come from player.def's per-weapon texts ("was railed
     # by", "rode X's rocket", ...), its generic "was killed by" - which names
-    # "world" as the killer of a fall or a kill volume - and openQ4's liquid
+    # "world" as the killer of a fall or a kill volume - and openD3's liquid
     # texts.  Matching the generic text alone counted every death to the map
     # as a kill and missed every weapon kill.
     obituaries = re.findall(OBITUARY_KILLED_BY, sample, re.M) + re.findall(OBITUARY_POSSESSIVE, sample, re.M)

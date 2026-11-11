@@ -5,7 +5,7 @@
 #include <string_view>
 
 namespace Rml { class Element; class ElementDocument; }
-namespace openq4::ui {
+namespace opend3::ui {
 struct TextRun;
 using NumberTextRunQuery = std::function<std::shared_ptr<const TextRun>(std::uintptr_t,std::string_view,float)>;
 using NumberValidationText = std::function<std::string(const NumberSpec&,const NumberEditView&,bool)>;
@@ -51,4 +51,4 @@ private:
 	struct Impl;
 	std::unique_ptr<Impl> impl;
 };
-} // namespace openq4::ui
+} // namespace opend3::ui

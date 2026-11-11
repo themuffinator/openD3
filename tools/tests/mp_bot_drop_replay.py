@@ -31,8 +31,8 @@ def main() -> int:
         dict(name="aligned", command="bot_probeDrop 1 676 1100 .25 0 0 0 652 1076 -183.75 676 1100 .25",
              setup=["set bot_debug 4", "bot_probeHealth 1 21"]),
     ]
-    exe = "openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64"
-    files = [runtime / exe, *[p for p in (runtime / "baseoq4").glob("game-mp*")
+    exe = "openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64"
+    files = [runtime / exe, *[p for p in (runtime / "baseod3").glob("game-mp*")
                              if p.suffix in (".dll", ".so", ".dylib")],
              ROOT / "src/mpgame/bots/Bot.cpp", ROOT / "src/mpgame/gamesys/SysCmds.cpp"]
     identity = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}

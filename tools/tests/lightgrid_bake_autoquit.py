@@ -92,7 +92,7 @@ def main() -> None:
         "successful batch auto-quit path",
     )
     require(
-        read("tools/validation/openq4_validate.py"),
+        read("tools/validation/opend3_validate.py"),
         "lightgrid_bake_autoquit.py",
         "validation runner registration",
     )

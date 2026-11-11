@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">openQ4</string>
-    <string name="app_name_emulator">openQ4 Emulator</string>
+    <string name="app_name" translatable="false">openD3</string>
+    <string name="app_name_emulator">openD3 Emulator</string>
     <string-array name="setup_language_names" translatable="false">
         <item>English</item>
         <item>Deutsch</item>
         <item>Español</item>
         <item>Français</item>
     </string-array>
-    <string name="setup_title">openQ4 setup</string>
+    <string name="setup_title">openD3 setup</string>
     <string name="setup_language">Language</string>
     <string name="setup_sample">Prepare your game files, then return to the front line.</string>
     <string name="setup_continue">Continue</string>
     <string name="setup_data">Game data</string>
-    <string name="setup_data_help">Choose the q4base folder from your own Quake 4 1.4.2 installation. openQ4 copies and checks the archives; the original files stay where they are. A folder inside Downloads or a connected USB drive is suitable. Game data is not included in this app.</string>
+    <string name="setup_data_help">Choose the q4base folder from your own Quake 4 1.4.2 installation. openD3 copies and checks the archives; the original files stay where they are. A folder inside Downloads or a connected USB drive is suitable. Game data is not included in this app.</string>
     <string name="setup_choose">Choose game folder</string>
     <string name="setup_check">Check installed files</string>
     <string name="setup_retry">Retry last operation</string>
@@ -68,8 +68,8 @@
     <string name="setup_export_help">Save a ZIP backup of your saved games, including descriptions and previews, or export diagnostic logs. Choose where to save it in Android’s file picker. The original files stay in the app. Logs may include local paths and server addresses; review them before sharing.</string>
     <string name="setup_export_saves">Back up saved games</string>
     <string name="setup_export_logs">Export logs</string>
-    <string name="setup_saves_filename">openQ4-saves.zip</string>
-    <string name="setup_logs_filename">openQ4-logs.zip</string>
+    <string name="setup_saves_filename">openD3-saves.zip</string>
+    <string name="setup_logs_filename">openD3-logs.zip</string>
     <string name="setup_no_document_picker">The system file picker is unavailable. Enable the Android Files app, then try again.</string>
     <string name="setup_export_picker_cancelled">No export destination was selected. Your files are unchanged.</string>
     <string name="setup_export_no_grant">The destination could not be opened for writing. Retry and choose an accessible location. Your original files are unchanged.</string>

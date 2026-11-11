@@ -1,6 +1,6 @@
-// First-party openQ4 settings view of the sound device. GPL-3.0-or-later.
-#ifndef OPENQ4_SOUND_RESTART_H
-#define OPENQ4_SOUND_RESTART_H
+// First-party openD3 settings view of the sound device. GPL-3.0-or-later.
+#ifndef OPEND3_SOUND_RESTART_H
+#define OPEND3_SOUND_RESTART_H
 
 // What a settings apply can see of the output device. The sound system reads
 // s_numberOfSpeakers and s_useEAXReverb when it opens the device, so a change

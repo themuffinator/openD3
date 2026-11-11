@@ -82,12 +82,6 @@ void idRetainedHud::Precache() {
 			name=data["imageAliases"][name].asString();
 		}
 		if (!precached.insert(name).second) continue;
-		// These three bitmaps are supplied by The Awakening, never by q4base.
-		// Keep their aliases available without loading absent optional media.
-		if ((name=="gfx/guis/hud/icons/gun_corecannon" || name=="gfx/guis/hud/icons/gun_freezegun" ||
-			name=="gfx/guis/hud/icons/gun_flamegun") &&
-			fileSystem->ReadFile((name+".tga").c_str(),nullptr)<0 &&
-			fileSystem->ReadFile(("dds/"+name+".dds").c_str(),nullptr)<0) continue;
 		const bool additive=name.starts_with("q4-add/");
 		RetainedUI_PrecacheImage(additive?name.substr(7):name,additive);
 	}
@@ -117,8 +111,8 @@ bool idRetainedHud::Covers(const char* source) {
 		"guis/vehicles/turret_hud.gui"};
 	return roots.contains(Key(source));
 }
-bool idRetainedHud::Draw(const char* source,std::vector<openq4::ui::HudPrimitive>&& captured) {
-	using namespace openq4::ui;
+bool idRetainedHud::Draw(const char* source,std::vector<opend3::ui::HudPrimitive>&& captured) {
+	using namespace opend3::ui;
 	impl->drawn=false;
 	if (!impl->attempted) {
 		impl->attempted=true;
@@ -204,28 +198,14 @@ idCVar ui_cinematicShake("ui_cinematicShake","1",CVAR_GUI|CVAR_FLOAT|CVAR_ARCHIV
 
 namespace {
 struct RemasteredRoute { const char* source; const char* document; };
-// Awakening's on-foot HUDs carry the stock groups plus their own expansion
-// panels, which their documents cover behind the Marine/Strogg family.
 constexpr RemasteredRoute RemasteredRoutes[]={
 	{"guis/hud.gui","guis/hud/remastered_marine.q4ui"},
-	{"guis/q4xhud.gui","guis/hud/remastered_marine_awakening.q4ui"},
 	{"guis/hud_strogg.gui","guis/hud/remastered_strogg.q4ui"},
-	{"guis/q4xhud_strogg.gui","guis/hud/remastered_strogg_awakening.q4ui"},
 	{"guis/mphud.gui","guis/hud/remastered_mp.q4ui"},
 	// The walker's and the hover tank's shared vehicle HUD (14.12).
 	{"guis/vehicles/hud.gui","guis/hud/remastered_vehicle.q4ui"},
 	// The air-defence cannon's optic, transmission display and HUD prompt (14.12).
 	{"guis/vehicles/airdef_cannon.gui","guis/hud/remastered_airdef.q4ui"},
-	// The Awakening's space cannon with its ship-status panel (14.12).
-	{"guis/vehicles/airassault/turretplayerhud.gui","guis/hud/remastered_turret.q4ui"},
-	// The Awakening's MCC cannon with the MCC's hull readout (14.12).
-	{"guis/vehicles/mcc/cannonplayerhud.gui","guis/hud/remastered_mcc.q4ui"},
-	// openQ4's HUD for the Awakening's chaingun turret: the gunner's gauges and the barrel heat (14.12).
-	{"guis/vehicles/turret_hud.gui","guis/hud/remastered_chaingun_turret.q4ui"},
-	// The Awakening's speeder bike with the m07 race display (14.12).
-	{"guis/vehicles/speederplayerhud.gui","guis/hud/remastered_speeder.q4ui"},
-	// The Awakening's GEV, drawn from scratch since its art never shipped (14.12).
-	{"guis/vehicles/gev_hud.gui","guis/hud/remastered_gev.q4ui"},
 	// Medical Labs' implant activation at the end of stroggification (14.19).
 	{"guis/vehicles/medchange.gui","guis/hud/remastered_medchange.q4ui"},
 	// The objectives display and its notices (14.11).
@@ -271,7 +251,7 @@ struct idRemasteredHud::Impl {
 	};
 	struct ForwardValue { char type='s'; bool valid=false,icon=false,weapon=false; std::string raw,normalized; };
 	std::unordered_map<std::string,ForwardValue,StateKeyHash,StateKeyEqual> types;
-	openq4::ui::HudAmmoReadout ammoReadout;
+	opend3::ui::HudAmmoReadout ammoReadout;
 	bool failed=false,reported=false;
 	// The stock dictionary joins the document on its first draw; until then
 	// forwarded writes are covered by that join, and events wait for it.
@@ -286,13 +266,13 @@ struct idRemasteredHud::Impl {
 	// Named events sent before the document loads (a vehicle's boarding
 	// events precede its HUD's first frame), replayed in order after the join.
 	std::vector<std::string> pending;
-	// Events whose effect outlasts them (extensions.openq4.joinEvents): when a
+	// Events whose effect outlasts them (extensions.opend3.joinEvents): when a
 	// stock window variable holds at the join ("!" inverts the test), the event
 	// replays, so a peer rebuilt mid-game - the layout switched to Classic and
 	// back while a vehicle is crewed or a transmission plays - shows what the
 	// stock windows show. A variable the stock GUI lacks is skipped.
 	std::vector<std::pair<std::string,std::string>> joinEvents;
-	// Layout readbacks (extensions.openq4.readbacks), applied the next frame;
+	// Layout readbacks (extensions.opend3.readbacks), applied the next frame;
 	// none feeds back into the layout it measures:
 	// [state, node, view] sets a boolean state when the node lays out wider
 	// than the view (the chat entry's mark of text before its view);
@@ -321,7 +301,7 @@ struct idRemasteredHud::Impl {
 		forwardMs=eventMs=stateMs=drawMs=unseenMs=prepareMs=readbackMs=0; forwards=events=frames=0; eventCost.clear();
 	}
 	~Impl() { if (gui) uiManager->DeAlloc(gui); }
-	bool ReadTypes(const openq4::ui::DocumentModel& model) {
+	bool ReadTypes(const opend3::ui::DocumentModel& model) {
 		// The generator's join events and readbacks ride in the document's
 		// extension object, which the loaded model keeps as compact JSON.
 		if (!model.extensions.empty()) {
@@ -329,12 +309,12 @@ struct idRemasteredHud::Impl {
 			Json::CharReaderBuilder builder;
 			std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
 			if (!reader->parse(model.extensions.data(),model.extensions.data()+model.extensions.size(),&data,&error) || !data.isObject()) return false;
-			const Json::Value& joins=data["openq4"]["joinEvents"];
+			const Json::Value& joins=data["opend3"]["joinEvents"];
 			if (joins.isArray()) for (const auto& pair:joins) {
 				if (pair.isArray() && pair.size()==2 && pair[0].isString() && pair[1].isString())
 					joinEvents.emplace_back(pair[0].asString(),pair[1].asString());
 			}
-			const Json::Value& measured=data["openq4"]["readbacks"];
+			const Json::Value& measured=data["opend3"]["readbacks"];
 			if (measured.isArray()) for (const auto& entry:measured) {
 				if (!entry.isArray() || (entry.size()!=3 && entry.size()!=5)) continue;
 				bool strings=true;
@@ -479,7 +459,7 @@ bool idRemasteredHud::PresentsChat() {
 void idRemasteredHud::Rejoin() {
 	impl->joined=false;
 	impl->pending.clear();
-	impl->ammoReadout=openq4::ui::HudAmmoReadout();
+	impl->ammoReadout=opend3::ui::HudAmmoReadout();
 	impl->readbackValues.clear();
 	for (auto& audio:impl->audioGraphs) audio.flat=false;
 }
@@ -556,14 +536,14 @@ bool idRemasteredHud::Draw(const idUserInterfaceLocal& legacy,int time) {
 	// below 4:3) canvas, its side screens capped by the HUD width setting, the
 	// safe inset or the window's safe area on every edge and the independent
 	// HUD scale. The canvas fits the safe area, as the document's runtime does.
-	openq4::ui::Viewport viewport;
+	opend3::ui::Viewport viewport;
 	if (!RetainedUI_DefaultViewport(viewport)) return false;
 	viewport.canvasHeight=720; viewport.canvasMinWidth=960; viewport.fitScale=1;
 	const float ratio=viewport.DpRatio();
 	if (!(ratio>0)) return false;
 	static idCVar* const safeInset=cvarSystem->Find("ui_hudSafeInset");
 	static idCVar* const hudScale=cvarSystem->Find("ui_hudScale");
-	const auto layout=openq4::ui::HudLayoutFor(float(viewport.width),float(viewport.height),ratio,
+	const auto layout=opend3::ui::HudLayoutFor(float(viewport.width),float(viewport.height),ratio,
 		{viewport.safeLeft,viewport.safeTop,viewport.safeRight,viewport.safeBottom},ui_hudWidth.GetInteger(),
 		safeInset ? safeInset->GetFloat() : 0.f,hudScale ? hudScale->GetFloat() : 1.f);
 	float top=layout.top,bottom=layout.bottom;
@@ -587,7 +567,7 @@ bool idRemasteredHud::Draw(const idUserInterfaceLocal& legacy,int time) {
 	impl->gui->SetStateFloat("hud.centerScale",layout.centerScale);
 	const idDict& state=legacy.State();
 	if (impl->types.contains("player_totalammo")) {
-		using namespace openq4::ui;
+		using namespace opend3::ui;
 		HudAmmoReadout current;
 		// Rebuilt only when the weapon changes: the readout compares every frame.
 		const char* icon=state.GetString("weapicon"); const char* weapon=state.GetString("player_weapon");
@@ -686,7 +666,7 @@ void idRetainedHud::Precache() {}
 bool idRetainedHud::Eligible(const char*) { return false; }
 bool idRetainedHud::Covers(const char*) { return false; }
 bool idRetainedHud::Usable() const { return false; }
-bool idRetainedHud::Draw(const char*,std::vector<openq4::ui::HudPrimitive>&&) { return false; }
+bool idRetainedHud::Draw(const char*,std::vector<opend3::ui::HudPrimitive>&&) { return false; }
 struct idRemasteredHud::Impl {};
 idRemasteredHud::idRemasteredHud(const char*) {}
 idRemasteredHud::~idRemasteredHud() = default;
@@ -734,32 +714,13 @@ bool idLegacyHudLayout::Fades(const char* source) {
 	return Covers(source) && !SourceIs(source,{"guis/wristcomm.gui","guis/wristcomm_strogg.gui","guis/scoreboard.gui"});
 }
 
-namespace {
-// The Awakening's HUDs and openQ4's definitions of them (tools/ui/build_awakening_legacy_hud.py):
-// on foot, the dropship's guns, the MCC's side gun and the speeder bike.
-struct HudDefinition { const char* source; const char* definition; };
-constexpr HudDefinition AwakeningDefinitions[]={
-	{"guis/q4xhud.gui","guis/openq4/awakening/q4xhud.gui"},
-	{"guis/vehicles/airassault/turretplayerhud.gui","guis/openq4/awakening/turretplayerhud.gui"},
-	{"guis/vehicles/mcc/cannonplayerhud.gui","guis/openq4/awakening/cannonplayerhud.gui"},
-	{"guis/vehicles/speederplayerhud.gui","guis/openq4/awakening/speederplayerhud.gui"},
-};
-}
-
 bool idLegacyHudLayout::Scales(const char* source) {
 	if (SourceIs(source,{"guis/hud.gui","guis/hud_strogg.gui","guis/mphud.gui","guis/vehicles/hud.gui"})) return true;
-	// By definition: the expansion's own scripts name no scale anchors.
-	for (const HudDefinition& entry:AwakeningDefinitions) if (SourceIs(source,{entry.definition})) return true;
 	return false;
 }
 
 const char* idLegacyHudLayout::DefinitionFor(const char* source) {
-	for (const HudDefinition& entry:AwakeningDefinitions) {
-		if (!SourceIs(source,{entry.source})) continue;
-		// Only beside the expansion's own HUD, whose content the definition draws.
-		if (ModOwns(source) || fileSystem->ReadFile(source,nullptr)<0 || fileSystem->ReadFile(entry.definition,nullptr)<0) return source;
-		return entry.definition;
-	}
+	// No stock HUD is replaced by a laid-out definition of it.
 	return source;
 }
 
@@ -767,7 +728,7 @@ bool idLegacyHudLayout::ModOwns(const char* source) {
 	if (!source || !source[0]) return false;
 	for (const char* cvar:{"fs_game","fs_game_base"}) {
 		const char* mod=cvarSystem->GetCVarString(cvar);
-		if (!mod[0] || !idStr::Icmp(mod,"baseoq4") || !idStr::Icmp(mod,"q4base") || !idStr::Icmp(mod,"q4xbase")) continue;
+		if (!mod[0] || !idStr::Icmp(mod,OPEND3_GAMEDIR) || !idStr::Icmp(mod,BASE_GAMEDIR) || !idStr::Icmp(mod,OPEND3_EXPANSION_GAMEDIR)) continue;
 		idFile* file=fileSystem->OpenFileRead(source,false,mod);
 		if (file) { fileSystem->CloseFile(file); return true; }
 	}
@@ -811,7 +772,7 @@ void idLegacyHudLayout::Publish(idUserInterfaceLocal& gui,const Settings& settin
 void idLegacyHudLayout::Edges(float xExpand,float yExpand,float edges[4],float scale,float* centerScale) {
 	// The view as the Remastered documents' dp (1.5 dp a unit on the 720 dp
 	// high, at least 960 dp wide canvas), so both interfaces share one rule.
-	const auto layout=openq4::ui::HudLayoutFor((640+2*xExpand)*1.5f,(480+2*yExpand)*1.5f,1.f,{0,0,0,0},
+	const auto layout=opend3::ui::HudLayoutFor((640+2*xExpand)*1.5f,(480+2*yExpand)*1.5f,1.f,{0,0,0,0},
 		hudWidthVar.Integer(1),hudInsetVar.Float(0),scale);
 	edges[0]=xExpand-layout.left/1.5f;
 	edges[1]=yExpand-layout.top/1.5f;
@@ -983,7 +944,7 @@ bool idUserInterfaceLocal::DrawRetainedHud() {
 	// A mod's own GUI, or a missing catalog, never draws through the bridge:
 	// capturing its whole frame only to discard it doubled the HUD's draw.
 	if (!retainedHud->Usable()) return false;
-	std::vector<openq4::ui::HudPrimitive> items;
+	std::vector<opend3::ui::HudPrimitive> items;
 	uiManagerLocal.dc.BeginHudCapture(items);
 	uiManagerLocal.dc.PushClipRect(uiManagerLocal.screenRect);
 	desktop->Redraw(0,0);
@@ -1001,7 +962,7 @@ void idUserInterfaceManagerLocal::BuildHudText(const char* text,float scale,floa
 	idList<uiHudPrimitive_t>& output) {
 	output.Clear();
 	if (!text || !text[0] || scale <= 0 || width <= 4 || height <= 4) return;
-	std::vector<openq4::ui::HudPrimitive> glyphs;
+	std::vector<opend3::ui::HudPrimitive> glyphs;
 	CaptureLegacyText(text,"fonts/lowpixel",scale,width,height,1,true,glyphs);
 	for (const auto& glyph : glyphs) {
 		uiHudPrimitive_t item;
@@ -1021,11 +982,11 @@ bool idUserInterfaceManagerLocal::DrawHudPrimitives(const char* source,const idL
 		if (generatedHuds.Num()>=16) return false;
 		index=generatedHudNames.Append(source); generatedHuds.Append(new idRetainedHud);
 	}
-	std::vector<openq4::ui::HudPrimitive> items;
+	std::vector<opend3::ui::HudPrimitive> items;
 	items.reserve(packet.Num());
 	for (int i=0;i<packet.Num();++i) {
 		const auto& p=packet[i]; if (!p.material) return false;
-		openq4::ui::HudPrimitive item;item.material=p.material->GetName();item.glyph=p.glyph;
+		opend3::ui::HudPrimitive item;item.material=p.material->GetName();item.glyph=p.glyph;
 		for (int n=0;n<4;++n) {
 			item.quad[2*n]=p.points[n].x;item.quad[2*n+1]=p.points[n].y;
 			item.colour[n]=p.color[n];item.uv[n]=p.uv[n];

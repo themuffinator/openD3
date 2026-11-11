@@ -27,7 +27,7 @@ from mp_round_remote_smoke import read_log, verify_runtime_is_current, write_scr
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "build"))
-from openq4_pak import OPENQ4_CLIENT_ONLY_PACK_NAMES, OPENQ4_CONTENT_PACKS  # noqa: E402
+from opend3_pak import OPEND3_CLIENT_ONLY_PACK_NAMES, OPEND3_CONTENT_PACKS  # noqa: E402
 
 SUFFIX = ".exe" if os.name == "nt" else ""
 MODULE = ".dll" if os.name == "nt" else ".so"
@@ -54,8 +54,8 @@ def link_or_copy(source: Path, destination: Path) -> None:
 def stage_core_server(package: Path, server_runtime: Path) -> list[str]:
     """Refresh the core-only server runtime: the dedicated server, its game module and pak0."""
     server_runtime.mkdir(parents=True, exist_ok=True)
-    wanted = [Path(f"openQ4-ded_x64{SUFFIX}"), Path("baseoq4/mod.json"), Path(f"baseoq4/game-mp_x64{MODULE}")]
-    wanted += [Path("baseoq4") / spec.name for spec in OPENQ4_CONTENT_PACKS if not spec.client_only]
+    wanted = [Path(f"openD3-ded_x64{SUFFIX}"), Path("baseod3/mod.json"), Path(f"baseod3/game-mp_x64{MODULE}")]
+    wanted += [Path("baseod3") / spec.name for spec in OPEND3_CONTENT_PACKS if not spec.client_only]
     if os.name == "nt":
         wanted += [path.relative_to(package) for path in package.glob("*.dll") if path.name.lower() == "openal32.dll"]
     for relative in wanted:
@@ -63,8 +63,8 @@ def stage_core_server(package: Path, server_runtime: Path) -> list[str]:
         if not source.is_file():
             raise RuntimeError(f"staged package is missing {relative}")
         link_or_copy(source, server_runtime / relative)
-    for name in OPENQ4_CLIENT_ONLY_PACK_NAMES:
-        stale = server_runtime / "baseoq4" / name
+    for name in OPEND3_CLIENT_ONLY_PACK_NAMES:
+        stale = server_runtime / "baseod3" / name
         if stale.exists():
             stale.unlink()
     return [relative.as_posix() for relative in wanted]
@@ -88,9 +88,9 @@ def main() -> int:
     verify_runtime_is_current(package)
     if not (assets / "q4base").is_dir():
         parser.error("the retail Quake 4 assets are required")
-    client_exe = package / f"openQ4-client_x64{SUFFIX}"
-    for name in OPENQ4_CLIENT_ONLY_PACK_NAMES:
-        if not (package / "baseoq4" / name).is_file():
+    client_exe = package / f"openD3-client_x64{SUFFIX}"
+    for name in OPEND3_CLIENT_ONLY_PACK_NAMES:
+        if not (package / "baseod3" / name).is_file():
             parser.error(f"the staged client package is missing {name}")
     output.mkdir(parents=True, exist_ok=False)
 
@@ -108,16 +108,16 @@ def main() -> int:
         path: digest(server_runtime / path) for path in report["server_files"]
     }
     report["client_pack_sha256"] = {
-        spec.name: digest(package / "baseoq4" / spec.name) for spec in OPENQ4_CONTENT_PACKS
+        spec.name: digest(package / "baseod3" / spec.name) for spec in OPEND3_CONTENT_PACKS
     }
 
-    games = {role: output / role / "baseoq4" for role in ("server", "client")}
-    logs = {role: game / "logs/openq4.log" for role, game in games.items()}
+    games = {role: output / role / "baseod3" for role in ("server", "client")}
+    logs = {role: game / "logs/opend3.log" for role, game in games.items()}
     for game in games.values():
         game.mkdir(parents=True)
     common = {
-        "fs_basepath": str(assets), "fs_game": "baseoq4", "com_gameMode": "MP", "si_gameType": "DM",
-        "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1", "s_noSound": "1",
+        "fs_basepath": str(assets), "fs_game": "baseod3", "com_gameMode": "MP", "si_gameType": "DM",
+        "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1", "s_noSound": "1",
         "in_mouse": "0", "in_joystick": "0", "com_skipLoadingContinue": "1", "net_allowCheats": "1",
         "net_LANServer": "1", "net_clientDownload": "0", "net_enableIPv4": "1", "net_enableIPv6": "0",
         "net_ip": "127.0.0.1",
@@ -186,16 +186,16 @@ def main() -> int:
                       net_port=str(args.port), net_serverDedicated="1", si_pure="1", si_name="PKG-02 core-only server",
                       si_maxPlayers="4", bot_minPlayers="0", si_warmup="0", si_timeLimit="0", si_fragLimit="0",
                       g_autoExecAfterMapLoad="split_server_start.cfg", g_autoExecAfterMapLoadDelayMs="500")
-        launch("server", server_runtime / f"openQ4-ded_x64{SUFFIX}", server_runtime, server, ["+spawnServer", args.map])
+        launch("server", server_runtime / f"openD3-ded_x64{SUFFIX}", server_runtime, server, ["+spawnServer", args.map])
         server_text = wait("server startup", lambda t: "\nSPLIT_SERVER_READY" in t["server"], args.startup_timeout)["server"]
         check("server spawned without client-only packs", f"Server spawned on port {args.port}." in server_text)
-        for spec in OPENQ4_CONTENT_PACKS:
+        for spec in OPEND3_CONTENT_PACKS:
             if spec.client_only:
-                line = f"Client-only pk4 baseoq4/{spec.name} ({spec.contents}) is not installed; this server does not need it"
+                line = f"Client-only pk4 baseod3/{spec.name} ({spec.contents}) is not installed; this server does not need it"
                 check(f"server reports {spec.name} as not needed", line in server_text)
         check("server never mounts a client-only pack",
-              not any(f"baseoq4/{name}" in line and "Loaded pk4" in line
-                      for line in server_text.splitlines() for name in OPENQ4_CLIENT_ONLY_PACK_NAMES))
+              not any(f"baseod3/{name}" in line and "Loaded pk4" in line
+                      for line in server_text.splitlines() for name in OPEND3_CLIENT_ONLY_PACK_NAMES))
 
         client = dict(common, fs_savepath=str(games["client"].parent), fs_devpath=str(games["client"].parent),
                       net_port=str(args.client_port), ui_name="SplitPlayer", ui_autoJoin="1", ui_spectate="Play",
@@ -212,7 +212,7 @@ def main() -> int:
         wait("client map load", lambda t: t["client"].count("\nSPLIT_MAP_LOADED") > loads)
         deadline = time.monotonic() + args.timeout
         while True:
-            state = step("player state", ["openq4_reportMPState"]).rsplit("\nMP_STATE ", 1)[-1]
+            state = step("player state", ["opend3_reportMPState"]).rsplit("\nMP_STATE ", 1)[-1]
             if ACTIVE.search(state):
                 break
             if time.monotonic() >= deadline:
@@ -221,8 +221,8 @@ def main() -> int:
         check("client joined the pure core-only server", True)
 
         paths = step("search path", ["path"])
-        for spec in OPENQ4_CONTENT_PACKS:
-            pattern = re.compile(re.escape(f"baseoq4/{spec.name}") + r"[^\n]*\n\s+(on|not on) the pure list")
+        for spec in OPEND3_CONTENT_PACKS:
+            pattern = re.compile(re.escape(f"baseod3/{spec.name}") + r"[^\n]*\n\s+(on|not on) the pure list")
             found = pattern.search(paths.replace("\\", "/"))
             expected = "not on" if spec.client_only else "on"
             check(f"client keeps {spec.name} {expected} the pure list", bool(found) and found.group(1) == expected,

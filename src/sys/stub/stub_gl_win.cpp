@@ -405,8 +405,8 @@ void QGL_Shutdown( void ) {
 
 // GLEW SDL3-loader hook: the dedicated GLEW flavor resolves through this;
 // glewInit is never called on a dedicated server
-typedef void ( *openQ4GlewProcAddress_t ) (void);
-extern "C" openQ4GlewProcAddress_t OpenQ4_GlewGetProcAddress(const unsigned char *name) {
+typedef void ( *openD3GlewProcAddress_t ) (void);
+extern "C" openD3GlewProcAddress_t openD3_GlewGetProcAddress(const unsigned char *name) {
 	(void)name;
 	return NULL;
 }

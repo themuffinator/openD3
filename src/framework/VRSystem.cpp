@@ -7,7 +7,7 @@
 	VR settings and the null VR system.
 
 	Every engine target registers the vr_* settings so configs stay portable
-	between builds. Clients built with OpenXR (OPENQ4_OPENXR) run the
+	between builds. Clients built with OpenXR (OPEND3_OPENXR) run the
 	implementation in src/sys/openxr; everything else, dedicated servers
 	included, runs the null system, which never activates.
 	See docs/dev/archive/2026-10-18/plans/2026-10-02-openxr-vr.md.
@@ -127,7 +127,7 @@ public:
 	}
 };
 
-#if defined( OPENQ4_OPENXR )
+#if defined( OPEND3_OPENXR )
 idVRSystem *vrSystem = VR_GetOpenXRSystem();
 #else
 static idVRSystemNull vrSystemNull;

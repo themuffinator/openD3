@@ -1,11 +1,11 @@
-// Copyright (C) 2026 openQ4 contributors
+// Copyright (C) 2026 openD3 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Stand-ins for the engine types the production idSoundOggStream uses
 // (AL_SoundSample.h/.cpp extracted by audio_streaming.py and
 // audio_stream_budget.py). The job system defers every accepted list until the
 // test runs it, so a block is observably pending, and records cancellation.
-#ifndef OPENQ4_TEST_SOUND_STREAM_JOB_STUBS_H
-#define OPENQ4_TEST_SOUND_STREAM_JOB_STUBS_H
+#ifndef OPEND3_TEST_SOUND_STREAM_JOB_STUBS_H
+#define OPEND3_TEST_SOUND_STREAM_JOB_STUBS_H
 
 #include <algorithm>
 #include <cstddef>

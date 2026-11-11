@@ -171,7 +171,7 @@ static bool TryStartDevice(const char* backend) {
     return true;
 }
 static void R_InitOpenGL() {
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
     throw std::runtime_error("Vulkan restart entered the OpenGL initializer");
 #else
     StartDevice("opengl");
@@ -343,7 +343,7 @@ static void ColdInitialize() {
         assert(events.empty() && !deviceStarts && r_initialRendererDevicePending && !R_GetRecoverableWindowRequest());
     }
     std::vector<int> refused{1,2,3};
-#ifndef OPENQ4_RENDERER_VK_MODULE
+#ifndef OPEND3_RENDERER_VK_MODULE
     refused.push_back(6);
 #endif
     for(int code:refused){
@@ -380,7 +380,7 @@ static void ColdInitialize() {
     std::puts("Strict first device: Init-only gate, immutable request, preflight, GL/VK failure cleanup, explicit cold retry, no world/font/action replay or false present passed");
 }
 int main() {
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
     const char* backend="vulkan";
 #else
     const char* backend="opengl";
@@ -417,7 +417,7 @@ int main() {
             assert(Position(backend)<Position("reload"));
             assert(Position("reload")<Position("fonts-init"));
             assert(Position("fonts-init")<Position("font-atlas"));
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
             assert(Position("vulkan")<Position("materials-init"));
             assert(Position("materials-init")<Position("vertex-cache"));
             assert(Position("vertex-cache")<Position("R_InitFrameData"));
@@ -437,7 +437,7 @@ int main() {
     command.next=&command;
     assert(!R_TryFullVidRestart(&request,error,sizeof(error)) && events.empty());command.next=nullptr;
     std::vector<int> refusals{1,2,3,4};
-#ifndef OPENQ4_RENDERER_VK_MODULE
+#ifndef OPEND3_RENDERER_VK_MODULE
     refusals.push_back(5);refusals.push_back(6);
 #endif
     for(int refused:refusals) {
@@ -808,7 +808,7 @@ def main():
         test_source.write_text(code, encoding='utf-8')
         for backend in ('opengl', 'vulkan'):
             binary = Path(temp) / f'{backend}.exe'
-            define = ['-DOPENQ4_RENDERER_VK_MODULE'] if backend == 'vulkan' else []
+            define = ['-DOPEND3_RENDERER_VK_MODULE'] if backend == 'vulkan' else []
             subprocess.run([compiler, '-std=c++17', *define, '-I', str(ROOT), str(test_source), '-o', str(binary)], check=True, env=env)
             subprocess.run([str(binary)], check=True, env=env)
         context_source = Path(temp) / 'context.cpp'

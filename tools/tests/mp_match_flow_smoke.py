@@ -19,7 +19,7 @@ ROUND_MODES = ("Clan Arena", "Freeze Tag", "Red Rover")
 
 
 def checkpoint(name: str, shot: bool = True) -> list[str]:
-    return [f"echo MP_FLOW_{name.upper()}", "openq4_reportMPState",
+    return [f"echo MP_FLOW_{name.upper()}", "opend3_reportMPState",
             *([f'screenshot "screenshots/{name.lower()}.tga"'] if shot else [])]
 
 
@@ -58,13 +58,13 @@ def main() -> int:
     runtime, output = args.runtime_dir.resolve(), args.output_dir.resolve()
     verify_runtime_is_current(runtime, getattr(args, "executable_name", ""))
     suffix = ".exe" if os.name == "nt" else ""
-    exe = runtime / (args.executable_name or f"openQ4-client_x64{suffix}")
+    exe = runtime / (args.executable_name or f"openD3-client_x64{suffix}")
     if not exe.is_file() or not args.basepath.is_dir():
         parser.error("the runtime executable and installed Quake 4 assets are required")
     savepath = output / "save"
-    gamepath = savepath / "baseoq4"
+    gamepath = savepath / "baseod3"
     gamepath.mkdir(parents=True, exist_ok=True)
-    take_flag = "teleport " + ("openq4_neutral_flag" if "One Flag" in args.gametype else "mp_ctf_strogg_flag_1")
+    take_flag = "teleport " + ("opend3_neutral_flag" if "One Flag" in args.gametype else "mp_ctf_strogg_flag_1")
     # A timed match ends in review only with a sole leader: stock Quake 4
     # (rvDMGameState::Run) enters sudden death when the clock expires with
     # players tied for first. In free-for-all DM a human suicide leaves the two
@@ -99,7 +99,7 @@ def main() -> int:
         "notready", "waitMsec 5000",
         *checkpoint("cancelled"),
         "ready", "waitMsec 9000",
-        "openq4_assertMPClientActive", *checkpoint("live"),
+        "opend3_assertMPClientActive", *checkpoint("live"),
         *(["script \"$player3.setOrigin('-4480 5392 8')\"", "wait 30", "kill 2", "wait 90",
            *checkpoint("frozen"), "setviewpos -4470 5355 72 180",
            "wait 240", *checkpoint("thawed")] if args.exercise_rescue else []),
@@ -110,13 +110,13 @@ def main() -> int:
     cvars = {
         "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
         "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(savepath),
-        "fs_devpath": str(savepath), "fs_game": "baseoq4", "com_gameMode": "MP",
+        "fs_devpath": str(savepath), "fs_game": "baseod3", "com_gameMode": "MP",
         "r_fullscreen": "0", "r_borderless": "0", "r_fullscreenDesktop": "0",
         "r_borderlessDefaultMigrated": "1", "r_mode": "-1", "r_customWidth": "960",
         "r_customHeight": "540", "r_windowWidth": "960", "r_windowHeight": "540",
         "r_hiddenWindow": "1", "in_mouse": "0", "in_joystick": "0", "s_noSound": "1",
         "r_renderApi": "gl", "com_maxfps": "60", "r_swapInterval": "0",
-        "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1",
+        "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1",
         "net_port": "28831", "net_serverDedicated": "0", "net_LANServer": "1",
         "si_pure": "0", "si_maxPlayers": "8", "si_gameType": args.gametype,
         "si_warmup": "1", "si_useReady": "1", "si_minPlayers": "4" if args.gametype == "Tourney" else "3",
@@ -149,7 +149,7 @@ def main() -> int:
             process.kill()  # Only the process launched by this test.
             process.wait()
             code = -1
-    log_path = gamepath / "logs/openq4.log"
+    log_path = gamepath / "logs/opend3.log"
     log = log_path.read_text(encoding="utf-8", errors="replace") if log_path.is_file() else ""
     phases = [(int(a), int(b), int(t)) for a, b, t in re.findall(r"MP match phase: (\d+) -> (\d+) at (\d+)", log)]
     expected = [(0, 1), (1, 2), (2, 1), (1, 2), (2, 3), (3, 5), (5, 6), (6, 1)]

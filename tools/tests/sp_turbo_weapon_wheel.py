@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT))
+GAME = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT))
 
 
 def read(path):
@@ -79,7 +79,7 @@ struct Game {bool isMultiplayer=false,isClient=false;int time=1000;UserInfo user
 struct Common {float seconds=1.0f/60;float GetUserCmdSec()const{return seconds;}
     void Printf(const char*,...){} } commonObject,*common=&commonObject;
 @TURBO@
-static bool OpenQ4_TurboWeaponReloadsDisabled(){return OpenQ4_TurboModeActive();}
+static bool openD3_TurboWeaponReloadsDisabled(){return openD3_TurboModeActive();}
 struct Inventory {
     int ammo=40;
     int HasAmmo(int,int required)const{return ammo<0?-1:(required?ammo/required:-1);}
@@ -196,9 +196,9 @@ int main() {
     {float offset,fit;WeaponWheelPlacement(offset,fit);assert(std::fabs(offset-345.6f)<.001f && fit==1);}
     // Off is authoritative even if a module-local handle still says On.
     vars.SetCVarBool("g_turboMode",false);g_turboMode.v=1;
-    assert(!OpenQ4_TurboModeActive());
-    vars.SetCVarBool("g_turboMode",true);assert(OpenQ4_TurboModeActive());
-    gameLocal.isMultiplayer=true;assert(!OpenQ4_TurboModeActive());gameLocal.isMultiplayer=false;
+    assert(!openD3_TurboModeActive());
+    vars.SetCVarBool("g_turboMode",true);assert(openD3_TurboModeActive());
+    gameLocal.isMultiplayer=true;assert(!openD3_TurboModeActive());gameLocal.isMultiplayer=false;
     rvWeaponShotgun w;stateParms_t p;p.stage=1;w.ammoClip=0;w.wsfl.attack=true;
     // Shoot more than a full magazine, including with an initially empty clip.
     for(int n=0;n<24;++n) {
@@ -226,7 +226,7 @@ int main() {
         idCmdArgs reloadArgs;idStr normalizedMapName("game/airdefense1"),normalizedEntityFilter(filter);bool devmap=true;
         @CAPTURE@
         vars.SetCVarInteger("g_turboMode",1-turbo);vars.SetCVarInteger("g_skill",1);
-        Session_openQ4StartSingleplayer_f(reloadArgs);
+        Session_openD3StartSingleplayer_f(reloadArgs);
         assert(sessLocal.started && sessLocal.turbo==bool(turbo) && sessLocal.skill==4 && sessLocal.dev);
         assert(sessLocal.map=="game/airdefense1" && sessLocal.filter==filter);
     }
@@ -336,16 +336,16 @@ def main():
                       "stateResult_t rvWeaponRocketLauncher::State_Rocket_Reload")
     rocket_guard = rocket.split("{", 1)[1].split("\tenum", 1)[0]
     capture = function(session, "void idSessionLocal::StartNewGame(")
-    capture = capture[capture.index('\t\treloadArgs.AppendArg( "openq4_startSingleplayer" );'):capture.index('\t\tcmdSystem->SetupReloadGameModule')]
+    capture = capture[capture.index('\t\treloadArgs.AppendArg( "opend3_startSingleplayer" );'):capture.index('\t\tcmdSystem->SetupReloadGameModule')]
     substitutions = {
-        "TURBO": function(read(GAME / "src/game/Game_local.cpp"), "bool OpenQ4_TurboModeActive("),
+        "TURBO": function(read(GAME / "src/game/Game_local.cpp"), "bool openD3_TurboModeActive("),
         "WEAPON": "\n".join(function(weapon, signature) for signature in (
             "int rvWeapon::AmmoAvailable(", "int rvWeapon::AmmoInClip(", "int\trvWeapon::ClipSize(",
             "void rvWeapon::UseAmmo", "void rvWeapon::Reload(", "bool rvWeapon::AutoReload", "bool rvWeapon::SkipReload")),
         "SHOTGUN": "\n".join(function(shotgun, "stateResult_t rvWeaponShotgun::" + method) for method in ("State_Idle(", "State_Fire(")),
         "GUARDS": "\n".join(guards), "GUARD_TESTS": "\n".join(guard_tests), "CAPTURE": capture,
         "ROCKET_GUARD": f"int RocketReload(const stateParms_t&) {{ {rocket_guard} return -1; }}",
-        "HANDOFF": function(session, "static void Session_openQ4StartSingleplayer_f("),
+        "HANDOFF": function(session, "static void Session_openD3StartSingleplayer_f("),
         "MENU_OPTION": function(read(ROOT / "src/framework/Session_menu.cpp"), "static int MainMenuGetNewGameOption("),
         "WHEEL": function(player, "static void WeaponWheelPlacement(") + "\n" +
                  function(read(GAME / "src/game/gamesys/WeaponWheelLegacy.inl"), "float WeaponWheelNormalizeAngle(") + "\n" +

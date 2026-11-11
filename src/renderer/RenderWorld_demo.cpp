@@ -258,7 +258,7 @@ bool R_ReadDemoRenderViewData( idDemoFile *demo, renderView_t *renderView, int r
 		}
 	}
 
-	if ( renderdemoVersion >= OPENQ4_RENDERDEMO_RENDER_VIEW_DECLS_VERSION ) {
+	if ( renderdemoVersion >= OPEND3_RENDERDEMO_RENDER_VIEW_DECLS_VERSION ) {
 		bool hasGlobalMaterial = false;
 		if ( !R_DemoReadBool( demo, hasGlobalMaterial ) ) {
 			return false;
@@ -638,7 +638,7 @@ bool idRenderWorldLocal::ReadDemoJoints( qhandle_t handle, idJointMat *joints, i
 	idDemoFile *demo = session->readDemo;
 	const int numWords = numJoints * DEMO_JOINT_WORDS;
 
-	if ( session->renderdemoVersion < OPENQ4_RENDERDEMO_JOINT_PREDICTION_VERSION ) {
+	if ( session->renderdemoVersion < OPEND3_RENDERDEMO_JOINT_PREDICTION_VERSION ) {
 		for ( int i = 0; i < numJoints; i++ ) {
 			float *data = joints[i].ToFloatPtr();
 			for ( int j = 0; j < DEMO_JOINT_WORDS; j++ ) {
@@ -761,7 +761,7 @@ bool		idRenderWorldLocal::ProcessDemoCommand( idDemoFile *readDemo, renderView_t
 		// a corrupt or truncated demo may not include a terminator
 		header.mapname[sizeof( header.mapname ) - 1] = '\0';
 		// the internal version value got replaced by DS_VERSION at toplevel
-		if ( header.version < 4 || header.version > OPENQ4_RENDERDEMO_CURRENT_VERSION ) {
+		if ( header.version < 4 || header.version > OPEND3_RENDERDEMO_CURRENT_VERSION ) {
 			return R_RejectRenderDemo( readDemo, va( "unsupported internal version %d", header.version ) );
 		}
 
@@ -927,7 +927,7 @@ bool		idRenderWorldLocal::ProcessDemoCommand( idDemoFile *readDemo, renderView_t
 		return true;
 
 	case DC_GUI_SURFACE:
-		if ( session->renderdemoVersion < OPENQ4_RENDERDEMO_SESSION_VERSION ) {
+		if ( session->renderdemoVersion < OPEND3_RENDERDEMO_SESSION_VERSION ) {
 			return R_RejectRenderDemo( readDemo, "in-world GUI record before render demo v11" );
 		}
 		if ( !ReadGuiSurface() ) {
@@ -963,7 +963,7 @@ void	idRenderWorldLocal::WriteLoadMap() {
 	demoHeader_t	header;
 	memset( &header, 0, sizeof( header ) );
 	strncpy( header.mapname, mapName.c_str(), sizeof( header.mapname ) - 1 );
-	header.version = OPENQ4_RENDERDEMO_CURRENT_VERSION;
+	header.version = OPEND3_RENDERDEMO_CURRENT_VERSION;
 	header.sizeofRenderEntity = sizeof( renderEntity_t );
 	header.sizeofRenderLight = sizeof( renderLight_t );
 	session->writeDemo->WriteInt( header.version );
@@ -1236,7 +1236,7 @@ bool	idRenderWorldLocal::ReadRenderLight( ) {
 		 !R_DemoReadVec3( session->readDemo, light.end ) ) {
 		return false;
 	}
-	if ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_POINTER_FREE_VERSION ) {
+	if ( session->renderdemoVersion >= OPEND3_RENDERDEMO_POINTER_FREE_VERSION ) {
 		if ( !R_DemoReadBool( session->readDemo, hasPrelightModel ) ) {
 			return false;
 		}
@@ -1250,7 +1250,7 @@ bool	idRenderWorldLocal::ReadRenderLight( ) {
 	if ( !R_DemoReadInt( session->readDemo, light.lightId ) ) {
 		return false;
 	}
-	if ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_POINTER_FREE_VERSION ) {
+	if ( session->renderdemoVersion >= OPEND3_RENDERDEMO_POINTER_FREE_VERSION ) {
 		if ( !R_DemoReadBool( session->readDemo, hasShader ) ) {
 			return false;
 		}
@@ -1266,7 +1266,7 @@ bool	idRenderWorldLocal::ReadRenderLight( ) {
 			return false;
 		}
 	}
-	if ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_ENTITY_EXTRAS_VERSION ) {
+	if ( session->renderdemoVersion >= OPEND3_RENDERDEMO_ENTITY_EXTRAS_VERSION ) {
 		if ( !R_DemoReadInt( session->readDemo, light.referenceSoundHandle ) ) {
 			return false;
 		}
@@ -1287,7 +1287,7 @@ bool	idRenderWorldLocal::ReadRenderLight( ) {
 			return false;
 		}
 	}
-	if ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_LIGHT_EXTRAS_VERSION ) {
+	if ( session->renderdemoVersion >= OPEND3_RENDERDEMO_LIGHT_EXTRAS_VERSION ) {
 		if ( !R_DemoReadBool( session->readDemo, light.noDynamicShadows ) ||
 			 !R_DemoReadBool( session->readDemo, light.globalLight ) ||
 			 !R_DemoReadFloat( session->readDemo, light.detailLevel ) ) {
@@ -1504,7 +1504,7 @@ bool	idRenderWorldLocal::ReadRenderEntity() {
 		return R_RejectRenderDemo( session->readDemo, va( "entity index %d is out of range", index ) );
 	}
 
-	if ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_POINTER_FREE_VERSION ) {
+	if ( session->renderdemoVersion >= OPEND3_RENDERDEMO_POINTER_FREE_VERSION ) {
 		if ( !R_DemoReadBool( session->readDemo, hasModel ) ) {
 			return false;
 		}
@@ -1521,7 +1521,7 @@ bool	idRenderWorldLocal::ReadRenderEntity() {
 		 !R_DemoReadVec3( session->readDemo, ent.bounds[1] ) ) {
 		return false;
 	}
-	if ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_POINTER_FREE_VERSION ) {
+	if ( session->renderdemoVersion >= OPEND3_RENDERDEMO_POINTER_FREE_VERSION ) {
 		// Render callbacks are process-local and cannot be replayed safely.
 		if ( !R_DemoReadBool( session->readDemo, hasCallback ) ||
 			 !R_DemoReadBool( session->readDemo, hasCallbackData ) ) {
@@ -1545,7 +1545,7 @@ bool	idRenderWorldLocal::ReadRenderEntity() {
 		 !R_DemoReadMat3( session->readDemo, ent.axis ) ) {
 		return false;
 	}
-	if ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_POINTER_FREE_VERSION ) {
+	if ( session->renderdemoVersion >= OPEND3_RENDERDEMO_POINTER_FREE_VERSION ) {
 		if ( !R_DemoReadBool( session->readDemo, hasCustomShader ) ||
 			 !R_DemoReadBool( session->readDemo, hasReferenceShader ) ||
 			 !R_DemoReadBool( session->readDemo, hasCustomSkin ) ) {
@@ -1573,23 +1573,23 @@ bool	idRenderWorldLocal::ReadRenderEntity() {
 			return false;
 		}
 	}
-	if ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_VISIBILITY_EFFECTS_VERSION ) {
+	if ( session->renderdemoVersion >= OPEND3_RENDERDEMO_VISIBILITY_EFFECTS_VERSION ) {
 		if ( !R_DemoReadVec4( session->readDemo, ent.outlineColor ) ||
 			 !R_DemoReadVec4( session->readDemo, ent.rimlightColor ) ||
-			 ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_BRIGHTSKIN_VERSION && !R_DemoReadVec4( session->readDemo, ent.brightSkinColor ) ) ||
+			 ( session->renderdemoVersion >= OPEND3_RENDERDEMO_BRIGHTSKIN_VERSION && !R_DemoReadVec4( session->readDemo, ent.brightSkinColor ) ) ||
 			 !R_DemoReadFloat( session->readDemo, ent.outlineWidth ) ||
 			 !R_DemoReadInt( session->readDemo, ent.outlineFlags ) ) {
 			return false;
 		}
 	}
-	if ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_FLAT_DIFFUSE_VERSION ) {
+	if ( session->renderdemoVersion >= OPEND3_RENDERDEMO_FLAT_DIFFUSE_VERSION ) {
 		if ( !R_DemoReadVec4( session->readDemo, ent.flatDiffuseColor ) ||
 			 !R_DemoReadInt( session->readDemo, ent.flatDiffuseFlags ) ) {
 			return false;
 		}
 	}
 	for ( i = 0; i < MAX_RENDERENTITY_GUI; i++ ) {
-		if ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_POINTER_FREE_VERSION ) {
+		if ( session->renderdemoVersion >= OPEND3_RENDERDEMO_POINTER_FREE_VERSION ) {
 			if ( !R_DemoReadBool( session->readDemo, hasGui[i] ) ) {
 				return false;
 			}
@@ -1601,7 +1601,7 @@ bool	idRenderWorldLocal::ReadRenderEntity() {
 			hasGui[i] = ( legacyGui != 0 );
 		}
 	}
-	if ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_REMOTE_VIEW_VERSION ) {
+	if ( session->renderdemoVersion >= OPEND3_RENDERDEMO_REMOTE_VIEW_VERSION ) {
 		if ( !R_DemoReadBool( session->readDemo, hasRemoteRenderView ) ) {
 			return false;
 		}
@@ -1621,7 +1621,7 @@ bool	idRenderWorldLocal::ReadRenderEntity() {
 	if ( ent.numJoints < 0 || ent.numJoints > DEMO_MAX_ENTITY_JOINTS ) {
 		return R_RejectRenderDemo( session->readDemo, va( "entity joint count %d is out of range", ent.numJoints ) );
 	}
-	if ( session->renderdemoVersion < OPENQ4_RENDERDEMO_POINTER_FREE_VERSION ) {
+	if ( session->renderdemoVersion < OPEND3_RENDERDEMO_POINTER_FREE_VERSION ) {
 		int legacyJoints = 0;
 		if ( !R_DemoReadInt( session->readDemo, legacyJoints ) ) {
 			return false;
@@ -1689,7 +1689,7 @@ bool	idRenderWorldLocal::ReadRenderEntity() {
 		ent.remoteRenderView = NULL;
 	}
 
-	if ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_ENTITY_EXTRAS_VERSION ) {
+	if ( session->renderdemoVersion >= OPEND3_RENDERDEMO_ENTITY_EXTRAS_VERSION ) {
 		bool hasOverlayShader = false;
 		bool hasDecals = false;
 		bool hasOverlay = false;
@@ -1781,7 +1781,7 @@ bool	idRenderWorldLocal::ReadRenderEntity() {
 		}
 	}
 
-	if ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_ENTITY_EXTRAS_VERSION ) {
+	if ( session->renderdemoVersion >= OPEND3_RENDERDEMO_ENTITY_EXTRAS_VERSION ) {
 		if ( def != NULL ) {
 			R_FreeRenderDemoDecalChain( def->decals );
 			if ( def->overlay != NULL ) {

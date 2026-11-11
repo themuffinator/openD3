@@ -13,7 +13,7 @@ diff --git a/src/lib_json/json_reader.cpp b/src/lib_json/json_reader.cpp
    return true;
  }
  
-+// openQ4: libc++'s num_get sets failbit whenever strtod reports ERANGE, but it
++// openD3: libc++'s num_get sets failbit whenever strtod reports ERANGE, but it
 +// still stores the value strtod returned. The gdtoa strtod in Apple's and
 +// FreeBSD's libc reports ERANGE for every subnormal result (glibc's for every
 +// inexact one), so under libc++ valid numbers such as 4.9406564584124654e-324

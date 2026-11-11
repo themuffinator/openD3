@@ -1,6 +1,6 @@
 #version 450
 
-// Vulkan material-stage wrapper for openQ4's SMAA fullscreen vertex shader.
+// Vulkan material-stage wrapper for openD3's SMAA fullscreen vertex shader.
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 5) in vec2 inTexCoord;

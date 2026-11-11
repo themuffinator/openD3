@@ -15,7 +15,7 @@ if ($parseErrors.Count) { throw "Cannot parse wrapper: $($parseErrors[0].Message
 $definition = $ast.Find({
     param($node)
     $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
-        $node.Name -ceq "Stop-openQ4RuntimeProcesses"
+        $node.Name -ceq "Stop-openD3RuntimeProcesses"
 }, $true)
 if ($null -eq $definition) { throw "Runtime shutdown function is missing" }
 Invoke-Expression $definition.Extent.Text
@@ -28,7 +28,7 @@ $script:nextId = 100
 function New-ProcessRecord([string]$path) {
     $script:nextId++
     $proc = [PSCustomObject]@{
-        Id = $script:nextId; Handle = $script:nextId; ProcessName = "openQ4-client_x64"; Path = $path
+        Id = $script:nextId; Handle = $script:nextId; ProcessName = "openD3-client_x64"; Path = $path
         MainWindowHandle = 1; HasExited = $false; Closed = $false; Killed = $false
         ExitOnClose = $false; ThrowOnClose = $false; ThrowOnKill = $false
         ExitBeforeKill = $false; AddDuringClose = $false
@@ -68,21 +68,21 @@ function Reset-Case { $script:lookups = 0; $script:processes = @(); $script:late
 
 $install = [System.IO.Path]::GetFullPath((Join-Path $TestRoot ".install"))
 Reset-Case
-Assert-True (-not (Stop-openQ4RuntimeProcesses -InstallRoot $install)) "Empty selection should report no shutdown"
+Assert-True (-not (Stop-openD3RuntimeProcesses -InstallRoot $install)) "Empty selection should report no shutdown"
 
 Reset-Case
-$own = New-ProcessRecord (Join-Path $install "openQ4-client_x64.exe")
-$foreign = New-ProcessRecord (Join-Path $TestRoot "other-worktree/.install/openQ4-client_x64.exe")
-$prefix = New-ProcessRecord (Join-Path ($install + "-other") "openQ4-client_x64.exe")
-$nested = New-ProcessRecord (Join-Path $install "comparison/openQ4-client_x64.exe")
+$own = New-ProcessRecord (Join-Path $install "openD3-client_x64.exe")
+$foreign = New-ProcessRecord (Join-Path $TestRoot "other-worktree/.install/openD3-client_x64.exe")
+$prefix = New-ProcessRecord (Join-Path ($install + "-other") "openD3-client_x64.exe")
+$nested = New-ProcessRecord (Join-Path $install "comparison/openD3-client_x64.exe")
 $unknown = New-ProcessRecord ""
 $unreadable = New-ProcessRecord ""
 $unreadable.PSObject.Properties.Remove("Path")
 $unreadable | Add-Member ScriptProperty Path { throw "Cannot inspect process" }
-$script:lateProcess = New-ProcessRecord (Join-Path $install "openQ4-client_x64.exe")
+$script:lateProcess = New-ProcessRecord (Join-Path $install "openD3-client_x64.exe")
 $own.AddDuringClose = $true
 $script:processes = @($own, $foreign, $prefix, $nested, $unknown, $unreadable)
-Assert-True (Stop-openQ4RuntimeProcesses -InstallRoot ($install + "/")) "Target process was not found"
+Assert-True (Stop-openD3RuntimeProcesses -InstallRoot ($install + "/")) "Target process was not found"
 Assert-True ($own.Closed -and $own.Killed) "Target process was not closed and stopped"
 foreach ($proc in @($foreign, $prefix, $nested, $unknown, $unreadable, $script:lateProcess)) {
     Assert-True (-not $proc.Closed -and -not $proc.Killed) "Unselected process $($proc.Id) was touched"
@@ -90,32 +90,32 @@ foreach ($proc in @($foreign, $prefix, $nested, $unknown, $unreadable, $script:l
 Assert-True ($script:lookups -eq 1) "Shutdown performed a second name lookup"
 
 Reset-Case
-$own = New-ProcessRecord ((Join-Path $install "openQ4-client_x64.exe").ToUpperInvariant())
+$own = New-ProcessRecord ((Join-Path $install "openD3-client_x64.exe").ToUpperInvariant())
 $own.ExitOnClose = $true
 $script:processes = @($own)
-Assert-True (Stop-openQ4RuntimeProcesses -InstallRoot $install) "Case-insensitive path match failed"
+Assert-True (Stop-openD3RuntimeProcesses -InstallRoot $install) "Case-insensitive path match failed"
 Assert-True ($own.Closed -and -not $own.Killed) "Gracefully exited process was force-stopped"
 
 Reset-Case
-$own = New-ProcessRecord (Join-Path $install "openQ4-client_x64.exe")
+$own = New-ProcessRecord (Join-Path $install "openD3-client_x64.exe")
 $own.ThrowOnClose = $true
 $script:processes = @($own)
-Assert-True (Stop-openQ4RuntimeProcesses -InstallRoot $install) "Close refusal blocked scoped fallback"
+Assert-True (Stop-openD3RuntimeProcesses -InstallRoot $install) "Close refusal blocked scoped fallback"
 Assert-True $own.Killed "Close refusal did not use scoped fallback"
 
 Reset-Case
-$own = New-ProcessRecord (Join-Path $install "openQ4-client_x64.exe")
+$own = New-ProcessRecord (Join-Path $install "openD3-client_x64.exe")
 $own.ExitBeforeKill = $true
 $script:processes = @($own)
-Assert-True (Stop-openQ4RuntimeProcesses -InstallRoot $install) "Concurrent exit should be harmless"
+Assert-True (Stop-openD3RuntimeProcesses -InstallRoot $install) "Concurrent exit should be harmless"
 
 Reset-Case
-$own = New-ProcessRecord (Join-Path $install "openQ4-client_x64.exe")
+$own = New-ProcessRecord (Join-Path $install "openD3-client_x64.exe")
 $own.ThrowOnKill = $true
 $script:processes = @($own)
 $rejected = $false
-try { $null = Stop-openQ4RuntimeProcesses -InstallRoot $install } catch {
-    $rejected = $_.Exception.Message -like "Failed to stop openQ4 in*"
+try { $null = Stop-openD3RuntimeProcesses -InstallRoot $install } catch {
+    $rejected = $_.Exception.Message -like "Failed to stop openD3 in*"
 }
 Assert-True $rejected "Failure to stop a live target did not propagate"
 
@@ -124,7 +124,7 @@ Assert-True $rejected "Failure to stop a live target did not propagate"
 $calls = @($ast.FindAll({
     param($node)
     $node -is [System.Management.Automation.Language.CommandAst] -and
-        $node.GetCommandName() -ceq "Stop-openQ4RuntimeProcesses"
+        $node.GetCommandName() -ceq "Stop-openD3RuntimeProcesses"
 }, $true))
 Assert-True ($calls.Count -eq 2) "Expected initial install and retry shutdown calls"
 foreach ($call in $calls) {

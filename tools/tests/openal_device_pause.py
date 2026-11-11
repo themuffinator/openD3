@@ -16,7 +16,7 @@ SUPPORT = r'''
 #include <stdexcept>
 #include <vector>
 #define ALC_APIENTRY
-#define OPENQ4_OPENAL_DEFERRED_UPDATES_SUPPORTED 1
+#define OPEND3_OPENAL_DEFERRED_UPDATES_SUPPORTED 1
 struct ALCdevice {int identity;};
 struct ALCcontext {};
 static ALCdevice first{1},second{2};static ALCcontext context,foreignContext;

@@ -7,10 +7,10 @@ import argparse
 import sys
 from pathlib import Path
 
-from openq4_pak import (
-    OPENQ4_CONTENT_PACKS,
-    OPENQ4_PACK_NAMES,
-    format_openq4_paks_header,
+from opend3_pak import (
+    OPEND3_CONTENT_PACKS,
+    OPEND3_PACK_NAMES,
+    format_opend3_paks_header,
     inspect_game_pk4,
     write_text_if_changed,
 )
@@ -44,7 +44,7 @@ def parse_pack_arguments(values: list[str]) -> dict[str, Path]:
         name, separator, raw_path = value.partition("=")
         if not separator or not raw_path:
             raise RuntimeError(f"--pack expects NAME=PATH, got {value!r}")
-        if name not in OPENQ4_PACK_NAMES:
+        if name not in OPEND3_PACK_NAMES:
             raise RuntimeError(f"--pack names {name}, which is not in the content pack table")
         if name in packs:
             raise RuntimeError(f"--pack repeats {name}")
@@ -59,10 +59,10 @@ def main(argv: list[str]) -> int:
         pack_paths = parse_pack_arguments(args.pack)
         results = {
             spec.name: inspect_game_pk4(require_pk4_input(pack_paths[spec.name], spec.name), pak_name=spec.name)
-            for spec in OPENQ4_CONTENT_PACKS
+            for spec in OPEND3_CONTENT_PACKS
             if spec.name in pack_paths
         }
-        header = format_openq4_paks_header(results)
+        header = format_opend3_paks_header(results)
     except (KeyError, RuntimeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
@@ -74,7 +74,7 @@ def main(argv: list[str]) -> int:
 
     write_text_if_changed(Path(args.header_out).resolve(), header)
     summary = " ".join(f"{Path(name).stem}={result.md5_hex}" for name, result in results.items())
-    print(f"generated openq4_paks_generated.h: {summary}")
+    print(f"generated opend3_paks_generated.h: {summary}")
     return 0
 
 

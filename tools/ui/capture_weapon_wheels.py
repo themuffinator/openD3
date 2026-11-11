@@ -54,7 +54,7 @@ def main():
         assert any(t[0]=='0' and t[3]=='2' and t[4]=='2' for t in traces), 'release equips the selected shotgun'
         assert traces[-1][0]=='0' and traces[-1][3]=='2' and traces[-1][7]=='1.000', 'cancel clears wheel and transient time scale'
         if name=='mp': assert all(t[7]=='1.000' for t in traces), 'MP simulation never slows'
-        config=(args.output/name/'save/baseoq4/wheel-settings.cfg').read_text(encoding='utf-8',errors='replace')
+        config=(args.output/name/'save/baseod3/wheel-settings.cfg').read_text(encoding='utf-8',errors='replace')
         assert re.search(r'ui_weaponWheelOffset\s+"-17"',config), 'placement must be archived'
         assert traces[-1][6]=='-17', 'config reload restores the saved nondefault offset'
         assert 'geometry ring overflow' not in log

@@ -94,7 +94,7 @@ static void R_ResetSpecularProbeMaterialInfo( specularProbeMaterialInfo_t &info 
 // post-processing and modern-feature surface. Vulkan implements the stock
 // material-program families natively without claiming those unrelated paths.
 static bool R_MaterialGLSLProgramsAvailable() {
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 	return true;
 #else
 	return glConfig.GLSLProgramAvailable;
@@ -109,7 +109,7 @@ static bool R_MaterialFragmentProgramsAvailable() {
 	if ( !r_useFragmentProgramMaterials.GetBool() ) {
 		return false;
 	}
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 	return true;
 #else
 	return glConfig.ARBFragmentProgramAvailable;
@@ -225,7 +225,7 @@ static bool R_IsQ4LightImageNamespace( const char *name ) {
 
 static textureUsage_t R_DefaultStageUsageForMaterial( const char *materialName ) {
 	// Retail Quake 4 routes projected-light materials from both stock light
-	// namespaces through its light-oriented image bucket. openQ4 maps that
+	// namespaces through its light-oriented image bucket. openD3 maps that
 	// behavior onto TD_LIGHT so projection cookies avoid the generic texture path.
 	if ( R_IsQ4LightImageNamespace( materialName ) ) {
 		return TD_LIGHT;
@@ -235,7 +235,7 @@ static textureUsage_t R_DefaultStageUsageForMaterial( const char *materialName )
 
 textureUsage_t R_ResolveMaterialHighQualityUsage( const materialQualityInputs_t& inputs, textureUsage_t usage, bool forceHighQuality ) {
 	// Retail Quake 4 routes authored "highquality"/"uncompressed" image hints
-	// through a distinct usage bucket. openQ4 keeps that separate identity so
+	// through a distinct usage bucket. openD3 keeps that separate identity so
 	// those stages do not collapse onto generic caches, while still letting the
 	// modern loader keep its higher-quality uncompressed binary-image pipeline.
 	if ( forceHighQuality || !inputs.ignoreHighQuality ) {
@@ -245,7 +245,7 @@ textureUsage_t R_ResolveMaterialHighQualityUsage( const materialQualityInputs_t&
 }
 
 unsigned int R_ResolveMaterialNoMipFlags( const materialQualityInputs_t& inputs, unsigned int flags ) {
-	// Retail only promoted "nomips" while resource builds were active. openQ4's
+	// Retail only promoted "nomips" while resource builds were active. openD3's
 	// equivalent build switch is the boolean com_makingBuild cvar.
 	if ( inputs.makingBuild ) {
 		flags |= IMAGEFLAG_NOMIPS;
@@ -545,12 +545,10 @@ static infoParm_t	infoParms[] = {
 	// game relevant attributes
 	{"solid",		0,	0,	CONTENTS_SOLID },		// may need to override a clearSolid
 	{"water",		1,	0,	CONTENTS_WATER },		// used for water
-#ifndef HUMANHEAD
-	// openQ4 liquids; Prey's contents have no lava/slime bits (BIT(26..27) are
+	// openD3 liquids; Prey's contents have no lava/slime bits (BIT(26..27) are
 	// CONTENTS_SHOOTABLEBYARROW and CONTENTS_HUNTERCLIP there).
 	{"lava",		1,	0,	CONTENTS_LAVA },		// used for lava, damages what swims in it
 	{"slime",		1,	0,	CONTENTS_SLIME },		// used for slime, damages what swims in it
-#endif
 	{"playerclip",	0,	0,	CONTENTS_PLAYERCLIP },	// solid to players
 	{"monsterclip",	0,	0,	CONTENTS_MONSTERCLIP },	// solid to monsters
 	{"moveableclip",0,	0,	CONTENTS_MOVEABLECLIP },// solid to moveable entities
@@ -560,31 +558,6 @@ static infoParm_t	infoParms[] = {
 	{"aassolid",	0,	0,	CONTENTS_AAS_SOLID },	// solid for AAS
 	{"aasobstacle",	0,	0,	CONTENTS_AAS_OBSTACLE },// used to compile an obstacle into AAS that can be enabled/disabled
 	{"flashlight_trigger",	0,	0,	CONTENTS_FLASHLIGHT_TRIGGER }, // used for triggers that are activated by the flashlight
-#ifdef HUMANHEAD
-	// Retail Prey's forcefield is non-solid, shootable, blocks splash damage and
-	// carries the forcefield surface type; the bullet-proof variant has no type.
-	{"forcefield",	CONTENTS_SOLID,	SURFTYPE_FORCEFIELD,	CONTENTS_FORCEFIELD | CONTENTS_BLOCK_RADIUSDAMAGE | CONTENTS_SHOOTABLE },
-	{"forcefield_nobullets",	CONTENTS_SOLID,	0,	CONTENTS_FORCEFIELD },
-	// clearSolid is a contents mask in retail Prey: seeThru removes
-	// CONTENTS_OPAQUE and noSeeThru adds it. Opaque coverage still re-adds
-	// CONTENTS_OPAQUE once parsing finishes, exactly as retail does.
-	{"seeThru",		CONTENTS_OPAQUE,	0,	0 },
-	{"noSeeThru",	0,	0,	CONTENTS_OPAQUE },
-	{"spiritbridge",0,	0,	CONTENTS_SPIRITBRIDGE },	// spirit-walk-only collision
-	{"blockradiusdamage",	0,	0,	CONTENTS_BLOCK_RADIUSDAMAGE },	// blocks splash damage
-	{"block_radiusdamage",	0,	0,	CONTENTS_BLOCK_RADIUSDAMAGE },	// compatibility alias
-	{"shootable",	0,	0,	CONTENTS_SHOOTABLE },	// bullets collide with but players can pass
-	{"deathvolume",	0,	0,	CONTENTS_DEATHVOLUME },	// instant-death zones
-	{"vehicleclip",	0,	0,	CONTENTS_VEHICLECLIP },	// solid to vehicles
-	{"ownertoowner",0,	0,	CONTENTS_OWNER_TO_OWNER },	// owner-to-owner collision override
-	{"owner_to_owner",0,	0,	CONTENTS_OWNER_TO_OWNER },	// compatibility alias
-	{"gameportal",	0,	0,	CONTENTS_GAME_PORTAL },	// game portal clipping
-	{"game_portal",0,	0,	CONTENTS_GAME_PORTAL },	// compatibility alias
-	{"shootablebyarrow",	0,	0,	CONTENTS_SHOOTABLEBYARROW },	// spirit-arrow-only collision
-	{"hunterclip",	0,	0,	CONTENTS_HUNTERCLIP },	// hunter-specific collision
-	{"shotclip",	0,	0,	CONTENTS_PROJECTILE },	// blocks hitscan shots
-	{"projectileclip",	0,	0,	CONTENTS_PROJECTILE },	// compatibility alias
-#else
 	{"projectileclip",	0,	0,	CONTENTS_PROJECTILECLIP },	// projectiles only
 	{"sightclip",	0,	0,	CONTENTS_SIGHTCLIP },	// blocks sight for actors and cameras
 	{"shotclip",	0,	0,	CONTENTS_PROJECTILE },	// blocks hitscan shots
@@ -593,7 +566,6 @@ static infoParm_t	infoParms[] = {
 	{"vehicleclip",	0,	0,	CONTENTS_VEHICLECLIP },	// solid to vehicles
 	{"flyclip",	0,	0,	CONTENTS_FLYCLIP },		// solid to vehicles
 	{"itemclip",	0,	0,	CONTENTS_ITEMCLIP },	// item collision
-#endif
 	{"nonsolid",	1,	0,	0 },					// clears the solid flag
 	{"nullNormal",	0,	SURF_NULLNORMAL,0 },		// renderbump will draw as 0x80 0x80 0x80
 
@@ -623,14 +595,6 @@ static infoParm_t	infoParms[] = {
 	{"cardboard",	0,	SURFTYPE_CARDBOARD,	0 },	// cardboard
 	{"liquid",		0,	SURFTYPE_LIQUID,	0 },	// liquid
 	{"glass",		0,	SURFTYPE_GLASS,		0 },	// glass
-#ifdef HUMANHEAD
-	{"tile",		0,	SURFTYPE_TILE,		0 },	// tile
-	{"wallwalk",	0,	SURFTYPE_WALLWALK,	0 },	// wallwalk
-	{"altmetal",	0,	SURFTYPE_ALTMETAL,	0 },	// alternate metal
-	{"pipe",		0,	SURFTYPE_PIPE,		0 },	// pipe
-	{"spirit",		0,	SURFTYPE_SPIRIT,	0 },	// spirit
-	{"chaff",		0,	SURFTYPE_CHAFF,		0 },	// chaff
-#else
 	{"plastic",		0,	SURFTYPE_PLASTIC,	0 },	// plastic
 	{"ricochet",	0,	SURFTYPE_RICOCHET,	0 },	// behaves like metal but causes a ricochet sound
 
@@ -641,7 +605,6 @@ static infoParm_t	infoParms[] = {
 	{"surftype13",	0,	SURFTYPE_13,	0 },
 	{"surftype14",	0,	SURFTYPE_14,	0 },
 	{"surftype15",	0,	SURFTYPE_15,	0 },
-#endif
 };
 
 static const int numInfoParms = sizeof(infoParms) / sizeof (infoParms[0]);
@@ -3162,19 +3125,19 @@ static bool R_ReadSpecularProbeNumbers( idLexer &src, const char *field,
 	for ( int index = 0; index < valueCount; ++index ) {
 		idToken value;
 		if ( !src.ReadTokenOnLine( &value ) || !value.IsNumeric() ) {
-			src.Warning( "openQ4SpecularProbe %s expects %d numeric value%s in material '%s'",
+			src.Warning( "openD3SpecularProbe %s expects %d numeric value%s in material '%s'",
 				field, valueCount, valueCount == 1 ? "" : "s", materialName );
 			return false;
 		}
 		values[index] = value.GetFloatValue();
 		if ( !std::isfinite( values[index] ) ) {
-			src.Warning( "openQ4SpecularProbe %s is not finite in material '%s'", field, materialName );
+			src.Warning( "openD3SpecularProbe %s is not finite in material '%s'", field, materialName );
 			return false;
 		}
 	}
 	idToken extra;
 	if ( src.ReadTokenOnLine( &extra ) ) {
-		src.Warning( "openQ4SpecularProbe %s has an unexpected value '%s' in material '%s'",
+		src.Warning( "openD3SpecularProbe %s has an unexpected value '%s' in material '%s'",
 			field, extra.c_str(), materialName );
 		return false;
 	}
@@ -3194,7 +3157,7 @@ malformed block can never expose partially authored probe state.
 */
 bool idMaterial::ParseSpecularProbeBlock( idLexer &src ) {
 	if ( specularProbeInfo.enabled ) {
-		src.Warning( "multiple openQ4SpecularProbe blocks in material '%s'", GetName() );
+		src.Warning( "multiple openD3SpecularProbe blocks in material '%s'", GetName() );
 		R_ResetSpecularProbeMaterialInfo( specularProbeInfo );
 		SetMaterialFlag( MF_DEFAULTED );
 		return false;
@@ -3219,7 +3182,7 @@ bool idMaterial::ParseSpecularProbeBlock( idLexer &src ) {
 
 		if ( !token.Icmp( "cubeMap" ) || !token.Icmp( "cameraCubeMap" ) ) {
 			if ( cubeSeen ) {
-				src.Warning( "openQ4SpecularProbe in material '%s' has multiple cube maps", GetName() );
+				src.Warning( "openD3SpecularProbe in material '%s' has multiple cube maps", GetName() );
 				SetMaterialFlag( MF_DEFAULTED );
 				return false;
 			}
@@ -3227,7 +3190,7 @@ bool idMaterial::ParseSpecularProbeBlock( idLexer &src ) {
 			idToken extra;
 			if ( !src.ReadTokenOnLine( &imageName ) || imageName.type == TT_NUMBER
 					|| imageName.type == TT_PUNCTUATION || src.ReadTokenOnLine( &extra ) ) {
-				src.Warning( "openQ4SpecularProbe %s expects one static image name in material '%s'",
+				src.Warning( "openD3SpecularProbe %s expects one static image name in material '%s'",
 					token.c_str(), GetName() );
 				SetMaterialFlag( MF_DEFAULTED );
 				return false;
@@ -3261,13 +3224,13 @@ bool idMaterial::ParseSpecularProbeBlock( idLexer &src ) {
 
 		if ( !token.Icmp( "tint" ) ) {
 			if ( tintSeen || !R_ReadSpecularProbeNumbers( src, "tint", GetName(), parsed.tint, 3 ) ) {
-				src.Warning( "openQ4SpecularProbe tint is duplicated or invalid in material '%s'", GetName() );
+				src.Warning( "openD3SpecularProbe tint is duplicated or invalid in material '%s'", GetName() );
 				SetMaterialFlag( MF_DEFAULTED );
 				return false;
 			}
 			for ( int component = 0; component < 3; ++component ) {
 				if ( parsed.tint[component] < 0.0f || parsed.tint[component] > 64.0f ) {
-					src.Warning( "openQ4SpecularProbe tint must be in [0,64] in material '%s'", GetName() );
+					src.Warning( "openD3SpecularProbe tint must be in [0,64] in material '%s'", GetName() );
 					SetMaterialFlag( MF_DEFAULTED );
 					return false;
 				}
@@ -3279,7 +3242,7 @@ bool idMaterial::ParseSpecularProbeBlock( idLexer &src ) {
 		if ( !token.Icmp( "intensity" ) ) {
 			if ( intensitySeen || !R_ReadSpecularProbeNumbers( src, "intensity", GetName(), &parsed.intensity, 1 )
 					|| parsed.intensity <= 0.0f || parsed.intensity > 64.0f ) {
-				src.Warning( "openQ4SpecularProbe intensity must be in (0,64] in material '%s'", GetName() );
+				src.Warning( "openD3SpecularProbe intensity must be in (0,64] in material '%s'", GetName() );
 				SetMaterialFlag( MF_DEFAULTED );
 				return false;
 			}
@@ -3290,7 +3253,7 @@ bool idMaterial::ParseSpecularProbeBlock( idLexer &src ) {
 		if ( !token.Icmp( "blendFraction" ) ) {
 			if ( blendSeen || !R_ReadSpecularProbeNumbers( src, "blendFraction", GetName(), &parsed.blendFraction, 1 )
 					|| parsed.blendFraction <= 0.0f || parsed.blendFraction > 1.0f ) {
-				src.Warning( "openQ4SpecularProbe blendFraction must be in (0,1] in material '%s'", GetName() );
+				src.Warning( "openD3SpecularProbe blendFraction must be in (0,1] in material '%s'", GetName() );
 				SetMaterialFlag( MF_DEFAULTED );
 				return false;
 			}
@@ -3304,7 +3267,7 @@ bool idMaterial::ParseSpecularProbeBlock( idLexer &src ) {
 			if ( prioritySeen || !src.ReadTokenOnLine( &value )
 					|| value.type != TT_NUMBER || !( value.subtype & TT_INTEGER )
 					|| src.ReadTokenOnLine( &extra ) ) {
-				src.Warning( "openQ4SpecularProbe priority expects one integer in material '%s'", GetName() );
+				src.Warning( "openD3SpecularProbe priority expects one integer in material '%s'", GetName() );
 				SetMaterialFlag( MF_DEFAULTED );
 				return false;
 			}
@@ -3312,7 +3275,7 @@ bool idMaterial::ParseSpecularProbeBlock( idLexer &src ) {
 			const long parsedPriority = std::strtol( value.c_str(), &end, 10 );
 			if ( end == value.c_str() || end == NULL || *end != '\0'
 					|| parsedPriority < 0 || parsedPriority > 255 ) {
-				src.Warning( "openQ4SpecularProbe priority must be in [0,255] in material '%s'", GetName() );
+				src.Warning( "openD3SpecularProbe priority must be in [0,255] in material '%s'", GetName() );
 				SetMaterialFlag( MF_DEFAULTED );
 				return false;
 			}
@@ -3324,7 +3287,7 @@ bool idMaterial::ParseSpecularProbeBlock( idLexer &src ) {
 		if ( !token.Icmp( "boxParallax" ) ) {
 			// A flag: a value after it is an unknown parameter below.
 			if ( parsed.boxParallax ) {
-				src.Warning( "openQ4SpecularProbe boxParallax is duplicated in material '%s'", GetName() );
+				src.Warning( "openD3SpecularProbe boxParallax is duplicated in material '%s'", GetName() );
 				SetMaterialFlag( MF_DEFAULTED );
 				return false;
 			}
@@ -3332,18 +3295,18 @@ bool idMaterial::ParseSpecularProbeBlock( idLexer &src ) {
 			continue;
 		}
 
-		src.Warning( "unknown openQ4SpecularProbe parameter '%s' in material '%s'", token.c_str(), GetName() );
+		src.Warning( "unknown openD3SpecularProbe parameter '%s' in material '%s'", token.c_str(), GetName() );
 		SetMaterialFlag( MF_DEFAULTED );
 		return false;
 	}
 
 	if ( token != "}" ) {
-		src.Warning( "unterminated openQ4SpecularProbe block in material '%s'", GetName() );
+		src.Warning( "unterminated openD3SpecularProbe block in material '%s'", GetName() );
 		SetMaterialFlag( MF_DEFAULTED );
 		return false;
 	}
 	if ( !cubeSeen || parsed.cubeImage == NULL ) {
-		src.Warning( "openQ4SpecularProbe material '%s' has no cubeMap", GetName() );
+		src.Warning( "openD3SpecularProbe material '%s' has no cubeMap", GetName() );
 		SetMaterialFlag( MF_DEFAULTED );
 		return false;
 	}
@@ -4084,7 +4047,7 @@ void idMaterial::ParseMaterial( idLexer &src ) {
 			}
 			continue;
 		}
-		else if ( !token.Icmp( "openQ4SpecularProbe" ) ) {
+		else if ( !token.Icmp( "openD3SpecularProbe" ) ) {
 			if ( !ParseSpecularProbeBlock( src ) ) {
 				return;
 			}
@@ -5547,7 +5510,7 @@ probe metadata.
 bool R_SpecularProbeMaterialParserSelfTest( void ) {
 	static const char validProbe[] =
 		"material _specular_probe_selftest_valid {\n"
-		" openQ4SpecularProbe {\n"
+		" openD3SpecularProbe {\n"
 		"  cubeMap normalCubeMap\n"
 		"  tint 0.75 1 1.25\n"
 		"  intensity 2\n"
@@ -5590,7 +5553,7 @@ bool R_SpecularProbeMaterialParserSelfTest( void ) {
 
 	static const char defaultPolicy[] =
 		"material _specular_probe_selftest_defaults {\n"
-		" openQ4SpecularProbe {\n"
+		" openD3SpecularProbe {\n"
 		"  cubeMap normalCubeMap\n"
 		" }\n"
 		"}\n";
@@ -5628,40 +5591,40 @@ bool R_SpecularProbeMaterialParserSelfTest( void ) {
 	};
 	static const char duplicateBlock[] =
 		"material _specular_probe_selftest_duplicate {\n"
-		" openQ4SpecularProbe { cubeMap normalCubeMap\n }\n"
-		" openQ4SpecularProbe { cubeMap normalCubeMap\n }\n"
+		" openD3SpecularProbe { cubeMap normalCubeMap\n }\n"
+		" openD3SpecularProbe { cubeMap normalCubeMap\n }\n"
 		"}\n";
 	static const char missingCube[] =
 		"material _specular_probe_selftest_missing_cube {\n"
-		" openQ4SpecularProbe { intensity 1\n }\n"
+		" openD3SpecularProbe { intensity 1\n }\n"
 		"}\n";
 	static const char twoDimensionalImage[] =
 		"material _specular_probe_selftest_2d {\n"
-		" openQ4SpecularProbe { cubeMap _white\n }\n"
+		" openD3SpecularProbe { cubeMap _white\n }\n"
 		"}\n";
 	static const char mutableImage[] =
 		"material _specular_probe_selftest_mutable {\n"
-		" openQ4SpecularProbe { cubeMap _currentRender\n }\n"
+		" openD3SpecularProbe { cubeMap _currentRender\n }\n"
 		"}\n";
 	static const char imageProgram[] =
 		"material _specular_probe_selftest_program {\n"
-		" openQ4SpecularProbe { cubeMap add( normalCubeMap, normalCubeMap )\n }\n"
+		" openD3SpecularProbe { cubeMap add( normalCubeMap, normalCubeMap )\n }\n"
 		"}\n";
 	static const char zeroIntensity[] =
 		"material _specular_probe_selftest_zero {\n"
-		" openQ4SpecularProbe { cubeMap normalCubeMap\n intensity 0\n }\n"
+		" openD3SpecularProbe { cubeMap normalCubeMap\n intensity 0\n }\n"
 		"}\n";
 	static const char fractionalPriority[] =
 		"material _specular_probe_selftest_priority {\n"
-		" openQ4SpecularProbe { cubeMap normalCubeMap\n priority 1.5\n }\n"
+		" openD3SpecularProbe { cubeMap normalCubeMap\n priority 1.5\n }\n"
 		"}\n";
 	static const char duplicateParallax[] =
 		"material _specular_probe_selftest_parallax {\n"
-		" openQ4SpecularProbe { cubeMap normalCubeMap\n boxParallax\n boxParallax\n }\n"
+		" openD3SpecularProbe { cubeMap normalCubeMap\n boxParallax\n boxParallax\n }\n"
 		"}\n";
 	static const char valuedParallax[] =
 		"material _specular_probe_selftest_parallax_value {\n"
-		" openQ4SpecularProbe { cubeMap normalCubeMap\n boxParallax 1\n }\n"
+		" openD3SpecularProbe { cubeMap normalCubeMap\n boxParallax 1\n }\n"
 		"}\n";
 
 	return rejectsProbeDeclaration( duplicateBlock, "R_SpecularProbeMaterialParserSelfTest duplicate" )

@@ -85,17 +85,17 @@ def validate_sdl3_highdpi_contract() -> None:
     require(source, "SDL3_EnvFlagEnabledWithLegacyAlias", "SDL3 openD3 environment migration aliases")
     require(
         video_hints,
-        'SDL3_EnvFlagEnabledWithLegacyAlias("OPEND3_FORCE_X11", "OPENQ4_FORCE_X11")',
+        'SDL3_EnvFlagEnabledWithLegacyAlias("OPEND3_FORCE_X11", "OPEND3_FORCE_X11")',
         "SDL3 direct XWayland fallback flag",
     )
     require(video_hints, 'SDL_HINT_VIDEO_DRIVER, "x11"', "SDL3 direct XWayland fallback hint")
     require(video_hints, '!SDL3_EnvHasValue("SDL_VIDEO_DRIVER")', "SDL3 direct XWayland fallback respects SDL_VIDEO_DRIVER")
     require(video_hints, '!SDL3_EnvHasValue("SDL_VIDEODRIVER")', "SDL3 direct XWayland fallback respects SDL_VIDEODRIVER")
-    require(video_hints, '"OPEND3_WAYLAND_DISABLE_LIBDECOR", "OPENQ4_WAYLAND_DISABLE_LIBDECOR"', "SDL3 Wayland libdecor disable flag")
-    require(video_hints, '"OPEND3_WAYLAND_PREFER_LIBDECOR", "OPENQ4_WAYLAND_PREFER_LIBDECOR"', "SDL3 Wayland libdecor preference flag")
+    require(video_hints, '"OPEND3_WAYLAND_DISABLE_LIBDECOR", "OPEND3_WAYLAND_DISABLE_LIBDECOR"', "SDL3 Wayland libdecor disable flag")
+    require(video_hints, '"OPEND3_WAYLAND_PREFER_LIBDECOR", "OPEND3_WAYLAND_PREFER_LIBDECOR"', "SDL3 Wayland libdecor preference flag")
     require(video_hints, "!disableWaylandLibdecor && SDL3_EnvFlagEnabledWithLegacyAlias(", "SDL3 Wayland libdecor disable precedence")
     require(video_hints, 'SDL_HINT_VIDEO_WAYLAND_PREFER_LIBDECOR, "1"', "SDL3 Wayland libdecor preference hint")
-    require(video_hints, '"OPEND3_WAYLAND_SYNC_WINDOW_OPS", "OPENQ4_WAYLAND_SYNC_WINDOW_OPS"', "SDL3 Wayland sync window ops flag")
+    require(video_hints, '"OPEND3_WAYLAND_SYNC_WINDOW_OPS", "OPEND3_WAYLAND_SYNC_WINDOW_OPS"', "SDL3 Wayland sync window ops flag")
     require(video_hints, 'SDL_HINT_VIDEO_SYNC_WINDOW_OPERATIONS, "1"', "SDL3 Wayland sync window ops hint")
     require(video_hints, '!SDL3_EnvHasValue("SDL_VIDEO_DRIVER")', "SDL3 explicit video driver override preservation")
     require(video_hints, '!SDL3_EnvHasValue("SDL_VIDEODRIVER")', "SDL3 legacy video driver override preservation")
@@ -213,7 +213,7 @@ def validate_sdl3_highdpi_contract() -> None:
 def validate_ci_smoke() -> None:
     push = read(".github/workflows/push-verification.yml")
     commit = read(".github/workflows/commit-validation.yml")
-    runner = read("tools/validation/openq4_validate.py")
+    runner = read("tools/validation/opend3_validate.py")
 
     require(push, "tools/tests/linux_highdpi_mouse.py", "push verification workflow")
     require(push, "python tools/tests/linux_highdpi_mouse.py", "push script-smoke regression check")

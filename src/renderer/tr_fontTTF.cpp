@@ -17,7 +17,7 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with openQ4 Source Code.  If not, see <http://www.gnu.org/licenses/>.
+along with openD3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
 
 ===========================================================================
 */
@@ -1138,7 +1138,7 @@ static bool R_TTFBuildSlot( idTrueTypeFont &face, const char *fontName, const q4
 	// A slot fitted to its retail counterpart is no longer a uniform rescale of
 	// the other two, so it must not carry the "ttf/" prefix the GUI reads as
 	// permission to sample a larger slot in its place (see
-	// openQ4_FontAtlasesAreProportional): that would draw the 48 point design
+	// openD3_FontAtlasesAreProportional): that would draw the 48 point design
 	// and line height where the bitmap path drew the 24 point ones.
 	idStr::Copynz( out.name, va( "%s/%s_%i", fit.fitted ? "ttfretail" : "ttf", safeName.c_str(), slot.pointSize ), sizeof( out.name ) );
 
@@ -1610,7 +1610,7 @@ void R_ShutdownTrueTypeFonts( bool preserveAtlasImages ) {
 }
 
 namespace {
-class RetainedFontSource final : public openq4::fonts::Source {
+class RetainedFontSource final : public opend3::fonts::Source {
 public:
 	bool Metrics(const std::string& name, int pixels, renderFontMetrics_t& out) override {
 		idTrueTypeFont* face = ttfFonts.FindFace(name.c_str());
@@ -1630,7 +1630,7 @@ public:
 		if (!glyph) glyph = face->GlyphForCodepoint('?');
 		return true; // .notdef is valid when even '?' is absent.
 	}
-	bool Rasterize(const std::string& name, int pixels, int glyph, openq4::fonts::Raster& out) override {
+	bool Rasterize(const std::string& name, int pixels, int glyph, opend3::fonts::Raster& out) override {
 		idTrueTypeFont* face = ttfFonts.FindFace(name.c_str());
 		ttGlyphMetrics_t metrics;
 		if (!face || !face->GetGlyphMetrics(glyph,metrics)) return false;
@@ -1649,10 +1649,10 @@ public:
 	}
 };
 void RetainedFontPageImage(idImage* image);
-class RetainedFontDevice final : public openq4::fonts::Device {
+class RetainedFontDevice final : public opend3::fonts::Device {
 public:
 	bool CreatePage(unsigned page, int dimension, const char* name) override {
-		if (dimension != openq4::fonts::Cache::PageSize) return false;
+		if (dimension != opend3::fonts::Cache::PageSize) return false;
 		// A scratch page would come back from reloadImages reallocated and
 		// empty while every glyph on it stays published. A generated page is
 		// rebuilt instead: the cache rasterizes its glyphs into the same places.
@@ -1674,20 +1674,20 @@ public:
 		for (auto& image : images) { if (image) image->PurgeImage(); image = NULL; }
 	}
 	bool Owns(const idImage* image, unsigned& page) const {
-		for (unsigned i = 0; i < openq4::fonts::Cache::MaxPages; ++i) if (images[i] == image) { page = i; return true; }
+		for (unsigned i = 0; i < opend3::fonts::Cache::MaxPages; ++i) if (images[i] == image) { page = i; return true; }
 		return false;
 	}
 private:
-	idImage* images[openq4::fonts::Cache::MaxPages] = {};
+	idImage* images[opend3::fonts::Cache::MaxPages] = {};
 };
 RetainedFontSource retainedFontSource;
 RetainedFontDevice retainedFontDevice;
-openq4::fonts::Cache retainedFontCache(retainedFontSource,retainedFontDevice);
+opend3::fonts::Cache retainedFontCache(retainedFontSource,retainedFontDevice);
 void RetainedFontPageImage(idImage* image) {
 	// A page released by Reset stays empty until the cache opens it again.
 	unsigned page = 0;
 	if (!retainedFontDevice.Owns(image,page)) return;
-	const int dimension = openq4::fonts::Cache::PageSize;
+	const int dimension = opend3::fonts::Cache::PageSize;
 	idImageOpts opts;
 	opts.textureType = TT_2D; opts.format = FMT_RGBA8; opts.colorFormat = CFM_DEFAULT;
 	opts.width = opts.height = dimension; opts.numLevels = 1; opts.isPersistant = true;

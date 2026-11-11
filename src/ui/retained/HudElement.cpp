@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 VectorVertex Mix(const VectorVertex& a, const VectorVertex& b, double t) {
 	return {a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,a.r+(b.r-a.r)*t,a.g+(b.g-a.g)*t,a.b+(b.b-a.b)*t,a.a+(b.a-a.a)*t};

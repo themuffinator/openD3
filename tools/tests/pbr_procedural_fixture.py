@@ -17,22 +17,22 @@ from typing import Callable
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "tools" / "validation" / "generate_pbr_fixture.py"
 TEMP_ROOT = ROOT / ".tmp"
-VALIDATOR = ROOT / "tools" / "validation" / "openq4_validate.py"
+VALIDATOR = ROOT / "tools" / "validation" / "opend3_validate.py"
 WORKFLOWS = (
     ROOT / ".github" / "workflows" / "commit-validation.yml",
     ROOT / ".github" / "workflows" / "push-verification.yml",
 )
 EXPECTED_HASHES_16 = {
-    "baseoq4/materials/openq4_pbr_procedural_fixture.mtr": (
+    "baseod3/materials/opend3_pbr_procedural_fixture.mtr": (
         "ea096bcd6990dc9e690e036365965d69143ddc308de159ced363ad0910adfade"
     ),
-    "baseoq4/textures/openq4/pbrtest/procedural_albedo.tga": (
+    "baseod3/textures/opend3/pbrtest/procedural_albedo.tga": (
         "c1eaa28c9aa511199bd03fee41d933816e384d15bbcc92fda570c6ebd5f6d9aa"
     ),
-    "baseoq4/textures/openq4/pbrtest/procedural_normal.tga": (
+    "baseod3/textures/opend3/pbrtest/procedural_normal.tga": (
         "81420b2a13bb77b45770917ccba12f7f048e3cc16e38338982deaee8d331f0b1"
     ),
-    "baseoq4/textures/openq4/pbrtest/procedural_orm.tga": (
+    "baseod3/textures/opend3/pbrtest/procedural_orm.tga": (
         "d6cc68d91332cfedd1cbd4ca51db72fbfe183468ead812f9b17f5a28967596c2"
     ),
 }
@@ -115,17 +115,17 @@ def test_deterministic_fixture_and_manifest() -> None:
 
         assert relative_file_bytes(first_root) == relative_file_bytes(second_root)
         assert set(relative_file_bytes(first_root)) == {
-            "baseoq4/materials/openq4_pbr_procedural_fixture.mtr",
-            "baseoq4/textures/openq4/pbrtest/procedural_albedo.tga",
-            "baseoq4/textures/openq4/pbrtest/procedural_normal.tga",
-            "baseoq4/textures/openq4/pbrtest/procedural_orm.tga",
-            "openq4-pbr-procedural-fixture.json",
+            "baseod3/materials/opend3_pbr_procedural_fixture.mtr",
+            "baseod3/textures/opend3/pbrtest/procedural_albedo.tga",
+            "baseod3/textures/opend3/pbrtest/procedural_normal.tga",
+            "baseod3/textures/opend3/pbrtest/procedural_orm.tga",
+            "opend3-pbr-procedural-fixture.json",
         }
 
         manifest = json.loads(first["manifest"].read_text(encoding="utf-8"))
         assert manifest["stockMap"] == "maps/tools/mv2"
         assert manifest["benchmarkCase"] == "sp-mv2-interaction"
-        assert manifest["materialOverride"] == "materials/openq4/pbr_test/procedural_packed"
+        assert manifest["materialOverride"] == "materials/opend3/pbr_test/procedural_packed"
         assert manifest["textureSize"] == [16, 16]
         assert "no third-party assets" in manifest["provenance"]
         assert "GNU GPL v3" in manifest["license"]
@@ -170,13 +170,13 @@ def test_deterministic_fixture_and_manifest() -> None:
         assert FIXTURE.verify_fixture(first_root, expected_size=16) == binding
 
         material = first["material"].read_text(encoding="utf-8")
-        assert "Original procedural openQ4 validation fixture" in material
+        assert "Original procedural openD3 validation fixture" in material
         assert "bumpmap _flat" in material
-        assert "diffusemap textures/openq4/pbrtest/procedural_albedo" in material
+        assert "diffusemap textures/opend3/pbrtest/procedural_albedo" in material
         assert "specularmap _black" in material
         assert "workflow metallicRoughness" in material
         assert "normalFormat tangentXYZ" in material
-        assert "ormMap textures/openq4/pbrtest/procedural_orm" in material
+        assert "ormMap textures/opend3/pbrtest/procedural_orm" in material
 
         width, height, albedo = decode_tga(first["albedo"])
         assert (width, height) == (16, 16)
@@ -239,7 +239,7 @@ def test_nested_links_and_junctions_fail_closed() -> None:
         sentinel.write_text("unchanged", encoding="utf-8")
         runtime = temporary_root / "runtime-symlink"
         runtime.mkdir()
-        nested_link = runtime / "baseoq4"
+        nested_link = runtime / "baseod3"
         try:
             os.symlink(outside, nested_link, target_is_directory=True)
         except (NotImplementedError, OSError):
@@ -264,7 +264,7 @@ def test_nested_links_and_junctions_fail_closed() -> None:
         junction_sentinel.write_text("unchanged", encoding="utf-8")
         junction_runtime = temporary_root / "runtime-junction"
         junction_runtime.mkdir()
-        junction = junction_runtime / "baseoq4"
+        junction = junction_runtime / "baseod3"
         created = subprocess.run(
             ["cmd.exe", "/d", "/c", "mklink", "/J", str(junction), str(junction_outside)],
             capture_output=True,

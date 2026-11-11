@@ -49,10 +49,10 @@ static void Reset() {
 }
 
 int main() {
-	using namespace openq4;
+	using namespace opend3;
 	std::string output, error;
-#if defined(USE_SDL3) && !defined(ID_DEDICATED) && defined(OPENQ4_SDL3_CHECKED_CLIPBOARD) && OPENQ4_SDL3_CHECKED_CLIPBOARD == 1
-	using openq4::ui::TextInputMaxBytes;
+#if defined(USE_SDL3) && !defined(ID_DEDICATED) && defined(OPEND3_SDL3_CHECKED_CLIPBOARD) && OPEND3_SDL3_CHECKED_CLIPBOARD == 1
+	using opend3::ui::TextInputMaxBytes;
 	for (const auto& text : std::vector<std::string>{"", "\tfirst\r\nsecond\n", "Za\xc5\xbc\xc3\xb3\xc5\x82\xc4\x87",
 		"\xd0\x9f\xd1\x80\xd0\xb8\xd0\xb2\xd0\xb5\xd1\x82 \xf0\x9f\x98\x80", "e\xcc\x81",
 		std::string(TextInputMaxBytes, 'x')}) {

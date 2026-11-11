@@ -1971,7 +1971,7 @@ extern int unzReadCurrentFile  (unzFile file, void *buf, unsigned len)
 		{
 			uInt uDoCopy,i ;
 
-			// openQ4: a stored entry whose headers claim more uncompressed than
+			// openD3: a stored entry whose headers claim more uncompressed than
 			// compressed bytes runs out of input with output still wanted, and
 			// this loop then copied nothing forever. Later minizip returns here.
 			if ((pfile_in_zip_read_info->stream.avail_in == 0) &&
@@ -2833,7 +2833,7 @@ int inflate_blocks(inflate_blocks_statef *s, z_streamp z, int r)
       s->sub.trees.bb = 7;
       t = inflate_trees_bits(s->sub.trees.blens, &s->sub.trees.bb,
                              &s->sub.trees.tb, s->hufts, z);
-      // openQ4: zlib 1.1.4's fix for the 1.1.3 double free (CVE-2002-0059).
+      // openD3: zlib 1.1.4's fix for the 1.1.3 double free (CVE-2002-0059).
       // blens was freed here on every error but the mode only left BTREE/DTREE
       // on a data error, so after a memory error inflate_blocks_reset freed it
       // again - and a crafted block makes huft_build report one. Free it only
@@ -3300,7 +3300,7 @@ static int huft_build(uInt *b, uInt n, uInt s, const uInt *d, const uInt *e, inf
 
         /* allocate new table */
         if (*hn + z > MANY)     /* (note: doesn't matter for fixed) */
-          return Z_DATA_ERROR;  /* overflow of MANY (openQ4: as zlib 1.1.4) */
+          return Z_DATA_ERROR;  /* overflow of MANY (openD3: as zlib 1.1.4) */
         u[h] = q = hp + *hn;
         *hn += z;
 

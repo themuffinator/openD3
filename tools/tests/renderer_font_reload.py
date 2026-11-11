@@ -83,7 +83,7 @@ def main():
     if 'TTF font: loaded fonts/chain.ttf' not in log or 'TTF font: console sheet rebuilt' not in log:
         failures.append('TrueType fonts were not used')
     section = log.split('FONT_STALE_BEGIN', 1)[-1].split('FONT_STALE_END', 1)[0]
-    screenshots = args.output_dir / 'batch/baseoq4/screenshots'
+    screenshots = args.output_dir / 'batch/baseod3/screenshots'
     # The native capture owns a separate generated image: reload invalidates
     # its completed-frame identity until a new scene has rendered.
     if args.backend == 'vk' and ((screenshots / 'stale-image.pfm').exists() or

@@ -971,7 +971,7 @@ void idSoundWorldLocal::Update()
 	soundSystemLocal.hardware.EndDeferredUpdates();
 	if( showVoices )
 	{
-		// The overlay console this used to draw into does not exist in openQ4,
+		// The overlay console this used to draw into does not exist in openD3,
 		// which left s_showVoices building a table every frame and throwing it
 		// away - i.e. the cvar produced no output at all. Print it instead so
 		// the voice list is actually usable for diagnosing silent sounds.

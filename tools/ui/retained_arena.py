@@ -801,7 +801,7 @@ def arena_document() -> dict:
     and modal closed, so it is never seen moved or covered when it next
     presents."""
     check_arena_fits()
-    doc = Document("openq4.arena")
+    doc = Document("opend3.arena")
     published_states(doc)
     doc.session("back", "arenaBack")
     doc.session("tierPrevious", "arenaTierPrevious")

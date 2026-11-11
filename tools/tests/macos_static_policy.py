@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def load_meson_sources_module():
     module_path = ROOT / "tools" / "build" / "meson_sources.py"
-    spec = importlib.util.spec_from_file_location("openq4_meson_sources", module_path)
+    spec = importlib.util.spec_from_file_location("opend3_meson_sources", module_path)
     if spec is None or spec.loader is None:
         raise AssertionError(f"Could not load Meson source manifest module: {module_path}")
     module = importlib.util.module_from_spec(spec)
@@ -223,7 +223,7 @@ def validate_package_root_runtime_policy() -> None:
 
 def validate_ci_wiring() -> None:
     script = "tools/tests/macos_static_policy.py"
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
     status_ledger = read("docs/dev/prey-rebase/status-ledger.md")

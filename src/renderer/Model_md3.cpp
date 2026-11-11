@@ -157,7 +157,7 @@ void idRenderModelMD3::InitFromFile( const char *fileName ) {
 		return;
 	}
 
-	// openQ4: every offset and count below is the file's, and the loader used
+	// openD3: every offset and count below is the file's, and the loader used
 	// them as they came: it copied ofsEnd bytes whatever the file's size, and
 	// wrote material pointers and swapped values at offsets the file chose.
 	if ( !MD3_FileIsConsistent( (const byte *)buffer, size ) ) {

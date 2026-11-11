@@ -20,7 +20,7 @@ struct vkProbeSourceStamp_t {
 // Output and stamp are cleared on every failure. A cache miss synchronously
 // submits/waits the upload queue; this never submits or resets a scene frame.
 modernSpecularProbeAtlasReject_t VK_ProbeSource_Read( const idImage *image,
-	openq4PBR::Cube &cube, vkProbeSourceStamp_t &stamp );
+	opend3PBR::Cube &cube, vkProbeSourceStamp_t &stamp );
 bool VK_ProbeSource_Matches( const idImage *image, const vkProbeSourceStamp_t &stamp );
 
 // The same read split across frames (REN-06): BeginRead validates the source
@@ -42,7 +42,7 @@ modernSpecularProbeAtlasReject_t VK_ProbeSource_BeginRead( const idImage *image,
 modernSpecularProbeAtlasReject_t VK_ProbeSource_CollectRead( const idImage *image, vkProbeSourceRead_t &read,
 	std::vector<std::uint8_t> &encoded, bool wait );
 void VK_ProbeSource_CancelRead( vkProbeSourceRead_t &read );
-bool VK_ProbeSource_Decode( const std::vector<std::uint8_t> &encoded, bool hdr, int faceSize, openq4PBR::Cube &cube );
+bool VK_ProbeSource_Decode( const std::vector<std::uint8_t> &encoded, bool hdr, int faceSize, opend3PBR::Cube &cube );
 bool VK_ProbeSource_RunSelfTest( void );
 
 #endif

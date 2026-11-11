@@ -1,6 +1,6 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
 #include "ManagedNativeTextOwner.h"
-namespace openq4::ui {
+namespace opend3::ui {
 bool ManagedNativeTextOwner::Attach(const TextEditorIdentity& owner,NativeTextIdentity native,NativeTextEditorBarrier& out,std::string& error) {
 	return OnThread() && UI_NativeTextAttach(probe,context,owner,native,out,error);
 }
@@ -28,4 +28,4 @@ bool ManagedNativeTextOwner::PublishSettlement(Interaction::NativeSettlement& pr
 void ManagedNativeTextOwner::RetireExact(const NativeTextIdentity& native,const TextEditorIdentity& owner) noexcept {
 	if(OnThread())(void)UI_NativeTextRetireExact(native,owner);
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

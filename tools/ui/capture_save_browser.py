@@ -22,28 +22,28 @@ from mp_round_remote_smoke import verify_runtime_is_current
 
 
 def activate(control):
-    return [f'openq4_retainedGui focus "{control}"', 'openq4_retainedGui menu accept 1',
-            'openq4_retainedGui menu accept 0', 'waitMsec 400']
+    return [f'opend3_retainedGui focus "{control}"', 'opend3_retainedGui menu accept 1',
+            'opend3_retainedGui menu accept 0', 'waitMsec 400']
 
 
 def observe(stage):
-    return [f'echo "SAVE_BROWSER_STAGE {stage}"', 'openq4_retainedGui report',
-            *[f'openq4_retainedGui inspect "row-{row}-selected"' for row in range(4)],
+    return [f'echo "SAVE_BROWSER_STAGE {stage}"', 'opend3_retainedGui report',
+            *[f'opend3_retainedGui inspect "row-{row}-selected"' for row in range(4)],
             f'screenshot "screenshots/{stage}.tga"']
 
 
 def steps():
     return ['waitMsec 1500', 'saveGame Zeta', 'waitMsec 1100', 'saveGame Alpha', 'waitMsec 1100',
             'saveGame Bravo', 'waitMsec 1100', 'screenshot "screenshots/gameplay.tga"',
-            'openq4_assertMenuActivation 10000', 'waitMsec 1500', *activate('nav_loadgame'), 'waitMsec 1000',
-            *activate('browser-manual'), *activate('row-1'), 'openq4_retainedGui event onSecondary', 'waitMsec 400',
-            'openq4_retainedGui event onTertiary', 'waitMsec 400', 'openq4_retainedGui event onTertiary', 'waitMsec 400',
+            'opend3_assertMenuActivation 10000', 'waitMsec 1500', *activate('nav_loadgame'), 'waitMsec 1000',
+            *activate('browser-manual'), *activate('row-1'), 'opend3_retainedGui event onSecondary', 'waitMsec 400',
+            'opend3_retainedGui event onTertiary', 'waitMsec 400', 'opend3_retainedGui event onTertiary', 'waitMsec 400',
             *observe('name-sorted'),
             # Refresh under a held row. Alpha must stay selected and the Load
             # page must stay open. Delayed queue ordering is covered natively;
             # the console dispatcher services each diagnostic event immediately.
-            'openq4_retainedGui focus "row-0"', 'openq4_retainedGui menu accept 1',
-            'openq4_retainedGui event onSecondary', 'waitMsec 400', 'openq4_retainedGui menu accept 0', 'waitMsec 400',
+            'opend3_retainedGui focus "row-0"', 'opend3_retainedGui menu accept 1',
+            'opend3_retainedGui event onSecondary', 'waitMsec 400', 'opend3_retainedGui menu accept 0', 'waitMsec 400',
             *observe('held-cancelled'),
             *activate('browser-automatic'), *observe('autosaves'),
             *activate('browser-manual'), *activate('row-1'), *activate('load_delete'),
@@ -51,10 +51,10 @@ def steps():
             *observe('delete-cancelled'),
             *activate('load_back'), 'waitMsec 1000', *activate('nav_savegame'), 'waitMsec 1000',
             *activate('browser-manual'), *activate('browser-sort'), *activate('browser-sort'),
-            'openq4_retainedGui focus "save-name"', 'openq4_retainedGui number begin "save-name"',
-            'openq4_retainedGui number input "save-name" "Middle name"',
-            'openq4_retainedGui event onSecondary', 'waitMsec 400',
-            'openq4_retainedGui number commit "save-name"', 'waitMsec 1500', *observe('saved-sorted'),
+            'opend3_retainedGui focus "save-name"', 'opend3_retainedGui number begin "save-name"',
+            'opend3_retainedGui number input "save-name" "Middle name"',
+            'opend3_retainedGui event onSecondary', 'waitMsec 400',
+            'opend3_retainedGui number commit "save-name"', 'waitMsec 1500', *observe('saved-sorted'),
             *activate('save_back'), 'waitMsec 1000', *activate('nav_loadgame'), 'waitMsec 1000',
             # Loading clears the command buffer. The map-load hook resumes
             # verification from a separate script after the restore completes.
@@ -74,7 +74,7 @@ def qualify(log):
     checks['name-sort-keeps-selection'] = bool(re.search(r'RETAINED_SAVE_CATALOG page=load .*sort=2 filter=1 count=3 first=0 selected=0 slot=Alpha', log))
     checks['focus-follows-filename'] = 'focus=row-0 ' in sections.get('name-sorted', '')
     checks['save-revealed-in-order'] = bool(re.search(r'RETAINED_SAVE_CATALOG page=save .*sort=2 filter=1 count=4 first=0 selected=2 slot=Middle_name', log))
-    checks['semantic-operations'] = not re.search(r'RETAINED_GUI_OPERATION .* failed|openq4_retainedGui: requires', log)
+    checks['semantic-operations'] = not re.search(r'RETAINED_GUI_OPERATION .* failed|opend3_retainedGui: requires', log)
     checks['restored-gameplay'] = bool(re.search(r'^RETAINED_STAGE save\s*-\s*browser after map\s*$', log, re.M))
     return checks
 
@@ -94,18 +94,18 @@ def main():
         parser.error('choose a new output directory under the project .tmp')
     verify_runtime_is_current(args.runtime)
     args.output.mkdir(parents=True)
-    binaries = [args.runtime / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64'),
-                *sorted(args.runtime.glob('renderer-*')), *sorted((args.runtime / 'baseoq4').glob('game-*'))]
+    binaries = [args.runtime / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64'),
+                *sorted(args.runtime.glob('renderer-*')), *sorted((args.runtime / 'baseod3').glob('game-*'))]
     binaries = [p for p in binaries if p.is_file()]
     bindings = {str(p.relative_to(args.runtime)): capture.digest(p) for p in binaries}
     sources = ['src/framework/Session_menu.cpp', 'src/framework/Session_local.h', 'src/ui/UserInterfaceRetained.cpp',
                'tools/ui/retained_saves.py', 'tools/ui/capture_save_browser.py']
     documents = [f'guis/menu/{page}{suffix}.q4ui' for page in ('loadgame', 'savegame') for suffix in ('', '_strogg')]
-    sources += ['content/baseoq4/pak0/' + path for path in documents]
+    sources += ['content/baseod3/pak0/' + path for path in documents]
     source_bindings = {p: capture.digest(ROOT / p) for p in sources}
-    with zipfile.ZipFile(args.runtime / 'baseoq4/pak0.pk4') as pack:
+    with zipfile.ZipFile(args.runtime / 'baseod3/pak0.pk4') as pack:
         for document in documents:
-            if pack.read(document).replace(b'\r\n', b'\n') != (ROOT / 'content/baseoq4/pak0' / document).read_bytes().replace(b'\r\n', b'\n'):
+            if pack.read(document).replace(b'\r\n', b'\n') != (ROOT / 'content/baseod3/pak0' / document).read_bytes().replace(b'\r\n', b'\n'):
                 raise RuntimeError('staged save document differs from source: ' + document)
     capture.SCENARIOS['save-browser'] = ('game/recomp' if args.family == 'strogg' else 'game/airdefense1', steps())
     result = capture.run(args, 'save-browser')

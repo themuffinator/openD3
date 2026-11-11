@@ -38,12 +38,12 @@ If you have questions concerning this license or the applicable additional terms
 static const int Q4_EDIT_WINDOW_TEXT_SPACING = 0;
 static const float Q4_EDIT_WINDOW_LINE_HEIGHT_SCALE = 1.25f;
 
-static float openQ4_EditWindowWrappedLineHeight( idEditWindow *window ) {
+static float openD3_EditWindowWrappedLineHeight( idEditWindow *window ) {
 	float lineHeight = window->GetMaxCharHeight() * Q4_EDIT_WINDOW_LINE_HEIGHT_SCALE;
 	return lineHeight > 0.0f ? lineHeight : 1.0f;
 }
 
-static int openQ4_EditWindowEscapeLength( const char *text ) {
+static int openD3_EditWindowEscapeLength( const char *text ) {
 	return idStr::IsEscape( text );
 }
 
@@ -166,7 +166,7 @@ bool idEditWindow::GetTextInputState( idRectangle &area, float &cursorOffset ) {
 		cursorPixels = boundedCursor * dc->CharWidth( '*', textScale, Q4_EDIT_WINDOW_TEXT_SPACING );
 	} else {
 		for ( int i = 0; i < boundedCursor; ) {
-			const int escapeLength = openQ4_EditWindowEscapeLength( &text[i] );
+			const int escapeLength = openD3_EditWindowEscapeLength( &text[i] );
 			if ( escapeLength > 0 ) {
 				i += escapeLength;
 			} else {
@@ -215,7 +215,7 @@ void idEditWindow::Draw( int time, float x, float y ) {
 	rect.w += paintOffset;
 
 	if ( wrap && scroller->GetHigh() > 0.0f ) {
-		const float lineHeight = openQ4_EditWindowWrappedLineHeight( this );
+		const float lineHeight = openD3_EditWindowWrappedLineHeight( this );
 		rect.y -= scroller->GetValue() * lineHeight;
 		rect.w -= sizeBias;
 		rect.h = breaks.Num() * lineHeight;
@@ -254,7 +254,7 @@ const char *idEditWindow::HandleEvent(const sysEvent_t *event, bool *updateVisua
 		return ret;
 	}
 
-	// openQ4: take the length first - for a gui:: bound string that is what
+	// openD3: take the length first - for a gui:: bound string that is what
 	// re-reads the binding, and c_str() then returns the fresh text - and hold
 	// the cursor to it. Only Draw clamped the cursor, so a key that arrived after
 	// the text was shortened or cleared but before the next draw (Enter clears
@@ -607,7 +607,7 @@ void idEditWindow::EnsureCursorVisible()
 		} else {
 			int i = 0;
 			while ( i < text.Length() && i < cursorPos ) {
-				const int escapeLength = openQ4_EditWindowEscapeLength( &text[i] );
+				const int escapeLength = openD3_EditWindowEscapeLength( &text[i] );
 				if ( escapeLength > 0 ) {
 					i += escapeLength;
 				} else {
@@ -642,7 +642,7 @@ void idEditWindow::EnsureCursorVisible()
 		}
 		dc->DrawText( text, textScale, textAlign, colorWhite, rect, true, ( flags & WIN_FOCUS ) ? cursorPos : -1, true, &breaks, 0, Q4_EDIT_WINDOW_TEXT_SPACING, static_cast<int>( textstyle ), ( flags & WIN_CHATWINDOW ) != 0 );
 
-		const int fit = static_cast<int>( textRect.h / openQ4_EditWindowWrappedLineHeight( this ) );
+		const int fit = static_cast<int>( textRect.h / openD3_EditWindowWrappedLineHeight( this ) );
 		if ( breaks.Num() <= fit ) {
 			// The text fits completely in the box
 			scroller->SetRange(0.0f, 0.0f, 1.0f);

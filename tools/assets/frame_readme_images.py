@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Frame the README screenshots in the openQ4 instrument-plate style.
+"""Frame the README screenshots in the openD3 instrument-plate style.
 
 Each source image under assets/docs/img/ is clipped to an asymmetric plate
 (two diagonally opposite corners cut deeply at 45 degrees, the other two

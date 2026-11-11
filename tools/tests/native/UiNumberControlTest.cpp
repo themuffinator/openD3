@@ -8,7 +8,7 @@
 #include <functional>
 #include <limits>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks = 0;
 static void Check(bool value, const char* message) {
 	++checks; if (!value) { std::fprintf(stderr,"FAIL: %s\n",message); std::exit(1); }
@@ -29,7 +29,7 @@ static Json::Value NodeJson(const char* id, const char* type = "group") {
 	return node;
 }
 static Json::Value Source() {
-	Json::Value source; source["format"] = "openq4-ui"; source["version"] = 1; source["id"] = "number-controls";
+	Json::Value source; source["format"] = "opend3-ui"; source["version"] = 1; source["id"] = "number-controls";
 	source["state"]["brightness"]["type"] = "number"; source["state"]["brightness"]["initial"] = 1.0;
 	source["actions"]["edit"]["input"] = "number"; source["actions"]["edit"]["operation"] = "settings.system.edit";
 	source["actions"]["edit"]["arguments"]["r_brightness"]["input"] = "value";

@@ -80,8 +80,8 @@ class AcceptanceTransitionTests(unittest.TestCase):
         self.write("docs/dev/ui/value-controls.md", "# Value controls\n")
         self.write("docs/dev/ui/foundation.md", "# Foundation\n\nLimited implementation.\n")
         self.write(WIDGET, "int Widget() { return 1; }\n")
-        self.write(MENU, '{"format": "openq4-ui", "id": "menu"}\n')
-        self.write(HUD, '{"format": "openq4-ui", "id": "hud"}\n')
+        self.write(MENU, '{"format": "opend3-ui", "id": "menu"}\n')
+        self.write(HUD, '{"format": "opend3-ui", "id": "hud"}\n')
         self.write(".gitignore", ".tmp/\n")
         rows = [
             requirement("DOC-001", "M1"),
@@ -100,7 +100,7 @@ class AcceptanceTransitionTests(unittest.TestCase):
             requirement("GATE-007", "M6", ["FINAL-001"], status="pending", needs=["Cutover evidence."]),
         ]
         self.previous = {
-            "schema_version": 19, "id_namespace": "openq4.ui.product", "date": "2026-10-23",
+            "schema_version": 19, "id_namespace": "opend3.ui.product", "date": "2026-10-23",
             "status": "Implementation incomplete.",
             "baseline": {"engine_revision": "fixture", "companion_revision": "fixture", "effective_gui_count": 2,
                          "translated_or_accepted_resources": 0},
@@ -133,8 +133,8 @@ class AcceptanceTransitionTests(unittest.TestCase):
         self.current = copy.deepcopy(self.previous)
         self.current_manifest = copy.deepcopy(self.manifest)
         self.current["baseline"]["engine_revision"] = self.baseline
-        self.write(".tmp/bin/openQ4-client_x64.exe", "client bytes")
-        self.write(".tmp/run/openq4.log", "UI ready\n")
+        self.write(".tmp/bin/openD3-client_x64.exe", "client bytes")
+        self.write(".tmp/run/opend3.log", "UI ready\n")
         (self.root / ".tmp/run/menu.png").write_bytes(base64.b64decode(
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="))
 
@@ -211,11 +211,11 @@ class AcceptanceTransitionTests(unittest.TestCase):
                   "rendered": True, "executed": True, "requirement_ids": list(requirements), "resource_ids": list(resources),
                   "scope": f"{name} complete scope.", "engine_revision": revision or self.base,
                   "companion_revision": revision or self.base, "source_or_asset_hashes": sources,
-                  "binary_hashes_if_executed": {".tmp/bin/openQ4-client_x64.exe": self.hash(".tmp/bin/openQ4-client_x64.exe")},
+                  "binary_hashes_if_executed": {".tmp/bin/openD3-client_x64.exe": self.hash(".tmp/bin/openD3-client_x64.exe")},
                   "build_options_if_executed": {"buildtype": "debugoptimized"},
                   "exact_commands_or_operations": ["python tools/ui/capture.py --renderer gl"],
                   "host_and_backend_if_rendered": {"host": "Windows 11 x64", "backends": ["gl", "vulkan"]},
-                  "log_and_image_hashes_if_rendered": {".tmp/run/openq4.log": self.hash(".tmp/run/openq4.log"),
+                  "log_and_image_hashes_if_rendered": {".tmp/run/opend3.log": self.hash(".tmp/run/opend3.log"),
                                                        ".tmp/run/menu.png": self.hash(".tmp/run/menu.png")},
                   "result": "passed",
                   "reviewer_or_review_outcome": {"reviewer": "Independent reviewer", "outcome": "accepted", "date": "2026-10-23"},
@@ -228,7 +228,7 @@ class AcceptanceTransitionTests(unittest.TestCase):
                     leaf_row = rows[leaf]
                     deps[leaf] = ({"verified_by": leaf_row["acceptance_evidence"]} if leaf_row["status"] == "verified" else
                                   {"milestone": milestone, "scope": f"{leaf} at the gate's scope.", "result": "passed",
-                                   "evidence": ["operation:0", ".tmp/run/openq4.log"]})
+                                   "evidence": ["operation:0", ".tmp/run/opend3.log"]})
             record["requirements"][req] = {
                 "requirement": row["requirement"],
                 "acceptance_evidence_needed": [{"need": need, "result": "passed", "evidence": [WIDGET, ".tmp/run/menu.png"]}
@@ -488,7 +488,7 @@ class AcceptanceTransitionTests(unittest.TestCase):
     def test_artwork_rejects_logs_and_nonimage_files(self):
         resource = self.resource_id(0)
         record = self.accept("acceptance-menu", resources=[resource])
-        for evidence in ([".tmp/run/openq4.log"], [".tmp/run/menu.png"]):
+        for evidence in ([".tmp/run/opend3.log"], [".tmp/run/menu.png"]):
             with self.subTest(evidence=evidence):
                 if evidence == [".tmp/run/menu.png"]:
                     self.write(".tmp/run/menu.png", "a log renamed to look like a screenshot")
@@ -521,7 +521,7 @@ class AcceptanceTransitionTests(unittest.TestCase):
         self.accept("acceptance-menu", resources=[self.resource_id(0)])
         self.audit(["DOC-001"], [self.resource_id(0)])
         self.land()
-        for name in (".tmp/bin/openQ4-client_x64.exe", ".tmp/run/openq4.log", ".tmp/run/menu.png"):
+        for name in (".tmp/bin/openD3-client_x64.exe", ".tmp/run/opend3.log", ".tmp/run/menu.png"):
             path = self.root / name
             original = path.read_bytes()
             for missing in (False, True):

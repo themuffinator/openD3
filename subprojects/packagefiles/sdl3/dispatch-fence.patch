@@ -3,8 +3,8 @@
 @@ -21,6 +21,7 @@
  #include "SDL_internal.h"
  #if defined(SDL_VIDEO_DRIVER_WINDOWS) && !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
- #include "../video/windows/SDL_openq4_text_provenance.h"
-+#include "../video/windows/SDL_openq4_native_fence.h"
+ #include "../video/windows/SDL_opend3_text_provenance.h"
++#include "../video/windows/SDL_opend3_native_fence.h"
  #endif
  
  // General event handling code for SDL
@@ -83,8 +83,8 @@
 @@ -24,6 +24,7 @@
  
  #include "SDL_windowsvideo.h"
- #include "SDL_openq4_text_provenance.h"
-+#include "SDL_openq4_native_fence.h"
+ #include "SDL_opend3_text_provenance.h"
++#include "SDL_opend3_native_fence.h"
  #include "../../events/SDL_events_c.h"
  #include "../../events/SDL_touch_c.h"
  #include "../../events/scancodes_windows.h"
@@ -206,7 +206,7 @@
  
  #include "SDL_windowsvideo.h"
 +#if !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
-+#include "SDL_openq4_native_fence.h"
++#include "SDL_opend3_native_fence.h"
 +#endif
  #include "SDL_windowskeyboard.h"
  #include "SDL_windowswindow.h"
@@ -238,7 +238,7 @@
  
  #include "SDL_windowsvideo.h"
 +#if !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
-+#include "SDL_openq4_native_fence.h"
++#include "SDL_opend3_native_fence.h"
 +#endif
  #include "SDL_windowsframebuffer.h"
  #include "SDL_windowsmessagebox.h"

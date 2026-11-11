@@ -257,19 +257,19 @@ GAME_MAIN = r'''
 int main(){
  idRenderTexture target;renderPresentationState_t below;
  for(int mode:{2,3,9}){modeCvar=mode;presentCalls=0;rendererAccepts=true;
-  CHECK(openQ4_ScaledScenePresentationRequested(below));CHECK(openQ4_PresentScaledScene(below,&target));CHECK(presentCalls==1);}
- modeCvar=3;presentCalls=0;rendererAccepts=false;CHECK(!openQ4_PresentScaledScene(below,&target));CHECK(presentCalls==1);
+  CHECK(openD3_ScaledScenePresentationRequested(below));CHECK(openD3_PresentScaledScene(below,&target));CHECK(presentCalls==1);}
+ modeCvar=3;presentCalls=0;rendererAccepts=false;CHECK(!openD3_PresentScaledScene(below,&target));CHECK(presentCalls==1);
  rendererAccepts=true;
  for(int mode:{0,1,-1}){modeCvar=mode;presentCalls=0;
-  CHECK(!openQ4_ScaledScenePresentationRequested(below));CHECK(!openQ4_PresentScaledScene(below,&target));CHECK(presentCalls==0);}
+  CHECK(!openD3_ScaledScenePresentationRequested(below));CHECK(!openD3_PresentScaledScene(below,&target));CHECK(presentCalls==0);}
  modeCvar=2;presentCalls=0;
  renderPresentationState_t native;native.sceneWidth=1280;native.sceneHeight=720;
- CHECK(!openQ4_PresentScaledScene(native,&target));
+ CHECK(!openD3_PresentScaledScene(native,&target));
  renderPresentationState_t super;super.sceneWidth=2560;super.sceneHeight=1440;
- CHECK(!openQ4_PresentScaledScene(super,&target));
- CHECK(!openQ4_PresentScaledScene(below,nullptr));CHECK(presentCalls==0);
+ CHECK(!openD3_PresentScaledScene(super,&target));
+ CHECK(!openD3_PresentScaledScene(below,nullptr));CHECK(presentCalls==0);
  renderPresentationState_t narrow;narrow.sceneWidth=1280;narrow.sceneHeight=700;
- CHECK(openQ4_PresentScaledScene(narrow,&target));CHECK(presentCalls==1);
+ CHECK(openD3_PresentScaledScene(narrow,&target));CHECK(presentCalls==1);
  std::cout<<"PASS game "<<checks<<" checks\n";
 }
 '''
@@ -296,8 +296,8 @@ def assemble_gl(draw: str, tr_local: str) -> str:
 
 def assemble_game(game: str) -> str:
     signatures = (
-        "static bool openQ4_ScaledScenePresentationRequested( const renderPresentationState_t &presentation )",
-        "static bool openQ4_PresentScaledScene( const renderPresentationState_t &presentation,",
+        "static bool openD3_ScaledScenePresentationRequested( const renderPresentationState_t &presentation )",
+        "static bool openD3_PresentScaledScene( const renderPresentationState_t &presentation,",
     )
     return COMMON + GAME_SUPPORT + "".join(function_body(game, s) for s in signatures) + GAME_MAIN
 
@@ -306,15 +306,15 @@ def check_sources(game: str, render_h: str, render_system: str, tr_backend: str,
                   vk_backend: str, vk_exec: str, draw: str) -> None:
     scene = function_body(game, "void idGameLocal::RenderScene(const renderView_t *view, idRenderWorld *renderWorld,")
     fast = scene[scene.index("if ( canUseFastNoPost ) {"):scene.index("// Render the scene to the forward render pass rendertexture.")]
-    require(fast, "if ( !openQ4_PresentScaledScene( presentation, gameRender.forwardRenderPassResolvedRT ) ) {\n"
-            "\t\t\topenQ4_DrawFullScreenMaterial( gameRender.resolvePostProcessMaterial );", "fast no-post presentation")
+    require(fast, "if ( !openD3_PresentScaledScene( presentation, gameRender.forwardRenderPassResolvedRT ) ) {\n"
+            "\t\t\topenD3_DrawFullScreenMaterial( gameRender.resolvePostProcessMaterial );", "fast no-post presentation")
     final = scene[scene.rindex("idRenderTexture *scaledSceneSource"):]
     require(final, "finalMaterial == gameRender.noPostProcessMaterial\n\t\t? gameRender.postProcessRT[0] : gameRender.postProcessRT[1];",
             "the no-post copy presents _postProcessAlbedo0 directly")
     require(final, "renderSystem->BindRenderTexture( scaledSceneSource, NULL );", "blur and CAS run at the scene extent first")
-    if not (final.index("openQ4_ScaledScenePresentationRequested( presentation )")
+    if not (final.index("openD3_ScaledScenePresentationRequested( presentation )")
             < final.index("renderSystem->ClearRenderTarget( false, true, 1.0f, 0.0f, 0.0f, 0.0f );")
-            < final.index("if ( !openQ4_PresentScaledScene( presentation, scaledSceneSource ) ) {\n\t\topenQ4_DrawFullScreenMaterial( finalMaterial );")):
+            < final.index("if ( !openD3_PresentScaledScene( presentation, scaledSceneSource ) ) {\n\t\topenD3_DrawFullScreenMaterial( finalMaterial );")):
         raise AssertionError("final presentation: scene-extent pass, back-buffer depth clear, then the scaled present or the material")
     tail = render_h[render_h.index("virtual void\t\t\tGetVRFrameResult("):render_h.index("extern idRenderSystem *")]
     require(tail, "virtual bool\t\t\tPresentScaledScene( idRenderTexture *sceneColorTarget ) = 0;",
@@ -323,7 +323,7 @@ def check_sources(game: str, render_h: str, render_system: str, tr_backend: str,
     if slots[:3] != ["GetVRFrameResult", "PresentScaledScene", "BeginGuiRoot"]:
         raise AssertionError(f"renderer extensions must follow the existing scaled-presentation slot: {slots}")
     front = function_body(render_system, "bool idRenderSystemLocal::PresentScaledScene( idRenderTexture *sceneColorTarget )")
-    if "#if" in front or "OPENQ4_RENDERER_VK_MODULE" in front:
+    if "#if" in front or "OPEND3_RENDERER_VK_MODULE" in front:
         raise AssertionError("the front end must not decline a backend at compile time")
     require(tr_backend, "case RC_PRESENT_SCALED_SCENE:", "OpenGL dispatch")
     require(tr_backend, "RB_PresentScaledScene( *reinterpret_cast<const presentScaledSceneCommand_t *>( cmds ) );", "OpenGL dispatch")

@@ -47,8 +47,8 @@ ROOT = Path(__file__).resolve().parents[2]
 LOG_NAME = "savegame-restore-matrix.log"
 AFTER_LOAD_CFG = "savegame_restore_matrix/after_load.cfg"
 SCREENSHOT_REL = "screenshots/savegame_restore_matrix.tga"
-ACTIVE_MARKER = "OPENQ4_RESTORE_MATRIX_ACTIVE"
-DONE_MARKER = "OPENQ4_RESTORE_MATRIX_DONE"
+ACTIVE_MARKER = "OPEND3_RESTORE_MATRIX_ACTIVE"
+DONE_MARKER = "OPEND3_RESTORE_MATRIX_DONE"
 PAYLOAD_MAGIC = b"OQ4S"
 INTEGRITY_MAGIC = int.from_bytes(b"OQ4I", "little")
 
@@ -67,7 +67,7 @@ def sha256_file(path: Path) -> str:
 
 
 def read_stamp(data: bytes) -> dict[str, Any]:
-    """Return the openQ4 payload stamp, or an empty dict for unstamped payloads."""
+    """Return the openD3 payload stamp, or an empty dict for unstamped payloads."""
     offset = data.find(PAYLOAD_MAGIC)
     if offset < 0 or offset + 16 > len(data):
         return {}
@@ -125,7 +125,7 @@ def client_path(install_root: Path) -> Path:
     machine = platform.machine().lower()
     arch = "arm64" if machine in ("arm64", "aarch64") else "x64"
     suffix = ".exe" if sys.platform == "win32" else ""
-    return install_root / f"openQ4-client_{arch}{suffix}"
+    return install_root / f"openD3-client_{arch}{suffix}"
 
 
 def input_files(source: Path) -> list[Path]:
@@ -167,7 +167,7 @@ def create_run_dir(output_root: Path) -> Path:
 
 
 def stage_slot(source: Path, home: Path, slot: str, payload: bytes | None) -> None:
-    savegames = home / "baseoq4" / "savegames"
+    savegames = home / "baseod3" / "savegames"
     savegames.mkdir(parents=True, exist_ok=True)
     for extension in (".txt", ".tga"):
         companion = source.with_suffix(extension)
@@ -181,7 +181,7 @@ def stage_slot(source: Path, home: Path, slot: str, payload: bytes | None) -> No
 
 
 def write_after_load_cfg(home: Path, settle_frames: int, screenshot: bool, after_load: list[str]) -> None:
-    cfg = home / "baseoq4" / AFTER_LOAD_CFG
+    cfg = home / "baseod3" / AFTER_LOAD_CFG
     cfg.parent.mkdir(parents=True, exist_ok=True)
     lines = [f"echo {ACTIVE_MARKER}", f"wait {max(1, settle_frames)}"]
     if screenshot:
@@ -193,7 +193,7 @@ def write_after_load_cfg(home: Path, settle_frames: int, screenshot: bool, after
 
 def runtime_text(home: Path, stdout_path: Path) -> str:
     texts = []
-    for candidate in (home / "baseoq4" / "logs" / LOG_NAME, stdout_path):
+    for candidate in (home / "baseod3" / "logs" / LOG_NAME, stdout_path):
         if candidate.is_file():
             texts.append(candidate.read_text(encoding="utf-8", errors="replace"))
     return "\n".join(texts)
@@ -207,7 +207,7 @@ def run_case(
     slot = "restore_matrix"
     stage_slot(source, home, slot, payload)
     write_after_load_cfg(home, args.settle_frames, args.screenshot, args.after_load)
-    staged = home / "baseoq4" / "savegames" / f"{slot}.save"
+    staged = home / "baseod3" / "savegames" / f"{slot}.save"
     stamp = read_stamp(staged.read_bytes())
 
     command = [str(client)]
@@ -286,7 +286,7 @@ def run_case(
         "preflightRejections": rejections[:5],
         "seconds": round(time.monotonic() - started, 1),
         "runDir": str(run_dir),
-        "screenshot": str(home / "baseoq4" / SCREENSHOT_REL) if (home / "baseoq4" / SCREENSHOT_REL).is_file() else "",
+        "screenshot": str(home / "baseod3" / SCREENSHOT_REL) if (home / "baseod3" / SCREENSHOT_REL).is_file() else "",
         "missingExpectedLog": [] if args.expect_reject else missing,
     }
 

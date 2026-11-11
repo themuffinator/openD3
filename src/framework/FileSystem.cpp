@@ -32,7 +32,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "Unzip.h"
 #include "GameDirPolicy.h"
 #include "LevelLoadCacheManager.h"
-#include "openq4_paks_generated.h"
+#include "opend3_paks_generated.h"
 #include "../sys/URLPolicy.h"
 
 #include <errno.h>
@@ -71,9 +71,9 @@ If you have questions concerning this license or the applicable additional terms
 #if ID_ENABLE_CURL
 	#include "../curl/include/curl/curl.h"
 	#if defined( LIBCURL_VERSION_NUM ) && LIBCURL_VERSION_NUM >= 0x071304 && defined( CURL_VERSION_ASYNCHDNS )
-		#define OPENQ4_CURL_CAPABLE_BUILD 1
+		#define OPEND3_CURL_CAPABLE_BUILD 1
 	#else
-		#define OPENQ4_CURL_CAPABLE_BUILD 0
+		#define OPEND3_CURL_CAPABLE_BUILD 0
 	#endif
 #endif
 
@@ -247,7 +247,7 @@ with "+set fs_basepath c:\doom" on the command line. The base path cannot be mod
 at all after startup.
 
 The "home path" is the user-writable root path for openD3 data. It can be overridden
-with "+set fs_homepath c:\users\you\saved games\openq4" on the command line.
+with "+set fs_homepath c:\users\you\saved games\opend3" on the command line.
 
 The "save path" is the path to the directory where game files will be saved. It defaults
 to the home path, but can be overridden with a "+set fs_savepath c:\doom" on the
@@ -338,12 +338,12 @@ unresolved segment in debug output instead of relying on lowercase assumptions.
 
 "additional mod path search":
 fs_game_base can be used to set an additional search path
-in search order, fs_game, fs_game_base, baseoq4, BASEGAME
-Any mod selected with fs_game runs on top of the openQ4 runtime directory
-(baseoq4), which carries the engine's own runtime content and the fallback
+in search order, fs_game, fs_game_base, baseod3, BASEGAME
+Any mod selected with fs_game runs on top of the openD3 runtime directory
+(baseod3), which carries the engine's own runtime content and the fallback
 game modules, so it is searched below the mod without being named. fs_game_base
-remains free for an intermediate base, for instance a mod built on the
-Awakening expansion: fs_game mymod, fs_game_base q4xbase
+remains free for an intermediate base, for instance a mod built on
+Resurrection of Evil: fs_game mymod, fs_game_base d3xp
 
 =============================================================================
 */
@@ -351,7 +351,7 @@ Awakening expansion: fs_game mymod, fs_game_base q4xbase
 
 
 // define to fix special-cases for GetPackStatus so that files that shipped in 
-// the wrong place for openQ4 don't break pure servers.
+// the wrong place for openD3 don't break pure servers.
 #define DOOM3_PURE_SPECIAL_CASES	
 
 typedef bool (*pureExclusionFunc_t)( const struct pureExclusion_s &excl, int l, const idStr &name );
@@ -1359,10 +1359,10 @@ static void FS_BuildSteamInstallCandidates( idStrList &candidates ) {
 
 	// Temporary migration aliases. New documentation and diagnostics use only
 	// OPEND3_* names.
-	FS_AppendEnvPathList( steamRoots, "OPENQ4_STEAM_ROOT" );
-	FS_AppendEnvPathList( steamRoots, "OPENQ4_STEAM_ROOTS" );
-	FS_AppendEnvPathList( explicitLibraryRoots, "OPENQ4_STEAM_LIBRARY" );
-	FS_AppendEnvPathList( explicitLibraryRoots, "OPENQ4_STEAM_LIBRARIES" );
+	FS_AppendEnvPathList( steamRoots, "OPEND3_STEAM_ROOT" );
+	FS_AppendEnvPathList( steamRoots, "OPEND3_STEAM_ROOTS" );
+	FS_AppendEnvPathList( explicitLibraryRoots, "OPEND3_STEAM_LIBRARY" );
+	FS_AppendEnvPathList( explicitLibraryRoots, "OPEND3_STEAM_LIBRARIES" );
 
 #ifdef WIN32
 	FS_AddUniquePath( steamRoots, "C:/Program Files (x86)/Steam" );
@@ -1477,8 +1477,8 @@ static void FS_BuildGogInstallCandidates( idStrList &candidates ) {
 
 	FS_AppendEnvPathList( candidates, "OPEND3_GOG_PATH" );
 	FS_AppendEnvPathList( candidates, "OPEND3_GOG_ROOT" );
-	FS_AppendEnvPathList( candidates, "OPENQ4_GOG_PATH" );
-	FS_AppendEnvPathList( candidates, "OPENQ4_GOG_ROOT" );
+	FS_AppendEnvPathList( candidates, "OPEND3_GOG_PATH" );
+	FS_AppendEnvPathList( candidates, "OPEND3_GOG_ROOT" );
 
 	FS_AddUniquePath( candidates, "C:/Program Files (x86)/GOG Galaxy/Games/Doom 3" );
 	FS_AddUniquePath( candidates, "C:/Program Files/GOG Galaxy/Games/Doom 3" );
@@ -1656,10 +1656,10 @@ typedef struct searchpath_s {
 #define ADDON_CONFIG "addon.conf"
 
 // Protocol 2.41 identifies compatible game code with the official 1.4.2
-// q4base/game300.pk4 checksum. openQ4 never loads executable code from that
+// q4base/game300.pk4 checksum. openD3 never loads executable code from that
 // archive; the unchanged value is a platform-independent wire token for a
 // module that FindDLL resolved from the trusted package/module roots.
-static const int OPENQ4_Q4_142_GAME300_PAK_CHECKSUM = 0x68fb90b1;
+static const int OPEND3_Q4_142_GAME300_PAK_CHECKSUM = 0x68fb90b1;
 
 typedef enum {
 	GAME_MODULE_ORIGIN_NONE = 0,
@@ -1688,9 +1688,9 @@ typedef enum modManifestStatus_s {
 	MOD_MANIFEST_INVALID
 } modManifestStatus_t;
 
-// The identity on disk of an openQ4 runtime pack that passed its checksum
-// check (see ValidateOpenQ4Paks).
-typedef struct openQ4PakStamp_s {
+// The identity on disk of an openD3 runtime pack that passed its checksum
+// check (see ValidateopenD3Paks).
+typedef struct openD3PakStamp_s {
 	uint64_t			size;
 	uint64_t			modified;		// last write, in the platform's native time units
 	uint64_t			changed;		// last content or metadata change, likewise
@@ -1698,17 +1698,17 @@ typedef struct openQ4PakStamp_s {
 	uint64_t			fileId;
 	uint32_t			zipChecksum;	// pack_t::checksum, over the central directory's CRCs
 	uint32_t			zipFiles;
-} openQ4PakStamp_t;
+} openD3PakStamp_t;
 
-typedef struct verifiedOpenQ4Pak_s {
+typedef struct verifiedopenD3Pak_s {
 	std::string			path;
-	openQ4PakStamp_t	stamp;
+	openD3PakStamp_t	stamp;
 	char				md5[ 33 ];
-} verifiedOpenQ4Pak_t;
+} verifiedopenD3Pak_t;
 
-// One openQ4 runtime pack from tools/build/content_packs.json, as the build
-// recorded it in openq4_paks_generated.h.
-typedef struct openQ4PackTableEntry_s {
+// One openD3 runtime pack from tools/build/content_packs.json, as the build
+// recorded it in opend3_paks_generated.h.
+typedef struct openD3PackTableEntry_s {
 	const char *		name;
 	const char *		md5;
 	long long			sizeBytes;
@@ -1717,17 +1717,17 @@ typedef struct openQ4PackTableEntry_s {
 	bool				bulk;			// carried by full packages, not update archives
 	const char *		contentsString;	// localized description, for example "light grids"
 	const char *		contents;		// English description, for logs
-} openQ4PackTableEntry_t;
+} openD3PackTableEntry_t;
 
-static const openQ4PackTableEntry_t openQ4PackTable[] = {
-	OPENQ4_PACK_TABLE_ENTRIES
+static const openD3PackTableEntry_t openD3PackTable[] = {
+	OPEND3_PACK_TABLE_ENTRIES
 };
-static const int openQ4PackTableCount = sizeof( openQ4PackTable ) / sizeof( openQ4PackTable[ 0 ] );
+static const int openD3PackTableCount = sizeof( openD3PackTable ) / sizeof( openD3PackTable[ 0 ] );
 
-static const openQ4PackTableEntry_t *FS_FindOpenQ4PackTableEntry( const char *fileName ) {
-	for ( int i = 0; i < openQ4PackTableCount; i++ ) {
-		if ( !idStr::Icmp( openQ4PackTable[ i ].name, fileName ) ) {
-			return &openQ4PackTable[ i ];
+static const openD3PackTableEntry_t *FS_FindopenD3PackTableEntry( const char *fileName ) {
+	for ( int i = 0; i < openD3PackTableCount; i++ ) {
+		if ( !idStr::Icmp( openD3PackTable[ i ].name, fileName ) ) {
+			return &openD3PackTable[ i ];
 		}
 	}
 	return NULL;
@@ -1746,7 +1746,6 @@ public:
 	virtual void			Shutdown( bool reloading );
 	virtual bool			IsInitialized( void ) const;
 	virtual bool			PerformingCopyFiles( void ) const;
-	virtual idCampaignContentInfo GetAwakeningContentInfo();
 	virtual const char *GetActiveGameDir() const { return gameFolder.c_str(); }
 	virtual idModList *		ListMods( void );
 	virtual bool			GetModInfo( const char *modDir, idModInfo &modInfo, idStr *reason = NULL );
@@ -1868,7 +1867,6 @@ private:
 	static idCVar			fs_basepath;
 	static idCVar			fs_homepath;
 	static idCVar			fs_savepath;
-	static idCVar			fs_awakeningpath;
 	static idCVar			fs_cachepath;
 	static idCVar			fs_cdpath;
 	static idCVar			fs_devpath;
@@ -1945,18 +1943,18 @@ private:
 	void					SetupGameDirectories( const char *gameName );
 	bool					IsGameDirPack( const pack_t *pak, const char *gameDir ) const;
 	bool					IsBaseGamePack( const pack_t *pak ) const;
-	bool					IsOpenQ4PurePack( const pack_t *pak ) const;
-	bool					IsOpenQ4ClientOnlyPack( const pack_t *pak ) const;
-	const openQ4PackTableEntry_t *FindOpenQ4PackTableEntry( const pack_t *pak ) const;
+	bool					IsopenD3PurePack( const pack_t *pak ) const;
+	bool					IsopenD3ClientOnlyPack( const pack_t *pak ) const;
+	const openD3PackTableEntry_t *FindopenD3PackTableEntry( const pack_t *pak ) const;
 	pack_t *				FindGamePackByName( const char *name, const char *gameDir ) const;
 	pack_t *				FindBaseGamePackByName( const char *name ) const;
 	void					PrintContentSearchDiagnostics( void );
 	bool					FindMisplacedOfficialPaks( idStr &errors ) const;
-	bool					ValidateOpenQ4Paks( idStr &errors, bool &onlyClientPacks );
-	void					ReadVerifiedOpenQ4Paks( std::vector<verifiedOpenQ4Pak_t> &records );
-	bool					WriteVerifiedOpenQ4Paks( const std::vector<verifiedOpenQ4Pak_t> &records );
+	bool					ValidateopenD3Paks( idStr &errors, bool &onlyClientPacks );
+	void					ReadVerifiedopenD3Paks( std::vector<verifiedopenD3Pak_t> &records );
+	bool					WriteVerifiedopenD3Paks( const std::vector<verifiedopenD3Pak_t> &records );
 	bool					ValidateRequiredOfficialPaks( idStr &errors ) const;
-	bool					UsesOpenQ4RuntimeUnderlay( void ) const;
+	bool					UsesopenD3RuntimeUnderlay( void ) const;
 	void					Startup( void );
 	void					SetRestrictions( void );
 							// some files can be obtained from directories without compromising si_pure
@@ -1996,10 +1994,10 @@ idCVar	idFileSystemLocal::fs_savepath( "fs_savepath", "", CVAR_SYSTEM | CVAR_INI
 // there, because a purged cache costs a slow reload and nothing else, while a
 // purged savepath costs the player their config and saves.
 idCVar	idFileSystemLocal::fs_cachepath( "fs_cachepath", "", CVAR_SYSTEM | CVAR_INIT, "regenerable cache directory for the generated/ tree; empty uses fs_savepath" );
-idCVar idFileSystemLocal::fs_awakeningpath( "fs_awakeningpath", "", CVAR_SYSTEM | CVAR_ARCHIVE, "optional Awakening content root (containing q4xbase), mounted only for its single-player campaign" );
+
 idCVar	idFileSystemLocal::fs_cdpath( "fs_cdpath", "", CVAR_SYSTEM | CVAR_INIT, "" );
 idCVar	idFileSystemLocal::fs_devpath( "fs_devpath", "", CVAR_SYSTEM | CVAR_INIT, "optional highest-priority loose development-content root" );
-idCVar	idFileSystemLocal::fs_game( "fs_game", OPENQ4_GAMEDIR, CVAR_SYSTEM | CVAR_INIT | CVAR_SERVERINFO, "mod path" );
+idCVar	idFileSystemLocal::fs_game( "fs_game", OPEND3_GAMEDIR, CVAR_SYSTEM | CVAR_INIT | CVAR_SERVERINFO, "mod path" );
 idCVar  idFileSystemLocal::fs_game_base( "fs_game_base", "", CVAR_SYSTEM | CVAR_INIT | CVAR_SERVERINFO, "alternate mod path, searched after the main fs_game path, before the basedir" );
 #ifdef WIN32
 idCVar	idFileSystemLocal::fs_caseSensitiveOS( "fs_caseSensitiveOS", "0", CVAR_SYSTEM | CVAR_BOOL, "" );
@@ -2314,7 +2312,7 @@ void idFileSystemLocal::DiscardGeneratedCache( const generatedCacheKind_t kind,
 idFileSystemLocal::GeneratedCacheReadsRefused
 
 The level-load caches (render models, worlds, collision, and the game's
-animation cache) are openQ4's own derived data. Their owners read them from
+animation cache) are openD3's own derived data. Their owners read them from
 fs_savepath with OpenExplicitFileRead, outside the search paths, so the pure
 directory gate in OpenFileReadSearch never sees them. Like a generated image
 cache entry, an entry names its source by public pak metadata and binds its
@@ -2396,7 +2394,7 @@ void idFileSystemLocal::AddToReadCount( const int count ) {
 		} else {
 			// Startup reads are mostly small script/decl/GUI files. The animated
 			// initialization screen paces itself by time, so offer it every read.
-			openQ4_UpdateInitialization();
+			openD3_UpdateInitialization();
 		}
 	}
 }
@@ -2960,7 +2958,7 @@ const char *idFileSystemLocal::OSPathToRelativePath( const char *OSPath ) {
 	}
 #endif
 	// fs_game and fs_game_base support - look for first complete name with a mod path
-	// ( fs_game searched before fs_game_base, then the openQ4 runtime under a mod )
+	// ( fs_game searched before fs_game_base, then the openD3 runtime under a mod )
 	const char *fsgame = NULL;
 	int igame = 0;
 	for ( igame = 0; igame < 3; igame++ ) {
@@ -2969,7 +2967,7 @@ const char *idFileSystemLocal::OSPathToRelativePath( const char *OSPath ) {
 		} else if ( igame == 1 ) {
 			fsgame = fs_game_base.GetString();
 		} else {
-			fsgame = UsesOpenQ4RuntimeUnderlay() ? OPENQ4_GAMEDIR : NULL;
+			fsgame = UsesopenD3RuntimeUnderlay() ? OPEND3_GAMEDIR : NULL;
 		}
 		if ( base == NULL && fsgame && strlen( fsgame ) ) {
 			base = (char *)strstr( OSPath, fsgame );
@@ -4014,7 +4012,7 @@ int idFileSystemLocal::GetFileList( const char *relativePath, const idStrList &e
 				}
  
 				// ensure we have a path, and not just a filename containing the path
-				// openQ4: only when there is a path. For the root, name[-1] was
+				// openD3: only when there is a path. For the root, name[-1] was
 				// read from before the string and every file in a pak was
 				// skipped, so completing "exec" never offered a pak's configs.
 				if ( pathLength && ( name[ pathLength ] == '\0' || name[pathLength - 1] != '/' ) ) {
@@ -4197,7 +4195,7 @@ bool idFileSystemLocal::HasBaseLanguageMediaPack( void ) {
 	return false;
 }
 
-static const char *OPENQ4_MOD_MANIFEST_FILENAME = "mod.json";
+static const char *OPEND3_MOD_MANIFEST_FILENAME = "mod.json";
 
 /*
 ===============
@@ -4665,7 +4663,7 @@ static bool FS_ModManifestKeyIsKnown( const idStr &key ) {
 		   !key.Icmp( "website" ) ||
 		   !key.Icmp( "author" ) ||
 		   !key.Icmp( "requiredopenD3Version" ) ||
-		   !key.Icmp( "requiredopenQ4Version" );
+		   !key.Icmp( "requiredopenD3Version" );
 }
 
 /*
@@ -4696,18 +4694,18 @@ static void FS_FinalizeModInfo( idModInfo &modInfo ) {
 	modInfo.listLabel = FS_BuildModListLabel( modInfo );
 }
 
-typedef struct openQ4BaseVersion_s {
+typedef struct openD3BaseVersion_s {
 	int major;
 	int minor;
 	int patch;
-} openQ4BaseVersion_t;
+} openD3BaseVersion_t;
 
 /*
 ===============
-FS_ParseopenQ4BaseVersion
+FS_ParseopenD3BaseVersion
 ===============
 */
-static bool FS_ParseopenQ4BaseVersion( const char *version, openQ4BaseVersion_t &parsed ) {
+static bool FS_ParseopenD3BaseVersion( const char *version, openD3BaseVersion_t &parsed ) {
 	int values[3] = { 0, 0, 0 };
 
 	if ( version == NULL || version[0] == '\0' ) {
@@ -4755,10 +4753,10 @@ static bool FS_ParseopenQ4BaseVersion( const char *version, openQ4BaseVersion_t 
 
 /*
 ===============
-FS_CompareopenQ4BaseVersions
+FS_CompareopenD3BaseVersions
 ===============
 */
-static int FS_CompareopenQ4BaseVersions( const openQ4BaseVersion_t &left, const openQ4BaseVersion_t &right ) {
+static int FS_CompareopenD3BaseVersions( const openD3BaseVersion_t &left, const openD3BaseVersion_t &right ) {
 	if ( left.major != right.major ) {
 		return left.major < right.major ? -1 : 1;
 	}
@@ -4786,7 +4784,7 @@ static bool FS_ParseModManifest( const char *jsonText, idModInfo &modInfo, idStr
 	modInfo.releaseDate.Clear();
 	modInfo.website.Clear();
 	modInfo.author.Clear();
-	modInfo.requiredopenQ4Version.Clear();
+	modInfo.requiredopenD3Version.Clear();
 	modInfo.listLabel.Clear();
 
 	if ( jsonText == NULL ) {
@@ -4848,9 +4846,9 @@ static bool FS_ParseModManifest( const char *jsonText, idModInfo &modInfo, idStr
 			} else if ( !key.Icmp( "author" ) ) {
 				modInfo.author = value;
 			} else if ( !key.Icmp( "requiredopenD3Version" ) ) {
-				modInfo.requiredopenQ4Version = value;
+				modInfo.requiredopenD3Version = value;
 				sawRequiredopenD3Version = true;
-			} else if ( !key.Icmp( "requiredopenQ4Version" ) ) {
+			} else if ( !key.Icmp( "requiredopenD3Version" ) ) {
 				legacyRequiredVersion = value;
 			}
 		} else if ( !FS_SkipJsonValue( cursor, errorOut ) ) {
@@ -4914,9 +4912,9 @@ static bool FS_ParseModManifest( const char *jsonText, idModInfo &modInfo, idStr
 	// openD3 is authoritative when both keys are present. The inherited key
 	// remains readable for migration of existing third-party manifests.
 	if ( !sawRequiredopenD3Version && !legacyRequiredVersion.IsEmpty() ) {
-		modInfo.requiredopenQ4Version = legacyRequiredVersion;
+		modInfo.requiredopenD3Version = legacyRequiredVersion;
 	}
-	if ( modInfo.requiredopenQ4Version.IsEmpty() ) {
+	if ( modInfo.requiredopenD3Version.IsEmpty() ) {
 		errorOut = "missing required field 'requiredopenD3Version'";
 		return false;
 	}
@@ -4958,7 +4956,7 @@ idModList *idFileSystemLocal::ListMods( void ) {
 		dirs.Remove( "pb" );
 
 		for ( int i = dirs.Num() - 1; i >= 0; --i ) {
-			if ( dirs[ i ].HasUpper() || !dirs[i].Icmp( "q4xbase" ) ) {
+			if ( dirs[ i ].HasUpper() || !dirs[i].Icmp( OPEND3_EXPANSION_GAMEDIR ) ) {
 				dirs.RemoveIndex( i );
 			}
 		}
@@ -5039,32 +5037,32 @@ modManifestStatus_t idFileSystemLocal::ReadModManifestFile( const char *manifest
 		return MOD_MANIFEST_INVALID;
 	}
 
-	openQ4BaseVersion_t requiredVersion;
-	if ( !FS_ParseopenQ4BaseVersion( modInfo.requiredopenQ4Version.c_str(), requiredVersion ) ) {
+	openD3BaseVersion_t requiredVersion;
+	if ( !FS_ParseopenD3BaseVersion( modInfo.requiredopenD3Version.c_str(), requiredVersion ) ) {
 		if ( reason != NULL ) {
 			*reason = va(
 				"%s has invalid required openD3 version '%s' (expected major.minor.patch)",
 				modInfo.displayName.c_str(),
-				modInfo.requiredopenQ4Version.c_str() );
+				modInfo.requiredopenD3Version.c_str() );
 		}
 		return MOD_MANIFEST_INVALID;
 	}
 
-	openQ4BaseVersion_t engineVersion;
-	if ( !FS_ParseopenQ4BaseVersion( OPENQ4_VERSION_BASE, engineVersion ) ) {
+	openD3BaseVersion_t engineVersion;
+	if ( !FS_ParseopenD3BaseVersion( OPEND3_VERSION_BASE, engineVersion ) ) {
 		if ( reason != NULL ) {
-			*reason = va( "this build has invalid openD3 version '%s'", OPENQ4_VERSION_BASE );
+			*reason = va( "this build has invalid openD3 version '%s'", OPEND3_VERSION_BASE );
 		}
 		return MOD_MANIFEST_INVALID;
 	}
 
-	if ( FS_CompareopenQ4BaseVersions( engineVersion, requiredVersion ) < 0 ) {
+	if ( FS_CompareopenD3BaseVersions( engineVersion, requiredVersion ) < 0 ) {
 		if ( reason != NULL ) {
 			*reason = va(
 				"%s requires openD3 %s or newer but this build is %s",
 				modInfo.displayName.c_str(),
-				modInfo.requiredopenQ4Version.c_str(),
-				OPENQ4_VERSION_BASE );
+				modInfo.requiredopenD3Version.c_str(),
+				OPEND3_VERSION_BASE );
 		}
 		return MOD_MANIFEST_INVALID;
 	}
@@ -5085,7 +5083,7 @@ modManifestStatus_t idFileSystemLocal::ReadModManifestFromSearchPath( const char
 		return MOD_MANIFEST_MISSING;
 	}
 
-	const idStr manifestPath = BuildOSPath( searchPath, modDir, OPENQ4_MOD_MANIFEST_FILENAME );
+	const idStr manifestPath = BuildOSPath( searchPath, modDir, OPEND3_MOD_MANIFEST_FILENAME );
 	const modManifestStatus_t status = ReadModManifestFile( manifestPath.c_str(), modInfo, reason );
 	if ( status != MOD_MANIFEST_VALID ) {
 		return status;
@@ -5140,7 +5138,7 @@ bool idFileSystemLocal::GetModInfo( const char *modDir, idModInfo &modInfo, idSt
 		if ( failureReason.Length() ) {
 			*reason = failureReason;
 		} else {
-			*reason = va( "missing %s", OPENQ4_MOD_MANIFEST_FILENAME );
+			*reason = va( "missing %s", OPEND3_MOD_MANIFEST_FILENAME );
 		}
 	}
 
@@ -5152,94 +5150,6 @@ bool idFileSystemLocal::GetModInfo( const char *modDir, idModInfo &modInfo, idSt
 idFileSystemLocal::ValidateConfiguredGameDir
 ===============
 */
-
-static idStr FS_AwakeningRoot() {
-    idStr root = cvarSystem->GetCVarString( "fs_awakeningpath" );
-    root.BackSlashesToSlashes();
-    root.StripTrailing( '/' );
-    idStr leaf;
-    root.ExtractFileName( leaf );
-    if ( !leaf.Icmp( "q4xbase" ) ) {
-        root.StripFilename();
-        root.StripTrailing( '/' );
-    }
-    return root;
-}
-
-idCampaignContentInfo idFileSystemLocal::GetAwakeningContentInfo() {
-    static const char *const required[] = {
-        "def/q4xdamage.def", "def/weapons/spikegun.def",
-        "scripts/main.script", "scripts/events.script",
-        "maps/game/m01_stranarus_trench1.map", "maps/game/m01_stranarus_trench1.proc", "maps/game/m01_stranarus_trench1.cm",
-        "maps/game/m01_stranarus_trench2.map", "maps/game/m01_stranarus_trench2.proc", "maps/game/m01_stranarus_trench2.cm",
-        "maps/game/m02_trianfac.map", "maps/game/m02_trianfac.proc", "maps/game/m02_trianfac.cm",
-        "maps/game/m03_airassault.map", "maps/game/m03_airassault.proc", "maps/game/m03_airassault.cm",
-        "maps/game/m04_prison.map", "maps/game/m04_prison.proc", "maps/game/m04_prison.cm",
-        "maps/game/m05_bio.map", "maps/game/m05_bio.proc", "maps/game/m05_bio.cm",
-        "maps/game/m06_mcc.map", "maps/game/m06_mcc.proc", "maps/game/m06_mcc.cm",
-        "maps/game/m06_mcc_invasion.map", "maps/game/m06_mcc_invasion.proc", "maps/game/m06_mcc_invasion.cm",
-        "maps/game/m07_race.map", "maps/game/m07_race.proc", "maps/game/m07_race.cm",
-        "maps/game/m07_race1.map", "maps/game/m07_race1.proc", "maps/game/m07_race1.cm",
-        "maps/game/m07_race2.map", "maps/game/m07_race2.proc", "maps/game/m07_race2.cm",
-        "maps/game/m08_cryofac.map", "maps/game/m08_cryofac.proc", "maps/game/m08_cryofac.cm",
-        "maps/game/m09_valkaryne.map", "maps/game/m09_valkaryne.proc", "maps/game/m09_valkaryne.cm"
-    };
-    bool found[ sizeof( required ) / sizeof( required[0] ) ] = {};
-    bool seen[ sizeof( required ) / sizeof( required[0] ) ] = {};
-    idCampaignContentInfo info;
-    idStrList roots;
-    roots.AddUnique( fs_savepath.GetString() );
-    roots.AddUnique( fs_cachepath.GetString() );
-    roots.AddUnique( fs_basepath.GetString() );
-    roots.AddUnique( fs_cdpath.GetString() );
-    roots.AddUnique( FS_AwakeningRoot() );
-    // Match SetupGameDirectories/AddGameDirectory precedence without mounting.
-    // A higher-priority empty file must not be hidden by a complete lower copy.
-    for ( int r = roots.Num() - 1; r >= 0; --r ) {
-        if ( roots[r].IsEmpty() ) continue;
-        const idStr directory = BuildOSPath( roots[r], "q4xbase", "" );
-        for ( size_t i = 0; i < sizeof( required ) / sizeof( required[0] ); ++i ) {
-            if ( seen[i] ) continue;
-            idStr filename = BuildOSPath( roots[r], "q4xbase", required[i] );
-            FILE *file = OpenOSFileCorrectName( filename, "rb" );
-            if ( file != NULL ) {
-                found[i] = fgetc( file ) != EOF;
-                seen[i] = true;
-                fclose( file );
-            }
-        }
-        idStrList packs;
-        ListOSFiles( directory, ".pk4", packs );
-        FS_SortPk4FilesForLoadOrder( packs );
-        for ( int p = packs.Num() - 1; p >= 0; --p ) {
-            const idStr filename = BuildOSPath( roots[r], "q4xbase", packs[p] );
-            pack_t *pack = LoadZipFile( filename );
-            if ( pack == NULL ) continue;
-            for ( size_t i = 0; i < sizeof( required ) / sizeof( required[0] ); ++i ) {
-                if ( seen[i] ) continue;
-                for ( fileInPack_t *entry = pack->hashTable[ HashFileName( required[i] ) ]; entry; entry = entry->next ) {
-                    if ( entry->name.Icmp( required[i] ) != 0 ) continue;
-                    seen[i] = true;
-                    unz_file_info zipInfo = {};
-                    found[i] = unzSetCurrentFileInfoPosition( pack->handle, entry->pos ) == UNZ_OK &&
-                        unzGetCurrentFileInfo( pack->handle, &zipInfo, NULL, 0, NULL, 0, NULL, 0 ) == UNZ_OK && zipInfo.uncompressed_size > 0;
-                    break;
-                }
-            }
-            FreePack( pack );
-        }
-    }
-    info.ready = true;
-    for ( size_t i = 0; i < sizeof( required ) / sizeof( required[0] ); ++i ) {
-        info.present = info.present || seen[i];
-        if ( !found[i] ) {
-            info.ready = false;
-            if ( info.missing.Length() ) info.missing += ", ";
-            info.missing += required[i];
-        }
-    }
-    return info;
-}
 
 bool idFileSystemLocal::ValidateConfiguredGameDir( const char *gameDir, idStr *reason ) {
 	if ( reason != NULL ) {
@@ -5254,11 +5164,10 @@ bool idFileSystemLocal::ValidateConfiguredGameDir( const char *gameDir, idStr *r
 		return true;
 	}
 
-	if ( !idStr::Icmp( gameDir, "q4xbase" ) ) {
-        const idCampaignContentInfo info = GetAwakeningContentInfo();
-        if ( reason && !info.ready ) *reason = "incomplete Awakening campaign: " + info.missing;
-        return info.ready;
-    }
+	// Resurrection of Evil is an official game directory, not a mod: it has no manifest.
+	if ( !idStr::Icmp( gameDir, OPEND3_EXPANSION_GAMEDIR ) ) {
+		return true;
+	}
     idModInfo modInfo;
     return GetModInfo( gameDir, modInfo, reason );
 }
@@ -5556,7 +5465,7 @@ idFileSystemLocal::MapLevelshot_f
 */
 void idFileSystemLocal::MapLevelshot_f( const idCmdArgs &args ) {
 	if ( args.Argc() != 2 ) {
-		common->Printf( "Usage: openq4_mapLevelshot <map>\n" );
+		common->Printf( "Usage: opend3_mapLevelshot <map>\n" );
 		return;
 	}
 
@@ -5647,22 +5556,22 @@ void idFileSystemLocal::AddGameDirectory( const char *path, const char *dir ) {
 	}
 
 	// Sort them so later entries override earlier ones after they are inserted
-	// into the search path. openQ4 reserves short pakN.pk4 names for its own
+	// into the search path. openD3 reserves short pakN.pk4 names for its own
 	// content, so those win over wider retail-style pakNNN.pk4 names.
 	FS_SortPk4FilesForLoadOrder( pakfiles );
 
 	for ( i = 0; i < pakfiles.Num(); i++ ) {
-		if ( !idStr::Icmp( dir, BASE_GAMEDIR ) && FS_IsIgnoredOfficialGameBinaryPk4( pakfiles[ i ] ) ) {
+		if ( ( !idStr::Icmp( dir, BASE_GAMEDIR ) || !idStr::Icmp( dir, OPEND3_EXPANSION_GAMEDIR ) ) && FS_IsIgnoredOfficialGameBinaryPk4( pakfiles[ i ] ) ) {
 			common->Printf( "Ignoring unneeded game binary pk4 %s\n", BuildOSPath( path, dir, pakfiles[ i ] ) );
 			continue;
 		}
-		// pak0.pk4 to pak9.pk4 in baseoq4 are openQ4's own packs. One this build's
+		// pak0.pk4 to pak9.pk4 in baseod3 are openD3's own packs. One this build's
 		// pack table does not list was retired or left by another release (an
 		// update archive cannot delete files), and mounting it would override
 		// current content, so it is skipped.
 		numberedPakName_t numberedPak;
-		if ( !idStr::Icmp( dir, OPENQ4_GAMEDIR ) && FS_ParseNumberedPakName( pakfiles[ i ].c_str(), numberedPak ) &&
-			 numberedPak.digitCount == 1 && FS_FindOpenQ4PackTableEntry( pakfiles[ i ].c_str() ) == NULL ) {
+		if ( !idStr::Icmp( dir, OPEND3_GAMEDIR ) && FS_ParseNumberedPakName( pakfiles[ i ].c_str(), numberedPak ) &&
+			 numberedPak.digitCount == 1 && FS_FindopenD3PackTableEntry( pakfiles[ i ].c_str() ) == NULL ) {
 			common->Warning( "Ignoring %s: this version of openD3 does not use it. It was left by another release and can be deleted.",
 				BuildOSPath( path, dir, pakfiles[ i ] ) );
 			continue;
@@ -5892,7 +5801,7 @@ void idFileSystemLocal::StageStartupAddonPaks( void ) {
 		} else if ( !idStr::Icmp( command, "map" ) ||
 					!idStr::Icmp( command, "devmap" ) ||
 					!idStr::Icmp( command, "testmap" ) ||
-					!idStr::Icmp( command, "openq4_startSingleplayer" ) ) {
+					!idStr::Icmp( command, "opend3_startSingleplayer" ) ) {
 			if ( args->Argc() > 1 ) {
 				NormalizeMapPath( args->Argv( 1 ), relativeMapPath );
 			}
@@ -5979,42 +5888,42 @@ bool idFileSystemLocal::IsBaseGamePack( const pack_t *pak ) const {
 
 /*
 ================
-idFileSystemLocal::IsOpenQ4PurePack
+idFileSystemLocal::IsopenD3PurePack
 ================
 */
-bool idFileSystemLocal::IsOpenQ4PurePack( const pack_t *pak ) const {
-	const openQ4PackTableEntry_t *entry = FindOpenQ4PackTableEntry( pak );
+bool idFileSystemLocal::IsopenD3PurePack( const pack_t *pak ) const {
+	const openD3PackTableEntry_t *entry = FindopenD3PackTableEntry( pak );
 	return entry != NULL && !entry->clientOnly;
 }
 
 /*
 ================
-idFileSystemLocal::IsOpenQ4ClientOnlyPack
+idFileSystemLocal::IsopenD3ClientOnlyPack
 
 Client-only packs (light grids, loadscreens) are presentation data: a server
 does not need them, so they stay out of every pure list and a client keeps
 reading its own copy on a pure server that has none.
 ================
 */
-bool idFileSystemLocal::IsOpenQ4ClientOnlyPack( const pack_t *pak ) const {
-	const openQ4PackTableEntry_t *entry = FindOpenQ4PackTableEntry( pak );
+bool idFileSystemLocal::IsopenD3ClientOnlyPack( const pack_t *pak ) const {
+	const openD3PackTableEntry_t *entry = FindopenD3PackTableEntry( pak );
 	return entry != NULL && entry->clientOnly;
 }
 
 /*
 ================
-idFileSystemLocal::FindOpenQ4PackTableEntry
+idFileSystemLocal::FindopenD3PackTableEntry
 ================
 */
-const openQ4PackTableEntry_t *idFileSystemLocal::FindOpenQ4PackTableEntry( const pack_t *pak ) const {
+const openD3PackTableEntry_t *idFileSystemLocal::FindopenD3PackTableEntry( const pack_t *pak ) const {
 	idStr name;
 
-	if ( pak == NULL || !IsGameDirPack( pak, OPENQ4_GAMEDIR ) ) {
+	if ( pak == NULL || !IsGameDirPack( pak, OPEND3_GAMEDIR ) ) {
 		return NULL;
 	}
 
 	pak->pakFilename.ExtractFileName( name );
-	return FS_FindOpenQ4PackTableEntry( name.c_str() );
+	return FS_FindopenD3PackTableEntry( name.c_str() );
 }
 
 /*
@@ -6055,30 +5964,30 @@ idFileSystemLocal::FindMisplacedOfficialPaks
 bool idFileSystemLocal::FindMisplacedOfficialPaks( idStr &errors ) const {
 	const officialPk4Info_t	*info;
 	pack_t					*basePack;
-	pack_t					*openQ4Pack;
+	pack_t					*openD3Pack;
 
 	errors.Clear();
 	for ( int i = 0; officialPk4s[ i ].name != NULL; i++ ) {
 		info = &officialPk4s[ i ];
 		basePack = FindGamePackByName( info->name, BASE_GAMEDIR );
-		openQ4Pack = FindGamePackByName( info->name, OPENQ4_GAMEDIR );
-		if ( !openQ4Pack ) {
+		openD3Pack = FindGamePackByName( info->name, OPEND3_GAMEDIR );
+		if ( !openD3Pack ) {
 			continue;
 		}
 
-		if ( info->checksum != 0 && (unsigned int)openQ4Pack->checksum != info->checksum ) {
+		if ( info->checksum != 0 && (unsigned int)openD3Pack->checksum != info->checksum ) {
 			errors += va( "%s was found in %s with checksum 0x%08x but belongs in %s (expected 0x%08x from %s)\n",
-				info->name, OPENQ4_GAMEDIR, (unsigned int)openQ4Pack->checksum, BASE_GAMEDIR,
-				info->checksum, openQ4Pack->pakFilename.c_str() );
+				info->name, OPEND3_GAMEDIR, (unsigned int)openD3Pack->checksum, BASE_GAMEDIR,
+				info->checksum, openD3Pack->pakFilename.c_str() );
 			continue;
 		}
 
 		if ( basePack ) {
 			errors += va( "%s was found in both %s and %s; remove the copy from %s (%s)\n",
-				info->name, BASE_GAMEDIR, OPENQ4_GAMEDIR, OPENQ4_GAMEDIR, openQ4Pack->pakFilename.c_str() );
+				info->name, BASE_GAMEDIR, OPEND3_GAMEDIR, OPEND3_GAMEDIR, openD3Pack->pakFilename.c_str() );
 		} else {
 			errors += va( "%s was found in %s but belongs in %s (%s)\n",
-				info->name, OPENQ4_GAMEDIR, BASE_GAMEDIR, openQ4Pack->pakFilename.c_str() );
+				info->name, OPEND3_GAMEDIR, BASE_GAMEDIR, openD3Pack->pakFilename.c_str() );
 		}
 	}
 
@@ -6087,9 +5996,9 @@ bool idFileSystemLocal::FindMisplacedOfficialPaks( idStr &errors ) const {
 
 /*
 ================
-openQ4 runtime pack verification record
+openD3 runtime pack verification record
 
-ValidateOpenQ4Paks proves every pack in the generated table against the digests built
+ValidateopenD3Paks proves every pack in the generated table against the digests built
 into this executable. pak1 is about 800 MB, and hashing it cost about 1.3 s of
 every warm launch, more from a cold disk cache, and the same again at every
 filesystem restart.
@@ -6125,12 +6034,12 @@ static uint64_t FS_StampTime( const struct timespec &value ) {
 
 /*
 ================
-FS_StampOpenQ4Pak
+FS_StampopenD3Pak
 
 Reads the pack's identity through the same narrow-path fopen that loaded it.
 ================
 */
-static bool FS_StampOpenQ4Pak( const pack_t *pack, openQ4PakStamp_t &stamp ) {
+static bool FS_StampopenD3Pak( const pack_t *pack, openD3PakStamp_t &stamp ) {
 	memset( &stamp, 0, sizeof( stamp ) );
 	FILE *file = fopen( pack->pakFilename.c_str(), "rb" );
 	if ( file == NULL ) {
@@ -6174,7 +6083,7 @@ static bool FS_StampOpenQ4Pak( const pack_t *pack, openQ4PakStamp_t &stamp ) {
 	return stamped;
 }
 
-static bool FS_SameOpenQ4PakStamp( const openQ4PakStamp_t &a, const openQ4PakStamp_t &b ) {
+static bool FS_SameopenD3PakStamp( const openD3PakStamp_t &a, const openD3PakStamp_t &b ) {
 	return a.size == b.size && a.modified == b.modified && a.changed == b.changed &&
 		a.volume == b.volume && a.fileId == b.fileId &&
 		a.zipChecksum == b.zipChecksum && a.zipFiles == b.zipFiles;
@@ -6213,7 +6122,7 @@ FS_ParseVerifiedPakLine
 <md5> <size> <modified> <changed> <volume> <file id> <zip checksum> <zip files> <path>
 ================
 */
-static bool FS_ParseVerifiedPakLine( const char *line, const char *end, verifiedOpenQ4Pak_t &record ) {
+static bool FS_ParseVerifiedPakLine( const char *line, const char *end, verifiedopenD3Pak_t &record ) {
 	for ( int i = 0; i < 32; i++ ) {
 		if ( !FS_IsVerifiedPakHexDigit( line[ i ] ) ) {
 			return false;
@@ -6250,7 +6159,7 @@ static bool FS_ParseVerifiedPakLine( const char *line, const char *end, verified
 	return true;
 }
 
-static void FS_ParseVerifiedPaks( const char *text, std::vector<verifiedOpenQ4Pak_t> &records ) {
+static void FS_ParseVerifiedPaks( const char *text, std::vector<verifiedopenD3Pak_t> &records ) {
 	records.clear();
 	const int headerLength = idStr::Length( FS_VERIFIED_PAKS_HEADER );
 	if ( idStr::Cmpn( text, FS_VERIFIED_PAKS_HEADER, headerLength ) != 0 || text[ headerLength ] != '\n' ) {
@@ -6262,7 +6171,7 @@ static void FS_ParseVerifiedPaks( const char *text, std::vector<verifiedOpenQ4Pa
 		if ( end == NULL ) {
 			break;	// a line counts only with its newline
 		}
-		verifiedOpenQ4Pak_t record;
+		verifiedopenD3Pak_t record;
 		if ( FS_ParseVerifiedPakLine( line, end, record ) ) {
 			records.push_back( record );
 		}
@@ -6270,11 +6179,11 @@ static void FS_ParseVerifiedPaks( const char *text, std::vector<verifiedOpenQ4Pa
 	}
 }
 
-static void FS_FormatVerifiedPaks( const std::vector<verifiedOpenQ4Pak_t> &records, std::string &text ) {
+static void FS_FormatVerifiedPaks( const std::vector<verifiedopenD3Pak_t> &records, std::string &text ) {
 	text = FS_VERIFIED_PAKS_HEADER;
 	text += '\n';
 	for ( size_t i = 0; i < records.size(); i++ ) {
-		const verifiedOpenQ4Pak_t &record = records[ i ];
+		const verifiedopenD3Pak_t &record = records[ i ];
 		char fields[ 256 ];
 		idStr::snPrintf( fields, sizeof( fields ), "%s %llx %llx %llx %llx %llx %x %x ", record.md5,
 			static_cast<unsigned long long>( record.stamp.size ),
@@ -6290,7 +6199,7 @@ static void FS_FormatVerifiedPaks( const std::vector<verifiedOpenQ4Pak_t> &recor
 	}
 }
 
-static const verifiedOpenQ4Pak_t *FS_FindVerifiedPak( const std::vector<verifiedOpenQ4Pak_t> &records, const char *path ) {
+static const verifiedopenD3Pak_t *FS_FindVerifiedPak( const std::vector<verifiedopenD3Pak_t> &records, const char *path ) {
 	for ( size_t i = 0; i < records.size(); i++ ) {
 		if ( records[ i ].path == path ) {
 			return &records[ i ];
@@ -6308,8 +6217,8 @@ most recent FS_VERIFIED_PAKS_MAX packs (builddir, the staged package and test
 runtimes can share one fs_cachepath).
 ================
 */
-static void FS_RecordVerifiedPak( std::vector<verifiedOpenQ4Pak_t> &records, const char *path,
-		const openQ4PakStamp_t &stamp, const char *md5 ) {
+static void FS_RecordVerifiedPak( std::vector<verifiedopenD3Pak_t> &records, const char *path,
+		const openD3PakStamp_t &stamp, const char *md5 ) {
 	if ( strpbrk( path, "\r\n" ) != NULL ) {
 		return;	// would not survive the line format
 	}
@@ -6320,7 +6229,7 @@ static void FS_RecordVerifiedPak( std::vector<verifiedOpenQ4Pak_t> &records, con
 			i++;
 		}
 	}
-	verifiedOpenQ4Pak_t record;
+	verifiedopenD3Pak_t record;
 	record.path = path;
 	record.stamp = stamp;
 	memcpy( record.md5, md5, 32 );
@@ -6333,13 +6242,13 @@ static void FS_RecordVerifiedPak( std::vector<verifiedOpenQ4Pak_t> &records, con
 
 /*
 ================
-idFileSystemLocal::ReadVerifiedOpenQ4Paks
+idFileSystemLocal::ReadVerifiedopenD3Paks
 
 Reads the exact file under fs_cachepath. A search-path lookup would let a pak
 or another search directory supply the record.
 ================
 */
-void idFileSystemLocal::ReadVerifiedOpenQ4Paks( std::vector<verifiedOpenQ4Pak_t> &records ) {
+void idFileSystemLocal::ReadVerifiedopenD3Paks( std::vector<verifiedopenD3Pak_t> &records ) {
 	records.clear();
 	const idStr osPath = RelativePathToOSPath( FS_VERIFIED_PAKS_FILE, "fs_cachepath" );
 	idFile *file = OpenExplicitFileRead( osPath );
@@ -6358,13 +6267,13 @@ void idFileSystemLocal::ReadVerifiedOpenQ4Paks( std::vector<verifiedOpenQ4Pak_t>
 
 /*
 ================
-idFileSystemLocal::WriteVerifiedOpenQ4Paks
+idFileSystemLocal::WriteVerifiedopenD3Paks
 
 Publishes the record through a staged file of this process's own, so startups
 sharing fs_cachepath never read a partial record.
 ================
 */
-bool idFileSystemLocal::WriteVerifiedOpenQ4Paks( const std::vector<verifiedOpenQ4Pak_t> &records ) {
+bool idFileSystemLocal::WriteVerifiedopenD3Paks( const std::vector<verifiedopenD3Pak_t> &records ) {
 	std::string text;
 	FS_FormatVerifiedPaks( records, text );
 #ifdef _WIN32
@@ -6384,7 +6293,7 @@ bool idFileSystemLocal::WriteVerifiedOpenQ4Paks( const std::vector<verifiedOpenQ
 
 /*
 ================
-openQ4 content pack failures
+openD3 content pack failures
 
 A missing or mismatched core pack (pak0) stops startup at once, in English:
 pak0 carries the string tables, so nothing localized can be trusted without it.
@@ -6394,14 +6303,14 @@ to get it in their own language. Nothing between filesystem startup and the
 language load needs those packs.
 ================
 */
-typedef struct openQ4PackProblem_s {
-	const openQ4PackTableEntry_t *	pack;
+typedef struct openD3PackProblem_s {
+	const openD3PackTableEntry_t *	pack;
 	bool							missing;
-} openQ4PackProblem_t;
+} openD3PackProblem_t;
 
-static idList<openQ4PackProblem_t>	fs_openQ4PackProblems;
-static idStr						fs_openQ4PackProblemDetails;
-static bool							fs_openQ4PackProblemsMayRaise = false;
+static idList<openD3PackProblem_t>	fs_openD3PackProblems;
+static idStr						fs_openD3PackProblemDetails;
+static bool							fs_openD3PackProblemsMayRaise = false;
 
 static const char *FS_LocalizedOr( const char *key, const char *fallback ) {
 	const idLangDict *dict = common != NULL ? common->GetLanguageDict() : NULL;
@@ -6414,37 +6323,37 @@ static const char *FS_LocalizedOr( const char *key, const char *fallback ) {
 
 /*
 ================
-FS_FormatOpenQ4PackProblems
+FS_FormatopenD3PackProblems
 
 The player-facing report: one line per pack naming it and what it holds,
 then where to get it. The English checksum details follow for support.
 ================
 */
-static idStr FS_FormatOpenQ4PackProblems( void ) {
+static idStr FS_FormatopenD3PackProblems( void ) {
 	idStr message = FS_LocalizedOr( "#str_231700",
 		"openD3 cannot start because a content pack is missing or does not match this version." );
 	message += "\n\n";
-	for ( int i = 0; i < fs_openQ4PackProblems.Num(); i++ ) {
-		const openQ4PackProblem_t &problem = fs_openQ4PackProblems[ i ];
+	for ( int i = 0; i < fs_openD3PackProblems.Num(); i++ ) {
+		const openD3PackProblem_t &problem = fs_openD3PackProblems[ i ];
 		const char *contents = FS_LocalizedOr( problem.pack->contentsString, problem.pack->contents );
 		if ( problem.missing ) {
 			message += va( FS_LocalizedOr( "#str_231704", "%s (%s) is missing from the %s folder." ),
-				problem.pack->name, contents, OPENQ4_GAMEDIR );
+				problem.pack->name, contents, OPEND3_GAMEDIR );
 		} else {
 			message += va( FS_LocalizedOr( "#str_231705", "%s (%s) in the %s folder does not match this version of openD3." ),
-				problem.pack->name, contents, OPENQ4_GAMEDIR );
+				problem.pack->name, contents, OPEND3_GAMEDIR );
 		}
 		message += "\n";
 	}
 	message += "\n";
 	message += va( FS_LocalizedOr( "#str_231706",
 		"Install the full openD3 %s package, or download each listed pack for that version from %s and save it in the %s folder under the same name." ),
-		PROJECT_VERSION, PROJECT_RELEASES_URL, OPENQ4_GAMEDIR );
-	if ( fs_openQ4PackProblemDetails.Length() ) {
+		PROJECT_VERSION, PROJECT_RELEASES_URL, OPEND3_GAMEDIR );
+	if ( fs_openD3PackProblemDetails.Length() ) {
 		message += "\n\n";
 		message += FS_LocalizedOr( "#str_231707", "Details:" );
 		message += "\n";
-		message += fs_openQ4PackProblemDetails;
+		message += fs_openD3PackProblemDetails;
 	}
 	return message;
 }
@@ -6459,45 +6368,45 @@ reports one at once.
 ================
 */
 void FS_RaiseDeferredContentPackFailure( void ) {
-	fs_openQ4PackProblemsMayRaise = true;
-	if ( fs_openQ4PackProblems.Num() == 0 ) {
+	fs_openD3PackProblemsMayRaise = true;
+	if ( fs_openD3PackProblems.Num() == 0 ) {
 		return;
 	}
-	const idStr message = FS_FormatOpenQ4PackProblems();
+	const idStr message = FS_FormatopenD3PackProblems();
 	common->FatalError( "%s", message.c_str() );
 }
 
 /*
 ================
-idFileSystemLocal::ValidateOpenQ4Paks
+idFileSystemLocal::ValidateopenD3Paks
 
 Checks every pack in the generated pack table against this executable's
 digest. onlyClientPacks reports whether every failure is a client-only pack,
 which can wait for the localized report.
 ================
 */
-bool idFileSystemLocal::ValidateOpenQ4Paks( idStr &errors, bool &onlyClientPacks ) {
+bool idFileSystemLocal::ValidateopenD3Paks( idStr &errors, bool &onlyClientPacks ) {
 	errors.Clear();
 	onlyClientPacks = true;
-	fs_openQ4PackProblems.Clear();
-	fs_openQ4PackProblemDetails.Clear();
+	fs_openD3PackProblems.Clear();
+	fs_openD3PackProblemDetails.Clear();
 
-	if ( idStr::Icmp( fs_game.GetString(), OPENQ4_GAMEDIR ) &&
-		 idStr::Icmp( fs_game_base.GetString(), OPENQ4_GAMEDIR ) &&
-		 !UsesOpenQ4RuntimeUnderlay() ) {
+	if ( idStr::Icmp( fs_game.GetString(), OPEND3_GAMEDIR ) &&
+		 idStr::Icmp( fs_game_base.GetString(), OPEND3_GAMEDIR ) &&
+		 !UsesopenD3RuntimeUnderlay() ) {
 		return true;
 	}
 
 	const bool useRecord = fs_cacheVerifiedPaks.GetBool();
-	std::vector<verifiedOpenQ4Pak_t> records;
+	std::vector<verifiedopenD3Pak_t> records;
 	bool recordChanged = false;
 	if ( useRecord ) {
-		ReadVerifiedOpenQ4Paks( records );
+		ReadVerifiedopenD3Paks( records );
 	}
 
-	for ( int i = 0; i < openQ4PackTableCount; i++ ) {
-		const openQ4PackTableEntry_t &expected = openQ4PackTable[ i ];
-		pack_t *pack = FindGamePackByName( expected.name, OPENQ4_GAMEDIR );
+	for ( int i = 0; i < openD3PackTableCount; i++ ) {
+		const openD3PackTableEntry_t &expected = openD3PackTable[ i ];
+		pack_t *pack = FindGamePackByName( expected.name, OPEND3_GAMEDIR );
 		char actualMD5[33];
 #ifdef ID_DEDICATED
 		// A server never reads presentation packs; it runs without them and
@@ -6510,21 +6419,21 @@ bool idFileSystemLocal::ValidateOpenQ4Paks( idStr &errors, bool &onlyClientPacks
 		if ( !pack ) {
 			if ( optional ) {
 				common->Printf( "Client-only pk4 %s/%s (%s) is not installed; this server does not need it\n",
-					OPENQ4_GAMEDIR, expected.name, expected.contents );
+					OPEND3_GAMEDIR, expected.name, expected.contents );
 				continue;
 			}
-			errors += va( "missing %s/%s, %s (expected checksum %s)\n", OPENQ4_GAMEDIR, expected.name, expected.contents, expected.md5 );
-			openQ4PackProblem_t problem = { &expected, true };
-			fs_openQ4PackProblems.Append( problem );
+			errors += va( "missing %s/%s, %s (expected checksum %s)\n", OPEND3_GAMEDIR, expected.name, expected.contents, expected.md5 );
+			openD3PackProblem_t problem = { &expected, true };
+			fs_openD3PackProblems.Append( problem );
 			onlyClientPacks = onlyClientPacks && expected.clientOnly;
 			continue;
 		}
 
 		// unchanged since it was hashed and recorded with this executable's digest
-		openQ4PakStamp_t stamp;
-		const bool stamped = useRecord && FS_StampOpenQ4Pak( pack, stamp );
-		const verifiedOpenQ4Pak_t *recorded = stamped ? FS_FindVerifiedPak( records, pack->pakFilename.c_str() ) : NULL;
-		if ( recorded != NULL && FS_SameOpenQ4PakStamp( recorded->stamp, stamp ) &&
+		openD3PakStamp_t stamp;
+		const bool stamped = useRecord && FS_StampopenD3Pak( pack, stamp );
+		const verifiedopenD3Pak_t *recorded = stamped ? FS_FindVerifiedPak( records, pack->pakFilename.c_str() ) : NULL;
+		if ( recorded != NULL && FS_SameopenD3PakStamp( recorded->stamp, stamp ) &&
 			 !idStr::Icmp( recorded->md5, expected.md5 ) ) {
 			common->Printf( "Verified pk4 %s: unchanged since its checksum was recorded\n", pack->pakFilename.c_str() );
 			continue;
@@ -6536,7 +6445,7 @@ bool idFileSystemLocal::ValidateOpenQ4Paks( idStr &errors, bool &onlyClientPacks
 			idStr detail;
 			if ( hashed ) {
 				detail = va( "checksum mismatch for %s/%s, %s (expected %s, got %s from %s)\n",
-					OPENQ4_GAMEDIR, expected.name, expected.contents, expected.md5, actualMD5, pack->pakFilename.c_str() );
+					OPEND3_GAMEDIR, expected.name, expected.contents, expected.md5, actualMD5, pack->pakFilename.c_str() );
 			} else {
 				detail = va( "could not read %s for checksum validation\n", pack->pakFilename.c_str() );
 			}
@@ -6545,26 +6454,26 @@ bool idFileSystemLocal::ValidateOpenQ4Paks( idStr &errors, bool &onlyClientPacks
 				continue;
 			}
 			errors += detail;
-			openQ4PackProblem_t problem = { &expected, false };
-			fs_openQ4PackProblems.Append( problem );
+			openD3PackProblem_t problem = { &expected, false };
+			fs_openD3PackProblems.Append( problem );
 			onlyClientPacks = onlyClientPacks && expected.clientOnly;
 			continue;
 		}
 		common->Printf( "Verified pk4 %s: hashed in %d ms\n", pack->pakFilename.c_str(), Sys_Milliseconds() - hashStart );
 
 		// record the pass only if the pack did not change while it was read
-		openQ4PakStamp_t after;
-		if ( stamped && FS_StampOpenQ4Pak( pack, after ) && FS_SameOpenQ4PakStamp( stamp, after ) ) {
+		openD3PakStamp_t after;
+		if ( stamped && FS_StampopenD3Pak( pack, after ) && FS_SameopenD3PakStamp( stamp, after ) ) {
 			FS_RecordVerifiedPak( records, pack->pakFilename.c_str(), stamp, actualMD5 );
 			recordChanged = true;
 		}
 	}
 
-	fs_openQ4PackProblemDetails = errors;
+	fs_openD3PackProblemDetails = errors;
 	if ( errors.Length() != 0 ) {
 		return false;
 	}
-	if ( recordChanged && !WriteVerifiedOpenQ4Paks( records ) ) {
+	if ( recordChanged && !WriteVerifiedopenD3Paks( records ) ) {
 		common->Printf( "Could not record the verified pk4 checksums in %s; the packs will be hashed again at the next startup\n",
 			RelativePathToOSPath( FS_VERIFIED_PAKS_FILE, "fs_cachepath" ) );
 	}
@@ -6573,21 +6482,21 @@ bool idFileSystemLocal::ValidateOpenQ4Paks( idStr &errors, bool &onlyClientPacks
 
 /*
 ================
-idFileSystemLocal::UsesOpenQ4RuntimeUnderlay
+idFileSystemLocal::UsesopenD3RuntimeUnderlay
 
-A mod selected with fs_game runs on top of the openQ4 runtime directory.
-baseoq4 holds the engine's own runtime content (GLSL programs, fonts, strings,
+A mod selected with fs_game runs on top of the openD3 runtime directory.
+baseod3 holds the engine's own runtime content (GLSL programs, fonts, strings,
 menus) and the fallback game modules, none of which a mod can be expected to
 carry, so it stays in the search path below the mod unless the mod already
 names it through fs_game_base.
 ================
 */
-bool idFileSystemLocal::UsesOpenQ4RuntimeUnderlay( void ) const {
+bool idFileSystemLocal::UsesopenD3RuntimeUnderlay( void ) const {
 	const char *game = fs_game.GetString();
-	if ( game[ 0 ] == '\0' || !idStr::Icmp( game, BASE_GAMEDIR ) || !idStr::Icmp( game, OPENQ4_GAMEDIR ) ) {
+	if ( game[ 0 ] == '\0' || !idStr::Icmp( game, BASE_GAMEDIR ) || !idStr::Icmp( game, OPEND3_GAMEDIR ) ) {
 		return false;
 	}
-	return idStr::Icmp( fs_game_base.GetString(), OPENQ4_GAMEDIR ) != 0;
+	return idStr::Icmp( fs_game_base.GetString(), OPEND3_GAMEDIR ) != 0;
 }
 
 /*
@@ -6639,7 +6548,7 @@ void idFileSystemLocal::PrintContentSearchDiagnostics( void ) {
 	roots[ 3 ] = fs_devpath.GetString();	rootNames[ 3 ] = "fs_devpath";
 
 	dirs[ 0 ] = BASE_GAMEDIR;
-	dirs[ 1 ] = OPENQ4_GAMEDIR;
+	dirs[ 1 ] = OPEND3_GAMEDIR;
 
 	common->Printf( "----- content search diagnostics -----\n" );
 	common->Printf( "fs_game      = '%s'\n", fs_game.GetString() );
@@ -6736,15 +6645,6 @@ void idFileSystemLocal::Startup( void ) {
 		common->Printf( "restarting filesystem with %d addon pak file(s) to include\n", addonChecksums.Num() );
 	}
 
-	// Awakening is a single-player campaign, never a multiplayer/base overlay.
-    if ( !idStr::Icmp( fs_game_base.GetString(), "q4xbase" ) ) fs_game_base.SetString( "" );
-#ifdef ID_DEDICATED
-    const bool awakeningAllowed = false;
-#else
-    const bool awakeningAllowed = !idStr::Icmp( cvarSystem->GetCVarString( "si_gameType" ), "singleplayer" ) &&
-        idStr::Icmp( cvarSystem->GetCVarString( "com_nextGameModule" ), "game_mp" );
-#endif
-    if ( !awakeningAllowed && !idStr::Icmp( fs_game.GetString(), "q4xbase" ) ) fs_game.SetString( OPENQ4_GAMEDIR );
     idStr invalidReason;
 	if ( fs_game_base.GetString()[ 0 ] &&
 		 idStr::Icmp( fs_game_base.GetString(), BASE_GAMEDIR ) &&
@@ -6756,19 +6656,19 @@ void idFileSystemLocal::Startup( void ) {
 	if ( fs_game.GetString()[ 0 ] &&
 		 idStr::Icmp( fs_game.GetString(), BASE_GAMEDIR ) &&
 		 !ValidateConfiguredGameDir( fs_game.GetString(), &invalidReason ) ) {
-		if ( !idStr::Icmp( fs_game.GetString(), OPENQ4_GAMEDIR ) ) {
+		if ( !idStr::Icmp( fs_game.GetString(), OPEND3_GAMEDIR ) ) {
 			PrintContentSearchDiagnostics();
 			common->FatalError(
 				"openD3 runtime directory '%s' is missing a compatible mod.json.\n\n%s\n"
 				"Rebuild or reinstall openD3 so '<openD3 package root>/%s/mod.json' is present and matches this engine version. Do not replace '%s' with retail Doom 3 assets.",
-				fs_game.GetString(), invalidReason.c_str(), OPENQ4_GAMEDIR, OPENQ4_GAMEDIR );
+				fs_game.GetString(), invalidReason.c_str(), OPEND3_GAMEDIR, OPEND3_GAMEDIR );
 		}
 
 		common->Warning( "Ignoring fs_game '%s': %s", fs_game.GetString(), invalidReason.c_str() );
-		// Fall back to the default openQ4 game, not to retail-only content: an
-		// empty fs_game also drops the openQ4 runtime underlay (strings, GUIs,
+		// Fall back to the default openD3 game, not to retail-only content: an
+		// empty fs_game also drops the openD3 runtime underlay (strings, GUIs,
 		// staged overrides), leaving a half-working game and serverinfo.
-		fs_game.SetString( OPENQ4_GAMEDIR );
+		fs_game.SetString( OPEND3_GAMEDIR );
 	}
 
 	// File writes should use the selected game directory even while search paths
@@ -6784,9 +6684,9 @@ void idFileSystemLocal::Startup( void ) {
 
 	SetupGameDirectories( BASE_GAMEDIR );
 
-	// the openQ4 runtime sits between the retail assets and any mod
-	if ( UsesOpenQ4RuntimeUnderlay() ) {
-		SetupGameDirectories( OPENQ4_GAMEDIR );
+	// the openD3 runtime sits between the retail assets and any mod
+	if ( UsesopenD3RuntimeUnderlay() ) {
+		SetupGameDirectories( OPEND3_GAMEDIR );
 	}
 
 	// fs_game_base override
@@ -6802,27 +6702,22 @@ void idFileSystemLocal::Startup( void ) {
 		SetupGameDirectories( fs_game.GetString() );
 	}
 
-	if ( !idStr::Icmp( fs_game.GetString(), "q4xbase" ) ) {
-        const idStr externalRoot = FS_AwakeningRoot();
-        if ( externalRoot.Length() ) AddGameDirectory( externalRoot, "q4xbase" );
-    }
-
-	idStr openQ4PakErrors;
+	idStr openD3PakErrors;
 	bool onlyClientPacks = false;
-	if ( !ValidateOpenQ4Paks( openQ4PakErrors, onlyClientPacks ) ) {
+	if ( !ValidateopenD3Paks( openD3PakErrors, onlyClientPacks ) ) {
 		PrintContentSearchDiagnostics();
 		if ( !onlyClientPacks ) {
 			idStr expectedPacks;
-			for ( int i = 0; i < openQ4PackTableCount; i++ ) {
-				expectedPacks += va( "%s'<openD3 package root>/%s/%s'", i ? ", " : "", OPENQ4_GAMEDIR, openQ4PackTable[ i ].name );
+			for ( int i = 0; i < openD3PackTableCount; i++ ) {
+				expectedPacks += va( "%s'<openD3 package root>/%s/%s'", i ? ", " : "", OPEND3_GAMEDIR, openD3PackTable[ i ].name );
 			}
 			common->FatalError(
 				"openD3 runtime content packs in '%s' are missing or modified.\n\n%s\n"
 				"Rebuild or reinstall openD3 %s so %s match this engine; packages are at %s. Retail Doom 3 PK4s belong in '%s', not '%s'.",
-				OPENQ4_GAMEDIR, openQ4PakErrors.c_str(), PROJECT_VERSION, expectedPacks.c_str(), PROJECT_RELEASES_URL, BASE_GAMEDIR, OPENQ4_GAMEDIR );
+				OPEND3_GAMEDIR, openD3PakErrors.c_str(), PROJECT_VERSION, expectedPacks.c_str(), PROJECT_RELEASES_URL, BASE_GAMEDIR, OPEND3_GAMEDIR );
 		}
-		common->Printf( "openD3 client content packs are missing or modified:\n%s", openQ4PakErrors.c_str() );
-		if ( fs_openQ4PackProblemsMayRaise ) {
+		common->Printf( "openD3 client content packs are missing or modified:\n%s", openD3PakErrors.c_str() );
+		if ( fs_openD3PackProblemsMayRaise ) {
 			FS_RaiseDeferredContentPackFailure();
 		}
 	}
@@ -6835,7 +6730,7 @@ void idFileSystemLocal::Startup( void ) {
 				"Retail Doom 3 media pk4 files must be installed in '%s', not '%s'.\n\n%s\n"
 				"Move the listed files into '<Doom 3 install root>/%s', or remove them from '%s' and launch with +set fs_basepath pointing at a Doom 3 install root that contains '%s'. "
 				"The '%s' directory is reserved for openD3 runtime files such as pak0.pk4, pak1.pk4, mod.json, and game modules.",
-				BASE_GAMEDIR, OPENQ4_GAMEDIR, misplacedErrors.c_str(), BASE_GAMEDIR, OPENQ4_GAMEDIR, BASE_GAMEDIR, OPENQ4_GAMEDIR );
+				BASE_GAMEDIR, OPEND3_GAMEDIR, misplacedErrors.c_str(), BASE_GAMEDIR, OPEND3_GAMEDIR, BASE_GAMEDIR, OPEND3_GAMEDIR );
 		}
 
 		idStr validationErrors;
@@ -6845,7 +6740,7 @@ void idFileSystemLocal::Startup( void ) {
 				"Required official Doom 3 media pk4 files are missing from '%s' or modified.\n\n%s\n"
 				"openD3 reads retail Doom 3 assets from '<Doom 3 install root>/%s'. Keep pak000.pk4 through pak004.pk4 in that folder, or launch with +set fs_basepath pointing at the install root that contains it. "
 				"Do not put retail pk4 files in '%s'; that directory is reserved for openD3 runtime files.",
-				BASE_GAMEDIR, validationErrors.c_str(), BASE_GAMEDIR, OPENQ4_GAMEDIR );
+				BASE_GAMEDIR, validationErrors.c_str(), BASE_GAMEDIR, OPEND3_GAMEDIR );
 		}
 
 // Quake 4 only: Doom 3 keeps character VO in the base packs that
@@ -7006,7 +6901,7 @@ void idFileSystemLocal::Startup( void ) {
 	cmdSystem->AddCommand( "path", Path_f, CMD_FL_SYSTEM, "lists search paths" );
 	cmdSystem->AddCommand( "touchFile", TouchFile_f, CMD_FL_SYSTEM, "touches a file" );
 	cmdSystem->AddCommand( "touchFileList", TouchFileList_f, CMD_FL_SYSTEM, "touches a list of files" );
-	cmdSystem->AddCommand( "openq4_mapLevelshot", MapLevelshot_f, CMD_FL_SYSTEM, "prints the levelshot the menus show for a map" );
+	cmdSystem->AddCommand( "opend3_mapLevelshot", MapLevelshot_f, CMD_FL_SYSTEM, "prints the levelshot the menus show for a map" );
 
 	// print the current search paths
 	Path_f( idCmdArgs() );
@@ -7084,7 +6979,7 @@ idFileSystemLocal::UpdateGamePakChecksums
 */
 bool idFileSystemLocal::UpdateGamePakChecksums( void ) {
 	memset( gamePakForOS, 0, sizeof( gamePakForOS ) );
-	if ( gameDLLChecksum == 0 || gamePakChecksum != OPENQ4_Q4_142_GAME300_PAK_CHECKSUM ||
+	if ( gameDLLChecksum == 0 || gamePakChecksum != OPEND3_Q4_142_GAME300_PAK_CHECKSUM ||
 		 gameModuleOrigin == GAME_MODULE_ORIGIN_NONE ) {
 		common->Warning( "No trusted openD3 game module is loaded for pure-server startup" );
 		return false;
@@ -7099,7 +6994,7 @@ bool idFileSystemLocal::UpdateGamePakChecksums( void ) {
 	// compatibility token is deliberately platform-independent; executable
 	// bytes remain outside the downloadable/pure-PK4 path.
 	for ( int os = 0; os <= 2; ++os ) {
-		gamePakForOS[ os ] = OPENQ4_Q4_142_GAME300_PAK_CHECKSUM;
+		gamePakForOS[ os ] = OPEND3_Q4_142_GAME300_PAK_CHECKSUM;
 	}
 
 	return true;
@@ -7219,7 +7114,7 @@ can be:
 server referenced files are prepended to the list if possible ( that doesn't break pureness )
 Game code:
   protocol 2.41 carries the official q4base/game300.pk4 checksum as a
-  compatibility token, but openQ4 resolves executable modules only from its
+  compatibility token, but openD3 resolves executable modules only from its
   trusted package/module roots and never from a server-selected PK4
 =====================
 */
@@ -7235,10 +7130,10 @@ fsPureReply_t idFileSystemLocal::SetPureServerChecksums( const int pureChecksums
 	*missingGamePakChecksum = 0;
 
 	// Validate the legacy game-code field before touching the server-selected
-	// asset list. It is only a wire-compatibility token in openQ4; it must never
+	// asset list. It is only a wire-compatibility token in openD3; it must never
 	// select, download, extract, or restart into executable code.
-	if ( _gamePakChecksum != OPENQ4_Q4_142_GAME300_PAK_CHECKSUM ||
-		 gamePakChecksum != OPENQ4_Q4_142_GAME300_PAK_CHECKSUM ||
+	if ( _gamePakChecksum != OPEND3_Q4_142_GAME300_PAK_CHECKSUM ||
+		 gamePakChecksum != OPEND3_Q4_142_GAME300_PAK_CHECKSUM ||
 		 gameDLLChecksum == 0 || gameModuleOrigin == GAME_MODULE_ORIGIN_NONE ) {
 		if ( fs_debug.GetBool() ) {
 			common->Printf( "pure server supplied unsupported game-code token 0x%x\n", _gamePakChecksum );
@@ -7428,7 +7323,6 @@ void idFileSystemLocal::Init( void ) {
 	common->StartupVariable( "fs_devpath", false );
 	common->StartupVariable( "fs_game", true );
 	common->StartupVariable( "fs_game_base", true );
-	common->StartupVariable( "fs_awakeningpath", false );
 	common->StartupVariable( "fs_copyfiles", false );
 	common->StartupVariable( "fs_restrict", false );
 	common->StartupVariable( "fs_searchAddons", false );
@@ -7528,7 +7422,7 @@ void idFileSystemLocal::Init( void ) {
 		common->FatalError(
 			"openD3 startup config 'default.cfg' could not be loaded.\n\n"
 			"Rebuild or reinstall openD3 so '%s/pak0.pk4' contains the runtime config files, and keep retail Doom 3 media PK4s in '%s'.",
-			OPENQ4_GAMEDIR, BASE_GAMEDIR );
+			OPEND3_GAMEDIR, BASE_GAMEDIR );
 	}
 }
 
@@ -7560,7 +7454,7 @@ void idFileSystemLocal::Restart( void ) {
 		common->FatalError(
 			"openD3 startup config 'default.cfg' could not be loaded after filesystem restart.\n\n"
 			"Rebuild or reinstall openD3 so '%s/pak0.pk4' contains the runtime config files, and keep retail Doom 3 media PK4s in '%s'.",
-			OPENQ4_GAMEDIR, BASE_GAMEDIR );
+			OPEND3_GAMEDIR, BASE_GAMEDIR );
 	}
 }
 
@@ -7633,7 +7527,7 @@ void idFileSystemLocal::Shutdown( bool reloading ) {
 	cmdSystem->RemoveCommand( "dir" );
 	cmdSystem->RemoveCommand( "dirtree" );
 	cmdSystem->RemoveCommand( "touchFile" );
-	cmdSystem->RemoveCommand( "openq4_mapLevelshot" );
+	cmdSystem->RemoveCommand( "opend3_mapLevelshot" );
 
 	mapDict.Clear();
 }
@@ -7750,7 +7644,7 @@ the search paths. The session now composes it in memory and never names these
 files (Session_PrepareExpandedLoadingBackground), but they stay in players' save
 folders, and a stray reference can still open one: an older build's learned
 level-load manifest, for example. Like a generated image cache entry such a file
-is openQ4's own derived data, so it is never read while pure: the directory gate
+is openD3's own derived data, so it is never read while pure: the directory gate
 refuses it. A read before the pure lock leaves the same pending eviction as a
 cache entry instead of a restart, and the client then purges every resident
 image from that folder (idImageManager::ReloadGeneratedCacheImages). Only the
@@ -7813,14 +7707,14 @@ pureStatus_t idFileSystemLocal::GetPackStatus( pack_t *pak ) {
 		return pak->pureStatus;
 	}
 
-	// Keep openQ4's canonical runtime pack in the pure list no matter its content mix.
+	// Keep openD3's canonical runtime pack in the pure list no matter its content mix.
 	pak->pakFilename.ExtractFileName( name );
-	if ( IsOpenQ4PurePack( pak ) ) {
+	if ( IsopenD3PurePack( pak ) ) {
 		pak->pureStatus = PURE_ALWAYS;
 		return PURE_ALWAYS;
 	}
 	// Client-only packs never enter a pure list, and stay readable on a pure server.
-	if ( IsOpenQ4ClientOnlyPack( pak ) ) {
+	if ( IsopenD3ClientOnlyPack( pak ) ) {
 		pak->pureStatus = PURE_NEVER;
 		return PURE_NEVER;
 	}
@@ -7993,14 +7887,7 @@ idFile *idFileSystemLocal::OpenFileReadSearch( const char *relativePath, int sea
 
 	hash = HashFileName( relativePath );
 
-    const bool protectCampaignNavigation = !gameFolder.Icmp( "q4xbase" ) &&
-        ( !idStr::Icmp( relativePath, "default.cfg" ) || !idStr::Icmp( relativePath, "guis/mainmenu.gui" ) ||
-          !idStr::Icmp( relativePath, "guis/arena_menu.gui" ) || !idStr::Icmp( relativePath, "guis/campaign_menu.gui" ) ||
-          !idStr::Icmpn( relativePath, "guis/menu/", 10 ) );
 	for ( search = searchPaths; search; search = search->next ) {
-        if ( protectCampaignNavigation &&
-             ( (search->dir && !search->dir->gamedir.Icmp( "q4xbase" )) ||
-               (search->pack && IsGameDirPack( search->pack, "q4xbase" )) ) ) continue;
 		if ( search->dir && ( searchFlags & FSFLAG_SEARCH_DIRS ) ) {
 			// check a file in the directory tree
 
@@ -8041,7 +7928,7 @@ idFile *idFileSystemLocal::OpenFileReadSearch( const char *relativePath, int sea
 			}
 
 			if ( FS_IsGeneratedImageCachePath( relativePath ) || FS_IsGeneratedLoadscreenPath( relativePath ) ) {
-				// openQ4's own derived images: a pure lock evicts them instead
+				// openD3's own derived images: a pure lock evicts them instead
 				// of restarting the engine. See FS_IsGeneratedImageCachePath
 				// and FS_IsGeneratedLoadscreenPath.
 				if ( !loadedImageCacheFromDir ) {
@@ -8574,7 +8461,7 @@ static void FS_ShutdownCurl() {
 }
 
 static bool FS_InitializeCurl() {
-#if !OPENQ4_CURL_CAPABLE_BUILD
+#if !OPEND3_CURL_CAPABLE_BUILD
 	common->Warning( "HTTP downloads disabled: libcurl 7.19.4 or newer with asynchronous DNS is required" );
 	return false;
 #else
@@ -8625,7 +8512,7 @@ private:
 };
 
 static CURLcode FS_ConfigureBoundedHTTPTransfer( CURL *session ) {
-#if !OPENQ4_CURL_CAPABLE_BUILD
+#if !OPEND3_CURL_CAPABLE_BUILD
 	return CURLE_FAILED_INIT;
 #else
 	CURLcode result;
@@ -9102,8 +8989,9 @@ void idFileSystemLocal::FindDLL( const char *name, char _dllPath[ MAX_OSPATH ], 
 	}
 
 	const char *moduleGameDir = fs_game.GetString();
-	if ( !moduleGameDir[0] || !idStr::Icmp( moduleGameDir, "q4xbase" ) ) {
-		moduleGameDir = OPENQ4_GAMEDIR;
+	// Both openD3 game modules, the expansion's included, live in the runtime directory.
+	if ( !moduleGameDir[0] || !idStr::Icmp( moduleGameDir, OPEND3_EXPANSION_GAMEDIR ) ) {
+		moduleGameDir = OPEND3_GAMEDIR;
 	}
 	if ( !idGameDirPolicy::IsPortableSegment( moduleGameDir ) ) {
 		common->Warning( "Refusing game module lookup for unsafe fs_game '%s'", moduleGameDir );
@@ -9127,21 +9015,21 @@ void idFileSystemLocal::FindDLL( const char *name, char _dllPath[ MAX_OSPATH ], 
 		FS_AppendGameModuleSearchPath( attemptedModulePaths, moduleSearchRoots[i], moduleGameDir, dllName );
 		dllFile = FS_OpenGameModuleFromExeDir( this, moduleSearchRoots[i], moduleGameDir, dllName, dllPath );
 		if ( dllFile ) {
-			resolvedOrigin = idStr::Icmp( moduleGameDir, OPENQ4_GAMEDIR ) == 0 ?
+			resolvedOrigin = idStr::Icmp( moduleGameDir, OPEND3_GAMEDIR ) == 0 ?
 				GAME_MODULE_ORIGIN_BASE_GAME : GAME_MODULE_ORIGIN_ACTIVE_MOD;
 		}
 	}
 
-	if ( !dllFile && idStr::Icmp( moduleGameDir, OPENQ4_GAMEDIR ) != 0 ) {
+	if ( !dllFile && idStr::Icmp( moduleGameDir, OPEND3_GAMEDIR ) != 0 ) {
 		for ( int i = 0; !dllFile && i < numModuleSearchRoots; i++ ) {
-			FS_AppendGameModuleSearchPath( attemptedModulePaths, moduleSearchRoots[i], OPENQ4_GAMEDIR, dllName );
-			dllFile = FS_OpenGameModuleFromExeDir( this, moduleSearchRoots[i], OPENQ4_GAMEDIR, dllName, dllPath );
+			FS_AppendGameModuleSearchPath( attemptedModulePaths, moduleSearchRoots[i], OPEND3_GAMEDIR, dllName );
+			dllFile = FS_OpenGameModuleFromExeDir( this, moduleSearchRoots[i], OPEND3_GAMEDIR, dllName, dllPath );
 			if ( dllFile ) {
 				resolvedOrigin = GAME_MODULE_ORIGIN_BASE_GAME;
 			}
 		}
 		if ( dllFile ) {
-			common->DPrintf( "Game DLL '%s' not found in mod directory '%s'; falling back to '%s'.\n", dllName, moduleGameDir, OPENQ4_GAMEDIR );
+			common->DPrintf( "Game DLL '%s' not found in mod directory '%s'; falling back to '%s'.\n", dllName, moduleGameDir, OPEND3_GAMEDIR );
 		}
 	}
 
@@ -9162,7 +9050,7 @@ void idFileSystemLocal::FindDLL( const char *name, char _dllPath[ MAX_OSPATH ], 
 			gameDLLChecksum = 0;
 		}
 		gameModuleOrigin = resolvedOrigin;
-		gamePakChecksum = dllFile ? OPENQ4_Q4_142_GAME300_PAK_CHECKSUM : 0;
+		gamePakChecksum = dllFile ? OPEND3_Q4_142_GAME300_PAK_CHECKSUM : 0;
 	}
 	if ( dllFile ) {
 		dllPath = dllFile->GetFullPath( );

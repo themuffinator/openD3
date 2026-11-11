@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Preserved from openQ4-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
+# Preserved from openD3-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
 """Execute stock-map neutral flag preparation and the live entity filter."""
 from __future__ import annotations
 
@@ -119,7 +119,7 @@ int main() {
         Add(map,"weapon_rocketlauncher","-800 0 16");
         Add(map,"powerup_regeneration","0 0 16")->epairs.Set("team","marine");
         Add(map,"item_armor_large","0 0 16")->epairs.SetBool("not_multiplayer",true);
-        Add(map,"func_static","0 0 0","openq4_neutral_flag");
+        Add(map,"func_static","0 0 0","opend3_neutral_flag");
         if (authored) Add(map,"mp_ctf_one_flag","0 500 16","mapper_flag");
         const int count=map.GetNumEntities();
         AddMissingNeutralFlag(&map);
@@ -127,7 +127,7 @@ int main() {
         if (!authored) {
             const auto& d=map.GetEntity(count)->epairs;
             CHECK(std::string(d.GetString("origin"))=="0 100 16");
-            CHECK(std::string(d.GetString("name"))=="openq4_neutral_flag_1");
+            CHECK(std::string(d.GetString("name"))=="opend3_neutral_flag_1");
             CHECK(std::string(d.GetString("classname"))=="mp_ctf_one_flag" && d.GetBool("nodrop"));
         }
         AddMissingNeutralFlag(&map); // Same-map reload cannot duplicate the flag.

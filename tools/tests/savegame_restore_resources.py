@@ -77,7 +77,7 @@ struct trmCache_t {
 };
 static idList<trmCache_t*> traceModelCache;
 struct Hash { void Add(int,int){} } traceModelHash;
-static const int MAX_SAVEGAME_TRACE_MODELS=20, OPENQ4_SAVEGAME_PORTABLE_COMPATIBILITY_VERSION=5;
+static const int MAX_SAVEGAME_TRACE_MODELS=20, OPEND3_SAVEGAME_PORTABLE_COMPATIBILITY_VERSION=5;
 static const int MAX_SAVEGAME_INVENTORY_ITEMS=20, MAX_SAVEGAME_STATIC_MULTI_STATES=20;
 static const int MAX_SAVEGAME_STATIC_MULTI_CLIP_MODELS=20;
 static const int MAX_SAVEGAME_VEHICLE_PARTS=20, MAX_SAVEGAME_VEHICLE_WEAPONS=20;
@@ -106,7 +106,7 @@ struct idRestoreGame {
     void ReadString(idStr& value){Tick(); value="part";}
     void ReadJoint(int& value){ReadInt(value);}
     template<class T> void ReadObject(T*& v){Tick(); v=nullptr;}
-    int GetOpenQ4SaveGameCompatibilityVersion(){return version;}
+    int GetopenD3SaveGameCompatibilityVersion(){return version;}
     [[noreturn]] void Error(const char*,...){throw std::runtime_error("invalid data");}
     void ReadSoundCommands(){Tick();}
     void ReadSyncId(const char*, const char*){Tick();}

@@ -12,7 +12,7 @@ void operator delete(void* p) noexcept{std::free(p);}
 void operator delete[](void* p) noexcept{std::free(p);}
 void operator delete(void* p,std::size_t) noexcept{std::free(p);}
 void operator delete[](void* p,std::size_t) noexcept{std::free(p);}
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks=0;
 #define CHECK(x) do{++checks;if(!(x)){std::fprintf(stderr,"FAIL line %d: %s\n",__LINE__,#x);std::exit(1);}}while(false)
 static bool Same(const TextEditState& a,const TextEditState& b){return a.text==b.text && a.anchor==b.anchor && a.caret==b.caret;}

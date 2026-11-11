@@ -40,22 +40,22 @@ def main() -> int:
     verify_runtime_is_current(runtime)
     output.mkdir(parents=True, exist_ok=False)
     profile = args.profile.resolve() if args.profile else output / "save"
-    game = profile / "baseoq4"
+    game = profile / "baseod3"
     game.mkdir(parents=True, exist_ok=True)
-    config = game / "openQ4Config.cfg"
+    config = game / "openD3Config.cfg"
     before = config.read_text(encoding="utf-8", errors="replace") if config.is_file() else ""
     (output / "config-before.cfg").write_text(before, encoding="utf-8")
-    log = game / "logs/openq4.log"
+    log = game / "logs/opend3.log"
     # Preserve a previous run's log when deliberately sharing its isolated home.
     if log.is_file():
-        (output / "previous-openq4.log").write_bytes(log.read_bytes())
+        (output / "previous-opend3.log").write_bytes(log.read_bytes())
         log.unlink()
     for name in ("arena-pause1", "arena-pause2", "arena-result"):
         (game / "screenshots" / (name + ".tga")).unlink(missing_ok=True)
     write_script(game / "arena_bootstrap.cfg", [
         "waitMsec 1800", "campaignSelect arena", "waitMsec 1500",
-        "openq4_retainedGui focus arena_start", "openq4_retainedGui menu accept 1",
-        "openq4_retainedGui menu accept 0",
+        "opend3_retainedGui focus arena_start", "opend3_retainedGui menu accept 1",
+        "opend3_retainedGui menu accept 0",
     ])
     pauses = ((1, 8000), (2, 8000)) if args.audio_output == "physical" else ((1, 3500), (2, 1800))
     resume_hold = 6000 if args.audio_output == "physical" else 1000
@@ -64,19 +64,19 @@ def main() -> int:
     script = ["waitMsec 10000", "god", "waitMsec 10000"] if args.listening_cue else ["waitMsec 20000"]
     if args.listening_cue:
         script += ["testSound weapon_lightninggun_fireloop", "echo ARENA_LISTENING_LOOP_STARTED"]
-    script += ["waitMsec 10000", "echo ARENA_SAMPLE_live", "openq4_arenaCeremony status", "s_soundWorlds", "listPlayingSounds"]
+    script += ["waitMsec 10000", "echo ARENA_SAMPLE_live", "opend3_arenaCeremony status", "s_soundWorlds", "listPlayingSounds"]
     for cycle, hold in pauses:
-        script += ["openq4_assertMenuActivation 5000 game", "waitMsec 500",
-                   f"echo ARENA_SAMPLE_pause{cycle}a", "openq4_arenaCeremony status", "s_soundWorlds",
-                   f"waitMsec {hold}", f"echo ARENA_SAMPLE_pause{cycle}b", "openq4_arenaCeremony status",
+        script += ["opend3_assertMenuActivation 5000 game", "waitMsec 500",
+                   f"echo ARENA_SAMPLE_pause{cycle}a", "opend3_arenaCeremony status", "s_soundWorlds",
+                   f"waitMsec {hold}", f"echo ARENA_SAMPLE_pause{cycle}b", "opend3_arenaCeremony status",
                    "s_soundWorlds", f'screenshot "screenshots/arena-pause{cycle}.tga"',
-                   "openq4_retainedGui event onBack", f"waitMsec {resume_hold}",
-                   f"echo ARENA_SAMPLE_resume{cycle}", "openq4_arenaCeremony status", "s_soundWorlds", "listPlayingSounds",
+                   "opend3_retainedGui event onBack", f"waitMsec {resume_hold}",
+                   f"echo ARENA_SAMPLE_resume{cycle}", "opend3_arenaCeremony status", "s_soundWorlds", "listPlayingSounds",
                    "waitMsec 500", f"echo ARENA_SAMPLE_resume{cycle}b", "s_soundWorlds"]
     # Victory review (6 s), scoreboard (5 s), stats (6 s), fades and the
     # browser handoff must finish before observing the archived result.
-    script += [f"openq4_arenaCeremony {args.outcome}", "waitMsec 30000", "echo ARENA_SAMPLE_result",
-               "s_soundWorlds", "ui_arenaProgress", "ui_arenaBest", "openq4_retainedGui report",
+    script += [f"opend3_arenaCeremony {args.outcome}", "waitMsec 30000", "echo ARENA_SAMPLE_result",
+               "s_soundWorlds", "ui_arenaProgress", "ui_arenaBest", "opend3_retainedGui report",
                'screenshot "screenshots/arena-result.tga"', "echo ARENA_SOUND_COMPLETE", "wait 5", "quit"]
     write_script(game / "arena_probe.cfg", script)
     settings = {
@@ -84,7 +84,7 @@ def main() -> int:
         # The campaign browser belongs to SP and its Start action switches to
         # MP. Starting in MP first would reload to SP and discard the remainder
         # of this config script before it can activate the match.
-        "fs_game": "baseoq4", "com_gameMode": "SP", "si_gameType": "singleplayer", "ui_autoJoin": "1",
+        "fs_game": "baseod3", "com_gameMode": "SP", "si_gameType": "singleplayer", "ui_autoJoin": "1",
         "ui_retained": "1", "ui_arenaSelectedTier": "0", "ui_arenaSelectedMatch": "0",
         "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
         "r_renderApi": args.renderer, "r_fullscreen": "0", "r_fullscreenDesktop": "0", "r_borderless": "0",
@@ -92,13 +92,13 @@ def main() -> int:
         "r_customHeight": "540", "r_windowWidth": "960", "r_windowHeight": "540", "com_maxfps": "60",
         "r_swapInterval": "0", "in_mouse": "0", "in_joystick": "0", "s_noSound": "0", "s_muteUnfocused": "0",
         "in_tty": "0", "sys_consoleWindow": "0", "s_deviceName": "",
-        "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1", "net_port": str(args.port),
+        "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1", "net_port": str(args.port),
         "net_ip": "127.0.0.1", "net_enableIPv6": "0", "net_allowCheats": "1", "com_skipLoadingContinue": "1",
         "g_autoExecAfterMapLoad": "arena_probe.cfg", "g_autoExecAfterMapLoadDelayMs": "500",
     }
     if args.audio_output == "physical":
         settings["s_volume_dB"] = "-12"
-    executable = runtime / ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    executable = runtime / ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     command = [str(executable), *(part for key, value in settings.items() for part in ("+set", key, value)),
                "+exec", "arena_bootstrap.cfg"]
     environment = dict(os.environ, ALSOFT_LOGFILE=str(output / "openal.log"), ALSOFT_LOGLEVEL="3")
@@ -113,8 +113,8 @@ def main() -> int:
               "capture_method": "engine screenshot command",
               "source": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
               "runtime_sha256": {}, "samples": {}, "world_samples": {}, "failures": []}
-    for path in (executable, runtime / "baseoq4/game-mp_x64.dll", runtime / "baseoq4/game-mp_x64.so",
-                 runtime / "baseoq4/pak0.pk4", runtime / "baseoq4/pak1.pk4"):
+    for path in (executable, runtime / "baseod3/game-mp_x64.dll", runtime / "baseod3/game-mp_x64.so",
+                 runtime / "baseod3/pak0.pk4", runtime / "baseod3/pak1.pk4"):
         if path.is_file():
             with path.open("rb") as source:
                 report["runtime_sha256"][path.relative_to(runtime).as_posix()] = hashlib.file_digest(source, "sha256").hexdigest()
@@ -150,12 +150,12 @@ def main() -> int:
             report["exit_code"] = process.returncode
             report["failures"].append("Arena runtime timed out")
     text = log.read_text(encoding="utf-8", errors="replace") if log.is_file() else ""
-    (output / "openq4.log").write_text(text, encoding="utf-8")
+    (output / "opend3.log").write_text(text, encoding="utf-8")
     after = config.read_text(encoding="utf-8", errors="replace") if config.is_file() else ""
     (output / "config-after.cfg").write_text(after, encoding="utf-8")
     if report["exit_code"] != 0 or "ARENA_SOUND_COMPLETE" not in text:
         report["failures"].append("runtime did not finish cleanly")
-    if re.search(r"ERROR:|FATAL ERROR|Unknown command|usage: openq4_|requires a retained test|Unable to open server on port", text):
+    if re.search(r"ERROR:|FATAL ERROR|Unknown command|usage: opend3_|requires a retained test|Unable to open server on port", text):
         report["failures"].append("engine or diagnostic command failed")
     if "OpenAL renderer: OpenAL Soft" not in text:
         report["failures"].append("OpenAL Soft was not initialized")

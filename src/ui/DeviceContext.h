@@ -101,7 +101,7 @@ public:
 	void				SetCursor(int n);
 
 	void				AdjustCoords(float *x, float *y, float *w, float *h);
-	// openQ4: the stock interface's HUD settings (idLegacyHudLayout). A group
+	// openD3: the stock interface's HUD settings (idLegacyHudLayout). A group
 	// scales about its screen anchor, both in virtual units, as coordinates
 	// leave virtual space: after clipping, so a clip rectangle scales with what
 	// it clips. The opacity multiplies every colour's alpha; additive art,
@@ -123,11 +123,11 @@ public:
 
 	void				EnableClipping(bool b) { enableClipping = b; };
 	void				SetFont( int num );
-	void BeginHudCapture(std::vector<openq4::ui::HudPrimitive>& output) { hudCapture = &output; hudDiscard = false; }
+	void BeginHudCapture(std::vector<opend3::ui::HudPrimitive>& output) { hudCapture = &output; hudDiscard = false; }
 	void BeginHudDiscard() { hudCapture = nullptr; hudDiscard = true; }
 	void EndHudCapture() { hudCapture = nullptr; hudDiscard = false; }
 	void CaptureLegacyText(const char* text, const char* family, float scale, float width, float height,
-		int align, bool clip, std::vector<openq4::ui::HudPrimitive>& output);
+		int align, bool clip, std::vector<opend3::ui::HudPrimitive>& output);
 
 	void				SetOverStrike(bool b) { overStrikeMode = b; }
 
@@ -172,7 +172,7 @@ public:
 	static idVec4 colorNone;
 
 private:
-	std::vector<openq4::ui::HudPrimitive>* hudCapture = nullptr;
+	std::vector<opend3::ui::HudPrimitive>* hudCapture = nullptr;
 	idVec4 hudColour = idVec4(1,1,1,1);
 	bool hudGlyph = false;
 	bool hudDiscard = false;

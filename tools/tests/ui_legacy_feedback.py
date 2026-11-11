@@ -39,7 +39,7 @@ struct idRectangle { float x,y,w,h; };
 '''
 CHECKS = r'''
 int main() {
-#if defined(OPENQ4_RENDERER_VK_MODULE)
+#if defined(OPEND3_RENDERER_VK_MODULE)
     constexpr int captureFlush = 0;
 #else
     constexpr int captureFlush = 1;
@@ -63,21 +63,21 @@ int main() {
     r.SetUseUIViewportFor2D(true); assert(r.flushes==2*captureFlush+1);
     for (auto expansion : {idRectangle{106,0,0,0},idRectangle{0,329,0,0},idRectangle{0,0,0,0}}) {
         idRectangle rect{0,0,640,480};
-        OpenQ4_ExpandLegacyMessageBackdrop("guis/msg.gui","msg_black",expansion.x,expansion.y,rect);
+        openD3_ExpandLegacyMessageBackdrop("guis/msg.gui","msg_black",expansion.x,expansion.y,rect);
         assert(rect.x==-expansion.x && rect.y==-expansion.y);
         assert(rect.w==640+2*expansion.x && rect.h==480+2*expansion.y);
     }
     // Furniture, unrelated documents and custom-sized mod backings are untouched.
     for (const char* name : {"msg_bg","msg_top","msg_text"}) {
         idRectangle rect{0,0,640,480};
-        OpenQ4_ExpandLegacyMessageBackdrop("guis/msg.gui",name,100,100,rect);
+        openD3_ExpandLegacyMessageBackdrop("guis/msg.gui",name,100,100,rect);
         assert(rect.x==0 && rect.w==640);
     }
     idRectangle custom{10,0,620,480};
-    OpenQ4_ExpandLegacyMessageBackdrop("guis/msg.gui","msg_black",100,100,custom);
+    openD3_ExpandLegacyMessageBackdrop("guis/msg.gui","msg_black",100,100,custom);
     assert(custom.x==10 && custom.w==620);
     idRectangle other{0,0,640,480};
-    OpenQ4_ExpandLegacyMessageBackdrop("guis/mainmenu.gui","msg_black",100,100,other);
+    openD3_ExpandLegacyMessageBackdrop("guis/mainmenu.gui","msg_black",100,100,other);
     assert(other.x==0 && other.w==640);
 }
 '''
@@ -144,7 +144,7 @@ def main():
         ('src/renderer/RenderSystem.cpp', 'void idRenderSystemLocal::SetUseUIViewportFor2D( bool enable )'),
     ])
     for path in ('src/ui/Window.cpp', 'src/ui/SimpleWindow.cpp'):
-        assert 'OpenQ4_ExpandLegacyMessageBackdrop(' in (ROOT / path).read_text(), path
+        assert 'openD3_ExpandLegacyMessageBackdrop(' in (ROOT / path).read_text(), path
     with tempfile.TemporaryDirectory(prefix='legacy-feedback-', dir=ROOT / '.tmp') as temp:
         source = Path(temp) / 'check.cpp'
         binary = Path(temp) / 'check.exe'
@@ -152,7 +152,7 @@ def main():
                           (ROOT / 'src/ui/LegacyGuiLayout.h').as_posix() + '"\n' + CHECKS)
         subprocess.run([compiler, '-std=c++17', str(source), '-o', str(binary)], cwd=ROOT, check=True)
         subprocess.run([str(binary)], cwd=ROOT, check=True)
-        subprocess.run([compiler, '-std=c++17', '-DOPENQ4_RENDERER_VK_MODULE', str(source), '-o', str(binary)], cwd=ROOT, check=True)
+        subprocess.run([compiler, '-std=c++17', '-DOPEND3_RENDERER_VK_MODULE', str(source), '-o', str(binary)], cwd=ROOT, check=True)
         subprocess.run([str(binary)], cwd=ROOT, check=True)
         mask = '#include "' + (ROOT / 'src/imagetools/LegacyScopeMask.h').as_posix() + '"\n'
         mask += function_body((ROOT / 'src/imagetools/Image_files.cpp').read_text(),

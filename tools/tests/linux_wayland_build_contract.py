@@ -156,12 +156,12 @@ def validate_openal_device_event_threading() -> None:
 
     require(precompiled, "#include <atomic>", "precompiled standard-library atomics")
     for token in (
-        "static std::atomic<int> openQ4_PendingOpenALDeviceEvents( 0 );",
-        "openQ4_PendingOpenALDeviceEvents.fetch_or( flag, std::memory_order_relaxed )",
-        "openQ4_PendingOpenALDeviceEvents.exchange( 0, std::memory_order_relaxed )",
+        "static std::atomic<int> openD3_PendingOpenALDeviceEvents( 0 );",
+        "openD3_PendingOpenALDeviceEvents.fetch_or( flag, std::memory_order_relaxed )",
+        "openD3_PendingOpenALDeviceEvents.exchange( 0, std::memory_order_relaxed )",
     ):
         require(source, token, "OpenAL asynchronous device-event handoff")
-    reject(source, "static volatile int openQ4_PendingOpenALDeviceEvents", "OpenAL racy device-event handoff")
+    reject(source, "static volatile int openD3_PendingOpenALDeviceEvents", "OpenAL racy device-event handoff")
 
 
 def validate_wayland_only_mode() -> None:
@@ -188,7 +188,7 @@ def validate_wayland_only_mode() -> None:
     require(building, "subprojects purge --confirm sdl3", "stale SDL patch-overlay recovery guidance")
     require(building, "stale SDL definitions can silently retain X11 libraries", "stale Wayland-only dependency warning")
     require(release_notes, "Meson does not reapply a changed", "SDL patch-overlay upgrade note")
-    if glew.count("!defined(OPENQ4_GLEW_SDL3_LOADER)") < 2:
+    if glew.count("!defined(OPEND3_GLEW_SDL3_LOADER)") < 2:
         raise AssertionError("GLEW SDL loader must exclude both GLX header and implementation branches")
 
 
@@ -200,12 +200,12 @@ def validate_arm64_wayland_ci() -> None:
         "CC: ${{ matrix.cc }}",
         "CXX: ${{ matrix.cxx }}",
         "prefer_libdecor: \"1\"",
-        "OPENQ4_WAYLAND_PREFER_LIBDECOR=1",
+        "OPEND3_WAYLAND_PREFER_LIBDECOR=1",
         "bash tools/validation/validate_pr.sh \\\n            --build-dir builddir \\",
         "--extra-setup-arg=-Dlinux_x11=${{ matrix.linux_x11 }}",
         "#define HAVE_LIBDECOR_H 1",
         "LD_DEBUG_OUTPUT",
-        "libdecor loaded despite OPENQ4_WAYLAND_DISABLE_LIBDECOR=1",
+        "libdecor loaded despite OPEND3_WAYLAND_DISABLE_LIBDECOR=1",
         "Native Wayland-only binary unexpectedly depends on X11/GLX",
     ):
         require(workflow, token, "ARM64 native Wayland workflow")
@@ -239,14 +239,14 @@ def validate_arm64_wayland_ci() -> None:
 
 def validate_elf_contract() -> None:
     meson = read("meson.build")
-    module_meson = read("content/baseoq4/meson.build")
+    module_meson = read("content/baseod3/meson.build")
     export_map = read("tools/build/linux_game_module.map")
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     require(meson, "'-Wl,-z,defs'", "Linux game-module defined-import policy")
     require(meson, "'-Wl,--version-script=' + linux_game_module_export_map[0].full_path()", "Linux game-module export map")
     require(module_meson, "link_depends: game_module_link_depends", "Linux game-module export-map relink dependency")
     require(export_map, "GetGameAPI;", "Linux game-module public API")
-    require(export_map, "openQ4_Mem_GetModuleStats;", "Linux game-module memory counter export")
+    require(export_map, "openD3_Mem_GetModuleStats;", "Linux game-module memory counter export")
     require(export_map, "local:", "Linux game-module local symbol policy")
     require(export_map, "*;", "Linux game-module default-local symbol policy")
     for token in (
@@ -256,7 +256,7 @@ def validate_elf_contract() -> None:
         '["--wide", "--dyn-syms"]',
         'fields[4] in {"GLOBAL", "WEAK", "UNIQUE"}',
         'fields[5] in {"DEFAULT", "PROTECTED"}',
-        'expected_game_exports = {"GetGameAPI", "openQ4_Mem_GetModuleStats"}',
+        'expected_game_exports = {"GetGameAPI", "openD3_Mem_GetModuleStats"}',
         "len(public_symbols) == len(expected_game_exports)",
         'symbol[:3] == ("FUNC", "GLOBAL", "DEFAULT")',
         'readelf_env["LC_ALL"] = "C"',

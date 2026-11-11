@@ -41,25 +41,25 @@ def main():
         stages += [f'testGUI guis/weapons/{kind}_scope.q4ui', 'waitMsec 1500',
                    f'echo SCOPE_PROFILE {kind}', f'ui_retainedProfile {args.frames}']
         for frame in range(args.frames + 2):
-            stages += [f'openq4_retainedGui state playerYaw {frame * .7 % 360:.3f}']
+            stages += [f'opend3_retainedGui state playerYaw {frame * .7 % 360:.3f}']
             if kind == 'nailgun':
-                stages += [f'openq4_retainedGui pending lockYaw {frame * 1.3 % 360:.3f}',
-                           f'openq4_retainedGui state lockStatus {.5 + .5 * math.sin(frame * .03):.5f}']
+                stages += [f'opend3_retainedGui pending lockYaw {frame * 1.3 % 360:.3f}',
+                           f'opend3_retainedGui state lockStatus {.5 + .5 * math.sin(frame * .03):.5f}']
             stages += ['wait 1']
         stages += [f'screenshot "screenshots/{kind}-moving.tga"']
         if kind == 'nailgun':
-            stages += ['openq4_retainedGui pending lockRange 12.4',
-                       'openq4_retainedGui state lockTime 2.0',
-                       'openq4_retainedGui event lockAquired', 'waitMsec 150',
+            stages += ['opend3_retainedGui pending lockRange 12.4',
+                       'opend3_retainedGui state lockTime 2.0',
+                       'opend3_retainedGui event lockAquired', 'waitMsec 150',
                        'screenshot "screenshots/nailgun-locked.tga"',
-                       'openq4_retainedGui event lockStop', 'waitMsec 400']
+                       'opend3_retainedGui event lockStop', 'waitMsec 400']
     # Also verify that the real weapon selects the retained scope in gameplay.
     # The weapon script owns held zoom; this probe does not synthesize input.
     stages += ['testGUI', 'give weapon_railgun', 'waitMsec 1000',
                'testWeaponScope weapon_railgun', 'waitMsec 1500',
                'testWeaponScope', 'screenshot "screenshots/railgun-selected.tga"']
     capture.SCENARIOS['scope-performance'] = ('game/airdefense1', stages)
-    runtime_files = ('openQ4-client_x64.exe', 'baseoq4/game-sp_x64.dll', 'baseoq4/pak0.pk4',
+    runtime_files = ('openD3-client_x64.exe', 'baseod3/game-sp_x64.dll', 'baseod3/pak0.pk4',
                      f'renderer-{"gl" if args.renderer == "gl" else "vk"}_x64.dll')
     identity = {name: capture.digest(args.runtime / name) for name in runtime_files}
     result = capture.run(args, 'scope-performance')

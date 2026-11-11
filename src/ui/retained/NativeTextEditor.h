@@ -4,7 +4,7 @@
 #include "TextEdit.h"
 #include "TextInputBroker.h"
 
-namespace openq4::ui {
+namespace opend3::ui {
 struct NativeTextCollection {
 	std::uint64_t dispatch=0, fenceSequence=0, lastTransactionSequence=0;
 	bool operator==(const NativeTextCollection&) const = default;
@@ -105,4 +105,4 @@ private:
 	struct Impl;
 	std::unique_ptr<Impl> impl;
 };
-} // namespace openq4::ui
+} // namespace opend3::ui

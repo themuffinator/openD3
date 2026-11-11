@@ -90,7 +90,7 @@ def require_before(haystack: str, first: str, second: str, context: str) -> None
 
 def load_meson_sources_module():
     module_path = ROOT / "tools" / "build" / "meson_sources.py"
-    spec = importlib.util.spec_from_file_location("openq4_meson_sources", module_path)
+    spec = importlib.util.spec_from_file_location("opend3_meson_sources", module_path)
     if spec is None or spec.loader is None:
         raise AssertionError(f"Could not load Meson source manifest module: {module_path}")
     module = importlib.util.module_from_spec(spec)
@@ -293,7 +293,7 @@ def validate_phase7_plan_status() -> None:
 
 def validate_ci_and_local_wiring() -> None:
     script = "tools/tests/macos_native_backend_containment.py"
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
     macos_debug = read(".github/workflows/macos-debug.yml")

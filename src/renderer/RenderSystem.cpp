@@ -105,7 +105,7 @@ static backEndName_t R_RequestBackEndRenderer( const char *rendererName ) {
 		return R_ModernBackEndAvailable() ? BE_MODERN : BE_BAD;
 	}
 
-#ifdef OPENQ4_RENDERER_GLES_MODULE
+#ifdef OPEND3_RENDERER_GLES_MODULE
 	// Only the renderer-gles module compiles the GLES_D3 translation units, so
 	// the name resolves nowhere else.
 	if ( idStr::Icmp( rendererName, "glesd3" ) == 0 ) {
@@ -129,7 +129,7 @@ static backEndName_t R_PickBestBackEndRenderer() {
 		return BE_ARB2;
 	}
 
-#ifdef OPENQ4_RENDERER_GLES_MODULE
+#ifdef OPEND3_RENDERER_GLES_MODULE
 	// An ES profile: gles_d3 is the back end that renders here. The modern
 	// executor's shader library targets desktop GLSL and does not compile as
 	// GLSL ES, so BE_MODERN on ES draws nothing -- picking it would hand back a
@@ -165,7 +165,7 @@ bool R_IsMD5RRuntimeAvailable( void ) {
 =======================
 R_IsMD5RWriteAvailable
 
-openQ4's text/binary MD5R model writer is now implemented in the parser-backed
+openD3's text/binary MD5R model writer is now implemented in the parser-backed
 rvRenderModelMD5R path, so it no longer depends on the original retail
 _MD5R_WRITE_SUPPORT macro. World export now round-trips packed MD5RProc
 companions when that shared world-buffer state is loaded, while classic .proc
@@ -1141,7 +1141,7 @@ void idRenderSystemLocal::SetUseUIViewportFor2D( bool enable ) {
 		(glConfig.uiViewportX==crop.x && glConfig.vidHeight-glConfig.uiViewportY-glConfig.uiViewportHeight==crop.y &&
 		 glConfig.uiViewportWidth==crop.width && glConfig.uiViewportHeight==crop.height);
 	bool mustFlush = !sameViewport;
-#if !defined( OPENQ4_RENDERER_VK_MODULE )
+#if !defined( OPEND3_RENDERER_VK_MODULE )
 	// GL captures _currentRender at the start of the post-process range. Keep
 	// the final scene composite separate from a following legacy scope even
 	// when their rectangles match. Ordinary UI geometry can still batch.
@@ -1568,7 +1568,7 @@ void idRenderSystemLocal::BeginFrame( int windowWidth, int windowHeight ) {
 		tiledWindow[1] = 0;
 	}
 
-	// openQ4 VR: a headset frame's output is the virtual screen (RenderSystem_vr.cpp)
+	// openD3 VR: a headset frame's output is the virtual screen (RenderSystem_vr.cpp)
 	const bool vrPresenting = BeginVRFrame( windowWidth, windowHeight );
 
 	glConfig.vidWidth = windowWidth;
@@ -2777,7 +2777,7 @@ static bool R_ValidateSMAALookupImage( const idImage *image, const char *imageNa
 }
 
 bool idRenderSystemLocal::ValidateSMAALookupTextures( void ) {
-#ifndef OPENQ4_RENDERER_VK_MODULE
+#ifndef OPEND3_RENDERER_VK_MODULE
 	if ( !glConfig.GLSLProgramAvailable || !glConfig.GLSL130Available ) {
 		return false;
 	}
@@ -3385,7 +3385,7 @@ void idRenderSystemLocal::DestroyRenderTexture( idRenderTexture* renderTexture )
 	pendingRenderTextureDeletes.Append( renderTexture );
 }
 
-#ifndef OPENQ4_RENDERER_VK_MODULE
+#ifndef OPEND3_RENDERER_VK_MODULE
 viewDef_t *R_SubmittedPrimaryView( void ) { return tr.primaryView; }
 bool R_SubmittedTakingScreenshot( void ) { return tr.takingScreenshot; }
 #endif

@@ -132,12 +132,12 @@ def build_digest(project_root: Path, game_stage_root: Path) -> tuple[str, int]:
 def render_header(source_hash: str, file_count: int) -> str:
     return "\n".join(
         (
-            "#ifndef OPENQ4_SAVEGAME_COMPAT_GENERATED_H",
-            "#define OPENQ4_SAVEGAME_COMPAT_GENERATED_H",
+            "#ifndef OPEND3_SAVEGAME_COMPAT_GENERATED_H",
+            "#define OPEND3_SAVEGAME_COMPAT_GENERATED_H",
             "",
-            "#define OPENQ4_SAVEGAME_COMPAT_GENERATOR_VERSION 1",
-            f'#define OPENQ4_SAVEGAME_COMPAT_SOURCE_HASH "{source_hash}"',
-            f"#define OPENQ4_SAVEGAME_COMPAT_SOURCE_FILE_COUNT {file_count}",
+            "#define OPEND3_SAVEGAME_COMPAT_GENERATOR_VERSION 1",
+            f'#define OPEND3_SAVEGAME_COMPAT_SOURCE_HASH "{source_hash}"',
+            f"#define OPEND3_SAVEGAME_COMPAT_SOURCE_FILE_COUNT {file_count}",
             "",
             "#endif",
             "",

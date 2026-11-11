@@ -1,7 +1,7 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
 // Standalone: compile this source alone. Includes unchanged production I/O with
 // compile-time-only fault points; all noninjected calls use real native files.
-#define OPENQ4_DURABLE_FILE_TESTING
+#define OPEND3_DURABLE_FILE_TESTING
 #include "src/framework/DurableFile.cpp"
 
 #include <filesystem>
@@ -16,8 +16,8 @@
 #endif
 
 namespace fs = std::filesystem;
-using namespace openq4;
-using namespace openq4::durable_detail;
+using namespace opend3;
+using namespace opend3::durable_detail;
 namespace {
 std::string error;
 int checks = 0;
@@ -151,7 +151,7 @@ void ReplaceCases(const fs::path& dir) {
     const auto pid = static_cast<unsigned long>(getpid());
 #endif
     for (unsigned i = 0; i < TempAttempts; ++i) {
-        const auto file = dir / (".openq4-durable-" + std::to_string(pid) + "-" + std::to_string(sequence+i) + ".tmp");
+        const auto file = dir / (".opend3-durable-" + std::to_string(pid) + "-" + std::to_string(sequence+i) + ".tmp");
         RawPut(file,"unowned"); collisions.push_back(file);
     }
     Check(!DurableReplaceExact(path,"unpublished",error) && error.find("collision") != std::string::npos,
@@ -530,7 +530,7 @@ int main(int argc, char** argv) {
     // directory remain (uncertain Windows tombstones). Preserve unexpected data.
     for (const auto& entry : fs::directory_iterator(dir)) {
         const auto name = entry.path().filename().string();
-        Check(entry.is_regular_file() && name.rfind(".openq4-durable-",0) == 0 &&
+        Check(entry.is_regular_file() && name.rfind(".opend3-durable-",0) == 0 &&
             entry.path().parent_path() == dir,"only owned inert tombstones remain");
         Check(fs::remove(entry.path()),"remove exact inert test tombstone");
     }

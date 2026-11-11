@@ -1,7 +1,7 @@
 #version 450
 #extension GL_GOOGLE_include_directive : require
 
-// Vulkan port of openQ4's live smaa_weights.fs material program.
+// Vulkan port of openD3's live smaa_weights.fs material program.
 
 layout(set = 0, binding = 0) uniform sampler2D EdgesTex;
 layout(set = 1, binding = 0) uniform sampler2D AreaTex;

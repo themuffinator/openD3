@@ -53,7 +53,7 @@ COLUMNS = ((0, 1), (2,))
 
 
 def audio_document() -> dict:
-    doc = Document("openq4.audio")
+    doc = Document("opend3.audio")
     doc.state.update({
         "audio.volume": {"type": "number", "initial": 0}, "audio.music": {"type": "number", "initial": 0},
         "audio.dialogue": {"type": "number", "initial": 0}, "audio.backend": {"type": "number", "initial": 1},

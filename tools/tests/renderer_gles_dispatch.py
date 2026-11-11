@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def main():
     compiler = os.environ.get("CXX") or shutil.which("clang++") or shutil.which("g++") or shutil.which("cl")
     if not compiler:
-        raise SystemExit("A C++ compiler is required (set CXX or use the openQ4 developer shell)")
+        raise SystemExit("A C++ compiler is required (set CXX or use the openD3 developer shell)")
     source = (ROOT / "src/renderer/GLES/gles_GLStubs.cpp").read_text(encoding="utf-8")
     production = source[source.index("PFN_glBindVertexBuffer"):source.index("\n/*\n===============================================================================\n\tGLEW initialisation shim.")]
     harness = r'''

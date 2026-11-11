@@ -39,7 +39,7 @@ struct retainedUIEditControl {
 struct retainedUIView_t {
     std::shared_ptr<retainedUIEditControl> edit;
 
-	std::unique_ptr<openq4::ui::Runtime> runtime;
+	std::unique_ptr<opend3::ui::Runtime> runtime;
 	std::string source, path;
 	retainedUIViewCallback_t callback = nullptr;
 	void* owner = nullptr;
@@ -49,9 +49,9 @@ struct retainedUIView_t {
 struct retainedUIPreparedEditData {
     std::shared_ptr<retainedUIEditControl> owner;
     retainedUIEditIdentity_t expected;
-    openq4::ui::DocumentEdit* history=nullptr;
-    std::unique_ptr<openq4::ui::DocumentEdit::Prepared> source;
-    std::unique_ptr<openq4::ui::Runtime::PreparedDocument> canvas;
+    opend3::ui::DocumentEdit* history=nullptr;
+    std::unique_ptr<opend3::ui::DocumentEdit::Prepared> source;
+    std::unique_ptr<opend3::ui::Runtime::PreparedDocument> canvas;
     std::string text,path;
     bool ready=true;
 };
@@ -101,7 +101,7 @@ idCVar ui_retainedOpaqueBacking("ui_retainedOpaqueBacking", "0", CVAR_GUI | CVAR
 idCVar ui_retainedSoftFocus("ui_retainedSoftFocus", "0", CVAR_GUI | CVAR_BOOL | CVAR_ROM,
 	"whether retained modals soften the screen beneath: no opaque backing and a renderer that can blur it");
 
-class EngineHost final : public openq4::ui::Host {
+class EngineHost final : public opend3::ui::Host {
 public:
 	bool timingRequested=false;
 	bool CollectTimings() const override { return timingRequested; }
@@ -165,7 +165,7 @@ public:
 	std::string Translate(const std::string& text) override {
 		return text.compare(0,5,"#str_") == 0 ? common->GetLanguageDict()->GetString(text.c_str()) : text;
 	}
-	bool ReadCVar(const std::string& name, size_t type, openq4::ui::StateValue& value) override {
+	bool ReadCVar(const std::string& name, size_t type, opend3::ui::StateValue& value) override {
 		const idCVar* cvar = cvarSystem->Find(name.c_str());
 		if (!cvar) return false;
 		if (type == 2) { value = std::string(cvar->GetString()); return true; }
@@ -247,9 +247,9 @@ public:
 			}
 		}
 	}
-	bool RenderModelScene(std::uint64_t owner,const openq4::ui::ModelScene& scene,int width,int height,double seconds,
+	bool RenderModelScene(std::uint64_t owner,const opend3::ui::ModelScene& scene,int width,int height,double seconds,
 		std::string& image,std::string& error) override {
-		if (!renderSystem || !gameEdit || !owner || !openq4::ui::ValidModelScene(scene,error)) {
+		if (!renderSystem || !gameEdit || !owner || !opend3::ui::ValidModelScene(scene,error)) {
 			if (error.empty()) error="The model preview renderer is unavailable";
 			return false;
 		}
@@ -386,14 +386,14 @@ public:
 		const idMaterial* material = declManager->FindMaterial("_retainedMultiply");
 		return material != NULL && material->GetState() != DS_DEFAULTED ? reinterpret_cast<std::uintptr_t>(material) : 0;
 	}
-	void Draw(const std::vector<openq4::ui::Vertex>& vertices, const std::vector<int>& indices, std::uintptr_t handle) override {
+	void Draw(const std::vector<opend3::ui::Vertex>& vertices, const std::vector<int>& indices, std::uintptr_t handle) override {
 		const idMaterial* material = Material(handle);
 		Convert(vertices,indices,material,handle,scratchMesh);
 		Submit(scratchMesh,material);
 	}
 	// Static retained geometry reaches the host unchanged every frame, so it
 	// converts once for each revision, material and view size.
-	void DrawMesh(std::uint64_t mesh, std::uint64_t revision, const std::vector<openq4::ui::Vertex>& vertices,
+	void DrawMesh(std::uint64_t mesh, std::uint64_t revision, const std::vector<opend3::ui::Vertex>& vertices,
 		const std::vector<int>& indices, std::uintptr_t handle) override {
 		const idMaterial* material = Material(handle);
 		auto& cached = meshes[mesh];
@@ -494,13 +494,13 @@ public:
 		layer.width=layer.height=1;
 		return true;
 	}
-	void CompositeLayer(std::uint32_t source, std::uint32_t destination, float opacity, const openq4::ui::Bounds& clip) override {
+	void CompositeLayer(std::uint32_t source, std::uint32_t destination, float opacity, const opend3::ui::Bounds& clip) override {
 		DrawLayer(layers[source-1].material,destination,opacity,clip);
 	}
 	bool CanCompositeMaskedLayer() const override { return ui_retainedSourceCache.GetBool() && !RetainedRecordingRenderDemo(); }
-	void CompositeMaskedLayer(std::uint32_t source, const std::vector<openq4::ui::Vertex>& mask,
+	void CompositeMaskedLayer(std::uint32_t source, const std::vector<opend3::ui::Vertex>& mask,
 		const std::vector<int>& indices, float opacity) override {
-		std::vector<openq4::ui::Vertex> vertices; vertices.reserve(mask.size());
+		std::vector<opend3::ui::Vertex> vertices; vertices.reserve(mask.size());
 		for (const auto& v:mask) {
 			const float alpha=v.a*opacity;
 			vertices.push_back({v.x,v.y,v.x/viewportWidth,1-v.y/viewportHeight,alpha,alpha,alpha,alpha});
@@ -514,8 +514,8 @@ public:
 		return api==RENDER_MODULE_API_VULKAN || ((api==RENDER_MODULE_API_GL || api==RENDER_MODULE_API_GL_MODULE) &&
 			renderSystem->GetGLConfig().GLSLProgramAvailable);
 	}
-	void DrawLinearMask(std::uint32_t source, const openq4::ui::LinearMask& mask,
-		const openq4::ui::Bounds& clip, float opacity) override {
+	void DrawLinearMask(std::uint32_t source, const opend3::ui::LinearMask& mask,
+		const opend3::ui::Bounds& clip, float opacity) override {
 		if (clip.width<=0 || clip.height<=0) return;
 		float left=viewportWidth,top=viewportHeight,right=0,bottom=0;
 		for (const auto& point:mask.points) {
@@ -545,17 +545,17 @@ public:
 		renderSystem->DrawStretchPic(vertices,indices,4,6,material,false);
 		renderSystem->SetColor4(1,1,1,1);
 	}
-	void MaskLayer(std::uint32_t mask, std::uint32_t destination, const openq4::ui::Bounds& clip) override {
+	void MaskLayer(std::uint32_t mask, std::uint32_t destination, const opend3::ui::Bounds& clip) override {
 		DrawLayer(layers[mask-1].maskMaterial,destination,1,clip);
 	}
-	void DrawLayer(const idMaterial* material, std::uint32_t destination, float opacity, const openq4::ui::Bounds& clip) {
+	void DrawLayer(const idMaterial* material, std::uint32_t destination, float opacity, const opend3::ui::Bounds& clip) {
 		BindTarget(destination ? layers[destination-1].target : nullptr);
 		const float x0 = clip.x, y0 = clip.y, x1 = x0+clip.width, y1 = y0+clip.height;
 		// Render textures keep GL row order on every backend: the Vulkan
 		// executor records them lower-origin and marks those writes canonical,
 		// and flips any image written the other way when a GUI stage samples it.
 		// Sampling a layer as top-origin there mirrors it onto empty rows.
-		auto vertex = [&](float x, float y) -> openq4::ui::Vertex {
+		auto vertex = [&](float x, float y) -> opend3::ui::Vertex {
 			return {x,y,x/viewportWidth,1-y/viewportHeight,opacity,opacity,opacity,opacity};
 		};
 		Draw({vertex(x0,y0),vertex(x1,y0),vertex(x1,y1),vertex(x0,y1)}, {0,1,2,0,2,3},
@@ -568,22 +568,22 @@ public:
 	// separable Gaussian passes and desaturated into the destination layer.
 	// The capture and both targets keep GL row order on every backend, so
 	// each pass samples v = 1-y/h as the layer composites do.
-	bool SoftenBackdrop(std::uint32_t destination, float sigma, float saturation, const openq4::ui::Bounds& region) override {
+	bool SoftenBackdrop(std::uint32_t destination, float sigma, float saturation, const opend3::ui::Bounds& region) override {
 		if (!destination || destination > layers.size() || !layers[destination-1].target) return false;
 		return DrawSoftenedBackdrop(layers[destination-1].target,sigma,saturation,region);
 	}
-	bool CanSoftenBackdropDirect(float sigma, float saturation, const openq4::ui::Bounds& region) const override {
+	bool CanSoftenBackdropDirect(float sigma, float saturation, const opend3::ui::Bounds& region) const override {
 		return ui_retainedDirectBackdrop.GetBool() && softFocus && blurScratch && backdropCreated &&
 			blurWidth==viewportWidth && blurHeight==viewportHeight && blurBackdropMaterial && blurScratchMaterial &&
 			viewportWidth>0 && viewportHeight>0 && captureWidth>0 && captureHeight>0 &&
 			sigma>=0 && sigma<=256 && saturation>=0 && saturation<=1 &&
 			region.x<=0 && region.y<=0 && region.x+region.width>=viewportWidth && region.y+region.height>=viewportHeight;
 	}
-	bool SoftenBackdropDirect(float sigma, float saturation, const openq4::ui::Bounds& region) override {
+	bool SoftenBackdropDirect(float sigma, float saturation, const opend3::ui::Bounds& region) override {
 		if (!CanSoftenBackdropDirect(sigma,saturation,region)) return false;
 		return DrawSoftenedBackdrop(nullptr,sigma,saturation,region);
 	}
-	bool DrawSoftenedBackdrop(idRenderTexture* destination, float sigma, float saturation, const openq4::ui::Bounds& region) {
+	bool DrawSoftenedBackdrop(idRenderTexture* destination, float sigma, float saturation, const opend3::ui::Bounds& region) {
 		if (!softFocus || !(sigma>=0 && sigma<=256) || !(saturation>=0 && saturation<=1)) return false;
 		const float right = static_cast<float>(viewportWidth), bottom = static_cast<float>(viewportHeight);
 		const float x0 = Max(region.x,0.f), x1 = Min(region.x+region.width,right);
@@ -626,7 +626,7 @@ public:
 	// capture holds more than the view, so an unblurred pass first copies the
 	// whole view into the scratch target; the streak pass then samples it in
 	// the view's own coordinates, toward its centre, into the destination layer.
-	bool StreakBackdrop(std::uint32_t destination, float strength, const openq4::ui::Bounds& region) override {
+	bool StreakBackdrop(std::uint32_t destination, float strength, const opend3::ui::Bounds& region) override {
 		if (!softFocus || !destination || destination > layers.size() || !layers[destination-1].target ||
 			!(strength > 0 && strength <= 1)) return false;
 		const float right = static_cast<float>(viewportWidth), bottom = static_cast<float>(viewportHeight);
@@ -694,7 +694,7 @@ public:
 	// One blur pass over a view-space box. The program reads the step along its
 	// axis (in the source's UV), the sigma in pixels and the saturation from
 	// parm0..3, which the GUI colour supplies unclamped.
-	void DrawBlurPass(const idMaterial* material, const openq4::ui::Bounds& box, const float (&uv)[4], const float (&parms)[4]) {
+	void DrawBlurPass(const idMaterial* material, const opend3::ui::Bounds& box, const float (&uv)[4], const float (&parms)[4]) {
 		const float sx = 640.f / viewportWidth, sy = 480.f / viewportHeight;
 		const float xs[4] = {box.x,box.x+box.width,box.x+box.width,box.x}, ys[4] = {box.y,box.y,box.y+box.height,box.y+box.height};
 		const float us[4] = {uv[0],uv[2],uv[2],uv[0]}, vs[4] = {uv[1],uv[1],uv[3],uv[3]};
@@ -713,11 +713,11 @@ public:
 		renderSystem->SetColor4(1,1,1,1);
 	}
 	bool LayoutLegacyText(const std::string& text, const std::string& family, float scale,
-		float width, float height, int align, bool clip, std::vector<openq4::ui::HudPrimitive>& output) override {
+		float width, float height, int align, bool clip, std::vector<opend3::ui::HudPrimitive>& output) override {
 		uiManagerLocal.CaptureLegacyText(text.c_str(),("fonts/"+FontFamily(family)).c_str(),scale,width,height,align,clip,output);
 		return true;
 	}
-	openq4::ui::FontMetrics GetFontMetrics(const std::string& family, int size) override {
+	opend3::ui::FontMetrics GetFontMetrics(const std::string& family, int size) override {
 		renderFontMetrics_t metrics;
 		const std::string key = FontFamily(family);
 		std::string path = va("fonts/%s/%s",cvarSystem->GetCVarString("sys_lang"),key.c_str());
@@ -737,7 +737,7 @@ public:
 		const glyphInfo_t* x = R_GlyphForCodePoint(font,'x',NULL);
 		return {font->ascender*scale, font->descender*scale, font->fontHeight*scale, x ? x->height*scale : size*.5f};
 	}
-	openq4::ui::Glyph GetGlyph(const std::string& family, int size, std::uint32_t codepoint) override {
+	opend3::ui::Glyph GetGlyph(const std::string& family, int size, std::uint32_t codepoint) override {
 		const std::string key = FontFamily(family);
 		if (key == "strogg") codepoint = RuneScalar(codepoint);
 		const auto found = scalableFaces.find(key);
@@ -809,7 +809,7 @@ private:
 		int width=0,height=0,time=0;
 		double seconds=0;
 		bool ready=false;
-		openq4::ui::ModelScene scene;
+		opend3::ui::ModelScene scene;
 		std::unique_ptr<idUserInterfaceLocal> gui;
 		std::unique_ptr<idRenderWindow> window;
 		idRenderTexture* target=nullptr;
@@ -838,8 +838,8 @@ private:
 		const auto frame=RenderFrame();
 		for (unsigned i=0;i<ModelCapacity;++i) if (modelScenes[i].width && !modelScenes[i].owner && modelScenes[i].frame!=frame) FreeModel(i);
 	}
-	openq4::ui::GeneratedImagePool generatedImages;
-	std::array<const idMaterial*,openq4::ui::GeneratedImagePool::Capacity> generatedMaterials{};
+	opend3::ui::GeneratedImagePool generatedImages;
+	std::array<const idMaterial*,opend3::ui::GeneratedImagePool::Capacity> generatedMaterials{};
 	std::uintptr_t generatedProbe=0;
 	bool generatedProbeEnabled=false;
 	bool ShrinkGeneratedImage(unsigned slot) {
@@ -907,9 +907,9 @@ private:
 		}
 		mesh.rasterTiles.clear();
 	}
-	void CacheRaster(HostMesh& mesh,const std::vector<openq4::ui::Vertex>& vertices,const std::vector<int>& indices) {
-		openq4::ui::CoverageBitmap bitmap;
-		if (!openq4::ui::RasterizeCoverage(vertices,indices,bitmap,8192,mesh.handle!=0)) return;
+	void CacheRaster(HostMesh& mesh,const std::vector<opend3::ui::Vertex>& vertices,const std::vector<int>& indices) {
+		opend3::ui::CoverageBitmap bitmap;
+		if (!opend3::ui::RasterizeCoverage(vertices,indices,bitmap,8192,mesh.handle!=0)) return;
 		// Wide frames and tall rails keep the same exact pixel coverage, split
 		// across the existing bounded pages. Never publish a partial mesh or a
 		// tile whose page upload has not succeeded.
@@ -936,7 +936,7 @@ private:
 			}
 		}
 	}
-	bool CacheRasterTile(HostMesh& mesh,const openq4::ui::CoverageBitmap& bitmap,int tileX,int tileY,int width,int height) {
+	bool CacheRasterTile(HostMesh& mesh,const opend3::ui::CoverageBitmap& bitmap,int tileX,int tileY,int width,int height) {
 		const int w=width+2,h=height+2;
 		int chosen=-1,x=0,y=0;
 		const auto frame=RenderFrame();
@@ -995,7 +995,7 @@ private:
 	const idMaterial* Material(std::uintptr_t handle) const {
 		return handle ? reinterpret_cast<const idMaterial*>(handle) : declManager->FindMaterial("_retainedSolid");
 	}
-	void Convert(const std::vector<openq4::ui::Vertex>& vertices, const std::vector<int>& indices, const idMaterial* material,
+	void Convert(const std::vector<opend3::ui::Vertex>& vertices, const std::vector<int>& indices, const idMaterial* material,
 		std::uintptr_t handle, HostMesh& mesh) const {
 		// Untextured vectors use premultiplied blending all the way to
 		// the target. Current engine font images store straight coverage;
@@ -1143,18 +1143,18 @@ private:
 EngineHost host;
 std::vector<retainedUIView_t*> views;
 retainedUIView_t* previewView = nullptr;
-openq4::ui::Runtime* runtime = nullptr; // Non-owning alias for preview commands.
+opend3::ui::Runtime* runtime = nullptr; // Non-owning alias for preview commands.
 bool resourcesRefreshing = false;
 bool rootSubmissionPending = false;
 std::uint64_t rootSubmissionFrame = 0;
-openq4::ui::Input input;
+opend3::ui::Input input;
 std::atomic<bool> applicationOpen{false};
 unsigned inputGeneration = 0;
 bool inputFocused = true, inputSuspended = false, inputResourceSuspended = false;
 int analogDirection = -1;
 bool analogNeedsNeutral = true;
 std::map<int,int> inputKeys;
-std::vector<openq4::ui::ControlAction> applicationRequests;
+std::vector<opend3::ui::ControlAction> applicationRequests;
 std::string currentPath;
 // One bounded developer checkpoint; never a second owner of the document.
 std::string savedCheckpoint;
@@ -1163,7 +1163,7 @@ retainedUIView_t* initializationView = nullptr;
 bool initializationEntered = false; // onEnter ran: the first frame is on screen.
 std::uint64_t languageRevision = 0, loadedLanguageRevision = (std::numeric_limits<std::uint64_t>::max)();
 const std::chrono::steady_clock::time_point epoch = std::chrono::steady_clock::now();
-struct ProfileSample { openq4::ui::RuntimeStatistics statistics; double engineMilliseconds; };
+struct ProfileSample { opend3::ui::RuntimeStatistics statistics; double engineMilliseconds; };
 std::vector<ProfileSample> profile;
 int profileFrames = 0;
 // Without a preview document the profile covers the session-owned root views
@@ -1326,7 +1326,7 @@ void ReportRootProfile() {
 			path.c_str(),view.cpu/rootProfileFrames,view.apply/rootProfileFrames,view.render/rootProfileFrames,double(view.vertices)/rootProfileFrames);
 	rootProfileFrames = 0; rootProfile.clear();
 }
-void RecordRootProfile(std::uint64_t frame, std::chrono::steady_clock::time_point started, double cpu, const openq4::ui::RuntimeStatistics& statistics, const std::string& path) {
+void RecordRootProfile(std::uint64_t frame, std::chrono::steady_clock::time_point started, double cpu, const opend3::ui::RuntimeStatistics& statistics, const std::string& path) {
 	if (!rootProfileFrames) return;
 	if (rootProfile.empty() || rootProfile.back().frame != frame) {
 		// The frame after the last measured one only closes its interval.
@@ -1379,7 +1379,7 @@ bool WindowFocused() {
 bool InputFocused() { return inputFocused || VR_HasInputFocus(); }
 void SetApplicationOpen(bool value) {
 	if (RetainedUI_IsOpen() == value) return;
-	openq4::NativeInputBeforeInputBlockerChange();
+	opend3::NativeInputBeforeInputBlockerChange();
 	Sys_EnterCriticalSection();
 	applicationOpen.store(value,std::memory_order_release);
 	Usercmd_RetainedInputChanged();
@@ -1390,8 +1390,8 @@ void SetApplicationOpen(bool value) {
 }
 void ApplyInput() {
 	for (const auto& event : input.Take()) if (runtime) {
-		if (event.kind == openq4::ui::RoutedInput::Kind::Cancel) runtime->CancelInput(PresentationTime());
-		else if (event.kind == openq4::ui::RoutedInput::Kind::PointerButton) runtime->PointerButton(event.down,PresentationTime());
+		if (event.kind == opend3::ui::RoutedInput::Kind::Cancel) runtime->CancelInput(PresentationTime());
+		else if (event.kind == opend3::ui::RoutedInput::Kind::PointerButton) runtime->PointerButton(event.down,PresentationTime());
 		else runtime->MenuAction(event.menu,event.down,PresentationTime());
 	}
 }
@@ -1400,7 +1400,7 @@ void CancelInput(bool forgetSources = false, bool cancelDocument = true) {
 	// The adapter owns this virtual source and will require physical neutral
 	// before pressing it again. Remove its quarantined hold before resetting
 	// the remembered direction, or it could never receive its paired release.
-	input.Menu(60000,openq4::ui::MenuInput::Next,false,false,PresentationTime());
+	input.Menu(60000,opend3::ui::MenuInput::Next,false,false,PresentationTime());
 	if (cancelDocument) ApplyInput();
 	else input.Take(); // RestoreSnapshot already cancelled document transients.
 	analogDirection = -1; analogNeedsNeutral = true;
@@ -1415,8 +1415,8 @@ void ReleaseQuarantinedInput(const retainedUIInput_t& event) {
 	if (event.kind == retainedUIInput_t::KEY) input.ReleaseQuarantined(event.source);
 	else if (event.kind == retainedUIInput_t::POINTER_BUTTON) input.ReleaseQuarantined(65536);
 }
-bool MapMenuKey(int key, openq4::ui::MenuInput& action) {
-	using openq4::ui::MenuInput;
+bool MapMenuKey(int key, opend3::ui::MenuInput& action) {
+	using opend3::ui::MenuInput;
 	// Confirm and Back may trade the south and east buttons (section 13.5).
 	switch (idKeyInput::MenuControllerKey(key)) {
 		case K_TAB: {
@@ -1437,19 +1437,19 @@ bool RegisteredView(const retainedUIView_t* view) {
 	return view && std::find(views.begin(),views.end(),view) != views.end();
 }
 bool LoadViewDocument(retainedUIView_t& view, const std::string& source, const std::string& path,
-    bool canonical, std::vector<openq4::ui::Diagnostic>& diagnostics) {
+    bool canonical, std::vector<opend3::ui::Diagnostic>& diagnostics) {
     TouchEdit(view);
 	diagnostics.clear();
 	if (canonical ? !view.runtime->LoadDocument(source,path,diagnostics) : !view.runtime->LoadMarkup(source,path)) return false;
 	view.source = source; view.path = path; view.canonical = canonical; view.failed = false;
 	return true;
 }
-void ReportViewDiagnostics(const std::string& path, const std::vector<openq4::ui::Diagnostic>& diagnostics) {
+void ReportViewDiagnostics(const std::string& path, const std::vector<opend3::ui::Diagnostic>& diagnostics) {
 	for (const auto& d : diagnostics) common->Warning("retained UI: %s:%u:%u %s: %s",path.c_str(),
 		static_cast<unsigned>(d.line),static_cast<unsigned>(d.column),d.pointer.c_str(),d.message.c_str());
 }
 bool LoadPreview(const std::string& source, const std::string& path) {
-	std::vector<openq4::ui::Diagnostic> diagnostics;
+	std::vector<opend3::ui::Diagnostic> diagnostics;
 	if (LoadViewDocument(*previewView,source,path,UI_IsRetainedPath(path.c_str()),diagnostics)) return true;
 	ReportViewDiagnostics(path,diagnostics); return false;
 }
@@ -1468,7 +1468,7 @@ void PreviewResourceEvent(void*, retainedUIViewEvent_t event) {
 void Close() {
 	SetApplicationOpen(false); ++inputGeneration;
 	CancelInput(true); inputKeys.clear(); applicationRequests.clear();
-	input = openq4::ui::Input{}; analogDirection = -1; analogNeedsNeutral = true;
+	input = opend3::ui::Input{}; analogDirection = -1; analogNeedsNeutral = true;
 	inputSuspended = inputResourceSuspended = false;
 	profileFrames = 0; profile.clear();
 	RetainedUI_DestroyView(previewView); previewView = nullptr; runtime = nullptr;
@@ -1524,7 +1524,7 @@ bool RefreshResources() {
 	for (auto& entry : saved) {
 		if (!entry.loaded) continue;
 		auto& view = *entry.view;
-		std::vector<openq4::ui::Diagnostic> diagnostics;
+		std::vector<opend3::ui::Diagnostic> diagnostics;
 		entry.reloaded = entry.valid && LoadViewDocument(view,view.source,view.path,view.canonical,diagnostics);
 		if (!diagnostics.empty()) ReportViewDiagnostics(view.path,diagnostics);
 	}
@@ -1635,9 +1635,9 @@ void Focus_f(const idCmdArgs& args) {
 	if (!PreviewReady() || !runtime->FocusControl(args.Argv(1),PresentationTime())) common->Warning("retained UI: cannot focus %s",args.Argv(1));
 }
 void Menu_f(const idCmdArgs& args) {
-	const std::map<std::string,openq4::ui::MenuInput> inputs = {{"next",openq4::ui::MenuInput::Next},{"previous",openq4::ui::MenuInput::Previous},
-		{"up",openq4::ui::MenuInput::Up},{"down",openq4::ui::MenuInput::Down},{"left",openq4::ui::MenuInput::Left},{"right",openq4::ui::MenuInput::Right},
-		{"accept",openq4::ui::MenuInput::Accept},{"back",openq4::ui::MenuInput::Back}};
+	const std::map<std::string,opend3::ui::MenuInput> inputs = {{"next",opend3::ui::MenuInput::Next},{"previous",opend3::ui::MenuInput::Previous},
+		{"up",opend3::ui::MenuInput::Up},{"down",opend3::ui::MenuInput::Down},{"left",opend3::ui::MenuInput::Left},{"right",opend3::ui::MenuInput::Right},
+		{"accept",opend3::ui::MenuInput::Accept},{"back",opend3::ui::MenuInput::Back}};
 	const auto found = args.Argc() == 3 ? inputs.find(args.Argv(1)) : inputs.end();
 	if (found == inputs.end() || (idStr::Cmp(args.Argv(2),"0") && idStr::Cmp(args.Argv(2),"1"))) {
 		common->Printf("usage: ui_retainedMenu <next|previous|up|down|left|right|accept|back> <0|1>\n"); return;
@@ -1662,7 +1662,7 @@ void State_f(const idCmdArgs& args) {
 	const auto state = runtime->GetControlState(args.Argv(1));
 	if (!state) { common->Warning("retained UI: unknown control %s",args.Argv(1)); return; }
 	const char* names[] = {"default","hover","focus","pressed","disabled"};
-	openq4::ui::Bounds bounds; runtime->GetBounds(args.Argv(1),bounds);
+	opend3::ui::Bounds bounds; runtime->GetBounds(args.Argv(1),bounds);
 	common->Printf("Retained UI control: %s state=%s focus=%s bounds=%.3f,%.3f,%.3f,%.3f\n",args.Argv(1),names[static_cast<unsigned>(*state)],runtime->FocusedControl().c_str(),bounds.x,bounds.y,bounds.width,bounds.height);
 }
 void Events_f(const idCmdArgs&) {
@@ -1671,13 +1671,13 @@ void Events_f(const idCmdArgs&) {
 	events.insert(events.begin(),applicationRequests.begin(),applicationRequests.end()); applicationRequests.clear();
 	common->Printf("Retained UI actions: %u\n",static_cast<unsigned>(events.size()));
 	for (const auto& event : events) common->Printf("Retained UI action: %s document=%s node=%s action=%s\n",
-		event.kind == openq4::ui::ControlAction::Kind::Activate ? "activate" : "back",event.document.c_str(),event.node.c_str(),event.action.c_str());
+		event.kind == opend3::ui::ControlAction::Kind::Activate ? "activate" : "back",event.document.c_str(),event.node.c_str(),event.action.c_str());
 }
 void Data_f(const idCmdArgs& args) {
 	if (!PreviewReady() || args.Argc() != 2) { common->Printf("usage: ui_retainedData <VFS state.json>\n"); return; }
-	std::string source, error; openq4::ui::StateValues values; std::vector<openq4::ui::Diagnostic> diagnostics;
+	std::string source, error; opend3::ui::StateValues values; std::vector<opend3::ui::Diagnostic> diagnostics;
 	if (!host.ReadFile(args.Argv(1),source)) { common->Warning("retained UI: cannot read state data %s",args.Argv(1)); return; }
-	if (!openq4::ui::ParseStateValues(source,values,diagnostics)) {
+	if (!opend3::ui::ParseStateValues(source,values,diagnostics)) {
 		for (const auto& d : diagnostics) common->Warning("retained UI: state %s:%u:%u %s: %s",args.Argv(1),static_cast<unsigned>(d.line),static_cast<unsigned>(d.column),d.pointer.c_str(),d.message.c_str()); return;
 	}
 	if (!runtime->SetState(values,error,PresentationTime())) { common->Warning("retained UI: %s",error.c_str()); return; }
@@ -1689,10 +1689,10 @@ void Value_f(const idCmdArgs& args) {
 	if (!value) { common->Warning("retained UI: unknown presented value %s.%s",args.Argv(1),args.Argv(2)); return; }
 	// Text remains data even in developer traces; escape controls so it cannot
 	// create another apparent log record. No parsed text becomes a command.
-	idStr text = value->type == openq4::ui::ValueType::Text ? value->text.c_str() : value->Css().c_str();
+	idStr text = value->type == opend3::ui::ValueType::Text ? value->text.c_str() : value->Css().c_str();
 	text.Replace("\\","\\\\"); text.Replace("\r","\\r"); text.Replace("\n","\\n"); text.Replace("\t","\\t");
 	common->Printf("Retained UI value: %s.%s=%s\n",args.Argv(1),args.Argv(2),text.c_str());
-	openq4::ui::Bounds bounds;
+	opend3::ui::Bounds bounds;
 	if (runtime->GetBounds(args.Argv(1),bounds)) common->Printf("Retained UI bounds: %s=%.3f,%.3f,%.3f,%.3f\n",args.Argv(1),bounds.x,bounds.y,bounds.width,bounds.height);
 }
 }
@@ -1704,7 +1704,7 @@ retainedUIView_t* RetainedUI_CreateView(retainedUIViewCallback_t callback, void*
 	auto view = std::make_unique<retainedUIView_t>();
     view->edit=std::make_shared<retainedUIEditControl>();view->edit->lifetime=NextEditLifetime();
     if(!view->edit->lifetime)return nullptr;
-	view->runtime = std::make_unique<openq4::ui::Runtime>(host);
+	view->runtime = std::make_unique<opend3::ui::Runtime>(host);
 	view->callback = callback; view->owner = owner;
 	views.push_back(view.get());
 	return view.release();
@@ -1717,11 +1717,11 @@ void RetainedUI_DestroyView(retainedUIView_t* view) {
     view->callback=nullptr;view->owner=nullptr;
     DrainEditViews();
 }
-openq4::ui::Runtime* RetainedUI_ViewRuntime(retainedUIView_t* view) {
+opend3::ui::Runtime* RetainedUI_ViewRuntime(retainedUIView_t* view) {
 	return RegisteredView(view) && !view->edit->destroyPending ? view->runtime.get() : nullptr;
 }
 bool RetainedUI_LoadView(retainedUIView_t* view, const std::string& source, const std::string& path,
-	std::vector<openq4::ui::Diagnostic>& diagnostics) {
+	std::vector<opend3::ui::Diagnostic>& diagnostics) {
 	EditCall call;
 	diagnostics.clear();
 	if (!RegisteredView(view) || !RefreshResources() || !RegisteredView(view) || view->edit->destroyPending) {
@@ -1729,8 +1729,8 @@ bool RetainedUI_LoadView(retainedUIView_t* view, const std::string& source, cons
 	}
 	return LoadViewDocument(*view,source,path,true,diagnostics);
 }
-bool RetainedUI_LoadParsedView(retainedUIView_t* view, const openq4::ui::Document& document, const std::string& path,
-	std::vector<openq4::ui::Diagnostic>& diagnostics) {
+bool RetainedUI_LoadParsedView(retainedUIView_t* view, const opend3::ui::Document& document, const std::string& path,
+	std::vector<opend3::ui::Diagnostic>& diagnostics) {
 	diagnostics.clear();
 	if (!RegisteredView(view) || !RefreshResources() || !RegisteredView(view) || view->edit->destroyPending) {
 		diagnostics.push_back({"","Retained view is unavailable during resource lifecycle changes"}); return false;
@@ -1754,16 +1754,16 @@ bool RetainedUI_QueryEditIdentity(retainedUIView_t* view,retainedUIEditIdentity_
 }
 namespace {
 retainedUIPreparedEdit_t* PrepareViewEdit(retainedUIView_t* view,retainedUIEditIdentity_t expected,
-    openq4::ui::DocumentEdit& history,openq4::ui::DocumentEditIdentity identity,
-    std::span<const openq4::ui::DocumentEditOperation> operations,bool travel,bool redo,
-    const openq4::ui::RuntimeDocumentOptions& supplied,std::vector<openq4::ui::Diagnostic>& diagnostics) {
+    opend3::ui::DocumentEdit& history,opend3::ui::DocumentEditIdentity identity,
+    std::span<const opend3::ui::DocumentEditOperation> operations,bool travel,bool redo,
+    const opend3::ui::RuntimeDocumentOptions& supplied,std::vector<opend3::ui::Diagnostic>& diagnostics) {
     if(std::this_thread::get_id()!=editThread)return nullptr;
     if(editWorkDepth || editDraining){if(RegisteredView(view))TouchEdit(*view);return nullptr;}
     retainedUIEditIdentity_t current;
     if(!RetainedUI_QueryEditIdentity(view,current) || current!=expected)return nullptr;
     if(!view->edit->pending.expired() || !history.Current() || history.Identity()!=identity ||
         history.Current()->Source()!=view->source || !view->runtime->SourceMatches(view->source,view->path) ||
-        view->runtime->NativeVacancy()!=openq4::ui::RuntimeNativeVacancy::Vacant){TouchEdit(*view);return nullptr;}
+        view->runtime->NativeVacancy()!=opend3::ui::RuntimeNativeVacancy::Vacant){TouchEdit(*view);return nullptr;}
     EditWork work;
     TouchEdit(*view);const auto revision=view->edit->revision;const auto owner=view->edit;
     try {
@@ -1786,17 +1786,17 @@ retainedUIPreparedEdit_t* PrepareViewEdit(retainedUIView_t* view,retainedUIEditI
 }
 }
 retainedUIPreparedEdit_t* RetainedUI_PrepareEdit(retainedUIView_t* view,retainedUIEditIdentity_t expected,
-    openq4::ui::DocumentEdit& history,openq4::ui::DocumentEditIdentity identity,
-    std::span<const openq4::ui::DocumentEditOperation> operations,const openq4::ui::RuntimeDocumentOptions& options,
-    std::vector<openq4::ui::Diagnostic>& diagnostics) {
+    opend3::ui::DocumentEdit& history,opend3::ui::DocumentEditIdentity identity,
+    std::span<const opend3::ui::DocumentEditOperation> operations,const opend3::ui::RuntimeDocumentOptions& options,
+    std::vector<opend3::ui::Diagnostic>& diagnostics) {
     return PrepareViewEdit(view,expected,history,identity,operations,false,false,options,diagnostics);
 }
 retainedUIPreparedEdit_t* RetainedUI_PrepareHistory(retainedUIView_t* view,retainedUIEditIdentity_t expected,
-    openq4::ui::DocumentEdit& history,openq4::ui::DocumentEditIdentity identity,bool redo,
-    const openq4::ui::RuntimeDocumentOptions& options,std::vector<openq4::ui::Diagnostic>& diagnostics) {
+    opend3::ui::DocumentEdit& history,opend3::ui::DocumentEditIdentity identity,bool redo,
+    const opend3::ui::RuntimeDocumentOptions& options,std::vector<opend3::ui::Diagnostic>& diagnostics) {
     return PrepareViewEdit(view,expected,history,identity,{},true,redo,options,diagnostics);
 }
-bool RetainedUI_PublishEdit(retainedUIView_t* view,retainedUIPreparedEdit_t* prepared,openq4::ui::DocumentEditReceipt& out) noexcept {
+bool RetainedUI_PublishEdit(retainedUIView_t* view,retainedUIPreparedEdit_t* prepared,opend3::ui::DocumentEditReceipt& out) noexcept {
     if(std::this_thread::get_id()!=editThread)return false;
     if(editWorkDepth || editDraining){if(RegisteredView(view))TouchEdit(*view);return false;}
     if(!prepared || !prepared->data)return false;
@@ -1816,7 +1816,7 @@ void RetainedUI_DestroyPreparedEdit(retainedUIPreparedEdit_t* prepared) {
     for(auto* item=editPrepared;item;item=item->next)if(item==prepared){item->destroyPending=true;item->data->ready=false;break;}
     DrainEditViews();
 }
-bool RetainedUI_DefaultViewport(openq4::ui::Viewport& viewport) {
+bool RetainedUI_DefaultViewport(opend3::ui::Viewport& viewport) {
 	viewport = {};
 	viewport.width = engineWindowState.uiViewportWidth;
 	viewport.height = engineWindowState.uiViewportHeight;
@@ -1870,11 +1870,11 @@ bool RetainedUI_DrawInitialization(const char* message) {
 		void* bytes = nullptr; const int size = fileSystem->ReadFile(path,&bytes);
 		if (size <= 0 || !bytes) return false;
 		initializationView = RetainedUI_CreateView();
-		std::vector<openq4::ui::Diagnostic> diagnostics;
+		std::vector<opend3::ui::Diagnostic> diagnostics;
 		const bool loaded = RetainedUI_LoadView(initializationView,std::string(static_cast<const char*>(bytes),size),path,diagnostics);
 		fileSystem->FreeFile(bytes);
 		if (!loaded) { ReportViewDiagnostics(path,diagnostics); RetainedUI_EndInitialization(); failedGeneration = generation; return false; }
-		openq4::ui::Runtime::EventEffects effects; std::string error;
+		opend3::ui::Runtime::EventEffects effects; std::string error;
 		if (!initializationView->runtime->RunEvent("onInit",PresentationTime(),effects,error)) {
 			RetainedUI_EndInitialization(); return false;
 		}
@@ -1884,7 +1884,7 @@ bool RetainedUI_DrawInitialization(const char* message) {
 		// entrance's veiled opening pose. Restart the entrance once that frame
 		// is on screen, so its cost cannot skip the entrance's first frames.
 		initializationEntered = true;
-		openq4::ui::Runtime::EventEffects effects; std::string error;
+		opend3::ui::Runtime::EventEffects effects; std::string error;
 		if (!initializationView->runtime->RunEvent("onEnter",PresentationTime(),effects,error) && ui_retainedTrace.GetBool())
 			common->Printf("RETAINED_INITIALIZATION onEnter failed: %s\n",error.c_str());
 	}
@@ -1892,18 +1892,18 @@ bool RetainedUI_DrawInitialization(const char* message) {
 	std::string error;
 	const auto& previous = initializationView->runtime->GetState();
 	const auto oldMessage = previous.find("message");
-	const bool changed = oldMessage == previous.end() || oldMessage->second != openq4::ui::StateValue(std::string(message));
+	const bool changed = oldMessage == previous.end() || oldMessage->second != opend3::ui::StateValue(std::string(message));
 	if (changed) {
 		int step = 0;
 		for (int i=0; i<6; ++i) {
 			if (!idStr::Icmp(message,common->GetLanguageDict()->GetString(va("#str_%d",104346+i)))) step=i+1;
 		}
 		if (!initializationView->runtime->SetState({{"message",std::string(message)}, {"step",double(step)}},error,PresentationTime())) return false;
-		openq4::ui::Runtime::EventEffects effects;
+		opend3::ui::Runtime::EventEffects effects;
 		if (!initializationView->runtime->RunEvent("stepChanged",PresentationTime(),effects,error)) return false;
 		if (ui_retainedTrace.GetBool()) common->Printf("RETAINED_INITIALIZATION step=%d message=%s\n",step,message);
 	}
-	openq4::ui::Viewport viewport;
+	opend3::ui::Viewport viewport;
 	if (!RetainedUI_DefaultViewport(viewport)) return false;
 	viewport.canvasHeight = 720; viewport.canvasMinWidth = 960; viewport.fitScale = 1;
 	host.rasterNewMeshes = false;
@@ -1917,7 +1917,7 @@ bool RetainedUI_DrawInitialization(const char* message) {
 	}
 	return drawn;
 }
-bool RetainedUI_DrawViewRoot(retainedUIView_t* view, const openq4::ui::Viewport& viewport) {
+bool RetainedUI_DrawViewRoot(retainedUIView_t* view, const opend3::ui::Viewport& viewport) {
 	const auto started = std::chrono::steady_clock::now();
     EditCall call;
 	if (!renderSystem || !renderSystem->IsOpenGLRunning() || viewport.width <= 0 || viewport.height <= 0 || !RetainedUI_PrepareView(view)) return false;
@@ -2022,7 +2022,7 @@ void RetainedUI_Draw() {
 	if (!renderSystem || !renderSystem->IsOpenGLRunning()) return;
 	if (host.DrawGeneratedImageProbe()) { rootSubmissionPending=true; rootSubmissionFrame=host.RenderFrame(); }
 	if (!runtime || !runtime->IsLoaded()) return;
-	openq4::ui::Viewport viewport;
+	opend3::ui::Viewport viewport;
 	if (!RetainedUI_DefaultViewport(viewport)) return;
 	const auto profileStart = std::chrono::steady_clock::now();
 	if (RetainedUI_DrawViewRoot(previewView,viewport)) RecordProfile(std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-profileStart).count());
@@ -2045,11 +2045,11 @@ int RetainedUI_PromptGlyphs() {
 }
 int RetainedUI_ViewCount() { return static_cast<int>(views.size()); }
 void RetainedUI_PrecacheImage(const std::string& source, bool additive) {
-	if (source.empty() || !openq4::ui::ValidImageSource(source)) return;
+	if (source.empty() || !opend3::ui::ValidImageSource(source)) return;
 	declManager->FindMaterial(((additive ? "_retainedAdd/" : "_retained/") + source).c_str());
 }
 void RetainedUI_ReloadImage(const std::string& source, bool additive) {
-	if (source.empty() || !openq4::ui::ValidImageSource(source)) return;
+	if (source.empty() || !opend3::ui::ValidImageSource(source)) return;
 	if (const idMaterial* material = declManager->FindMaterial(((additive ? "_retainedAdd/" : "_retained/") + source).c_str()))
 		material->ReloadImages(false);
 }
@@ -2072,13 +2072,13 @@ void RetainedUI_FrameInput() {
 	if (extent < 38) analogNeedsNeutral = false;
 	int direction = -1;
 	if (!analogNeedsNeutral && extent >= (analogDirection < 0 ? 50 : 38)) {
-		using openq4::ui::MenuInput;
+		using opend3::ui::MenuInput;
 		direction = static_cast<int>(idMath::Abs(x) > idMath::Abs(y) ?
 			(x > 0 ? MenuInput::Right : MenuInput::Left) : (y > 0 ? MenuInput::Up : MenuInput::Down));
 	}
 	if (direction != analogDirection) {
-		if (analogDirection >= 0) input.Menu(60000,static_cast<openq4::ui::MenuInput>(analogDirection),false,false,PresentationTime());
-		if (direction >= 0) input.Menu(60000,static_cast<openq4::ui::MenuInput>(direction),true,false,PresentationTime());
+		if (analogDirection >= 0) input.Menu(60000,static_cast<opend3::ui::MenuInput>(analogDirection),false,false,PresentationTime());
+		if (direction >= 0) input.Menu(60000,static_cast<opend3::ui::MenuInput>(direction),true,false,PresentationTime());
 		analogDirection = direction;
 	}
 	input.Advance(PresentationTime()); ApplyInput();
@@ -2132,7 +2132,7 @@ bool RetainedUI_ProcessEvent(const sysEvent_s* event) {
 		if (decoded.key <= 0 || decoded.key >= K_LAST_KEY || decoded.source < 0 || decoded.source > 65535) return true;
 		if (decoded.down && !decoded.repeated && inputKeys.size() < 1024) inputKeys[decoded.source] = decoded.key;
 		else if (!decoded.down) inputKeys.erase(decoded.source);
-		openq4::ui::MenuInput action;
+		opend3::ui::MenuInput action;
 		if (decoded.key == K_MOUSE1) input.Pointer(decoded.source,decoded.down,PresentationTime());
 		else if (MapMenuKey(decoded.key,action)) input.Menu(decoded.source,action,decoded.down,decoded.repeated,PresentationTime());
 	} else if (decoded.kind == retainedUIInput_t::POINTER) {
@@ -2145,7 +2145,7 @@ bool RetainedUI_ProcessEvent(const sysEvent_s* event) {
 	}
 	ApplyInput();
 	for (const auto& action : runtime->TakeActions()) {
-		if (action.kind == openq4::ui::ControlAction::Kind::Back) {
+		if (action.kind == opend3::ui::ControlAction::Kind::Back) {
 			if (!runtime->PopModal(PresentationTime())) { Close(); break; }
 		} else if (applicationRequests.size() < 256) applicationRequests.push_back(action);
 		else common->Warning("retained UI: application request queue overflow");
@@ -2155,17 +2155,17 @@ bool RetainedUI_ProcessEvent(const sysEvent_s* event) {
 #else
 retainedUIView_t* RetainedUI_CreateView(retainedUIViewCallback_t,void*) { return nullptr; }
 void RetainedUI_DestroyView(retainedUIView_t*) {}
-openq4::ui::Runtime* RetainedUI_ViewRuntime(retainedUIView_t*) { return nullptr; }
-bool RetainedUI_LoadView(retainedUIView_t*,const std::string&,const std::string&,std::vector<openq4::ui::Diagnostic>&) { return false; }
-bool RetainedUI_LoadParsedView(retainedUIView_t*,const openq4::ui::Document&,const std::string&,std::vector<openq4::ui::Diagnostic>&) { return false; }
+opend3::ui::Runtime* RetainedUI_ViewRuntime(retainedUIView_t*) { return nullptr; }
+bool RetainedUI_LoadView(retainedUIView_t*,const std::string&,const std::string&,std::vector<opend3::ui::Diagnostic>&) { return false; }
+bool RetainedUI_LoadParsedView(retainedUIView_t*,const opend3::ui::Document&,const std::string&,std::vector<opend3::ui::Diagnostic>&) { return false; }
 bool RetainedUI_PrepareView(retainedUIView_t*) { return false; }
-bool RetainedUI_DrawViewRoot(retainedUIView_t*,const openq4::ui::Viewport&) { return false; }
+bool RetainedUI_DrawViewRoot(retainedUIView_t*,const opend3::ui::Viewport&) { return false; }
 bool RetainedUI_QueryEditIdentity(retainedUIView_t*,retainedUIEditIdentity_t&) noexcept{return false;}
-retainedUIPreparedEdit_t* RetainedUI_PrepareEdit(retainedUIView_t*,retainedUIEditIdentity_t,openq4::ui::DocumentEdit&,openq4::ui::DocumentEditIdentity,std::span<const openq4::ui::DocumentEditOperation>,const openq4::ui::RuntimeDocumentOptions&,std::vector<openq4::ui::Diagnostic>&){return nullptr;}
-retainedUIPreparedEdit_t* RetainedUI_PrepareHistory(retainedUIView_t*,retainedUIEditIdentity_t,openq4::ui::DocumentEdit&,openq4::ui::DocumentEditIdentity,bool,const openq4::ui::RuntimeDocumentOptions&,std::vector<openq4::ui::Diagnostic>&){return nullptr;}
-bool RetainedUI_PublishEdit(retainedUIView_t*,retainedUIPreparedEdit_t*,openq4::ui::DocumentEditReceipt&) noexcept{return false;}
+retainedUIPreparedEdit_t* RetainedUI_PrepareEdit(retainedUIView_t*,retainedUIEditIdentity_t,opend3::ui::DocumentEdit&,opend3::ui::DocumentEditIdentity,std::span<const opend3::ui::DocumentEditOperation>,const opend3::ui::RuntimeDocumentOptions&,std::vector<opend3::ui::Diagnostic>&){return nullptr;}
+retainedUIPreparedEdit_t* RetainedUI_PrepareHistory(retainedUIView_t*,retainedUIEditIdentity_t,opend3::ui::DocumentEdit&,opend3::ui::DocumentEditIdentity,bool,const opend3::ui::RuntimeDocumentOptions&,std::vector<opend3::ui::Diagnostic>&){return nullptr;}
+bool RetainedUI_PublishEdit(retainedUIView_t*,retainedUIPreparedEdit_t*,opend3::ui::DocumentEditReceipt&) noexcept{return false;}
 void RetainedUI_DestroyPreparedEdit(retainedUIPreparedEdit_t*){}
-bool RetainedUI_DefaultViewport(openq4::ui::Viewport&) { return false; }
+bool RetainedUI_DefaultViewport(opend3::ui::Viewport&) { return false; }
 double RetainedUI_PresentationTime() { return 0; }
 void RetainedUI_FrameSubmitted() {}
 void RetainedUI_ClearModelWorlds() {}

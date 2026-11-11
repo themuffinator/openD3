@@ -28,9 +28,9 @@ def validate_common_runtime_copy() -> None:
     require(common, 'fileName = "logs/opend3_%Y%m%d_%H%M%S.log";', "automatic log naming")
     require(common, '"openD3 Warning"', "runtime warning title")
     require(common, '"applies the selected openD3 performance preset"', "console help")
-    reject(common, '"logs/openq4_%Y%m%d_%H%M%S.log"', "automatic log naming")
-    reject(common, '"openQ4 Warning"', "runtime warning title")
-    reject(common, '"applies the selected openQ4 performance preset"', "console help")
+    reject(common, '"logs/opend3_%Y%m%d_%H%M%S.log"', "automatic log naming")
+    reject(common, '"openD3 Warning"', "runtime warning title")
+    reject(common, '"applies the selected openD3 performance preset"', "console help")
 
 
 def validate_discord_release_copy() -> None:
@@ -48,11 +48,11 @@ def validate_discord_release_copy() -> None:
         require(announcer, token, "Discord release announcer")
 
     for token in (
-        "The new openQ4",
+        "The new openD3",
         "original Quake 4 assets",
-        'username: "openQ4 Releases"',
+        'username: "openD3 Releases"',
         "open-source Quake 4 engine and game code",
-        "themuffinator/OpenQ4/main/assets/img/avatar.png",
+        "themuffinator/openD3/main/assets/img/avatar.png",
     ):
         reject(announcer, token, "Discord release announcer")
 
@@ -76,7 +76,7 @@ def validate_listen_server_helper() -> None:
     ):
         require(helper, token, "listen-server helper")
 
-    for token in ("openQ4-client", "baseoq4", "q4base", "Steam\\steamapps", "[switch]$Fullscreen"):
+    for token in ("openD3-client", "baseod3", "q4base", "Steam\\steamapps", "[switch]$Fullscreen"):
         reject(helper, token, "listen-server helper")
 
 
@@ -93,15 +93,15 @@ def validate_renderdoc_helper() -> None:
     ):
         require(helper, token, "RenderDoc helper")
 
-    for token in ("openQ4-client", "baseoq4", "q4base", "logs/openq4.log", "Steam\\steamapps"):
+    for token in ("openD3-client", "baseod3", "q4base", "logs/opend3.log", "Steam\\steamapps"):
         reject(helper, token, "RenderDoc helper")
 
 
 def validate_linux_desktop_helper() -> None:
     helper = read("tools/linux/install_desktop_launcher.sh")
     for token in (
-        'OPEND3_INSTALL_ROOT:-${OPENQ4_INSTALL_ROOT:-',
-        'OPEND3_BASEPATH:-${OPENQ4_BASEPATH:-',
+        'OPEND3_INSTALL_ROOT:-${OPEND3_INSTALL_ROOT:-',
+        'OPEND3_BASEPATH:-${OPEND3_BASEPATH:-',
         "openD3-client_${arch}",
         "opend3.svg",
         "assets/icons/doom3.svg",
@@ -112,8 +112,8 @@ def validate_linux_desktop_helper() -> None:
         require(helper, token, "Linux desktop helper")
 
     for token in (
-        "openQ4-client_",
-        "Name=openQ4",
+        "openD3-client_",
+        "Name=openD3",
         "replacement for Quake 4",
         "q4base/",
         "assets/icons/quake4",

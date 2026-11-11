@@ -1,7 +1,7 @@
-// Copyright (C) 2026 openQ4 contributors
+// Copyright (C) 2026 openD3 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
-#ifndef OPENQ4_SOUND_OUTPUT_RECOVERY_H
-#define OPENQ4_SOUND_OUTPUT_RECOVERY_H
+#ifndef OPEND3_SOUND_OUTPUT_RECOVERY_H
+#define OPEND3_SOUND_OUTPUT_RECOVERY_H
 
 // The output a voice plays on can go away (a disconnected endpoint stops every
 // source), be replaced (a reopen onto another endpoint) or change layout (an

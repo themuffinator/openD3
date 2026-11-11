@@ -1,5 +1,5 @@
 // Copyright (C) 2026 DarkMatter Productions
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
 #include "../tr_local.h"

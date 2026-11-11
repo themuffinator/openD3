@@ -19,7 +19,7 @@ def meson_string(value: str) -> str:
 
 def generate(ndk: Path, api: int, host: str | None = None, abi: str = DEFAULT_ABI) -> str:
     if api < 24:
-        raise ValueError("openQ4 requires Android API 24 or later")
+        raise ValueError("openD3 requires Android API 24 or later")
     target = android_abi(abi)
     ndk = ndk.resolve()
     host = host or {"Windows": "windows-x86_64", "Linux": "linux-x86_64", "Darwin": "darwin-x86_64"}.get(platform.system())

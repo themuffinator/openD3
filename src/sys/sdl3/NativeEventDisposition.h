@@ -4,7 +4,7 @@
 #include <thread>
 #include <array>
 
-namespace openq4 {
+namespace opend3 {
 struct NativeDispositionContext {
     std::uint64_t providerEpoch = 0, generation = 0, engineToken = 0;
     bool operator==(const NativeDispositionContext&) const = default;
@@ -210,4 +210,4 @@ private:
     std::size_t next = 0;
     std::uint64_t issued = 0, completed = 0, first = 0;
 };
-} // namespace openq4
+} // namespace opend3

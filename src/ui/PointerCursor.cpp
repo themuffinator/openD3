@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace {
-using namespace openq4::ui;
+using namespace opend3::ui;
 
 // The art is in texels of the stock 32-texel cursor box, hotspot at the
 // origin, and is lit from above and to the right as the stock arrow is: a

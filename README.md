@@ -52,7 +52,7 @@ Not yet checked, so don't rely on it: playing beyond the first cinematic, loadin
 
 Not working yet:
 
-- **Resurrection of Evil.** Its game module builds, but the expansion can't be started.
+- **Resurrection of Evil.** `+set fs_game d3xp` loads the expansion's game module, but no expansion map has been run yet.
 - **openQ4's retained menus and HUD.** They have no Doom 3 pages; openD3 uses Doom 3's own menus, which is why you launch with `ui_retained 0`.
 
 The [rebase record](docs/dev/doom3-rebase.md) is the detailed and current statement of what has been verified and what is open.
@@ -85,8 +85,6 @@ You'll need a 64-bit CPU, a graphics driver with OpenGL ARB vertex and fragment 
 - [AGENTS.md](AGENTS.md): project rules and the debug loop
 - [The rebase record](docs/dev/doom3-rebase.md): how openD3 moved onto openQ4, the engine/game contract and the open items
 - [Game source provenance](docs/dev/game-source-provenance.md): where the game library came from
-
-The rest of `docs/` is inherited from openQ4 and describes that project's Quake 4 work. It is useful background on the engine, not a description of openD3.
 
 ## Credits
 

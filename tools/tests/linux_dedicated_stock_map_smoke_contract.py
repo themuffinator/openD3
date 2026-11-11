@@ -25,7 +25,7 @@ def main() -> None:
     runner = read("tools/tests/linux_dedicated_stock_map_smoke.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     status_ledger = read("docs/dev/prey-rebase/status-ledger.md")
     session = read("src/framework/Session.cpp")
     linux_main = read("src/sys/linux/main.cpp")
@@ -115,11 +115,11 @@ def main() -> None:
         "steamapps",
         "r_rendererPerfThreshold",
         '"dummy"',
-        "baseoq4",
+        "baseod3",
         "q4base",
         "game-mp_",
-        "openQ4-client",
-        "openQ4-ded",
+        "openD3-client",
+        "openD3-ded",
         "Quake 4",
     ):
         reject(runner, token, "portable opt-in Linux stock-map runner")

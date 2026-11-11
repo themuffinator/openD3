@@ -45,7 +45,7 @@ public:
 
 	// Programmatic renderDef, shared with the retained host. No GUI scripts or
 	// entity spawning are involved; the caller owns the output target/crop.
-	void ConfigureModelScene( const openq4::ui::ModelScene &scene );
+	void ConfigureModelScene( const opend3::ui::ModelScene &scene );
 	bool PrepareModelScene( int time, std::string &error );
 	void DrawModelScene( int time, float fov, int width, int height );
 
@@ -86,7 +86,7 @@ private:
 	idWinVec4 brightSkinColor;
 	idWinFloat outlineWidth;
 	idWinStr customSkin[MAX_RENDERWINDOW_MODELS];
-	openq4::ui::ModelScene configuredScene;
+	opend3::ui::ModelScene configuredScene;
 	bool sceneConfigured = false;
 	idWinStr customShader;
 	idWinBool needsRender;

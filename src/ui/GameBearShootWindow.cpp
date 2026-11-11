@@ -115,12 +115,12 @@ static void GameBearShoot_ValidateEntityIndex( const char *fieldName, int index,
 // write on every supported target (roadmap Q4-06).
 template< class type >
 static void GameBearShoot_ReadSaveField( idFile *savefile, type &value, const char *fieldName ) {
-	OpenQ4_ReadSaveGameField( savefile, value, "idGameBearShootWindow::ReadFromSaveGame", fieldName );
+	openD3_ReadSaveGameField( savefile, value, "idGameBearShootWindow::ReadFromSaveGame", fieldName );
 }
 
 template< class type >
 static void GameBearShoot_WriteSaveField( idFile *savefile, const type &value, const char *fieldName ) {
-	OpenQ4_WriteSaveGameField( savefile, value, "idGameBearShootWindow::WriteToSaveGame", fieldName );
+	openD3_WriteSaveGameField( savefile, value, "idGameBearShootWindow::WriteToSaveGame", fieldName );
 }
 
 /*

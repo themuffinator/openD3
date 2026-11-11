@@ -1,7 +1,7 @@
-// Copyright (C) 2026 openQ4 contributors
+// Copyright (C) 2026 openD3 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
-#ifndef OPENQ4_SOUND_VORBIS_STREAM_H
-#define OPENQ4_SOUND_VORBIS_STREAM_H
+#ifndef OPEND3_SOUND_VORBIS_STREAM_H
+#define OPEND3_SOUND_VORBIS_STREAM_H
 
 #include <algorithm>
 #include <cstring>
@@ -56,11 +56,11 @@ public:
 	// A stream without length metadata (Frames() is 0) cannot seek until a complete
 	// decode has counted it. Find the last page that carries a position once, then
 	// give each decoder of the stream that page and the counted length.
-	bool FindLastGranulePage(stb_vorbis_openq4_granule_page& page) {
-		return decoder && stb_vorbis_openq4_find_last_granule(decoder, &page) != 0;
+	bool FindLastGranulePage(stb_vorbis_opend3_granule_page& page) {
+		return decoder && stb_vorbis_opend3_find_last_granule(decoder, &page) != 0;
 	}
-	bool SetCountedLength(unsigned int counted, const stb_vorbis_openq4_granule_page& page) {
-		if (!decoder || frames || !stb_vorbis_openq4_set_length(decoder, counted, &page)) return false;
+	bool SetCountedLength(unsigned int counted, const stb_vorbis_opend3_granule_page& page) {
+		if (!decoder || frames || !stb_vorbis_opend3_set_length(decoder, counted, &page)) return false;
 		frames = counted;
 		return true;
 	}

@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def main():
     compiler = os.environ.get("CXX") or shutil.which("clang++") or shutil.which("g++") or shutil.which("cl")
     if not compiler:
-        raise SystemExit("A C++ compiler is required (set CXX or use the openQ4 developer shell)")
+        raise SystemExit("A C++ compiler is required (set CXX or use the openD3 developer shell)")
     source = (ROOT / "src/renderer/OpenGL/gl_Image.cpp").read_text(encoding="utf-8")
     start = source.index("void idImage::SubImageUpload(")
     production = source[start:source.index("\n/*", start)]
@@ -28,7 +28,7 @@ def main():
 #include <algorithm>
 #include <cstdio>
 #define GL_APICALL
-#define OPENQ4_RENDERER_GLES_MODULE
+#define OPEND3_RENDERER_GLES_MODULE
 #define ID_INLINE inline
 #include "src/renderer/GLES/qgl_gles.h"
 #include "src/renderer/ImageOpts.h"

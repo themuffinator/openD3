@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <limits>
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks=0;
 #define CHECK(v) do{++checks;if(!(v)){std::fprintf(stderr,"FAIL line %d: %s\n",__LINE__,#v);std::exit(1);}}while(false)
 struct Fixture {

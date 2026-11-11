@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name_emulator">Émulateur openQ4</string>
-    <string name="setup_title">Configuration d’openQ4</string>
+    <string name="app_name_emulator">Émulateur openD3</string>
+    <string name="setup_title">Configuration d’openD3</string>
     <string name="setup_language">Langue</string>
     <string name="setup_sample">Préparez les fichiers du jeu, puis retournez au front.</string>
     <string name="setup_continue">Continuer</string>
     <string name="setup_data">Données du jeu</string>
-    <string name="setup_data_help">Choisissez le dossier q4base de votre propre installation de Quake 4 1.4.2. openQ4 copie et vérifie les archives ; les originaux restent en place. Vous pouvez utiliser un sous-dossier de Téléchargements ou un lecteur USB connecté. Cette application ne contient pas les données du jeu.</string>
+    <string name="setup_data_help">Choisissez le dossier q4base de votre propre installation de Quake 4 1.4.2. openD3 copie et vérifie les archives ; les originaux restent en place. Vous pouvez utiliser un sous-dossier de Téléchargements ou un lecteur USB connecté. Cette application ne contient pas les données du jeu.</string>
     <string name="setup_choose">Choisir le dossier du jeu</string>
     <string name="setup_check">Vérifier les fichiers installés</string>
     <string name="setup_retry">Réessayer la dernière opération</string>
@@ -61,8 +61,8 @@
     <string name="setup_export_help">Créez une copie ZIP de vos parties enregistrées, avec leurs descriptions et aperçus, ou exportez les journaux de diagnostic. Choisissez la destination dans le sélecteur de fichiers Android. Les originaux restent dans l’application. Les journaux peuvent contenir des chemins locaux et des adresses de serveurs ; vérifiez-les avant de les partager.</string>
     <string name="setup_export_saves">Copier les parties enregistrées</string>
     <string name="setup_export_logs">Exporter les journaux</string>
-    <string name="setup_saves_filename">openQ4-sauvegardes.zip</string>
-    <string name="setup_logs_filename">openQ4-journaux.zip</string>
+    <string name="setup_saves_filename">openD3-sauvegardes.zip</string>
+    <string name="setup_logs_filename">openD3-journaux.zip</string>
     <string name="setup_no_document_picker">Le sélecteur de fichiers du système est indisponible. Activez l’application Fichiers d’Android, puis réessayez.</string>
     <string name="setup_export_picker_cancelled">Aucune destination d’exportation n’a été choisie. Vos fichiers sont inchangés.</string>
     <string name="setup_export_no_grant">Impossible d’ouvrir la destination en écriture. Réessayez avec un emplacement accessible. Vos fichiers originaux sont inchangés.</string>

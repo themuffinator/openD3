@@ -1,7 +1,7 @@
 #version 450
 #extension GL_GOOGLE_include_directive : require
 
-// openQ4 Vulkan translucent shadow-moment caster for projected lights —
+// openD3 Vulkan translucent shadow-moment caster for projected lights —
 // fragment stage (GL shadow_proj_translucent_caster.fs). Geometry outside the
 // light's depth range contributes nothing.
 

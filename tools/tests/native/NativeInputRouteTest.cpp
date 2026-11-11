@@ -28,7 +28,7 @@ void operator delete[](void* value) noexcept { std::free(value); }
 void operator delete(void* value, std::size_t) noexcept { std::free(value); }
 void operator delete[](void* value, std::size_t) noexcept { std::free(value); }
 
-using namespace openq4;
+using namespace opend3;
 using Phase = NativeInputRoute::Phase;
 static int checks = 0, failures = 0;
 #define CHECK(value) do { ++checks; if (!(value)) { ++failures; std::fprintf(stderr,"line %d: %s\n",__LINE__,#value); } } while (false)

@@ -9,7 +9,7 @@
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <application
-        android:label="${openq4AppLabel}"
+        android:label="${opend3AppLabel}"
         android:icon="@mipmap/ic_launcher"
         android:allowBackup="false"
         android:enableOnBackInvokedCallback="false"
@@ -26,7 +26,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".OpenQ4Activity"
+            android:name=".openD3Activity"
             android:exported="false"
             android:launchMode="singleInstance"
             android:screenOrientation="sensorLandscape"

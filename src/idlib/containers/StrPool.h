@@ -154,7 +154,7 @@ ID_INLINE void idStrPool::FreeString( const idPoolStr *poolStr ) {
 		}
 		assert( pool[i] == poolStr );
 		delete pool[i];
-		// openQ4: fill the hole with the last string. Removing the index used
+		// openD3: fill the hole with the last string. Removing the index used
 		// to close the gap in the list and then renumber the whole hash index,
 		// a walk over every string in the pool for each one freed - and the
 		// two pools are every dictionary key and value in the process, so

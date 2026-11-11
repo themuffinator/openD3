@@ -44,7 +44,7 @@ struct idClass {
 };
 std::map<std::string,idTypeInfo*> idClass::classes;
 struct FakeFileSystem {
-    const char* mounted="baseoq4";
+    const char* mounted="baseod3";
     const char* GetActiveGameDir() const { return mounted; }
 } fs, *fileSystem=&fs;
 struct FakeGame {
@@ -78,7 +78,7 @@ int main() {
     assert(idClassSubstitution::Resolve(&stock)==&stock);
     {
         idClassSubstitution sub(stock.classname,expansion.classname,"q4xbase");
-        for (const char* mounted : {"baseoq4","q4base","another_mod"}) {
+        for (const char* mounted : {"baseod3","q4base","another_mod"}) {
             fs.mounted=mounted;
             assert(idClassSubstitution::Resolve(&stock)==&stock);
             gameLocal.printed=0;
@@ -87,14 +87,14 @@ int main() {
         }
         // A queued fs_game change cannot affect classes in the live old map:
         // production code must consult the mounted filesystem, not the CVar.
-        fs.mounted="baseoq4";
+        fs.mounted="baseod3";
         assert(idClassSubstitution::Resolve(&stock)==&stock);
         fs.mounted="Q4XBASE";
         assert(idClassSubstitution::Resolve(&stock)==&expansion);
         gameLocal.printed=0;
         idClassSubstitution::Validate();
         assert(gameLocal.printed==1);
-        fs.mounted="baseoq4";
+        fs.mounted="baseod3";
         assert(idClassSubstitution::Resolve(&stock)==&stock);
     }
     idClassSubstitution::list=nullptr;
@@ -127,7 +127,7 @@ int main() {
     idClassSubstitution::list=nullptr;
     {
         idClassSubstitution global(stock.classname,expansion.classname);
-        fs.mounted="baseoq4";
+        fs.mounted="baseod3";
         idClassSubstitution::Validate();
         assert(idClassSubstitution::Resolve(&stock)==&expansion);
     }
@@ -145,7 +145,7 @@ def validate_isolation() -> None:
     assert startup.index('!awakeningAllowed') < startup.index('SetupGameDirectories( BASE_GAMEDIR )')
     assert 'const bool awakeningAllowed = false;' in startup
     dll = function_body(fs, 'void idFileSystemLocal::FindDLL(')
-    assert 'q4xbase' in dll and 'OPENQ4_GAMEDIR' in dll
+    assert 'q4xbase' in dll and 'OPEND3_GAMEDIR' in dll
     # OpenFileReadFlags delegates to the search shared with length-only queries
     flags_entry = function_body(fs, 'idFile *idFileSystemLocal::OpenFileReadFlags(')
     assert 'return OpenFileReadSearch(' in flags_entry

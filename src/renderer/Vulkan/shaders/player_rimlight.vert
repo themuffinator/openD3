@@ -1,7 +1,7 @@
 #version 450
 
 // Multiplayer player rimlight. A port of
-// content/baseoq4/pak0/glprogs/player_rimlight.vs
+// content/baseod3/pak0/glprogs/player_rimlight.vs
 // (RB_PlayerVisibilityDrawRimlightSurface).
 
 layout(location = 0) in vec3 inPosition;

@@ -167,7 +167,7 @@ def validate_ci_smoke() -> None:
     for relative_path, context in (
         (".github/workflows/push-verification.yml", "push verification workflow"),
         (".github/workflows/commit-validation.yml", "commit validation workflow"),
-        ("tools/validation/openq4_validate.py", "validation runner"),
+        ("tools/validation/opend3_validate.py", "validation runner"),
     ):
         source = (ROOT / relative_path).read_text(encoding="utf-8")
         if "source_charset_integrity.py" not in source:

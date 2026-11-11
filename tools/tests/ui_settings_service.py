@@ -42,7 +42,7 @@ SUPPORT = r'''
 #include "src/ui/application/SystemSettingsHost.h"
 #include "src/ui/application/SystemDisplay.h"
 #include "src/ui/application/SettingsDisplayController.h"
-using namespace openq4::ui;
+using namespace opend3::ui;
 static void Check(bool condition,const char* message) {
     if(!condition) { std::fprintf(stderr,"FAIL: %s\n",message);std::exit(1); }
 }
@@ -60,7 +60,7 @@ static struct HostData {
     bool unsupportedTuple=false,throwPreflight=false;
     bool nextStart=false; // The draft holds a change that finishes at the next start.
 } host;
-namespace openq4::ui {
+namespace opend3::ui {
 // The display builders compiled in below link the catalog; the service never reads it.
 const std::vector<SystemSettingDescriptor>& SystemSettingsHost::Catalog() {
     static const std::vector<SystemSettingDescriptor> catalog;return catalog;
@@ -292,7 +292,7 @@ public:
 };
 // The hardware adapter has its own production-body fault tests. Keep existing
 // service/transaction scenarios independent of GPU drivers and engine restarts.
-namespace openq4::ui {
+namespace opend3::ui {
 static bool renderingPending=false,renderingRestartOkay=true;
 static int renderingPicks=0,renderingRestarts=0;
 static std::function<void()> renderingHook;
@@ -1435,7 +1435,7 @@ static void ExitDisplayApplyFailure(const std::string& failure) {
 static void ExactValues(const std::string& scenario) {
     // No renderer/native service runs. The bounded four-field host uses a
     // zero-capable continuous numeric range for this exact comparison probe.
-    openq4::test::FloatFlushMode mode(true);
+    opend3::test::FloatFlushMode mode(true);
     host.allowNearZero=true;host.live["r_brightness"]=std::bit_cast<double>(std::uint64_t(1));cvars.trace=true;
     const auto owner=Begin();Check(Dispatch(owner,"edit",{{"r_brightness",0.0}}),"edit observed subnormal to explicit zero");
     Expect(owner,"dirty",true);Expect(owner,"canApply",true);
@@ -1683,10 +1683,10 @@ def main(production_mutations=()):
         'bool Utf8(', 'bool ValidStateValue(', 'const Node* Find(', 'const Node* DocumentModel::FindNode('))
     host_source = (ROOT / 'src/ui/application/SystemSettingsHost.cpp').read_text(encoding='utf-8')
     legacy = host_source[host_source.index('constexpr int LegacyModes'):host_source.index('#if defined(USE_SDL3)', host_source.index('constexpr int LegacyModes'))]
-    display = ('namespace openq4::ui { namespace {\n' + legacy + '\n}\n' +
+    display = ('namespace opend3::ui { namespace {\n' + legacy + '\n}\n' +
                '\n'.join(function_body(host_source, name) for name in ('bool SystemSettingsHost::ResolveModeDimensions(', 'int SystemSettingsHost::LegacyModeForSize(')) +
                '\n}\n#define Fail DisplayHelperFail\n' + without_includes((ROOT / 'src/ui/application/SystemDisplay.cpp').read_text(encoding='utf-8')) + '\n#undef Fail\n')
-    code = (SUPPORT + '\nnamespace openq4::ui {\n' + validation + '\n}\n' +
+    code = (SUPPORT + '\nnamespace opend3::ui {\n' + validation + '\n}\n' +
             service + '\n' + display + persistence_bodies() + '\n' + render_frame_body() + MAIN)
     compiler = next((path for name in ('clang++', 'g++', 'c++') if (path := shutil.which(name))), None)
     if not compiler:

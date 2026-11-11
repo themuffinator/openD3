@@ -33,7 +33,7 @@ def sources(args):
 
 def inject_screenshots(script):
     """Called only after canonical source validation and semantic filtering."""
-    marker = 'openq4_guiGet "liveHeight"'
+    marker = 'opend3_guiGet "liveHeight"'
     if script.splitlines().count(marker) != 6:
         raise ValueError('display settings setup must contain six complete readback groups')
     result = []
@@ -43,7 +43,7 @@ def inject_screenshots(script):
         if line == marker:
             if group >= 2:
                 result.append(f'screenshot "screenshots/ui-display-{SHOTS[group-2][0]}.tga"')
-                result.append('openq4_retainedGui inspect "settings-panel"')
+                result.append('opend3_retainedGui inspect "settings-panel"')
             group += 1
     return '\n'.join(result) + '\n'
 
@@ -89,7 +89,7 @@ def persistence_evidence(game):
     errors = []
     journal = game / 'ui-settings-recovery.dat'
     lock = game / '.settings-recovery.lock'
-    config = game / 'openQ4Config.cfg'
+    config = game / 'openD3Config.cfg'
     result = {'journal_absent': not (journal.exists() or journal.is_symlink()),
               'permanent_lock_present': lock.is_file() and not lock.is_symlink()}
     if not result['journal_absent'] or not result['permanent_lock_present']:

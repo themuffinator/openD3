@@ -4,7 +4,7 @@
 #include "../sys/EventDisposition.h"
 #include <mutex>
 
-namespace openq4 {
+namespace opend3 {
 namespace {
 struct Publications {
     std::mutex mutex;
@@ -74,4 +74,4 @@ void NativeInputBeforeWindowChange() noexcept {
     auto& p=Facts();std::lock_guard<std::mutex> lock(p.mutex);Revoke(p);
 }
 void NativeInputBeforeInputBlockerChange() noexcept { NativeInputBeforeSessionChange(); }
-} // namespace openq4
+} // namespace opend3

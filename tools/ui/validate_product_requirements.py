@@ -142,7 +142,7 @@ def audit_helpers():
 
 def load_sibling(name: str):
     path = Path(__file__).resolve().with_name(name + ".py")
-    spec = importlib.util.spec_from_file_location("openq4_ui_" + name, path)
+    spec = importlib.util.spec_from_file_location("opend3_ui_" + name, path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module

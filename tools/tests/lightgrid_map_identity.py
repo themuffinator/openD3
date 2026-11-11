@@ -2,7 +2,7 @@
 """A baked light grid only lights the build of the map it was baked from.
 
 A mod can ship its own build of a map under a stock name. The Awakening's mp/q4xdm13 has
-10 areas where retail's has 14, and openQ4's pak1 carries a grid baked for retail's. The
+10 areas where retail's has 14, and openD3's pak1 carries a grid baked for retail's. The
 pack loader refused that grid on its area count, but the text fallback from the same bake
 then stopped the map load with a fatal ParseLightGridPoints error. A mod build with the
 same area count took the stock grid and was lit from the wrong geometry.
@@ -103,9 +103,9 @@ def check_contract(source: str) -> str:
     if "light-grid areas, but map has" in source:
         fail("a mod's own build of a map is not a fault; the loaders say so as a developer print")
     rank = block(source, "static int LightGrid_GameDirRank(")
-    order = [rank.find(token) for token in ('"fs_game"', '"fs_game_base"', "OPENQ4_GAMEDIR", "dirs.Append( BASE_GAMEDIR )")]
+    order = [rank.find(token) for token in ('"fs_game"', '"fs_game_base"', "OPEND3_GAMEDIR", "dirs.Append( BASE_GAMEDIR )")]
     if -1 in order or order != sorted(order):
-        fail("LightGrid_GameDirRank must rank game directories as the filesystem stacks them: fs_game, fs_game_base, openQ4, q4base")
+        fail("LightGrid_GameDirRank must rank game directories as the filesystem stacks them: fs_game, fs_game_base, openD3, q4base")
     setup_world = block(source, "void idRenderWorldLocal::SetupLightGrid(")
     if "LightGrid_GameDirRank( procName )" not in setup_world:
         fail("SetupLightGrid must find which game directory the map's .proc comes from")

@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 RENDERER = ROOT / "src" / "renderer"
 GAME_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", str(ROOT))
+    os.environ.get("OPEND3_GAMELIBS_REPO", str(ROOT))
 ).resolve()
 
 
@@ -167,7 +167,7 @@ def validate_shared_renderer_contracts() -> None:
         ),
         "semantic layout and typed generational buffer contract",
     )
-    require(meson, "'openq4-renderer-contracts-test'", "native renderer contract target")
+    require(meson, "'opend3-renderer-contracts-test'", "native renderer contract target")
     require(meson, "'src/renderer/RendererContracts.cpp'", "native renderer contract source")
 
 
@@ -615,7 +615,7 @@ def validate_paired_evidence_verifier() -> None:
     require_all(
         source,
         (
-            "openq4-gpu-skinning-paired-evidence",
+            "opend3-gpu-skinning-paired-evidence",
             "minimum-cpu-p95-improvement",
             "GPU skinning fallbacks:",
             "stencilVolume",

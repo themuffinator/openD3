@@ -54,24 +54,24 @@ def staged_package(stage: Path, variant: str) -> tuple[dict[str, bytes], dict[st
     files.update({
         'android-build.json': json.dumps({'format': 1, 'variant': variant, 'abi': abi,
                                           'androidApi': 24, 'sdlVersion': '3.4.18'}).encode(),
-        'baseoq4/mod.json': b'{"version":"0.14.000","requiredopenQ4Version":"0.14.000"}',
-        'baseoq4/pak0.pk4': pack.getvalue(), 'baseoq4/pak1.pk4': b'second pack', 'baseoq4/pak2.pk4': b'third pack',
+        'baseod3/mod.json': b'{"version":"0.14.000","requiredopenD3Version":"0.14.000"}',
+        'baseod3/pak0.pk4': pack.getvalue(), 'baseod3/pak1.pk4': b'second pack', 'baseod3/pak2.pk4': b'third pack',
         'LICENSE': b'engine license', 'LICENSING.md': b'component licenses', 'CONTRIBUTORS.md': b'credits',
         'licenses/QUAKE-4-SDK-EULA.rtf': b'SDK EULA', 'licenses/MD4.txt': b'MD4 notice',
         'licenses/sdl3/LICENSE.txt': b'SDL', 'licenses/openal-soft/COPYING': b'OpenAL',
         'licenses/android-ndk/NOTICE.toolchain': b'NDK',
     })
     if verify_android_apk.variant_info(variant).headset:
-        files[verify_android_apk.HEADSET_MARKER] = b'# openQ4 Meta Quest build marker\n'
+        files[verify_android_apk.HEADSET_MARKER] = b'# openD3 Meta Quest build marker\n'
     entries = {}
     for name, data in sorted(files.items()):
         path = stage / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
         entries[f'lib/{abi}/' + name[4:] if name.startswith('lib/') else 'assets/' + name] = data
-    manifest = package_manifest(stage / 'baseoq4')
-    entries['assets/openq4-package-manifest.txt'] = manifest
-    entries['assets/openq4-package-version.txt'] = hashlib.sha256(manifest).hexdigest().encode()
+    manifest = package_manifest(stage / 'baseod3')
+    entries['assets/opend3-package-manifest.txt'] = manifest
+    entries['assets/opend3-package-version.txt'] = hashlib.sha256(manifest).hexdigest().encode()
     entries.update({'assets/' + name: data for name, data in faces.items()})
     return files, entries
 
@@ -94,12 +94,12 @@ class AndroidBuildTests(unittest.TestCase):
         names = tuple(pack['name'] for pack in table['packs'])
         self.assertEqual(content_pack_names(), names)
         self.assertEqual(required_package_files(), {'mod.json', *names})
-        java = (ROOT / 'mobile/android/app/src/main/java/com/darkmatter/openq4/PackageStorage.java').read_text(encoding='utf-8')
+        java = (ROOT / 'mobile/android/app/src/main/java/com/darkmatter/opend3/PackageStorage.java').read_text(encoding='utf-8')
         listed = '{ ' + ', '.join(f'"{name}"' for name in ('mod.json', *names)) + ' }'
         self.assertIn(f'for (String required : new String[] {listed})', java,
                       'PackageStorage.java must require every pack in tools/build/content_packs.json')
         for gradle in ('mobile/android/package-manifest.gradle', 'mobile/android/app/build.gradle'):
-            self.assertIn('openQ4ContentPackNames()', (ROOT / gradle).read_text(encoding='utf-8'), gradle)
+            self.assertIn('openD3ContentPackNames()', (ROOT / gradle).read_text(encoding='utf-8'), gradle)
 
     def test_emulator_file_check_distinguishes_absence_from_command_failure(self) -> None:
         probe = android_emulator_smoke.Probe.__new__(android_emulator_smoke.Probe)
@@ -112,16 +112,16 @@ class AndroidBuildTests(unittest.TestCase):
                 probe.adb = mock.Mock(return_value=subprocess.CompletedProcess([], code, stdout, stderr))
                 if expected is None:
                     with self.assertRaisesRegex(RuntimeError, 'Private-file test failed'):
-                        probe.private_test('-f', 'files/saves/baseoq4/autoexec.cfg')
+                        probe.private_test('-f', 'files/saves/baseod3/autoexec.cfg')
                 else:
-                    self.assertIs(probe.private_test('-f', 'files/saves/baseoq4/autoexec.cfg'), expected)
+                    self.assertIs(probe.private_test('-f', 'files/saves/baseod3/autoexec.cfg'), expected)
                 # Exercise the actual shell builtin on older Android, where
                 # directly executing `test` through run-as fails.
                 self.assertIn('sh', probe.adb.call_args.args)
                 self.assertIn('-c', probe.adb.call_args.args)
         probe.adb = mock.Mock(return_value=subprocess.CompletedProcess([], 1, b'', b'permission denied'))
         with self.assertRaisesRegex(RuntimeError, 'Retail-file test failed'):
-            probe.remote_sha('/sdcard/Android/data/com.darkmatter.openq4.emulator/files/q4base/pak001.pk4')
+            probe.remote_sha('/sdcard/Android/data/com.darkmatter.opend3.emulator/files/q4base/pak001.pk4')
 
     def test_emulator_preflight_rejects_gles2_before_install_or_data_writes(self) -> None:
         probe = android_emulator_smoke.Probe.__new__(android_emulator_smoke.Probe)
@@ -188,7 +188,7 @@ class AndroidBuildTests(unittest.TestCase):
             for name, replacement, message in (
                 ('lib/arm64-v8a/libquake4.so', b'old binary', 'differs from validated stage'),
                 ('lib/arm64-v8a/libgame-sp_arm64.so', None, 'seven matching'),
-                ('assets/baseoq4/pak0.pk4', b'old data', 'differs from validated stage'),
+                ('assets/baseod3/pak0.pk4', b'old data', 'differs from validated stage'),
                 ('assets/licenses/openal-soft/COPYING', None, 'asset set differs'),
                 ('assets/licenses/QUAKE-4-SDK-EULA.rtf', None, 'asset set differs'),
                 ('assets/licenses/MD4.txt', None, 'asset set differs'),
@@ -196,9 +196,9 @@ class AndroidBuildTests(unittest.TestCase):
                 ('assets/fonts/lowpixel.ttf', b'wrong face', 'typeface differs'),
                 ('assets/fonts/extra.ttf', b'unexpected face', 'asset set differs'),
                 ('assets/q4base/pak001.pk4', b'retail data', 'asset set differs'),
-                ('assets/openq4-package-version.txt', b'wrong revision', 'extraction revision'),
-                ('assets/openq4-package-manifest.txt', b'wrong manifest', 'extraction manifest'),
-                ('assets/openq4-package-manifest.txt', None, 'asset set differs'),
+                ('assets/opend3-package-version.txt', b'wrong revision', 'extraction revision'),
+                ('assets/opend3-package-manifest.txt', b'wrong manifest', 'extraction manifest'),
+                ('assets/opend3-package-manifest.txt', None, 'asset set differs'),
             ):
                 with self.subTest(name=name):
                     changed = dict(entries)
@@ -280,7 +280,7 @@ class AndroidBuildTests(unittest.TestCase):
         good = [
             f'Verified using v2 scheme (APK Signature Scheme v2): true\nSigner #1 certificate SHA-256 digest: {cert_digest}\n',
             '',
-            "package: name='com.darkmatter.openq4' versionCode='14000' versionName='0.14.000'\nsdkVersion:'24'\ntargetSdkVersion:'35'\nnative-code: 'arm64-v8a'\nlaunchable-activity: name='com.darkmatter.openq4.LauncherActivity'\n",
+            "package: name='com.darkmatter.opend3' versionCode='14000' versionName='0.14.000'\nsdkVersion:'24'\ntargetSdkVersion:'35'\nnative-code: 'arm64-v8a'\nlaunchable-activity: name='com.darkmatter.opend3.LauncherActivity'\n",
             'A: android:extractNativeLibs(0x010104ea)=(type 0x12)0xffffffff',
         ]
         for index, replacement, message in (
@@ -290,7 +290,7 @@ class AndroidBuildTests(unittest.TestCase):
             (2, good[2].replace("sdkVersion:'24'", "sdkVersion:'28'"), 'manifest mismatch'),
             (2, good[2].replace("versionCode='14000'", "versionCode='13001'"), 'manifest mismatch'),
             (2, good[2] + 'application-debuggable', 'not be debuggable'),
-            (2, good[2].replace('.LauncherActivity', '.OpenQ4Activity'), 'manifest mismatch'),
+            (2, good[2].replace('.LauncherActivity', '.openD3Activity'), 'manifest mismatch'),
             (3, good[3].replace('0xffffffff', '0x0'), 'extract native libraries'),
         ):
             outputs = good.copy()
@@ -313,7 +313,7 @@ class AndroidBuildTests(unittest.TestCase):
         good = [
             f'Verified using v2 scheme (APK Signature Scheme v2): true\nSigner #1 certificate SHA-256 digest: {cert_digest}\n',
             '',
-            "package: name='com.darkmatter.openq4.emulator' versionCode='14000' versionName='0.14.000'\nsdkVersion:'24'\ntargetSdkVersion:'35'\nnative-code: 'x86_64'\nlaunchable-activity: name='com.darkmatter.openq4.LauncherActivity'\napplication-debuggable\n",
+            "package: name='com.darkmatter.opend3.emulator' versionCode='14000' versionName='0.14.000'\nsdkVersion:'24'\ntargetSdkVersion:'35'\nnative-code: 'x86_64'\nlaunchable-activity: name='com.darkmatter.opend3.LauncherActivity'\napplication-debuggable\n",
             'A: android:extractNativeLibs(0x010104ea)=(type 0x12)0xffffffff',
         ]
         for variant, index, replacement, message in (
@@ -321,7 +321,7 @@ class AndroidBuildTests(unittest.TestCase):
             ('phone', -1, '', 'manifest mismatch'),
             ('emulator', 0, good[0].replace(cert_digest, '0' * 64), 'pinned diagnostic certificate'),
             ('emulator', 0, good[0].replace(': true', ': false'), 'valid v2 signature'),
-            ('emulator', 2, good[2].replace('.openq4.emulator', '.openq4'), 'manifest mismatch'),
+            ('emulator', 2, good[2].replace('.opend3.emulator', '.opend3'), 'manifest mismatch'),
             ('emulator', 2, good[2].replace("'x86_64'", "'arm64-v8a'"), 'manifest mismatch'),
             ('emulator', 2, good[2].replace("sdkVersion:'24'", "sdkVersion:'28'"), 'manifest mismatch'),
             ('emulator', 2, good[2].replace('application-debuggable', ''), 'diagnostic debuggable build'),
@@ -360,7 +360,7 @@ class AndroidBuildTests(unittest.TestCase):
             # The marker is what starts the game in VR: required here, packaged exactly.
             marker = stage / verify_android_apk.HEADSET_MARKER
             marker.unlink()
-            with self.assertRaisesRegex(ValueError, 'must carry the openq4-headset marker'):
+            with self.assertRaisesRegex(ValueError, 'must carry the opend3-headset marker'):
                 verify_android_apk.verify_payload(apk, stage, '0.14.000', 'quest')
             marker.write_bytes(files[verify_android_apk.HEADSET_MARKER])
             changed = dict(entries)
@@ -400,10 +400,10 @@ class AndroidBuildTests(unittest.TestCase):
                        '      E: activity (line=15)\n')
         tree = lambda *parts: f'N: android={android}\n  E: manifest (line=2)\n' + ''.join(parts)
         quest_tree = tree(feature, permission, application, devices, '          E: intent-filter (line=28)\n', immersive)
-        badging = ("package: name='com.darkmatter.openq4.quest' versionCode='14000' versionName='0.14.000'\nsdkVersion:'24'\n"
-                   "targetSdkVersion:'35'\nnative-code: 'arm64-v8a'\nlaunchable-activity: name='com.darkmatter.openq4.LauncherActivity'\n")
+        badging = ("package: name='com.darkmatter.opend3.quest' versionCode='14000' versionName='0.14.000'\nsdkVersion:'24'\n"
+                   "targetSdkVersion:'35'\nnative-code: 'arm64-v8a'\nlaunchable-activity: name='com.darkmatter.opend3.LauncherActivity'\n")
         signer = f'Verified using v2 scheme (APK Signature Scheme v2): true\nSigner #1 certificate SHA-256 digest: {cert_digest}\n'
-        phone_badging = badging.replace('.openq4.quest', '.openq4')
+        phone_badging = badging.replace('.opend3.quest', '.opend3')
         for variant, outputs, message in (
             ('quest', [signer, '', badging, quest_tree], ''),
             ('phone', [signer, '', badging, quest_tree], 'manifest mismatch'),
@@ -536,7 +536,7 @@ class AndroidBuildTests(unittest.TestCase):
         (ROOT / ".tmp").mkdir(exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="android-wrapper-test-", dir=ROOT / ".tmp") as temporary:
             fixture = Path(temporary)
-            project = fixture / "openQ4"
+            project = fixture / "openD3"
             game = project
             build = project / "builddir"
             scripts = project / "tools/build"
@@ -562,11 +562,11 @@ class AndroidBuildTests(unittest.TestCase):
             (fake_meson / "mesonmain.py").write_text(
                 "import json, os, sys\n"
                 "if __name__ == '__main__':\n"
-                "    with open(os.environ['OPENQ4_TEST_MESON_LOG'], 'a') as output:\n"
+                "    with open(os.environ['OPEND3_TEST_MESON_LOG'], 'a') as output:\n"
                 "        output.write(json.dumps(sys.argv[1:]) + '\\n')\n", encoding="utf-8")
             env = os.environ.copy()
-            env.update({"PYTHONPATH": str(fake_meson.parent), "OPENQ4_GAMELIBS_REPO": str(game),
-                        "OPENQ4_TEST_MESON_LOG": str(log)})
+            env.update({"PYTHONPATH": str(fake_meson.parent), "OPEND3_GAMELIBS_REPO": str(game),
+                        "OPEND3_TEST_MESON_LOG": str(log)})
 
             def invoke() -> list[list[str]]:
                 log.unlink(missing_ok=True)
@@ -577,7 +577,7 @@ class AndroidBuildTests(unittest.TestCase):
                 return [json.loads(line) for line in log.read_text().splitlines()]
 
             self.assertEqual([call[0] for call in invoke()], ["setup", "compile"])
-            inventory_path = build / 'openq4_game_sources.json'
+            inventory_path = build / 'opend3_game_sources.json'
             generated = subprocess.run([sys.executable, str(scripts / 'game_source_inventory.py'), str(project)],
                                        check=True,capture_output=True,text=True)
             inventory_path.write_text(generated.stdout,encoding='utf-8')

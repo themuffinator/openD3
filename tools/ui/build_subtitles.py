@@ -5,7 +5,7 @@ import build_retained_screens as ui
 
 
 def document():
-    doc = ui.Document('openq4.subtitles')
+    doc = ui.Document('opend3.subtitles')
     for name, initial in {'x': 120, 'width': 1040, 'size': 17, 'pitch': 24,
                           'lines': 1, 'background': .6, 'indent0': 0, 'indent1': 0, 'bottom': 570,
                           'aboveLines': 0, 'aboveBottom': 0, 'aboveIndent': 0}.items():

@@ -42,20 +42,20 @@ def main():
         return [f'echo VOICE_UI_{name}', 'listVoiceChat']
 
     def toggle(control):
-        return [f'openq4_retainedGui focus "{control}"', 'openq4_retainedGui menu accept 1', 'openq4_retainedGui menu accept 0', 'waitMsec 400']
+        return [f'opend3_retainedGui focus "{control}"', 'opend3_retainedGui menu accept 1', 'opend3_retainedGui menu accept 0', 'waitMsec 400']
 
-    steps = ['openq4_assertMenuActivation 4000 game', 'waitMsec 600', 'openq4_retainedGui event tab_voice', 'waitMsec 500',
+    steps = ['opend3_assertMenuActivation 4000 game', 'waitMsec 600', 'opend3_retainedGui event tab_voice', 'waitMsec 500',
              *probe('OFF'), 'screenshot "screenshots/voice-off.tga"',
              *toggle('voice-capture'), *probe('READY'), 'screenshot "screenshots/voice-ready.tga"',
              *toggle('voice-test'), 'waitMsec 800', *probe('TEST'), 'screenshot "screenshots/voice-test.tga"',
              # A lost output stops voice playback with every other source; the test carries on.
              *probe('BEFORE_OUTAGE'), 's_testDeviceInterruption 1000', 'waitMsec 500', *probe('OUTAGE'),
              'waitMsec 1500', *probe('RETURNED'),
-             'openq4_retainedGui event tab_settings', 'waitMsec 400', *probe('LEFT'),
-             'openq4_retainedGui event tab_voice', 'waitMsec 300', *toggle('voice-test'),
+             'opend3_retainedGui event tab_settings', 'waitMsec 400', *probe('LEFT'),
+             'opend3_retainedGui event tab_voice', 'waitMsec 300', *toggle('voice-test'),
              'set s_voiceChatCapture 0', 'waitMsec 400', *probe('REVOKED'),
-             'openq4_retainedGui event onBack', 'waitMsec 500', 'set ui_retained 0', 'set ui_retainedMultiplayer 0',
-             'openq4_assertMenuActivation 4000 game', 'waitMsec 500', 'openq4_guiAction main_b_voiceconfig',
+             'opend3_retainedGui event onBack', 'waitMsec 500', 'set ui_retained 0', 'set ui_retainedMultiplayer 0',
+             'opend3_assertMenuActivation 4000 game', 'waitMsec 500', 'opend3_guiAction main_b_voiceconfig',
              'waitMsec 500', *probe('CLASSIC'), 'screenshot "screenshots/voice-classic.tga"']
     capture.SCENARIOS['voice-settings'] = ('mp:mp/q4dm1', steps)
     capture.SCENARIO_CVARS['voice-settings'] = {
@@ -93,7 +93,7 @@ def main():
         'semantic_actions_succeeded': re.search(r'RETAINED_GUI_OPERATION .* failed', log) is None,
     }
     result.update(checks=checks, phases=phases, passed=all(checks.values()), capture_driver='SDL dummy', physical_microphone=False,
-                  engine_sha256=capture.digest(args.runtime / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64')))
+                  engine_sha256=capture.digest(args.runtime / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64')))
     (args.output / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
     print(json.dumps({'passed': result['passed'], 'checks': checks, 'phases': phases}, indent=2))
     return 0 if result['passed'] else 1

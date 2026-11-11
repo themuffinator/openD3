@@ -37,7 +37,7 @@ from renderer_gameplay_benchmark import collect_runtime_files  # noqa: E402
 LANGUAGES = ["english", "brazilian", "czech", "french", "german", "hungarian", "italian", "polish",
              "russian", "spanish", "turkish", "ukrainian"]
 RESOLUTIONS = [(1280, 720), (1920, 1080), (3840, 2160)]
-EXE = "openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64"
+EXE = "openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64"
 KNOWN_WARNINGS = [
     # Retail content gaps reported by every stock menu path.
     "Couldn't load image: models/monsters/burn_misc_sm",
@@ -47,11 +47,11 @@ KNOWN_WARNINGS = [
 
 def settings(out: Path, assets: Path, renderer: str, width: int = 1280, height: int = 720, **extra: str) -> dict:
     values = {
-        "fs_basepath": str(assets.resolve()), "fs_savepath": str(out), "fs_devpath": str(out), "fs_game": "baseoq4",
+        "fs_basepath": str(assets.resolve()), "fs_savepath": str(out), "fs_devpath": str(out), "fs_game": "baseod3",
         "si_gameType": "singleplayer", "r_fullscreen": "0", "r_hiddenWindow": "1",
         "r_renderApi": "vulkan" if renderer == "vk" else "gl", "r_mode": "-1",
         "r_windowWidth": str(width), "r_windowHeight": str(height), "r_customWidth": str(width), "r_customHeight": str(height),
-        "in_mouse": "0", "in_joystick": "0", "s_noSound": "1", "logFile": "2", "logFileName": "logs/openq4.log",
+        "in_mouse": "0", "in_joystick": "0", "s_noSound": "1", "logFile": "2", "logFileName": "logs/opend3.log",
         "developer": "1", "com_allowConsole": "1", "editorExperimental_autoSaveSeconds": "0", "r_useLightGrid": "0",
         "com_skipLoadingContinue": "1", "com_loadingContinueAutoAdvance": "1", "g_autoSkipCinematics": "1",
         "editorExperimental_externalCheckSeconds": "1",
@@ -69,7 +69,7 @@ def launch(runtime: Path, out: Path, values: dict, cfg: str, timeout: int) -> tu
     (out / f"launch-{cfg}.json").write_text(json.dumps(command, indent=2) + "\n", encoding="utf-8")
     with (out / f"process-{cfg}.log").open("wb") as stream:
         process = subprocess.run(command, cwd=runtime, stdout=stream, stderr=subprocess.STDOUT, timeout=timeout)
-    log_path = out / "baseoq4/logs/openq4.log"
+    log_path = out / "baseod3/logs/opend3.log"
     log = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
     shutil.copyfile(log_path, out / f"log-{cfg}.txt") if log_path.exists() else None
     return process.returncode, log
@@ -109,7 +109,7 @@ def camera(log: str) -> list[str]:
 def workspace_phase(args: argparse.Namespace, runtime: Path, root: Path, renderer: str) -> dict:
     out = root / f"workspace-{renderer}"
     out.mkdir(parents=True)
-    game = out / "baseoq4"
+    game = out / "baseod3"
     original = stock_map(args.assets)
     source = game / SOURCE_MAP
     source.parent.mkdir(parents=True)
@@ -219,7 +219,7 @@ def workspace_phase(args: argparse.Namespace, runtime: Path, root: Path, rendere
     import time
 
     def edit_externally() -> None:
-        log = game / "logs/openq4.log"
+        log = game / "logs/opend3.log"
         deadline = time.time() + 300
         while time.time() < deadline:
             if log.exists() and "AUTH_EXTERNAL_BEGIN" in log.read_text(encoding="utf-8", errors="replace"):
@@ -300,7 +300,7 @@ def fit_phase(args: argparse.Namespace, runtime: Path, root: Path) -> dict:
     results = {}
     for language in LANGUAGES:
         out = root / f"fit-{language}"
-        (out / "baseoq4").mkdir(parents=True)
+        (out / "baseod3").mkdir(parents=True)
         commands = ["editorExperimental", "wait 3"]
         for index, (width, height) in enumerate(RESOLUTIONS):
             if index:
@@ -312,7 +312,7 @@ def fit_phase(args: argparse.Namespace, runtime: Path, root: Path) -> dict:
                          f'screenshot "screenshots/fit-{width}x{height}.tga"',
                          "editorExperimentalWorkspace action panels", "editorExperimentalWorkspace action quad", "wait 1"]
         commands += ["editorExperimentalWorkspace action hide", "quit"]
-        (out / "baseoq4/fit.cfg").write_text("\n".join(commands) + "\n", encoding="ascii")
+        (out / "baseod3/fit.cfg").write_text("\n".join(commands) + "\n", encoding="ascii")
         code, log = launch(runtime, out, settings(out, args.assets, "gl", sys_lang=language), "fit.cfg", 300)
         check(code == 0, f"{language}: client exited {code}")
         fits = re.findall(r"editor fit: language=(\w+) checked=(\d+) overflows=(\d+) size=(\d+x\d+)", log)
@@ -344,9 +344,9 @@ def outputs(text: str) -> dict:
 
 def build_phase(args: argparse.Namespace, runtime: Path, root: Path) -> dict:
     out = root / "build"
-    game = out / "baseoq4"
+    game = out / "baseod3"
     (game / "screenshots").mkdir(parents=True)
-    sandbox = game / "editor_experimental/build/baseoq4"
+    sandbox = game / "editor_experimental/build/baseod3"
     sandbox.mkdir(parents=True)
     # The isolated play client reads this from its own (sandbox) profile.
     (sandbox / "editor_play_check.cfg").write_text(
@@ -403,7 +403,7 @@ def build_phase(args: argparse.Namespace, runtime: Path, root: Path) -> dict:
     b = positions(play_log.split("PLAY_DUMP_B", 1)[1])
     moved = {name: sum((p - q) ** 2 for p, q in zip(a[name], b[name])) ** 0.5 for name in a if name in b}
     check(len(moved) == 2 and max(moved.values()) > 32, f"AI did not move on the rebuilt navigation: {moved}")
-    check(not (game / "editor_experimental/build/baseoq4/config.cfg").exists() or True, "")
+    check(not (game / "editor_experimental/build/baseod3/config.cfg").exists() or True, "")
     leak = between(log, "LEAK_DONE", "CANCEL_BEGIN")
     check("editor build: state=failed" in leak and "leaks" in leak, "leaking build did not fail")
     check(outputs(leak) == first, "a failed build changed the previous outputs")
@@ -419,11 +419,11 @@ def build_phase(args: argparse.Namespace, runtime: Path, root: Path) -> dict:
 
 def stock_phase(args: argparse.Namespace, runtime: Path, root: Path) -> dict:
     out = root / "stock"
-    game = out / "baseoq4"
+    game = out / "baseod3"
     source = game / SOURCE_MAP
     source.parent.mkdir(parents=True)
     source.write_bytes(stock_map(args.assets))
-    sandbox = game / "editor_experimental/build/baseoq4"
+    sandbox = game / "editor_experimental/build/baseod3"
     sandbox.mkdir(parents=True)
     spawn = "\n".join(["spawn monster_tactical_mgun"] * 8)
     (sandbox / "editor_play_check.cfg").write_text(
@@ -454,7 +454,7 @@ def stock_phase(args: argparse.Namespace, runtime: Path, root: Path) -> dict:
     tactics = re.findall(r"combat\.tacticalCurrent = (\w+)", play_log)
     ai = len(re.findall(r"def=monster_tactical_mgun", play_log))
     check(ai >= 8, f"tactical AI did not spawn on the rebuilt map ({ai})")
-    times = re.findall(r"(\d+) seconds for dmap|(\d+) seconds to create AAS", (game / "editor_experimental/build/baseoq4/logs/editor_build.log").read_text(errors="replace"))
+    times = re.findall(r"(\d+) seconds for dmap|(\d+) seconds to create AAS", (game / "editor_experimental/build/baseod3/logs/editor_build.log").read_text(errors="replace"))
     return {"aas": profile.groups(), "tactics": tactics, "ai": ai, "build_times": times, "outputs": outputs(built)}
 
 

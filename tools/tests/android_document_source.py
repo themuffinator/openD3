@@ -94,8 +94,8 @@ public final class Os {
     }
 }
 ''',
-'com/darkmatter/openq4/DocumentSourceTest.java': r'''
-package com.darkmatter.openq4;
+'com/darkmatter/opend3/DocumentSourceTest.java': r'''
+package com.darkmatter.opend3;
 import android.content.*;
 import android.content.res.*;
 import android.database.*;
@@ -323,13 +323,13 @@ def main() -> None:
             path.write_text(text)
             paths.append(str(path))
         for name in ('Pk4Checksum.java', 'RetailData.java', 'RetailImport.java', 'DocumentSource.java'):
-            paths.append(str(ROOT/'mobile/android/app/src/main/java/com/darkmatter/openq4'/name))
+            paths.append(str(ROOT/'mobile/android/app/src/main/java/com/darkmatter/opend3'/name))
         classes = scratch/'classes'
         classes.mkdir()
         javac = Path(args.javac).resolve()
         java = javac.with_name('java.exe' if os.name == 'nt' else 'java')
         subprocess.run([str(javac), '--release', '17', '-d', str(classes), *paths], check=True)
-        subprocess.run([str(java), '-cp', str(classes), 'com.darkmatter.openq4.DocumentSourceTest', str(scratch)], check=True)
+        subprocess.run([str(java), '-cp', str(classes), 'com.darkmatter.opend3.DocumentSourceTest', str(scratch)], check=True)
 
 
 if __name__ == '__main__':

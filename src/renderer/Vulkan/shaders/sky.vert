@@ -1,6 +1,6 @@
 #version 450
 
-// openQ4 Vulkan cube-texgen pipeline — vertex stage (Phase E,
+// openD3 Vulkan cube-texgen pipeline — vertex stage (Phase E,
 // TG_SKYBOX_CUBE / TG_WOBBLESKY_CUBE / TG_DIFFUSE_CUBE).
 //
 // Binding 0 carries the idDrawVert position; location 1 carries the

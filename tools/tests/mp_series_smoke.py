@@ -27,7 +27,7 @@ ROLLBACK_DEF = "".join([
     "}\n"])
 # --broken-map-retry ships a .map that exists (so the preflight accepts it) but
 # cannot be parsed, so the load fails only after MAP_ACTIVE is checkpointed.
-BROKEN_MAP_TEXT = "openQ4 broken-map fixture: deliberately not a map file\n"
+BROKEN_MAP_TEXT = "openD3 broken-map fixture: deliberately not a map file\n"
 # Without a .proc the renderer refuses the world after the commit.
 BROKEN_MAP_ERROR = "couldn't load maps/" + ROLLBACK_MAP
 
@@ -38,10 +38,10 @@ class SeriesRun:
         self.output = args.output_dir.resolve()
         self.runtime = args.runtime_dir.resolve()
         verify_runtime_is_current(self.runtime, getattr(args, "executable_name", ""))
-        self.games = {role: self.output / role / "baseoq4" for role in roles}
+        self.games = {role: self.output / role / "baseod3" for role in roles}
         self.slots = {role: slot for slot, role in enumerate(roles)}
         self.port = getattr(args, "port", 28901)
-        self.logs = {role: path / "logs/openq4.log" for role, path in self.games.items()}
+        self.logs = {role: path / "logs/opend3.log" for role, path in self.games.items()}
         self.processes, self.streams, self.loops = {}, [], {}
         self.command_numbers = {role: 0 for role in self.games}
         self.operation = 0
@@ -65,7 +65,7 @@ class SeriesRun:
             self.loops[role] = game / "series_commands.cfg"
             write_script(self.loops[role], ["// Waiting for the first operation."])
             write_script(game / "series_pump.cfg", ["exec series_commands.cfg", "waitMsec 250",
-                         "openq4_reportMPState", "vstr oq4_series_pump"])
+                         "opend3_reportMPState", "vstr oq4_series_pump"])
             self.start_script(role)
 
     def start_script(self, role):
@@ -87,13 +87,13 @@ class SeriesRun:
         cvars = {
             "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
             "fs_basepath": str(a.basepath.resolve()), "fs_savepath": str(self.games[role].parent),
-            "fs_devpath": str(self.games[role].parent), "fs_game": "baseoq4", "com_gameMode": "MP",
+            "fs_devpath": str(self.games[role].parent), "fs_game": "baseod3", "com_gameMode": "MP",
             "r_fullscreen": "0", "r_borderless": "0", "r_fullscreenDesktop": "0",
             "r_borderlessDefaultMigrated": "1", "r_mode": "-1", "r_customWidth": "960",
             "r_customHeight": "540", "r_windowWidth": "960", "r_windowHeight": "540",
             "r_hiddenWindow": "1", "in_mouse": "0", "in_joystick": "0", "s_noSound": "1",
             "r_renderApi": "gl", "com_maxfps": "60", "r_swapInterval": "0", "logFile": "2",
-            "logFileName": "logs/openq4.log", "developer": "1", "ui_autoJoin": "1",
+            "logFileName": "logs/opend3.log", "developer": "1", "ui_autoJoin": "1",
             # The smoke drives and captures the stock in-match menu, which the
             # retained Escape card would cover.
             "ui_retained": "0",
@@ -126,7 +126,7 @@ class SeriesRun:
         until = min(self.deadline, time.monotonic() + timeout)
         while time.monotonic() < until:
             texts = {role: read_log(path) for role, path in self.logs.items()}
-            errors = re.finditer(r"(?:FATAL(?: ERROR|:)|ERROR:|Unknown command|usage: openq4_guiSet|"
+            errors = re.finditer(r"(?:FATAL(?: ERROR|:)|ERROR:|Unknown command|usage: opend3_guiSet|"
                                  r"Reliable messages overflow|reliable message queue overflowed|"
                                  r"competition report rejected|could not project match evidence|"
                                  r"could not (?:capture|persist|finalize) competition|"
@@ -156,7 +156,7 @@ class SeriesRun:
 
     def perform(self, role, label, actions):
         marker = f"MP_SERIES_DONE_{self.operation + 1}"
-        self.inject(role, [*actions, "openq4_matchControl report", "echo " + marker])
+        self.inject(role, [*actions, "opend3_matchControl report", "echo " + marker])
         self.wait(label, lambda texts: "\n" + marker + " " in texts[role])
 
     def view(self, role):
@@ -181,17 +181,17 @@ class SeriesRun:
             reason = re.search(rf"MP_CONTROL match_op_{opcode}_reason=([^\n]*)", latest)
             raise RuntimeError(f"{role} cannot {token}: {reason[1] if reason else 'no accepted availability'}")
         self.perform(role, token, ["waitMsec 2200", *before,
-                     "openq4_matchControl action " + ("arm_" if confirm else "") + token,
-                     *(["waitMsec 100", "openq4_matchControl action confirm"] if confirm else []),
+                     "opend3_matchControl action " + ("arm_" if confirm else "") + token,
+                     *(["waitMsec 100", "opend3_matchControl action confirm"] if confirm else []),
                      "waitMsec 500"])
 
     def open_menu(self, role, review=False):
-        opening = ["openq4_matchControl open"] if review else [
-            "openq4_assertMPClientActive", "openq4_assertMenuActivation 3000 game"]
+        opening = ["opend3_matchControl open"] if review else [
+            "opend3_assertMPClientActive", "opend3_assertMenuActivation 3000 game"]
         self.perform(role, "series menu", [*opening,
-                     "waitMsec 1500", "openq4_guiSet desktop::active 1", "openq4_guiSet desktop::dest 21",
+                     "waitMsec 1500", "opend3_guiSet desktop::active 1", "opend3_guiSet desktop::dest 21",
                      "GuiEvent hideMain", "GuiEvent chooseCurr", "GuiEvent resetMain0", "waitMsec 1500",
-                     "openq4_guiSet desktop::match_tab 4"])
+                     "opend3_guiSet desktop::match_tab 4"])
 
     def capture(self, role, label, expected):
         view = self.await_view(role, label + " authoritative state", lambda v:
@@ -214,9 +214,9 @@ class SeriesRun:
         if screenshot.exists():
             raise RuntimeError(f"capture path already exists: {screenshot}")
         self.perform(role, name + " screenshot", [
-            "openq4_guiGet match_series_profile_choice::choices",
-            "openq4_guiGet match_series_profile_choice::values",
-            "openq4_guiGet match_series_profile_choice::rect",
+            "opend3_guiGet match_series_profile_choice::choices",
+            "opend3_guiGet match_series_profile_choice::values",
+            "opend3_guiGet match_series_profile_choice::rect",
             f'screenshot "screenshots/{name}.tga"'])
         if not screenshot.is_file() or screenshot.stat().st_size < 18:
             raise RuntimeError(f"engine did not write screenshot: {screenshot}")
@@ -494,7 +494,7 @@ class SeriesRun:
         for stream in self.streams:
             stream.close()
         for role, log in self.logs.items():
-            shutil.move(str(log), archive / f"{role}-openq4.log")
+            shutil.move(str(log), archive / f"{role}-opend3.log")
             shutil.move(str(self.output / f"{role}-console.log"), archive / f"{role}-console.log")
             self.command_numbers[role] = 0
             write_script(self.loops[role], ["// Waiting for the first recovered operation."])
@@ -534,7 +534,7 @@ class SeriesRun:
         for role in self.games:
             self.open_menu(role)
         profile = {1: "best_of_one", 3: "best_of_three", 5: "best_of_five"}[self.args.best_of]
-        self.action("host", "series_stage", before=["openq4_matchControl set match_series_profile_choice " + profile])
+        self.action("host", "series_stage", before=["opend3_matchControl set match_series_profile_choice " + profile])
         first = self.await_view("host", "series setup", lambda v: v["series"]["state"] == 1)
         series_id = first["series"]["id"]
         self.view_series_id = series_id
@@ -560,8 +560,8 @@ class SeriesRun:
                 # The final veto schedules the broken map; its load error is expected.
                 self.expected_errors = (BROKEN_MAP_ERROR,)
             self.action("host", token, confirm=True, before=[
-                f"openq4_matchControl set match_series_map_rows_sel_0 {chosen['pool_index']}",
-                "openq4_matchControl action select_series_map"])
+                f"opend3_matchControl set match_series_map_rows_sel_0 {chosen['pool_index']}",
+                "opend3_matchControl action select_series_map"])
             if last_veto:
                 if self.missing_map_retry:
                     self.missing_map_rollback(previous_session, loaded_counts)
@@ -607,7 +607,7 @@ class SeriesRun:
             forfeiting_side = (forfeiting_competition if self.args.duel else selection["starting_side"]
                                if selection["side_chosen_by"] == forfeiting_competition else 1 - selection["starting_side"])
             self.action("host", "forfeit", confirm=True,
-                        before=["openq4_matchControl action action_side_" + ("b" if forfeiting_side else "a")])
+                        before=["opend3_matchControl action action_side_" + ("b" if forfeiting_side else "a")])
             view = self.await_view("host", "map forfeit result", lambda v: v["phase"] == 5 and v["pause"] == 0 and v["series"]["state"] == 5)
             expected_wins[winner] += 1
             if view["series"]["wins"] != expected_wins:
@@ -649,7 +649,7 @@ class SeriesRun:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
-    parser.add_argument("--executable-name", default="openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    parser.add_argument("--executable-name", default="openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     parser.add_argument("--output-dir", type=Path, default=ROOT / ".tmp/mp-series-smoke")
     parser.add_argument("--basepath", type=Path, default=Path(r"C:\Program Files (x86)\Steam\steamapps\common\Quake 4"))
     parser.add_argument("--best-of", type=int, choices=(1, 3, 5), default=1)

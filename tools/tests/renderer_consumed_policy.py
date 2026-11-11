@@ -420,7 +420,7 @@ def main():
             binary = out/(tag+'.exe')
             command = [compiler, '-std=c++20', '-pthread', '-I', str(out)]
             if args.vulkan:
-                command += ['-DOPENQ4_RENDERER_VK_MODULE']
+                command += ['-DOPEND3_RENDERER_VK_MODULE']
             if args.sanitize:
                 command += ['-fsanitize=address,undefined', '-fno-omit-frame-pointer', '-g', '-no-pie']
             command += [str(source), str(out/'resolvers.cpp'), str(out/'main.cpp'), str(root/'src/imagetools/ImageContentIdentity.cpp'), str(root/'src/idlib/CryptoHash.cpp'), '-o', str(binary)]
@@ -429,7 +429,7 @@ def main():
                     raise RuntimeError('Use GCC/Clang Unix-style driver for sanitizers')
                 command = [compiler, '/nologo', '/std:c++20', '/EHsc', '/MTd', '/D_DEBUG', '/D_ITERATOR_DEBUG_LEVEL=2', '/I'+str(out)]
                 if args.vulkan:
-                    command += ['/DOPENQ4_RENDERER_VK_MODULE']
+                    command += ['/DOPEND3_RENDERER_VK_MODULE']
                 command += [str(source), str(out/'resolvers.cpp'), str(out/'main.cpp'), str(root/'src/imagetools/ImageContentIdentity.cpp'), str(root/'src/idlib/CryptoHash.cpp'), '/Fe:'+str(binary), '/Fo:'+str(out)+os.sep]
             for stage, call in [('compile', command), ('run', [str(binary)])]:
                 result = subprocess.run(call, cwd=out, env=env, timeout=120, capture_output=True, text=True)

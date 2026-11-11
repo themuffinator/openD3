@@ -124,7 +124,7 @@ def bind_row(doc: Document, row: int, label_key: str, value_x: float) -> dict:
 
 
 def controls_document() -> dict:
-    doc = Document("openq4.controls")
+    doc = Document("opend3.controls")
     doc.state["controls.capture"] = {"type": "number", "initial": -1}
     for row, binding in enumerate(BINDINGS):
         doc.state[f"controls.{row}.keys"] = {"type": "string", "initial": "", "keyBinding": binding}

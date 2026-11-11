@@ -36,23 +36,23 @@ extern idCVar s_warnOnMissingSamples;
 extern idCVar s_openALEfxDebugMode;
 
 #if defined( AL_AUXILIARY_SEND_FILTER ) && defined( AL_DIRECT_FILTER ) && defined( AL_FILTER_LOWPASS ) && defined( AL_EFFECTSLOT_NULL ) && defined( AL_FILTER_NULL )
-	#define OPENQ4_OPENAL_EFX_SUPPORTED 1
+	#define OPEND3_OPENAL_EFX_SUPPORTED 1
 #else
-	#define OPENQ4_OPENAL_EFX_SUPPORTED 0
+	#define OPEND3_OPENAL_EFX_SUPPORTED 0
 #endif
 
-#if OPENQ4_OPENAL_EFX_SUPPORTED
-typedef void ( AL_APIENTRY *openq4_alGenFilters_t )( ALsizei n, ALuint *filters );
-typedef void ( AL_APIENTRY *openq4_alDeleteFilters_t )( ALsizei n, const ALuint *filters );
-typedef void ( AL_APIENTRY *openq4_alFilteri_t )( ALuint filter, ALenum param, ALint iValue );
-typedef void ( AL_APIENTRY *openq4_alFilterf_t )( ALuint filter, ALenum param, ALfloat flValue );
+#if OPEND3_OPENAL_EFX_SUPPORTED
+typedef void ( AL_APIENTRY *opend3_alGenFilters_t )( ALsizei n, ALuint *filters );
+typedef void ( AL_APIENTRY *opend3_alDeleteFilters_t )( ALsizei n, const ALuint *filters );
+typedef void ( AL_APIENTRY *opend3_alFilteri_t )( ALuint filter, ALenum param, ALint iValue );
+typedef void ( AL_APIENTRY *opend3_alFilterf_t )( ALuint filter, ALenum param, ALfloat flValue );
 
-static openq4_alGenFilters_t qalGenFilters = NULL;
-static openq4_alDeleteFilters_t qalDeleteFilters = NULL;
-static openq4_alFilteri_t qalFilteri = NULL;
-static openq4_alFilterf_t qalFilterf = NULL;
+static opend3_alGenFilters_t qalGenFilters = NULL;
+static opend3_alDeleteFilters_t qalDeleteFilters = NULL;
+static opend3_alFilteri_t qalFilteri = NULL;
+static opend3_alFilterf_t qalFilterf = NULL;
 
-static bool openQ4_LoadVoiceEfxProcs() {
+static bool openD3_LoadVoiceEfxProcs() {
 	static bool initialized = false;
 	static bool available = false;
 
@@ -61,10 +61,10 @@ static bool openQ4_LoadVoiceEfxProcs() {
 	}
 	initialized = true;
 
-	qalGenFilters = reinterpret_cast<openq4_alGenFilters_t>( alGetProcAddress( "alGenFilters" ) );
-	qalDeleteFilters = reinterpret_cast<openq4_alDeleteFilters_t>( alGetProcAddress( "alDeleteFilters" ) );
-	qalFilteri = reinterpret_cast<openq4_alFilteri_t>( alGetProcAddress( "alFilteri" ) );
-	qalFilterf = reinterpret_cast<openq4_alFilterf_t>( alGetProcAddress( "alFilterf" ) );
+	qalGenFilters = reinterpret_cast<opend3_alGenFilters_t>( alGetProcAddress( "alGenFilters" ) );
+	qalDeleteFilters = reinterpret_cast<opend3_alDeleteFilters_t>( alGetProcAddress( "alDeleteFilters" ) );
+	qalFilteri = reinterpret_cast<opend3_alFilteri_t>( alGetProcAddress( "alFilteri" ) );
+	qalFilterf = reinterpret_cast<opend3_alFilterf_t>( alGetProcAddress( "alFilterf" ) );
 
 	available =
 		( qalGenFilters != NULL ) &&
@@ -76,27 +76,27 @@ static bool openQ4_LoadVoiceEfxProcs() {
 #endif
 
 #if defined( AL_SEC_OFFSET_LATENCY_SOFT )
-	#define OPENQ4_OPENAL_SOURCE_LATENCY_SUPPORTED 1
+	#define OPEND3_OPENAL_SOURCE_LATENCY_SUPPORTED 1
 #else
-	#define OPENQ4_OPENAL_SOURCE_LATENCY_SUPPORTED 0
+	#define OPEND3_OPENAL_SOURCE_LATENCY_SUPPORTED 0
 #endif
 
 // Centre routing submits 5.1 buffers played through direct channels.
 #if defined( AL_FORMAT_51CHN16 ) && defined( AL_DIRECT_CHANNELS_SOFT )
-	#define OPENQ4_OPENAL_CENTER_ROUTING_SUPPORTED 1
+	#define OPEND3_OPENAL_CENTER_ROUTING_SUPPORTED 1
 #else
-	#define OPENQ4_OPENAL_CENTER_ROUTING_SUPPORTED 0
+	#define OPEND3_OPENAL_CENTER_ROUTING_SUPPORTED 0
 #endif
 
 // Voices are created, started and refilled on the sound (main) thread only, so
 // the deep routed-queue slot count and the routing scratch are plain statics.
 // AL_SoundSample.cpp's fixed reservation counts the slots and the scratch.
 static int soundDeepRoutedQueueVoices = 0;
-#if OPENQ4_OPENAL_CENTER_ROUTING_SUPPORTED
+#if OPEND3_OPENAL_CENTER_ROUTING_SUPPORTED
 static short soundRoutedQueueScratch[SOUND_QUEUE_MAX_FRAMES * 6];
 #endif
 
-#if OPENQ4_OPENAL_SOURCE_LATENCY_SUPPORTED
+#if OPEND3_OPENAL_SOURCE_LATENCY_SUPPORTED
 static LPALGETSOURCEDVSOFT qalGetSourcedvSOFT = NULL;
 #endif
 
@@ -111,17 +111,17 @@ static int SYSTEM_SAMPLE_RATE = 44100;
 static float ONE_OVER_SYSTEM_SAMPLE_RATE = 1.0f / SYSTEM_SAMPLE_RATE;
 static const int OPENAL_RESTART_SAMPLE_ALIGNMENT = 128;
 
-static const float OPENQ4_OPENAL_PORTAL_DIRECT_ATTENUATION_DB = -8.0f;
-static const float OPENQ4_OPENAL_PORTAL_DIRECT_HF_ATTENUATION_DB = -24.0f;
-static const float OPENQ4_OPENAL_PORTAL_WET_ATTENUATION_DB = -3.0f;
-static const float OPENQ4_OPENAL_PORTAL_WET_HF_ATTENUATION_DB = -10.0f;
-static const float OPENQ4_OPENAL_ENV_DIRECT_ATTENUATION_DB = -2.0f;
-static const float OPENQ4_OPENAL_ENV_DIRECT_HF_ATTENUATION_DB = -16.0f;
-static const float OPENQ4_OPENAL_ENV_WET_ATTENUATION_DB = -1.0f;
-static const float OPENQ4_OPENAL_ENV_WET_HF_ATTENUATION_DB = -12.0f;
-static const float OPENQ4_OPENAL_MAX_SOURCE_GAIN = 16.0f;
+static const float OPEND3_OPENAL_PORTAL_DIRECT_ATTENUATION_DB = -8.0f;
+static const float OPEND3_OPENAL_PORTAL_DIRECT_HF_ATTENUATION_DB = -24.0f;
+static const float OPEND3_OPENAL_PORTAL_WET_ATTENUATION_DB = -3.0f;
+static const float OPEND3_OPENAL_PORTAL_WET_HF_ATTENUATION_DB = -10.0f;
+static const float OPEND3_OPENAL_ENV_DIRECT_ATTENUATION_DB = -2.0f;
+static const float OPEND3_OPENAL_ENV_DIRECT_HF_ATTENUATION_DB = -16.0f;
+static const float OPEND3_OPENAL_ENV_WET_ATTENUATION_DB = -1.0f;
+static const float OPEND3_OPENAL_ENV_WET_HF_ATTENUATION_DB = -12.0f;
+static const float OPEND3_OPENAL_MAX_SOURCE_GAIN = 16.0f;
 
-struct openQ4OcclusionFilter_t
+struct openD3OcclusionFilter_t
 {
 	float directGain;
 	float directGainHF;
@@ -129,7 +129,7 @@ struct openQ4OcclusionFilter_t
 	float wetGainHF;
 };
 
-static float OpenQ4_DBToClampedGain( const float db )
+static float openD3_DBToClampedGain( const float db )
 {
 	if( FLOAT_IS_NAN( db ) )
 	{
@@ -138,7 +138,7 @@ static float OpenQ4_DBToClampedGain( const float db )
 	return idMath::ClampFloat( 0.0f, 1.0f, DBtoLinear( db ) );
 }
 
-static float OpenQ4_SanitizeUnitValue( const float value )
+static float openD3_SanitizeUnitValue( const float value )
 {
 	if( FLOAT_IS_NAN( value ) || value <= 0.0f )
 	{
@@ -151,33 +151,33 @@ static float OpenQ4_SanitizeUnitValue( const float value )
 	return value;
 }
 
-static float OpenQ4_SanitizeSourceGain( const float sourceGain )
+static float openD3_SanitizeSourceGain( const float sourceGain )
 {
 	if( FLOAT_IS_NAN( sourceGain ) || sourceGain <= 0.0f )
 	{
 		return 0.0f;
 	}
-	return idMath::ClampFloat( 0.0f, OPENQ4_OPENAL_MAX_SOURCE_GAIN, sourceGain );
+	return idMath::ClampFloat( 0.0f, OPEND3_OPENAL_MAX_SOURCE_GAIN, sourceGain );
 }
 
-static openQ4OcclusionFilter_t OpenQ4_BuildOcclusionFilter( const float occlusion, const float environmentMuffle )
+static openD3OcclusionFilter_t openD3_BuildOcclusionFilter( const float occlusion, const float environmentMuffle )
 {
-	const float clampedOcclusion = OpenQ4_SanitizeUnitValue( occlusion );
-	const float clampedEnvironmentMuffle = OpenQ4_SanitizeUnitValue( environmentMuffle );
+	const float clampedOcclusion = openD3_SanitizeUnitValue( occlusion );
+	const float clampedEnvironmentMuffle = openD3_SanitizeUnitValue( environmentMuffle );
 
-	openQ4OcclusionFilter_t filter;
-	filter.directGain = OpenQ4_DBToClampedGain(
-		OPENQ4_OPENAL_PORTAL_DIRECT_ATTENUATION_DB * clampedOcclusion +
-		OPENQ4_OPENAL_ENV_DIRECT_ATTENUATION_DB * clampedEnvironmentMuffle );
-	filter.directGainHF = OpenQ4_DBToClampedGain(
-		OPENQ4_OPENAL_PORTAL_DIRECT_HF_ATTENUATION_DB * clampedOcclusion +
-		OPENQ4_OPENAL_ENV_DIRECT_HF_ATTENUATION_DB * clampedEnvironmentMuffle );
-	filter.wetGain = OpenQ4_DBToClampedGain(
-		OPENQ4_OPENAL_PORTAL_WET_ATTENUATION_DB * clampedOcclusion +
-		OPENQ4_OPENAL_ENV_WET_ATTENUATION_DB * clampedEnvironmentMuffle );
-	filter.wetGainHF = OpenQ4_DBToClampedGain(
-		OPENQ4_OPENAL_PORTAL_WET_HF_ATTENUATION_DB * clampedOcclusion +
-		OPENQ4_OPENAL_ENV_WET_HF_ATTENUATION_DB * clampedEnvironmentMuffle );
+	openD3OcclusionFilter_t filter;
+	filter.directGain = openD3_DBToClampedGain(
+		OPEND3_OPENAL_PORTAL_DIRECT_ATTENUATION_DB * clampedOcclusion +
+		OPEND3_OPENAL_ENV_DIRECT_ATTENUATION_DB * clampedEnvironmentMuffle );
+	filter.directGainHF = openD3_DBToClampedGain(
+		OPEND3_OPENAL_PORTAL_DIRECT_HF_ATTENUATION_DB * clampedOcclusion +
+		OPEND3_OPENAL_ENV_DIRECT_HF_ATTENUATION_DB * clampedEnvironmentMuffle );
+	filter.wetGain = openD3_DBToClampedGain(
+		OPEND3_OPENAL_PORTAL_WET_ATTENUATION_DB * clampedOcclusion +
+		OPEND3_OPENAL_ENV_WET_ATTENUATION_DB * clampedEnvironmentMuffle );
+	filter.wetGainHF = openD3_DBToClampedGain(
+		OPEND3_OPENAL_PORTAL_WET_HF_ATTENUATION_DB * clampedOcclusion +
+		OPEND3_OPENAL_ENV_WET_HF_ATTENUATION_DB * clampedEnvironmentMuffle );
 	return filter;
 }
 
@@ -265,7 +265,7 @@ bool idSoundVoice_OpenAL::RecoversAtClock() const
 
 bool idSoundVoice_OpenAL::WantsCenterRouting() const
 {
-#if OPENQ4_OPENAL_CENTER_ROUTING_SUPPORTED
+#if OPEND3_OPENAL_CENTER_ROUTING_SUPPORTED
 	return SoundUseCenterChannel( soundSystemLocal.hardware.HasCenterChannelOutput(),
 		numChannels == 1 && ( loopingSample == NULL || loopingSample->NumChannels() == 1 ),
 		( startFlags & SSF_CENTER ) != 0, centerChannel, position.LengthSqr() );
@@ -673,7 +673,7 @@ void idSoundVoice_OpenAL::Create( const idSoundSample* leadinSample_, const idSo
 		alSourcef( openalSource, AL_ROLLOFF_FACTOR, 0.0f );
 		// AL_MAX_GAIN defaults to 1, which flattened every s_unclamped sound (57 stock
 		// map speakers are authored 1-12 dB hot) back to unity before the listener gain.
-		alSourcef( openalSource, AL_MAX_GAIN, OPENQ4_OPENAL_MAX_SOURCE_GAIN );
+		alSourcef( openalSource, AL_MAX_GAIN, OPEND3_OPENAL_MAX_SOURCE_GAIN );
 	}
 
 	formatTag = leadinSample->format.basic.formatTag;
@@ -767,7 +767,7 @@ bool idSoundVoice_OpenAL::Start( int offsetMS, int ssFlags )
 	outputSerial = soundSystemLocal.hardware.GetOutputSerial();
 	outputRecovery = false;
 	startFlags = ssFlags;
-#if OPENQ4_OPENAL_CENTER_ROUTING_SUPPORTED
+#if OPEND3_OPENAL_CENTER_ROUTING_SUPPORTED
 	centerRouting = WantsCenterRouting();
 	if( centerRouting ) {
 		if( !EnsureStreamingBuffers() ) return false;
@@ -1068,7 +1068,7 @@ int idSoundVoice_OpenAL::SubmitBuffer( idSoundSample_OpenAL* sample, int bufferN
 
 	const byte* audioData = reinterpret_cast<const byte*>( sampleBuffer.buffer ) + byteOffset;
 	int queueFrames = SoundQueueChunkFrames( sample->SampleRate(), bytesPerSample );
-#if OPENQ4_OPENAL_CENTER_ROUTING_SUPPORTED
+#if OPEND3_OPENAL_CENTER_ROUTING_SUPPORTED
 	if( centerRouting )
 	{
 		queueFrames = RoutedQueueFrames( sample->SampleRate() );
@@ -1085,7 +1085,7 @@ int idSoundVoice_OpenAL::SubmitBuffer( idSoundSample_OpenAL* sample, int bufferN
 		return 0;
 	}
 
-#if OPENQ4_OPENAL_CENTER_ROUTING_SUPPORTED
+#if OPEND3_OPENAL_CENTER_ROUTING_SUPPORTED
 	if( centerRouting ) {
 		SoundRouteMonoToCenter( reinterpret_cast<const short*>( audioData ), submitSamples, centerChannel, soundRoutedQueueScratch );
 		alBufferData( streamBuffer, AL_FORMAT_51CHN16, soundRoutedQueueScratch, submitSamples * 6 * sizeof( short ), sample->SampleRate() );
@@ -1115,7 +1115,7 @@ int idSoundVoice_OpenAL::StreamBlockFrames( idSoundSample_OpenAL* sample, int of
 	const int channels = Max( 1, sample->NumChannels() );
 	int queueFrames = SoundQueueChunkFrames( sample->SampleRate(), channels * static_cast<int>( sizeof( short ) ) );
 	int decodeCapacity = static_cast<int>( SOUND_QUEUE_BUFFER_BYTES / sizeof( short ) ) / channels;
-#if OPENQ4_OPENAL_CENTER_ROUTING_SUPPORTED
+#if OPEND3_OPENAL_CENTER_ROUTING_SUPPORTED
 	if( centerRouting ) {
 		queueFrames = RoutedQueueFrames( sample->SampleRate() );
 		decodeCapacity = SOUND_QUEUE_MAX_FRAMES;
@@ -1183,7 +1183,7 @@ bool idSoundVoice_OpenAL::QueueNextBuffer( ALuint streamBuffer )
 		const int frames = oggStream->BlockFrames();
 		const int channels = sample->NumChannels();
 		if( pcm == NULL || frames <= 0 ) { ResetQueuedBufferState(); return false; }
-#if OPENQ4_OPENAL_CENTER_ROUTING_SUPPORTED
+#if OPEND3_OPENAL_CENTER_ROUTING_SUPPORTED
 		if( centerRouting ) {
 			SoundRouteMonoToCenter( pcm, frames, centerChannel, soundRoutedQueueScratch );
 			alBufferData( streamBuffer, AL_FORMAT_51CHN16, soundRoutedQueueScratch, frames * 6 * sizeof( short ), sample->SampleRate() );
@@ -1428,7 +1428,7 @@ idSoundVoice_OpenAL::SourceLatencyQueriesAvailable
 */
 bool idSoundVoice_OpenAL::SourceLatencyQueriesAvailable()
 {
-#if OPENQ4_OPENAL_SOURCE_LATENCY_SUPPORTED
+#if OPEND3_OPENAL_SOURCE_LATENCY_SUPPORTED
 	if( alIsExtensionPresent( "AL_SOFT_source_latency" ) != AL_TRUE )
 	{
 		return false;
@@ -1453,7 +1453,7 @@ bool idSoundVoice_OpenAL::GetPlaybackLatencyMS( float& offsetMS, float& latencyM
 	offsetMS = 0.0f;
 	latencyMS = 0.0f;
 
-#if OPENQ4_OPENAL_SOURCE_LATENCY_SUPPORTED
+#if OPEND3_OPENAL_SOURCE_LATENCY_SUPPORTED
 	if( !alIsSource( openalSource ) || !SourceLatencyQueriesAvailable() )
 	{
 		return false;
@@ -1841,8 +1841,8 @@ void idSoundVoice_OpenAL::ResetSourceMixState()
 		alSourcei( openalSource, AL_SOURCE_RESAMPLER_SOFT, hardware.GetSourceResampler() );
 	}
 #endif
-#if OPENQ4_OPENAL_EFX_SUPPORTED
-	if( soundSystemLocal.hardware.HasEFXFilters() && openQ4_LoadVoiceEfxProcs() )
+#if OPEND3_OPENAL_EFX_SUPPORTED
+	if( soundSystemLocal.hardware.HasEFXFilters() && openD3_LoadVoiceEfxProcs() )
 	{
 		alSourcei( openalSource, AL_DIRECT_FILTER, AL_FILTER_NULL );
 		DetachReverbSends();
@@ -1895,7 +1895,7 @@ idSoundVoice_OpenAL::DetachReverbSends
 */
 void idSoundVoice_OpenAL::DetachReverbSends()
 {
-#if OPENQ4_OPENAL_EFX_SUPPORTED
+#if OPEND3_OPENAL_EFX_SUPPORTED
 	if( !alIsSource( openalSource ) || !soundSystemLocal.hardware.HasEFXFilters() )
 	{
 		return;
@@ -1916,8 +1916,8 @@ idSoundVoice_OpenAL::CreateWetDryFilters
 */
 void idSoundVoice_OpenAL::CreateWetDryFilters()
 {
-#if OPENQ4_OPENAL_EFX_SUPPORTED
-	if( !soundSystemLocal.hardware.HasEFXFilters() || !openQ4_LoadVoiceEfxProcs() || !alIsSource( openalSource ) )
+#if OPEND3_OPENAL_EFX_SUPPORTED
+	if( !soundSystemLocal.hardware.HasEFXFilters() || !openD3_LoadVoiceEfxProcs() || !alIsSource( openalSource ) )
 	{
 		return;
 	}
@@ -1976,7 +1976,7 @@ idSoundVoice_OpenAL::DestroyWetDryFilters
 */
 void idSoundVoice_OpenAL::DestroyWetDryFilters()
 {
-#if OPENQ4_OPENAL_EFX_SUPPORTED
+#if OPEND3_OPENAL_EFX_SUPPORTED
 	if( openalDirectFilter != 0 )
 	{
 		if( qalDeleteFilters != NULL )
@@ -2026,8 +2026,8 @@ void idSoundVoice_OpenAL::ApplyWetDryRouting()
 		return;
 	}
 
-	float effectiveDry = OpenQ4_SanitizeUnitValue( dryLevel );
-	float effectiveWet = OpenQ4_SanitizeUnitValue( wetLevel );
+	float effectiveDry = openD3_SanitizeUnitValue( dryLevel );
+	float effectiveWet = openD3_SanitizeUnitValue( wetLevel );
 
 	switch( s_openALEfxDebugMode.GetInteger() )
 	{
@@ -2043,10 +2043,10 @@ void idSoundVoice_OpenAL::ApplyWetDryRouting()
 			break;
 	}
 
-	const float effectiveGain = OpenQ4_SanitizeSourceGain( gain );
-	const openQ4OcclusionFilter_t occlusionFilter = OpenQ4_BuildOcclusionFilter( occlusion, environmentMuffle );
+	const float effectiveGain = openD3_SanitizeSourceGain( gain );
+	const openD3OcclusionFilter_t occlusionFilter = openD3_BuildOcclusionFilter( occlusion, environmentMuffle );
 	// Every stock reverb preset sets an air absorption of -5 mB per metre, a high-frequency
-	// loss over distance. OpenAL applies it from the distance it attenuates by, and openQ4
+	// loss over distance. OpenAL applies it from the distance it attenuates by, and openD3
 	// attenuates itself (AL_ROLLOFF_FACTOR 0), so apply it here: -1.3 dB at 5 kHz across
 	// 1000 units, -3.8 dB across 3000. The position is the spatialized one, so a sound heard
 	// round a corner travels the portal path.
@@ -2072,7 +2072,7 @@ void idSoundVoice_OpenAL::ApplyWetDryRouting()
 		primaryRolloffGain = SoundReverb_RoomRolloffGain( position.Length(), reference, hardware.GetReverbSlotRoomRolloff( hardware.GetPrimaryReverbSlot() ) );
 		areaRolloffGain = SoundReverb_RoomRolloffGain( position.Length(), reference, hardware.GetReverbSlotRoomRolloff( reverbAreaSlot ) );
 	}
-	// openQ4's liquid and suit muffling, then retail's EAX source occlusion and room level
+	// openD3's liquid and suit muffling, then retail's EAX source occlusion and room level
 	const float directFilterGain = effectiveDry * occlusionFilter.directGain * eaxDirectGain;
 	const float directFilterGainHF = occlusionFilter.directGainHF * eaxDirectGainHF * airGainHF;
 	const float wetFilterGain = effectiveWet * occlusionFilter.wetGain * eaxPrimaryGain * primaryRolloffGain;
@@ -2080,8 +2080,8 @@ void idSoundVoice_OpenAL::ApplyWetDryRouting()
 	const float areaFilterGain = effectiveWet * occlusionFilter.wetGain * eaxAreaGain * areaRolloffGain;
 	const float areaFilterGainHF = occlusionFilter.wetGainHF * eaxAreaGainHF * airGainHF;
 
-#if OPENQ4_OPENAL_EFX_SUPPORTED
-	const bool hasEfxFilters = soundSystemLocal.hardware.HasEFXFilters() && openQ4_LoadVoiceEfxProcs();
+#if OPEND3_OPENAL_EFX_SUPPORTED
+	const bool hasEfxFilters = soundSystemLocal.hardware.HasEFXFilters() && openD3_LoadVoiceEfxProcs();
 	if( hasEfxFilters )
 	{
 		CreateWetDryFilters();
@@ -2155,17 +2155,17 @@ bool idSoundVoice_OpenAL::ApplyWetDryRoutingChecked(bool filters, bool wet, ALui
 #define SOUND_VOICE_CALL(expr) SOUND_VOICE_TEST(((expr),true))
 	if (!source || !lifetime) return false;
 	SOUND_VOICE_TEST(alGetError()==AL_NO_ERROR); SOUND_VOICE_TEST(alIsSource(source));
-	float dry=OpenQ4_SanitizeUnitValue(dryLevel), send=OpenQ4_SanitizeUnitValue(wetLevel);
+	float dry=openD3_SanitizeUnitValue(dryLevel), send=openD3_SanitizeUnitValue(wetLevel);
 	if (s_openALEfxDebugMode.GetInteger()==1) {dry=0.0f;send=1.0f;}
 	if (s_openALEfxDebugMode.GetInteger()==2) {dry=1.0f;send=0.0f;}
-	const auto occluded=OpenQ4_BuildOcclusionFilter(occlusion,environmentMuffle);
+	const auto occluded=openD3_BuildOcclusionFilter(occlusion,environmentMuffle);
 	// Same direct path and primary send as ApplyWetDryRouting; send 1 stays with the normal path,
 	// and so does air absorption, which the next normal update applies.
 	const float direct=dry*occluded.directGain*eaxDirectGain, auxiliary=send*occluded.wetGain*eaxPrimaryGain;
 	const float directHF=occluded.directGainHF*eaxDirectGainHF, auxiliaryHF=occluded.wetGainHF*eaxPrimaryGainHF;
-	const float effectiveGain=OpenQ4_SanitizeSourceGain(gain);
+	const float effectiveGain=openD3_SanitizeSourceGain(gain);
 	SoundSettingsSourceReceipt receipt;receipt.source=source;receipt.lifetime=lifetime;
-#if OPENQ4_OPENAL_EFX_SUPPORTED
+#if OPEND3_OPENAL_EFX_SUPPORTED
 	if (filters) {
 		LPALGENFILTERS gen=nullptr;LPALDELETEFILTERS del=nullptr;LPALFILTERI filteri=nullptr;LPALFILTERF filterf=nullptr;
 		SOUND_VOICE_CALL(gen=reinterpret_cast<LPALGENFILTERS>(alGetProcAddress("alGenFilters")));

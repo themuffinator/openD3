@@ -5,7 +5,7 @@ uniform sampler2D uLightFalloffMap;
 uniform sampler2D uLightProjectionMap;
 uniform sampler2D uDiffuseMap;
 uniform sampler2D uSpecularMap;
-#ifdef OPENQ4_SHADOW_COMPARE
+#ifdef OPEND3_SHADOW_COMPARE
 uniform sampler2DShadow uShadowMap;
 #else
 uniform sampler2D uShadowMap;
@@ -286,7 +286,7 @@ float EffectiveShadowFilterRadius() {
 		return 0.0;
 	}
 	float radius = uShadowFilterRadius;
-#ifndef OPENQ4_SHADOW_COMPARE
+#ifndef OPEND3_SHADOW_COMPARE
 	if ( uShadowFilterMode > 1.5 ) {
 		radius = max( radius, max( max( uShadowPCSSMaxRadius, 0.0 ), max( uShadowPCSSLightRadius, 0.0 ) ) );
 	}
@@ -424,7 +424,7 @@ float ShadowFootprintBias( int cascadeIndex ) {
 
 float SampleShadowCompare( vec2 uv, float depth, int cascadeIndex, float tapBias ) {
 	float bias = ShadowReceiverBias( cascadeIndex, depth ) + tapBias;
-#ifdef OPENQ4_SHADOW_COMPARE
+#ifdef OPEND3_SHADOW_COMPARE
 	return shadow2D( uShadowMap, vec3( uv, depth - bias ) ).r;
 #else
 	float storedDepth = texture2D( uShadowMap, uv ).r;
@@ -433,14 +433,14 @@ float SampleShadowCompare( vec2 uv, float depth, int cascadeIndex, float tapBias
 }
 
 float RawShadowDepth( vec2 uv ) {
-#ifdef OPENQ4_SHADOW_COMPARE
+#ifdef OPEND3_SHADOW_COMPARE
 	return shadow2D( uShadowMap, vec3( uv, 0.5 ) ).r;
 #else
 	return texture2D( uShadowMap, uv ).r;
 #endif
 }
 
-#ifndef OPENQ4_SHADOW_COMPARE
+#ifndef OPEND3_SHADOW_COMPARE
 float ProjectedPCSSRadius( vec2 uv, float depth, int cascadeIndex, vec2 clampMin, vec2 clampMax, mat2 rotation ) {
 	// The CPU already applies the distant-source scale to every radius. Keep
 	// the contact floor at the configured PCF radius; the larger PCSS search and
@@ -544,7 +544,7 @@ vec4 SampleShadowCascade( vec4 shadowCoord, vec4 atlasRect, int cascadeIndex ) {
 	mat2 rotation = ShadowOffsetRotation( tileTexel, depth );
 
 	float filterRadius = EffectiveShadowFilterRadius();
-#ifndef OPENQ4_SHADOW_COMPARE
+#ifndef OPEND3_SHADOW_COMPARE
 	if ( !ShadowDebugModeIs( kShadowDebugPCFOff ) ) {
 		filterRadius = ProjectedPCSSRadius( uv, depth, cascadeIndex, clampMin, clampMax, rotation );
 	}
@@ -835,7 +835,7 @@ vec4 ShadowDebugOutput( vec4 shadowInfo ) {
 		bool validCoord = ProjectShadowCoord( ShadowCoordByIndex( cascadeIndex ), localUv, depth );
 		if ( uShadowDebugMode < kShadowDebugAtlas + 0.5 ) {
 			vec2 atlasUv = mix( uShadowAtlasRect[cascadeIndex].xy, uShadowAtlasRect[cascadeIndex].zw, localUv );
-#ifdef OPENQ4_SHADOW_COMPARE
+#ifdef OPEND3_SHADOW_COMPARE
 			float atlasDepth = shadow2D( uShadowMap, vec3( atlasUv, depth ) ).r;
 #else
 			float atlasDepth = texture2D( uShadowMap, atlasUv ).r;
@@ -948,19 +948,19 @@ vec3 SampleTranslucentShadow() {
 	return mix( shadow, nextShadow, blend );
 }
 
-#ifdef OPENQ4_PBR
+#ifdef OPEND3_PBR
 // Native PBR shading for one light, given its shadow visibility; draw_pbr.cpp
 // appends the library that defines it to this source.
-vec3 OpenQ4PBRDirect( vec3 shadow );
+vec3 openD3PBRDirect( vec3 shadow );
 // The coverage of a translucent owner's replayed light; zero otherwise.
-float OpenQ4PBRAlpha();
+float openD3PBRAlpha();
 #endif
 
 void main() {
-#ifdef OPENQ4_PBR
+#ifdef OPEND3_PBR
 	gShadowDebugState = 0.0;
-#ifdef OPENQ4_PBR_UNSHADOWED
-	gl_FragColor = vec4( OpenQ4PBRDirect( vec3( 1.0 ) ), OpenQ4PBRAlpha() );
+#ifdef OPEND3_PBR_UNSHADOWED
+	gl_FragColor = vec4( openD3PBRDirect( vec3( 1.0 ) ), openD3PBRAlpha() );
 #else
 	if ( uShadowReceiverPlaneBias > 0.5 ) {
 		gShadowDepthGradients = vec4(
@@ -974,7 +974,7 @@ void main() {
 		gl_FragColor = ShadowDebugOutput( pbrShadowInfo );
 		return;
 	}
-	gl_FragColor = vec4( OpenQ4PBRDirect( pbrShadowInfo.x * SampleTranslucentShadow() ), OpenQ4PBRAlpha() );
+	gl_FragColor = vec4( openD3PBRDirect( pbrShadowInfo.x * SampleTranslucentShadow() ), openD3PBRAlpha() );
 #endif
 	return;
 #endif

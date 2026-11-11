@@ -67,7 +67,7 @@ static const int ROQ_AUDIO_MAX_SAMPLE = 32767;
 // failed allocation must not turn a successfully loaded map into a fatal
 // error; keep the decoded sample available for the voice streaming path and
 // avoid repeating the same warning for every remaining sample in the map.
-static std::atomic<bool> openQ4_openALBufferAllocationWarningIssued( false );
+static std::atomic<bool> openD3_openALBufferAllocationWarningIssued( false );
 
 extern idCVar sys_lang;
 
@@ -378,7 +378,7 @@ void idSoundOggStream::DecodeBlock( const idJobContext* context ) {
 			decoderError = decoder->Error(); outcome = DECODE_OPEN_FAILED; return;
 		}
 		if( shape.countedLength ) {
-			const stb_vorbis_openq4_granule_page page = { shape.pageStart, shape.pageEnd, shape.pageGranule };
+			const stb_vorbis_opend3_granule_page page = { shape.pageStart, shape.pageEnd, shape.pageGranule };
 			if( !decoder->SetCountedLength( shape.frames, page ) ) { outcome = DECODE_SHAPE_MISMATCH; return; }
 		}
 		if( decoder->Channels() != shape.channels || decoder->Rate() != shape.rate || decoder->Frames() != shape.frames ) {
@@ -573,12 +573,12 @@ static bool SoundResizeAmplitude( idList<byte>& out, uint64& reserved, int count
 }
 
 template<class type>
-static bool openQ4_ReadBigExact( idFile* file, type& value )
+static bool openD3_ReadBigExact( idFile* file, type& value )
 {
 	return file != NULL && file->ReadBig( value ) == sizeof( value );
 }
 
-static bool openQ4_ReadExact( idFile* file, void* buffer, const int size )
+static bool openD3_ReadExact( idFile* file, void* buffer, const int size )
 {
 	if( size < 0 || ( size > 0 && buffer == NULL ) )
 	{
@@ -587,7 +587,7 @@ static bool openQ4_ReadExact( idFile* file, void* buffer, const int size )
 	return size == 0 || ( file != NULL && file->Read( buffer, size ) == size );
 }
 
-static bool openQ4_ReadWaveExact( idWaveFile& wave, void* buffer, const int size )
+static bool openD3_ReadWaveExact( idWaveFile& wave, void* buffer, const int size )
 {
 	if( size <= 0 || buffer == NULL )
 	{
@@ -598,13 +598,13 @@ static bool openQ4_ReadWaveExact( idWaveFile& wave, void* buffer, const int size
 
 /*
 ========================
-openQ4_GetMSADPCMDecodedSize
+openD3_GetMSADPCMDecodedSize
 
 Validates the MS ADPCM block geometry before any arithmetic is narrowed to
 the engine's legacy int-sized allocation and sample-count interfaces.
 ========================
 */
-static bool openQ4_GetMSADPCMDecodedSize( const uint32_t encodedBytes, const uint16_t blockSize,
+static bool openD3_GetMSADPCMDecodedSize( const uint32_t encodedBytes, const uint16_t blockSize,
 	const uint16_t samplesPerBlock, const uint16_t channels, const uint16_t numCoefficients,
 	size_t& decodedBytes )
 {
@@ -710,7 +710,7 @@ static void SoundSample_AppendMissingQ4StockFallback( idList< idStr >& variants,
 	}
 }
 
-static bool openQ4_CanUploadSampleToOpenAL()
+static bool openD3_CanUploadSampleToOpenAL()
 {
 	ALCcontext* const expectedContext = soundSystemLocal.hardware.GetOpenALContext();
 	if( expectedContext == NULL )
@@ -850,14 +850,14 @@ bool idSoundSample_OpenAL::LoadGeneratedSample( const idStr& filename )
 
 		const int fileLength = fileIn->Length();
 		uint32 magic;
-		if( !openQ4_ReadBigExact( fileIn, magic ) || magic != SOUND_MAGIC_IDMSA )
+		if( !openD3_ReadBigExact( fileIn, magic ) || magic != SOUND_MAGIC_IDMSA )
 		{
 			return false;
 		}
-		if( !openQ4_ReadBigExact( fileIn, timestamp ) ||
-			!openQ4_ReadBigExact( fileIn, loaded ) ||
-			!openQ4_ReadBigExact( fileIn, playBegin ) ||
-			!openQ4_ReadBigExact( fileIn, playLength ) ||
+		if( !openD3_ReadBigExact( fileIn, timestamp ) ||
+			!openD3_ReadBigExact( fileIn, loaded ) ||
+			!openD3_ReadBigExact( fileIn, playBegin ) ||
+			!openD3_ReadBigExact( fileIn, playLength ) ||
 			playBegin < 0 ||
 			playLength < 0 )
 		{
@@ -868,21 +868,21 @@ bool idSoundSample_OpenAL::LoadGeneratedSample( const idStr& filename )
 			return false;
 		}
 		int num;
-		if( !openQ4_ReadBigExact( fileIn, num ) || num < 0 || num > fileLength )
+		if( !openD3_ReadBigExact( fileIn, num ) || num < 0 || num > fileLength )
 		{
 			return false;
 		}
 		if( !SoundResizeAmplitude( amplitude, amplitudeReserved, num ) ) return false;
-		if( !openQ4_ReadExact( fileIn, amplitude.Ptr(), amplitude.Num() ) )
+		if( !openD3_ReadExact( fileIn, amplitude.Ptr(), amplitude.Num() ) )
 		{
 			SoundResizeAmplitude( amplitude, amplitudeReserved, 0 );
 			return false;
 		}
-		if( !openQ4_ReadBigExact( fileIn, totalBufferSize ) || totalBufferSize <= 0 )
+		if( !openD3_ReadBigExact( fileIn, totalBufferSize ) || totalBufferSize <= 0 )
 		{
 			return false;
 		}
-		if( !openQ4_ReadBigExact( fileIn, num ) || num <= 0 || num > totalBufferSize || num > 16384 )
+		if( !openD3_ReadBigExact( fileIn, num ) || num <= 0 || num > totalBufferSize || num > 16384 )
 		{
 			return false;
 		}
@@ -891,8 +891,8 @@ bool idSoundSample_OpenAL::LoadGeneratedSample( const idStr& filename )
 		for( int i = 0; i < num; i++ )
 		{
 			buffers[ i ].buffer = NULL;
-			if( !openQ4_ReadBigExact( fileIn, buffers[ i ].numSamples ) ||
-				!openQ4_ReadBigExact( fileIn, buffers[ i ].bufferSize ) ||
+			if( !openD3_ReadBigExact( fileIn, buffers[ i ].numSamples ) ||
+				!openD3_ReadBigExact( fileIn, buffers[ i ].bufferSize ) ||
 				buffers[ i ].numSamples < 0 ||
 				buffers[ i ].bufferSize <= 0 ||
 				buffers[ i ].bufferSize > remainingBufferBytes )
@@ -905,7 +905,7 @@ bool idSoundSample_OpenAL::LoadGeneratedSample( const idStr& filename )
 				return false;
 			}
 			buffers[ i ].buffer = AllocBuffer( buffers[ i ].bufferSize, GetName() );
-			if( buffers[ i ].buffer == NULL || !openQ4_ReadExact( fileIn, buffers[ i ].buffer, buffers[ i ].bufferSize ) )
+			if( buffers[ i ].buffer == NULL || !openD3_ReadExact( fileIn, buffers[ i ].buffer, buffers[ i ].bufferSize ) )
 			{
 				for( int j = 0; j <= i; j++ )
 				{
@@ -1150,7 +1150,7 @@ void idSoundSample_OpenAL::CreateOpenALBuffer()
 		return;
 	}
 
-	if( !openQ4_CanUploadSampleToOpenAL() )
+	if( !openD3_CanUploadSampleToOpenAL() )
 	{
 		return;
 	}
@@ -1169,7 +1169,7 @@ void idSoundSample_OpenAL::CreateOpenALBuffer()
 		}
 		openalBuffer = 0;
 		openalBufferUploadFailed = true;
-		if( !openQ4_openALBufferAllocationWarningIssued.exchange( true, std::memory_order_relaxed ) )
+		if( !openD3_openALBufferAllocationWarningIssued.exchange( true, std::memory_order_relaxed ) )
 		{
 			common->Warning(
 				"OpenAL could not allocate another sample buffer (error 0x%x, sample '%s'); "
@@ -1468,7 +1468,7 @@ bool idSoundSample_OpenAL::LoadWav( const idStr& filename )
 		buffers[0].buffer = AllocBuffer( totalBufferSize, GetName() );
 
 		if( buffers[0].buffer == NULL ) { FreeData(); return false; }
-		if( !openQ4_ReadWaveExact( wave, buffers[0].buffer, totalBufferSize ) )
+		if( !openD3_ReadWaveExact( wave, buffers[0].buffer, totalBufferSize ) )
 		{
 			idLib::Warning( "LoadWav( %s ) : could not read PCM data", filename.c_str() );
 			FreeData();
@@ -1486,7 +1486,7 @@ bool idSoundSample_OpenAL::LoadWav( const idStr& filename )
 	else if( format.basic.formatTag == idWaveFile::FORMAT_ADPCM )
 	{
 		size_t decodedBytes = 0;
-		if( !openQ4_GetMSADPCMDecodedSize( dataChunkSize, format.basic.blockSize,
+		if( !openD3_GetMSADPCMDecodedSize( dataChunkSize, format.basic.blockSize,
 			format.extra.adpcm.samplesPerBlock, format.basic.numChannels,
 			format.extra.adpcm.numCoef, decodedBytes ) )
 		{
@@ -1505,7 +1505,7 @@ bool idSoundSample_OpenAL::LoadWav( const idStr& filename )
 		buffers[0].buffer  = AllocBuffer( totalBufferSize, GetName() );
 
 		if( buffers[0].buffer == NULL ) { FreeData(); return false; }
-		if( !openQ4_ReadWaveExact( wave, buffers[0].buffer, totalBufferSize ) )
+		if( !openD3_ReadWaveExact( wave, buffers[0].buffer, totalBufferSize ) )
 		{
 			idLib::Warning( "LoadWav( %s ) : could not read ADPCM data", filename.c_str() );
 			FreeData();
@@ -1851,7 +1851,7 @@ bool idSoundSample_OpenAL::LoadOggStream( const idStr& filename )
 	// decoders can seek once they know that length and the last page that carries
 	// a position; a stream with no positioned page at all decodes whole instead.
 	const bool counted = frames == 0;
-	stb_vorbis_openq4_granule_page lastPage = {};
+	stb_vorbis_opend3_granule_page lastPage = {};
 	if( counted && !stream.FindLastGranulePage( lastPage ) ) return false;
 	// The decoded size must fit the sample's int-sized PCM bookkeeping: about three
 	// hours of 48 kHz stereo, more at the stock rates. The envelope is 60 bytes a second.
@@ -2532,7 +2532,7 @@ bool idSoundSample_OpenAL::LoadRoQ( const idStr& filename )
 	if( fileIn == NULL || fileIn->Length() < 16 ) return false;
 	const int fileLen = fileIn->Length();
 	byte header[8];
-	if( !openQ4_ReadExact( fileIn, header, 8 ) || ( header[0] | ( header[1] << 8 ) ) != ROQ_FILE_MAGIC ) return false;
+	if( !openD3_ReadExact( fileIn, header, 8 ) || ( header[0] | ( header[1] << 8 ) ) != ROQ_FILE_MAGIC ) return false;
 
 	// Count audio values from chunk headers, then decode directly into the one
 	// admitted PCM allocation. Video payloads and complete encoded RoQ files
@@ -2541,7 +2541,7 @@ bool idSoundSample_OpenAL::LoadRoQ( const idStr& filename )
 		channels = values = 0;
 		int offset = 8;
 		while( offset <= fileLen - 8 ) {
-			if( fileIn->Seek( offset, FS_SEEK_SET ) != 0 || !openQ4_ReadExact( fileIn, header, 8 ) ) return false;
+			if( fileIn->Seek( offset, FS_SEEK_SET ) != 0 || !openD3_ReadExact( fileIn, header, 8 ) ) return false;
 			const int chunkId = header[0] | ( header[1] << 8 );
 			const int chunkSize = header[2] | ( header[3] << 8 ) | ( header[4] << 16 );
 			const int argument = header[6] | ( header[7] << 8 );
@@ -2559,7 +2559,7 @@ bool idSoundSample_OpenAL::LoadRoQ( const idStr& filename )
 					byte input[4096];
 					for( int done = 0; done < chunkSize; ) {
 						const int count = Min( static_cast<int>( sizeof( input ) ), chunkSize - done );
-						if( !openQ4_ReadExact( fileIn, input, count ) ) return false;
+						if( !openD3_ReadExact( fileIn, input, count ) ) return false;
 						for( int i = 0; i < count; ++i ) {
 							int32& predictor = channels == 2 && ( i & 1 ) ? right : left;
 							predictor = idMath::ClampInt( ROQ_AUDIO_MIN_SAMPLE, ROQ_AUDIO_MAX_SAMPLE, predictor + RoQAudioDelta( input[i] ) );
@@ -2762,7 +2762,7 @@ bool idSoundSample_OpenAL::LoadAmplitude( const idStr& name )
 		return false;
 	}
 	if( !SoundResizeAmplitude( amplitude, amplitudeReserved, fileLength ) ) return false;
-	if( !openQ4_ReadExact( f, amplitude.Ptr(), amplitude.Num() ) )
+	if( !openD3_ReadExact( f, amplitude.Ptr(), amplitude.Num() ) )
 	{
 		SoundResizeAmplitude( amplitude, amplitudeReserved, 0 );
 		return false;
@@ -3322,7 +3322,7 @@ int idSoundSample_OpenAL::MS_ADPCM_decode( uint8** audio_buf, uint32* audio_len 
 	}
 
 	size_t decodedBytes = 0;
-	if( !openQ4_GetMSADPCMDecodedSize( *audio_len, format.basic.blockSize,
+	if( !openD3_GetMSADPCMDecodedSize( *audio_len, format.basic.blockSize,
 		format.extra.adpcm.samplesPerBlock, format.basic.numChannels,
 		format.extra.adpcm.numCoef, decodedBytes ) )
 	{

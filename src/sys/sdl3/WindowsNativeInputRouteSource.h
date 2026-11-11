@@ -6,7 +6,7 @@
 #include "NativeInputDriver.h"
 #include "../../framework/NativeInputPublications.h"
 
-namespace openq4::sys {
+namespace opend3::sys {
 // Uses copied engine window/provider publications, never HWND/SDL queries.
 class WindowsNativeInputWindowProbe final : public WindowsTextSessionWindowProbe {
 public:
@@ -54,5 +54,5 @@ private:
     std::uint64_t routeId = 0, controllerId = 0;
     bool preparing = false, poisoned = false, releasing = false, finished = false, completedInventory = false;
 };
-} // namespace openq4::sys
+} // namespace opend3::sys
 #endif

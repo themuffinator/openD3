@@ -6,14 +6,14 @@
 #include <limits>
 #include <stdexcept>
 #include <vector>
-#ifdef OPENQ4_BROKER_SHAPE_TEST
+#ifdef OPEND3_BROKER_SHAPE_TEST
 // Standalone source-bound harness extracts these actual frozen production
 // functions unchanged. Ordinary native builds still run all independent codec
 // oracles below; no duplicate broker implementation is linked into this test.
 #include "BrokerShapeValidation.h"
 #endif
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 namespace {
 std::size_t checks = 0;
 void Check(bool ok, const char* why) { ++checks; if (!ok) throw std::runtime_error(why); }
@@ -230,7 +230,7 @@ void BoundedStressAndBrokerShape() {
 		if (record.kind == Kind::Preedit && i % 4 == 0) { record.input.selectionStart = 0; record.input.selectionLength = text.size(); }
 		RoundTrip(record);
 	}
-#ifdef OPENQ4_BROKER_SHAPE_TEST
+#ifdef OPEND3_BROKER_SHAPE_TEST
 	for (int kind = -1; kind <= 11; ++kind) for (int origin = -1; origin <= 4; ++origin)
 		for (int input = -1; input <= 3; ++input) for (unsigned bits = 0; bits < 32; ++bits) {
 			TextNativeRecord record; record.kind = static_cast<Kind>(kind); record.origin = static_cast<Origin>(origin);

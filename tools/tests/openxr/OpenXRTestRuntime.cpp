@@ -1,6 +1,6 @@
 // Copyright (C) 2026 DarkMatter Productions
 //
-// openQ4 OpenXR test runtime.
+// openD3 OpenXR test runtime.
 //
 // A minimal OpenXR 1.0 runtime with XR_KHR_opengl_enable and
 // XR_KHR_vulkan_enable2, loaded through the standard Khronos loader by
@@ -14,21 +14,21 @@
 // the way a real compositor would and can be written out as images.
 //
 // Environment:
-//   OPENQ4_XR_TEST_SCRIPT   path of a frame script (see ParseScript)
-//   OPENQ4_XR_TEST_LOG      path of a JSON-lines event log
-//   OPENQ4_XR_TEST_EYE_SIZE "WIDTHxHEIGHT" recommended per-eye size (default 1440x1600)
-//   OPENQ4_XR_TEST_RATE     display refresh in Hz (default 90); 0 runs unpaced
-//   OPENQ4_XR_TEST_NO_INPUT 1 keeps every controller action inactive
-//   OPENQ4_XR_TEST_FAULT    "call:occurrence:value" (e.g. xrWaitSwapchainImage:2:timeout)
-//   OPENQ4_XR_TEST_FAULT_AFTER optional existing-file marker before counting calls
-//   OPENQ4_XR_TEST_FAULT_ONCE optional receipt prevents reinjection after loader restart
-//   OPENQ4_XR_TEST_VK_DEVICE  index of the Vulkan physical device the "headset"
+//   OPEND3_XR_TEST_SCRIPT   path of a frame script (see ParseScript)
+//   OPEND3_XR_TEST_LOG      path of a JSON-lines event log
+//   OPEND3_XR_TEST_EYE_SIZE "WIDTHxHEIGHT" recommended per-eye size (default 1440x1600)
+//   OPEND3_XR_TEST_RATE     display refresh in Hz (default 90); 0 runs unpaced
+//   OPEND3_XR_TEST_NO_INPUT 1 keeps every controller action inactive
+//   OPEND3_XR_TEST_FAULT    "call:occurrence:value" (e.g. xrWaitSwapchainImage:2:timeout)
+//   OPEND3_XR_TEST_FAULT_AFTER optional existing-file marker before counting calls
+//   OPEND3_XR_TEST_FAULT_ONCE optional receipt prevents reinjection after loader restart
+//   OPEND3_XR_TEST_VK_DEVICE  index of the Vulkan physical device the "headset"
 //                           renders with (default: the first discrete GPU)
-//   OPENQ4_XR_TEST_SPACES   comma-separated floor-level reference spaces offered
+//   OPEND3_XR_TEST_SPACES   comma-separated floor-level reference spaces offered
 //                           besides VIEW and LOCAL: stage, local_floor (which
 //                           also offers XR_EXT_local_floor), or none
 //                           (default: stage)
-//   OPENQ4_XR_TEST_VK_FORMATS comma-separated VkFormat values the swapchains
+//   OPEND3_XR_TEST_VK_FORMATS comma-separated VkFormat values the swapchains
 //                           offer, in order (default 43,50,37,44: RGBA and
 //                           BGRA, sRGB first)
 //
@@ -524,7 +524,7 @@ struct RuntimeGlobals {
 	int						faultOccurrence = 1, faultCalls = 0;
 	bool					faultFired = false;
 	int						trackingInvalidFrames = 0;
-	// floor-level reference spaces offered (OPENQ4_XR_TEST_SPACES)
+	// floor-level reference spaces offered (OPEND3_XR_TEST_SPACES)
 	bool					offerStage = true;
 	bool					offerLocalFloor = false;
 	// LOCAL's origin in the stage space: a seated origin at the default head
@@ -658,27 +658,27 @@ void InitGlobals() {
 	}
 	g.initialized = true;
 	ResetHands();
-	if ( const char *logPath = std::getenv( "OPENQ4_XR_TEST_LOG" ) ) {
+	if ( const char *logPath = std::getenv( "OPEND3_XR_TEST_LOG" ) ) {
 		g.log = std::fopen( logPath, "a" );
 	}
-	if ( const char *size = std::getenv( "OPENQ4_XR_TEST_EYE_SIZE" ) ) {
+	if ( const char *size = std::getenv( "OPEND3_XR_TEST_EYE_SIZE" ) ) {
 		int w = 0, h = 0;
 		if ( std::sscanf( size, "%dx%d", &w, &h ) == 2 && w >= 64 && h >= 64 && w <= 4096 && h <= 4096 ) {
 			g.eyeWidth = w;
 			g.eyeHeight = h;
 		}
 	}
-	if ( const char *rate = std::getenv( "OPENQ4_XR_TEST_RATE" ) ) {
+	if ( const char *rate = std::getenv( "OPEND3_XR_TEST_RATE" ) ) {
 		const double value = std::atof( rate );
 		if ( value >= 0.0 && value <= 1000.0 ) {
 			g.refreshRate = value;
 		}
 	}
-	if ( const char *script = std::getenv( "OPENQ4_XR_TEST_SCRIPT" ) ) {
+	if ( const char *script = std::getenv( "OPEND3_XR_TEST_SCRIPT" ) ) {
 		ParseScript( script );
 	}
-	g.noInput = std::getenv( "OPENQ4_XR_TEST_NO_INPUT" ) != nullptr;
-	if ( const char *fault = std::getenv( "OPENQ4_XR_TEST_FAULT" ) ) {
+	g.noInput = std::getenv( "OPEND3_XR_TEST_NO_INPUT" ) != nullptr;
+	if ( const char *fault = std::getenv( "OPEND3_XR_TEST_FAULT" ) ) {
 		std::istringstream input( fault );
 		std::string occurrence;
 		std::getline( input, g.faultCall, ':' );
@@ -686,13 +686,13 @@ void InitGlobals() {
 		std::getline( input, g.faultValue );
 		g.faultOccurrence = std::max( 1, std::atoi( occurrence.c_str() ) );
 	}
-	if ( const char *spaces = std::getenv( "OPENQ4_XR_TEST_SPACES" ) ) {
+	if ( const char *spaces = std::getenv( "OPEND3_XR_TEST_SPACES" ) ) {
 		const std::string list = std::string( "," ) + spaces + ",";
 		g.offerStage = list.find( ",stage," ) != std::string::npos;
 		g.offerLocalFloor = list.find( ",local_floor," ) != std::string::npos;
 	}
-	if ( const char *path = std::getenv( "OPENQ4_XR_TEST_FAULT_AFTER" ) ) g.faultAfter = path;
-	if ( const char *path = std::getenv( "OPENQ4_XR_TEST_FAULT_ONCE" ) ) g.faultOnce = path;
+	if ( const char *path = std::getenv( "OPEND3_XR_TEST_FAULT_AFTER" ) ) g.faultAfter = path;
+	if ( const char *path = std::getenv( "OPEND3_XR_TEST_FAULT_ONCE" ) ) g.faultOnce = path;
 	Log( "{\"event\":\"runtime_loaded\",\"eye_width\":%d,\"eye_height\":%d,\"rate\":%.1f}", g.eyeWidth, g.eyeHeight, g.refreshRate );
 }
 
@@ -1471,7 +1471,7 @@ const char *const SUPPORTED_EXTENSIONS[] = {
 	XR_KHR_OPENGL_ENABLE_EXTENSION_NAME,
 	XR_KHR_VULKAN_ENABLE2_EXTENSION_NAME,
 	XR_KHR_COMPOSITION_LAYER_CYLINDER_EXTENSION_NAME,
-	XR_EXT_LOCAL_FLOOR_EXTENSION_NAME,	// only while OPENQ4_XR_TEST_SPACES offers local_floor
+	XR_EXT_LOCAL_FLOOR_EXTENSION_NAME,	// only while OPEND3_XR_TEST_SPACES offers local_floor
 #if defined( __linux__ )
 	TR_MNDX_EGL_ENABLE_EXTENSION_NAME,
 #endif
@@ -1617,7 +1617,7 @@ XRAPI_ATTR XrResult XRAPI_CALL TR_xrGetInstanceProperties( XrInstance handle, Xr
 		return XR_ERROR_VALIDATION_FAILURE;
 	}
 	properties->runtimeVersion = XR_MAKE_VERSION( 0, 1, 0 );
-	std::snprintf( properties->runtimeName, sizeof( properties->runtimeName ), "openQ4 test runtime" );
+	std::snprintf( properties->runtimeName, sizeof( properties->runtimeName ), "openD3 test runtime" );
 	return XR_SUCCESS;
 }
 
@@ -1720,7 +1720,7 @@ XRAPI_ATTR XrResult XRAPI_CALL TR_xrGetSystemProperties( XrInstance handle, XrSy
 	}
 	properties->systemId = TR_SYSTEM_ID;
 	properties->vendorId = 0x4F51;
-	std::snprintf( properties->systemName, sizeof( properties->systemName ), "openQ4 simulated headset" );
+	std::snprintf( properties->systemName, sizeof( properties->systemName ), "openD3 simulated headset" );
 	properties->graphicsProperties.maxSwapchainImageWidth = 4096;
 	properties->graphicsProperties.maxSwapchainImageHeight = 4096;
 	properties->graphicsProperties.maxLayerCount = XR_MIN_COMPOSITION_LAYERS_SUPPORTED;
@@ -1910,7 +1910,7 @@ XRAPI_ATTR XrResult XRAPI_CALL TR_xrCreateVulkanInstanceKHR( XrInstance handle, 
 	return XR_SUCCESS;
 }
 
-// The GPU the simulated headset renders with: OPENQ4_XR_TEST_VK_DEVICE, or the
+// The GPU the simulated headset renders with: OPEND3_XR_TEST_VK_DEVICE, or the
 // first discrete GPU, or the first integrated one, or the first device.
 XRAPI_ATTR XrResult XRAPI_CALL TR_xrGetVulkanGraphicsDevice2KHR( XrInstance handle, const XrVulkanGraphicsDeviceGetInfoKHR *getInfo,
 		VkPhysicalDevice *vulkanPhysicalDevice ) {
@@ -1943,7 +1943,7 @@ XRAPI_ATTR XrResult XRAPI_CALL TR_xrGetVulkanGraphicsDevice2KHR( XrInstance hand
 		return XR_ERROR_RUNTIME_FAILURE;
 	}
 	int chosen = -1;
-	const char *forced = std::getenv( "OPENQ4_XR_TEST_VK_DEVICE" );
+	const char *forced = std::getenv( "OPEND3_XR_TEST_VK_DEVICE" );
 	if ( forced != nullptr && forced[0] != '\0' ) {
 		chosen = std::atoi( forced );
 		if ( chosen < 0 || chosen >= static_cast<int>( count ) ) {
@@ -2483,7 +2483,7 @@ XRAPI_ATTR XrResult XRAPI_CALL TR_xrDestroySpace( XrSpace handle ) {
 const std::vector<int64_t> &VulkanSwapchainFormats() {
 	static std::vector<int64_t> formats;
 	if ( formats.empty() ) {
-		const char *list = std::getenv( "OPENQ4_XR_TEST_VK_FORMATS" );
+		const char *list = std::getenv( "OPEND3_XR_TEST_VK_FORMATS" );
 		if ( list != nullptr && list[0] != '\0' ) {
 			std::stringstream stream( list );
 			std::string item;

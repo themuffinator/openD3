@@ -97,7 +97,7 @@ private:
 
 /*
 ================================================
-openQ4: the frame's default target.
+openD3: the frame's default target.
 
 Desktop frames draw to the window's framebuffer. A VR frame stands an eye or
 virtual-screen render texture in for it, and every "unbind"

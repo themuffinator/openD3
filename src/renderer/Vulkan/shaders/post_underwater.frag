@@ -1,6 +1,6 @@
 #version 450
 
-// openQ4 underwater view. A port of content/baseoq4/pak0/glprogs/underwater.fs,
+// openD3 underwater view. A port of content/baseod3/pak0/glprogs/underwater.fs,
 // which RB_STD_Underwater draws on the OpenGL backend; see that file for how
 // absorption, in-scattering, scattering blur, bloom and the surface effects
 // build the volume. The body below is that file with its uniforms moved into a

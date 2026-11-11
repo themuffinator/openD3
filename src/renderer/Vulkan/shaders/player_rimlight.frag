@@ -1,7 +1,7 @@
 #version 450
 
 // Multiplayer player rimlight. A port of
-// content/baseoq4/pak0/glprogs/player_rimlight.fs; see that file for the
+// content/baseod3/pak0/glprogs/player_rimlight.fs; see that file for the
 // shaping parameters.
 
 layout(std140, set = 6, binding = 0) uniform RimlightBlock {

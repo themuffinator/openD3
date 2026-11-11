@@ -1,7 +1,7 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
 #pragma once
 #include "NativeQueueBatch.h"
-namespace openq4 {
+namespace opend3 {
 // Root supplies a checked, non-reused module epoch. This object lives within one
 // SDL module load only; constructing another object cannot legitimize stale data.
 // Unload/reload requires root's verified retirement and a new module epoch.
@@ -14,4 +14,4 @@ public:
 private:
     const std::uint64_t epoch;
 };
-} // namespace openq4
+} // namespace opend3

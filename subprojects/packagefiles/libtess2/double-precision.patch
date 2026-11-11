@@ -6,7 +6,7 @@ diff --git a/Include/tesselator.h b/Include/tesselator.h
  };
  
 -typedef float TESSreal;
-+/* openQ4: preserve thin path topology through pixel coverage extraction. */
++/* openD3: preserve thin path topology through pixel coverage extraction. */
 +typedef double TESSreal;
  typedef int TESSindex;
  typedef struct TESStesselator TESStesselator;

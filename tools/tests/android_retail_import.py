@@ -13,7 +13,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 JAVA = r'''
-package com.darkmatter.openq4;
+package com.darkmatter.opend3;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
@@ -40,7 +40,7 @@ public final class RetailImportTest {
             Path base=Files.createDirectory(root.resolve(name));
             external=base.resolve("external").toFile();
             data=Files.createDirectories(external.toPath().resolve("q4base"));
-            save=Files.createDirectories(base.resolve("private/saves/baseoq4/savegames")).resolve("campaign.save");
+            save=Files.createDirectories(base.resolve("private/saves/baseod3/savegames")).resolve("campaign.save");
             Files.writeString(save,"keep this save exactly");
             config=data.resolve("autoexec.cfg");Files.writeString(config,"keep this setting exactly");
         }
@@ -52,7 +52,7 @@ public final class RetailImportTest {
             Files.copy(first,data.resolve("pak001.pk4"),StandardCopyOption.REPLACE_EXISTING);
             Files.copy(second,data.resolve("pak002.pk4"),StandardCopyOption.REPLACE_EXISTING);
         }
-        Path part(String name) { return external.toPath().resolve(".openq4-import").resolve(name+".part"); }
+        Path part(String name) { return external.toPath().resolve(".opend3-import").resolve(name+".part"); }
     }
     static class Source implements RetailImport.Source {
         final List<RetailImport.Entry> items=new ArrayList<>();
@@ -226,11 +226,11 @@ public final class RetailImportTest {
             try { failure(RetailImport.Code.DESTINATION_UNAVAILABLE,()->run(source(),linked,null)); }
             finally { Files.delete(link); }
             Scenario linkedWork=new Scenario("linked-work");
-            link=Files.createSymbolicLink(linkedWork.external.toPath().resolve(".openq4-import"),root);
+            link=Files.createSymbolicLink(linkedWork.external.toPath().resolve(".opend3-import"),root);
             try { failure(RetailImport.Code.DESTINATION_UNAVAILABLE,()->run(source(),linkedWork,null)); }
             finally { Files.delete(link); }
             Scenario linkedPart=new Scenario("linked-part");
-            Files.createDirectory(linkedPart.external.toPath().resolve(".openq4-import"));
+            Files.createDirectory(linkedPart.external.toPath().resolve(".opend3-import"));
             link=Files.createSymbolicLink(linkedPart.part("pak001.pk4"),first);
             try { failure(RetailImport.Code.DESTINATION_UNAVAILABLE,()->run(source(),linkedPart,null)); }
             finally { Files.delete(link); }
@@ -293,7 +293,7 @@ def main() -> None:
         corrupt[30+name_length+extra_length+2] ^= 255
         (scratch/'corrupt.pk4').write_bytes(corrupt)
         sources = {
-            'com/darkmatter/openq4/RetailImportTest.java': JAVA,
+            'com/darkmatter/opend3/RetailImportTest.java': JAVA,
             'android/system/ErrnoException.java': '''package android.system;
 public class ErrnoException extends Exception { public ErrnoException(Throwable cause){super(cause);} }''',
             'android/system/Os.java': '''package android.system;
@@ -312,13 +312,13 @@ public final class Os {
             path.write_text(source)
             source_paths.append(str(path))
         for name in ('Pk4Checksum.java', 'RetailData.java', 'RetailImport.java'):
-            source_paths.append(str(ROOT/'mobile/android/app/src/main/java/com/darkmatter/openq4'/name))
+            source_paths.append(str(ROOT/'mobile/android/app/src/main/java/com/darkmatter/opend3'/name))
         classes = scratch/'classes'
         classes.mkdir()
         javac = Path(args.javac).resolve()
         java = javac.with_name('java.exe' if os.name == 'nt' else 'java')
         subprocess.run([str(javac), '--release', '17', '-d', str(classes), *source_paths], check=True)
-        subprocess.run([str(java), '-cp', str(classes), 'com.darkmatter.openq4.RetailImportTest', str(scratch)], check=True)
+        subprocess.run([str(java), '-cp', str(classes), 'com.darkmatter.opend3.RetailImportTest', str(scratch)], check=True)
 
 
 if __name__ == '__main__':

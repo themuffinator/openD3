@@ -30,7 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 
 idCVar s_subFraction( "s_subFraction", "0.5", CVAR_ARCHIVE | CVAR_FLOAT, "Amount of each sound to send to the LFE channel" );
 
-static float OpenQ4_SanitizeMixFraction( const float value, const float fallback )
+static float openD3_SanitizeMixFraction( const float value, const float fallback )
 {
 	if( FLOAT_IS_NAN( value ) )
 	{
@@ -39,7 +39,7 @@ static float OpenQ4_SanitizeMixFraction( const float value, const float fallback
 	return idMath::ClampFloat( 0.0f, 1.0f, value );
 }
 
-static float OpenQ4_SanitizeMixScale( const float value )
+static float openD3_SanitizeMixScale( const float value )
 {
 	if( FLOAT_IS_NAN( value ) || value <= 0.0f )
 	{
@@ -203,7 +203,7 @@ void idSoundVoice_Base::CalculateSurround( int srcChannels, float pLevelMatrix[ 
 	}
 
 	memset( pLevelMatrix, 0, sizeof( float ) * MAX_CHANNELS_PER_VOICE * MAX_CHANNELS_PER_VOICE );
-	scale = OpenQ4_SanitizeMixScale( scale );
+	scale = openD3_SanitizeMixScale( scale );
 	if( srcChannels <= 0 || srcChannels > MAX_CHANNELS_PER_VOICE || dstChannels <= 0 || dstChannels > MAX_CHANNELS_PER_VOICE )
 	{
 		return;
@@ -226,13 +226,13 @@ void idSoundVoice_Base::CalculateSurround( int srcChannels, float pLevelMatrix[ 
 
 #define MATINDEX( src, dst ) ( srcChannels * dst + src )
 
-	float subFraction = OpenQ4_SanitizeMixFraction( s_subFraction.GetFloat(), 0.0f );
+	float subFraction = openD3_SanitizeMixFraction( s_subFraction.GetFloat(), 0.0f );
 
 	if( srcChannels == 1 )
 	{
 		idVec2 p2 = position.ToVec2();
 
-		float centerFraction = OpenQ4_SanitizeMixFraction( centerChannel, 0.0f );
+		float centerFraction = openD3_SanitizeMixFraction( centerChannel, 0.0f );
 
 		float sqrLength = p2.LengthSqr();
 		if( FLOAT_IS_NAN( sqrLength ) || sqrLength <= 0.01f )
@@ -254,7 +254,7 @@ void idSoundVoice_Base::CalculateSurround( int srcChannels, float pLevelMatrix[ 
 			{
 				spatialize = distance / innerRadius;
 			}
-			spatialize = OpenQ4_SanitizeMixFraction( spatialize, 1.0f );
+			spatialize = openD3_SanitizeMixFraction( spatialize, 1.0f );
 			float omni = omniLevel * ( 1.0f - spatialize );
 
 			if( dstCenter != -1 )

@@ -21,7 +21,7 @@ TOOL_PATH = ROOT / "tools" / "validation" / "stock_asset_baseline.py"
 
 
 def load_tool() -> ModuleType:
-    spec = importlib.util.spec_from_file_location("openq4_stock_asset_baseline", TOOL_PATH)
+    spec = importlib.util.spec_from_file_location("opend3_stock_asset_baseline", TOOL_PATH)
     if spec is None or spec.loader is None:
         raise AssertionError("could not load stock_asset_baseline.py")
     module = importlib.util.module_from_spec(spec)
@@ -39,7 +39,7 @@ def cvar_value(arguments: list[str], name: str) -> str | None:
 
 def timing_marker(map_name: str) -> str:
     return (
-        f"OPENQ4_FRAME_TIMING_V1 map={map_name} backend=opengl profile=baseline "
+        f"OPEND3_FRAME_TIMING_V1 map={map_name} backend=opengl profile=baseline "
         "cpuSamples=256 cpuP50Us=7000 cpuP95Us=11000 cpuP99Us=14000 "
         "gpuAvailable=1 gpuSamples=252 gpuP50Us=5000 gpuP95Us=8000 gpuP99Us=10000"
     )
@@ -270,7 +270,7 @@ def test_save_preview_coherence(tool: ModuleType, base: Path) -> None:
         / "p0-20260819-save-preview-final6-sp-default"
         / "savepaths"
         / "sp"
-        / "baseoq4"
+        / "baseod3"
     )
     final6_screenshot = final6 / "screenshots" / "stock-baseline" / "sp_after_load.tga"
     final6_preview = final6 / "savegames" / "StockBaselineSP.tga"
@@ -293,7 +293,7 @@ def test_save_preview_coherence(tool: ModuleType, base: Path) -> None:
             / "p0-20260819-save-preview-final6-sp-legacy50"
             / "savepaths"
             / "sp"
-            / "baseoq4"
+            / "baseod3"
             / "savegames"
             / "StockBaselineSP.tga"
         )
@@ -337,7 +337,7 @@ def test_save_preview_coherence(tool: ModuleType, base: Path) -> None:
         / "p0-20260819-final12"
         / "savepaths"
         / "sp"
-        / "baseoq4"
+        / "baseod3"
     )
     final12_screenshot = final12 / "screenshots" / "stock-baseline" / "sp_after_load.tga"
     final12_preview = final12 / "savegames" / "StockBaselineSP.tga"
@@ -366,7 +366,7 @@ def test_save_preview_coherence(tool: ModuleType, base: Path) -> None:
         / "p0-20260819-final11"
         / "savepaths"
         / "sp"
-        / "baseoq4"
+        / "baseod3"
     )
     final11_screenshot = final11 / "screenshots" / "stock-baseline" / "sp_after_load.tga"
     final11_preview = final11 / "savegames" / "StockBaselineSP.tga"
@@ -413,14 +413,14 @@ def test_asset_inventory_and_comparison(tool: ModuleType, base: Path) -> None:
     contaminated = base / "contaminated"
     (contaminated / "q4base").mkdir(parents=True)
     (contaminated / "q4base" / "pak001.pk4").write_bytes(b"stock")
-    (contaminated / "baseoq4").mkdir()
-    (contaminated / "baseoq4" / "override.cfg").write_text("override", encoding="utf-8")
+    (contaminated / "baseod3").mkdir()
+    (contaminated / "baseod3" / "override.cfg").write_text("override", encoding="utf-8")
     try:
         tool.collect_pk4s(contaminated)
     except ValueError as exc:
         assert "non-empty" in str(exc) and "unapproved content" in str(exc)
     else:
-        raise AssertionError("non-empty asset-root/baseoq4 must fail closed")
+        raise AssertionError("non-empty asset-root/baseod3 must fail closed")
 
     original_link_check = tool.is_link_or_junction
     tool.is_link_or_junction = lambda path: path.name == "q4base"
@@ -450,13 +450,13 @@ def test_asset_inventory_and_comparison(tool: ModuleType, base: Path) -> None:
     collision_assets = base / "collision-assets"
     collision_runtime = base / "collision-runtime"
     (collision_assets / "q4base").mkdir(parents=True)
-    (collision_runtime / "baseoq4").mkdir(parents=True)
+    (collision_runtime / "baseod3").mkdir(parents=True)
     with ZipFile(collision_assets / "q4base" / "pak001.pk4", "w") as archive:
         archive.writestr("guis/mainmenu.gui", "retail")
         archive.writestr("materials/retail_only.mtr", "retail")
-    with ZipFile(collision_runtime / "baseoq4" / "pak0.pk4", "w") as archive:
+    with ZipFile(collision_runtime / "baseod3" / "pak0.pk4", "w") as archive:
         archive.writestr("GUIS/MainMenu.gui", "overlay")
-        archive.writestr("materials/openq4_only.mtr", "overlay")
+        archive.writestr("materials/opend3_only.mtr", "overlay")
     collision_records = tool.collect_retail_path_collisions(
         collision_assets,
         tool.collect_pk4s(collision_assets),
@@ -467,7 +467,7 @@ def test_asset_inventory_and_comparison(tool: ModuleType, base: Path) -> None:
         {
             "path": "guis/mainmenu.gui",
             "retailPk4s": ["q4base/pak001.pk4"],
-            "openQ4OverlayPk4s": ["baseoq4/pak0.pk4"],
+            "openD3OverlayPk4s": ["baseod3/pak0.pk4"],
         }
     ]
     report_dir = base / "collision-report"
@@ -490,8 +490,8 @@ def test_asset_inventory_and_comparison(tool: ModuleType, base: Path) -> None:
                 "directoryViews": tool.asset_directory_views(collision_assets),
                 "stockPk4s": tool.collect_pk4s(collision_assets),
                 "looseFiles": [],
-                "openQ4OverlayPk4s": tool.collect_overlay_pk4s(collision_runtime),
-                "openQ4OverlayLooseFiles": [],
+                "openD3OverlayPk4s": tool.collect_overlay_pk4s(collision_runtime),
+                "openD3OverlayLooseFiles": [],
                 "retailArchiveBytesMatchExpected": True,
                 "retailPathNamespaceUntouched": False,
                 "retailPathCollisionCount": 1,
@@ -507,7 +507,7 @@ def test_asset_inventory_and_comparison(tool: ModuleType, base: Path) -> None:
         encoding="utf-8"
     )
     assert "not an overlay-free or stock-only run" in report_markdown
-    assert "`baseoq4/pak0.pk4` supersedes 1 retail virtual path" in report_markdown
+    assert "`baseod3/pak0.pk4` supersedes 1 retail virtual path" in report_markdown
     assert "clean logs" not in report_markdown.casefold()
     assert "none of the harness denylist classes" in report_markdown
     assert "engine `ERROR` records" in report_markdown
@@ -561,8 +561,8 @@ def test_plan_is_windowed_and_engine_only(tool: ModuleType, base: Path) -> None:
             assert cvar_value(plan.args, "si_pure") == "1"
             assert cvar_value(plan.args, "net_serverAllowServerMod") == "0"
 
-    sp_stage1 = (output / "savepaths" / "sp" / "baseoq4" / "stock-baseline" / "sp_stage1.cfg").read_text(encoding="utf-8")
-    sp_stage2 = (output / "savepaths" / "sp" / "baseoq4" / "stock-baseline" / "sp_after_load.cfg").read_text(encoding="utf-8")
+    sp_stage1 = (output / "savepaths" / "sp" / "baseod3" / "stock-baseline" / "sp_stage1.cfg").read_text(encoding="utf-8")
+    sp_stage2 = (output / "savepaths" / "sp" / "baseod3" / "stock-baseline" / "sp_after_load.cfg").read_text(encoding="utf-8")
     for token in ("recordDemo stock_baseline_sp", "saveGame StockBaselineSP", "loadGame StockBaselineSP"):
         assert token in sp_stage1
     sp_stage1_lines = sp_stage1.splitlines()
@@ -574,13 +574,13 @@ def test_plan_is_windowed_and_engine_only(tool: ModuleType, base: Path) -> None:
     assert plans["sp-capture"].expected.count(
         (
             "saveReferenceScreenshot",
-            "baseoq4/screenshots/stock-baseline/sp_before_save.tga",
+            "baseod3/screenshots/stock-baseline/sp_before_save.tga",
         )
     ) == 1
-    assert "OPENQ4_STOCK_BASELINE_SP_SAVE_LOAD_COMPLETE" in sp_stage2
+    assert "OPEND3_STOCK_BASELINE_SP_SAVE_LOAD_COMPLETE" in sp_stage2
     assert 'screenshot "screenshots/stock-baseline/sp_after_load.tga"' in sp_stage2
-    mp_server_cfg = (output / "savepaths" / "mp-server" / "baseoq4" / "stock-baseline" / "server.cfg").read_text(encoding="utf-8")
-    mp_client_cfg = (output / "savepaths" / "mp-client" / "baseoq4" / "stock-baseline" / "client.cfg").read_text(encoding="utf-8")
+    mp_server_cfg = (output / "savepaths" / "mp-server" / "baseod3" / "stock-baseline" / "server.cfg").read_text(encoding="utf-8")
+    mp_client_cfg = (output / "savepaths" / "mp-client" / "baseod3" / "stock-baseline" / "client.cfg").read_text(encoding="utf-8")
     assert "waitMsec 120000" in mp_server_cfg
     assert "waitMsec 10000" in mp_client_cfg
     assert "rendererBenchmarkCapture" in mp_server_cfg
@@ -598,23 +598,23 @@ def test_plan_is_windowed_and_engine_only(tool: ModuleType, base: Path) -> None:
     assert_canonical_display_before_sampling(sp_stage2)
     assert_canonical_display_before_sampling(mp_server_cfg)
     assert_canonical_display_before_sampling(mp_client_cfg)
-    assert "openq4_joinGame" not in mp_client_cfg
-    assert "openq4_assertMPClientActive" in mp_client_cfg
-    assert "openq4_assertMPGameplayView" in mp_client_cfg
+    assert "opend3_joinGame" not in mp_client_cfg
+    assert "opend3_assertMPClientActive" in mp_client_cfg
+    assert "opend3_assertMPGameplayView" in mp_client_cfg
     mp_client_lines = mp_client_cfg.splitlines()
     screenshot_line = mp_client_lines.index('screenshot "screenshots/stock-baseline/mp_client.tga"')
     assertion_lines = [
-        index for index, line in enumerate(mp_client_lines) if line == "openq4_assertMPClientActive"
+        index for index, line in enumerate(mp_client_lines) if line == "opend3_assertMPClientActive"
     ]
     assert len(assertion_lines) == 3
     assert assertion_lines[-2] < screenshot_line < assertion_lines[-1]
     view_assertion_lines = [
-        index for index, line in enumerate(mp_client_lines) if line == "openq4_assertMPGameplayView"
+        index for index, line in enumerate(mp_client_lines) if line == "opend3_assertMPGameplayView"
     ]
     assert len(view_assertion_lines) == 3
     assert view_assertion_lines[-2] < screenshot_line < view_assertion_lines[-1]
     assert mp_client_lines[view_assertion_lines[-1] + 1] == (
-        "echo OPENQ4_STOCK_BASELINE_MP_CLIENT_COMPLETE"
+        "echo OPEND3_STOCK_BASELINE_MP_CLIENT_COMPLETE"
     )
     assert "expected exact budget workload" in tool.runtime_window_failure(
         "  [0] * Test Display (contentScale 1.50)\nMODE: -1, 1920 x 1080 windowed hz:N/A\n",
@@ -632,7 +632,7 @@ def test_plan_is_windowed_and_engine_only(tool: ModuleType, base: Path) -> None:
     )
     assert "missing" in tool.runtime_window_failure("no renderer evidence\n")
     assert "screenshot-write" in tool.mp_client_active_proof_failure(
-        tool.MP_CLIENT_ACTIVE_MARKER + "\nOPENQ4_STOCK_BASELINE_MP_CLIENT_COMPLETE\n"
+        tool.MP_CLIENT_ACTIVE_MARKER + "\nOPEND3_STOCK_BASELINE_MP_CLIENT_COMPLETE\n"
     )
     legacy_active_line = (
         tool.MP_CLIENT_ACTIVE_MARKER
@@ -646,13 +646,13 @@ def test_plan_is_windowed_and_engine_only(tool: ModuleType, base: Path) -> None:
         + screenshot_write
         + legacy_active_line
         + view_line
-        + "OPENQ4_STOCK_BASELINE_MP_CLIENT_COMPLETE\n"
+        + "OPEND3_STOCK_BASELINE_MP_CLIENT_COMPLETE\n"
     )
     active_line = (
         tool.MP_CLIENT_ACTIVE_MARKER
         + " client=1 spectating=0 wantSpectate=0 ingame=1 menu=0 disableHud=0\n"
     )
-    completion_line = "OPENQ4_STOCK_BASELINE_MP_CLIENT_COMPLETE\n"
+    completion_line = "OPEND3_STOCK_BASELINE_MP_CLIENT_COMPLETE\n"
     assert tool.mp_client_active_proof_failure(
         active_line + view_line + screenshot_write + active_line + view_line + completion_line
     ) is None
@@ -705,7 +705,7 @@ def test_diagnostic_authority_and_shared_mp_deadline(
     )
     view_line = tool.MP_CLIENT_VIEW_MARKER + " gui=0\n"
     screenshot_write = "Wrote screenshots/stock-baseline/mp_client.tga\n"
-    completion_line = "OPENQ4_STOCK_BASELINE_MP_CLIENT_COMPLETE\n"
+    completion_line = "OPEND3_STOCK_BASELINE_MP_CLIENT_COMPLETE\n"
     valid_sequence = (
         active_line
         + view_line
@@ -765,14 +765,14 @@ def test_diagnostic_authority_and_shared_mp_deadline(
 
 
 def make_runtime_package(tool: ModuleType, runtime_dir: Path) -> tuple[Path, list[dict[str, object]]]:
-    game_dir = runtime_dir / "baseoq4"
+    game_dir = runtime_dir / "baseod3"
     game_dir.mkdir(parents=True)
     suffix = ".exe" if os.name == "nt" else ""
     shared = ".dll" if os.name == "nt" else (".dylib" if sys.platform == "darwin" else ".so")
-    executable = runtime_dir / f"openQ4-client_{tool.host_arch()}{suffix}"
+    executable = runtime_dir / f"openD3-client_{tool.host_arch()}{suffix}"
     executable.write_bytes(b"client")
-    (runtime_dir / f"openQ4-ded_{tool.host_arch()}{suffix}").write_bytes(b"dedicated")
-    (runtime_dir / f"openQ4-client_{tool.host_arch()}.pdb").write_bytes(b"symbols")
+    (runtime_dir / f"openD3-ded_{tool.host_arch()}{suffix}").write_bytes(b"dedicated")
+    (runtime_dir / f"openD3-client_{tool.host_arch()}.pdb").write_bytes(b"symbols")
     (runtime_dir / f"renderer-gl_{tool.host_arch()}{shared}").write_bytes(b"renderer")
     (runtime_dir / f"OpenAL32{shared}").write_bytes(b"audio")
     (game_dir / f"game-sp_{tool.host_arch()}{shared}").write_bytes(b"sp")
@@ -789,7 +789,7 @@ def make_runtime_package(tool: ModuleType, runtime_dir: Path) -> tuple[Path, lis
         "runtimeLibrary",
     }
     loose, unexpected = tool.collect_overlay_loose_files(runtime_dir, records)
-    assert unexpected == [] and any(item["path"] == "baseoq4/mod.json" for item in loose)
+    assert unexpected == [] and any(item["path"] == "baseod3/mod.json" for item in loose)
     unexpected_content = game_dir / "maps" / "override.map"
     unexpected_content.parent.mkdir()
     unexpected_content.write_text("override", encoding="utf-8")
@@ -874,8 +874,8 @@ def test_tga_and_report_verification(tool: ModuleType, base: Path) -> None:
             "directoryViews": tool.asset_directory_views(asset_root),
             "stockPk4s": asset_records,
             "looseFiles": [],
-            "openQ4OverlayPk4s": [],
-            "openQ4OverlayLooseFiles": overlay_loose,
+            "openD3OverlayPk4s": [],
+            "openD3OverlayLooseFiles": overlay_loose,
             "retailArchiveBytesMatchExpected": True,
             "retailPathNamespaceUntouched": True,
             "retailPathCollisionCount": 0,
@@ -896,7 +896,7 @@ def test_tga_and_report_verification(tool: ModuleType, base: Path) -> None:
         savepath = base / "savepaths" / contract["saveDir"]
         plans.append(tool.plan_record(generated_plans[role]))
         artifacts: list[dict[str, object]] = []
-        log = base / "savepaths" / contract["saveDir"] / "baseoq4" / "logs" / contract["logName"]
+        log = base / "savepaths" / contract["saveDir"] / "baseod3" / "logs" / contract["logName"]
         log.parent.mkdir(parents=True, exist_ok=True)
         active_proofs = ""
         if role == "mp-client":
@@ -1217,7 +1217,7 @@ def test_tga_and_report_verification(tool: ModuleType, base: Path) -> None:
     wrong_revision = json.loads(json.dumps(report))
     wrong_revision["git"]["revision"] = "0" * 40
     assert any(
-        "not the current openQ4 HEAD" in failure
+        "not the current openD3 HEAD" in failure
         for failure in tool.verify_recorded_files(
             wrong_revision, base, asset_root, runtime_dir
         )
@@ -1236,7 +1236,7 @@ def test_tga_and_report_verification(tool: ModuleType, base: Path) -> None:
         {
             "path": "guis/fake.gui",
             "retailPk4s": ["q4base/pak001.pk4"],
-            "openQ4OverlayPk4s": ["baseoq4/pak0.pk4"],
+            "openD3OverlayPk4s": ["baseod3/pak0.pk4"],
         }
     ]
     false_collision_inventory["assets"]["retailPathCollisionCount"] = 1

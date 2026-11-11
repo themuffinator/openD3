@@ -5,7 +5,7 @@
 #include <limits>
 #include <span>
 
-namespace openq4::ui {
+namespace opend3::ui {
 struct DocumentEditIdentity {
     std::uint64_t document=0, revision=0;
     bool operator==(const DocumentEditIdentity&) const = default;
@@ -78,4 +78,4 @@ private:
     std::shared_ptr<Impl> impl;
     friend class Runtime;
 };
-} // namespace openq4::ui
+} // namespace opend3::ui

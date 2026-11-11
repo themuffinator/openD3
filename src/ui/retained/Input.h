@@ -3,7 +3,7 @@
 #include "Interaction.h"
 #include <cstdint>
 
-namespace openq4::ui {
+namespace opend3::ui {
 struct RoutedInput {
 	enum class Kind { Menu, PointerButton, Cancel } kind = Kind::Menu;
 	MenuInput menu = MenuInput::Accept;
@@ -43,4 +43,4 @@ private:
 	std::uint64_t serial = 0, repeatSerial = 0;
 	double clock = 0, nextRepeat = 0;
 };
-} // namespace openq4::ui
+} // namespace opend3::ui

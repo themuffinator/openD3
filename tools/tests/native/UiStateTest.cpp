@@ -6,13 +6,13 @@
 #include <fstream>
 #include <iterator>
 #include <limits>
-using namespace openq4::ui;
+using namespace opend3::ui;
 static void Check(bool good, const char* message) {
 	if (!good) { std::fprintf(stderr,"FAIL: %s\n",message); std::exit(1); }
 }
 static bool Near(double a, double b) { return std::abs(a-b)<.0001; }
 static void CheckCombinedSources() {
-	const std::string source = R"({"format":"openq4-ui","version":1,"id":"combined-state",
+	const std::string source = R"({"format":"opend3-ui","version":1,"id":"combined-state",
  "root":{"id":"root","type":"group","properties":{"left":{"type":"length","value":1,"unit":"dp"}}},
  "state":{"application":{"type":"number","initial":2},"host":{"type":"number","initial":1,"cvar":"host_value"}},
  "presentationVariables":{"pending":{"type":"number","initial":0,"value":{"state":"application"}}},

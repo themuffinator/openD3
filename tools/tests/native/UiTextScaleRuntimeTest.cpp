@@ -10,7 +10,7 @@ static Rml::Element* Element(const char* id) {
     Check(element!=nullptr,"real canonical element exists");return element;
 }
 static Json::Value TypographySource() {
-    Json::Value source;source["format"]="openq4-ui";source["version"]=1;source["id"]="text-scale";
+    Json::Value source;source["format"]="opend3-ui";source["version"]=1;source["id"]="text-scale";
     auto root=Box("root",0,0,640,400);
     root["properties"]["font-family"]=Typed("font","test-font");
     root["properties"]["font-size"]=Typed("length",16,"dp");

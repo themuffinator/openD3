@@ -1,44 +1,44 @@
 // Copyright (C) 2026 DarkMatter Productions
 // Original shared scalar equations for authored metallic/roughness materials.
-#ifndef OPENQ4_PBR_MATH_H
-#define OPENQ4_PBR_MATH_H
+#ifndef OPEND3_PBR_MATH_H
+#define OPEND3_PBR_MATH_H
 
 // Keep the scalar kernel executable by both the native numerical tests and
 // GLSL. GL embeds the string below; offline Vulkan shaders include this file.
 // No renderer state, texture transfer, or legacy-material policy lives here.
 // The 0.045 perceptual floor bounds the mirror peak in a half-float HDR target.
-#define OPENQ4_PBR_INLINE
-#define OPENQ4_PBR_SCALAR_FUNCTIONS \
-OPENQ4_PBR_INLINE float PBRClamp(float x, float lo, float hi) { return x < lo ? lo : (x > hi ? hi : x); } \
-OPENQ4_PBR_INLINE float PBRRoughness(float r) { return PBRClamp(r, 0.045, 1.0); } \
+#define OPEND3_PBR_INLINE
+#define OPEND3_PBR_SCALAR_FUNCTIONS \
+OPEND3_PBR_INLINE float PBRClamp(float x, float lo, float hi) { return x < lo ? lo : (x > hi ? hi : x); } \
+OPEND3_PBR_INLINE float PBRRoughness(float r) { return PBRClamp(r, 0.045, 1.0); } \
 /* N.V for direct shading. A normal map can turn the shading normal away     \
    from a view the surface itself faces, chiefly at silhouettes. Cutting the \
    light there blacked those pixels out, and the cut flipped with the last   \
    bit of interpolation; clamping keeps every term continuous (Neubelt and   \
    Pettineo 2013). */ \
-OPENQ4_PBR_INLINE float PBRShadingNoV(float NoV) { return PBRClamp(NoV, 1.0e-4, 1.0); } \
-OPENQ4_PBR_INLINE float PBRFilteredRoughness(float perceptualRoughness, float normalVariance) { \
+OPEND3_PBR_INLINE float PBRShadingNoV(float NoV) { return PBRClamp(NoV, 1.0e-4, 1.0); } \
+OPEND3_PBR_INLINE float PBRFilteredRoughness(float perceptualRoughness, float normalVariance) { \
     float r = PBRRoughness(perceptualRoughness); \
     float alpha = r * r; \
     float kernel = PBRClamp(2.0 * normalVariance, 0.0, 0.18); \
     return sqrt(sqrt(PBRClamp(alpha * alpha + kernel, 0.0, 1.0))); \
 } \
-OPENQ4_PBR_INLINE float PBRSRGBToLinear(float value) { \
+OPEND3_PBR_INLINE float PBRSRGBToLinear(float value) { \
     float x = PBRClamp(value, 0.0, 1.0); \
     return x <= 0.04045 ? x / 12.92 : pow((x + 0.055) / 1.055, 2.4); \
 } \
-OPENQ4_PBR_INLINE float PBRLinearToSRGB(float value) { \
+OPEND3_PBR_INLINE float PBRLinearToSRGB(float value) { \
     float x = PBRClamp(value, 0.0, 1.0); \
     return x <= 0.0031308 ? x * 12.92 : 1.055 * pow(x, 1.0 / 2.4) - 0.055; \
 } \
 /* The same transfer pair continued above one, for display-referred HDR      \
    framebuffers: Quake 4's FP16 scene holds encoded values beyond white.     \
    Negative input is treated as black. */ \
-OPENQ4_PBR_INLINE float PBRSRGBToLinearExtended(float value) { \
+OPEND3_PBR_INLINE float PBRSRGBToLinearExtended(float value) { \
     float x = value > 0.0 ? value : 0.0; \
     return x <= 0.04045 ? x / 12.92 : pow((x + 0.055) / 1.055, 2.4); \
 } \
-OPENQ4_PBR_INLINE float PBRLinearToSRGBExtended(float value) { \
+OPEND3_PBR_INLINE float PBRLinearToSRGBExtended(float value) { \
     float x = value > 0.0 ? value : 0.0; \
     return x <= 0.0031308 ? x * 12.92 : 1.055 * pow(x, 1.0 / 2.4) - 0.055; \
 } \
@@ -47,15 +47,15 @@ OPENQ4_PBR_INLINE float PBRLinearToSRGBExtended(float value) { \
    shows. Read as encoded radiance, a white Lambertian PBR surface leaves    \
    the same radiance at normal incidence when the light's irradiance is pi   \
    times its decoded value. PBR keeps cosine falloff and its specular lobe. */ \
-OPENQ4_PBR_INLINE float PBRClassicLightIrradiance(float displayLight) { \
+OPEND3_PBR_INLINE float PBRClassicLightIrradiance(float displayLight) { \
     return 3.141592653589793 * PBRSRGBToLinearExtended(displayLight); \
 } \
-OPENQ4_PBR_INLINE float PBRFresnelWeight(float VoH) { \
+OPEND3_PBR_INLINE float PBRFresnelWeight(float VoH) { \
     float x = 1.0 - PBRClamp(VoH, 0.0, 1.0); \
     float x2 = x * x; \
     return x2 * x2 * x; \
 } \
-OPENQ4_PBR_INLINE float PBRDistributionGGX(float NoH, float perceptualRoughness) { \
+OPEND3_PBR_INLINE float PBRDistributionGGX(float NoH, float perceptualRoughness) { \
     float r = PBRRoughness(perceptualRoughness); \
     float alpha = r * r; \
     float n = PBRClamp(NoH, 0.0, 1.0); \
@@ -64,7 +64,7 @@ OPENQ4_PBR_INLINE float PBRDistributionGGX(float NoH, float perceptualRoughness)
     float ratio = alpha / denominator; \
     return ratio * ratio / 3.141592653589793; \
 } \
-OPENQ4_PBR_INLINE float PBRVisibilitySmithGGX(float NoV, float NoL, float perceptualRoughness) { \
+OPEND3_PBR_INLINE float PBRVisibilitySmithGGX(float NoV, float NoL, float perceptualRoughness) { \
     float v = PBRClamp(NoV, 0.0, 1.0); \
     float l = PBRClamp(NoL, 0.0, 1.0); \
     if (v <= 0.0 || l <= 0.0) { return 0.0; } \
@@ -80,7 +80,7 @@ OPENQ4_PBR_INLINE float PBRVisibilitySmithGGX(float NoV, float NoL, float percep
    the light (1 - ln 2). 15-term fit in r and sqrt(NoV) over NoV in [0.1, 1] \
    (grazing views use 0.1); 1/E stays within 3.5% of a visible-normal        \
    reference. Prefer the table where a pass binds it. */ \
-OPENQ4_PBR_INLINE float PBRSpecularAlbedo(float NoV, float perceptualRoughness) { \
+OPEND3_PBR_INLINE float PBRSpecularAlbedo(float NoV, float perceptualRoughness) { \
     float r = PBRRoughness(perceptualRoughness); \
     float u = sqrt(PBRClamp(NoV, 0.1, 1.0)); \
     float c0 = 1.30429459 + u * (-0.93026197 + u * 0.659094632); \
@@ -93,13 +93,13 @@ OPENQ4_PBR_INLINE float PBRSpecularAlbedo(float NoV, float perceptualRoughness) 
 /* Multiple-scattering energy compensation for one F0 channel: scale the     \
    single-scattering specular so a white conductor reflects all of a uniform \
    environment. Dielectrics change by at most 9%, rough metals up to 3.3x. */ \
-OPENQ4_PBR_INLINE float PBREnergyCompensation(float f0, float specularAlbedo) { \
+OPEND3_PBR_INLINE float PBREnergyCompensation(float f0, float specularAlbedo) { \
     return 1.0 + PBRClamp(f0, 0.0, 1.0) * (1.0 / PBRClamp(specularAlbedo, 0.3, 1.0) - 1.0); \
 } \
 /* The split-sum bias B, the F90 part of A + B = PBRSpecularAlbedo, so a     \
    pass without the table can evaluate f0 * A + B. 30-term fit in r and      \
    sqrt(NoV) over NoV in [0.1, 1], within 0.0095 of IntegrateBRDF. */        \
-OPENQ4_PBR_INLINE float PBRSpecularBias(float NoV, float perceptualRoughness) { \
+OPEND3_PBR_INLINE float PBRSpecularBias(float NoV, float perceptualRoughness) { \
     float r = PBRRoughness(perceptualRoughness); \
     float u = sqrt(PBRClamp(NoV, 0.1, 1.0)); \
     float c0 = 1.86122463 + u * (-5.8115519 + u * (6.04423784 + u * (-2.09929099 + u * 0.00579774298))); \
@@ -115,7 +115,7 @@ OPENQ4_PBR_INLINE float PBRSpecularBias(float NoV, float perceptualRoughness) { 
    the energy-compensated split sum f0 * A + B = f0 * E + (1 - f0) * B. A    \
    white conductor reflects exactly one. An authored ambient light is such   \
    an environment (it stands in for bounced light from every direction). */  \
-OPENQ4_PBR_INLINE float PBRUniformEnvironmentSpecular(float f0, float NoV, float perceptualRoughness) { \
+OPEND3_PBR_INLINE float PBRUniformEnvironmentSpecular(float f0, float NoV, float perceptualRoughness) { \
     float albedo = PBRSpecularAlbedo(NoV, perceptualRoughness); \
     float f = PBRClamp(f0, 0.0, 1.0); \
     return (f * albedo + (1.0 - f) * PBRSpecularBias(NoV, perceptualRoughness)) * PBREnergyCompensation(f, albedo); \
@@ -123,7 +123,7 @@ OPENQ4_PBR_INLINE float PBRUniformEnvironmentSpecular(float f0, float NoV, float
 /* Specular occlusion derived from ambient occlusion (Lagarde and de         \
    Rousiers 2014): rough lobes follow the AO, smooth lobes viewed head-on    \
    escape most of it, and grazing views are occluded more. AO 0 stays 0. */  \
-OPENQ4_PBR_INLINE float PBRSpecularOcclusion(float NoV, float ao, float perceptualRoughness) { \
+OPEND3_PBR_INLINE float PBRSpecularOcclusion(float NoV, float ao, float perceptualRoughness) { \
     float r = PBRRoughness(perceptualRoughness); \
     float a = PBRClamp(ao, 0.0, 1.0); \
     float lobe = exp2(-16.0 * r * r - 1.0); \
@@ -132,7 +132,7 @@ OPENQ4_PBR_INLINE float PBRSpecularOcclusion(float NoV, float ao, float perceptu
 /* Multi-bounce occlusion for one albedo channel (Jimenez et al. 2016):      \
    light trapped by occluders still bounces off bright surfaces, so a bright \
    albedo darkens less than the raw visibility. Bounded to [v, 1]. */ \
-OPENQ4_PBR_INLINE float PBRMultiBounceAO(float visibility, float albedo) { \
+OPEND3_PBR_INLINE float PBRMultiBounceAO(float visibility, float albedo) { \
     float v = PBRClamp(visibility, 0.0, 1.0); \
     float x = PBRClamp(albedo, 0.0, 1.0); \
     float bounced = ((v * (2.0404 * x - 0.3324) + (0.6417 - 4.7951 * x)) * v + (2.7552 * x + 0.6903)) * v; \
@@ -140,7 +140,7 @@ OPENQ4_PBR_INLINE float PBRMultiBounceAO(float visibility, float albedo) { \
 } \
 /* Fade reflections that a normal map turns below the geometric surface;     \
    the argument is dot(reflection, interpolated vertex normal). */ \
-OPENQ4_PBR_INLINE float PBRHorizonOcclusion(float RoN) { \
+OPEND3_PBR_INLINE float PBRHorizonOcclusion(float RoN) { \
     float h = PBRClamp(1.0 + RoN, 0.0, 1.0); \
     return h * h; \
 } \
@@ -151,10 +151,10 @@ OPENQ4_PBR_INLINE float PBRHorizonOcclusion(float RoN) { \
    frame (centre at the origin, half extents e) the result is the distance t  \
    to the exit point p + t r, or -1 when p lies outside the box. An axis the  \
    ray runs parallel to never bounds it. */ \
-OPENQ4_PBR_INLINE float PBRBoxExitAxis(float p, float r, float e) { \
+OPEND3_PBR_INLINE float PBRBoxExitAxis(float p, float r, float e) { \
     return r > 1.0e-6 ? (e - p) / r : (r < -1.0e-6 ? (-e - p) / r : 3.0e38); \
 } \
-OPENQ4_PBR_INLINE float PBRBoxParallaxDistance(float px, float py, float pz, \
+OPEND3_PBR_INLINE float PBRBoxParallaxDistance(float px, float py, float pz, \
         float rx, float ry, float rz, float ex, float ey, float ez) { \
     if (px > ex || px < -ex || py > ey || py < -ey || pz > ez || pz < -ez) return -1.0; \
     float t = PBRBoxExitAxis(px, rx, ex); \
@@ -165,7 +165,7 @@ OPENQ4_PBR_INLINE float PBRBoxParallaxDistance(float px, float py, float pz, \
 } \
 /* A box probe's weight: one inside, falling to zero across the blend margin  \
    (blendFraction of the smallest half extent) inside each face. */ \
-OPENQ4_PBR_INLINE float PBRBoxInfluence(float px, float py, float pz, \
+OPEND3_PBR_INLINE float PBRBoxInfluence(float px, float py, float pz, \
         float ex, float ey, float ez, float blendFraction) { \
     float d = ex - (px < 0.0 ? -px : px); \
     float dy = ey - (py < 0.0 ? -py : py); \
@@ -179,24 +179,24 @@ OPENQ4_PBR_INLINE float PBRBoxInfluence(float px, float py, float pz, \
 }
 
 #ifdef __cplusplus
-#define OPENQ4_PBR_STRING_IMPL(...) #__VA_ARGS__
-#define OPENQ4_PBR_STRING(...) OPENQ4_PBR_STRING_IMPL(__VA_ARGS__)
-static const char OPENQ4_PBR_SCALAR_GLSL[] =
-    OPENQ4_PBR_STRING(OPENQ4_PBR_SCALAR_FUNCTIONS);
-#undef OPENQ4_PBR_STRING
-#undef OPENQ4_PBR_STRING_IMPL
+#define OPEND3_PBR_STRING_IMPL(...) #__VA_ARGS__
+#define OPEND3_PBR_STRING(...) OPEND3_PBR_STRING_IMPL(__VA_ARGS__)
+static const char OPEND3_PBR_SCALAR_GLSL[] =
+    OPEND3_PBR_STRING(OPEND3_PBR_SCALAR_FUNCTIONS);
+#undef OPEND3_PBR_STRING
+#undef OPEND3_PBR_STRING_IMPL
 
 #include <cmath>
-#undef OPENQ4_PBR_INLINE
-#define OPENQ4_PBR_INLINE inline
-namespace openq4PBRMath {
+#undef OPEND3_PBR_INLINE
+#define OPEND3_PBR_INLINE inline
+namespace opend3PBRMath {
 using std::exp2;
 using std::pow;
 using std::sqrt;
-OPENQ4_PBR_SCALAR_FUNCTIONS
+OPEND3_PBR_SCALAR_FUNCTIONS
 }
 #else
-OPENQ4_PBR_SCALAR_FUNCTIONS
+OPEND3_PBR_SCALAR_FUNCTIONS
 #endif
 
 #endif

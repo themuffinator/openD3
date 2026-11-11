@@ -30,7 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "tr_local.h"
 #include "SavePreviewCapture.h"
-#if !defined( OPENQ4_RENDERER_GLES_MODULE )
+#if !defined( OPEND3_RENDERER_GLES_MODULE )
 #include "draw_pbr.h"
 #endif
 #include "GLDebugScope.h"
@@ -392,7 +392,7 @@ void GL_State( int stateBits ) {
 
 		if (stateBits & GLS_ALPHA_COVERAGE) glBlendFuncSeparate(srcFactor,dstFactor,GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
 		else if ( R_PremultipliedDefaultTargetBound() ) {
-			// openQ4 VR virtual screen: the layer is composited with premultiplied
+			// openD3 VR virtual screen: the layer is composited with premultiplied
 			// alpha. "Over" blends accumulate coverage; every other blend (additive
 			// glows, modulation) leaves coverage alone, so it lights or tints the
 			// world behind the layer instead of covering it.
@@ -1152,7 +1152,7 @@ void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
 			R_ClassicFogBlendDomain_PrepareFrame( *scenePackets );
 		}
 		R_ModernGLExecutor_PrepareFrame( *scenePackets, legacyGraph );
-#if !defined( OPENQ4_RENDERER_GLES_MODULE )
+#if !defined( OPEND3_RENDERER_GLES_MODULE )
 		// The ES module has no native PBR owner (draw_pbr.cpp is not built).
 		RB_GLPBR_AdoptExecutorFrame();
 #endif
@@ -1178,7 +1178,7 @@ void RB_ExecuteBackEndCommands( const emptyCommand_t *cmds ) {
 			rg_modernStatMirrorsZeroed = true;
 		}
 		R_ModernGLExecutor_SkipFrame();
-#if !defined( OPENQ4_RENDERER_GLES_MODULE )
+#if !defined( OPEND3_RENDERER_GLES_MODULE )
 		// Native PBR admission (draw_pbr.cpp) reads the material contract
 		// table. Prepare that alone, from the same packets Vulkan uses, and
 		// only for a frame that draws a PBR material. The ES module has no

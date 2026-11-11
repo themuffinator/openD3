@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Coverage checks for openQ4 settings-menu cvar exposure."""
+"""Coverage checks for openD3 settings-menu cvar exposure."""
 
 from collections import defaultdict
 import json
@@ -10,7 +10,7 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_LIBS = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
 
 
@@ -76,7 +76,7 @@ def gui_block(source_text: str, widget_name: str) -> str:
 
 def load_locale_strings() -> dict[str, str]:
     locales: dict[str, str] = defaultdict(str)
-    for lang_path in sorted((ROOT / "content/baseoq4/pak0/strings").glob("*.lang")):
+    for lang_path in sorted((ROOT / "content/baseod3/pak0/strings").glob("*.lang")):
         locale = lang_path.stem.split("_", 1)[0]
         locales[locale] += "\n" + read(lang_path)
     if not locales:
@@ -283,13 +283,13 @@ def validate_performance_preset_wiring(
     ):
         require(common_cpp, token, "Performance preset engine wiring")
 
-    implementation_start = common_cpp.index("using openQ4PerformancePreset_t = openq4::PerformancePreset;")
+    implementation_start = common_cpp.index("using openD3PerformancePreset_t = opend3::PerformancePreset;")
     implementation_end = common_cpp.index("Com_ReloadEngine_f", implementation_start)
     implementation = common_cpp[implementation_start:implementation_end] + read(ROOT / "src/framework/PerformancePreset.cpp")
-    for shared in ("openq4::PerformancePresets()", "openq4::PerformancePresetTargets()", "openq4::ExpandPerformancePreset(preset,expansion,expansionError)", "openq4::DetectPerformancePreset(signals)"):
+    for shared in ("opend3::PerformancePresets()", "opend3::PerformancePresetTargets()", "opend3::ExpandPerformancePreset(preset,expansion,expansionError)", "opend3::DetectPerformancePreset(signals)"):
         require(common_cpp, shared, "shared performance preset source")
     for obsolete_target in (
-        "OPENQ4_PERFORMANCE_PRESET_DYNAMIC_CVARS",
+        "OPEND3_PERFORMANCE_PRESET_DYNAMIC_CVARS",
         '"image_filter"',
         '"image_lodbias"',
         '"image_forceDownSize"',
@@ -808,9 +808,9 @@ def validate_ingame_menu_activation_contract(
         require(session_menu, f'!idStr::Icmp( cmd, "{command}" )', f"{command} handler")
 
     for token in (
-        "Session_openQ4AssertMenuActivation_f",
-        "OPENQ4_MENU_ACTIVATION PASS elapsed=%dms limit=%dms",
-        'AddCommand( "openq4_assertMenuActivation"',
+        "Session_openD3AssertMenuActivation_f",
+        "OPEND3_MENU_ACTIVATION PASS elapsed=%dms limit=%dms",
+        'AddCommand( "opend3_assertMenuActivation"',
     ):
         require(session_cpp, token, "runtime in-game menu activation assertion")
 
@@ -881,7 +881,7 @@ def validate_dedicated_conversion() -> None:
     converted, so net_serverDedicated 1 is held back across it and resumed by the
     replayed spawnServer. An engine that starts with net_serverDedicated 1 and no
     device (a launch with it, or any later engine reload) is a dedicated server
-    already: like openQ4-ded's, its session gets worlds and no menus, so a map
+    already: like openD3-ded's, its session gets worlds and no menus, so a map
     change's reload holds nothing back. The teardown must leave nothing that a
     later frame or the final shutdown touches without its device.
     """
@@ -957,7 +957,7 @@ def validate_dedicated_conversion() -> None:
     require(" ".join(sorted(hidden_flags)), "CVAR_NOCHEAT", "r_hiddenWindow flags")
 
     # A dedicated server's session, the client's without a device included, gets
-    # its worlds and none of the menus, as openQ4-ded's does.
+    # its worlds and none of the menus, as openD3-ded's does.
     session = read(ROOT / "src/framework/Session.cpp")
     predicate = function_body(session, "bool idSessionLocal::IsDedicatedServer() const {", "Session.cpp")
     require_order(
@@ -1068,7 +1068,7 @@ def check_retained_tab_strips_take_the_pointer() -> None:
     the tree as a ring, so the strip also follows Back: a tab's last row leads
     on to Back, and Back to the strip, the order the page reads in."""
     for page, name in (("game", "game"), ("controls", "controls"), ("system", "settings")):
-        text = read(ROOT / f"content/baseoq4/pak0/guis/menu/settings/{page}.q4ui")
+        text = read(ROOT / f"content/baseod3/pak0/guis/menu/settings/{page}.q4ui")
         document = json.loads("\n".join(line for line in text.split("\n") if not line.startswith("//")))
         found = {}
 
@@ -1098,13 +1098,13 @@ def main() -> None:
     validate_settings_registry()
     check_retained_tab_strips_take_the_pointer()
 
-    mainmenu = read(ROOT / "content/baseoq4/pak0/guis/mainmenu.gui")
-    controls_gui = read(ROOT / "content/baseoq4/pak0/guis/menu/settings/controls.gui")
-    system_gui = read(ROOT / "content/baseoq4/pak0/guis/menu/settings/system.gui")
-    audio_gui = read(ROOT / "content/baseoq4/pak0/guis/menu/settings/audio.gui")
-    popups_gui = read(ROOT / "content/baseoq4/pak0/guis/menu/settings/popups.gui")
-    game_gui = read(ROOT / "content/baseoq4/pak0/guis/menu/settings/game.gui")
-    game_hovers = read(ROOT / "content/baseoq4/pak0/guis/menu/settings/game_hovers.gui")
+    mainmenu = read(ROOT / "content/baseod3/pak0/guis/mainmenu.gui")
+    controls_gui = read(ROOT / "content/baseod3/pak0/guis/menu/settings/controls.gui")
+    system_gui = read(ROOT / "content/baseod3/pak0/guis/menu/settings/system.gui")
+    audio_gui = read(ROOT / "content/baseod3/pak0/guis/menu/settings/audio.gui")
+    popups_gui = read(ROOT / "content/baseod3/pak0/guis/menu/settings/popups.gui")
+    game_gui = read(ROOT / "content/baseod3/pak0/guis/menu/settings/game.gui")
+    game_hovers = read(ROOT / "content/baseod3/pak0/guis/menu/settings/game_hovers.gui")
     session_menu = read(ROOT / "src/framework/Session_menu.cpp")
     session_cpp = read(ROOT / "src/framework/Session.cpp")
     common_cpp = read(ROOT / "src/framework/Common.cpp")
@@ -1381,7 +1381,7 @@ def main() -> None:
         reject(system_surface, f'cvar\t"{cvar}"', f"{cvar} direct negative GUI binding")
 
     string_ids = [f"#str_{value}" for value in range(229943, 229976)]
-    for lang_path in sorted((ROOT / "content/baseoq4/pak0/strings").glob("*_openq4.lang")):
+    for lang_path in sorted((ROOT / "content/baseod3/pak0/strings").glob("*_opend3.lang")):
         lang_text = read(lang_path)
         for string_id in string_ids:
             require(lang_text, string_id, lang_path.name)

@@ -46,7 +46,7 @@ def restart_wordmark() -> dict:
 def restart_menu_document() -> dict:
     check_fits(tuple((key, "marine", PLATE_TEXT, U * PLATE_LABEL[2]) for _, key, _, _ in PLATES), ())
     check_fits(tuple((tip, "lowpixel", TIP_TEXT, CANVAS_W - 32) for _, _, tip, _ in PLATES), ())
-    doc = Document("openq4.restartmenu")
+    doc = Document("opend3.restartmenu")
     for _, _, _, action in PLATES:
         if action:
             doc.session(action, {"restart": "deathRestart", "load": "deathLoad", "menu": "deathMenu"}[action])

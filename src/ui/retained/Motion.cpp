@@ -5,7 +5,7 @@
 #include <cmath>
 #include <set>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 // Shared by every Motion and its copies, so no two writes share a stamp.
 std::atomic<std::uint64_t> motionRevisions{0};
@@ -288,4 +288,4 @@ bool Motion::Restore(const MotionSnapshot& snapshot, double seconds, std::string
 	Touch();
 	return true;
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

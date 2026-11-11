@@ -170,7 +170,7 @@ static void R_TemporalPresentation_CountReason( temporalReasonCount_t *slots, co
 }
 
 
-// openQ4 VR: dynamic resolution, screen-space effects and motion blur stand
+// openD3 VR: dynamic resolution, screen-space effects and motion blur stand
 // down while a VR frame presents. Temporal AA keeps one history per eye
 // (VR-05): each eye's view mixes its eye into its identity, so it keeps its
 // own camera and object history, and backends keep its images and velocity
@@ -837,10 +837,10 @@ bool R_TemporalPresentation_DynamicResolutionRequested( void ) {
 // (where MSAA/SMAA already serve), for the crop and nearest scale modes a
 // player picks on purpose, and on backends without a temporal resolve.
 static bool R_TemporalPresentation_AutomaticTemporalAAWanted( void ) {
-#if defined( OPENQ4_RENDERER_GLES_MODULE )
+#if defined( OPEND3_RENDERER_GLES_MODULE )
 	return false;
 #else
-#if !defined( OPENQ4_RENDERER_VK_MODULE )
+#if !defined( OPEND3_RENDERER_VK_MODULE )
 	if ( !glConfig.GLSLProgramAvailable || !glConfig.GLSL130Available ) {
 		return false;
 	}
@@ -1137,7 +1137,7 @@ void R_TemporalPresentation_PrintStatus_f( const idCmdArgs &args ) {
 	if ( resolve.otherReasons > 0 ) {
 		common->Printf( "Temporal reasons beyond the table: %d\n", resolve.otherReasons );
 	}
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 	extern void VK_PostProcess_PrintTemporalMotion( void );
 	VK_PostProcess_PrintTemporalMotion();
 #endif

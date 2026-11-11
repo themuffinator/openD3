@@ -14,16 +14,16 @@
 	module split only has to change who compiles this file.
 
 	Until B8 it is compiled as part of the SDL3 platform backend translation
-	unit (sdl3_backend.cpp defines OPENQ4_SDL3_CONTEXT_IMPL and includes it
+	unit (sdl3_backend.cpp defines OPEND3_SDL3_CONTEXT_IMPL and includes it
 	at its tail), which supplies the SDL/QGL/wgl declarations; standalone
 	glob compilation produces an empty TU.
 
 ===============================================================================
 */
 
-#ifdef OPENQ4_SDL3_CONTEXT_IMPL
+#ifdef OPEND3_SDL3_CONTEXT_IMPL
 
-#ifndef OPENQ4_SDL3_CONTEXT_ENCLOSED
+#ifndef OPEND3_SDL3_CONTEXT_ENCLOSED
 // standalone module compilation (Phase B8): supply the declarations the
 // enclosing platform backend otherwise provides
 #include "../tr_local.h"
@@ -50,11 +50,11 @@ PFNWGLBINDTEXIMAGEARBPROC wglBindTexImageARB = NULL;
 PFNWGLRELEASETEXIMAGEARBPROC wglReleaseTexImageARB = NULL;
 PFNWGLSETPBUFFERATTRIBARBPROC wglSetPbufferAttribARB = NULL;
 #else
-#define OPENQ4_SDL3_POSIX_HOST 1
+#define OPEND3_SDL3_POSIX_HOST 1
 #if defined(__linux__)
 // the module build has no linux_sdl3.cpp wrapper to define the host macro;
-// the GLEW SDL3-loader hook (OpenQ4_GlewGetProcAddress) hangs off it
-#define OPENQ4_SDL3_LINUX_HOST 1
+// the GLEW SDL3-loader hook (openD3_GlewGetProcAddress) hangs off it
+#define OPEND3_SDL3_LINUX_HOST 1
 #endif
 #endif
 #endif
@@ -126,7 +126,7 @@ static const char *R_GLVideoError(void) {
 		? s_glWindowServices->GetVideoErrorString() : "unknown video error";
 }
 
-#if defined(OPENQ4_SDL3_POSIX_HOST) || !defined(OPENQ4_SDL3_CONTEXT_ENCLOSED)
+#if defined(OPEND3_SDL3_POSIX_HOST) || !defined(OPEND3_SDL3_CONTEXT_ENCLOSED)
 // The SDL3 POSIX backends (and the standalone module build, which has no
 // win_glimp) reuse this translation unit but do not provide the legacy
 // platform GL logging hooks from the native GLX/Cocoa paths.
@@ -212,7 +212,7 @@ static bool SDL3_ApplySwapInterval(void) {
 }
 
 static void SDL3_LoadWGLExtensions(void) {
-#if defined(OPENQ4_SDL3_POSIX_HOST)
+#if defined(OPEND3_SDL3_POSIX_HOST)
 	glConfig.wgl_extensions_string = "";
 	r_swapInterval.SetModified();
 #else
@@ -334,7 +334,7 @@ static int SDL3_PrependGLESCandidate(rendererContextCandidate_t *candidates, int
 }
 
 static int SDL3_BuildGLContextCandidates(rendererContextCandidate_t *candidates, int maxCandidates) {
-#if defined(OPENQ4_RENDERER_GLES_MODULE)
+#if defined(OPEND3_RENDERER_GLES_MODULE)
 	// The GLES module links libGLESv2 and nothing else, so a desktop context is
 	// not a fallback -- it is a context none of this module's GL entry points
 	// can talk to. Without this the macOS ladder hands back a 2.1 compatibility
@@ -785,7 +785,7 @@ void GLimp_SwapBuffers(void) {
 		R_DisplayPresentationSubmitted(); R_DisplayPresentationPresented();
 	}
 
-#if defined(__ANDROID__) && defined(OPENQ4_RENDERER_GLES_MODULE)
+#if defined(__ANDROID__) && defined(OPEND3_RENDERER_GLES_MODULE)
 	// The host app's touch overlay draws inside that swap; undo what it left
 	// behind before the next frame delta-codes against it.
 	RB_GLES_RestoreStateAfterOverlay();
@@ -813,10 +813,10 @@ void GLimp_DeactivateContext(void) {
 	}
 }
 
-#if defined(OPENQ4_SDL3_LINUX_HOST)
-typedef void ( *openQ4GlewProcAddress_t ) (void);
+#if defined(OPEND3_SDL3_LINUX_HOST)
+typedef void ( *openD3GlewProcAddress_t ) (void);
 
-extern "C" openQ4GlewProcAddress_t OpenQ4_GlewGetProcAddress(const unsigned char *name) {
+extern "C" openD3GlewProcAddress_t openD3_GlewGetProcAddress(const unsigned char *name) {
 	if (name == NULL || name[0] == '\0') {
 		return NULL;
 	}
@@ -824,7 +824,7 @@ extern "C" openQ4GlewProcAddress_t OpenQ4_GlewGetProcAddress(const unsigned char
 		return NULL;
 	}
 
-	return reinterpret_cast<openQ4GlewProcAddress_t>(
+	return reinterpret_cast<openD3GlewProcAddress_t>(
 		s_glWindowServices->GetGLProcAddress(reinterpret_cast<const char *>(name)));
 }
 #endif
@@ -838,7 +838,7 @@ void *GLimp_ExtensionPointer(const char *name) {
 	}
 
 	void *proc = s_glWindowServices->GetGLProcAddress(name);
-#if !defined(OPENQ4_SDL3_POSIX_HOST)
+#if !defined(OPEND3_SDL3_POSIX_HOST)
 	if (!proc && qwglGetProcAddress) {
 		proc = (void *)qwglGetProcAddress(name);
 	}
@@ -850,4 +850,4 @@ void *GLimp_ExtensionPointer(const char *name) {
 	return proc;
 }
 
-#endif /* OPENQ4_SDL3_CONTEXT_IMPL */
+#endif /* OPEND3_SDL3_CONTEXT_IMPL */

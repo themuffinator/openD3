@@ -13,7 +13,7 @@
 	renderer-global dependencies: triangle-surface allocation and cleanup,
 	silhouette/tangent derivation, light-volume derivation, polytope
 	generation, interaction facing/culling, and stencil shadow-volume
-	construction. It builds as the openq4_render_geo static library so the
+	construction. It builds as the opend3_render_geo static library so the
 	dmap compiler (engine-side) and the renderer (module-side after Phase B8)
 	share one implementation
 	(docs/dev/archive/2026-10-18/plans/2026-07-16-vulkan-renderer-phase-b.md, B6).

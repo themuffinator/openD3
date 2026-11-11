@@ -29,11 +29,11 @@ def main():
     originals += [core/n for n in ['Interaction.cpp','ScrollGeometry.cpp','TextInput.cpp','TextEdit.cpp','NativeTextDocument.cpp','NativeTextEditor.cpp','Input.cpp']]
     test=ROOT/('tools/tests/native/WindowsNativeInputFactsTest.cpp' if a.route_facts else 'tools/tests/native/WindowsTextSessionTest.cpp')
     paths=originals+[test,Path(__file__).resolve(),ROOT/'tools/tests/filesystem_case_segments.py',core/'Document.cpp']
-    paths+=list((ROOT/'src').rglob('*.h'))+[ROOT/'subprojects/packagefiles/sdl3/include/SDL3/SDL_openq4_native_fence.h']
+    paths+=list((ROOT/'src').rglob('*.h'))+[ROOT/'subprojects/packagefiles/sdl3/include/SDL3/SDL_opend3_native_fence.h']
     before={str(path.relative_to(ROOT)):sha(path) for path in paths}
     sdk_headers={str(path.relative_to(sdl)):sha(path) for path in sdl.glob('SDL3/*.h')}
     valid=folder/'valid.cpp';doc=(core/'Document.cpp').read_text(encoding='utf-8-sig')
-    valid.write_text('#include "Interaction.h"\n#include <cmath>\nnamespace openq4::ui {\n'+
+    valid.write_text('#include "Interaction.h"\n#include <cmath>\nnamespace opend3::ui {\n'+
         function_body(doc,'bool Utf8(')+function_body(doc,'bool ValidStateValue(')+'}\n',encoding='utf-8',newline='\n')
     working=folder/'WindowsTextSession.cpp';body=originals[0].read_text(encoding='utf-8-sig');working.write_text(body,encoding='utf-8',newline='\n')
     if a.route_facts:
@@ -54,11 +54,11 @@ def main():
         before={str(path.relative_to(ROOT)):sha(path) for path in paths}
     includes=[ROOT,ROOT/'src',core,sys,ROOT/'subprojects/packagefiles/sdl3/include',sdl]
     flags=[a.compiler,'-std=c++20','-Wall','-Wextra','-Werror','-Wno-missing-field-initializers',
-        '-DSDL_STATIC_LIB','-DUSE_SDL3','-DOPENQ4_SDL3_CHECKED_NATIVE_QUEUE=1']
+        '-DSDL_STATIC_LIB','-DUSE_SDL3','-DOPEND3_SDL3_CHECKED_NATIVE_QUEUE=1']
     flags += ['-I'+str(n) for n in includes]
     if a.msvc_debug:
         flags=[a.compiler,'/nologo','/std:c++20','/EHsc','/W3','/WX','/wd4458','/MTd','/D_ITERATOR_DEBUG_LEVEL=2',
-            '/D_CRT_SECURE_NO_WARNINGS','/DSDL_STATIC_LIB','/DUSE_SDL3','/DOPENQ4_SDL3_CHECKED_NATIVE_QUEUE=1']+['/I'+str(n) for n in includes]
+            '/D_CRT_SECURE_NO_WARNINGS','/DSDL_STATIC_LIB','/DUSE_SDL3','/DOPEND3_SDL3_CHECKED_NATIVE_QUEUE=1']+['/I'+str(n) for n in includes]
     env={**os.environ,'TEMP':str(folder),'TMP':str(folder),'TMPDIR':str(folder)}
     report={'passed':False,'scope':__doc__,'sources':before,'sdl_headers':sdk_headers,'cases':[]}
     def run(command,name):

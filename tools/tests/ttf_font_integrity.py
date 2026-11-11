@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Guard the shipped TrueType faces against the defects their audit found.
 
-The faces under content/baseoq4/pak0/fonts are generated from the retail bitmap
-atlases by tools/assets/fonts/build_openq4_fonts.py; the full audit (tracing
+The faces under content/baseod3/pak0/fonts are generated from the retail bitmap
+atlases by tools/assets/fonts/build_opend3_fonts.py; the full audit (tracing
 fidelity, fused accents, specimen sheets) needs those proprietary atlases and
 lives in tools/assets/fonts/audit_fonts.py. This test checks what the shipped
 files alone can prove, with no third-party modules so it runs wherever CI does:
@@ -28,7 +28,7 @@ import unicodedata
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-FONTS_DIR = ROOT / "content" / "baseoq4" / "pak0" / "fonts"
+FONTS_DIR = ROOT / "content" / "baseod3" / "pak0" / "fonts"
 
 FACES = ("bigchars", "chain", "lowpixel", "marine", "profont", "r_strogg", "strogg")
 LATIN_ONLY_FACES = {"strogg"}

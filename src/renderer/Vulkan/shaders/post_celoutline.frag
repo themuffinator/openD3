@@ -1,7 +1,7 @@
 #version 450
 
 // Screen-space cel outline over world geometry. A port of
-// content/baseoq4/pak0/glprogs/celoutline.fs (RB_STD_CelWorldOutline); see
+// content/baseod3/pak0/glprogs/celoutline.fs (RB_STD_CelWorldOutline); see
 // that file for how the two depth snapshots divide the work. fragUV is
 // OpenGL's texture coordinate; see post_ssao.frag.
 

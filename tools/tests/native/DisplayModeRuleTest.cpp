@@ -12,9 +12,9 @@
 #include <limits>
 #include <vector>
 
-using openq4::DisplayModeCandidate;
-using openq4::DisplayRefreshHertz;
-using openq4::SelectDisplayMode;
+using opend3::DisplayModeCandidate;
+using opend3::DisplayRefreshHertz;
+using opend3::SelectDisplayMode;
 
 namespace {
 int checks = 0;

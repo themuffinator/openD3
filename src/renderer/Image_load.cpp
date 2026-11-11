@@ -302,7 +302,7 @@ static void R_FillUsageNeutralMissingImage( byte *rgba, int pixelCount, textureU
 	}
 }
 
-#if defined( _DEBUG ) || defined( OPENQ4_ENABLE_IDLIB_ASSERTS )
+#if defined( _DEBUG ) || defined( OPEND3_ENABLE_IDLIB_ASSERTS )
 static void R_PreyRetailImageCompatibilitySelfTestOnce() {
 	static bool tested = false;
 	if ( tested ) {
@@ -368,26 +368,6 @@ static const char *R_FindMissingQ4StockImageFallback( const char *imageName ) {
 	idStr canonicalName = imageName;
 	canonicalName.BackSlashesToSlashes();
 	canonicalName.StripFileExtension();
-	// The recovered tactical trooper material misspells its own texture folder.
-	// Keep the authored source first and salt the generated cache exactly as for
-	// the retail fallbacks below, so an installed correction takes precedence.
-	if ( idStr::Icmp( fileSystem->GetActiveGameDir(), "q4xbase" ) == 0 ) {
-		if ( canonicalName.Icmp( "textures/common/white" ) == 0 ) {
-			return "gfx/guis/white.tga";
-		}
-		if ( canonicalName.Icmp( "gfx/effects/fluids_drips/drop_additive" ) == 0 ) {
-			return "makeIntensity( gfx/effects/fluids_drips/drop_blue.tga )";
-		}
-		if ( canonicalName.Icmp( "gfx/effects/fire/p_fire2a" ) == 0 ) {
-			return "gfx/effects/fire/fire2a.tga";
-		}
-		if ( canonicalName.Icmp( "downsize( models/monsters/a4x_tactical/q4x_tt_body_s, 1)" ) == 0 ) {
-			return "downsize( models/monsters/q4x_tactical/q4x_tt_body_s, 1)";
-		}
-		if ( canonicalName.Icmp( "models/monsters/a4x_tactical/q4x_tt_body_s" ) == 0 ) {
-			return "models/monsters/q4x_tactical/q4x_tt_body_s.tga";
-		}
-	}
 
 	struct q4StockImageFallback_t {
 		const char *missingName;
@@ -631,7 +611,7 @@ ID_INLINE void idImage::DeriveOpts() {
 			break;
 		case TD_HIGH_QUALITY:
 			// Preserve Quake 4's distinct "uncompressed/highquality" image bucket,
-			// but keep it on openQ4's modern uncompressed RGBA8 path rather than
+			// but keep it on openD3's modern uncompressed RGBA8 path rather than
 			// reviving older compressed-driver behavior.
 			opts.gammaMips = false;
 			opts.colorFormat = CFM_DEFAULT;

@@ -499,7 +499,7 @@ static bool R_ParseImageProgram_r(idLexer& src, byte** pic, int* width, int* hei
 		return true;
 	}
 
-	// openQ4: in the five operations below the inner program can fail and leave
+	// openD3: in the five operations below the inner program can fail and leave
 	// *pic NULL with the first image's size still in *width and *height (add
 	// and addnormals do, when their second image is missing), and each went on
 	// to write through it. They skip the work then, as they always have when
@@ -592,7 +592,7 @@ static bool R_ParseImageProgram_r(idLexer& src, byte** pic, int* width, int* hei
 	}
 	// jmarshall end
 
-	// openQ4: one material-data image from three single-channel maps, so a PBR
+	// openD3: one material-data image from three single-channel maps, so a PBR
 	// material with separate occlusion, roughness and metallic maps shades
 	// from one texture on every backend. Red = occlusion, green = roughness,
 	// blue = metallic, each from its source's red channel, at the largest

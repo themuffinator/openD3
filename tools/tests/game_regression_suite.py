@@ -47,7 +47,7 @@ def discover():
     tests = sorted({r['current'] for r in rows if r['current'].endswith('.py')
                     and r['current'] != 'tools/tests/game_regression_suite.py'})
     meson = (ROOT / 'meson.build').read_text(encoding='utf-8')
-    profile = (ROOT / 'tools/validation/openq4_validate.py').read_text(encoding='utf-8')
+    profile = (ROOT / 'tools/validation/opend3_validate.py').read_text(encoding='utf-8')
     workflow = (ROOT / '.github/workflows/commit-validation.yml').read_text(encoding='utf-8')
     if 'game_regression_suite.py' not in meson or 'game_regression_suite.py' not in profile or 'validate_push' not in workflow:
         raise RuntimeError('Game regression suite is disconnected from native/profile/CI discovery')
@@ -69,7 +69,7 @@ def main():
     args.log_dir.mkdir(parents=True, exist_ok=True)
     temporary = args.log_dir.resolve() / 'tmp'
     temporary.mkdir(exist_ok=True)
-    env = dict(os.environ, OPENQ4_GAMELIBS_REPO=str(ROOT),
+    env = dict(os.environ, OPEND3_GAMELIBS_REPO=str(ROOT),
                TMP=str(temporary), TEMP=str(temporary), TMPDIR=str(temporary))
     def run(name):
         try:

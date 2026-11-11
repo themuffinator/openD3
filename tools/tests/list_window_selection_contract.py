@@ -125,11 +125,11 @@ static void key(idListWindow &list,int value,int type=SE_KEY){
 }
 int main(){
     idDeviceContext dc;
-    assert(std::string(openQ4_FitBrowserCell(&dc,"DM",.17f,12).c_str())=="DM");
-    assert(std::string(openQ4_FitBrowserCell(&dc,"Deathmatch",.17f,36).c_str())=="Dea...");
-    assert(std::string(openQ4_FitBrowserCell(&dc,"Deathmatch",.17f,17).c_str()).empty());
-    assert(std::string(openQ4_FitBrowserCell(&dc,"A\xc3\xa9\xf0\x9f\x8e\xaf" "BCDEF",.17f,36).c_str())=="A\xc3\xa9\xf0\x9f\x8e\xaf...");
-    assert(std::string(openQ4_FitBrowserCell(&dc,"A\xc3\xa9\xf0\x9f\x8e\xaf" "BCDEF",.17f,24).c_str())=="A...");
+    assert(std::string(openD3_FitBrowserCell(&dc,"DM",.17f,12).c_str())=="DM");
+    assert(std::string(openD3_FitBrowserCell(&dc,"Deathmatch",.17f,36).c_str())=="Dea...");
+    assert(std::string(openD3_FitBrowserCell(&dc,"Deathmatch",.17f,17).c_str()).empty());
+    assert(std::string(openD3_FitBrowserCell(&dc,"A\xc3\xa9\xf0\x9f\x8e\xaf" "BCDEF",.17f,36).c_str())=="A\xc3\xa9\xf0\x9f\x8e\xaf...");
+    assert(std::string(openD3_FitBrowserCell(&dc,"A\xc3\xa9\xf0\x9f\x8e\xaf" "BCDEF",.17f,24).c_str())=="A...");
     GuiDouble g;idListWindow list(g);
     click(list,0,1000);assert(list.entered==0&&list.GetCurrentSel()==0&&g.observedRows.back()==0);
     click(list,1,1100);assert(list.entered==0&&list.GetCurrentSel()==1&&g.observedRows.back()==1);
@@ -174,7 +174,7 @@ def main() -> None:
     header = (ROOT / "src/ui/ListWindow.h").read_text(encoding="utf-8")
     assert "clickRow" in header and "clickRow = -1;" in function_body(source, "void idListWindow::CommonInit()")
     functions = "\n".join(function_body(source, signature) for signature in (
-        "static idStr openQ4_FitBrowserCell(",
+        "static idStr openD3_FitBrowserCell(",
         "void idListWindow::SetCurrentSel(", "void idListWindow::ClearSelection(",
         "void idListWindow::AddCurrentSel(", "int idListWindow::GetCurrentSel(",
         "bool idListWindow::IsSelected(", "const char *idListWindow::HandleEvent("))

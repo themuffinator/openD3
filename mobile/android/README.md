@@ -8,7 +8,7 @@ SigmaTouch overlay remains an optional, separately licensed host.
 ## Release download
 
 The manual release workflow includes an experimental, release-signed
-`openq4-<version>-android-arm64-experimental.apk`. Install it on an ARM64 device
+`opend3-<version>-android-arm64-experimental.apk`. Install it on an ARM64 device
 with Android 7.0/API 24 or later and OpenGL ES 3.0, then provide your retail
 assets as described below. Broad device and release-package qualification remains
 open; the recorded S25 development builds pass the scoped save/touch/audio checks
@@ -24,29 +24,29 @@ it to switch to the release APK. Do not clear app data to update a release APK.
 Build the native Android targets and run Meson install first, following
 [the Android build guide](../../docs/dev/android-build.md). The staging directory
 must contain `lib/libquake4.so`, `lib/libSDL3.so`, the renderer/game modules and
-their shared dependencies, plus `baseoq4/pak0.pk4` and the remaining staged packs.
+their shared dependencies, plus `baseod3/pak0.pk4` and the remaining staged packs.
 
 Use Java 17 or 21, Gradle 8.12, and Android SDK platform 35. Supply the same SDL3
 source tree used for the native library (currently SDL 3.4.18):
 
 ```sh
 gradle -p mobile/android \
-  --project-cache-dir=/absolute/path/to/openQ4/.tmp/android-gradle-project \
+  --project-cache-dir=/absolute/path/to/openD3/.tmp/android-gradle-project \
   -Psdl3SourceRoot=/path/to/SDL3-3.4.18 \
-  -Popenq4Stage=/path/to/openQ4/.install/android/arm64-v8a \
+  -Popend3Stage=/path/to/openD3/.install/android/arm64-v8a \
   assembleDebug
 ```
 
 Set `ANDROID_HOME` to an installed Android SDK, or set `sdk.dir` in the ignored
 `mobile/android/local.properties`. The APK is written under
 `builddir/android-apk/app/outputs/apk/debug/`. Native compilation stays in Meson;
-Gradle only packages staged libraries and openQ4-owned overlays. The phone
+Gradle only packages staged libraries and openD3-owned overlays. The phone
 package targets `arm64-v8a` and API 24 or later.
 
 The separate [diagnostic emulator build](../../docs/dev/android-build.md#diagnostic-emulator-build)
-uses `-Popenq4Abi=x86_64` and its matching stage. It produces a debug APK under
+uses `-Popend3Abi=x86_64` and its matching stage. It produces a debug APK under
 `builddir/android-apk-emulator/`, uses application ID
-`com.darkmatter.openq4.emulator` and keeps separate saves/data. Release packaging
+`com.darkmatter.opend3.emulator` and keeps separate saves/data. Release packaging
 is disabled for that ABI; it is not a published phone upgrade.
 
 Gradle uses a 4 GiB heap and at most two workers. PK4 assets are already
@@ -58,26 +58,26 @@ that metadata and uses its native API as the APK's minimum Android version.
 The supplied SDL Java source version must match the staged native SDL library.
 Do not mix Java classes and native libraries from different SDL releases.
 
-The APK version name comes from the staged `baseoq4/mod.json`, and its default
+The APK version name comes from the staged `baseod3/mod.json`, and its default
 version code is `major * 1000000 + minor * 1000 + patch` (for example, `0.13.1`
 becomes `13001`). Distributors publishing multiple APKs with the same engine
 version, including prereleases, can provide an increasing
-`-Popenq4VersionCode=<integer>`; preserve increasing codes across later releases.
+`-Popend3VersionCode=<integer>`; preserve increasing codes across later releases.
 
 Use an absolute `--project-cache-dir` path: Gradle resolves a relative path
 against `mobile/android`, which can otherwise place generated cache files in
 the source tree. Compiler and APK intermediates remain under `builddir/`.
 
-The APK retains the full official openQ4 overlay packs. First launch also
+The APK retains the full official openD3 overlay packs. First launch also
 copies those packs into private storage;
 allow room for both the APK and extracted content, plus the retail installation
 and saves.
 
-Install the APK and open **openQ4 setup**. Choose English, German, Spanish or
+Install the APK and open **openD3 setup**. Choose English, German, Spanish or
 French, then **Choose game folder** and select `q4base` from your own Quake 4
 1.4.2 installation. A subfolder inside Downloads or a connected USB drive can
 hold the source files. Android's picker grants read access to that folder;
-openQ4 copies the archives to its app-specific storage and preserves the
+openD3 copies the archives to its app-specific storage and preserves the
 originals. No retail game data is included in the APK.
 
 Setup verifies the required archives and their contents, reports optional and
@@ -93,9 +93,9 @@ For development, manual data placement still works. Open the launcher and use
 
 ```sh
 adb install builddir/android-apk/app/outputs/apk/debug/app-debug.apk
-adb shell mkdir -p /sdcard/Android/data/com.darkmatter.openq4/files/q4base
-adb push /path/to/Quake4/q4base/. /sdcard/Android/data/com.darkmatter.openq4/files/q4base/
-adb shell am start -n com.darkmatter.openq4/.LauncherActivity
+adb shell mkdir -p /sdcard/Android/data/com.darkmatter.opend3/files/q4base
+adb push /path/to/Quake4/q4base/. /sdcard/Android/data/com.darkmatter.opend3/files/q4base/
+adb shell am start -n com.darkmatter.opend3/.LauncherActivity
 ```
 
 The native game Activity is internal; external launches use the setup entry
@@ -145,17 +145,17 @@ orientation when it creates the engine's resizable window. In portrait the
 touch controls form the thumb deck below the view. Physical portrait,
 cutout, rotation and input qualification remain in progress.
 
-Saves/configuration/logs live in private `files/saves/baseoq4/`, and generated
+Saves/configuration/logs live in private `files/saves/baseod3/`, and generated
 texture caches live in the Android cache directory. With a debug APK, retrieve
 the engine log using:
 
 ```sh
-adb shell run-as com.darkmatter.openq4 cat files/saves/baseoq4/logs/openq4.log
+adb shell run-as com.darkmatter.opend3 cat files/saves/baseod3/logs/opend3.log
 ```
 
 When a native fatal error writes a diagnostic report, it is beside that log at
-`files/saves/baseoq4/logs/fatal.txt`. The standalone host publishes
-`OPENQ4_SAVE_ROOT` before native startup so early diagnostics use the same root
+`files/saves/baseod3/logs/fatal.txt`. The standalone host publishes
+`OPEND3_SAVE_ROOT` before native startup so early diagnostics use the same root
 as `fs_savepath`. External hosts may publish their absolute save directory in
 that variable; otherwise the existing `USER_FILES/quake4` or SDL private-storage
 fallback remains in use. The setup screen's **Export logs** action includes
@@ -173,7 +173,7 @@ these copies and local saves. The native libraries must be extracted by the
 package manager. Gradle's `useLegacyPackaging` setting writes the corresponding
 `extractNativeLibs` attribute into the packaged manifest.
 
-The custom Activity and build files are openQ4 GPL-3.0-or-later sources. SDL's
+The custom Activity and build files are openD3 GPL-3.0-or-later sources. SDL's
 Android Java classes are referenced directly from the supplied source tree;
 they retain [SDL's zlib license](https://github.com/libsdl-org/SDL/blob/release-3.4.10/LICENSE.txt).
 The SDL Activity contract and Gradle versions follow

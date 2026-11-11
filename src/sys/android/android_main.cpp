@@ -1,5 +1,5 @@
 // Android/SigmaTouch support by emileb: https://github.com/emileb/openQ4/tree/android
-// Integrated and adapted for current openQ4; licensed under GPL-3.0-or-later.
+// Integrated and adapted for current openD3; licensed under GPL-3.0-or-later.
 
 /*
 ===========================================================================
@@ -36,7 +36,7 @@ the Free Software Foundation, either version 3 of the License, or
 
 #include "android_public.h"
 #include <SDL3/SDL.h>
-#if !defined( OPENQ4_SIGMATOUCH )
+#if !defined( OPEND3_SIGMATOUCH )
 #include <SDL3/SDL_main.h>
 #endif
 
@@ -85,7 +85,7 @@ const char *Sys_DefaultSavePath( void ) {
 		return savepath.c_str();
 	}
 
-	const char *saveRoot = getenv( OPENQ4_ANDROID_SAVE_ROOT_ENV );
+	const char *saveRoot = getenv( OPEND3_ANDROID_SAVE_ROOT_ENV );
 	if ( saveRoot != NULL && saveRoot[0] == '/' ) {
 		savepath = saveRoot;
 		// Preserve the root itself while removing redundant trailing slashes.
@@ -136,14 +136,14 @@ const char *Sys_EXEPath( void ) {
 		return exepath.c_str();
 	}
 
-	const char *nativeLibs = getenv( OPENQ4_ANDROID_NATIVE_LIBS_ENV );
+	const char *nativeLibs = getenv( OPEND3_ANDROID_NATIVE_LIBS_ENV );
 	if ( nativeLibs != NULL && nativeLibs[0] == '/' ) {
 		exepath = nativeLibs;
 		exepath.StripTrailing( '/' );
-		exepath += "/openq4";
+		exepath += "/opend3";
 	} else {
 		exepath = Posix_Cwd();
-		exepath += "/openq4";
+		exepath += "/opend3";
 	}
 	return exepath.c_str();
 }
@@ -174,7 +174,7 @@ bool Sys_GetGameModuleRootDirectory( char *moduleRoot, int moduleRootSize ) {
 	}
 	moduleRoot[0] = '\0';
 
-	const char *nativeLibs = getenv( OPENQ4_ANDROID_NATIVE_LIBS_ENV );
+	const char *nativeLibs = getenv( OPEND3_ANDROID_NATIVE_LIBS_ENV );
 	if ( nativeLibs == NULL || nativeLibs[0] != '/' ) {
 		return false;
 	}
@@ -396,7 +396,7 @@ static void Sys_HandlePendingQuitSignal( void ) {
 	common->Quit();
 }
 
-extern "C" __attribute__((visibility("default"))) int OpenQ4_AndroidMain( int argc, const char **argv ) {
+extern "C" __attribute__((visibility("default"))) int openD3_AndroidMain( int argc, const char **argv ) {
 	Posix_EarlyInit();
 
 	if ( argc > 1 && argv != NULL ) {
@@ -417,10 +417,10 @@ extern "C" __attribute__((visibility("default"))) int OpenQ4_AndroidMain( int ar
 	return 0;
 }
 
-#if !defined( OPENQ4_SIGMATOUCH )
+#if !defined( OPEND3_SIGMATOUCH )
 // SDLActivity loads libquake4.so and resolves SDL_main. The host must set
-// OPENQ4_NATIVE_LIBS to ApplicationInfo.nativeLibraryDir before startup.
+// OPEND3_NATIVE_LIBS to ApplicationInfo.nativeLibraryDir before startup.
 extern "C" SDL_DECLSPEC int SDL_main( int argc, char **argv ) {
-	return OpenQ4_AndroidMain( argc, const_cast<const char **>( argv ) );
+	return openD3_AndroidMain( argc, const_cast<const char **>( argv ) );
 }
 #endif

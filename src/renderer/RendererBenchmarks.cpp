@@ -393,7 +393,7 @@ void RendererBenchmarks_PrintTimingMarker( void ) {
 	const long long gpuP99 = gpu.count > 0 ? static_cast<long long>( gpu.p99 ) : -1;
 
 	common->Printf(
-		"OPENQ4_FRAME_TIMING_V1 map=%s backend=%s profile=%s cpuSamples=%d cpuP50Us=%llu cpuP95Us=%llu cpuP99Us=%llu gpuAvailable=%d gpuSamples=%d gpuP50Us=%lld gpuP95Us=%lld gpuP99Us=%lld\n",
+		"OPEND3_FRAME_TIMING_V1 map=%s backend=%s profile=%s cpuSamples=%d cpuP50Us=%llu cpuP95Us=%llu cpuP99Us=%llu gpuAvailable=%d gpuSamples=%d gpuP50Us=%lld gpuP95Us=%lld gpuP99Us=%lld\n",
 		mapName.c_str(), RendererBenchmarks_GpuBackendName( timing.backend ),
 		budget.presetName, cpu.count, cpu.p50, cpu.p95, cpu.p99,
 		gpu.count > 0 ? 1 : 0, gpu.count, gpuP50, gpuP95, gpuP99 );

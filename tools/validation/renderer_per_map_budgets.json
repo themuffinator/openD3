@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "kind": "openq4-renderer-per-map-budgets",
+  "kind": "opend3-renderer-per-map-budgets",
   "contractId": "stock-baseline-targets-v1",
   "timeUnit": "microseconds",
   "budgets": [

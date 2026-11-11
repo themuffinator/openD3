@@ -1,6 +1,6 @@
 #version 450
 
-// openQ4 Vulkan stencil shadow volume — fragment stage (Phase G1).
+// openD3 Vulkan stencil shadow volume — fragment stage (Phase G1).
 //
 // The volume pipeline masks every color write (colorWriteMask 0) and only
 // the depth test + stencil ops matter. The r_showShadows visualization

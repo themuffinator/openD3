@@ -45,14 +45,14 @@ idCVar				idAsyncNetwork::serverDedicated( "net_serverDedicated", "1", CVAR_SERV
 #else
 idCVar				idAsyncNetwork::serverDedicated( "net_serverDedicated", "0", CVAR_SERVERINFO | CVAR_SYSTEM | CVAR_INTEGER | CVAR_NOCHEAT, "1 = text console dedicated server, 2 = graphical dedicated server", 0, 2, idCmdSystem::ArgCompletion_Integer<0,2> );
 #endif
-// openQ4: snapshots carry everything a client is told about the world - entity
+// openD3: snapshots carry everything a client is told about the world - entity
 // state, projectiles, and the whole batch of replicated effects, hit scans and
 // events - so this interval is the granularity of all of it.  33ms is two 60Hz
 // server frames and halves the worst-case age of a replicated effect against the
 // 50ms this shipped with, which is worth having now that the rate cap below no
 // longer throttles the stream below the asked-for rate anyway.
 idCVar				idAsyncNetwork::serverSnapshotDelay( "net_serverSnapshotDelay", "33", CVAR_SYSTEM | CVAR_INTEGER | CVAR_NOCHEAT, "delay between snapshots in milliseconds" );
-// openQ4: these are ceilings, not reservations - a match only ever uses what its
+// openD3: these are ceilings, not reservations - a match only ever uses what its
 // snapshots actually need.  But the channel's token bucket refuses to send until
 // the previous packet has been paid for at this rate, so a cap below
 // snapshotSize * snapshotHz does not shed bytes, it sheds whole snapshots.  At
@@ -496,12 +496,11 @@ idAsyncNetwork::SpawnServer_f
 With net_serverDedicated 1, a client showing a window turns itself into a
 dedicated server here, as retail Quake4.exe 1.4.2 does: the window closes, the
 system console becomes the server's only interface, and the audio device is
-released. Before that the spawn may have to swap to game_mp, or reload the engine
-out of q4xbase. The renderer reads net_serverDedicated as it starts, and a client
+released. Before that the spawn may have to reload the engine. The renderer reads net_serverDedicated as it starts, and a client
 must come back from that reload with its window to be converted here, so the
 request is held back across it and resumed by the spawnServer it replays. An
 engine that starts with net_serverDedicated 1 and no device is a dedicated server
-already: its session has worlds and no menus, as openQ4-ded's does, so a later
+already: its session has worlds and no menus, as openD3-ded's does, so a later
 engine reload (a map change's, or a bare reloadEngine) keeps it one.
 ==================
 */
@@ -512,23 +511,6 @@ void idAsyncNetwork::SpawnServer_f( const idCmdArgs &args ) {
 	}
 	const bool holdDedicatedAcrossReload = serverDedicated.GetInteger() == 1 && renderSystem->IsOpenGLRunning();
 
-    if ( !idStr::Icmp( fileSystem->GetActiveGameDir(), "q4xbase" ) ||
-         !idStr::Icmp( cvarSystem->GetCVarString( "fs_game" ), "q4xbase" ) ) {
-        const idStr requestedGameType = cvarSystem->GetCVarString( "si_gameType" );
-        common->StartupVariable( "si_gameType", true );
-        cvarSystem->SetCVarString( "si_gameType", requestedGameType.c_str() );
-        cvarSystem->SetCVarString( "fs_game", OPENQ4_GAMEDIR );
-        cvarSystem->SetCVarString( "fs_game_base", "" );
-        if ( !idStr::Icmp( cvarSystem->GetCVarString( "si_gameType" ), "singleplayer" ) )
-            cvarSystem->SetCVarString( "si_gameType", "DM" );
-        cvarSystem->SetCVarString( "com_nextGameModule", "game_mp" );
-        if ( holdDedicatedAcrossReload ) {
-            dedicatedSpawnDeferred = true;
-            serverDedicated.SetInteger( 0 );
-        }
-        cmdSystem->SetupReloadEngineMenu( args );
-        return;
-    }
 
 	if(args.Argc() > 1) {
 		cvarSystem->SetCVarString("si_map", args.Argv(1));
@@ -566,7 +548,7 @@ void idAsyncNetwork::SpawnServer_f( const idCmdArgs &args ) {
 
 #ifndef ID_DEDICATED
 	// An engine that starts with net_serverDedicated 1 gets its session worlds
-	// without a renderer device, as openQ4-ded's does. One that starts without
+	// without a renderer device, as openD3-ded's does. One that starts without
 	// a device otherwise (com_skipRenderer, or a display recovery that left
 	// none) gets no worlds, and a map cannot load: refuse here instead of
 	// crashing in the map change.
@@ -589,11 +571,11 @@ void idAsyncNetwork::SpawnServer_f( const idCmdArgs &args ) {
 			if ( renderSystem->IsOpenGLRunning() ) {
 				common->Printf( "Dedicated server: closing the game window; this console now runs the server, and closing it quits\n" );
 				// The console is the server's only window from here on, so closing
-				// it quits, as it does for openQ4-ded. A launch with a hidden game
+				// it quits, as it does for openD3-ded. A launch with a hidden game
 				// window keeps the console hidden too.
 				Sys_ShowConsole( cvarSystem->GetCVarBool( "r_hiddenWindow" ) ? 0 : 1, true );
 				renderSystem->ShutdownOpenGL();
-				// A dedicated server takes no single-instance lock (openQ4-ded never
+				// A dedicated server takes no single-instance lock (openD3-ded never
 				// does), so the game can start again on this computer to join it.
 				Sys_ReleaseInstanceLock();
 			}
@@ -655,19 +637,6 @@ static idStr Net_AddressArgument( const idCmdArgs &args ) {
 
 void idAsyncNetwork::Connect_f( const idCmdArgs &args ) {
 
-    if ( !idStr::Icmp( fileSystem->GetActiveGameDir(), "q4xbase" ) ||
-         !idStr::Icmp( cvarSystem->GetCVarString( "fs_game" ), "q4xbase" ) ) {
-        const idStr requestedGameType = cvarSystem->GetCVarString( "si_gameType" );
-        common->StartupVariable( "si_gameType", true );
-        cvarSystem->SetCVarString( "si_gameType", requestedGameType.c_str() );
-        cvarSystem->SetCVarString( "fs_game", OPENQ4_GAMEDIR );
-        cvarSystem->SetCVarString( "fs_game_base", "" );
-        if ( !idStr::Icmp( cvarSystem->GetCVarString( "si_gameType" ), "singleplayer" ) )
-            cvarSystem->SetCVarString( "si_gameType", "DM" );
-        cvarSystem->SetCVarString( "com_nextGameModule", "game_mp" );
-        cmdSystem->SetupReloadEngineMenu( args );
-        return;
-    }
 	if ( server.IsActive() ) {
 		common->Printf( "already running a server\n" );
 		return;
@@ -790,7 +759,7 @@ void idAsyncNetwork::Kick_f( const idCmdArgs &args ) {
 	}
 	iclient = atoi( clientId );
 
-	// openQ4: DropClient indexes the client array before it validates anything, so a
+	// openD3: DropClient indexes the client array before it validates anything, so a
 	// typo'd client number used to be an out of bounds access rather than a usage error.
 	if ( iclient < 0 || iclient >= MAX_ASYNC_CLIENTS ) {
 		common->Printf( "usage: kick <client number>, must be in the range 0 - %d\n", MAX_ASYNC_CLIENTS - 1 );

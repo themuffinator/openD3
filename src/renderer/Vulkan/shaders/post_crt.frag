@@ -3,7 +3,7 @@
 #include "framebuffer_coords.glsl"
 
 // CRT monitor effect over the finished frame. A port of
-// content/baseoq4/pak0/glprogs/crt.fs, which RB_ApplyCRTToBackBuffer draws on
+// content/baseod3/pak0/glprogs/crt.fs, which RB_ApplyCRTToBackBuffer draws on
 // the OpenGL backend.
 //
 // The back-buffer copy is stored bottom-up like an OpenGL texture, so uv uses

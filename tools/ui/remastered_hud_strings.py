@@ -3,7 +3,7 @@
 
 The Remastered HUD documents and the game's Remastered fields use the
 #str_2312xx block. Running this script adds missing entries to every
-content/baseoq4/pak0/strings/*_openq4.lang table (UTF-8, CRLF) and updates
+content/baseod3/pak0/strings/*_opend3.lang table (UTF-8, CRLF) and updates
 entries whose text changed; `--check` reports tables that are out of date.
 
 Ordinals: #str_231201 is first place exactly, then 231202-231205 are the
@@ -17,7 +17,7 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-STRINGS = ROOT / "content/baseoq4/pak0/strings"
+STRINGS = ROOT / "content/baseod3/pak0/strings"
 LANGUAGES = ("english", "brazilian", "czech", "french", "german", "hungarian", "italian", "polish", "russian", "spanish",
              "turkish", "ukrainian")
 
@@ -227,7 +227,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    stale = [language for language in LANGUAGES if update(STRINGS / f"{language}_openq4.lang", language, args.check)]
+    stale = [language for language in LANGUAGES if update(STRINGS / f"{language}_opend3.lang", language, args.check)]
     if args.check and stale:
         print("stale language tables:", ", ".join(stale))
         return 1

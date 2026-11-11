@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name_emulator">openQ4-Emulator</string>
-    <string name="setup_title">openQ4-Einrichtung</string>
+    <string name="app_name_emulator">openD3-Emulator</string>
+    <string name="setup_title">openD3-Einrichtung</string>
     <string name="setup_language">Sprache</string>
     <string name="setup_sample">Bereite deine Spieldateien vor und kehre an die Front zurück.</string>
     <string name="setup_continue">Weiter</string>
     <string name="setup_data">Spieldaten</string>
-    <string name="setup_data_help">Wähle den Ordner q4base deiner eigenen Installation von Quake 4 1.4.2. openQ4 kopiert und prüft die Archive; die Originale bleiben unverändert. Geeignet ist ein Unterordner von Downloads oder ein angeschlossenes USB-Laufwerk. Diese App enthält keine Spieldaten.</string>
+    <string name="setup_data_help">Wähle den Ordner q4base deiner eigenen Installation von Quake 4 1.4.2. openD3 kopiert und prüft die Archive; die Originale bleiben unverändert. Geeignet ist ein Unterordner von Downloads oder ein angeschlossenes USB-Laufwerk. Diese App enthält keine Spieldaten.</string>
     <string name="setup_choose">Spielordner wählen</string>
     <string name="setup_check">Installierte Dateien prüfen</string>
     <string name="setup_retry">Letzten Vorgang wiederholen</string>
@@ -61,8 +61,8 @@
     <string name="setup_export_help">Sichere deine Spielstände samt Beschreibungen und Vorschaubildern als ZIP oder exportiere Diagnoseprotokolle. Wähle den Speicherort in der Android-Dateiauswahl. Die Originaldateien bleiben in der App. Protokolle können lokale Pfade und Serveradressen enthalten; prüfe sie vor dem Teilen.</string>
     <string name="setup_export_saves">Spielstände sichern</string>
     <string name="setup_export_logs">Protokolle exportieren</string>
-    <string name="setup_saves_filename">openQ4-Spielstaende.zip</string>
-    <string name="setup_logs_filename">openQ4-Protokolle.zip</string>
+    <string name="setup_saves_filename">openD3-Spielstaende.zip</string>
+    <string name="setup_logs_filename">openD3-Protokolle.zip</string>
     <string name="setup_no_document_picker">Die System-Dateiauswahl ist nicht verfügbar. Aktiviere die Android-App Dateien und versuche es erneut.</string>
     <string name="setup_export_picker_cancelled">Es wurde kein Exportziel gewählt. Deine Dateien sind unverändert.</string>
     <string name="setup_export_no_grant">Das Ziel konnte nicht zum Schreiben geöffnet werden. Versuche es erneut mit einem zugänglichen Speicherort. Deine Originaldateien sind unverändert.</string>

@@ -20,14 +20,14 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def menu(action):
-    return [f'openq4_retainedGui menu {action} 1', f'openq4_retainedGui menu {action} 0', 'wait 3']
+    return [f'opend3_retainedGui menu {action} 1', f'opend3_retainedGui menu {action} 0', 'wait 3']
 
 
 def observe_menu():
-    return ['testGUI guis/menu/settings/system.q4ui', 'waitMsec 2000', 'openq4_retainedGui report',
-            *[f'openq4_guiGet "{node}::text"' for node in
+    return ['testGUI guis/menu/settings/system.q4ui', 'waitMsec 2000', 'opend3_retainedGui report',
+            *[f'opend3_guiGet "{node}::text"' for node in
               ('settings_backend-value', 'settings_gpu-value', 'rendering-active', 'rendering-notice')],
-            'openq4_retainedGui widget settings_gpu']
+            'opend3_retainedGui widget settings_gpu']
 
 
 def main():
@@ -50,17 +50,17 @@ def main():
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     save = output / 'save'
-    game = save / 'baseoq4'
+    game = save / 'baseod3'
     game.mkdir(parents=True, exist_ok=True)
-    if (game / 'openQ4Config.cfg').exists(): raise RuntimeError('Use a fresh isolated profile')
+    if (game / 'openD3Config.cfg').exists(): raise RuntimeError('Use a fresh isolated profile')
     runtime = ROOT / '.install'
     verify_runtime_is_current(runtime)
-    paths = [runtime / n for n in ('openQ4-client_x64.exe', 'renderer-gl_x64.dll', 'renderer-vk_x64.dll', 'baseoq4/game-sp_x64.dll')]
+    paths = [runtime / n for n in ('openD3-client_x64.exe', 'renderer-gl_x64.dll', 'renderer-vk_x64.dll', 'baseod3/game-sp_x64.dll')]
     hashes = {p.relative_to(runtime).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
     launch = []
-    settings = {'fs_savepath': str(save), 'fs_devpath': str(save), 'fs_game': 'baseoq4',
+    settings = {'fs_savepath': str(save), 'fs_devpath': str(save), 'fs_game': 'baseod3',
                 'com_gameMode': 'SP', 'si_gameType': 'singleplayer', 'ui_autoJoin': '0',
-                'win_allowMultipleInstances': '1', 'logFile': '2', 'logFileName': 'logs/openq4.log',
+                'win_allowMultipleInstances': '1', 'logFile': '2', 'logFileName': 'logs/opend3.log',
                 'developer': '1', 'r_hiddenWindow': '1', 'r_fullscreen': '0', 'r_fullscreenDesktop': '0',
                 'r_borderless': '0', 'r_borderlessDefaultMigrated': '1', 'r_mode': '-1',
                 'r_windowWidth': '1280', 'r_windowHeight': '720', 'r_swapInterval': '0',
@@ -71,7 +71,7 @@ def main():
     if args.assets: settings['fs_basepath'] = str(args.assets.resolve())
     preferences = {key: value for key, value in [('r_renderApi', args.backend), ('r_renderDevice', args.device)] if value}
     if args.saved:
-        write_script(game / 'openQ4Config.cfg', [f'seta {key} "{value}"' for key, value in preferences.items()])
+        write_script(game / 'openD3Config.cfg', [f'seta {key} "{value}"' for key, value in preferences.items()])
     else: settings.update(preferences)
     for key, value in settings.items(): benchmark.append_set(launch, key, value)
     benchmark.append_command(launch, 'exec', 'boot.cfg')
@@ -81,7 +81,7 @@ def main():
              'rendererModuleSelfTest', 'performancePresetSelfTest', 'autoDetectPerformancePreset',
              'vid_restart', 'waitMsec 2000', 'rendererDevices', 'screenshot screenshots/gameplay.tga',
              *observe_menu(), 'screenshot screenshots/system.tga', 'wait 3',
-             'openq4_retainedGui focus settings_gpu', *menu('accept'),
+             'opend3_retainedGui focus settings_gpu', *menu('accept'),
              'screenshot "screenshots/device-list.tga"', *menu('back'), 'testGUI',
              'echo RENDER_SELECTION_COMPLETE', 'quit']
     write_script(game / 'aftermap.cfg', after)
@@ -91,24 +91,24 @@ def main():
     else:
         # The phase is archived by the checked restart; config execution after
         # reload runs it once. No filesystem race or native input is involved.
-        write_script(game / 'autoexec.cfg', ['vstr openq4_renderSelectionReload'])
-        write_script(game / 'reload.cfg', ['seta openq4_renderSelectionReload ""', 'waitMsec 3000', 'map game/airdefense1'])
+        write_script(game / 'autoexec.cfg', ['vstr opend3_renderSelectionReload'])
+        write_script(game / 'reload.cfg', ['seta opend3_renderSelectionReload ""', 'waitMsec 3000', 'map game/airdefense1'])
         control = 'settings_backend' if args.menu_backend else 'settings_gpu'
         steps = ('best','gl','vulkan').index(args.menu_backend) if args.menu_backend else args.menu_gpu+1
-        boot += observe_menu() + [f'openq4_retainedGui focus {control}'] + menu('accept') + menu('home')
+        boot += observe_menu() + [f'opend3_retainedGui focus {control}'] + menu('accept') + menu('home')
         for _ in range(steps): boot += menu('down')
-        boot += menu('accept') + ['waitMsec 500', 'openq4_guiGet "rendering-notice::text"',
-                                 'openq4_retainedGui event apply', 'waitMsec 1500',
+        boot += menu('accept') + ['waitMsec 500', 'opend3_guiGet "rendering-notice::text"',
+                                 'opend3_retainedGui event apply', 'waitMsec 1500',
                                  'r_renderApi', 'r_renderDevice', 'r_actualRenderApi',
-                                 'openq4_guiGet "rendering-notice::text"', 'screenshot screenshots/pending.tga',
-                                 'seta openq4_renderSelectionReload "exec reload.cfg"',
-                                 'echo RENDER_SELECTION_RESTART', 'openq4_retainedGui event restartRenderer']
+                                 'opend3_guiGet "rendering-notice::text"', 'screenshot screenshots/pending.tga',
+                                 'seta opend3_renderSelectionReload "exec reload.cfg"',
+                                 'echo RENDER_SELECTION_RESTART', 'opend3_retainedGui event restartRenderer']
     write_script(game / 'boot.cfg', boot)
     (output / 'launch.json').write_text(json.dumps(launch, indent=2), encoding='utf-8')
     (output / 'runtime.json').write_text(json.dumps(hashes, indent=2), encoding='utf-8')
     code, timeout, elapsed = benchmark.launch_and_wait(paths[0], launch, runtime,
         output / 'stdout.txt', output / 'stderr.txt', 240)
-    log = (game / 'logs/openq4.log').read_text(encoding='utf-8', errors='replace')
+    log = (game / 'logs/opend3.log').read_text(encoding='utf-8', errors='replace')
     failures = []
     if code or timeout: failures.append(f'exit={code}, timeout={timeout}')
     if 'RENDER_SELECTION_COMPLETE' not in log: failures.append('missing completion')
@@ -119,7 +119,7 @@ def main():
     if args.expected_device and f'active={args.expected_device}' not in section: failures.append('wrong active GPU UUID')
     if args.expected_auto and f"Auto-detected performance preset '{args.expected_auto}'" not in section: failures.append('wrong detected preset')
     if changing and 'ReloadEngine end' not in log: failures.append('menu restart did not finish')
-    if re.search(r'VUID-|Validation Error|FATAL ERROR|self-test failed|usage: openq4|openq4_retainedGui: requires', log): failures.append('runtime, diagnostic or Vulkan validation error')
+    if re.search(r'VUID-|Validation Error|FATAL ERROR|self-test failed|usage: opend3|opend3_retainedGui: requires', log): failures.append('runtime, diagnostic or Vulkan validation error')
     for name, digest in hashes.items():
         if hashlib.sha256((runtime / name).read_bytes()).hexdigest() != digest: failures.append('runtime changed during test')
     from PIL import Image, ImageStat

@@ -2,7 +2,7 @@
 #extension GL_GOOGLE_include_directive : require
 #include "pbr_vertex.glsl"
 
-// openQ4 Vulkan shadow-receiving interaction — vertex stage (Phase F2a,
+// openD3 Vulkan shadow-receiving interaction — vertex stage (Phase F2a,
 // docs/dev/archive/2026-10-18/plans/2026-07-19-vulkan-phase-f.md).
 //
 // interaction.vert plus the projected shadow coordinate of the GL

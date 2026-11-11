@@ -87,19 +87,19 @@ def _compare_packages(left: Path, right: Path) -> int:
 
 
 def staged_source(runtime: Path) -> tuple[bytes, dict]:
-    """Resolve this page in the highest-priority cdpath/baseoq4 mount.
+    """Resolve this page in the highest-priority cdpath/baseod3 mount.
 
     No extraction or source copy. SetupGameDirectories mounts cdpath last;
     AddGameDirectory puts loose files before packages and later-loaded packages
     before earlier ones. Addon activation and duplicate archive members require
     runtime information this bounded probe does not have, so fail closed.
     """
-    game = runtime / 'baseoq4'
-    if not game.is_dir(): raise ValueError('Staged baseoq4 directory is missing')
+    game = runtime / 'baseod3'
+    if not game.is_dir(): raise ValueError('Staged baseod3 directory is missing')
     packages = [path for path in game.iterdir() if path.suffix.lower() == '.pk4']
     names = [path.name.lower() for path in packages]
     if len(set(names)) != len(names) or any(not name.isascii() for name in names):
-        raise ValueError('Ambiguous package names in staged baseoq4')
+        raise ValueError('Ambiguous package names in staged baseod3')
     packages.sort(key=cmp_to_key(_compare_packages))
     candidates, selected = [], None
     for package in packages:
@@ -147,15 +147,15 @@ def staged_source(runtime: Path) -> tuple[bytes, dict]:
     if selected is None: raise ValueError('Production SYSTEM source is absent from staged packages and loose files')
     return selected[0], {'effective':selected[1], 'candidates_low_to_high':candidates,
                          'packages_low_to_high':[path.name for path in packages],
-                         'mount':str(game), 'precedence':'cdpath/baseoq4: loose, then reverse engine PK4 load order'}
+                         'mount':str(game), 'precedence':'cdpath/baseod3: loose, then reverse engine PK4 load order'}
 
 
 def key(action: str) -> list[str]:
-    return [f'openq4_retainedGui menu "{action}" 1', f'openq4_retainedGui menu "{action}" 0']
+    return [f'opend3_retainedGui menu "{action}" 1', f'opend3_retainedGui menu "{action}" 0']
 
 
 def activate(control: str) -> list[str]:
-    return [f'openq4_retainedGui focus "{control}"'] + key('accept')
+    return [f'opend3_retainedGui focus "{control}"'] + key('accept')
 
 
 def open_choice(control: str) -> list[str]:
@@ -168,7 +168,7 @@ def open_choice(control: str) -> list[str]:
 def show_tab(name: str) -> list[str]:
     # The page's own tab event, as its strip fires it; the wait lets the page
     # switched to lay out before one of its rows takes the focus.
-    return [f'openq4_retainedGui event tab_{name}', 'wait 3']
+    return [f'opend3_retainedGui event tab_{name}', 'wait 3']
 
 
 class Tabs:
@@ -205,9 +205,9 @@ def stages() -> list[dict]:
                          popup=popup, live=live, actions=list(actions), events=events,
                          screenshot=screenshot, resets=resets, opening=opening, resolution_measured=resolution_measured))
 
-    add('open', ['openq4_system open'], brightness=1, baseline=1, live=1,
+    add('open', ['opend3_system open'], brightness=1, baseline=1, live=1,
         actions=[('begin', 0)], events=[('onactivate', 1, 1)], opening=True)
-    add('brightness_dirty', tabs.on('settings_brightness') + ['openq4_retainedGui focus "settings_brightness"'] + key('right'),
+    add('brightness_dirty', tabs.on('settings_brightness') + ['opend3_retainedGui focus "settings_brightness"'] + key('right'),
         baseline=1, dirty=1, live=1, actions=[('edit', 1)], screenshot='draft')
     add('applied', activate('settings_apply'), actions=[('apply', 0)], events=[('apply', 1, 0)], screenshot='applied')
     add('shadow_dirty', tabs.on('settings_shadows') + activate('settings_shadows'), shadows=0, dirty=1, actions=[('edit', 1)])
@@ -217,7 +217,7 @@ def stages() -> list[dict]:
         events=[('continueediting', 1, 1)])
     add('discarded', activate('settings_back') + ['wait 3'] + activate('discard_changes'),
         page=False, actions=[('cancel', 0)], events=[('onback', 0, 1), ('discard', 2, 1)])
-    add('reopen_discarded', ['openq4_system open'], actions=[('begin', 0)],
+    add('reopen_discarded', ['opend3_system open'], actions=[('begin', 0)],
         events=[('onactivate', 1, 1)], opening=True)
     add('choice_tentative', tabs.on('settings_postaa') + open_choice('settings_postaa') + key('down'), popup=1, screenshot='choice')
     add('choice_cancelled', key('back'))
@@ -225,15 +225,15 @@ def stages() -> list[dict]:
         postaa=2, dirty=1, actions=[('edit', 1)])
     add('choice_restored', activate('settings_back') + ['wait 3'] + activate('discard_changes'),
         page=False, actions=[('cancel', 0)], events=[('onback', 0, 1), ('discard', 2, 1)])
-    add('reopen_choice', ['openq4_system open'], actions=[('begin', 0)],
+    add('reopen_choice', ['opend3_system open'], actions=[('begin', 0)],
         events=[('onactivate', 1, 1)], opening=True)
-    add('reload_draft', tabs.on('settings_brightness') + ['openq4_retainedGui focus "settings_brightness"'] + key('right'),
+    add('reload_draft', tabs.on('settings_brightness') + ['opend3_retainedGui focus "settings_brightness"'] + key('right'),
         brightness=1.2, dirty=1, actions=[('edit', 1)])
     add('language', ['reloadLanguage', 'wait 30'], brightness=1.2, dirty=1, resets=1)
     add('video', ['vid_restart windowed', 'wait 60'], brightness=1.2, dirty=1, resets=1, screenshot='reloaded')
     add('final_clean', activate('settings_back') + ['wait 3'] + activate('discard_changes'),
         page=False, actions=[('cancel', 0)], events=[('onback', 0, 1), ('discard', 2, 1)])
-    add('reopen_clean', ['openq4_system open'], actions=[('begin', 0)],
+    add('reopen_clean', ['opend3_system open'], actions=[('begin', 0)],
         events=[('onactivate', 1, 1)], opening=True)
     def extras(down):
         commands = []
@@ -254,20 +254,20 @@ def stages() -> list[dict]:
     add('extras_restored', activate('settings_apply'), actions=[('apply',0)], events=[('apply',1,0)], resolution_measured=1,
         screenshot='extrasrestored')
     add('returned', activate('settings_back'), page=False, events=[('onback', 1, 0)], screenshot='returned')
-    add('reopened', ['openq4_system open'], actions=[('begin', 0)], events=[('onactivate', 1, 1)],
+    add('reopened', ['opend3_system open'], actions=[('begin', 0)], events=[('onactivate', 1, 1)],
         opening=True, screenshot='reopened')
     add('finished', activate('settings_back'), page=False, events=[('onback', 1, 0)])
     return rows
 
 
 def script() -> str:
-    lines = ['openq4_assertMenuActivation 10000', 'wait 3']
+    lines = ['opend3_assertMenuActivation 10000', 'wait 3']
     for stage in stages():
-        lines += [f'echo {STAGE_MARKER} {stage["name"]}'] + stage['commands'] + ['wait 6', 'openq4_system report']
+        lines += [f'echo {STAGE_MARKER} {stage["name"]}'] + stage['commands'] + ['wait 6', 'opend3_system report']
         if stage['page']:
-            lines += [f'openq4_guiGet "{field}"' for field in FIELDS]
-            lines += [f'openq4_retainedGui widget "{control}"' for control in CONTROLS]
-            lines += ['openq4_retainedGui report']
+            lines += [f'opend3_guiGet "{field}"' for field in FIELDS]
+            lines += [f'opend3_retainedGui widget "{control}"' for control in CONTROLS]
+            lines += ['opend3_retainedGui report']
         if stage['screenshot']:
             lines += [f'screenshot "screenshots/system-{stage["screenshot"]}.tga"']
     lines += ['gfxInfo', f'echo {COMPLETE}', 'quit']
@@ -275,7 +275,7 @@ def script() -> str:
 
 
 def source_contract(runtime: Path) -> dict:
-    source = ROOT / 'content/baseoq4/pak0' / PAGE
+    source = ROOT / 'content/baseod3/pak0' / PAGE
     staged, binding = staged_source(runtime)
     if not source.is_file() or source.read_bytes() != staged:
         raise ValueError('Production SYSTEM source must exactly match its effective staged member or loose override')
@@ -283,7 +283,7 @@ def source_contract(runtime: Path) -> dict:
     # silently rewrite or copy the source into a test-specific loader location.
     model = json.loads('\n'.join(line for line in source.read_text(encoding='utf-8').splitlines()
                                  if not line.lstrip().startswith('//')))
-    if model.get('id') != 'openq4.system':
+    if model.get('id') != 'opend3.system':
         raise ValueError('Unexpected production SYSTEM document identity')
     nodes, pending = {}, [model['root']]
     while pending:
@@ -519,13 +519,13 @@ def qualify(log: str, mode: str) -> dict:
         elif COMPLETE in line:
             completion.append(stripped)
             if stripped != COMPLETE: errors.append('Malformed standalone completion marker')
-        elif line.startswith('OPENQ4_MENU_ACTIVATION '):
+        elif line.startswith('OPEND3_MENU_ACTIVATION '):
             activation.append(line)
             if records: errors.append('Menu activation occurred after SYSTEM observations')
-        elif line.startswith(('OPENQ4_SYSTEM ', 'GUI_VALUE ', 'RETAINED_GUI_', 'RETAINED_GUI ', 'UI_SETTINGS ')):
+        elif line.startswith(('OPEND3_SYSTEM ', 'GUI_VALUE ', 'RETAINED_GUI_', 'RETAINED_GUI ', 'UI_SETTINGS ')):
             if current is None or completion: errors.append('Observation outside the ordered stage interval')
             else: current['lines'].append(line)
-    if len(activation) != 1 or not re.fullmatch(r'OPENQ4_MENU_ACTIVATION PASS elapsed=\d+ms limit=10000ms', activation[0]):
+    if len(activation) != 1 or not re.fullmatch(r'OPEND3_MENU_ACTIVATION PASS elapsed=\d+ms limit=10000ms', activation[0]):
         errors.append('Missing bounded normal menu activation from map gameplay')
     elif len(re.search(r'elapsed=(\d+)', activation[0]).group(1)) > 5 or int(re.search(r'elapsed=(\d+)', activation[0]).group(1)) > 10000:
         errors.append('Menu activation exceeded its limit')
@@ -544,10 +544,10 @@ def qualify(log: str, mode: str) -> dict:
         routes, reads, widgets, reports, operations, actions, events, resources, loads, observed, dispatches = [], [], [], [], [], [], [], [], [], [], []
         scrolls = []
         for line in lines:
-            if line.startswith('OPENQ4_SYSTEM operation='):
+            if line.startswith('OPEND3_SYSTEM operation='):
                 operations.append(line)
-            elif line.startswith('OPENQ4_SYSTEM '):
-                routes.append(_fields(line, 'OPENQ4_SYSTEM ', route_fields)); observed.append('route')
+            elif line.startswith('OPEND3_SYSTEM '):
+                routes.append(_fields(line, 'OPEND3_SYSTEM ', route_fields)); observed.append('route')
             elif line.startswith('GUI_VALUE '):
                 parts = line[len('GUI_VALUE '):].split('=', 1); reads.append(parts); observed.append('read:' + parts[0])
             elif line.startswith('RETAINED_GUI_WIDGET '):
@@ -573,9 +573,9 @@ def qualify(log: str, mode: str) -> dict:
             elif line.startswith('RETAINED_GUI_DISPATCH '):
                 dispatches.append(_fields(line,'RETAINED_GUI_DISPATCH ',set('path operation value brightness shadows close'.split())))
             else: errors.append(f'{at}: unexpected traced observation')
-        if operations != (['OPENQ4_SYSTEM operation=open result=1'] if stage['opening'] else []):
+        if operations != (['OPEND3_SYSTEM operation=open result=1'] if stage['opening'] else []):
             errors.append(f'{at}: normal SYSTEM route failed or repeated')
-        settled = [index for index,line in enumerate(lines) if line.startswith('OPENQ4_SYSTEM ') and not line.startswith('OPENQ4_SYSTEM operation=')]
+        settled = [index for index,line in enumerate(lines) if line.startswith('OPEND3_SYSTEM ') and not line.startswith('OPEND3_SYSTEM operation=')]
         if settled and any(index > settled[-1] for index,line in enumerate(lines)
                            if line.startswith(('UI_SETTINGS ', 'RETAINED_GUI_EVENT ', 'RETAINED_GUI_RESOURCE ',
                                                'RETAINED_GUI_OPERATION ', 'RETAINED_GUI_LOADED ', 'RETAINED_GUI_DISPATCH '))):
@@ -641,7 +641,7 @@ def qualify(log: str, mode: str) -> dict:
         for row in actions:
             if not re.fullmatch(r'[1-9]\d{0,19}',row[3]) or int(row[3]) >= 2**64: errors.append(f'{at}: invalid service owner token')
             owners.append((at,row[0],row[3]))
-        expected_operations = [('operation', line.split()[1]) for line in stage['commands'] if line.startswith('openq4_retainedGui ')]
+        expected_operations = [('operation', line.split()[1]) for line in stage['commands'] if line.startswith('opend3_retainedGui ')]
         if [event for event in events if event[0]=='operation'] != expected_operations:
             errors.append(f'{at}: semantic input operation sequence mismatch')
         if [event[1:] for event in events if event[0]=='event'] != stage['events']:
@@ -661,8 +661,8 @@ def qualify(log: str, mode: str) -> dict:
                 errors.append(f'{at}: SYSTEM editing owner changed before close or across resource restoration')
     else: errors.append('No real settings service operations were observed')
     for line in log.splitlines():
-        if ('ERROR:' in line or 'FATAL:' in line or 'openq4_guiGet: unknown' in line or
-            line.startswith(('usage: openq4_', 'openq4_retainedGui: requires'))): errors.append('Engine error or unsupported semantic command')
+        if ('ERROR:' in line or 'FATAL:' in line or 'opend3_guiGet: unknown' in line or
+            line.startswith(('usage: opend3_', 'opend3_retainedGui: requires'))): errors.append('Engine error or unsupported semantic command')
     return {'passed':not errors, 'errors':errors, 'stages':records, 'service_owners':owners,
             'normal_session_route':not errors, 'replacement_acceptance':False, 'full_system_acceptance':False,
             'widget_editor_acceptance':False, 'host_input_injection':False}
@@ -672,17 +672,17 @@ def capture(args) -> int:
     output, runtime = args.output.resolve(), args.runtime.resolve()
     if output.exists(): raise ValueError('Use a new output directory to preserve evidence')
     if not output.is_relative_to((ROOT/'.tmp').resolve()): raise ValueError('Capture evidence must use a private repository .tmp directory')
-    executable = runtime / ('openQ4-client_x64.exe' if os.name=='nt' else 'openQ4-client_x64')
+    executable = runtime / ('openD3-client_x64.exe' if os.name=='nt' else 'openD3-client_x64')
     if not executable.is_file() or not (args.assets/'q4base').is_dir(): raise ValueError('Staged client and installed q4base assets are required')
     source = source_contract(runtime)
     profiles = json.loads((ROOT/'.vscode/launch.json').read_text(encoding='utf-8-sig'))['configurations']
     prefix = '(SP) airdefense1 ' if args.mode=='sp' else '(MP) q4dm1 '
     profile = next(row for row in profiles if row['name'].startswith(prefix) and row['name'].endswith('GL'))
-    game = output/'save/baseoq4'; game.mkdir(parents=True)
+    game = output/'save/baseod3'; game.mkdir(parents=True)
     cfg = game/'system-page.cfg'; cfg.write_text(script(),encoding='utf-8')
     density = args.density if args.density is not None else (1.25 if args.mode=='sp' else 2)
     overrides = {'fs_basepath':str(args.assets.resolve()), 'fs_savepath':str(output/'save'), 'fs_devpath':str(output/'save'),
-        'fs_game':'baseoq4', 'logFile':'2', 'logFileName':'logs/openq4.log',
+        'fs_game':'baseod3', 'logFile':'2', 'logFileName':'logs/opend3.log',
         'r_fullscreen':'0', 'r_fullscreenDesktop':'0', 'r_borderless':'0', 'r_borderlessDefaultMigrated':'1', 'r_hiddenWindow':'1',
         'r_windowWidth':'1280', 'r_windowHeight':'720', 'r_mode':'-1', 'r_customWidth':'1280', 'r_customHeight':'720',
         'r_renderApi':args.renderer, 'r_rendererSharedGui':'1', 'r_rendererSharedInWorldGui':'0', 'r_multiSamples':'0', 'r_swapInterval':'1',
@@ -703,7 +703,7 @@ def capture(args) -> int:
         if count==1 or original[index+1].lower() not in {key.lower() for key in overrides}:
             command += [value.replace('${workspaceFolder}',str(ROOT)) for value in original[index:index+count]]
         index += count
-    binaries = [executable] + sorted(runtime.glob('renderer-*')) + sorted((runtime/'baseoq4').glob('game-*'))
+    binaries = [executable] + sorted(runtime.glob('renderer-*')) + sorted((runtime/'baseod3').glob('game-*'))
     metadata = {'status':'running', 'profile':profile['name'], 'mode':args.mode, 'renderer':args.renderer,
         'command':command, 'cwd':str(runtime), 'source':source, 'script_sha256':digest(cfg), 'density':density, 'ui_scale':1, 'text_scale':args.text_scale, 'language':args.language,
         'windowed':True, 'hidden_window':True, 'host_input_injection':False, 'capture_method':'engine screenshot after active map gameplay',
@@ -726,7 +726,7 @@ def capture(args) -> int:
             except subprocess.TimeoutExpired: process.kill(); process.wait()
             metadata['status']='timeout'; save(); return 1
     metadata['seconds'] = round(time.monotonic()-started,3)
-    log_path = game/'logs/openq4.log'
+    log_path = game/'logs/opend3.log'
     log = re.sub(r'\^[0-9]','',log_path.read_text(encoding='utf-8',errors='replace')) if log_path.is_file() else ''
     metadata['log_sha256'] = digest(log_path) if log_path.is_file() else None
     metadata['qualification'] = qualify(log,args.mode)

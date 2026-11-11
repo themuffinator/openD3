@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Guards the multiplayer bot's navigation contract.
 
-openQ4 multiplayer bots occupy real client slots and are driven by user commands
+openD3 multiplayer bots occupy real client slots and are driven by user commands
 the game writes into the engine's own array.  That only works while a handful of
 non-obvious agreements hold, none of which the compiler can check:
 
@@ -33,7 +33,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_LIBS_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)).resolve()
+GAME_LIBS_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)).resolve()
 
 
 def read(path: Path) -> str:

@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <functional>
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 enum class SettingsPhase { Closed, Editing, Confirming, RecoveryRequired, Applying, Restoring };
 enum class SettingsCode { Ok, Busy, NotOpen, Invalid, Conflict, ApplyFailed, RollbackFailed };
@@ -165,4 +165,4 @@ private:
 	SettingsResult lastResult;
 };
 
-} // namespace openq4::ui
+} // namespace opend3::ui

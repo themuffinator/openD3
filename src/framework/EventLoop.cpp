@@ -69,7 +69,7 @@ static const char *EventLoop_ValidateHeader( int type, int length ) {
 	}
 	switch ( type ) {
 	case SE_KEY:
-		return length == 0 || length == openq4::KeyEventMetadataBytes ? NULL : "Unexpected journal key metadata length";
+		return length == 0 || length == opend3::KeyEventMetadataBytes ? NULL : "Unexpected journal key metadata length";
 	case SE_NONE:
 	case SE_CHAR:
 	case SE_MOUSE:
@@ -88,8 +88,8 @@ static const char *EventLoop_ValidatePayload( const sysEvent_t &ev ) {
 		return "Invalid event payload ownership";
 	}
 	if ( ev.evType == SE_KEY && ev.evPtrLength ) {
-		openq4::KeyEventMetadata metadata;
-		if ( !openq4::DecodeKeyEventMetadata( ev.evPtr, static_cast<size_t>( ev.evPtrLength ), metadata ) ) return "Invalid journal key metadata";
+		opend3::KeyEventMetadata metadata;
+		if ( !opend3::DecodeKeyEventMetadata( ev.evPtr, static_cast<size_t>( ev.evPtrLength ), metadata ) ) return "Invalid journal key metadata";
 	}
 	if ( ev.evType == SE_CONSOLE && memchr( ev.evPtr, '\0', static_cast<size_t>( ev.evPtrLength ) ) == NULL ) {
 		return "Unterminated console event payload";
@@ -328,24 +328,24 @@ sysEventTransfer_t idEventLoop::TakeEventWithDisposition( sysEvent_t& event, sys
 }
 
 
-sysEventTransfer_t idEventLoop::PeekEventForRetirement(openq4::NativeInputHead& out) noexcept {
+sysEventTransfer_t idEventLoop::PeekEventForRetirement(opend3::NativeInputHead& out) noexcept {
     if (!Sys_EventDispositionBoundThread()) return sysEventTransfer_t::Refused;
     if (com_pushedEventsHead > com_pushedEventsTail) {
         const unsigned slot = static_cast<unsigned>(com_pushedEventsTail & (MAX_PUSHED_EVENTS-1));
         if (!com_pushedRetirementSerials[slot] || !com_pushedDisposition[slot].ShapeValid()) return sysEventTransfer_t::Refused;
-        out = Sys_EventRetirementHead(openq4::NativeInputLane::Pushed, com_pushedRetirementSerials[slot], slot,
+        out = Sys_EventRetirementHead(opend3::NativeInputLane::Pushed, com_pushedRetirementSerials[slot], slot,
             com_pushedEvents[slot], com_pushedDisposition[slot]);
         return sysEventTransfer_t::Ready;
     }
     return Sys_PeekEventForRetirement(out);
 }
-sysEventTransfer_t idEventLoop::TakeEventForRetirement(openq4::NativeInputRoute& route,
-    const openq4::NativeInputRoute::CancellationPermit& permit, sysEvent_t& event, sysEventDispositionTag_t& tag) noexcept {
+sysEventTransfer_t idEventLoop::TakeEventForRetirement(opend3::NativeInputRoute& route,
+    const opend3::NativeInputRoute::CancellationPermit& permit, sysEvent_t& event, sysEventDispositionTag_t& tag) noexcept {
     if (!Sys_EventDispositionBoundThread()) return sysEventTransfer_t::Refused;
     // The present pushed head always takes precedence, including a refused or
     // untagged head. Never fall through to a previously peeked platform record.
     if (com_pushedEventsHead <= com_pushedEventsTail) return Sys_TakeEventForRetirement(route, permit, event, tag);
-    openq4::NativeInputHead head;
+    opend3::NativeInputHead head;
     const auto status = PeekEventForRetirement(head);
     if (status != sysEventTransfer_t::Ready) return status;
     if (!route.AllowsCancellation(permit, head)) return sysEventTransfer_t::Refused;

@@ -222,12 +222,12 @@ int main() {
 		CHECK( gameValue.answers.size() == 1, "client-answers-once" );
 		CHECK( guiValue.status == "rcon verified\n", "client-unasked-print-is-status" );
 	}
-	for ( const char *reply : { "#str_04847", "#str_104847" } ) {	// openQ4's bad password id, then retail's
+	for ( const char *reply : { "#str_04847", "#str_104847" } ) {	// openD3's bad password id, then retail's
 		Fixture f;
 		f.client.RemoteConsole( "verifyRconPass" );
 		f.client.ProcessPrintMessage( f.server, Print( SERVER_PRINT_MISC, reply ) );
 		CHECK( gameValue.answers == std::vector<int>{ 0 },
-			strcmp( reply, "#str_04847" ) == 0 ? "client-bad-password-openq4" : "client-bad-password-retail" );
+			strcmp( reply, "#str_04847" ) == 0 ? "client-bad-password-opend3" : "client-bad-password-retail" );
 		CHECK( gameValue.output.empty(), "client-misc-not-console-output" );
 	}
 	{	// only the server asked may answer; silence times out as false, once
@@ -308,7 +308,7 @@ MUTATIONS = {
     "client-no-timeout": ("rconVerifyRefused ||\n\t\tAsyncClient_Elapsed( realTime, rconVerifyTime ) > RCON2_CLIENT_TIMEOUT_MSEC )",
                           "rconVerifyRefused )", "client-timeout-answers-false"),
     "client-refusal-unanswered": ("\t\trconVerifyRefused = true;", "\t\trconVerifyRefused = false;", "client-refused-answers-false"),
-    "client-openq4-bad-password-ignored": ('idStr::Cmp( raw, "#str_04847" ) == 0 || ', "", "client-bad-password-openq4"),
+    "client-opend3-bad-password-ignored": ('idStr::Cmp( raw, "#str_04847" ) == 0 || ', "", "client-bad-password-opend3"),
     "client-no-console-output": ("\t\tgame->ReceiveRemoteConsoleOutput( string );", "", "client-forwards-rcon-output"),
     "client-gamedeny-classified": ("opcode != SERVER_PRINT_GAMEDENY && rconVerifyPending", "rconVerifyPending", "client-gamedeny-ignored"),
     "client-answers-twice": ("void idAsyncClient::AnswerRconVerify( bool success ) {\n\trconVerifyPending = false;",

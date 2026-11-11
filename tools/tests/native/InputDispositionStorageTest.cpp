@@ -133,7 +133,7 @@ static void LegacyBoundaries() {
     SDL3_QueueKeyboardInput(K_ALT, true, 14); SDL3_QueueKeyboardInput('a', false, 15);
     SDL3_QueueMouseInput(M_DELTAX, 0, 1); SDL3_QueueMouseInput(-1, 3, 1); SDL3_QueueMouseInput(M_ACTION1, 0, 8);
     Check(Sys_PollKeyboardInputEvents() == 2 && Sys_PollMouseInputEvents() == 1, "ordinary scalar validation/poll preserved");
-#if defined(OPENQ4_SDL3_POSIX_HOST)
+#if defined(OPEND3_SDL3_POSIX_HOST)
     Check(pumps == beforePump + 1, "POSIX legacy mouse entry still pumps exactly once before lock");
 #else
     Check(pumps == beforePump, "Windows legacy mouse entry does not pump");

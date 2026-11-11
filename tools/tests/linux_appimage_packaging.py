@@ -114,7 +114,7 @@ Categories=Game;
 
 
 def validate_tree_safety() -> None:
-    with tempfile.TemporaryDirectory(prefix="openq4-appimage-policy-") as temp_name:
+    with tempfile.TemporaryDirectory(prefix="opend3-appimage-policy-") as temp_name:
         root = Path(temp_name) / "AppDir"
         root.mkdir()
         (root / "payload").write_text("ok\n", encoding="utf-8")
@@ -174,9 +174,9 @@ def validate_release_workflow_policy() -> None:
         "f0837e7448a0c1e4e650a93bb3e85802546e60654ef287576f46c71c126a9158",
         "c20cd71e3a4e3b80c3483cef793cda3f4e990aca14014d23c544ca3ce1270b4d",
         "620095110d693282b8ebeb244a95b5e911cf8f65f76c88b4b47d16ae6346fcff",
-        "openq4-${{ needs.metadata.outputs.version_tag }}-x86_64.AppImage",
-        "openq4-${{ needs.metadata.outputs.version_tag }}-preview-aarch64.AppImage",
-        "openq4-${{ needs.metadata.outputs.version_tag }}-aarch64.AppImage",
+        "opend3-${{ needs.metadata.outputs.version_tag }}-x86_64.AppImage",
+        "opend3-${{ needs.metadata.outputs.version_tag }}-preview-aarch64.AppImage",
+        "opend3-${{ needs.metadata.outputs.version_tag }}-aarch64.AppImage",
         "--executable \"${{ steps.appimage.outputs.appimage_path }}\"",
     ):
         require(workflow, token, "manual release AppImage policy")
@@ -217,7 +217,7 @@ def validate_user_documentation() -> None:
 
 def validate_game_layer_runtime_paths() -> None:
     """User content or obsolete expansion modules never add an AppImage runtime dependency."""
-    work = ROOT / ".tmp" / "openq4-appimage-policy" / "layer-paths"
+    work = ROOT / ".tmp" / "opend3-appimage-policy" / "layer-paths"
     shutil.rmtree(work, ignore_errors=True)
     work.mkdir(parents=True)
     base = APPIMAGE.core_runtime_relative_paths(work, "arm64")
@@ -239,7 +239,7 @@ def main() -> None:
         validate_release_workflow_policy()
         validate_user_documentation()
     finally:
-        shutil.rmtree(ROOT / ".tmp" / "openq4-appimage-policy", ignore_errors=True)
+        shutil.rmtree(ROOT / ".tmp" / "opend3-appimage-policy", ignore_errors=True)
     print("linux_appimage_packaging: ok")
 
 

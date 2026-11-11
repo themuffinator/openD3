@@ -13,7 +13,7 @@ import pathlib
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-OUTPUT = ROOT / "content/baseoq4/pak0/guis/level_editor_experimental.gui"
+OUTPUT = ROOT / "content/baseod3/pak0/guis/level_editor_experimental.gui"
 
 ORANGE = "0.890,0.537,0,1"
 MUTED = "0.72,0.76,0.63,1"

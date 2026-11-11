@@ -35,7 +35,7 @@ def main() -> None:
     if "static void R_SetSilEdgeCapacity(" in production:
         capacity = function_span(production, "static void R_SetSilEdgeCapacity(")
     else:
-        capacity = "#define OPENQ4_FIXED_SIL_EDGE_SCRATCH"
+        capacity = "#define OPEND3_FIXED_SIL_EDGE_SCRATCH"
     edges_start = production.index("static int c_duplicatedEdges, c_tripledEdges;")
     edges_end = production.index("\n}", production.index("void R_IdentifySilEdges(", edges_start)) + 2
     hash_index = "\n".join(

@@ -1083,7 +1083,7 @@ int idLexer::ReadNumber( idToken *token ) {
 					token->subtype |= TT_NAN;
 					c2++;
 				}
-				// openQ4: stop at the terminator. Text ending in "1.#" was read up
+				// openD3: stop at the terminator. Text ending in "1.#" was read up
 				// to three bytes past its end, and lexing went on from there
 				// under the no-error flags decls and command lines use.
 				for ( i = 0; i < c2 && c != '\0'; i++ ) {
@@ -1825,7 +1825,7 @@ const char *idLexer::ParseBracedSectionExact( idStr &out, int tabs ) {
 	skipWhite = false;
 	doTabs = tabs >= 0;
 
-	// openQ4: without re-indenting, the loop below copies every character as
+	// openD3: without re-indenting, the loop below copies every character as
 	// it stands, so find the end and take the section in one append. Appending
 	// a character at a time regrew and recopied the string every 32 bytes,
 	// which is quadratic in the section's size, and every decl is read this way.

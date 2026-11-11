@@ -99,9 +99,9 @@ def main():
     cases.append((label,body.replace(before,after)))
   for label,source in cases:
    cpp=out/(label+'.cpp');cpp.write_text(source+MAIN);exe=out/(label+'.exe')
-   cmd=[a.compiler,'-std=c++20','-DOPENQ4_RENDERER_MODULE_ONLY','-I',ROOT/'src/renderer',cpp,'-o',exe]
+   cmd=[a.compiler,'-std=c++20','-DOPEND3_RENDERER_MODULE_ONLY','-I',ROOT/'src/renderer',cpp,'-o',exe]
    if a.sanitize:cmd+=['-fsanitize=address,undefined','-fno-omit-frame-pointer','-g0','-no-pie']
-   if Path(a.compiler).stem in ('cl','clang-cl'):cmd=[a.compiler,'/nologo','/std:c++20','/EHsc','/MTd','/D_DEBUG','/DOPENQ4_RENDERER_MODULE_ONLY','/I'+str(ROOT/'src/renderer'),cpp,'/Fe:'+str(exe),'/Fo:'+str(out)+os.sep]
+   if Path(a.compiler).stem in ('cl','clang-cl'):cmd=[a.compiler,'/nologo','/std:c++20','/EHsc','/MTd','/D_DEBUG','/DOPEND3_RENDERER_MODULE_ONLY','/I'+str(ROOT/'src/renderer'),cpp,'/Fe:'+str(exe),'/Fo:'+str(out)+os.sep]
    for name,cmd in [('compile',cmd),('run',[exe])]:
     r=subprocess.run([str(v) for v in cmd],cwd=out,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=120);log=out/(label+'-'+name+'.log');log.write_text(r.stdout)
     record['runs'].append({'case':label,'name':name,'exit':r.returncode,'log':str(log),'command':[str(v) for v in cmd]});print(label,name,r.returncode,r.stdout[-1000:],flush=True)

@@ -7,7 +7,7 @@
 	renderer-vk backend tail (Phase C,
 	docs/dev/archive/2026-10-18/plans/2026-07-17-vulkan-phase-c.md).
 
-	The shared module glue (RendererGLModule.cpp under OPENQ4_RENDERER_MODULE)
+	The shared module glue (RendererGLModule.cpp under OPEND3_RENDERER_MODULE)
 	owns the GetRenderAPI export and the engine-interface binding; this TU
 	supplies the Vulkan-specific pieces the glue attaches: the bring-up
 	diagnostics surface for the on-demand rendererVkProbe flow and the
@@ -16,7 +16,7 @@
 ===============================================================================
 */
 
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
@@ -51,4 +51,4 @@ void VK_ModuleBindServices( const renderModuleServices_t *services ) {
 	VK_Bringup_SetLoaderInit( VK_Device_InitLoader );
 }
 
-#endif /* OPENQ4_RENDERER_VK_MODULE */
+#endif /* OPEND3_RENDERER_VK_MODULE */

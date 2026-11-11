@@ -378,7 +378,7 @@ def close_prompt(doc: HudDocument) -> dict:
 
 
 def objectives_document(*, strogg: bool) -> dict:
-    doc = HudDocument(f"openq4.hud.remastered.objectives{'.strogg' if strogg else ''}")
+    doc = HudDocument(f"opend3.hud.remastered.objectives{'.strogg' if strogg else ''}")
     layout_state(doc)
     shown = display(doc, strogg)
     new = new_notice(doc, strogg)
@@ -396,5 +396,5 @@ def objectives_document(*, strogg: bool) -> dict:
         anchor(doc, "br", [close]),
     ])
     return doc.build(root, {"canvas": {"height": 720, "minWidth": 960},
-                            "extensions": {"openq4": {"reference": "ui-visual-design.md 14.11",
+                            "extensions": {"opend3": {"reference": "ui-visual-design.md 14.11",
                                                       "stock": "guis/wristcomm_strogg.gui" if strogg else "guis/wristcomm.gui"}}})

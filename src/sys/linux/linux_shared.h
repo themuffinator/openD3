@@ -16,7 +16,7 @@ the Free Software Foundation, either version 3 of the License, or
 #ifndef __LINUX_SHARED_H__
 #define __LINUX_SHARED_H__
 
-static const int OPENQ4_LINUX_UNKNOWN_VIDEO_RAM_MB = 2048;
-static const int OPENQ4_LINUX_MAX_CONFIGURED_VIDEO_RAM_MB = 65536;
+static const int OPEND3_LINUX_UNKNOWN_VIDEO_RAM_MB = 2048;
+static const int OPEND3_LINUX_MAX_CONFIGURED_VIDEO_RAM_MB = 65536;
 
 #endif

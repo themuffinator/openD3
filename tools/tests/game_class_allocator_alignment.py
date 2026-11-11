@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression checks for idClass allocation alignment in openQ4-game."""
+"""Regression checks for idClass allocation alignment in openD3-game."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_LIBS_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)).resolve()
+GAME_LIBS_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)).resolve()
 CLASS_SOURCES = (
     "src/game/gamesys/Class.cpp",
     "src/mpgame/gamesys/Class.cpp",
@@ -68,7 +68,7 @@ def validate_class_allocator_source(relative_path: str) -> None:
 
 
 def validate_validation_wiring() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     push = read(".github/workflows/push-verification.yml")
     commit = read(".github/workflows/commit-validation.yml")
 

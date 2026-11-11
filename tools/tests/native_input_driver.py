@@ -44,7 +44,7 @@ def main():
   sources=['src/framework/NativeInputRoute.cpp','src/sys/EventDisposition.cpp','src/sys/EventQueueContinuity.cpp','src/sys/sdl3/NativeQueueBatch.cpp','src/sys/sdl3/NativeEventDisposition.cpp','src/ui/application/NativeTextCollectionCoordinator.cpp']
   sources+=['src/ui/retained/'+n+'.cpp' for n in ['Interaction','TextInput','TextEdit','NativeTextDocument','NativeTextEditor','Input','ScrollGeometry']]
   objects=[obj(ROOT/n,'core-'+str(i)) for i,n in enumerate(sources)]
-  valid=out/'valid.cpp';doc=read('src/ui/retained/Document.cpp');valid.write_text('#include "Interaction.h"\n#include <cmath>\nnamespace openq4::ui {\n'+function_body(doc,'bool Utf8(')+function_body(doc,'bool ValidStateValue(')+'}\n');objects.append(obj(valid,'valid'))
+  valid=out/'valid.cpp';doc=read('src/ui/retained/Document.cpp');valid.write_text('#include "Interaction.h"\n#include <cmath>\nnamespace opend3::ui {\n'+function_body(doc,'bool Utf8(')+function_body(doc,'bool ValidStateValue(')+'}\n');objects.append(obj(valid,'valid'))
   enums=storage.sdl.enum(read('src/framework/KeyInput.h'),'keyNum_t')+'\n'+storage.queues.event_types()+'\n'+storage.sdl.enum(read('src/sys/sys_public.h'),'sys_mEvents');(out/'engine_enums.inc').write_text(enums)
   inv=out/'inventory.cpp';inv.write_text(read('src/sys/sdl3/NativeInputEmissionInventory.cpp').replace('#include "../../idlib/precompiled.h"\n','').replace('#include "../../framework/KeyInput.h"','#include "engine_enums.inc"'));objects.append(obj(inv,'inventory'))
   nativeFixture=read('tools/tests/native/UiNativeCollectionCoordinatorTest.cpp');fixture=nativeFixture[nativeFixture.index('struct Fixture {'):nativeFixture.index('static void Success()')]
@@ -56,8 +56,8 @@ def main():
    body=body.replace('struct Common {','struct Common {\n    int GetPresentationTime()const{return 100;}')
    body=body.replace('struct Cvars {','struct Cvars { int GetCVarInteger(const char*)const{return 0;} void SetCVarBool(const char*,bool){}')
    body='#include <functional>\n#include <deque>\n#include <utility>\n'+body+'\n#include "src/sys/sdl3/NativeInputDriver.h"\n#define CHECK(...) Check((__VA_ARGS__),#__VA_ARGS__)\n'
-   body+='static long failAfter=-1;static bool noAllocation=false;\nnamespace native_model {\nusing namespace openq4;using namespace openq4::ui;\nstatic bool Same(const TextEditState&a,const TextEditState&b){return a.text==b.text&&a.anchor==b.anchor&&a.caret==b.caret;}\n'+fixture+'}\n'
-   body+='\nusing namespace openq4;\nstatic idCVar com_asyncInput;\nint idEventLoop::JournalLevel()const{return com_journal.GetInteger();}\n'
+   body+='static long failAfter=-1;static bool noAllocation=false;\nnamespace native_model {\nusing namespace opend3;using namespace opend3::ui;\nstatic bool Same(const TextEditState&a,const TextEditState&b){return a.text==b.text&&a.anchor==b.anchor&&a.caret==b.caret;}\n'+fixture+'}\n'
+   body+='\nusing namespace opend3;\nstatic idCVar com_asyncInput;\nint idEventLoop::JournalLevel()const{return com_journal.GetInteger();}\n'
    body+=function_body(sys,'sysEventTransfer_t Sys_PeekEventDispositionTag(')+function_body(loop,'sysEventTransfer_t idEventLoop::PeekEventDispositionTag(')
    body+=read('tools/tests/native/NativeInputDriverSupport.inc')
    body+=function_body(read('src/framework/KeyInput.cpp'),'static bool Key_IsValidKeyNum(')+'\n'

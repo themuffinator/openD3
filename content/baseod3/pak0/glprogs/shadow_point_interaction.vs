@@ -43,7 +43,7 @@ vec3 TangentSpaceVector( vec3 objectVector ) {
 		dot( attr_Normal, objectVector ) );
 }
 
-#ifdef OPENQ4_PBR
+#ifdef OPEND3_PBR
 // Native PBR (draw_pbr.cpp) shades in object space with an orthonormal vertex
 // frame, exactly as Vulkan does; that frame helper is appended to this source.
 void PBRVertexFrame( vec3 normal, vec3 tangent, vec3 bitangent );
@@ -61,7 +61,7 @@ void main() {
 		dot( position, uModelMatrixRow1 ),
 		dot( position, uModelMatrixRow2 ) );
 
-#ifdef OPENQ4_PBR
+#ifdef OPEND3_PBR
 	// Object-space light and eye vectors: transforming them through the
 	// vertex tangent frame before interpolation distorts their directions
 	// across a curved triangle.

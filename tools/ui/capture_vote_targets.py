@@ -22,18 +22,18 @@ from mp_round_remote_smoke import verify_runtime_is_current
 
 
 def press(key):
-    return [f'openq4_retainedGui menu {key} 1', f'openq4_retainedGui menu {key} 0', 'waitMsec 300']
+    return [f'opend3_retainedGui menu {key} 1', f'opend3_retainedGui menu {key} 0', 'waitMsec 300']
 
 
 def activate(node):
-    return [f'openq4_retainedGui focus "{node}"', *press('accept')]
+    return [f'opend3_retainedGui focus "{node}"', *press('accept')]
 
 
 def observe(stage):
-    return [f'echo VOTE_TARGET_STAGE "{stage}"', 'openq4_retainedGui report',
-            'openq4_retainedGui widget "vote-row-kick"', 'openq4_retainedGui widget "vote-row-restart"',
-            'openq4_retainedGui inspect "vote-call-lock"',
-            'openq4_retainedGui inspect "vote-call-reason"',
+    return [f'echo VOTE_TARGET_STAGE "{stage}"', 'opend3_retainedGui report',
+            'opend3_retainedGui widget "vote-row-kick"', 'opend3_retainedGui widget "vote-row-restart"',
+            'opend3_retainedGui inspect "vote-call-lock"',
+            'opend3_retainedGui inspect "vote-call-reason"',
             f'screenshot "screenshots/{stage}.tga"']
 
 
@@ -43,23 +43,23 @@ def replace_subject():
 
 def steps():
     return ['waitMsec 4000', 'addbot VoteSubject', 'waitMsec 2500',
-            'screenshot "screenshots/gameplay.tga"', 'openq4_assertMenuActivation 5000 game',
-            'waitMsec 500', 'openq4_retainedGui event tab_vote', 'waitMsec 500', *observe('initial'),
+            'screenshot "screenshots/gameplay.tga"', 'opend3_assertMenuActivation 5000 game',
+            'waitMsec 500', 'opend3_retainedGui event tab_vote', 'waitMsec 500', *observe('initial'),
             # Keep the displayed label identical across the replacement.
-            *activate('vote-row-kick'), *press('down'), 'openq4_retainedGui menu accept 1',
-            *replace_subject(), 'openq4_retainedGui menu accept 0', 'waitMsec 500', *observe('held-replaced'),
-            'openq4_retainedGui focus "vote-row-kick"', *press('right'), *observe('drafted'),
+            *activate('vote-row-kick'), *press('down'), 'opend3_retainedGui menu accept 1',
+            *replace_subject(), 'opend3_retainedGui menu accept 0', 'waitMsec 500', *observe('held-replaced'),
+            'opend3_retainedGui focus "vote-row-kick"', *press('right'), *observe('drafted'),
             *activate('vote-row-restart'), *observe('mixed'),
             *replace_subject(), *observe('stale'),
-            'openq4_retainedGui event vote_call', 'waitMsec 3000', *observe('blocked'),
+            'opend3_retainedGui event vote_call', 'waitMsec 3000', *observe('blocked'),
             # Explicitly choosing No one acknowledges the changed draft.
             *activate('vote-row-kick'), *press('home'), *press('accept'), *observe('cleared'),
-            *activate('vote-row-restart'), 'openq4_retainedGui focus "vote-row-kick"',
+            *activate('vote-row-restart'), 'opend3_retainedGui focus "vote-row-kick"',
             *press('right'), *observe('reselected'), *activate('vote-call'), 'waitMsec 6000',
-            'openq4_assertMenuActivation 5000 game', 'waitMsec 500', 'openq4_retainedGui event tab_vote',
+            'opend3_assertMenuActivation 5000 game', 'waitMsec 500', 'opend3_retainedGui event tab_vote',
             'waitMsec 500', *activate('vote-row-kick'), *observe('after-kick'),
-            *press('back'), 'openq4_retainedGui event onBack', 'waitMsec 500',
-            'openq4_assertMPGameplayView', 'screenshot "screenshots/gameplay-return.tga"']
+            *press('back'), 'opend3_retainedGui event onBack', 'waitMsec 500',
+            'opend3_assertMPGameplayView', 'screenshot "screenshots/gameplay-return.tga"']
 
 
 def qualify(log):
@@ -83,7 +83,7 @@ def qualify(log):
     # chat lines share a localized reason; do not require an English message.
     final_vote = sections.get('reselected', '')
     checks['fresh-kick'] = bool(re.search(r'^client 1 ([^\n]+)\nVoteSubject \1$', final_vote, re.M))
-    checks['semantic-operations'] = not re.search(r'RETAINED_GUI_OPERATION .* failed|openq4_retainedGui: requires|openq4_guiGet: unknown', log)
+    checks['semantic-operations'] = not re.search(r'RETAINED_GUI_OPERATION .* failed|opend3_retainedGui: requires|opend3_guiGet: unknown', log)
     return checks
 
 
@@ -101,8 +101,8 @@ def main():
         parser.error('choose a new output directory under the project .tmp')
     verify_runtime_is_current(args.runtime)
     args.output.mkdir(parents=True)
-    binaries = [args.runtime / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64'),
-                *sorted(args.runtime.glob('renderer-*')), *sorted((args.runtime / 'baseoq4').glob('game-*'))]
+    binaries = [args.runtime / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64'),
+                *sorted(args.runtime.glob('renderer-*')), *sorted((args.runtime / 'baseod3').glob('game-*'))]
     binaries = [p for p in binaries if p.is_file()]
     bindings = {str(p.relative_to(args.runtime)): capture.digest(p) for p in binaries}
     sources = ['src/mpgame/Player.cpp', 'src/mpgame/Player.h', 'src/mpgame/MultiplayerGame.cpp',
@@ -111,11 +111,11 @@ def main():
                'src/ui/UserInterfaceRetained.cpp', 'src/framework/Session_menu.cpp',
                'src/ui/retained/Interaction.cpp', 'src/ui/retained/State.cpp', 'src/ui/retained/Document.cpp',
                'src/ui/retained/Document.h', 'tools/ui/capture_vote_targets.py',
-               'content/baseoq4/pak0/guis/menu/mp_escape.q4ui']
+               'content/baseod3/pak0/guis/menu/mp_escape.q4ui']
     source_bindings = {p: capture.digest(ROOT / p) for p in sources}
-    with zipfile.ZipFile(args.runtime / 'baseoq4/pak0.pk4') as pack:
+    with zipfile.ZipFile(args.runtime / 'baseod3/pak0.pk4') as pack:
         document = 'guis/menu/mp_escape.q4ui'
-        if pack.read(document).replace(b'\r\n', b'\n') != (ROOT / 'content/baseoq4/pak0' / document).read_bytes().replace(b'\r\n', b'\n'):
+        if pack.read(document).replace(b'\r\n', b'\n') != (ROOT / 'content/baseod3/pak0' / document).read_bytes().replace(b'\r\n', b'\n'):
             raise RuntimeError('staged Vote document differs from source')
     capture.SCENARIOS['vote-targets'] = ('mp:mp/q4dm1', steps())
     capture.SCENARIO_CVARS['vote-targets'] = {'net_ip': '127.0.0.1', 'net_port': '28984', 'ui_autoJoin': '1',

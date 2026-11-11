@@ -38,7 +38,7 @@
 #include <algorithm>
 #include <vector>
 
-namespace openq4 {
+namespace opend3 {
 namespace touch {
 
 enum ButtonId {
@@ -1294,6 +1294,6 @@ inline void BuildOverlay( const Controls &controls, Mesh &mesh, bool pauseOnly =
 }
 
 } // namespace touch
-} // namespace openq4
+} // namespace opend3
 
 #endif /* !__ANDROID_TOUCH_CONTROLS_H__ */

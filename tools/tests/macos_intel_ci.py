@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_LIBS_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)).resolve()
+GAME_LIBS_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)).resolve()
 
 
 def read(relative_path: str) -> str:
@@ -18,7 +18,7 @@ def read(relative_path: str) -> str:
 def read_game(relative_path: str) -> str:
     path = GAME_LIBS_ROOT / relative_path
     if not path.is_file():
-        raise AssertionError(f"openQ4-game file not found: {path}")
+        raise AssertionError(f"openD3-game file not found: {path}")
     return path.read_text(encoding="utf-8")
 
 
@@ -34,7 +34,7 @@ def reject(source: str, needle: str, context: str) -> None:
 
 def validate_engine_corridor() -> None:
     meson = read("meson.build")
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     dedicated = read("tools/tests/macos_dedicated_server_smoke.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
@@ -45,19 +45,19 @@ def validate_engine_corridor() -> None:
         "engine_client_binary_name = meson.project_name() + '-client_' + binary_arch",
         "engine_ded_binary_name = meson.project_name() + '-ded_' + binary_arch",
     ):
-        require(meson, token, "openQ4 macOS x64 Meson naming")
+        require(meson, token, "openD3 macOS x64 Meson naming")
 
     for token in (
         '"x64": frozenset(("x86_64",))',
         "validate_macos_binary_architectures(",
         "validate_macos_staged_metadata(",
     ):
-        require(validator, token, "openQ4 staged x64 Mach-O validation")
+        require(validator, token, "openD3 staged x64 Mach-O validation")
 
     for token in (
         'if machine in {"x86_64", "amd64"}',
         'return "x64"',
-        'f"openQ4-ded_{arch}"',
+        'f"openD3-ded_{arch}"',
         'f"game-mp_{arch}.dylib"',
     ):
         require(dedicated, token, "macOS dedicated smoke Intel support")
@@ -94,7 +94,7 @@ def validate_engine_corridor() -> None:
 
 def validate_companion_corridor() -> None:
     meson=read('meson.build')
-    modules=read('content/baseoq4/meson.build')
+    modules=read('content/baseod3/meson.build')
     workflow=read('.github/workflows/commit-validation.yml')
     for token in ("binary_arch = 'x64'", "binary_arch = 'arm64'"):
         require(meson,token,'canonical macOS game architecture')
@@ -106,8 +106,8 @@ def validate_companion_corridor() -> None:
         require(workflow,token,'canonical macOS CI corridor')
     require(push,'macos-15-intel','canonical macOS Intel CI corridor')
     for source in (workflow,push):
-        reject(source,'openQ4-game.git','retired companion checkout')
-    require(read('tools/validation/openq4_validate.py'),'lipo','staged Mach-O architecture guard')
+        reject(source,'openD3-game.git','retired companion checkout')
+    require(read('tools/validation/opend3_validate.py'),'lipo','staged Mach-O architecture guard')
 
 
 def validate_policy_and_wiring() -> None:
@@ -118,7 +118,7 @@ def validate_policy_and_wiring() -> None:
     plan = read("docs/dev/archive/2026-10-18/plan/2026-06-30-macos-compatibility-support.md")
     release_completion = read("docs/dev/release-completion.md")
     release_notes = read("docs/dev/releases/v0.8.1.md")
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
 
@@ -140,8 +140,8 @@ def validate_policy_and_wiring() -> None:
 
     for token in (
         "[x] Add a standard hosted Intel Mac runner",
-        "[x] Add `../openQ4-game` macOS x86_64 CI",
-        "[x] Add openQ4 macOS x86_64 staged-package validation",
+        "[x] Add `../openD3-game` macOS x86_64 CI",
+        "[x] Add openD3 macOS x86_64 staged-package validation",
         "[ ] Record clean hosted results",
         "[ ] Intel release expansion remains deferred",
     ):

@@ -32,13 +32,13 @@ along with Doom 3 Source Code.  If not, see <http://www.gnu.org/licenses/>.
 #include <stdlib.h>
 #include <unistd.h>
 
-#define OPENQ4_SDL3_LINUX_HOST 1
+#define OPEND3_SDL3_LINUX_HOST 1
 #include "../sdl3/sdl3_backend.cpp"
 
 // Xlib defines macros such as None, Bool and Status that break engine and UI
 // declarations (PaintType::None in ui/retained/Vector.h), so include it after
 // the shared SDL3 backend; only the X11 helpers below use it.
-#if defined(OPENQ4_HAVE_X11_HELPERS)
+#if defined(OPEND3_HAVE_X11_HELPERS)
 #include <X11/Xlib.h>
 extern "C" {
 #include "libXNVCtrl/NVCtrlLib.h"
@@ -55,7 +55,7 @@ idCVar sys_videoRam(
 	CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_INTEGER,
 	"Texture memory on the video card (in megabytes) - 0: autodetect",
 	0,
-	OPENQ4_LINUX_MAX_CONFIGURED_VIDEO_RAM_MB
+	OPEND3_LINUX_MAX_CONFIGURED_VIDEO_RAM_MB
 );
 
 bool QGL_Init(const char *dllname) {
@@ -160,8 +160,8 @@ static int Sys_QueryDrmSysfsVideoRamMB(void) {
 	if (megabytes == 0) {
 		return 0;
 	}
-	if (megabytes > static_cast<unsigned long long>(OPENQ4_LINUX_MAX_CONFIGURED_VIDEO_RAM_MB)) {
-		return OPENQ4_LINUX_MAX_CONFIGURED_VIDEO_RAM_MB;
+	if (megabytes > static_cast<unsigned long long>(OPEND3_LINUX_MAX_CONFIGURED_VIDEO_RAM_MB)) {
+		return OPEND3_LINUX_MAX_CONFIGURED_VIDEO_RAM_MB;
 	}
 	return static_cast<int>(megabytes);
 }
@@ -186,7 +186,7 @@ static bool Sys_PreferDrmSysfsBeforeX11VideoRam(void) {
 	}
 
 	const bool waylandSession = SDL3_EnvHasValue("WAYLAND_DISPLAY");
-	const bool explicitX11Fallback = SDL3_EnvFlagEnabledWithLegacyAlias("OPEND3_FORCE_X11", "OPENQ4_FORCE_X11") ||
+	const bool explicitX11Fallback = SDL3_EnvFlagEnabledWithLegacyAlias("OPEND3_FORCE_X11", "OPEND3_FORCE_X11") ||
 		SDL3_StringEquals(getenv("SDL_VIDEO_DRIVER"), "x11") ||
 		SDL3_StringEquals(getenv("SDL_VIDEODRIVER"), "x11");
 	return (waylandSession && !explicitX11Fallback) ||
@@ -217,7 +217,7 @@ int Sys_GetVideoRam(void) {
 		return cachedVideoRam;
 	}
 
-#if defined(OPENQ4_HAVE_X11_HELPERS)
+#if defined(OPEND3_HAVE_X11_HELPERS)
 	if (!preferDrmBeforeX11) {
 		Display *queryDisplay = dpy;
 		const bool ownsDisplay = (queryDisplay == NULL);
@@ -279,7 +279,7 @@ int Sys_GetVideoRam(void) {
 		}
 	}
 
-	common->Printf("guess failed, using conservative modern VRAM setting ( %dMB VRAM )\n", OPENQ4_LINUX_UNKNOWN_VIDEO_RAM_MB);
-	cachedVideoRam = OPENQ4_LINUX_UNKNOWN_VIDEO_RAM_MB;
+	common->Printf("guess failed, using conservative modern VRAM setting ( %dMB VRAM )\n", OPEND3_LINUX_UNKNOWN_VIDEO_RAM_MB);
+	cachedVideoRam = OPEND3_LINUX_UNKNOWN_VIDEO_RAM_MB;
 	return cachedVideoRam;
 }

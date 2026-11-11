@@ -1,7 +1,7 @@
 // Authored vector controls adapted from managed-settings-smoke.q4ui.
 // Bounded presentation alias qualification; no shipped menu replacement acceptance.
 {
-  "format": "openq4-ui",
+  "format": "opend3-ui",
   "version": 1,
   "id": "presentation-alias-smoke",
   "tokens": {
@@ -3042,7 +3042,7 @@
     ]
   },
   "extensions": {
-    "openq4.fixture": {
+    "opend3.fixture": {
       "productionDesign": false,
       "interactive": true,
       "nativeVectors": true,

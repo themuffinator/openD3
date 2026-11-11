@@ -16,9 +16,9 @@ from typing import Any, Iterable
 
 
 CONTRACT_SCHEMA_VERSION = 1
-CONTRACT_KIND = "openq4-renderer-per-map-budgets"
+CONTRACT_KIND = "opend3-renderer-per-map-budgets"
 TIME_UNIT = "microseconds"
-MARKER_PREFIX = "OPENQ4_FRAME_TIMING_V1"
+MARKER_PREFIX = "OPEND3_FRAME_TIMING_V1"
 DEFAULT_CONTRACT_PATH = Path(__file__).with_name("renderer_per_map_budgets.json")
 SUPPORTED_BACKENDS = ("opengl", "vulkan")
 

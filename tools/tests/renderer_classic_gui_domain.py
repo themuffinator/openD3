@@ -465,7 +465,7 @@ def validate_control_and_evidence() -> None:
 
 
 def validate_ci_registration() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
     if validator.count("renderer_classic_gui_domain.py") != 1:

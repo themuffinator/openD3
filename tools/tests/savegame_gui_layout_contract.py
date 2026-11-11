@@ -12,10 +12,10 @@ src/framework/SaveGameReleases.h keeps such a GUI's previous revision under
 guis/savecompat/ and reads older records through it. This contract makes that
 the only way a serialized GUI can change:
 
-* every openQ4 GUI is classified as serialized or never serialized;
+* every openD3 GUI is classified as serialized or never serialized;
 * each serialized GUI's current definition matches its pin, or a recorded
   layout-neutral revision of it;
-* each revision in OPENQ4_SAVEGAME_GUI_REVISIONS keeps exactly the definition
+* each revision in OPEND3_SAVEGAME_GUI_REVISIONS keeps exactly the definition
   the older builds shipped (its explanatory header aside), and its marker window
   exists only in the current definition, which is how the reader tells the two
   records apart; and
@@ -36,10 +36,10 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-PAK0 = ROOT / "content" / "baseoq4" / "pak0"
+PAK0 = ROOT / "content" / "baseod3" / "pak0"
 REVISION_ROOT = "guis/savecompat"
 
-# Git blob ids (LF-normalized) of every openQ4 GUI a save writes: player HUDs,
+# Git blob ids (LF-normalized) of every openD3 GUI a save writes: player HUDs,
 # objective and cinematic GUIs, weapon and vehicle zoom GUIs and vehicle HUDs.
 SERIALIZED_GUIS: dict[str, str] = {
     "guis/cinematic.gui": "63d5f187afe545a3533f14780605a7e614463f5c",
@@ -47,10 +47,10 @@ SERIALIZED_GUIS: dict[str, str] = {
     "guis/hud_strogg.gui": "51981879a988f53c7b884a84036b6ef66968a37a",
     # The Awakening's guis/q4xhud.gui, which the engine reads from this definition
     # (idLegacyHudLayout::DefinitionFor; generated from guis/hud.gui).
-    "guis/openq4/awakening/q4xhud.gui": "56a23a1fc2515b0ade85217725d68684d0f8bde6",
-    "guis/openq4/awakening/cannonplayerhud.gui": "c9534629a60ffedf211207d5f979c7e8c5ecf598",
-    "guis/openq4/awakening/speederplayerhud.gui": "91ce8efaf287ba39fa72ad03b77173142609befe",
-    "guis/openq4/awakening/turretplayerhud.gui": "e108d7a8aa51171cea6f77e9b923d629d42aad44",
+    "guis/opend3/awakening/q4xhud.gui": "56a23a1fc2515b0ade85217725d68684d0f8bde6",
+    "guis/opend3/awakening/cannonplayerhud.gui": "c9534629a60ffedf211207d5f979c7e8c5ecf598",
+    "guis/opend3/awakening/speederplayerhud.gui": "91ce8efaf287ba39fa72ad03b77173142609befe",
+    "guis/opend3/awakening/turretplayerhud.gui": "e108d7a8aa51171cea6f77e9b923d629d42aad44",
     "guis/vehicles/airdef_cannon.gui": "e92ae101f581b82a2885ac970b8755a92e1cbcae",
     "guis/vehicles/hud.gui": "fcea89c5dd4a1a0b0afcb46ae3cdd4ea2beb42b1",
     "guis/vehicles/strogg_noise.gui": "d0777427b93ec45c90c6dfdf3ba6352aec981dc6",
@@ -75,7 +75,7 @@ LAYOUT_NEUTRAL_EDITS: dict[str, dict[str, tuple[str, str]]] = {
     },
 }
 
-# OPENQ4_SAVEGAME_GUI_REVISIONS as it must read, in table order (a GUI edited
+# OPEND3_SAVEGAME_GUI_REVISIONS as it must read, in table order (a GUI edited
 # more than once lists its revisions oldest first), with the blob each saved
 # definition keeps and a commit that shipped it: `shippedBefore` names the
 # commit that changed it (its parent shipped it), `shippedIn` one that shipped it.
@@ -144,15 +144,15 @@ GUI_REVISIONS: list[dict[str, object]] = [
         "savedBlob": "95493b94ce52d5ff87683c94e2b09a318bc5f3e9",
         "shippedIn": "9cc5e67a4",
     },
-    # A GUI another game ships, read from openQ4's own definition of it: `definition`
+    # A GUI another game ships, read from openD3's own definition of it: `definition`
     # is that file, and the saved definition is the game's own file (`external`),
-    # which openQ4 does not ship and the engine parses as written.
+    # which openD3 does not ship and the engine parses as written.
     {
         "gui": "guis/q4xhud.gui",
         "firstBuild": 2330,
         "savedDefinition": "guis/q4xhud.gui",
         "marker": "p_pickup0",
-        "definition": "guis/openq4/awakening/q4xhud.gui",
+        "definition": "guis/opend3/awakening/q4xhud.gui",
         "external": "The Awakening (q4xbase)",
     },
     {
@@ -160,7 +160,7 @@ GUI_REVISIONS: list[dict[str, object]] = [
         "firstBuild": 2334,
         "savedDefinition": "guis/vehicles/airassault/turretplayerhud.gui",
         "marker": "oq4_prompt",
-        "definition": "guis/openq4/awakening/turretplayerhud.gui",
+        "definition": "guis/opend3/awakening/turretplayerhud.gui",
         "external": "The Awakening (q4xbase)",
     },
     {
@@ -168,7 +168,7 @@ GUI_REVISIONS: list[dict[str, object]] = [
         "firstBuild": 2334,
         "savedDefinition": "guis/vehicles/mcc/cannonplayerhud.gui",
         "marker": "oq4_prompt",
-        "definition": "guis/openq4/awakening/cannonplayerhud.gui",
+        "definition": "guis/opend3/awakening/cannonplayerhud.gui",
         "external": "The Awakening (q4xbase)",
     },
     {
@@ -176,7 +176,7 @@ GUI_REVISIONS: list[dict[str, object]] = [
         "firstBuild": 2334,
         "savedDefinition": "guis/vehicles/speederplayerhud.gui",
         "marker": "oq4_prompt",
-        "definition": "guis/openq4/awakening/speederplayerhud.gui",
+        "definition": "guis/opend3/awakening/speederplayerhud.gui",
         "external": "The Awakening (q4xbase)",
     },
     {
@@ -194,7 +194,7 @@ GUI_REVISIONS: list[dict[str, object]] = [
         "marker": "lock_state_msg",
         "savedBlob": "1450369bf59ac72a8f611ad495b60f5f1a8771bd",
         "shippedIn": "9dc0fecf8",
-        "definition": "guis/openq4/awakening/turretplayerhud.gui",
+        "definition": "guis/opend3/awakening/turretplayerhud.gui",
     },
     {
         "gui": "guis/vehicles/mcc/cannonplayerhud.gui",
@@ -203,7 +203,7 @@ GUI_REVISIONS: list[dict[str, object]] = [
         "marker": "lock_state_msg",
         "savedBlob": "d2ed3e80e9b377b455f3d8232ded903c2de0f6b7",
         "shippedIn": "9dc0fecf8",
-        "definition": "guis/openq4/awakening/cannonplayerhud.gui",
+        "definition": "guis/opend3/awakening/cannonplayerhud.gui",
     },
     {
         "gui": "guis/vehicles/speederplayerhud.gui",
@@ -212,11 +212,11 @@ GUI_REVISIONS: list[dict[str, object]] = [
         "marker": "lock_state_msg",
         "savedBlob": "8c51b2aef073eb06156e596cd35b9e18c84dc235",
         "shippedIn": "9dc0fecf8",
-        "definition": "guis/openq4/awakening/speederplayerhud.gui",
+        "definition": "guis/opend3/awakening/speederplayerhud.gui",
     },
 ]
 
-# openQ4 GUIs that single-player saves never contain: menus, loading screens and
+# openD3 GUIs that single-player saves never contain: menus, loading screens and
 # multiplayer-only GUIs (idPlayer deliberately skips mphud).
 NEVER_SERIALIZED_GUIS = {
     "guis/arena_menu.gui",
@@ -273,7 +273,7 @@ def read(path: Path) -> str:
 
 def shipped_guis() -> dict[str, Path]:
     guis: dict[str, Path] = {}
-    for pak in sorted((ROOT / "content" / "baseoq4").glob("pak*")):
+    for pak in sorted((ROOT / "content" / "baseod3").glob("pak*")):
         for path in pak.glob("guis/**/*.gui"):
             relative = path.relative_to(pak).as_posix()
             if relative.startswith(REVISION_ROOT + "/"):
@@ -296,7 +296,7 @@ def validate_classification(guis: dict[str, Path]) -> None:
     unclassified = sorted(set(guis) - serialized - NEVER_SERIALIZED_GUIS)
     if unclassified:
         raise AssertionError(
-            "Unclassified openQ4 GUI(s) "
+            "Unclassified openD3 GUI(s) "
             + ", ".join(unclassified)
             + ": add each to SERIALIZED_GUIS if any save writes it (player, weapon, vehicle "
             "or entity GUI), otherwise to NEVER_SERIALIZED_GUIS"
@@ -317,16 +317,16 @@ def validate_current_pins(guis: dict[str, Path]) -> None:
             "so this edit can move every later byte of a save written before it. If it adds, removes "
             "or reorders windows, defined vars, scripts, script statements with owned values, timeline "
             f"or named events, keep the pinned definition under {REVISION_ROOT}/ as a new revision in "
-            "OPENQ4_SAVEGAME_GUI_REVISIONS and pin the new one. Record it as layout-neutral only after "
+            "OPEND3_SAVEGAME_GUI_REVISIONS and pin the new one. Record it as layout-neutral only after "
             "proving the window tree is unchanged."
         )
 
 
 def validate_revisions(guis: dict[str, Path]) -> None:
     releases = read(ROOT / "src" / "framework" / "SaveGameReleases.h")
-    match = re.search(r"OPENQ4_SAVEGAME_GUI_REVISIONS\[\]\s*=\s*\{(?P<body>.*?)\n\};", releases, re.DOTALL)
+    match = re.search(r"OPEND3_SAVEGAME_GUI_REVISIONS\[\]\s*=\s*\{(?P<body>.*?)\n\};", releases, re.DOTALL)
     if match is None:
-        raise AssertionError("SaveGameReleases.h has no OPENQ4_SAVEGAME_GUI_REVISIONS table")
+        raise AssertionError("SaveGameReleases.h has no OPEND3_SAVEGAME_GUI_REVISIONS table")
     table = [
         {"gui": gui, "firstBuild": int(build), "savedDefinition": saved, "marker": marker}
         for gui, build, saved, marker in REVISION_ENTRY.findall(match.group("body"))
@@ -336,7 +336,7 @@ def validate_revisions(guis: dict[str, Path]) -> None:
         for entry in GUI_REVISIONS
     ]
     if table != expected:
-        raise AssertionError(f"OPENQ4_SAVEGAME_GUI_REVISIONS {table} does not match the contract {expected}")
+        raise AssertionError(f"OPEND3_SAVEGAME_GUI_REVISIONS {table} does not match the contract {expected}")
     # The reader takes a GUI's first revision its payload predates.
     for gui in {str(entry["gui"]) for entry in GUI_REVISIONS}:
         builds = [int(entry["firstBuild"]) for entry in GUI_REVISIONS if entry["gui"] == gui]
@@ -352,9 +352,9 @@ def validate_revisions(guis: dict[str, Path]) -> None:
             # The saved definition is another game's file: the record's name, parsed as written.
             if entry["savedDefinition"] != entry["gui"] or "definition" not in entry:
                 raise AssertionError(f"{entry['gui']}: an external saved definition is the game's own file, "
-                                     "read through an openQ4 definition")
+                                     "read through an openD3 definition")
             if (PAK0 / str(entry["savedDefinition"])).exists():
-                raise AssertionError(f"{entry['savedDefinition']} ships with openQ4; keep its revision under {REVISION_ROOT}/")
+                raise AssertionError(f"{entry['savedDefinition']} ships with openD3; keep its revision under {REVISION_ROOT}/")
             if marker not in window_names(guis[gui].read_text(encoding="latin-1")):
                 raise AssertionError(f"{gui} no longer has marker window '{entry['marker']}'")
             continue
@@ -389,7 +389,7 @@ def validate_release_provenance() -> None:
         shipped = entry["shippedIn"] if "shippedIn" in entry else f"{entry['shippedBefore']}^"
         result = subprocess.run(
             ["git", "-C", str(ROOT), "rev-parse", "--verify", "--quiet",
-             f"{shipped}:content/baseoq4/pak0/{gui}"],
+             f"{shipped}:content/baseod3/pak0/{gui}"],
             capture_output=True,
             text=True,
         )
@@ -435,7 +435,7 @@ def validate_eval_transfer() -> None:
 
 
 def validate_external_definitions() -> None:
-    """A GUI read from openQ4's definition restores earlier records through the game's own file."""
+    """A GUI read from openD3's definition restores earlier records through the game's own file."""
     hud = read(ROOT / "src" / "ui" / "RetainedHud.cpp")
     interface = read(ROOT / "src" / "ui" / "UserInterface.cpp")
     for entry in GUI_REVISIONS:

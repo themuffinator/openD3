@@ -1093,7 +1093,7 @@ void rvSegment::Render(rvBSE* effect, const renderEffect_s* owner, idRenderModel
 		}
 	}
 	else {
-		idList<openq4::bse::DrawParticle<rvParticle>> drawList;
+		idList<opend3::bse::DrawParticle<rvParticle>> drawList;
 		drawList.SetGranularity(64);
 		for (rvParticle* p = mUsedHead; p; p = p->GetNext()) {
 			drawList.Append({p, depthSort ? p->UpdateViewDist(view[0]) : 0.0f,
@@ -1102,7 +1102,7 @@ void rvSegment::Render(rvBSE* effect, const renderEffect_s* owner, idRenderModel
 		const int drawCount = drawList.Num();
 
 		if (depthSort) {
-			openq4::bse::SortParticleDepth(drawList.Ptr(), drawCount);
+			opend3::bse::SortParticleDepth(drawList.Ptr(), drawCount);
 		}
 
 		if (inverseOrder) {

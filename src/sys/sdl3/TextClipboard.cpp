@@ -1,16 +1,16 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
 #include "TextClipboard.h"
 
-#ifndef OPENQ4_SDL3_CHECKED_CLIPBOARD
-#define OPENQ4_SDL3_CHECKED_CLIPBOARD 0
+#ifndef OPEND3_SDL3_CHECKED_CLIPBOARD
+#define OPEND3_SDL3_CHECKED_CLIPBOARD 0
 #endif
-#if defined(USE_SDL3) && !defined(ID_DEDICATED) && OPENQ4_SDL3_CHECKED_CLIPBOARD == 1
+#if defined(USE_SDL3) && !defined(ID_DEDICATED) && OPEND3_SDL3_CHECKED_CLIPBOARD == 1
 #include "../../ui/retained/TextInput.h"
 #include <SDL3/SDL.h>
 #include <memory>
 #include <utility>
 
-namespace openq4 {
+namespace opend3 {
 namespace {
 
 bool ClipboardFailure(std::string& error, const char* operation, const char* detail) {
@@ -55,9 +55,9 @@ bool SDL3_WriteTextClipboard(const std::string& text, std::string& error) {
 	return true;
 }
 
-} // namespace openq4
+} // namespace opend3
 #else
-namespace openq4 {
+namespace opend3 {
 bool SDL3_ReadTextClipboard(std::string&, std::string& error) {
 	error = "Checked text clipboard requires a verified patched SDL3 client";
 	return false;
@@ -66,5 +66,5 @@ bool SDL3_WriteTextClipboard(const std::string&, std::string& error) {
 	error = "Checked text clipboard requires a verified patched SDL3 client";
 	return false;
 }
-} // namespace openq4
+} // namespace opend3
 #endif

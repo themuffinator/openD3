@@ -32,7 +32,7 @@
 #endif
 
 #ifndef ID_ALLOW_D3XP
-	#define ID_ALLOW_D3XP 0
+	#define ID_ALLOW_D3XP 1
 #endif
 
 #ifndef ID_CONSOLE_LOCK

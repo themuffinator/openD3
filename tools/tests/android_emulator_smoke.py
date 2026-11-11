@@ -32,8 +32,8 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools/build"))
 from verify_android_apk import verify_payload, verify_tools
 
-PACKAGE = "com.darkmatter.openq4.emulator"
-SAVE_ROOT = "files/saves/baseoq4"
+PACKAGE = "com.darkmatter.opend3.emulator"
+SAVE_ROOT = "files/saves/baseod3"
 SLOT = "AndroidEmulatorSmoke"
 CAPTURES = ("emulator-spawn.tga", "emulator-moved.tga", "emulator-restored.tga")
 ROTATE_CAPTURES = ("emulator-spawn.tga", "emulator-portrait.tga", "emulator-moved.tga", "emulator-restored.tga")
@@ -438,7 +438,7 @@ class Probe:
         deadline = time.monotonic() + 60
         save = None
         while time.monotonic() < deadline:
-            log = self.read("logs/openq4.log") or b""
+            log = self.read("logs/opend3.log") or b""
             save = self.read(f"savegames/{SUSPEND_SLOT}.save")
             if b"Saving 'Suspended' as the app goes to the background" in log and save:
                 break
@@ -464,7 +464,7 @@ class Probe:
         self.created["emulator_resumed.cfg"] = RESUMED.encode()
         self.put("emulator_resumed.cfg", RESUMED.encode())
         self.report["created_script_sha256"] = {n: hashlib.sha256(d).hexdigest() for n, d in self.created.items()}
-        result = self.adb("shell", "am", "start", "-W", "-n", PACKAGE + "/com.darkmatter.openq4.OpenQ4Activity",
+        result = self.adb("shell", "am", "start", "-W", "-n", PACKAGE + "/com.darkmatter.opend3.openD3Activity",
                           "--ez", "multiplayer", "false", timeout=60)
         (self.out / "relaunch.log").write_bytes(result.stdout + result.stderr)
         self.pid = None
@@ -474,7 +474,7 @@ class Probe:
         at, _ = self.go_home()
         self.lifecycle["backgrounded_utc"] = at
         time.sleep(self.args.away)
-        result = self.adb("shell", "am", "start", "-W", "-n", PACKAGE + "/com.darkmatter.openq4.OpenQ4Activity", timeout=60)
+        result = self.adb("shell", "am", "start", "-W", "-n", PACKAGE + "/com.darkmatter.opend3.openD3Activity", timeout=60)
         (self.out / "return.log").write_bytes(result.stdout + result.stderr)
         self.lifecycle["returned_utc"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         self.lifecycle["away_seconds"] = self.args.away
@@ -526,7 +526,7 @@ class Probe:
             temporary.unlink(missing_ok=True)
 
     def collect(self):
-        for name in ("logs/openq4.log", "openQ4Config.cfg"):
+        for name in ("logs/opend3.log", "openD3Config.cfg"):
             data = self.read(name)
             if data is not None:
                 (self.out / Path(name).name).write_bytes(data)
@@ -635,12 +635,12 @@ class Probe:
                      *("screenshots/" + name for name in self.captures)):
             if self.read(name) is not None:
                 raise ValueError(f"Existing test file must be reviewed before reuse: {name}")
-        self.before_config = self.read("openQ4Config.cfg")
+        self.before_config = self.read("openD3Config.cfg")
         if self.before_config is not None:
-            (self.out / "before-openQ4Config.cfg").write_bytes(self.before_config)
-        old_log = self.read("logs/openq4.log")
+            (self.out / "before-openD3Config.cfg").write_bytes(self.before_config)
+        old_log = self.read("logs/opend3.log")
         if old_log is not None:
-            (self.out / "before-openq4.log").write_bytes(old_log)
+            (self.out / "before-opend3.log").write_bytes(old_log)
         self.prepared = True
         if self.mode == "rotate":
             self.apply_rotation_setup()
@@ -648,9 +648,9 @@ class Probe:
             self.write_setup({"touch_settings": LIFECYCLE_TOUCH, "touch_layout": LIFECYCLE_LAYOUT})
             self.report["touch_layout_record"] = LIFECYCLE_LAYOUT
         if old_log is not None:
-            if self.read("logs/openq4.log") != old_log:
+            if self.read("logs/opend3.log") != old_log:
                 raise ValueError("Log changed during preparation")
-            self.adb("shell", "run-as", PACKAGE, "rm", self.path("logs/openq4.log"))
+            self.adb("shell", "run-as", PACKAGE, "rm", self.path("logs/opend3.log"))
         for name, text in self.scripts.items():
             data = text.encode()
             # Track attempted writes too: a failed readback must not leave an
@@ -661,7 +661,7 @@ class Probe:
         self.write_report()
         print(f"Retail files verified; launching silent {self.mode.upper()} diagnostics.", flush=True)
         result = self.adb("shell", "am", "start", "-W", "-n",
-                          PACKAGE + "/com.darkmatter.openq4.OpenQ4Activity",
+                          PACKAGE + "/com.darkmatter.opend3.openD3Activity",
                           "--ez", "multiplayer", "true" if self.mode in ("mp", "resume") else "false", timeout=60)
         requests = {"EMULATOR_ROTATE_PORTRAIT": 1, "EMULATOR_ROTATE_LANDSCAPE": 0}
         (self.out / "launch.log").write_bytes(result.stdout + result.stderr)
@@ -675,10 +675,10 @@ class Probe:
                     self.pids.append(pid)
                 elif pid != self.pid:
                     raise ValueError("Native game process was replaced")
-            data = self.read("logs/openq4.log") or b""
+            data = self.read("logs/opend3.log") or b""
             if re.search(rb"(?:^|\n)(?:ERROR:|FATAL:|Fatal)", data):
                 self.collect()
-                raise ValueError("Engine reported a fatal error; inspect openq4.log")
+                raise ValueError("Engine reported a fatal error; inspect opend3.log")
             markers = re.findall(rb"EMULATOR_(?:GAMEPLAY_READY|ROTATE_PORTRAIT|ROTATE_LANDSCAPE|TOUCH_RELEASED"
                                  rb"|SAVE_RESTORED|SUSPEND_RESTORED|BACKGROUND_REQUEST|RECONNECTED|SMOKE_COMPLETE)", data)
             if markers and markers[-1].decode() != last_marker:
@@ -695,7 +695,7 @@ class Probe:
                 if last_marker == "EMULATOR_BACKGROUND_REQUEST" and "backgrounded_utc" not in self.lifecycle:
                     if self.mode == "lifecycle":
                         self.suspend_and_kill()
-                        (self.out / "first-run-openq4.log").write_bytes(data)
+                        (self.out / "first-run-opend3.log").write_bytes(data)
                         last_marker = ""
                         continue
                     if self.mode == "resume":
@@ -709,7 +709,7 @@ class Probe:
                 # session, so a reconnect's map load is the marker). Give a lost
                 # connection time to show before ending the client, which would play on.
                 time.sleep(15)
-                (self.out / "resumed-openq4.log").write_bytes(self.read("logs/openq4.log") or data)
+                (self.out / "resumed-opend3.log").write_bytes(self.read("logs/opend3.log") or data)
                 self.adb("shell", "am", "force-stop", PACKAGE)
                 self.wait_for_pid(False, 30)
                 break
@@ -726,7 +726,7 @@ class Probe:
             return self.assess_lifecycle()
         if self.mode == "resume":
             return self.assess_resume()
-        log = (self.out / "openq4.log").read_text(errors="replace")
+        log = (self.out / "opend3.log").read_text(errors="replace")
         for marker in ("EMULATOR_GAMEPLAY_READY", "EMULATOR_TOUCH_RELEASED", "EMULATOR_SMOKE_COMPLETE",
                        *(("EMULATOR_SAVE_RESTORED",) if self.mode != "mp" else ()),
                        *(("EMULATOR_PORTRAIT_READY", "EMULATOR_LANDSCAPE_RESTORED") if self.mode == "rotate" else ())):
@@ -786,8 +786,8 @@ class Probe:
                            + "; visual review separate")
 
     def assess_lifecycle(self):
-        first = (self.out / "first-run-openq4.log").read_text(errors="replace")
-        log = (self.out / "openq4.log").read_text(errors="replace")
+        first = (self.out / "first-run-opend3.log").read_text(errors="replace")
+        log = (self.out / "opend3.log").read_text(errors="replace")
         for text, marker in ((first, "EMULATOR_GAMEPLAY_READY"), (first, "EMULATOR_TOUCH_NEUTRAL"),
                              (first, "EMULATOR_BACKGROUND_REQUEST"), (log, "EMULATOR_SUSPEND_RESTORED"),
                              (log, "EMULATOR_SMOKE_COMPLETE")):
@@ -838,7 +838,7 @@ class Probe:
                                  "process, relaunch and load of that save; visual review separate")
 
     def assess_resume(self):
-        log = (self.out / "resumed-openq4.log").read_text(errors="replace")
+        log = (self.out / "resumed-opend3.log").read_text(errors="replace")
         for marker in ("EMULATOR_GAMEPLAY_READY", "EMULATOR_BACKGROUND_REQUEST"):
             if marker not in log:
                 raise ValueError(f"Missing engine marker: {marker}")
@@ -929,9 +929,9 @@ class Probe:
                 self.adb("shell", "run-as", PACKAGE, "rm", self.path(name))
                 retired[name] = hashlib.sha256(data).hexdigest()
         if self.before_config is not None:
-            self.put("openQ4Config.cfg", self.before_config)
-        elif self.read("openQ4Config.cfg") is not None:
-            self.adb("shell", "run-as", PACKAGE, "rm", self.path("openQ4Config.cfg"))
+            self.put("openD3Config.cfg", self.before_config)
+        elif self.read("openD3Config.cfg") is not None:
+            self.adb("shell", "run-as", PACKAGE, "rm", self.path("openD3Config.cfg"))
         self.report["retired_test_files"] = retired
         self.report["original_config_restored"] = True
         self.restore_rotation_setup()

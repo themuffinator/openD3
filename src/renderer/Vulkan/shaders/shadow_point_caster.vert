@@ -1,11 +1,11 @@
 #version 450
 
-// openQ4 Vulkan point-light shadow-map caster — vertex stage (Phase F2b,
+// openD3 Vulkan point-light shadow-map caster — vertex stage (Phase F2b,
 // docs/dev/archive/2026-10-18/plans/2026-07-19-vulkan-phase-f.md).
 //
 // Depth-only caster into one face of a point light's depth cube, mirroring
 // the GL shadow_point_caster.vs contract in its hardware-compare
-// (OPENQ4_POINT_SHADOW_CASTER_DEPTH) variant: the map stores NORMALIZED
+// (OPEND3_POINT_SHADOW_CASTER_DEPTH) variant: the map stores NORMALIZED
 // RADIAL DISTANCE (length(worldPos - lightOrigin) / far), written by the
 // fragment stage. The push mvp is the model -> cube-face VIEW matrix (not a
 // clip transform): the face view is a rigid transform centered on the light

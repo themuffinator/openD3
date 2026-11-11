@@ -1,5 +1,5 @@
 // Copyright (C) 2026 DarkMatter Productions
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
@@ -238,11 +238,11 @@ modernSpecularProbeAtlasReject_t VK_ProbeSource_CollectRead( const idImage *imag
 	return result;
 }
 
-bool VK_ProbeSource_Decode( const std::vector<std::uint8_t> &encoded, bool hdr, int faceSize, openq4PBR::Cube &cube ) {
-	cube = openq4PBR::Cube();
+bool VK_ProbeSource_Decode( const std::vector<std::uint8_t> &encoded, bool hdr, int faceSize, opend3PBR::Cube &cube ) {
+	cube = opend3PBR::Cube();
 	const int pixelsPerFace = faceSize * faceSize;
 	if ( faceSize <= 0 || encoded.size() != size_t( pixelsPerFace ) * 6 * ( hdr ? 8 : 4 ) ) { return false; }
-	openq4PBR::Cube candidate;
+	opend3PBR::Cube candidate;
 	candidate.size = faceSize;
 	const std::uint8_t *bytes = encoded.data();
 	for ( int face = 0; face < 6; ++face ) {
@@ -258,7 +258,7 @@ bool VK_ProbeSource_Decode( const std::vector<std::uint8_t> &encoded, bool hdr, 
 					if ( !HDRExposure_DecodeHalf( bits, value ) ) { return false; }
 					color[component] = Max( 0.0f, value );
 				} else {
-					color[component] = openq4PBRMath::PBRSRGBToLinear( bytes[index] / 255.0f );
+					color[component] = opend3PBRMath::PBRSRGBToLinear( bytes[index] / 255.0f );
 				}
 			}
 			candidate.faces[face][pixel] = { color[0], color[1], color[2] };
@@ -269,8 +269,8 @@ bool VK_ProbeSource_Decode( const std::vector<std::uint8_t> &encoded, bool hdr, 
 }
 
 modernSpecularProbeAtlasReject_t VK_ProbeSource_Read( const idImage *image,
-		openq4PBR::Cube &cube, vkProbeSourceStamp_t &stamp ) {
-	cube = openq4PBR::Cube();
+		opend3PBR::Cube &cube, vkProbeSourceStamp_t &stamp ) {
+	cube = opend3PBR::Cube();
 	stamp = {};
 	vkProbeSourceRead_t read;
 	modernSpecularProbeAtlasReject_t result = VK_ProbeSource_BeginRead( image, read );
@@ -278,7 +278,7 @@ modernSpecularProbeAtlasReject_t VK_ProbeSource_Read( const idImage *image,
 	std::vector<std::uint8_t> encoded;
 	result = VK_ProbeSource_CollectRead( image, read, encoded, true );
 	if ( result != MODERN_SPECULAR_PROBE_ATLAS_REJECT_NONE ) { return result; }
-	openq4PBR::Cube candidate;
+	opend3PBR::Cube candidate;
 	if ( !VK_ProbeSource_Decode( encoded, read.hdr, read.stamp.faceSize, candidate ) ) {
 		return MODERN_SPECULAR_PROBE_ATLAS_REJECT_INVALID_STORAGE;
 	}
@@ -350,7 +350,7 @@ struct vkProbeSourceTest_t {
 		passed = value && passed;
 	}
 	void Reject( const idImage *image, modernSpecularProbeAtlasReject_t expected, const char *label ) {
-		openq4PBR::Cube output;
+		opend3PBR::Cube output;
 		output.size = 1;
 		output.faces[0].push_back( { 1.0f, 2.0f, 3.0f } );
 		vkProbeSourceStamp_t stamp = { 1, 1, 1, 1, 1 };
@@ -362,7 +362,7 @@ struct vkProbeSourceTest_t {
 		++rejections;
 	}
 	void ReadPattern( const idImage *image ) {
-		openq4PBR::Cube output;
+		opend3PBR::Cube output;
 		vkProbeSourceStamp_t stamp;
 		const bool hdr = image->GetOpts().format == FMT_RGBA16F;
 		const int size = image->GetUploadWidth();
@@ -377,7 +377,7 @@ struct vkProbeSourceTest_t {
 			bool matches = true;
 			for ( int y = 0; y < size; ++y ) {
 				for ( int x = 0; x < size; ++x ) {
-					const openq4PBR::Vector value = output.faces[face][y * size + x];
+					const opend3PBR::Vector value = output.faces[face][y * size + x];
 					const float actual[3] = { value.x, value.y, value.z };
 					for ( int c = 0; c < 3; ++c ) {
 						const int index = VK_ProbeSource_TestIndex( face, x, y, c, hdr );
@@ -521,7 +521,7 @@ bool VK_ProbeSource_RunSelfTest( void ) {
 	vkProbeTestFormat = FMT_RGBA8;
 	vkProbeTestSize = 8;
 	source->Reload( true );
-	openq4PBR::Cube output;
+	opend3PBR::Cube output;
 	vkProbeSourceStamp_t stamp;
 	test.Check( VK_ProbeSource_Read( source, output, stamp ) == MODERN_SPECULAR_PROBE_ATLAS_REJECT_NONE, "update reference" );
 	const byte change[4] = { 255, 128, 64, 0 };
@@ -530,7 +530,7 @@ bool VK_ProbeSource_RunSelfTest( void ) {
 	test.Check( VK_ProbeSource_Read( source, output, stamp ) == MODERN_SPECULAR_PROBE_ATLAS_REJECT_NONE,
 		"partial overwrite preserves complete source admission" );
 	if ( output.size == 8 && output.faces[4].size() == 64 ) {
-		const openq4PBR::Vector value = output.faces[4][2 * 8 + 3];
+		const opend3PBR::Vector value = output.faces[4][2 * 8 + 3];
 		test.Check( value.x == 1.0f && idMath::Fabs( value.y - vkProbeTestLinear[2] ) < 0.000001f
 			&& idMath::Fabs( value.z - vkProbeTestLinear[1] ) < 0.000001f, "latest GPU contents after overwrite" );
 	}

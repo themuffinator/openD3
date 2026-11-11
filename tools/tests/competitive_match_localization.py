@@ -11,20 +11,20 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
-STRINGS_ROOT = ROOT / "content" / "baseoq4" / "pak0" / "strings"
+STRINGS_ROOT = ROOT / "content" / "baseod3" / "pak0" / "strings"
 LANGUAGE_FILES = (
-    "english_openq4.lang",
-    "german_openq4.lang",
-    "french_openq4.lang",
-    "italian_openq4.lang",
-    "spanish_openq4.lang",
-    "brazilian_openq4.lang",
-    "czech_openq4.lang",
-    "hungarian_openq4.lang",
-    "turkish_openq4.lang",
-    "ukrainian_openq4.lang",
+    "english_opend3.lang",
+    "german_opend3.lang",
+    "french_opend3.lang",
+    "italian_opend3.lang",
+    "spanish_opend3.lang",
+    "brazilian_opend3.lang",
+    "czech_opend3.lang",
+    "hungarian_opend3.lang",
+    "turkish_opend3.lang",
+    "ukrainian_opend3.lang",
 )
 # 41693-41698 are the three built-in match-series profiles (label, description)
 # consumed by seriesProfileDescriptors in mp/match/MatchSeries.cpp.

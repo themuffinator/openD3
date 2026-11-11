@@ -5,7 +5,7 @@
 
 class idEventLoop;
 typedef struct sysEvent_s sysEvent_t;
-namespace openq4 {
+namespace opend3 {
 // The status refers to the original, frozen input. StoredRetired means storage
 // owns that input even though post-transfer admission/owner validation failed.
 enum class NativeInputTransferStatus { Unchanged, StoredAdmitted, StoredRetired };
@@ -77,4 +77,4 @@ private:
     std::uint64_t mutation=0;
     bool calling=false,claimed=false,revoked=false,released=false,interrupted=false;
 };
-} // namespace openq4
+} // namespace opend3

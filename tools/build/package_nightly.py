@@ -35,16 +35,16 @@ from linux_metadata import (
 from generate_release_docs import GeneratedDocSite, generate_release_docs_site
 from gamelibs_stage_path import MANIFEST_NAME as GAMELIBS_STAGE_MANIFEST_NAME, stage_root as gamelibs_stage_root
 from game_layer import PACKAGED_LAYER_GAME_DIRS, RETIRED_LAYER_GAME_DIRS, LayerError, read_layer_mod_json
-from openq4_pak import (
-    OPENQ4_BULK_PACK_NAMES,
-    OPENQ4_CONTENT_PACKS_BY_NAME,
-    OPENQ4_PK4_FORBIDDEN_FILES,
-    OPENQ4_PACK_NAMES,
-    OPENQ4_REQUIRED_LOOSE_GAME_FILES,
+from opend3_pak import (
+    OPEND3_BULK_PACK_NAMES,
+    OPEND3_CONTENT_PACKS_BY_NAME,
+    OPEND3_PK4_FORBIDDEN_FILES,
+    OPEND3_PACK_NAMES,
+    OPEND3_REQUIRED_LOOSE_GAME_FILES,
     PAK0_NAME,
     copy_file_if_changed,
     copy_game_pk4,
-    create_game_pk4 as create_openq4_game_pk4,
+    create_game_pk4 as create_opend3_game_pk4,
     is_relative_to,
 )
 
@@ -88,7 +88,7 @@ ARCHIVE_SUFFIX = {
 # Shared macOS compatibility floor: written to Info.plist LSMinimumSystemVersion
 # and enforced against each packaged binary's Mach-O minimum-OS load command.
 MACOS_MIN_SYSTEM_VERSION = "11.0"
-MACOS_RUNTIME_LAYOUT_KEY = "OpenQ4RuntimeLayout"
+MACOS_RUNTIME_LAYOUT_KEY = "openD3RuntimeLayout"
 MACOS_RUNTIME_LAYOUT_VALUE = "self-contained-v1"
 MACOS_EXPECTED_PLIST_VALUES = {
     "CFBundleExecutable": "openD3",
@@ -129,19 +129,19 @@ MACOS_LOCALIZED_INFO_LOCALES = (
     "English",
     "French",
 )
-MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME = "OpenQ4PackageRoot.strings"
+MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME = "openD3PackageRoot.strings"
 MACOS_PACKAGE_ROOT_ERROR_STRINGS = {
     "English": {
-        "OpenQ4PackageRootMissingTitle": "openD3.app adjacent package root is incomplete",
-        "OpenQ4PackageRootMissingBody": "This legacy package layout needs openD3.app, baseod3/, openD3-client_<arch>, and openD3-ded_<arch> together in the same package folder. Current self-contained packages support moving only openD3.app to /Applications; reinstall this package to use that layout.",
-        "OpenQ4BundleRuntimeMissingTitle": "openD3.app is incomplete",
-        "OpenQ4BundleRuntimeMissingBody": "Reinstall the complete openD3.app. Its game data and signed game module must remain inside the application bundle.",
+        "openD3PackageRootMissingTitle": "openD3.app adjacent package root is incomplete",
+        "openD3PackageRootMissingBody": "This legacy package layout needs openD3.app, baseod3/, openD3-client_<arch>, and openD3-ded_<arch> together in the same package folder. Current self-contained packages support moving only openD3.app to /Applications; reinstall this package to use that layout.",
+        "openD3BundleRuntimeMissingTitle": "openD3.app is incomplete",
+        "openD3BundleRuntimeMissingBody": "Reinstall the complete openD3.app. Its game data and signed game module must remain inside the application bundle.",
     },
     "French": {
-        "OpenQ4PackageRootMissingTitle": "La racine de paquet adjacente a openD3.app est incomplete",
-        "OpenQ4PackageRootMissingBody": "Cette ancienne disposition de paquet necessite que openD3.app, baseod3/, openD3-client_<arch> et openD3-ded_<arch> restent ensemble dans le meme dossier. Les paquets autonomes actuels permettent de deplacer seulement openD3.app vers /Applications ; reinstallez ce paquet pour utiliser cette disposition.",
-        "OpenQ4BundleRuntimeMissingTitle": "openD3.app est incomplete",
-        "OpenQ4BundleRuntimeMissingBody": "Reinstallez l'application openD3.app complete. Ses donnees de jeu et son module de jeu signe doivent rester dans l'application.",
+        "openD3PackageRootMissingTitle": "La racine de paquet adjacente a openD3.app est incomplete",
+        "openD3PackageRootMissingBody": "Cette ancienne disposition de paquet necessite que openD3.app, baseod3/, openD3-client_<arch> et openD3-ded_<arch> restent ensemble dans le meme dossier. Les paquets autonomes actuels permettent de deplacer seulement openD3.app vers /Applications ; reinstallez ce paquet pour utiliser cette disposition.",
+        "openD3BundleRuntimeMissingTitle": "openD3.app est incomplete",
+        "openD3BundleRuntimeMissingBody": "Reinstallez l'application openD3.app complete. Ses donnees de jeu et son module de jeu signe doivent rester dans l'application.",
     },
 }
 # macOS renderer payload. The Vulkan renderer module runs on macOS through
@@ -190,7 +190,7 @@ MACOS_EXPECTED_APP_BUNDLE_FILES = (
     "Contents/Resources/openD3.icns",
     "Contents/Resources/VERSION.txt",
     f"Contents/Resources/{GAME_DIR_NAME}/mod.json",
-    *(f"Contents/Resources/{GAME_DIR_NAME}/{pak_name}" for pak_name in OPENQ4_PACK_NAMES),
+    *(f"Contents/Resources/{GAME_DIR_NAME}/{pak_name}" for pak_name in OPEND3_PACK_NAMES),
     "Contents/Resources/assets/splash/doom3_splash.bmp",
     "Contents/Resources/licenses/openal-soft/COPYING",
     "Contents/Resources/licenses/openal-soft/LICENSE-pffft",
@@ -218,15 +218,15 @@ MACOS_TAR_ARCHIVE_READ_MODES = {
 }
 MACOS_SUPPORT_INFO_REQUIRED_TOKENS = (
     "#!/bin/sh",
-    "OPENQ4_PACKAGE_ROOT",
+    "OPEND3_PACKAGE_ROOT",
     "HOME_DIR=${HOME:-}",
     "ARCHIVE_TMP",
     "MAX_SUPPORT_TEXT_BYTES",
     "MAX_CRASH_REPORT_BYTES",
     "MAX_SUPPORT_ARCHIVE_BYTES",
     "write_bounded_report()",
-    "write_openq4_log_candidate_paths()",
-    "write_openq4_renderer_config_candidate_paths()",
+    "write_opend3_log_candidate_paths()",
+    "write_opend3_renderer_config_candidate_paths()",
     "sanitize_text()",
     "redact_text()",
     "limit_stream_tail()",
@@ -287,10 +287,10 @@ MACOS_SIGNING_MODES = (
     "developer-id",
 )
 VERSION_REPOSITORY_METADATA_KEYS = (
-    "openq4_commit",
-    "openq4_dirty",
-    "openq4_game_commit",
-    "openq4_game_dirty",
+    "opend3_commit",
+    "opend3_dirty",
+    "opend3_game_commit",
+    "opend3_game_dirty",
 )
 MACOS_FORBIDDEN_ENTITLEMENTS = {
     "com.apple.security.app-sandbox": (
@@ -416,7 +416,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--macos-signing-mode",
         choices=MACOS_SIGNING_MODES,
-        default=os.environ.get("OPENQ4_MACOS_SIGNING_MODE", "ad-hoc"),
+        default=os.environ.get("OPEND3_MACOS_SIGNING_MODE", "ad-hoc"),
         help=(
             "macOS signing mode. Use ad-hoc for local/debug packaging and developer-id "
             "for release packages that will be notarized."
@@ -424,28 +424,28 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     )
     parser.add_argument(
         "--macos-code-sign-identity",
-        default=os.environ.get("OPENQ4_MACOS_CODE_SIGN_IDENTITY", ""),
+        default=os.environ.get("OPEND3_MACOS_CODE_SIGN_IDENTITY", ""),
         help="Developer ID Application identity for --macos-signing-mode=developer-id.",
     )
     parser.add_argument(
         "--macos-entitlements",
-        default=os.environ.get("OPENQ4_MACOS_ENTITLEMENTS", ""),
+        default=os.environ.get("OPEND3_MACOS_ENTITLEMENTS", ""),
         help="Optional entitlements plist passed to codesign for macOS release signing.",
     )
     parser.add_argument(
         "--macos-notarize",
         action="store_true",
-        default=env_flag("OPENQ4_MACOS_NOTARIZE"),
+        default=env_flag("OPEND3_MACOS_NOTARIZE"),
         help="Submit the signed macOS package payload to Apple notarization and staple the app ticket.",
     )
     parser.add_argument(
         "--macos-notary-keychain-profile",
-        default=os.environ.get("OPENQ4_MACOS_NOTARY_KEYCHAIN_PROFILE", ""),
+        default=os.environ.get("OPEND3_MACOS_NOTARY_KEYCHAIN_PROFILE", ""),
         help="notarytool keychain profile used when --macos-notarize is enabled.",
     )
     parser.add_argument(
         "--macos-notary-keychain",
-        default=os.environ.get("OPENQ4_MACOS_NOTARY_KEYCHAIN", ""),
+        default=os.environ.get("OPEND3_MACOS_NOTARY_KEYCHAIN", ""),
         help="Optional keychain path that contains the notarytool keychain profile.",
     )
     return parser.parse_args(argv[1:])
@@ -1595,10 +1595,10 @@ def read_staged_repository_metadata(source_root: Path, platform: str = "windows"
         return {}
 
     return {
-        "openq4_commit": clean_version_metadata_value(manifest.get("projectGitCommit")),
-        "openq4_dirty": clean_version_metadata_value(manifest.get("projectGitDirty")),
-        "openq4_game_commit": clean_version_metadata_value(manifest.get("gameLibsGitCommit")),
-        "openq4_game_dirty": clean_version_metadata_value(manifest.get("gameLibsGitDirty")),
+        "opend3_commit": clean_version_metadata_value(manifest.get("projectGitCommit")),
+        "opend3_dirty": clean_version_metadata_value(manifest.get("projectGitDirty")),
+        "opend3_game_commit": clean_version_metadata_value(manifest.get("gameLibsGitCommit")),
+        "opend3_game_dirty": clean_version_metadata_value(manifest.get("gameLibsGitDirty")),
     }
 
 
@@ -1607,8 +1607,8 @@ def collect_package_repository_metadata(source_root: Path, platform: str = "wind
     # before packaging. Both receipt fields identify the same source commit.
     commit = clean_version_metadata_value(package_git_value(source_root, "rev-parse", "--verify", "HEAD"))
     dirty = package_git_dirty(source_root)
-    return {"openq4_commit": commit, "openq4_dirty": dirty,
-            "openq4_game_commit": commit, "openq4_game_dirty": dirty}
+    return {"opend3_commit": commit, "opend3_dirty": dirty,
+            "opend3_game_commit": commit, "opend3_game_dirty": dirty}
 
 
 def write_version_manifest(
@@ -2413,7 +2413,7 @@ def copy_required_loose_game_files(
 ) -> list[str]:
     missing_required: list[str] = []
 
-    for relative_path in sorted(OPENQ4_REQUIRED_LOOSE_GAME_FILES):
+    for relative_path in sorted(OPEND3_REQUIRED_LOOSE_GAME_FILES):
         source = install_game_dir / Path(relative_path)
         if not source.is_file():
             if allow_missing_binaries:
@@ -2435,7 +2435,7 @@ def validate_packaged_layer_mod_manifest(package_layer_dir: Path, version: str) 
         manifest = read_layer_mod_json(package_layer_dir / "mod.json")
     except LayerError as exc:
         raise RuntimeError(f"packaged {package_layer_dir.name}/mod.json: {exc}") from exc
-    required = manifest["requiredopenQ4Version"]
+    required = manifest["requiredopenD3Version"]
     if is_stable_base_version(version) and required != version:
         raise RuntimeError(
             f"packaged {package_layer_dir.name}/mod.json requires openD3 {required}, "
@@ -2507,7 +2507,7 @@ def copy_game_layer_dirs(
 def create_game_pk4(
     install_game_dir: Path, destination_pk4: Path, pak_name: str = PAK0_NAME
 ) -> tuple[int, list[str], list[str]]:
-    result = create_openq4_game_pk4(install_game_dir, destination_pk4, pak_name=pak_name)
+    result = create_opend3_game_pk4(install_game_dir, destination_pk4, pak_name=pak_name)
     return result.added_files, result.skipped_samples, result.missing_required
 
 
@@ -2618,7 +2618,7 @@ WINDOWS_SYMBOL_ARCHIVE_SUFFIX = "-symbols.zip"
 
 def update_archive_excluded_paths() -> frozenset[str]:
     """The bulk content packs, which full packages carry and update archives leave out."""
-    return frozenset(f"{GAME_DIR_NAME}/{pak_name}" for pak_name in OPENQ4_BULK_PACK_NAMES)
+    return frozenset(f"{GAME_DIR_NAME}/{pak_name}" for pak_name in OPEND3_BULK_PACK_NAMES)
 
 
 def move_windows_symbols(package_root: Path, symbol_root: Path) -> list[Path]:
@@ -2875,7 +2875,7 @@ def validate_macos_archive_contents(
         embedded_moltenvk_entry,
         embedded_openal_soft_entry,
         f"{app_bundle_prefix}Contents/Resources/{GAME_DIR_NAME}/mod.json",
-        *(f"{app_bundle_prefix}Contents/Resources/{GAME_DIR_NAME}/{pak_name}" for pak_name in OPENQ4_PACK_NAMES),
+        *(f"{app_bundle_prefix}Contents/Resources/{GAME_DIR_NAME}/{pak_name}" for pak_name in OPEND3_PACK_NAMES),
         support_info_entry,
         f"{package_prefix}{MACOS_SYMBOL_MANIFEST_NAME}",
         f"{package_prefix}VERSION.txt",
@@ -3697,7 +3697,7 @@ def validate_macos_app_bundle(package_root: Path, app_root: Path, arch: str, ver
     require_non_empty_package_file(app_version, "macOS app bundle version manifest")
     for relative_path in (
         MACOS_APP_GAME_DATA_DIR / "mod.json",
-        *(MACOS_APP_GAME_DATA_DIR / pak_name for pak_name in OPENQ4_PACK_NAMES),
+        *(MACOS_APP_GAME_DATA_DIR / pak_name for pak_name in OPEND3_PACK_NAMES),
         MACOS_APP_SPLASH_DIR / "doom3_splash.bmp",
     ):
         require_non_empty_package_file(app_root / relative_path, f"macOS embedded runtime file {relative_path}")
@@ -3823,7 +3823,7 @@ def create_macos_app_bundle(
     staged_game_module = staged_game_dir / f"game_{arch}.dylib"
     for path, label in (
         (staged_game_dir / "mod.json", "macOS staged game metadata"),
-        *((staged_game_dir / pak_name, f"macOS staged {pak_name}") for pak_name in OPENQ4_PACK_NAMES),
+        *((staged_game_dir / pak_name, f"macOS staged {pak_name}") for pak_name in OPEND3_PACK_NAMES),
     ):
         require_non_empty_package_file(path, label)
     require_packaged_executable(staged_game_module, "macOS staged unified game module")
@@ -4106,15 +4106,15 @@ def main(argv: list[str]) -> int:
         return 1
 
     pk4_results = []
-    for pak_name in OPENQ4_PACK_NAMES:
+    for pak_name in OPEND3_PACK_NAMES:
         game_pk4_path = package_game_dir / pak_name
         staged_game_pk4_path = install_game_dir / pak_name
-        source_pack_dir = source_root / OPENQ4_CONTENT_PACKS_BY_NAME[pak_name].source
+        source_pack_dir = source_root / OPEND3_CONTENT_PACKS_BY_NAME[pak_name].source
 
         if staged_game_pk4_path.is_file():
             pk4_result = copy_game_pk4(staged_game_pk4_path, game_pk4_path, pak_name=pak_name)
         elif source_pack_dir.is_dir():
-            pk4_result = create_openq4_game_pk4(source_pack_dir, game_pk4_path, pak_name=pak_name)
+            pk4_result = create_opend3_game_pk4(source_pack_dir, game_pk4_path, pak_name=pak_name)
         else:
             print(
                 f"error: {GAME_DIR_NAME}/{pak_name} was not staged and source pack directory is missing: {source_pack_dir}",
@@ -4285,7 +4285,7 @@ def main(argv: list[str]) -> int:
     print(f"Package directory: {package_root}")
     print(f"Release archive: {archive_path}")
     if update_archive_path is not None:
-        print(f"Update archive (no {', '.join(OPENQ4_BULK_PACK_NAMES)}): {update_archive_path}")
+        print(f"Update archive (no {', '.join(OPEND3_BULK_PACK_NAMES)}): {update_archive_path}")
     if windows_symbol_archive_path is not None:
         print(f"Windows symbol archive: {windows_symbol_archive_path}")
     print(f"Archive format: {archive_format}")

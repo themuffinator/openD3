@@ -1,10 +1,10 @@
 // Copyright (C) 2026 DarkMatter Productions
 // Exact sRGB filtering for explicitly authored colour textures; alpha is linear.
-#ifndef OPENQ4_SRGB_H
-#define OPENQ4_SRGB_H
+#ifndef OPEND3_SRGB_H
+#define OPEND3_SRGB_H
 #include <array>
 #include <cmath>
-namespace openq4SRGB {
+namespace opend3SRGB {
 inline float Decode(float x) {
     return x <= 0.04045f ? x/12.92f : std::pow((x+0.055f)/1.055f, 2.4f);
 }

@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <limits>
 
-namespace openq4 {
+namespace opend3 {
 
 // Draw-only clock policy shared by SP and MP. None of this state is serialized,
 // transmitted, or used to schedule simulation. The input clock is monotonic ms
@@ -81,4 +81,4 @@ private:
 	double previous = 0.0, rate = 0.0;
 };
 
-} // namespace openq4
+} // namespace opend3

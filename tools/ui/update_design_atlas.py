@@ -9,12 +9,12 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-START = '<!-- openq4-medlabs-implant-start -->'
-END = '<!-- openq4-medlabs-implant-end -->'
+START = '<!-- opend3-medlabs-implant-start -->'
+END = '<!-- opend3-medlabs-implant-end -->'
 
 def update_audio(text):
     """Replace the illustrative voice driver with local playback sources."""
-    start, end = '// openq4-playback-graphs-start', '// openq4-playback-graphs-end'
+    start, end = '// opend3-playback-graphs-start', '// opend3-playback-graphs-end'
     text = re.sub(r'\n*' + re.escape(start) + r'.*?' + re.escape(end) + r'\n*', '\n\n', text, flags=re.S)
     text = re.sub(r"/\* A voice line's level.*?(?=/\* The trace in a rect)",
                   '/* Playback controls below provide the Remastered drive. */\nA.voiceLevel = () => 0;\n', text, flags=re.S)
@@ -43,7 +43,7 @@ def main():
     text = args.base.read_text(encoding='utf-8')
     text = re.sub(r'visual specification 1\.\d+', 'visual specification 1.19', text)
     text = update_audio(text)
-    start, end = '<!-- openq4-wheel-placement-start -->', '<!-- openq4-wheel-placement-end -->'
+    start, end = '<!-- opend3-wheel-placement-start -->', '<!-- opend3-wheel-placement-end -->'
     text = re.sub(re.escape(start) + r'.*?' + re.escape(end), '', text, flags=re.S)
     placement = (ROOT / 'docs/dev/ui/atlas/weapon-wheel-placement.js').read_text(encoding='utf-8')
     text += '\n' + start + '\n<script>\n' + placement + '\n</script>\n' + end + '\n'

@@ -490,7 +490,7 @@ void idSimpleWindow::CalcClientRect(float xofs, float yofs) {
 		}
 
 		AdjustTournamentWarmupLayout( gui, name.c_str(), mParent != NULL ? mParent->GetName() : NULL, xofs, xExpand, drawRect );
-		OpenQ4_ExpandLegacyMessageBackdrop( gui != NULL ? gui->GetSourceFile() : NULL,
+		openD3_ExpandLegacyMessageBackdrop( gui != NULL ? gui->GetSourceFile() : NULL,
 			name.c_str(), xExpand, yExpand, drawRect );
 	}
 
@@ -636,12 +636,12 @@ idWinVar *idSimpleWindow::GetWinVarByName(const char *_name) {
 idSimpleWindow::WriteToSaveGame
 ========================
 */
-static bool OpenQ4_IsFiniteSimpleWindowRectangle( const idRectangle &rect ) {
+static bool openD3_IsFiniteSimpleWindowRectangle( const idRectangle &rect ) {
 	return std::isfinite( rect.x ) && std::isfinite( rect.y ) &&
 		std::isfinite( rect.w ) && std::isfinite( rect.h );
 }
 
-static bool OpenQ4_IsFiniteSimpleWindowVec2( const idVec2 &vec ) {
+static bool openD3_IsFiniteSimpleWindowVec2( const idVec2 &vec ) {
 	return std::isfinite( vec.x ) && std::isfinite( vec.y );
 }
 
@@ -650,41 +650,41 @@ void idSimpleWindow::WriteToSaveGame( idFile *savefile ) {
 		common->Error( "idSimpleWindow::WriteToSaveGame: invalid output file for window '%s'", name.c_str() );
 		return;
 	}
-	if ( !OpenQ4_IsFiniteSimpleWindowRectangle( drawRect ) || !OpenQ4_IsFiniteSimpleWindowRectangle( clientRect ) ||
-		 !OpenQ4_IsFiniteSimpleWindowRectangle( textRect ) || !OpenQ4_IsFiniteSimpleWindowVec2( origin ) ||
+	if ( !openD3_IsFiniteSimpleWindowRectangle( drawRect ) || !openD3_IsFiniteSimpleWindowRectangle( clientRect ) ||
+		 !openD3_IsFiniteSimpleWindowRectangle( textRect ) || !openD3_IsFiniteSimpleWindowVec2( origin ) ||
 		 !std::isfinite( matScalex ) || !std::isfinite( matScaley ) || !std::isfinite( borderSize ) ||
 		 !std::isfinite( textAlignx ) || !std::isfinite( textAligny ) ) {
 		common->Error( "idSimpleWindow::WriteToSaveGame: refusing non-finite layout state for window '%s'", name.c_str() );
 		return;
 	}
-	if ( !OpenQ4_WriteSaveGameField( savefile, flags, "idSimpleWindow::WriteToSaveGame", "flags" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, drawRect, "idSimpleWindow::WriteToSaveGame", "draw rect" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, clientRect, "idSimpleWindow::WriteToSaveGame", "client rect" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, textRect, "idSimpleWindow::WriteToSaveGame", "text rect" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, origin, "idSimpleWindow::WriteToSaveGame", "origin" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, fontNum, "idSimpleWindow::WriteToSaveGame", "font number" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, matScalex, "idSimpleWindow::WriteToSaveGame", "material scale x" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, matScaley, "idSimpleWindow::WriteToSaveGame", "material scale y" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, borderSize, "idSimpleWindow::WriteToSaveGame", "border size" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, textAlign, "idSimpleWindow::WriteToSaveGame", "text align" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, textAlignx, "idSimpleWindow::WriteToSaveGame", "text align x" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, textAligny, "idSimpleWindow::WriteToSaveGame", "text align y" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, textSpacing, "idSimpleWindow::WriteToSaveGame", "text spacing" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, textStyle, "idSimpleWindow::WriteToSaveGame", "text style" ) ||
-		 !OpenQ4_WriteSaveGameField( savefile, textShadow, "idSimpleWindow::WriteToSaveGame", "text shadow" ) ) {
+	if ( !openD3_WriteSaveGameField( savefile, flags, "idSimpleWindow::WriteToSaveGame", "flags" ) ||
+		 !openD3_WriteSaveGameField( savefile, drawRect, "idSimpleWindow::WriteToSaveGame", "draw rect" ) ||
+		 !openD3_WriteSaveGameField( savefile, clientRect, "idSimpleWindow::WriteToSaveGame", "client rect" ) ||
+		 !openD3_WriteSaveGameField( savefile, textRect, "idSimpleWindow::WriteToSaveGame", "text rect" ) ||
+		 !openD3_WriteSaveGameField( savefile, origin, "idSimpleWindow::WriteToSaveGame", "origin" ) ||
+		 !openD3_WriteSaveGameField( savefile, fontNum, "idSimpleWindow::WriteToSaveGame", "font number" ) ||
+		 !openD3_WriteSaveGameField( savefile, matScalex, "idSimpleWindow::WriteToSaveGame", "material scale x" ) ||
+		 !openD3_WriteSaveGameField( savefile, matScaley, "idSimpleWindow::WriteToSaveGame", "material scale y" ) ||
+		 !openD3_WriteSaveGameField( savefile, borderSize, "idSimpleWindow::WriteToSaveGame", "border size" ) ||
+		 !openD3_WriteSaveGameField( savefile, textAlign, "idSimpleWindow::WriteToSaveGame", "text align" ) ||
+		 !openD3_WriteSaveGameField( savefile, textAlignx, "idSimpleWindow::WriteToSaveGame", "text align x" ) ||
+		 !openD3_WriteSaveGameField( savefile, textAligny, "idSimpleWindow::WriteToSaveGame", "text align y" ) ||
+		 !openD3_WriteSaveGameField( savefile, textSpacing, "idSimpleWindow::WriteToSaveGame", "text spacing" ) ||
+		 !openD3_WriteSaveGameField( savefile, textStyle, "idSimpleWindow::WriteToSaveGame", "text style" ) ||
+		 !openD3_WriteSaveGameField( savefile, textShadow, "idSimpleWindow::WriteToSaveGame", "text shadow" ) ) {
 		return;
 	}
 
-	OpenQ4_SanitizeSaveGameWinVar( text, "idSimpleWindow::WriteToSaveGame", name.c_str(), "text" );
-	OpenQ4_SanitizeSaveGameWinVar( visible, "idSimpleWindow::WriteToSaveGame", name.c_str(), "visible" );
-	OpenQ4_SanitizeSaveGameWinVar( rect, "idSimpleWindow::WriteToSaveGame", name.c_str(), "rect" );
-	OpenQ4_SanitizeSaveGameWinVar( backColor, "idSimpleWindow::WriteToSaveGame", name.c_str(), "backColor" );
-	OpenQ4_SanitizeSaveGameWinVar( matColor, "idSimpleWindow::WriteToSaveGame", name.c_str(), "matColor" );
-	OpenQ4_SanitizeSaveGameWinVar( foreColor, "idSimpleWindow::WriteToSaveGame", name.c_str(), "foreColor" );
-	OpenQ4_SanitizeSaveGameWinVar( borderColor, "idSimpleWindow::WriteToSaveGame", name.c_str(), "borderColor" );
-	OpenQ4_SanitizeSaveGameWinVar( textScale, "idSimpleWindow::WriteToSaveGame", name.c_str(), "textScale" );
-	OpenQ4_SanitizeSaveGameWinVar( rotate, "idSimpleWindow::WriteToSaveGame", name.c_str(), "rotate" );
-	OpenQ4_SanitizeSaveGameWinVar( shear, "idSimpleWindow::WriteToSaveGame", name.c_str(), "shear" );
+	openD3_SanitizeSaveGameWinVar( text, "idSimpleWindow::WriteToSaveGame", name.c_str(), "text" );
+	openD3_SanitizeSaveGameWinVar( visible, "idSimpleWindow::WriteToSaveGame", name.c_str(), "visible" );
+	openD3_SanitizeSaveGameWinVar( rect, "idSimpleWindow::WriteToSaveGame", name.c_str(), "rect" );
+	openD3_SanitizeSaveGameWinVar( backColor, "idSimpleWindow::WriteToSaveGame", name.c_str(), "backColor" );
+	openD3_SanitizeSaveGameWinVar( matColor, "idSimpleWindow::WriteToSaveGame", name.c_str(), "matColor" );
+	openD3_SanitizeSaveGameWinVar( foreColor, "idSimpleWindow::WriteToSaveGame", name.c_str(), "foreColor" );
+	openD3_SanitizeSaveGameWinVar( borderColor, "idSimpleWindow::WriteToSaveGame", name.c_str(), "borderColor" );
+	openD3_SanitizeSaveGameWinVar( textScale, "idSimpleWindow::WriteToSaveGame", name.c_str(), "textScale" );
+	openD3_SanitizeSaveGameWinVar( rotate, "idSimpleWindow::WriteToSaveGame", name.c_str(), "rotate" );
+	openD3_SanitizeSaveGameWinVar( shear, "idSimpleWindow::WriteToSaveGame", name.c_str(), "shear" );
 	text.WriteToSaveGame( savefile );
 	visible.WriteToSaveGame( savefile );
 	rect.WriteToSaveGame( savefile );
@@ -706,14 +706,14 @@ void idSimpleWindow::WriteToSaveGame( idFile *savefile ) {
 				name.c_str(), stringLen );
 			return;
 		}
-		if ( !OpenQ4_WriteSaveGameInt( savefile, stringLen, "idSimpleWindow::WriteToSaveGame", "background length" ) ||
-			 !OpenQ4_WriteSaveGameBytes( savefile, background->GetName(), stringLen,
+		if ( !openD3_WriteSaveGameInt( savefile, stringLen, "idSimpleWindow::WriteToSaveGame", "background length" ) ||
+			 !openD3_WriteSaveGameBytes( savefile, background->GetName(), stringLen,
 				 "idSimpleWindow::WriteToSaveGame", "background name" ) ) {
 			return;
 		}
 	} else {
 		stringLen = 0;
-		OpenQ4_WriteSaveGameInt( savefile, stringLen, "idSimpleWindow::WriteToSaveGame", "background length" );
+		openD3_WriteSaveGameInt( savefile, stringLen, "idSimpleWindow::WriteToSaveGame", "background length" );
 	}
 
 }
@@ -739,25 +739,25 @@ void idSimpleWindow::ReadFromSaveGame( idFile *savefile ) {
 	int savedTextSpacing;
 	signed char savedTextStyle;
 	int savedTextShadow;
-	if ( !OpenQ4_ReadSaveGameField( savefile, savedFlags, "idSimpleWindow::ReadFromSaveGame", "flags" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedDrawRect, "idSimpleWindow::ReadFromSaveGame", "draw rect" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedClientRect, "idSimpleWindow::ReadFromSaveGame", "client rect" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedTextRect, "idSimpleWindow::ReadFromSaveGame", "text rect" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedOrigin, "idSimpleWindow::ReadFromSaveGame", "origin" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedFontNum, "idSimpleWindow::ReadFromSaveGame", "font number" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedMatScaleX, "idSimpleWindow::ReadFromSaveGame", "material scale x" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedMatScaleY, "idSimpleWindow::ReadFromSaveGame", "material scale y" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedBorderSize, "idSimpleWindow::ReadFromSaveGame", "border size" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedTextAlign, "idSimpleWindow::ReadFromSaveGame", "text align" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedTextAlignX, "idSimpleWindow::ReadFromSaveGame", "text align x" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedTextAlignY, "idSimpleWindow::ReadFromSaveGame", "text align y" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedTextSpacing, "idSimpleWindow::ReadFromSaveGame", "text spacing" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedTextStyle, "idSimpleWindow::ReadFromSaveGame", "text style" ) ||
-		 !OpenQ4_ReadSaveGameField( savefile, savedTextShadow, "idSimpleWindow::ReadFromSaveGame", "text shadow" ) ) {
+	if ( !openD3_ReadSaveGameField( savefile, savedFlags, "idSimpleWindow::ReadFromSaveGame", "flags" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedDrawRect, "idSimpleWindow::ReadFromSaveGame", "draw rect" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedClientRect, "idSimpleWindow::ReadFromSaveGame", "client rect" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedTextRect, "idSimpleWindow::ReadFromSaveGame", "text rect" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedOrigin, "idSimpleWindow::ReadFromSaveGame", "origin" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedFontNum, "idSimpleWindow::ReadFromSaveGame", "font number" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedMatScaleX, "idSimpleWindow::ReadFromSaveGame", "material scale x" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedMatScaleY, "idSimpleWindow::ReadFromSaveGame", "material scale y" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedBorderSize, "idSimpleWindow::ReadFromSaveGame", "border size" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedTextAlign, "idSimpleWindow::ReadFromSaveGame", "text align" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedTextAlignX, "idSimpleWindow::ReadFromSaveGame", "text align x" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedTextAlignY, "idSimpleWindow::ReadFromSaveGame", "text align y" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedTextSpacing, "idSimpleWindow::ReadFromSaveGame", "text spacing" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedTextStyle, "idSimpleWindow::ReadFromSaveGame", "text style" ) ||
+		 !openD3_ReadSaveGameField( savefile, savedTextShadow, "idSimpleWindow::ReadFromSaveGame", "text shadow" ) ) {
 		return;
 	}
-	if ( !OpenQ4_IsFiniteSimpleWindowRectangle( savedDrawRect ) || !OpenQ4_IsFiniteSimpleWindowRectangle( savedClientRect ) ||
-		 !OpenQ4_IsFiniteSimpleWindowRectangle( savedTextRect ) || !OpenQ4_IsFiniteSimpleWindowVec2( savedOrigin ) ||
+	if ( !openD3_IsFiniteSimpleWindowRectangle( savedDrawRect ) || !openD3_IsFiniteSimpleWindowRectangle( savedClientRect ) ||
+		 !openD3_IsFiniteSimpleWindowRectangle( savedTextRect ) || !openD3_IsFiniteSimpleWindowVec2( savedOrigin ) ||
 		 !std::isfinite( savedMatScaleX ) || !std::isfinite( savedMatScaleY ) || !std::isfinite( savedBorderSize ) ||
 		 !std::isfinite( savedTextAlignX ) || !std::isfinite( savedTextAlignY ) ) {
 		common->Error( "idSimpleWindow::ReadFromSaveGame: non-finite layout state for window '%s'", name.c_str() );
@@ -794,7 +794,7 @@ void idSimpleWindow::ReadFromSaveGame( idFile *savefile ) {
 	int stringLen = 0;
 
 	const int stringOffset = savefile->Tell();
-	if ( !OpenQ4_ReadSaveGameInt( savefile, stringLen, "idSimpleWindow::ReadFromSaveGame", "background length" ) ) {
+	if ( !openD3_ReadSaveGameInt( savefile, stringLen, "idSimpleWindow::ReadFromSaveGame", "background length" ) ) {
 		background = NULL;
 		return;
 	}
@@ -810,7 +810,7 @@ void idSimpleWindow::ReadFromSaveGame( idFile *savefile ) {
 		idStr backName;
 
 		backName.Fill( ' ', stringLen );
-		if ( !OpenQ4_ReadSaveGameBytes( savefile, &(backName)[0], stringLen,
+		if ( !openD3_ReadSaveGameBytes( savefile, &(backName)[0], stringLen,
 				"idSimpleWindow::ReadFromSaveGame", "background name" ) ) {
 			background = NULL;
 			return;

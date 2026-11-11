@@ -56,7 +56,7 @@ float idDeclTable::TableLookup( float index ) const {
 		if ( index >= domain - 1 ) {
 			return values[domain - 1];
 		} else if ( !( index > 0 ) ) {
-			// openQ4: written so that a NaN index lands here too. It failed
+			// openD3: written so that a NaN index lands here too. It failed
 			// both tests as they were, and the integer it converts to indexed
 			// the table two billion entries before its start.
 			return values[0];

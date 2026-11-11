@@ -43,9 +43,9 @@ class SideBallotRun(EdgesRun):
 
     def open_side_ballot(self, label):
         self.action("observer", "proposal_create", before=[
-            "openq4_matchControl set match_proposal_scope_choice side",
-            f"openq4_matchControl set match_proposal_rows_sel_0 {SIDE_FORFEIT_TEMPLATE_ROW}",
-            "openq4_matchControl action select_proposal_row"])
+            "opend3_matchControl set match_proposal_scope_choice side",
+            f"opend3_matchControl set match_proposal_rows_sel_0 {SIDE_FORFEIT_TEMPLATE_ROW}",
+            "opend3_matchControl action select_proposal_row"])
         observer = self.view("observer")["participant"]
         opened = self.sample("observer", label + "-open", lambda v: v["side_proposal"]["present"] and
                              v["side_proposal"]["caller"] == observer)
@@ -67,7 +67,7 @@ class SideBallotRun(EdgesRun):
         return ballot, opened["engine"]
 
     def vote(self, token, ballot):
-        self.action("client", token, before=["openq4_matchControl set match_proposal_scope_choice side"])
+        self.action("client", token, before=["opend3_matchControl set match_proposal_scope_choice side"])
         return ballot
 
     def run(self):
@@ -77,8 +77,8 @@ class SideBallotRun(EdgesRun):
         self.sample("observer", "unrostered-observer", lambda v: v["side"] == -1 and not v["active"])
         # Two seats per side: each captain plus one invited player.
         self.action("host", "rules_stage_field", before=[
-            "openq4_matchControl set match_rule_rows_sel_0 9", "openq4_matchControl action select_rule_row",
-            "openq4_matchControl set match_rule_value 2"])
+            "opend3_matchControl set match_rule_rows_sel_0 9", "opend3_matchControl action select_rule_row",
+            "opend3_matchControl set match_rule_value 2"])
         for role in ("host", "client"):
             self.assign("host", role, 2)
             self.sample(role, role + "-captain", lambda v: v["roles"] & CAPTAIN and v["active"])
@@ -131,7 +131,7 @@ class SideBallotRun(EdgesRun):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
-    parser.add_argument("--executable-name", default="openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    parser.add_argument("--executable-name", default="openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     parser.add_argument("--output-dir", type=Path, default=ROOT / ".tmp/mp-match-side-ballot-smoke")
     parser.add_argument("--basepath", type=Path, default=Path(r"C:\Program Files (x86)\Steam\steamapps\common\Quake 4"))
     parser.add_argument("--renderer", choices=("gl", "vulkan"), default="gl")

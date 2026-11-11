@@ -1,5 +1,5 @@
 // Android/SigmaTouch support by emileb: https://github.com/emileb/openQ4/tree/android
-// Integrated and adapted for current openQ4; licensed under GPL-3.0-or-later.
+// Integrated and adapted for current openD3; licensed under GPL-3.0-or-later.
 
 #ifndef QUAKE4_BRIDGE_H
 #define QUAKE4_BRIDGE_H
@@ -28,7 +28,7 @@ extern "C" {
 
 // sys/android/android_main.cpp. Runs common->Init() and the frame loop; never
 // returns.
-int OpenQ4_AndroidMain( int argc, const char **argv );
+int openD3_AndroidMain( int argc, const char **argv );
 
 // mobile/game_interface.cpp; called from Sys_SDL_PumpEvents.
 void Quake4_DrainTouchInput( void );

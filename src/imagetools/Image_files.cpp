@@ -474,7 +474,7 @@ static void LoadJPG( const char *filename, unsigned char **pic, int *width, int 
   int row_stride;		/* physical row width in output buffer */
   unsigned char *out;
   byte	*fbuffer;
-  int	fbufferLength = 0;	// openQ4: the file's bytes in fbuffer, without its padding
+  int	fbufferLength = 0;	// openD3: the file's bytes in fbuffer, without its padding
   byte  *bbuf;
 
   /* In this example we want to open the input file before doing anything else,

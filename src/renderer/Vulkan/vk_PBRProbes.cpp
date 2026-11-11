@@ -1,5 +1,5 @@
 // Copyright (C) 2026 DarkMatter Productions
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
@@ -43,14 +43,14 @@ static void VK_PBR_GenerateEnvironment( idImage *image ) {
 	if ( !image->IsLoaded() ) {
 		return;
 	}
-	openq4PBR::Cube analytic;
+	opend3PBR::Cube analytic;
 	analytic.size = 64;
-	const openq4PBR::AnalyticEnvironment sample;
+	const opend3PBR::AnalyticEnvironment sample;
 	for ( int face = 0; face < 6; ++face ) {
 		analytic.faces[face].resize( analytic.size * analytic.size );
 		for ( int y = 0; y < analytic.size; ++y ) {
 			for ( int x = 0; x < analytic.size; ++x ) {
-				analytic.faces[face][y * analytic.size + x] = sample( openq4PBR::FaceDirection(
+				analytic.faces[face][y * analytic.size + x] = sample( opend3PBR::FaceDirection(
 					face, 2.0f * ( x + 0.5f ) / analytic.size - 1.0f,
 					2.0f * ( y + 0.5f ) / analytic.size - 1.0f ) );
 			}
@@ -66,22 +66,22 @@ static void VK_PBR_GenerateEnvironment( idImage *image ) {
 				for ( int x = 0; x < tileSize; ++x ) {
 					for ( int c = 0; c < 4; ++c ) {
 						pixels[(( originY + y ) * size + originX + x ) * 4 + c] =
-							openq4PBR::RadianceHalf( rgba[( y * tileSize + x ) * 4 + c] );
+							opend3PBR::RadianceHalf( rgba[( y * tileSize + x ) * 4 + c] );
 					}
 				}
 			}
 		};
 		for ( int face = 0; face < 6; ++face ) {
 			tile( MODERN_SPECULAR_PROBE_ANALYTIC_SLOT * 6 + face, faceSize,
-				openq4PBR::PrefilterFace( analytic, face, faceSize,
+				opend3PBR::PrefilterFace( analytic, face, faceSize,
 					float( level ) / MODERN_SPECULAR_PROBE_ATLAS_MAX_MIP ) );
 		}
 		if ( level == 0 ) {
 			tile( MODERN_SPECULAR_PROBE_DIFFUSE_FIRST_CELL + MODERN_SPECULAR_PROBE_ANALYTIC_SLOT,
 				MODERN_SPECULAR_PROBE_DIFFUSE_SIZE,
-				openq4PBR::DiffuseIrradiance( analytic, MODERN_SPECULAR_PROBE_DIFFUSE_SIZE ) );
+				opend3PBR::DiffuseIrradiance( analytic, MODERN_SPECULAR_PROBE_DIFFUSE_SIZE ) );
 			tile( MODERN_SPECULAR_PROBE_BRDF_CELL, MODERN_SPECULAR_PROBE_BRDF_SIZE,
-				openq4PBR::BRDFTable( MODERN_SPECULAR_PROBE_BRDF_SIZE ) );
+				opend3PBR::BRDFTable( MODERN_SPECULAR_PROBE_BRDF_SIZE ) );
 		}
 		image->SubImageUpload( level, 0, 0, 0, size, size, pixels.data() );
 		const vkImageEntry_t *entry = VK_Image_GetEntry( image->GetDeviceHandle() );
@@ -163,9 +163,9 @@ struct vkProbePrefilter_t {
 	bool active = false;
 	bool taken = false;
 	int nextTile = 0;
-	openq4PBR::PrefilteredTiles tiles;
+	opend3PBR::PrefilteredTiles tiles;
 };
-static openq4PBR::AsyncPrefilter prefilterJobs[MODERN_SPECULAR_PROBE_ATLAS_MAX_ENTRIES];
+static opend3PBR::AsyncPrefilter prefilterJobs[MODERN_SPECULAR_PROBE_ATLAS_MAX_ENTRIES];
 static vkProbePrefilter_t prefilterPending[MODERN_SPECULAR_PROBE_ATLAS_MAX_ENTRIES];
 static unsigned int prefilterStarted, prefilterPublished, prefilterCancelled, prefilterWaits, prefilterPendingFrames;
 static unsigned long long prefilterLatencyTotal, prefilterLatencyMax;
@@ -224,14 +224,14 @@ static bool VK_PBRProbes_AtlasReady( idImage *&atlas ) {
 static bool VK_PBRProbes_UploadTile( idImage *atlas, int cell, int level, int size,
 		const std::vector<float> &rgba ) {
 	std::vector<std::uint16_t> pixels( rgba.size() );
-	for ( size_t i = 0; i < rgba.size(); ++i ) { pixels[i] = openq4PBR::RadianceHalf( rgba[i] ); }
+	for ( size_t i = 0; i < rgba.size(); ++i ) { pixels[i] = opend3PBR::RadianceHalf( rgba[i] ); }
 	const int cellSize = MODERN_SPECULAR_PROBE_ATLAS_FACE_SIZE >> level;
 	atlas->SubImageUpload( level, cell % 8 * cellSize, cell / 8 * cellSize, 0, size, size, pixels.data() );
 	const vkImageEntry_t *entry = VK_Image_GetEntry( atlas->GetDeviceHandle() );
 	return entry != NULL && entry->lastUploadSucceeded;
 }
 
-static bool VK_PBRProbes_PublishTiles( idImage *atlas, int slot, const openq4PBR::PrefilteredTiles &tiles ) {
+static bool VK_PBRProbes_PublishTiles( idImage *atlas, int slot, const opend3PBR::PrefilteredTiles &tiles ) {
 	for ( int level = 0; level <= MODERN_SPECULAR_PROBE_ATLAS_MAX_MIP; ++level ) {
 		const int size = MODERN_SPECULAR_PROBE_ATLAS_FACE_SIZE >> level;
 		for ( int face = 0; face < 6; ++face ) {
@@ -300,7 +300,7 @@ static modernSpecularProbeAtlasReject_t VK_PBRProbes_Acquire( const idImage *ima
 			if ( !wait ) { publishSliceMax = Max( publishSliceMax, publishSpentThisFrame ); }
 			return spent;
 		};
-		openq4PBR::PrefilteredTiles tiles;
+		opend3PBR::PrefilteredTiles tiles;
 		vkProbeSourceStamp_t stamp;
 		unsigned long long filterBegin = 0;
 		bool synchronous = false;	// read, filtered and published on this frame
@@ -345,20 +345,20 @@ static modernSpecularProbeAtlasReject_t VK_PBRProbes_Acquire( const idImage *ima
 			const bool hdr = pending.read.hdr;
 			const int faceSize = pending.stamp.faceSize;
 			auto bytes = std::make_shared<std::vector<std::uint8_t>>( std::move( encoded ) );
-			if ( !prefilterJobs[slot].StartFrom( [bytes, hdr, faceSize]( openq4PBR::Cube &cube ) {
+			if ( !prefilterJobs[slot].StartFrom( [bytes, hdr, faceSize]( opend3PBR::Cube &cube ) {
 						return VK_ProbeSource_Decode( *bytes, hdr, faceSize, cube );
 					}, MODERN_SPECULAR_PROBE_ATLAS_FACE_SIZE, MODERN_SPECULAR_PROBE_ATLAS_MAX_MIP,
 					MODERN_SPECULAR_PROBE_DIFFUSE_SIZE, VK_PROBE_PREFILTER_WORKERS, true ) ) {
 				// No thread available: finish the filter on this frame.
 				const unsigned long long filterStart = R_RendererMetrics_CpuClock();
-				openq4PBR::Cube cube;
+				opend3PBR::Cube cube;
 				if ( !VK_ProbeSource_Decode( *bytes, hdr, faceSize, cube ) ) {
 					VK_PBRProbes_CancelPrefilter( slot );
 					return MODERN_SPECULAR_PROBE_ATLAS_REJECT_INVALID_STORAGE;
 				}
-				pending.tiles = openq4PBR::PrefilterTiles( cube, MODERN_SPECULAR_PROBE_ATLAS_FACE_SIZE,
+				pending.tiles = opend3PBR::PrefilterTiles( cube, MODERN_SPECULAR_PROBE_ATLAS_FACE_SIZE,
 					MODERN_SPECULAR_PROBE_ATLAS_MAX_MIP, MODERN_SPECULAR_PROBE_DIFFUSE_SIZE );
-				openq4PBR::PackTilesHalf( pending.tiles );
+				opend3PBR::PackTilesHalf( pending.tiles );
 				pending.taken = true;
 				chargeFrame( filterStart );
 			}
@@ -403,7 +403,7 @@ static modernSpecularProbeAtlasReject_t VK_PBRProbes_Acquire( const idImage *ima
 			pending = vkProbePrefilter_t{};
 		} else {
 			// Synchronous: r_pbrProbeAsyncPrefilter 0, or a capture with nothing pending.
-			openq4PBR::Cube cube;
+			opend3PBR::Cube cube;
 			const unsigned long long readBegin = R_RendererMetrics_CpuClock();
 			const modernSpecularProbeAtlasReject_t reject = VK_ProbeSource_Read( image, cube, stamp );
 			const unsigned long long readCost = chargeFrame( readBegin );
@@ -415,7 +415,7 @@ static modernSpecularProbeAtlasReject_t VK_PBRProbes_Acquire( const idImage *ima
 			resident.valid = false;
 			filterBegin = R_RendererMetrics_CpuClock();
 			synchronous = true;
-			tiles = openq4PBR::PrefilterTiles( cube, MODERN_SPECULAR_PROBE_ATLAS_FACE_SIZE,
+			tiles = opend3PBR::PrefilterTiles( cube, MODERN_SPECULAR_PROBE_ATLAS_FACE_SIZE,
 				MODERN_SPECULAR_PROBE_ATLAS_MAX_MIP, MODERN_SPECULAR_PROBE_DIFFUSE_SIZE );
 			if ( !VK_PBRProbes_PublishTiles( atlas, slot, tiles ) ) {
 				return MODERN_SPECULAR_PROBE_ATLAS_REJECT_UPLOAD_UNAVAILABLE;

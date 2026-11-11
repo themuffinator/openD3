@@ -36,23 +36,23 @@ def main() -> int:
             any(not math.isfinite(t) or t <= 0 for t in args.times) or args.timeout <= 0):
         parser.error("use a player slot from 0 to 31 and positive seek times")
     verify_runtime_is_current(runtime)
-    exe = runtime / ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
-    paths = [exe, demo, *sorted((runtime / "baseoq4").glob("game-mp*")),
+    exe = runtime / ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
+    paths = [exe, demo, *sorted((runtime / "baseod3").glob("game-mp*")),
              *sorted(runtime.glob("renderer-*")),
-             runtime / "baseoq4/pak0.pk4", runtime / "baseoq4/pak1.pk4", runtime / "baseoq4/mod.json"]
+             runtime / "baseod3/pak0.pk4", runtime / "baseod3/pak1.pk4", runtime / "baseod3/mod.json"]
     paths = [path for path in paths if path.is_file() and path.suffix not in (".pdb", ".lib", ".exp")]
 
     def identity() -> dict[str, str]:
         return {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths}
 
     initial_identity = identity()
-    game = output / "save/baseoq4"
+    game = output / "save/baseod3"
     (game / "demos").mkdir(parents=True, exist_ok=False)
     shutil.copy2(demo, game / "demos/seek_probe.mvd")
     script = ["playMVD seek_probe", "waitMsec 3000", f"mvdFollow {args.follow}", "mvdPause 1"]
     for index, seconds in enumerate(args.times):
         script += [f"mvdSeek {seconds:.3f}", "waitMsec 3000", f"echo MVD_SEEK_CHECKPOINT {index}",
-                   "mvdStatus", "r_actualRenderApi", "openq4_reportMPState", f"openq4_reportMPWorld player{args.follow + 1}",
+                   "mvdStatus", "r_actualRenderApi", "opend3_reportMPState", f"opend3_reportMPWorld player{args.follow + 1}",
                    "listClientEntities", f'screenshot "screenshots/seek_{index}.tga"', "waitMsec 200",
                    "mvdStatus", f"echo MVD_SEEK_CHECKPOINT_END {index}"]
     script += ["stopMVD", "echo MVD_SEEK_COMPLETE", "quit"]
@@ -65,10 +65,10 @@ def main() -> int:
         "r_customWidth": "960", "r_customHeight": "540", "r_windowWidth": "960", "r_windowHeight": "540",
         "r_renderApi": "vulkan" if args.renderer == "vk" else "gl",
         "r_swapInterval": "0", "com_maxfps": "60", "s_noSound": "1",
-        "ui_retained": "1", "ui_autoJoin": "1", "fs_game": "baseoq4", "com_gameMode": "MP",
+        "ui_retained": "1", "ui_autoJoin": "1", "fs_game": "baseod3", "com_gameMode": "MP",
         "com_nextGameModule": "game_mp",
         "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(game.parent), "fs_devpath": str(game.parent),
-        "net_allowCheats": "1", "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1",
+        "net_allowCheats": "1", "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1",
         "com_skipLoadingContinue": "1", "g_autoExecAfterMapLoad": "",
     }
     command = [str(exe), *[part for key, value in values.items() for part in ("+set", key, value)],
@@ -82,7 +82,7 @@ def main() -> int:
         except subprocess.TimeoutExpired:
             process.kill()
             code = process.wait()
-    log_path = game / "logs/openq4.log"
+    log_path = game / "logs/opend3.log"
     log = read_log(log_path)
     failures, observations, checkpoints = [], [], []
     if identity() != initial_identity:

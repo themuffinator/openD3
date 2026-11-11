@@ -153,11 +153,11 @@ sysEventTransfer_t Sys_TakeEventWithDisposition(sysEvent_t& event, sysEventDispo
 }
 // This fixture supplies ordinary platform events only. The dedicated retirement
 // suite compiles actual platform storage; journal tests must never invoke it.
-sysEventTransfer_t Sys_PeekEventForRetirement(openq4::NativeInputHead&) noexcept {
+sysEventTransfer_t Sys_PeekEventForRetirement(opend3::NativeInputHead&) noexcept {
     Check(false,"journal-only fixture cannot retire platform input");return sysEventTransfer_t::Refused;
 }
-sysEventTransfer_t Sys_TakeEventForRetirement(openq4::NativeInputRoute&,
-    const openq4::NativeInputRoute::CancellationPermit&,sysEvent_t&,sysEventDispositionTag_t&) noexcept {
+sysEventTransfer_t Sys_TakeEventForRetirement(opend3::NativeInputRoute&,
+    const opend3::NativeInputRoute::CancellationPermit&,sysEvent_t&,sysEventDispositionTag_t&) noexcept {
     Check(false,"journal-only fixture cannot cancel platform input");return sysEventTransfer_t::Refused;
 }
 sysEventTransfer_t Sys_PeekEventDispositionTag(sysEventDispositionTag_t&) noexcept {
@@ -338,19 +338,19 @@ static void PairedOpenCases() {
 }
 static void KeyMetadataCases() {
 	for (unsigned flags=0; flags<16; ++flags) {
-		Reset(); const openq4::KeyEventMetadata value{(flags&1)!=0,(flags&2)!=0,(flags&4)!=0,(flags&8)!=0};
-		const auto encoded=openq4::EncodeKeyEventMetadata(value);
+		Reset(); const opend3::KeyEventMetadata value{(flags&1)!=0,(flags&2)!=0,(flags&4)!=0,(flags&8)!=0};
+		const auto encoded=opend3::EncodeKeyEventMetadata(value);
 		const std::vector<unsigned char> bytes(encoded.begin(),encoded.end());
 		auto event=Live(SE_KEY,bytes);event.evValue=65;event.evValue2=1;idFile file;
 		Check(EventLoop_WriteJournalEvent(&file,event)==nullptr,"key modifier record writes through actual journal");
 		sysEvent_t decoded={};Check(EventLoop_ReadJournalEvent(&file,decoded)==nullptr,"key modifier record reads through actual journal");
-		openq4::KeyEventMetadata restored;
-		Check(openq4::DecodeKeyEventMetadata(decoded.evPtr,decoded.evPtrLength,restored) && restored.control==value.control &&
+		opend3::KeyEventMetadata restored;
+		Check(opend3::DecodeKeyEventMetadata(decoded.evPtr,decoded.evPtrLength,restored) && restored.control==value.control &&
 			restored.shift==value.shift && restored.alt==value.alt && restored.repeated==value.repeated,"all modifier and repeat combinations survive playback");
 		eventLoopLocal.ProcessEvent(event);eventLoopLocal.ProcessEvent(decoded);
 		Check(releases==2 && owned.empty(),"live and replayed key metadata each release exactly once");
 	}
-	const auto good=openq4::EncodeKeyEventMetadata({true,true,true,true});
+	const auto good=opend3::EncodeKeyEventMetadata({true,true,true,true});
 	for (std::size_t index=0;index<good.size();++index) for(unsigned byte=0;byte<256;++byte) {
 		auto damaged=good;damaged[index]=static_cast<unsigned char>(byte);
 		const bool valid=index==4 ? byte<=7 : index==5 ? byte<=1 : byte==good[index];

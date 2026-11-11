@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
-from openq4_release_status import is_withdrawn_release, require_available_release
+from opend3_release_status import is_withdrawn_release, require_available_release
 
 
 RELEASE_TAG_RE = re.compile(r"^v(\d+\.\d+\.\d+)$")

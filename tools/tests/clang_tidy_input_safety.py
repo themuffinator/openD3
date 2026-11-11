@@ -26,7 +26,7 @@ WINDOWS_X64_WARNING_ERRORS = {
 
 
 def load_script() -> ModuleType:
-    spec = importlib.util.spec_from_file_location("openq4_clang_tidy_input_safety_test", SCRIPT)
+    spec = importlib.util.spec_from_file_location("opend3_clang_tidy_input_safety_test", SCRIPT)
     if spec is None or spec.loader is None:
         raise AssertionError(f"could not load {SCRIPT}")
     module = importlib.util.module_from_spec(spec)
@@ -48,7 +48,7 @@ def check_msvc_sanitization() -> None:
         "/Fpclient.pch",
         "/source-charset:windows-1252",
         "/execution-charset:windows-1252",
-        "-DOPENQ4_INPUT_TEST=1",
+        "-DOPEND3_INPUT_TEST=1",
         "/std:c++20",
         "/c",
         "../src/framework/UsercmdGen.cpp",
@@ -61,7 +61,7 @@ def check_msvc_sanitization() -> None:
     expected_include = f"/FI{precompiled.resolve()}"
     if expected_include not in sanitized:
         raise AssertionError("MSVC PCH was not replaced by a textual forced include")
-    for retained in ("-DOPENQ4_INPUT_TEST=1", "/std:c++20", "../src/framework/UsercmdGen.cpp"):
+    for retained in ("-DOPEND3_INPUT_TEST=1", "/std:c++20", "../src/framework/UsercmdGen.cpp"):
         if retained not in sanitized:
             raise AssertionError(f"MSVC analysis command dropped semantic flag {retained}")
 
@@ -85,7 +85,7 @@ def check_posix_sanitization() -> None:
         "-include",
         "precompiled.h",
         "-Winvalid-pch",
-        "-DOPENQ4_INPUT_TEST=1",
+        "-DOPEND3_INPUT_TEST=1",
         "-std=c++20",
         "-c",
         "../src/framework/UsercmdGen.cpp",
@@ -97,7 +97,7 @@ def check_posix_sanitization() -> None:
     include_index = sanitized.index("-include")
     if sanitized[include_index + 1] != str(precompiled.resolve()):
         raise AssertionError("POSIX PCH was not replaced by a textual forced include")
-    if "-DOPENQ4_INPUT_TEST=1" not in sanitized or "-std=c++20" not in sanitized:
+    if "-DOPEND3_INPUT_TEST=1" not in sanitized or "-std=c++20" not in sanitized:
         raise AssertionError("POSIX analysis command dropped semantic flags")
 
 
@@ -128,8 +128,8 @@ def check_database_generation() -> None:
     for source in sources:
         database.extend(
             (
-                fake_entry(build_dir, source, "openQ4-ded_x64.exe"),
-                fake_entry(build_dir, source, "openQ4-client_x64.exe"),
+                fake_entry(build_dir, source, "openD3-ded_x64.exe"),
+                fake_entry(build_dir, source, "openD3-client_x64.exe"),
             )
         )
     (build_dir / "compile_commands.json").write_text(json.dumps(database), encoding="utf-8")
@@ -142,7 +142,7 @@ def check_database_generation() -> None:
     if tuple(Path(entry["file"]).resolve() for entry in production_entries) != sources:
         raise AssertionError("analysis production entries target the wrong sources or order")
     for entry in production_entries:
-        if not any("openQ4-client_x64.exe.p" in str(argument) for argument in entry["arguments"]):
+        if not any("openD3-client_x64.exe.p" in str(argument) for argument in entry["arguments"]):
             raise AssertionError("analysis did not select the deterministic client compilation command")
     if Path(safety["file"]).resolve() != (ROOT / "tools" / "tests" / "native" / "CoreSafetyTest.cpp").resolve():
         raise AssertionError("analysis safety entry targets the wrong source")
@@ -174,9 +174,9 @@ def check_fail_closed_profile() -> None:
         raise AssertionError("clang-tidy capability check does not fail closed")
 
     for header in (
-        r"E:\Repositories\openQ4\src\idlib\NumericString.h",
+        r"E:\Repositories\openD3\src\idlib\NumericString.h",
         "/repo/src/idlib/NumericString.h",
-        r"E:\Repositories\openQ4\src\idlib\Token.h",
+        r"E:\Repositories\openD3\src\idlib\Token.h",
         "/repo/src/idlib/Token.h",
     ):
         if re.match(ANALYSIS.HEADER_FILTER, header) is None:
@@ -231,7 +231,7 @@ def meson_conditional_body(source: str, condition: str) -> str:
 
 def check_windows_warning_policy() -> None:
     game_repo = Path(
-        os.environ.get("OPENQ4_GAMELIBS_REPO", str(ROOT))
+        os.environ.get("OPEND3_GAMELIBS_REPO", str(ROOT))
     ).resolve()
     policies = (
         (

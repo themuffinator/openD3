@@ -13,7 +13,7 @@
 #include <chrono>
 #include <cmath>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 // Single-precision transform composition jitters a still element's sub-pixel
 // phase by about 1e-4 px between frames, e.g. under a rotation its child turns
@@ -614,4 +614,4 @@ Rml::SharedPtr<Rml::Decorator> VectorMaskInstancer::InstanceDecorator(const Rml:
 	const Rml::PropertyDictionary&, const Rml::DecoratorInstancerInterface&) {
 	return Rml::MakeShared<VectorMask>();
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

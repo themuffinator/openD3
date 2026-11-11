@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <string_view>
 
-namespace openq4 {
+namespace opend3 {
 // Observe accepted setter calls on this thread without allocations or writes.
 // Unlike modified flags this includes assigning the current value. The caller
 // keeps the bounded names/flags alive; nested captures observe the same calls.

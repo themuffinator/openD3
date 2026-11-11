@@ -26,7 +26,7 @@ from tools.build.linux_metadata import (  # noqa: E402
     desktop_entry_exec,
     desktop_exec_command,
 )
-from tools.validation import openq4_validate as staged_validator  # noqa: E402
+from tools.validation import opend3_validate as staged_validator  # noqa: E402
 
 
 APPIMAGE_ARCHES = {
@@ -53,7 +53,7 @@ RUNPATH_RE = re.compile(r"\((?:RPATH|RUNPATH)\).*?\[([^\]]*)\]")
 
 def core_runtime_relative_paths(package_root: Path, arch: str) -> tuple[Path, ...]:
     """The engine binaries and game modules linuxdeploy prepares, followed by the modules of
-    any game-library layer (q4xbase) the package carries beside baseoq4."""
+    any game-library layer (q4xbase) the package carries beside baseod3."""
     return CORE_RUNTIME_RELATIVE_PATHS[arch] + tuple(
         Path(name) / f"game-{kind}_{arch}.so"
         for name in linux_release.packaged_layer_dirs(package_root)

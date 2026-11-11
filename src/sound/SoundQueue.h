@@ -1,7 +1,7 @@
-// Copyright (C) 2026 openQ4 contributors
+// Copyright (C) 2026 openD3 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
-#ifndef OPENQ4_SOUND_QUEUE_H
-#define OPENQ4_SOUND_QUEUE_H
+#ifndef OPEND3_SOUND_QUEUE_H
+#define OPEND3_SOUND_QUEUE_H
 
 // A bounded voice queue (streamed Ogg, CPU-resident PCM without an uploaded
 // buffer, centre-routed mono) owns three OpenAL buffers and is refilled once

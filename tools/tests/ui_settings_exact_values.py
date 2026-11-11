@@ -96,14 +96,14 @@ def main():
                 raise RuntimeError(name)
         document = (r / 'src/ui/retained/Document.cpp').read_text(encoding='utf-8')
         valid = out / 'valid.cpp'
-        valid.write_text('#include "src/ui/retained/Document.h"\n#include <cmath>\nnamespace openq4::ui {\n' +
+        valid.write_text('#include "src/ui/retained/Document.h"\n#include <cmath>\nnamespace opend3::ui {\n' +
                          function_body(document, 'bool Utf8(') + function_body(document, 'bool ValidStateValue(') + '}\n', encoding='utf-8')
         names = ('bool Identifier(', 'std::string PointerPart(', 'void Diagnose(', 'bool Utf8(',
                  'bool LexicalForms(', 'bool Parse(', 'bool ValidStateValue(', 'bool ParseStateValues(')
         validation = '\n'.join(document[document.index(n):document.index('bool Parse(', document.index(n))]
                                if n == 'bool LexicalForms(' else function_body(document, n) for n in names)
         parsed = out / 'parsed.cpp'
-        parsed.write_text('#include "src/ui/retained/Document.h"\n#include <json/json.h>\n#include <cmath>\n#include <algorithm>\n#include <memory>\nnamespace openq4::ui { constexpr size_t MaxSourceBytes=16*1024*1024;\n' + validation + '\n}\n', encoding='utf-8')
+        parsed.write_text('#include "src/ui/retained/Document.h"\n#include <json/json.h>\n#include <cmath>\n#include <algorithm>\n#include <memory>\nnamespace opend3::ui { constexpr size_t MaxSourceBytes=16*1024*1024;\n' + validation + '\n}\n', encoding='utf-8')
         tx = r / 'src/ui/application/SettingsTransaction.cpp'
         controller = r / 'src/ui/application/SettingsDisplayController.cpp'
         journal = r / 'src/ui/application/SettingsJournal.cpp'

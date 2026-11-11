@@ -92,8 +92,8 @@ def validate_runtime_startup_error() -> None:
         require(compat, token, "macOS adjacent package-root startup diagnostic")
     for token in (
         'appName.Icmp( "openD3.app" )',
-        "openQ4.app",
-        "baseoq4",
+        "openD3.app",
+        "baseod3",
         "game-sp_",
         "game-mp_",
     ):
@@ -245,7 +245,7 @@ def validate_package_metadata_and_archive_guards() -> None:
     ):
         require(package, token, "macOS archive hygiene guards")
 
-    for token in ("openQ4.app", "baseoq4", "game-sp_", "game-mp_", "signed game modules"):
+    for token in ("openD3.app", "baseod3", "game-sp_", "game-mp_", "signed game modules"):
         reject(package, token, "macOS packager must use the renamed unified-package contract")
 
 
@@ -256,8 +256,8 @@ def validate_release_path_policy() -> None:
     platform_support = read("docs/dev/platform-support.md")
 
     for token in (
-        "name: DISABLED - inherited OpenQ4 reference (Manual Releases)",
-        "if: ${{ false }} # OPEND3-GATED: split-module/OpenQ4 source contract",
+        "name: DISABLED - inherited openD3 reference (Manual Releases)",
+        "if: ${{ false }} # OPEND3-GATED: split-module/openD3 source contract",
         "macos_support_tier",
     ):
         require(manual_release, token, "disabled inherited manual-release reference")
@@ -267,7 +267,7 @@ def validate_release_path_policy() -> None:
 
     for token in (
         "inherited nightly/manual publishing workflows are disabled",
-        "`OpenD3-GameLibs`, `baseod3`, and the unified module",
+        "`openD3-GameLibs`, `baseod3`, and the unified module",
         "macOS packages include an `openD3.app` launcher bundle",
     ):
         require(building, token, "build documentation macOS boundary")
@@ -289,7 +289,7 @@ def validate_support_info_path_resolution() -> None:
         'case "$0" in',
         'SCRIPT_DIR=$(CDPATH= cd "${script_dir}" && pwd -P)',
         "OPEND3_PACKAGE_ROOT",
-        "OPENQ4_PACKAGE_ROOT",
+        "OPEND3_PACKAGE_ROOT",
         "runtime_arch_token()",
         "Detected runtime architecture token: %s",
         "prepare_package_root()",
@@ -310,7 +310,7 @@ def validate_support_info_path_resolution() -> None:
         "Support report output is limited to the final",
         "write_bounded_report()",
         "Source file was larger than",
-        "write_openq4_log_candidate_paths()",
+        "write_opend3_log_candidate_paths()",
         "HOME was not set; home-scoped opend3.log paths were skipped.",
         "HOME was not set; home-scoped opend3.log files were skipped.",
         "HOME was not set; the macOS DiagnosticReports directory could not be located.",
@@ -355,7 +355,7 @@ def validate_support_info_path_resolution() -> None:
     ):
         require(support_doc, token, "macOS support data path-resolution documentation")
 
-    for token in ("openQ4.app", "baseoq4", "game-sp_", "game-mp_"):
+    for token in ("openD3.app", "baseod3", "game-sp_", "game-mp_"):
         reject(collector, token, "macOS support collector must use the unified openD3 package contract")
 
 
@@ -405,7 +405,7 @@ def validate_docs_plan_and_release_status() -> None:
 
 
 def validate_ci_wiring() -> None:
-    local_runner = read("tools/validation/openq4_validate.py")
+    local_runner = read("tools/validation/opend3_validate.py")
     active = read(".github/workflows/opend3-validation.yml")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")

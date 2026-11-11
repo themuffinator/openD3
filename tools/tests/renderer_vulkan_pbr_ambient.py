@@ -35,7 +35,7 @@ def configure(manifest: dict, samples: int) -> dict:
             for i, origin in enumerate(('-120 -1000 540', '120 -900 540', '-120 -1000 540')):
                 shader = 'ambient_double' if i == 2 else 'ambient'
                 commands += [f'spawn light name ambient_light_{i} origin "{origin}" angle 0 '
-                             f'light_radius "2000 2000 2000" texture "lights/openq4/pbr_lab/{shader}" '
+                             f'light_radius "2000 2000 2000" texture "lights/opend3/pbr_lab/{shader}" '
                              '_color "1 0.5 0.25" noshadows 1']
         else:
             commands += ['script "$ambient_specimen.remove()"', 'wait 3']

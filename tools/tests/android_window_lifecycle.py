@@ -26,7 +26,7 @@ static int creates=0, destroyed=0, hidden=0, retired=0, stoppedText=0, unbound=0
 static constexpr int SDL_WINDOW_HIDDEN=1, SDL_WINDOW_BORDERLESS=2, SDL_INIT_VIDEO=4;
 static constexpr int SDL_WINDOWPOS_CENTERED=0;
 static constexpr int POSIX_SPLASH_WIDTH=640, POSIX_SPLASH_HEIGHT=480;
-static const char* GAME_NAME="openQ4";
+static const char* GAME_NAME="openD3";
 struct Splash {
     Window* window=nullptr;
     Renderer* renderer=nullptr;

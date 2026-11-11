@@ -8,9 +8,9 @@
 // actual private SDL public header; no replicated native record layout is used.
 struct OQ4_TextRecord;
 
-namespace openq4::ui {
+namespace opend3::ui {
 
-// Compile the implementation with OPENQ4_SDL_TEXT_PROVENANCE only when the
+// Compile the implementation with OPEND3_SDL_TEXT_PROVENANCE only when the
 // reviewed private provider header is available. This reports compilation
 // support, not current native health, module lifetime, or input authorization.
 bool TextProvenanceSupported();
@@ -70,4 +70,4 @@ private:
 	bool healthy = true;
 };
 
-} // namespace openq4::ui
+} // namespace opend3::ui

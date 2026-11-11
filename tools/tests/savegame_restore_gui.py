@@ -30,9 +30,9 @@ struct Manager {
     int calls=0;bool unique=false;
     idUserInterface* FindGui(const char*,bool load,bool value){if(!load)throw std::runtime_error("autoload disabled");++calls;unique=value;return result;}
 } manager,*uiManager=&manager;
-struct openQ4SaveGameGuiRevision_t {const char* currentWindow="new";} revision;
-static bool historical=false;static int openQ4SaveGameLayoutBuild=0;
-static const openQ4SaveGameGuiRevision_t* OpenQ4_FindSaveGameGuiRevision(const char*,int){return historical?&revision:nullptr;}
+struct openD3SaveGameGuiRevision_t {const char* currentWindow="new";} revision;
+static bool historical=false;static int openD3SaveGameLayoutBuild=0;
+static const openD3SaveGameGuiRevision_t* openD3_FindSaveGameGuiRevision(const char*,int){return historical?&revision:nullptr;}
 struct idRestoreGame {
     File storage;File* file=&storage;
     idStr name="guis/in-world-terminal.gui";
@@ -42,7 +42,7 @@ struct idRestoreGame {
     void ReadString(idStr& out){out=name;}
     void ReadBool(bool& out){out=unique;++flags;}
     bool GuiRecordNamesWindow(const char*){return current;}
-    void ReadUserInterfaceRevision(idUserInterface*,const openQ4SaveGameGuiRevision_t&){++legacy;}
+    void ReadUserInterfaceRevision(idUserInterface*,const openD3SaveGameGuiRevision_t&){++legacy;}
     void UpdateGuiParms(idUserInterface*,const idDict*){++parms;}
     void ReadUserInterface(idUserInterface*&,const idDict*);
     [[noreturn]] void Error(const char* format,...){

@@ -35,7 +35,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 RAW = re.compile(r"\b(?:savefile|saveFile)\s*->\s*(?:Write|Read)\s*\(")
-HELPER = re.compile(r"\bOpenQ4_(?:Write|Read)SaveGame(?:RawField|Bytes)\s*\(")
+HELPER = re.compile(r"\bopenD3_(?:Write|Read)SaveGame(?:RawField|Bytes)\s*\(")
 # Script globals are copied one byte at a time from the program's variable block.
 SCRIPT_BYTES = re.compile(r"\bsavefile\s*->\s*(?:Write|Read)Byte\s*\(\s*variables\s*\[")
 
@@ -98,7 +98,7 @@ GAME_DIRECT_WRITES = 2
 
 
 def field(op: str, name: str, context: str, label: str) -> str:
-    return f'OpenQ4_{op}SaveGameRawField(savefile,{name},"{context}","{label}")'
+    return f'openD3_{op}SaveGameRawField(savefile,{name},"{context}","{label}")'
 
 
 # Flag bitfields written one bit per flag (SaveCodec_WriteFlagBytes). Each list
@@ -121,29 +121,29 @@ FLAG_LISTS = [
 
 
 UI: dict[str, dict[str, list[str]]] = {
-    # Window layout fields go through the typed OpenQ4_*SaveGameField overloads
+    # Window layout fields go through the typed openD3_*SaveGameField overloads
     # (same bytes as the raw copy). Version 5 writes the transition interpolator
     # through SaveCodec; these reads decode the raw records of versions 2 to 4.
     "Window.cpp": {
         "legacy-reader": [field("Read", "interp", "idWindow::ReadSaveGameTransition", "interpolatestate"),
                           field("Read", "saved", "idWindow::ReadSaveGameTransition", "interpolatestate")],
-        "bytes": ['OpenQ4_WriteSaveGameBytes(savefile,string,len,"idWindow::WriteSaveGameString","string")',
-                  'OpenQ4_ReadSaveGameBytes(savefile,&string[0],len,"idWindow::ReadSaveGameString","string")'],
+        "bytes": ['openD3_WriteSaveGameBytes(savefile,string,len,"idWindow::WriteSaveGameString","string")',
+                  'openD3_ReadSaveGameBytes(savefile,&string[0],len,"idWindow::ReadSaveGameString","string")'],
     },
     "SimpleWindow.cpp": {
-        "bytes":['OpenQ4_WriteSaveGameBytes(savefile,background->GetName(),stringLen,"idSimpleWindow::WriteToSaveGame","backgroundname")',
-                  'OpenQ4_ReadSaveGameBytes(savefile,&(backName)[0],stringLen,"idSimpleWindow::ReadFromSaveGame","backgroundname")'],
+        "bytes":['openD3_WriteSaveGameBytes(savefile,background->GetName(),stringLen,"idSimpleWindow::WriteToSaveGame","backgroundname")',
+                  'openD3_ReadSaveGameBytes(savefile,&(backName)[0],stringLen,"idSimpleWindow::ReadFromSaveGame","backgroundname")'],
     },
     "Winvar.h": {
-        "helper": ["OpenQ4_WriteSaveGameBytes(idFile*savefile,constvoid*buffer,intlen,constchar*context,constchar*fieldName)",
-                   "OpenQ4_ReadSaveGameBytes(idFile*savefile,void*buffer,intlen,constchar*context,constchar*fieldName)",
-                   "OpenQ4_ReadSaveGameRawField(idFile*savefile,type&value,constchar*context,constchar*fieldName)",
-                   "OpenQ4_ReadSaveGameBytes(savefile,&value,sizeof(value),context,fieldName)",
+        "helper": ["openD3_WriteSaveGameBytes(idFile*savefile,constvoid*buffer,intlen,constchar*context,constchar*fieldName)",
+                   "openD3_ReadSaveGameBytes(idFile*savefile,void*buffer,intlen,constchar*context,constchar*fieldName)",
+                   "openD3_ReadSaveGameRawField(idFile*savefile,type&value,constchar*context,constchar*fieldName)",
+                   "openD3_ReadSaveGameBytes(savefile,&value,sizeof(value),context,fieldName)",
                    W("buffer,len"), R("buffer,len")],
-        "bytes": ['OpenQ4_WriteSaveGameBytes(savefile,data.c_str(),len,"idWinStr::WriteToSaveGame","string")',
-                  'OpenQ4_ReadSaveGameBytes(savefile,&data[0],len,"idWinStr::ReadFromSaveGame","string")',
-                  'OpenQ4_WriteSaveGameBytes(savefile,data.c_str(),len,"idWinBackground::WriteToSaveGame","materialname")',
-                  'OpenQ4_ReadSaveGameBytes(savefile,&data[0],len,"idWinBackground::ReadFromSaveGame","materialname")'],
+        "bytes": ['openD3_WriteSaveGameBytes(savefile,data.c_str(),len,"idWinStr::WriteToSaveGame","string")',
+                  'openD3_ReadSaveGameBytes(savefile,&data[0],len,"idWinStr::ReadFromSaveGame","string")',
+                  'openD3_WriteSaveGameBytes(savefile,data.c_str(),len,"idWinBackground::WriteToSaveGame","materialname")',
+                  'openD3_ReadSaveGameBytes(savefile,&data[0],len,"idWinBackground::ReadFromSaveGame","materialname")'],
     },
     "UserInterface.cpp": {"bytes": [W("string.c_str(),len"), R("buffer,len")]},
     "RegExp.cpp": {"bytes": [W("buffer,len"), R("buffer,len")]},

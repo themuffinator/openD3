@@ -45,7 +45,7 @@ def main():
     record = dict(passed=False, sources_before=hashes(), runs=[], mutations=[], scope=__doc__)
     document = (ROOT / 'src/ui/retained/Document.cpp').read_text(encoding='utf-8')
     valid = out / 'validation.cpp'
-    valid.write_text('#include "src/ui/retained/Document.h"\n#include <cmath>\nnamespace openq4::ui {\n' +
+    valid.write_text('#include "src/ui/retained/Document.h"\n#include <cmath>\nnamespace opend3::ui {\n' +
                      ''.join(function_body(document, signature) for signature in ('bool Utf8(', 'bool ValidStateValue(')) + '}\n', encoding='utf-8')
 
     def execute(label, command, expected_failure=False):

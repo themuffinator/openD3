@@ -8,7 +8,7 @@
 #include <limits>
 #include <map>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks=0;
 static void Check(bool value,const char* message) {
     ++checks;
@@ -20,7 +20,7 @@ static std::string Encode(const Json::Value& value) {
 }
 static Json::Value Source() {
     Json::Value source,root,model;
-    source["format"]="openq4-ui"; source["version"]=1; source["id"]="model-scene-test";
+    source["format"]="opend3-ui"; source["version"]=1; source["id"]="model-scene-test";
     source["state"]["body"]["type"]="string"; source["state"]["body"]["initial"]="";
     source["state"]["yaw"]["type"]="number"; source["state"]["yaw"]["initial"]=200;
     source["state"]["shown"]["type"]="boolean"; source["state"]["shown"]["initial"]=true;

@@ -412,7 +412,7 @@ def hud_prompt(doc: HudDocument, lead: list = ()) -> dict:
 # ------------------------------------------------------------------ the document
 
 def vehicle_document() -> dict:
-    doc = HudDocument("openq4.hud.remastered.vehicle")
+    doc = HudDocument("opend3.hud.remastered.vehicle")
     layout_state(doc)
     for key in ("vehicle_health", "vehicle_shield", "vehicle_weaponcharge", "vehicle_weaponammo"):
         doc.number(key, 1 if key in ("vehicle_health", "vehicle_shield") else 0)
@@ -455,7 +455,7 @@ def vehicle_document() -> dict:
                               ("left_elecwarn::visible", "electricWarningOn"), ("BossBar::visible", "showBossBar"),
                               ("p_boss_shield_bar_left::visible", "showBossShieldBar")])
     return doc.build(root, {"canvas": {"height": 720, "minWidth": 960},
-                            "extensions": {"openq4": {"reference": "ui-visual-design.md 14.8, 14.12",
+                            "extensions": {"opend3": {"reference": "ui-visual-design.md 14.8, 14.12",
                                                       "stock": "guis/vehicles/hud.gui", "joinEvents": joins}}})
 
 
@@ -507,7 +507,7 @@ def airdef_document() -> dict:
     transmission display the cannon's HUD lacks at the top-trailing corner,
     sets the HUD prompt (Exit, or a lock and Vehicle locked) bottom-trailing in
     place of the exit line and keeps the save notice."""
-    doc = HudDocument("openq4.hud.remastered.airdef")
+    doc = HudDocument("opend3.hud.remastered.airdef")
     layout_state(doc)
     lens = airdef_lens()
     radio = transmission(doc, strogg=False, emblem="radio_rhino")
@@ -528,7 +528,7 @@ def airdef_document() -> dict:
     ])
     joins = join_events(doc, [("exit_msg::visible", "showExitmessage"), ("lock_msg::visible", "showLockmessage")])
     return doc.build(root, {"canvas": {"height": 720, "minWidth": 960},
-                            "extensions": {"openq4": {"reference": "ui-visual-design.md 14.12",
+                            "extensions": {"opend3": {"reference": "ui-visual-design.md 14.12",
                                                       "stock": "guis/vehicles/airdef_cannon.gui", "joinEvents": joins}}})
 
 # ------------------------------------------------------------------ ride gauges

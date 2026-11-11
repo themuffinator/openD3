@@ -1140,7 +1140,7 @@ def main():
     output, source, runtime = args.output.resolve(), args.source_save.resolve(), ROOT/'.install'
     if (ROOT/'.tmp').resolve() not in output.parents:
         parser.error('Output must be a new directory below project .tmp.')
-    for relative in ('openQ4-client_x64.exe', 'baseoq4/game-sp_x64.dll', 'baseoq4/game-mp_x64.dll'):
+    for relative in ('openD3-client_x64.exe', 'baseod3/game-sp_x64.dll', 'baseod3/game-mp_x64.dll'):
         if sha(ROOT/'builddir'/relative) != sha(runtime/relative):
             parser.error('Stage the current build before running this probe: '+relative)
     original = source.read_bytes()
@@ -1157,12 +1157,12 @@ def main():
     output.mkdir(parents=True, exist_ok=False)
     save = output/'save'
     # A separate test mod gives the local fault fixture precedence over staged
-    # baseoq4 packages without modifying that shared runtime or retail assets.
-    game_name = 'restore-gui-probe' if args.unavailable_pause_menu else 'baseoq4'
+    # baseod3 packages without modifying that shared runtime or retail assets.
+    game_name = 'restore-gui-probe' if args.unavailable_pause_menu else 'baseod3'
     game = save/game_name
     (game/'savegames').mkdir(parents=True)
     if args.unavailable_pause_menu:
-        manifest = json.loads((runtime/'baseoq4/mod.json').read_text())
+        manifest = json.loads((runtime/'baseod3/mod.json').read_text())
         manifest['name'] = 'Save GUI fallback probe'
         (game/'mod.json').write_text(json.dumps(manifest, indent=2)+'\n')
         menu = game/'guis/menu/pause.q4ui'
@@ -1181,7 +1181,7 @@ def main():
         marker = 'RESTORE_REJECTED_'+name
         markers.append(marker)
         script += ['loadGame '+name, 'waitMsec 2000', 'echo '+marker,
-                   'openq4_retainedGui report', f'screenshot screenshots/{name}.tga']
+                   'opend3_retainedGui report', f'screenshot screenshots/{name}.tga']
     script += ['set g_autoExecAfterMapLoad final.cfg', 'loadGame Good']
     (game/'initial.cfg').write_text('\n'.join(script)+'\n')
     markers.append('RESTORE_GOOD_FINAL')
@@ -1193,15 +1193,15 @@ def main():
         r_mode='-1', r_customWidth='1280', r_customHeight='720', r_windowWidth='1280', r_windowHeight='720',
         r_renderApi=args.renderer, r_swapInterval='0', com_maxfps='60', com_skipLoadingContinue='1', com_loadingContinueAutoAdvance='1',
         g_autoSkipCinematics='1', g_autoExecAfterMapLoad='initial.cfg', g_autoExecAfterMapLoadDelayMs='750',
-        logFile='2', logFileName='logs/openq4.log', developer='1')
-    executable = runtime/'openQ4-client_x64.exe'
+        logFile='2', logFileName='logs/opend3.log', developer='1')
+    executable = runtime/'openD3-client_x64.exe'
     command = [str(executable), *[part for key, value in settings.items() for part in ('+set', key, value)], '+loadGame', 'Good']
     report = dict(source_save=dict(path=str(source), sha256=sha(source)), fixture=metadata,
         cases={name: details for name, (_, details) in fixtures.items()}, command=command,
         harness_sha256=sha(Path(__file__)), ui=args.ui, renderer=args.renderer, fixture_set=args.cases,
         unavailable_pause_menu=args.unavailable_pause_menu, game_directory=game_name,
         runtime={relative: sha(runtime/relative) for relative in
-                 ('openQ4-client_x64.exe', 'baseoq4/game-sp_x64.dll', 'baseoq4/game-mp_x64.dll', 'baseoq4/pak0.pk4', 'baseoq4/pak1.pk4')},
+                 ('openD3-client_x64.exe', 'baseod3/game-sp_x64.dll', 'baseod3/game-mp_x64.dll', 'baseod3/pak0.pk4', 'baseod3/pak1.pk4')},
         before={path.name: sha(path) for path in saves},
         scope='Current v5 semantic restore rejection, real recovery UI, good reload. Hidden window, input disabled, engine screenshots.')
     (output/'plan.json').write_text(json.dumps(report, indent=2)+'\n')
@@ -1219,7 +1219,7 @@ def main():
             code = process.wait(timeout=15)
             report['timed_out'] = True
     report.update(exit_code=code, elapsed=time.monotonic()-begin, after={path.name: sha(path) for path in saves})
-    log = game/'logs/openq4.log'
+    log = game/'logs/opend3.log'
     text = log.read_text(errors='replace') if log.is_file() else ''
     report['markers'] = {marker: text.count(marker) for marker in markers}
     report['restore_attempts'] = text.count('Game Map Init SaveGame')

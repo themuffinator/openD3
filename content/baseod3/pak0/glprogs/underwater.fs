@@ -1,4 +1,4 @@
-// openQ4 underwater view.
+// openD3 underwater view.
 //
 // A scene pass: it runs inside the 3D view, on the finished world, before the HUD and any menu are
 // drawn, so only the world goes under the water.

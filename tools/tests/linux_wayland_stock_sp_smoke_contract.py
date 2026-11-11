@@ -25,7 +25,7 @@ def main() -> None:
     runner = read("tools/tests/linux_wayland_stock_sp_smoke.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     status_ledger = read("docs/dev/prey-rebase/status-ledger.md")
 
     for token in (
@@ -110,10 +110,10 @@ def main() -> None:
         '"s_noSound", "1"',
         '"SDL_VIDEO_DRIVER": "x11"',
         'r"[A-Za-z0-9_-]{1,64}"',
-        "baseoq4",
+        "baseod3",
         "q4base",
         "game-sp_",
-        "openQ4-client",
+        "openD3-client",
         "Quake 4",
     ):
         reject(runner, token, "portable native-Wayland stock-SP smoke runner")

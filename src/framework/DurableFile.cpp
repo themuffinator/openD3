@@ -26,7 +26,7 @@
 #endif
 #endif
 
-namespace openq4 {
+namespace opend3 {
 namespace durable_detail {
 
 constexpr std::size_t MaxPathBytes = 32700;
@@ -37,7 +37,7 @@ constexpr unsigned TempAttempts = 32;
 // engine builds contain no mutable hook or alternate operating-system backend.
 enum class Point { OpenRead, Read, OpenTemp, Write, FileSync, CloseRead,
     CloseWrite, Rename, MetadataSync, Remove, Cleanup, CreatePublication };
-#ifdef OPENQ4_DURABLE_FILE_TESTING
+#ifdef OPEND3_DURABLE_FILE_TESTING
 struct Faults {
     Point point = Point::OpenRead;
     int failOn = 0, calls = 0;
@@ -206,7 +206,7 @@ bool Regular(Native file, std::uint64_t& size, std::string& error) {
 
 bool ReadChunk(Native file, char* bytes, std::size_t request, std::size_t& count, std::string& error) {
     if (Fail(Point::Read)) return Error(error,"File read failed (injected)");
-#ifdef OPENQ4_DURABLE_FILE_TESTING
+#ifdef OPEND3_DURABLE_FILE_TESTING
     if (faults.zeroRead) { count = 0; return true; }
     request = (std::min)(request,faults.readChunk);
     if (faults.beforeRead) { auto callback = faults.beforeRead; faults.beforeRead = nullptr; callback(); }
@@ -230,7 +230,7 @@ bool WriteAll(Native file, const std::string& bytes, std::string& error) {
     while (offset < bytes.size()) {
         auto request = (std::min)(ChunkBytes,bytes.size()-offset);
         if (Fail(Point::Write)) return Error(error,"File write failed (injected)");
-#ifdef OPENQ4_DURABLE_FILE_TESTING
+#ifdef OPEND3_DURABLE_FILE_TESTING
         if (faults.zeroWrite) return Error(error,"File write made no progress");
         request = (std::min)(request,faults.writeChunk);
 #endif
@@ -277,7 +277,7 @@ std::string TempLeaf() {
 #endif
     // CREATE_NEW/O_EXCL is the ownership proof, not predictability of the name.
     // Bounded collision retries never delete a file left by a different call.
-    return ".openq4-durable-" + std::to_string(pid) + "-" +
+    return ".opend3-durable-" + std::to_string(pid) + "-" +
         std::to_string(tempSequence.fetch_add(1,std::memory_order_relaxed)) + ".tmp";
 }
 
@@ -441,7 +441,7 @@ DurableCreateResult Create(const Path& path, const std::string& bytes, std::stri
     if (Fail(Point::CreatePublication)) {
         Error(error,"New-file publication failed (injected)"); return DurableCreateResult::Failed;
     }
-#ifdef OPENQ4_DURABLE_FILE_TESTING
+#ifdef OPEND3_DURABLE_FILE_TESTING
     if (faults.beforeCreatePublication) {
         auto callback=faults.beforeCreatePublication;faults.beforeCreatePublication=nullptr;callback();
     }
@@ -678,4 +678,4 @@ bool DurableFileLease::TryAcquire(const std::string& path, std::string& error) {
 void DurableFileLease::Release() { impl.reset(); }
 bool DurableFileLease::IsHeld() const { return impl && impl->file.value != durable_detail::Invalid; }
 
-} // namespace openq4
+} // namespace opend3

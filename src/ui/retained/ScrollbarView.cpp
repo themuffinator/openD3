@@ -13,7 +13,7 @@
 #include <cmath>
 #include <limits>
 #include <tuple>
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 std::uint64_t NextGeometry() {
     static std::atomic<std::uint64_t> next{1};auto value=next.load();

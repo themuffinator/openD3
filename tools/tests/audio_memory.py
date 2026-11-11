@@ -153,9 +153,9 @@ int main(){
     std::puts("PASS: aggregate overflow/saturation/reduction, worker release, allocator/envelope ownership, bounded RoQ and ADPCM PCM, failure/retry");
 }
 '''
-    for tag, code in {'ADMISSION': admission, 'ALLOCATION': allocation, 'READ': body(source, 'static bool openQ4_ReadExact('),
+    for tag, code in {'ADMISSION': admission, 'ALLOCATION': allocation, 'READ': body(source, 'static bool openD3_ReadExact('),
                       'DELTA': body(source, 'static ID_INLINE int RoQAudioDelta(').replace('ID_INLINE', 'inline'), 'ROQ': roq,
-                      'ADPCM_SIZE': body(source, 'static bool openQ4_GetMSADPCMDecodedSize('),
+                      'ADPCM_SIZE': body(source, 'static bool openD3_GetMSADPCMDecodedSize('),
                       'ADPCM_NIBBLE': body(source, 'int32 idSoundSample_OpenAL::MS_ADPCM_nibble('),
                       'ADPCM_DECODE': body(source, 'int idSoundSample_OpenAL::MS_ADPCM_decode(')}.items():
         harness = harness.replace('@' + tag + '@', code)

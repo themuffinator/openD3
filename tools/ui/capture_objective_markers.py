@@ -25,7 +25,7 @@ def shot(name):
 
 
 BASE = ['set g_autoExecAfterMapLoad ""', 'set developer 1', 'addbot', 'waitMsec 5000',
-        'openq4_assertMPClientActive', 'openq4_reportMPState']
+        'opend3_assertMPClientActive', 'opend3_reportMPState']
 CTF = BASE + [
     'setviewpos -2176 400 216 60', 'waitMsec 900', shot('bases'),
     'setviewpos -2176 400 216 -120', 'waitMsec 500', shot('behind'),
@@ -39,7 +39,7 @@ CTF = BASE + [
     'testScoreboard 1200', 'waitMsec 300', shot('scoreboard'), 'waitMsec 1200',
     'set g_showHud 0', 'waitMsec 200', shot('hidden-hud'), 'set g_showHud 1',
     'setviewpos -3104 -128 264 60', 'waitMsec 200', 'kill 0', 'waitMsec 200', shot('dead'), 'waitMsec 14000',
-    'openq4_assertMPClientActive', 'setviewpos -2176 400 216 60', 'waitMsec 500', shot('dropped'),
+    'opend3_assertMPClientActive', 'setviewpos -2176 400 216 60', 'waitMsec 500', shot('dropped'),
     'ui_hudTest guis/mphud.gui get oq4_flag1_state',
 ]
 DZ = BASE + [
@@ -107,7 +107,7 @@ def main():
         result['expected_screenshots'] = sum(s.startswith('screenshot ') for s in scenarios[name][1])
         result['passed'] = (result['complete'] and result['returncode'] == 0 and not result['errors'] and
                             len(result['screenshots']) == result['expected_screenshots'] and
-                            'OPENQ4_STOCK_BASELINE_MP_CLIENT_ACTIVE' in log and
+                            'OPEND3_STOCK_BASELINE_MP_CLIENT_ACTIVE' in log and
                             (not traces if name == 'dm' else bool(traces)) and not result['retained_warnings'])
         if name == 'ctf':
             result['passed'] &= all(f'key=oq4_flag1_state value={value}' in log for value in (1, 2))
@@ -119,8 +119,8 @@ def main():
         payload = {'source': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                    'working_tree': subprocess.check_output(['git', 'status', '--short'], cwd=ROOT, text=True),
                    'runtime': {str(path.relative_to(args.runtime)): capture.digest(path)
-                               for path in [args.runtime / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64'),
-                                            *sorted((args.runtime / 'baseoq4').glob('game-mp_*'))]
+                               for path in [args.runtime / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64'),
+                                            *sorted((args.runtime / 'baseod3').glob('game-mp_*'))]
                                if path.is_file()}, 'results': results}
         (args.output / 'report.json').write_text(json.dumps(payload, indent=2) + '\n', encoding='utf-8')
     return 0 if all(result['passed'] for result in results) else 1

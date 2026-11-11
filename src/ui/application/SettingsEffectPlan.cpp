@@ -2,7 +2,7 @@
 #include "SettingsEffectPlan.h"
 #include "SettingsTransaction.h"
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 bool Fail(std::string& error, const char* message) noexcept {
  try { error=message; } catch (...) { error.clear(); } return false;
@@ -140,4 +140,4 @@ bool ValidateSettingsEffectPlan(const SettingsEffectPlan& plan, const StateValue
  if (plan!=expected) return Fail(error,"Settings effect plan contradicts its catalog changes");
  error.clear(); return true;
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

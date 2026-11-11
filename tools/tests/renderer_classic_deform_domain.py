@@ -653,7 +653,7 @@ def validate_controls_diagnostics_and_tooling() -> None:
     baseline = read("tools/validation/stock_asset_baseline.py")
     baseline_test = read("tools/tests/stock_asset_baseline.py")
     matrix = read("tools/tests/renderer_validation_matrix.py")
-    registry = read("tools/validation/openq4_validate.py")
+    registry = read("tools/validation/opend3_validate.py")
 
     require(
         init,

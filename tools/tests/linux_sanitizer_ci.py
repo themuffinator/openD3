@@ -48,12 +48,12 @@ def validate_commit_workflow() -> None:
     require(source, "--skip-subprojects", "commit validation sanitizer staging")
     require(source, "Run sanitizer native Wayland smoke", "commit validation sanitizer runtime")
     require(source, "weston --backend=headless-backend.so", "commit validation sanitizer compositor")
-    require(source, "--socket=openq4-sanitizer-wayland", "commit validation sanitizer compositor socket")
+    require(source, "--socket=opend3-sanitizer-wayland", "commit validation sanitizer compositor socket")
     require(source, "unset DISPLAY", "commit validation native Wayland isolation")
     require(source, "SDL_VIDEO_DRIVER=wayland", "commit validation native Wayland driver")
     require(source, "SDL_VIDEODRIVER=wayland", "commit validation native Wayland legacy driver")
     require(source, "LIBGL_ALWAYS_SOFTWARE=1", "commit validation software renderer")
-    require(source, "OPENQ4_WAYLAND_DISABLE_LIBDECOR=1", "commit validation deterministic Wayland decorations")
+    require(source, "OPEND3_WAYLAND_DISABLE_LIBDECOR=1", "commit validation deterministic Wayland decorations")
     require(source, "--cases sdl3-wayland-window-lifecycle", "commit validation sanitizer lifecycle case")
     require(source, "--timeout 120", "commit validation bounded sanitizer lifecycle case")
     require(source, '--basepath ""', "commit validation assetless base path")
@@ -61,7 +61,7 @@ def validate_commit_workflow() -> None:
     require(source, '--output-dir "${output_dir}"', "commit validation sanitizer report output")
     require(source, "commit-linux-sanitizer-build-logs", "commit validation sanitizer artifact")
     require(source, ".tmp/validation/linux-sanitizer-builddir/meson-logs", "commit validation sanitizer logs")
-    require(source, ".tmp/validation/linux-sanitizer-builddir/openq4_game_sources.json", "commit validation sanitizer source inventory")
+    require(source, ".tmp/validation/linux-sanitizer-builddir/opend3_game_sources.json", "commit validation sanitizer source inventory")
     require(source, ".tmp/renderer-validation/sanitizer", "commit validation sanitizer runtime artifacts")
     require(workflow, "python tools/tests/linux_sanitizer_ci.py", "commit script-smoke sanitizer guard")
 
@@ -87,7 +87,7 @@ def validate_push_workflow() -> None:
 
 
 def validate_validation_runner() -> None:
-    source = read("tools/validation/openq4_validate.py")
+    source = read("tools/validation/opend3_validate.py")
 
     require(source, "linux_sanitizer_ci.py", "validation runner sanitizer guard")
     require(source, "--extra-setup-arg", "validation runner sanitizer Meson passthrough")
@@ -122,7 +122,7 @@ def validate_release_note() -> None:
 
     require(source, "Linux sanitizer coverage now catches native Wayland runtime regressions", "release completion notes")
     require(source, "ASan+UBSan", "release completion notes")
-    require(source, "openQ4-game staging manifest", "release completion notes")
+    require(source, "openD3-game staging manifest", "release completion notes")
 
 
 def validate_bse_without_pch() -> None:

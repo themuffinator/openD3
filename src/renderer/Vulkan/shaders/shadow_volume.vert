@@ -1,6 +1,6 @@
 #version 450
 
-// openQ4 Vulkan stencil shadow volume — vertex stage (Phase G1,
+// openD3 Vulkan stencil shadow volume — vertex stage (Phase G1,
 // docs/dev/archive/2026-10-18/plans/2026-07-20-vulkan-phase-g.md).
 //
 // Port of the retail VPROG_STENCIL_SHADOW contract ("shadow.vp" is a pak

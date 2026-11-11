@@ -72,7 +72,7 @@ struct idIK {
 STATE_SUPPORT = r'''
 namespace StateFixture {
 using idStr=std::string;
-constexpr int OPENQ4_SAVEGAME_TYPED_COMPATIBILITY_VERSION=3, MAX_SAVEGAME_STATE_CALLS=16;
+constexpr int OPEND3_SAVEGAME_TYPED_COMPATIBILITY_VERSION=3, MAX_SAVEGAME_STATE_CALLS=16;
 constexpr int SFLAG_ONCLEAR=1, SFLAG_ONCLEARONLY=2;
 int BIT(int value) { return 1<<value; }
 enum stateResult_t { SRESULT_DONE=0 };
@@ -88,7 +88,7 @@ struct idRestoreGame {
         Tick();
     }
     void Read(void*,size_t) { Tick(); }
-    int GetOpenQ4SaveGameCompatibilityVersion() { return version; }
+    int GetopenD3SaveGameCompatibilityVersion() { return version; }
     [[noreturn]] void Error(const char*,...) { throw std::runtime_error("invalid state"); }
 };
 struct stateParms_t {

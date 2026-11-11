@@ -35,7 +35,7 @@ resolve_meson_cmd() {
     local candidate=""
     local python_cmd=""
 
-    local configured_meson="${OPEND3_MESON:-${OPENQ4_MESON:-}}"
+    local configured_meson="${OPEND3_MESON:-${OPEND3_MESON:-}}"
     if [[ -n "${configured_meson}" ]]; then
         if [[ ! -x "${configured_meson}" ]]; then
             echo "OPEND3_MESON points to a missing or non-executable Meson: '${configured_meson}'." >&2
@@ -193,7 +193,7 @@ test_game_sources_refresh_needed() {
     [[ "${games}" != "false" ]] || return 1
     # Content and git-state drift only refresh the snapshot; a membership change reconfigures.
     if "${PYTHON_CMD}" "${script_dir}/game_source_inventory.py" "${repo_root}" \
-        --refresh "${build_dir}/openq4_game_sources.json" >/dev/null; then
+        --refresh "${build_dir}/opend3_game_sources.json" >/dev/null; then
         return 1
     fi
     return 0
@@ -296,7 +296,7 @@ if [[ -z "${command_name}" ]]; then
     exit 1
 fi
 
-if [[ ( "${command_name}" == "setup" || "${command_name}" == "compile" || "${command_name}" == "install" ) && "${OPEND3_SKIP_ICON_SYNC:-${OPENQ4_SKIP_ICON_SYNC:-0}}" != "1" ]]; then
+if [[ ( "${command_name}" == "setup" || "${command_name}" == "compile" || "${command_name}" == "install" ) && "${OPEND3_SKIP_ICON_SYNC:-${OPEND3_SKIP_ICON_SYNC:-0}}" != "1" ]]; then
     if [[ ! -f "${sync_icons_script}" ]]; then
         echo "Icon sync script not found: '${sync_icons_script}'." >&2
         exit 1

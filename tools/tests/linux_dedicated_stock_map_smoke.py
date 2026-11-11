@@ -609,7 +609,7 @@ def main(argv: list[str]) -> int:
         "DISPLAY",
         "WAYLAND_DISPLAY",
         "OPEND3_FORCE_X11",
-        "OPENQ4_FORCE_X11",
+        "OPEND3_FORCE_X11",
         "GDK_BACKEND",
     ):
         server_environment.pop(name, None)
@@ -632,7 +632,7 @@ def main(argv: list[str]) -> int:
     )
     client_environment.pop("DISPLAY", None)
     client_environment.pop("OPEND3_FORCE_X11", None)
-    client_environment.pop("OPENQ4_FORCE_X11", None)
+    client_environment.pop("OPEND3_FORCE_X11", None)
 
     started = time.monotonic()
     server_process: subprocess.Popen[str] | None = None

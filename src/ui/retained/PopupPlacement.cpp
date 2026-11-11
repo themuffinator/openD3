@@ -4,7 +4,7 @@
 #include <cmath>
 #include <limits>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 constexpr double Limit = 10000000, Epsilon = 1e-8;
 bool Finite(double v) { return std::isfinite(v) && std::abs(v) <= Limit; }
@@ -145,4 +145,4 @@ bool PlacePopup(const PopupRegion& region, const PopupRect& anchor, double prefe
     if (!PopupRegionContains(region,candidate.rectangle,1e-6)) return false;
     out=candidate;return true;
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

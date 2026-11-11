@@ -33,8 +33,8 @@ int Sys_SDL_GamepadGlyphFamily(int faceLabels[4]);
 #endif
 
 namespace {
-using namespace openq4::ui;
-constexpr const char* ActionMarker = "openq4-retained-actions";
+using namespace opend3::ui;
+constexpr const char* ActionMarker = "opend3-retained-actions";
 constexpr unsigned SaveTag = 0x49553451; // Q4UI, little endian through idFile.
 constexpr int MaxStateEntries = 4096, MaxStringBytes = 65536;
 constexpr int MaxStateBytes = 16 * 1024 * 1024;
@@ -787,7 +787,7 @@ struct idUserInterfaceRetained::Impl {
 	}
 	bool interactive = true, interactiveSet = false, unique = false, active = false;
 	bool suspended = false, close = false, worldReported = false;
-	// openq4_retainedGui pointer placed the cursor: it shows although the
+	// opend3_retainedGui pointer placed the cursor: it shows although the
 	// hidden capture window reads as unfocused.
 	bool pointerPlaced = false;
 	bool unavailable = false;
@@ -801,7 +801,7 @@ struct idUserInterfaceRetained::Impl {
 	std::string lastError;
 	std::string checkpoint;
 
-	~Impl() { openq4::NativeInputBeforeUiChange(0,textBackend); UI_SettingsReleaseOwner(settingsOwner); RetainedUI_DestroyView(view); }
+	~Impl() { opend3::NativeInputBeforeUiChange(0,textBackend); UI_SettingsReleaseOwner(settingsOwner); RetainedUI_DestroyView(view); }
 	Runtime* RuntimeView() const { return RetainedUI_ViewRuntime(view); }
 	bool NativeOwnerMatches(const TextEditorIdentity& owner, bool eligible) const noexcept {
 		return owner.allocation && owner.backend && owner.document &&
@@ -817,7 +817,7 @@ struct idUserInterfaceRetained::Impl {
 		Error("Callers cannot overwrite adapter-owned number draft state"); return false;
 	}
 	void Quarantine(bool forget = false, bool cancelRuntime = true, bool discardPrograms = false) {
-		openq4::NativeInputBeforeUiChange(0,textBackend);
+		opend3::NativeInputBeforeUiChange(0,textBackend);
 		input.Cancel(forget); input.Take(); held.clear(); close = false; pointerPlaced = false;
 		routedPointerValid = false;
 		// Completed programs retain their immutable invocations through input
@@ -844,7 +844,7 @@ struct idUserInterfaceRetained::Impl {
 		// Allocate before teardown. Exhaustion permanently disables text ownership
 		// for this document; restored editors cannot inherit its old native lease.
 		if (event == retainedUIViewEvent_t::BeforeResourceReset) {
-			openq4::NativeInputBeforeUiChange(0,self.textBackend);
+			opend3::NativeInputBeforeUiChange(0,self.textBackend);
 			self.textDocument = UI_NextTextLifetime();
 			if (!self.textDocument) self.Error("GUI text lifetime exhausted");
 		}
@@ -1017,7 +1017,7 @@ struct idUserInterfaceRetained::Impl {
 		for (auto& action : effects.actions) actions.push_back({std::move(action),false});
 		if (!interactiveSet) {
 			const bool nextInteractive = hasControls && !NonInteractive(state);
-			if (nextInteractive != interactive) openq4::NativeInputBeforeUiChange(0,textBackend);
+			if (nextInteractive != interactive) opend3::NativeInputBeforeUiChange(0,textBackend);
 			interactive = nextInteractive;
 			if (!interactive) Quarantine();
 		}
@@ -1041,7 +1041,7 @@ struct idUserInterfaceRetained::Impl {
 					if (RuntimeView()->HasEvent("onBack")) RunEvent("onBack");
 					else if (semantic && actions.size() < 256) actions.push_back({{"","ui.dismiss",{}},false});
 					else if (!semantic) {
-						openq4::NativeInputBeforeUiChange(0,textBackend);
+						opend3::NativeInputBeforeUiChange(0,textBackend);
 						close = true;
 					}
 				}
@@ -1108,7 +1108,7 @@ struct idUserInterfaceRetained::Impl {
 	// press of the left or right stick its onLeftStick or onRightStick (Join
 	// Game's SPECTATE and FAVORITE). A field being edited keeps its keys, and
 	// Ctrl or Alt leave them to shortcuts.
-	bool TabKey(int key, const openq4::KeyEventMetadata* metadata) {
+	bool TabKey(int key, const opend3::KeyEventMetadata* metadata) {
 		const char* name = key == 'q' || key == K_JOY1 ? "onTabPrevious" : key == 'e' || key == K_JOY2 ? "onTabNext" :
 			key == K_JOY16 ? "onSectionPrevious" : key == K_JOY15 ? "onSectionNext" :
 			key == K_JOY6 ? "onSecondary" : key == K_JOY5 ? "onTertiary" : key == K_JOY7 ? "onMenuButton" :
@@ -1121,7 +1121,7 @@ struct idUserInterfaceRetained::Impl {
 		if (widget && widget->role == ControlRole::Number && widget->number && widget->number->active) return false;
 		RunEvent(name); return true;
 	}
-	bool TextCommandKey(int key, bool down, bool repeated, const openq4::KeyEventMetadata* metadata) {
+	bool TextCommandKey(int key, bool down, bool repeated, const opend3::KeyEventMetadata* metadata) {
 		auto* runtime = RuntimeView();
 		const auto id = runtime->FocusedControl();
 		const auto widget = runtime->GetWidgetState(id);
@@ -1203,7 +1203,7 @@ struct idUserInterfaceRetained::Impl {
 };
 
 idUserInterfaceRetained::idUserInterfaceRetained(bool managed) : idUserInterfaceManaged(managed), impl(std::make_unique<Impl>()) { diagnosticViews.push_back(this); }
-idUserInterfaceRetained::~idUserInterfaceRetained() { MarkNativeInputClosing(); openq4::NativeInputBeforeUiChange(0,impl->textBackend); diagnosticViews.erase(std::remove(diagnosticViews.begin(),diagnosticViews.end(),this),diagnosticViews.end()); }
+idUserInterfaceRetained::~idUserInterfaceRetained() { MarkNativeInputClosing(); opend3::NativeInputBeforeUiChange(0,impl->textBackend); diagnosticViews.erase(std::remove(diagnosticViews.begin(),diagnosticViews.end(),this),diagnosticViews.end()); }
 const char* idUserInterfaceRetained::Name() const { return impl->path.c_str(); }
 const char* idUserInterfaceRetained::Comment() const { return "Canonical retained UI"; }
 const char* idUserInterfaceRetained::GetSourceFile() const { return Name(); }
@@ -1213,7 +1213,7 @@ bool idUserInterfaceRetained::HasInteractiveOverride() const { return impl->inte
 bool idUserInterfaceRetained::IsMenuGui() const { return true; }
 bool idUserInterfaceRetained::AlwaysThink() const { return false; }
 bool idUserInterfaceRetained::IsInteractive() const { return impl->interactive; }
-void idUserInterfaceRetained::SetInteractive(bool value) { if (value != impl->interactive) openq4::NativeInputBeforeUiChange(0,impl->textBackend); impl->interactiveSet = true; impl->interactive = value; if (!value) impl->Quarantine(); }
+void idUserInterfaceRetained::SetInteractive(bool value) { if (value != impl->interactive) opend3::NativeInputBeforeUiChange(0,impl->textBackend); impl->interactiveSet = true; impl->interactive = value; if (!value) impl->Quarantine(); }
 bool idUserInterfaceRetained::IsUniqued() const { return impl->unique; }
 void idUserInterfaceRetained::SetUniqued(bool value) { impl->unique = value; }
 size_t idUserInterfaceRetained::Size() { return sizeof(*this)+sizeof(Impl)+impl->state.Allocated()+impl->document.Source().size(); }
@@ -1261,7 +1261,7 @@ bool idUserInterfaceRetained::InitFromFile(const char* qpath, bool rebuild, bool
 		return false;
 	}
 	impl->Quarantine(false,false,true);
-	openq4::NativeInputBeforeUiChange(0,impl->textBackend);
+	opend3::NativeInputBeforeUiChange(0,impl->textBackend);
 	impl->textDocument = textDocument;
 	if (same && impl->settingsClosePending) UI_SettingsCloseOwner(impl->settingsOwner);
 	impl->settingsClosePending = false;
@@ -1336,7 +1336,7 @@ void idUserInterfaceRetained::StateChanged(int time, bool redraw) {
 		impl->lastError.clear();
 		if (!impl->interactiveSet) {
 			const bool nextInteractive = impl->hasControls && !NonInteractive(impl->state);
-			if (nextInteractive != impl->interactive) openq4::NativeInputBeforeUiChange(0,impl->textBackend);
+			if (nextInteractive != impl->interactive) opend3::NativeInputBeforeUiChange(0,impl->textBackend);
 			impl->interactive = nextInteractive;
 			if (!impl->interactive) impl->Quarantine();
 		}
@@ -1357,7 +1357,7 @@ bool idUserInterfaceRetained::GetPresentationValue(const char* name, idStr& valu
 	const std::string alias(name); const auto separator = alias.find("::");
 	if (separator == std::string::npos) return false;
 	if (idStr::Icmp(alias.substr(0,separator).c_str(),"gui") == 0) return false;
-	// openQ4: "node::@width" (or @height, @x, @y) reads the node's laid-out
+	// openD3: "node::@width" (or @height, @x, @y) reads the node's laid-out
 	// border box in canvas dp, for a HUD peer's layout readbacks.
 	if (alias.compare(separator+2,1,"@") == 0) {
 		Bounds bounds;
@@ -1491,7 +1491,7 @@ const char* idUserInterfaceRetained::HandleEvent(const sysEvent_t* event, int ti
 		if (impl->active && event->evType == SE_KEY && event->evValue2 &&
 			(event->evValue == K_ESCAPE || idKeyInput::MenuControllerKey(event->evValue) == K_JOY4 || event->evValue == K_JOY7 ||
 			event->evValue == K_JOY8)) {
-			openq4::NativeInputBeforeUiChange(0,impl->textBackend);
+			opend3::NativeInputBeforeUiChange(0,impl->textBackend);
 			impl->close = true;
 		}
 		return impl->close ? ActionMarker : "";
@@ -1511,8 +1511,8 @@ const char* idUserInterfaceRetained::HandleEvent(const sysEvent_t* event, int ti
 		impl->Pointer();
 	} else if (event->evType == SE_KEY && event->evValue > 0 && event->evValue < K_LAST_KEY) {
 		const int key = event->evValue; const bool down = event->evValue2 != 0;
-		openq4::KeyEventMetadata metadata;
-		const bool hasMetadata = event->evPtrLength > 0 && openq4::DecodeKeyEventMetadata(event->evPtr,static_cast<size_t>(event->evPtrLength),metadata);
+		opend3::KeyEventMetadata metadata;
+		const bool hasMetadata = event->evPtrLength > 0 && opend3::DecodeKeyEventMetadata(event->evPtr,static_cast<size_t>(event->evPtrLength),metadata);
 		// Malformed optional metadata must not degrade into a shortcut with
 		// frame-global modifiers. Releases still retire quarantined sources.
 		if (event->evPtrLength && !hasMetadata) { if (!down) impl->input.ReleaseQuarantined(key); return ""; }
@@ -1949,7 +1949,7 @@ bool idUserInterfaceRetained::WriteToSaveGame(idFile* file) const {
 }
 
 bool idUserInterfaceRetained::ReadFromSaveGame(idFile* file) {
-	openq4::NativeInputBeforeUiChange(0,impl->textBackend);
+	opend3::NativeInputBeforeUiChange(0,impl->textBackend);
 	if (!file || !impl->Prepare()) return false;
 	unsigned tag = 0; int version = 0, length = 0;
 	if (file->ReadUnsignedInt(tag) != 4 || file->ReadInt(version) != 4 || file->ReadInt(length) != 4 ||
@@ -1977,7 +1977,7 @@ bool idUserInterfaceRetained::ReadFromSaveGame(idFile* file) {
 	const auto textDocument = UI_NextTextLifetime();
 	if (!textDocument) { impl->Error("GUI text lifetime exhausted"); return false; }
 	if (!impl->RuntimeView()->RestoreSnapshot(snapshot,error,RetainedUI_PresentationTime())) { impl->Error(error); return false; }
-	openq4::NativeInputBeforeUiChange(0,impl->textBackend);
+	opend3::NativeInputBeforeUiChange(0,impl->textBackend);
 	impl->textDocument = textDocument;
 	impl->Quarantine(false,false,true); impl->state = state; impl->state.Set("name",Name());
 	impl->fullApplication = true;
@@ -2000,7 +2000,7 @@ bool UI_RetainedSettingsDocument(idUserInterface* gui) {
 	auto& impl = *(*found)->impl;
 	if (!impl.Prepare()) return false;
 	const auto& model = impl.document.Model();
-	if (model.id != "openq4.system" || !model.events.contains("onactivate") || !model.events.contains("onback")) return false;
+	if (model.id != "opend3.system" || !model.events.contains("onactivate") || !model.events.contains("onback")) return false;
 	for (const auto& [key,type] : UI_SettingsStateSchema()) {
 		const auto declaration = model.state.find(key);
 		if (declaration == model.state.end() || declaration->second.initial.index() != type || declaration->second.HostSourced()) return false;
@@ -2021,7 +2021,7 @@ bool UI_RetainedSettingsCanReturn(idUserInterface* gui) {
 	// Read the actual service owner, never pending GUI dictionary values.
 	if (!std::get<bool>(live.at("settings.open"))) return true;
 	return !std::get<bool>(live.at("settings.dirty")) && !std::get<bool>(live.at("settings.busy")) &&
-		std::get<double>(live.at("settings.phase")) == static_cast<double>(openq4::ui::SettingsPhase::Editing);
+		std::get<double>(live.at("settings.phase")) == static_cast<double>(opend3::ui::SettingsPhase::Editing);
 }
 
 // Native collection endpoints have no authored action or state-dictionary path.
@@ -2292,7 +2292,7 @@ bool UI_RetainedDiagnostic(idUserInterface* gui, const idCmdArgs& args) {
 }
 
 bool UI_RetainedImageSource( const char *source ) {
-	return source != NULL && openq4::ui::ValidImageSource( source );
+	return source != NULL && opend3::ui::ValidImageSource( source );
 }
 
 void UI_RetainedPrecacheImage( const char *source ) {
@@ -2308,7 +2308,7 @@ bool UI_RetainedViewFailed(idUserInterface* gui) {
 	return found == diagnosticViews.end() || RetainedUI_ViewFailed((*found)->impl->view);
 }
 
-const openq4::ui::DocumentModel* UI_RetainedDocumentModel(idUserInterface* gui) {
+const opend3::ui::DocumentModel* UI_RetainedDocumentModel(idUserInterface* gui) {
 	const auto found = std::find(diagnosticViews.begin(),diagnosticViews.end(),gui);
 	return found == diagnosticViews.end() || (*found)->impl->document.Source().empty() ? nullptr : &(*found)->impl->document.Model();
 }
@@ -2405,33 +2405,26 @@ void DropPrefetched(const char* path) {
 	const auto found = std::find_if(prefetchedDocuments.begin(),prefetchedDocuments.end(),[&](const auto& entry) { return path != nullptr && entry->path == path; });
 	if (found != prefetchedDocuments.end()) prefetchedDocuments.erase(found);
 }
-bool AwakeningGame() {
-	for (const char* cvar : {"fs_game","fs_game_base"})
-		if (!idStr::Icmp(cvarSystem->GetCVarString(cvar),"q4xbase")) return true;
-	return false;
-}
 // The weapon wheels and quick chat the game names (WeaponWheel.inl,
 // QuickChat.inl), by family and campaign; the HUD documents come from the
 // Remastered routes of the stock HUD sources a spawn creates.
 constexpr const char* WheelDocuments[] = {"guis/hud/weapon_wheel_marine.q4ui","guis/hud/weapon_wheel_strogg.q4ui"};
-constexpr const char* AwakeningWheelDocuments[] = {"guis/hud/weapon_wheel_marine_awakening.q4ui","guis/hud/weapon_wheel_strogg_awakening.q4ui"};
 // Single player precaches the scoreboard but never draws it, so its document
 // is not expected there; multiplayer draws the Marine HUD under its own.
 constexpr const char* SinglePlayerHudSources[] = {"guis/hud.gui","guis/hud_strogg.gui","guis/wristcomm.gui","guis/wristcomm_strogg.gui","guis/vehicles/hud.gui"};
-constexpr const char* AwakeningHudSources[] = {"guis/q4xhud.gui","guis/q4xhud_strogg.gui","guis/wristcomm.gui","guis/wristcomm_strogg.gui","guis/vehicles/hud.gui"};
+
 constexpr const char* MultiplayerHudSources[] = {"guis/mphud.gui","guis/hud.gui","guis/scoreboard.gui"};
 constexpr const char* QuickChatDocument = "guis/hud/quick_chat.q4ui";
 constexpr const char* ViewEffectsDocument = "guis/hud/view_effects.q4ui";
 std::vector<const char*> GameplayDocuments(bool multiplayer) {
 	std::vector<const char*> documents;
-	const bool awakening = !multiplayer && AwakeningGame();
 	if (idRemasteredHud::Enabled()) {
 		for (const char* source : multiplayer ? std::span<const char* const>(MultiplayerHudSources) :
-				awakening ? std::span<const char* const>(AwakeningHudSources) : std::span<const char* const>(SinglePlayerHudSources))
+				std::span<const char* const>(SinglePlayerHudSources))
 			if (const char* document = idRemasteredHud::DocumentFor(source)) documents.push_back(document);
 	}
 	if (multiplayer) { documents.push_back(WheelDocuments[0]); documents.push_back(QuickChatDocument); }
-	else for (const char* wheel : awakening ? std::span<const char* const>(AwakeningWheelDocuments) : std::span<const char* const>(WheelDocuments)) documents.push_back(wheel);
+	else for (const char* wheel : WheelDocuments) documents.push_back(wheel);
 	documents.push_back(ViewEffectsDocument);
 	return documents;
 }

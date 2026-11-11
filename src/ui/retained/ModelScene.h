@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 // The engine's renderDef contract: one animated root, two joint attachments
 // and five lights. No engine pointers, entity spawning or GUI scripts cross

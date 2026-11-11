@@ -10,7 +10,7 @@ starts from.
 - openD3 forked from openQ4 `abb9a688` (2026-02-18) and carried six commits of
   Doom 3 adaptation on that snapshot. The fork tree was byte-identical to that
   openQ4 commit apart from 42 stripped Quake 4 asset files.
-- The game library lived in a companion repository, `OpenD3-GameLibs`, and was
+- The game library lived in a companion repository, `openD3-GameLibs`, and was
   synchronised into `src/game` by script.
 - openQ4 then gained about 2,350 commits: the renderer module split with the
   modern OpenGL and native Vulkan backends, shadow mapping, the SDL3 platform
@@ -32,7 +32,7 @@ The branch history, oldest first:
    `src/mpgame` (Quake 4 SDK), the SDK licence and the Quake 4 runtime content
    leave the tree. The engine-side content moves to `content/baseod3`.
 3. **Import the Doom 3 game library with its history.** `src/game` (base game)
-   and `src/d3xp` (Resurrection of Evil) come from `OpenD3-GameLibs` `c450f9c`
+   and `src/d3xp` (Resurrection of Evil) come from `openD3-GameLibs` `c450f9c`
    at their existing paths; that repository's history is a parent of the
    import commit. See [game-source-provenance.md](game-source-provenance.md).
 4. **Transplant openPREY's engine layer.** openPREY already carried, on openQ4
@@ -79,7 +79,7 @@ The branch history, oldest first:
 | Module | Source | Defines | State |
 | --- | --- | --- | --- |
 | `game_<arch>` | `src/game` | | Builds, loads and runs |
-| `game-d3xp_<arch>` | `src/d3xp` | `_D3XP`, `CTF` | Builds and stages; not run |
+| `game-d3xp_<arch>` | `src/d3xp` | `_D3XP`, `CTF` | Builds, loads and initialises; not played |
 
 `src/d3xp` was imported in id's GPL form. The 64-bit and engine-ABI port that
 `src/game` already carried was applied to it by three-way merge per file
@@ -88,6 +88,10 @@ The branch history, oldest first:
 resolved by hand. A fix that applies to both games goes into both trees.
 
 The engine selects `game-d3xp` when `d3xp` is `fs_game` or `fs_game_base`.
+`d3xp` is an official game directory: it needs no `mod.json`, its retail
+`game0x.pk4` binary packs are left out of the search path like the base
+game's, and the module is loaded from `baseod3/`. The engine's own expansion
+switch, `ID_ALLOW_D3XP`, is on.
 
 ## Verified
 
@@ -107,6 +111,10 @@ release of Doom 3 (1.3.1 packs):
   native Vulkan renderer (`r_renderApi vulkan`).
 - The stock main menu path starts and plays the intro video.
 - The dedicated server spawns `game/mp/d3dm1` (887 entities).
+- `+set fs_game d3xp` mounts the expansion directory, loads `game-d3xp_x64`
+  and initialises the game. On the test machine, which has only the
+  expansion's patch pack, startup then stops with a parse error in the
+  expansion's `guis/mainmenu.gui`.
 
 That is all that has been run. In particular, nothing here is evidence for:
 playing past the first cinematic, combat, AI, PDA and video playback, level
@@ -117,10 +125,11 @@ Linux, macOS, Android, ARM64 or VR.
 
 Listed roughly by how much they block a player.
 
-1. **Resurrection of Evil is not playable.** The filesystem's official
-   expansion handling still describes Quake 4's Awakening (`q4xbase`) and
-   resets `fs_game d3xp`. The module is untested, and the machine this was
-   done on has no complete RoE data. The renderer carries
+1. **Resurrection of Evil is unverified.** The expansion mounts and its
+   module initialises, but no map has been loaded: the machine this was done
+   on has no complete RoE data, and with the patch pack alone the expansion's
+   main menu fails to parse. That needs repeating with a full install before
+   deciding whether it is a GUI parser gap. The renderer carries
    `renderEntity_t::xrayIndex` and the sound world `SetSlowmo` only so the
    game compiles; neither has an effect.
 2. **Savegames are not stamped.** The engine's hardened savegame framework
@@ -130,14 +139,19 @@ Listed roughly by how much they block a player.
    game-side work; it must be written for openD3, not copied from openQ4's or
    openPREY's game trees, which are under their SDK licences. Loading a save
    has not been tested.
-3. **Prey-only engine code remains.** The transplanted layer includes features
-   only Prey used: spirit-walk views, glow stages, Prey material keywords and
-   deforms, Prey GUI window types, Prey sound classes and subtitles, the
-   loading-music player, Prey font face folding and the libogg/libvorbis
-   decode fallback. They are inert for Doom 3 content and many comments still
-   say Prey. The Prey data blocks formerly behind `HUMANHEAD` are compiled
-   out. Each of these should be removed or, where Doom 3 mods benefit, kept
-   deliberately.
+3. **Engine features with no stock Doom 3 content.** Kept deliberately,
+   because custom content and mods could use them: BSE effects, MD5R models,
+   light grids, the retained RmlUi interface, the Arena ladder (it loads only
+   when a package ships its campaign file), and the extensions that came with
+   the openPREY layer (glow stages, extra material keywords and deforms, GUI
+   window types, subtitles, loading music, the libogg/libvorbis decode
+   fallback). Many of their comments still describe Quake 4 or Prey content.
+   Handling tied to one retail product was removed: the Awakening expansion's
+   campaign, content checks and substitutions, the Quake 4 savegame names and
+   the Prey data blocks formerly behind `HUMANHEAD`. The chapter list and the
+   campaign commands now name Doom 3's maps. Still to go through: the Quake 4
+   HUD routes in the retained HUD, the Quake 4 language-pack listing, and
+   Quake 4 image and font fallbacks.
 4. **Startup warnings still to clear** (Procedure 1 in `AGENTS.md`): the
    engine's chat window and menu background precache four Quake 4 menu images;
    the retained HUD looks for a Quake 4 HUD document; the engine asks for a
@@ -150,30 +164,50 @@ Listed roughly by how much they block a player.
    `ui_retained 0`. The stock Doom 3 GUIs are the interface.
 6. **Tooling under `tools/` is inherited and unadapted.** The test corpus,
    validation profiles, packaging, installer and release scripts were written
-   for openQ4 and partly adapted for Prey. They were renamed mechanically and
-   have not been run for openD3. The build helpers Meson invokes are adapted
-   and exercised.
+   for openQ4. They were renamed mechanically and have not been run for
+   openD3; many still test Quake 4 maps and content. The optional native test
+   suite (`-Dbuild_native_tests=true`) references Quake 4 interface files that
+   are no longer in the tree and will not configure. The build helpers Meson
+   invokes are adapted and exercised.
 7. **No CI.** openQ4's GitHub workflows were removed rather than left to fail;
    they need rebuilding for openD3.
-8. **Documentation under `docs/`** other than this file and
-   `game-source-provenance.md` is openQ4's and describes Quake 4 work.
+8. **Player guides do not exist yet.** openQ4's documentation was removed
+   because it describes Quake 4; only this record, the provenance note and
+   the Android/GLES integration record remain under `docs/`.
 
 ## Naming
 
-The project name is openD3 everywhere a user or packager sees it: binaries,
-window titles, config and log names, environment variables (`OPEND3_*`),
-package metadata and messages. Identifiers that are engine code shared with
-upstream keep upstream's names (`OPENQ4_*` macros, `openQ4_` functions,
-`openq4_*` generated headers and Meson variables, `*_openq4` content file
-names). Renaming them would turn every upstream merge into a conflict; openPREY
-makes the same choice.
+The project name is openD3 everywhere, in what users see and in the source:
+binaries, window titles, config and log names, environment variables and
+macros (`OPEND3_*`), functions (`openD3_*`), generated headers, Meson
+variables, content file names (`*_opend3`) and the dependency patches. The
+runtime directory is `baseod3`. The only places upstream's name appears are
+prose about the upstream project, its repository URLs and the
+`openq4-upstream` remote.
+
+`tools/build/rebrand_upstream.py` performs the rename and is safe to re-run. It
+maps `openQ4`/`OpenQ4` to `openD3`, `OPENQ4` to `OPEND3`, `openq4` to `opend3`
+and `baseoq4` to `baseod3`, in file contents and in paths, and reports
+collisions with `--check`.
 
 ## Syncing with upstream
 
+Because openD3 renames upstream's identifiers, a plain merge conflicts on
+every line upstream touched that carries its name. Merge in upstream's naming
+instead:
+
 ```
 git fetch openq4-upstream
-git merge openq4-upstream/main
+git switch -c sync/upstream
+git merge openq4-upstream/main        # resolve as described below
+python tools/build/rebrand_upstream.py --check
+python tools/build/rebrand_upstream.py
 ```
+
+Expect conflicts wherever both sides changed a renamed line; taking upstream's
+text for such a line and letting the script rename it afterwards is usually
+right. Delete the extracted dependency folders under `subprojects/` and
+reconfigure if the dependency patches changed.
 
 Keep openD3's side for `src/game`, `src/d3xp`, `content/baseod3`, the openD3
 identity and the `OPEND3` sites. Never take `src/mpgame`, upstream's `src/game`

@@ -17,7 +17,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_LIBS_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)).resolve()
+GAME_LIBS_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)).resolve()
 
 
 def read(path: Path) -> str:
@@ -87,7 +87,7 @@ def validate_shutdown_lifecycle_contract(common: str) -> None:
         require(load, token, "game module lifecycle reset")
 
     false_store = shutdown.index(
-        "openQ4_singleplayerGameModuleReady.store( false, std::memory_order_release );"
+        "openD3_singleplayerGameModuleReady.store( false, std::memory_order_release );"
     )
     session_shutdown = shutdown.index("session->Shutdown();")
     early_shutdown = shutdown.index("game->Shutdown();")
@@ -272,12 +272,12 @@ def validate_ui_font_reload_contract(
         "int useFontSlot = -1;",
         "if ( activeFont != &fonts[i] )",
         "fontLang = cvarSystem->GetCVarString( \"sys_lang\" );",
-        "openQ4_NormalizeFontLanguage( fontLang );",
+        "openD3_NormalizeFontLanguage( fontLang );",
         "for ( int i = 0; i < fonts.Num(); ++i )",
         "idStr::Copynz( logicalName, fonts[i].name, sizeof( logicalName ) );",
         # registration goes through the helper so a language without its own font
         # artwork falls back to English instead of failing every font
-        "openQ4_RegisterFontForLanguage( logicalName, fontLang, replacement, fileName )",
+        "openD3_RegisterFontForLanguage( logicalName, fontLang, replacement, fileName )",
         "fontInfoEx_t replacement;",
         "idStr::Copynz( replacement.name, logicalName, sizeof( replacement.name ) );",
         "fonts[i] = replacement;",
@@ -291,7 +291,7 @@ def validate_ui_font_reload_contract(
     reject(reload_fonts, "fonts.Append", "stable UI font indices across vid_restart")
     if not (
         reload_fonts.index("idStr::Copynz( logicalName, fonts[i].name")
-        < reload_fonts.index("openQ4_RegisterFontForLanguage( logicalName, fontLang, replacement, fileName )")
+        < reload_fonts.index("openD3_RegisterFontForLanguage( logicalName, fontLang, replacement, fileName )")
         < reload_fonts.index("fonts[i] = replacement;")
         < reload_fonts.index("SetFont( activeFontIndex );")
     ):
@@ -299,19 +299,19 @@ def validate_ui_font_reload_contract(
 
     register_for_language = function_body(
         device_source,
-        "static bool openQ4_RegisterFontForLanguage(",
+        "static bool openD3_RegisterFontForLanguage(",
         "language font fallback",
     )
     for token in (
-        "openQ4_ResolveFontFileName( logicalName, language, resolvedFileName );",
+        "openD3_ResolveFontFileName( logicalName, language, resolvedFileName );",
         "renderSystem->RegisterFont( resolvedFileName, font )",
         "idStr::Icmp( language.c_str(), \"english\" ) == 0",
-        "openQ4_ResolveFontFileName( logicalName, idStr( \"english\" ), englishFileName );",
+        "openD3_ResolveFontFileName( logicalName, idStr( \"english\" ), englishFileName );",
     ):
         require(register_for_language, token, "language font fallback")
     if not (
         register_for_language.index("renderSystem->RegisterFont( resolvedFileName, font )")
-        < register_for_language.index("openQ4_ResolveFontFileName( logicalName, idStr( \"english\" ), englishFileName );")
+        < register_for_language.index("openD3_ResolveFontFileName( logicalName, idStr( \"english\" ), englishFileName );")
     ):
         raise AssertionError(
             "the language-specific font must be tried before the English fallback, so a "
@@ -436,7 +436,7 @@ def validate_ttf_persistent_atlas_contract(ttf_source: str) -> None:
     # FindMaterial parses a newly created implicit material before this module
     # can replace its source. Its default stage maps an image named after the
     # material, so the generated material must share the already-uploaded
-    # intrinsic atlas identity. A separate openq4/ttffont name probes a file
+    # intrinsic atlas identity. A separate opend3/ttffont name probes a file
     # which can never exist and emits one warning/default image per atlas.
     for signature, context in (
         ("static void R_TTFBuildExtendedPages", "extended TrueType atlas identity"),
@@ -444,7 +444,7 @@ def validate_ttf_persistent_atlas_contract(ttf_source: str) -> None:
     ):
         atlas = function_body(ttf_source, signature, context)
         require(atlas, "const idStr materialName = imageName;", context)
-        reject(atlas, "openq4/ttffont", context)
+        reject(atlas, "opend3/ttffont", context)
 
     restore = function_body(
         ttf_source, "void R_TTFRestoreAtlasMaterials( void )", "TrueType atlas material restore"
@@ -590,7 +590,7 @@ def validate_async_module_state() -> None:
     common = read(ROOT / "src" / "framework" / "Common.cpp")
     validate_shutdown_lifecycle_contract(common)
     helper_start = common.index(
-        "static bool openQ4_ShouldUseSmoothSingleplayerSlowTime( float effectiveTimeScale ) {"
+        "static bool openD3_ShouldUseSmoothSingleplayerSlowTime( float effectiveTimeScale ) {"
     )
     helper_end = common.index("\n}\n", helper_start)
     helper = common[helper_start:helper_end]
@@ -602,12 +602,12 @@ def validate_async_module_state() -> None:
         raise AssertionError("async slow-time helper still reads mutable CVar/module strings")
     require(
         common,
-        "static std::atomic<bool> openQ4_singleplayerGameModuleReady( false );",
+        "static std::atomic<bool> openD3_singleplayerGameModuleReady( false );",
         "async-safe game module state",
     )
     require(
         helper,
-        "openQ4_singleplayerGameModuleReady.load( std::memory_order_acquire )",
+        "openD3_singleplayerGameModuleReady.load( std::memory_order_acquire )",
         "async-safe game module state",
     )
     require(
@@ -621,15 +621,15 @@ def validate_async_module_state() -> None:
     load_body = common[load_start:unload_start]
     require(
         load_body,
-        "openQ4_singleplayerGameModuleReady.store( false, std::memory_order_release );",
+        "openD3_singleplayerGameModuleReady.store( false, std::memory_order_release );",
         "game module load transition",
     )
     require(
         load_body,
-        "openQ4_NormalizeGameTypeForModule( gameModuleBaseName );",
+        "openD3_NormalizeGameTypeForModule( gameModuleBaseName );",
         "game type normalization before module load",
     )
-    if load_body.index("openQ4_NormalizeGameTypeForModule") > load_body.index("sys->DLL_Load"):
+    if load_body.index("openD3_NormalizeGameTypeForModule") > load_body.index("sys->DLL_Load"):
         raise AssertionError("game type is normalized after the module starts loading")
 
     init_start = common.index("void idCommonLocal::InitGame( void ) {")
@@ -637,23 +637,23 @@ def validate_async_module_state() -> None:
     init_body = common[init_start:init_end]
     for token in (
         "const idStr pendingGameModule = openD3_SelectGameModuleBaseName();",
-        "openQ4_NormalizeGameTypeForModule( pendingGameModule.c_str() );",
+        "openD3_NormalizeGameTypeForModule( pendingGameModule.c_str() );",
     ):
         require(init_body, token, "game type normalization before declaration initialization")
     if not (
         init_body.index("const idStr pendingGameModule")
-        < init_body.index("openQ4_NormalizeGameTypeForModule( pendingGameModule.c_str() );")
+        < init_body.index("openD3_NormalizeGameTypeForModule( pendingGameModule.c_str() );")
         < init_body.index("declManager->Init")
     ):
         raise AssertionError("game type is normalized after declarations initialize")
 
-    reject(common, "openQ4_StartupRequiresMultiplayerModule", "startup command preselection")
+    reject(common, "openD3_StartupRequiresMultiplayerModule", "startup command preselection")
     common_init_start = common.index("void idCommonLocal::Init( int argc")
     common_init_end = common.index("void idCommonLocal::Shutdown( void ) {", common_init_start)
     common_init = common[common_init_start:common_init_end]
     for token in (
         'SetCVarString( "com_nextGameModule", "game_mp" )',
-        'openQ4_NormalizeGameTypeForModule( "game_mp" );',
+        'openD3_NormalizeGameTypeForModule( "game_mp" );',
     ):
         reject(common_init, token, "startup command preselection")
 

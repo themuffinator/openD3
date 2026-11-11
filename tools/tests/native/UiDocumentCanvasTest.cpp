@@ -10,7 +10,7 @@
 #include <thread>
 #include <json/json.h>
 #include <RmlUi/Core.h>
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks=0;
 static bool deny=false;
 static int ContextCount(){return Rml::GetSystemInterface()?Rml::GetNumContexts():0;}
@@ -48,7 +48,7 @@ struct CanvasHost final:Host {
     FontMetrics GetFontMetrics(const std::string&,int size) override{Call();if(failFont)return {};return {size*.8f,size*.2f,size*1.2f,size*.5f};}
     Glyph GetGlyph(const std::string&,int size,std::uint32_t) override{Call();return {size*.6f,0,-size*.8f,size*.6f,float(size),0,0,1,1,"font"};}
 };
-static const char* Source=R"json({"format":"openq4-ui","version":1,"id":"canvas","state":{"host":{"type":"number","initial":1,"cvar":"fixture"}},"root":{"id":"root","type":"group","children":[
+static const char* Source=R"json({"format":"opend3-ui","version":1,"id":"canvas","state":{"host":{"type":"number","initial":1,"cvar":"fixture"}},"root":{"id":"root","type":"group","children":[
  {"id":"panel","type":"group","properties":{"position":{"type":"keyword","value":"absolute"},"left":{"type":"length","unit":"dp","value":10},"top":{"type":"length","unit":"dp","value":20},"width":{"type":"length","unit":"dp","value":100},"height":{"type":"length","unit":"dp","value":40},"background-color":{"type":"color","value":[1,0,0,1]}}}
 ]}})json";
 static Json::Value Typed(const char* type,Json::Value value,const char* unit=nullptr) {
@@ -63,7 +63,7 @@ static Json::Value Box(const char* id,double x,double y,double width,double heig
 }
 static void Colour(Json::Value& node,std::initializer_list<double> colour) { node["properties"]["background-color"]=Typed("color",Array(colour)); }
 static std::string NumberSource(bool transformed=false,bool framed=false,bool hostSource=false) {
-	Json::Value source;source["format"]="openq4-ui";source["version"]=1;source["id"]="number-runtime";
+	Json::Value source;source["format"]="opend3-ui";source["version"]=1;source["id"]="number-runtime";
 	source["state"]["value"]["type"]="number";source["state"]["value"]["initial"]=1.05;
 	if(hostSource)source["state"]["value"]["cvar"]="r_number_test";
 	source["actions"]["edit"]["input"]="number";source["actions"]["edit"]["operation"]="test.edit";source["actions"]["edit"]["arguments"]["value"]["input"]="value";

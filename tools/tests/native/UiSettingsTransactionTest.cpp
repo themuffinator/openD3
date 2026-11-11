@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <utility>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 namespace {
 void Check(bool condition, const char* message) {
 	if (!condition) { std::fprintf(stderr,"FAIL: %s\n",message); std::exit(1); }

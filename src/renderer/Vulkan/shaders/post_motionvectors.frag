@@ -1,7 +1,7 @@
 #version 450
 
 // Rigid-object motion vectors. A port of
-// content/baseoq4/pak0/glprogs/motionvectors.fs. The vector target is drawn
+// content/baseod3/pak0/glprogs/motionvectors.fs. The vector target is drawn
 // with a positive-height viewport, so its rows are stored bottom-up like the
 // OpenGL target and the blur pass samples it with OpenGL texture coordinates.
 

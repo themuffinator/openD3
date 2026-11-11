@@ -7,16 +7,16 @@
 ===============================================================================
 */
 
-#include "openq4_version_generated.h"
+#include "opend3_version_generated.h"
 
 // RAVEN BEGIN
 // rjohnson: this is the name of the game we are making
 #define PROJECT_NAME					"openD3"
 #define PROJECT_AUTHOR					"themuffinator"
 #define PROJECT_COMPANY				"DarkMatter Productions"
-#define PROJECT_VERSION				OPENQ4_VERSION_SHORT
-#define PROJECT_VERSION_FULL			OPENQ4_VERSION
-#define PROJECT_VERSION_DATE			OPENQ4_VERSION_DATE
+#define PROJECT_VERSION				OPEND3_VERSION_SHORT
+#define PROJECT_VERSION_FULL			OPEND3_VERSION
+#define PROJECT_VERSION_DATE			OPEND3_VERSION_DATE
 #define PROJECT_WEBSITE				"www.darkmatter-quake.com"
 #define PROJECT_REPO					"https://github.com/themuffinator/openD3"
 #define PROJECT_RELEASES_URL			PROJECT_REPO "/releases"
@@ -52,23 +52,23 @@
 // BASE_GAMEDIR holds the retail Doom 3 paks; OPEND3_GAMEDIR holds openD3's
 // own game module and runtime content.
 #define OPEND3_GAMEDIR					"baseod3"
-// Name used by engine call sites shared with upstream openQ4.
-#define OPENQ4_GAMEDIR					OPEND3_GAMEDIR
+// Resurrection of Evil's retail directory; selects the game-d3xp module.
+#define OPEND3_EXPANSION_GAMEDIR			"d3xp"
 #define	DEMO_GAMEDIR					"demo"
 #define	GAME_PLAYERDEFNAME				"player_doommarine"
 #define GAME_PLAYERDEFNAME_MP			"player_doommarine_mp"
 
 // filenames
 #if defined( _M_X64 ) || defined( __x86_64__ )
-	#define OPENQ4_BINARY_ARCH			"x64"
+	#define OPEND3_BINARY_ARCH			"x64"
 #elif defined( _M_IX86 ) || defined( __i386__ )
-	#define OPENQ4_BINARY_ARCH			"x86"
+	#define OPEND3_BINARY_ARCH			"x86"
 #elif defined( _M_ARM64 ) || defined( __aarch64__ )
-	#define OPENQ4_BINARY_ARCH			"arm64"
+	#define OPEND3_BINARY_ARCH			"arm64"
 #else
-	#define OPENQ4_BINARY_ARCH			"unknown"
+	#define OPEND3_BINARY_ARCH			"unknown"
 #endif
-#define	CD_EXE							PROJECT_NAME "-client_" OPENQ4_BINARY_ARCH ".exe"
+#define	CD_EXE							PROJECT_NAME "-client_" OPEND3_BINARY_ARCH ".exe"
 
 #ifdef _XENON
 #define CONFIG_FILE						"save:/openD3Config.cfg"
@@ -130,14 +130,11 @@
 #define ASYNC_PROTOCOL_MAJOR			2
 // RAVEN END
 
-// Savegame header compatibility. New openD3 saves carry the Doom 3 name; the
-// names inherited from the openQ4 engine stay recognised by the shared reader.
+// The game name openD3 writes into, and requires of, a savegame header.
 #define SAVEGAME_GAME_NAME_DOOM3				"Doom3"
-#define SAVEGAME_GAME_NAME_RETAIL				"Quake4"
-#define SAVEGAME_GAME_NAME_LEGACY_OPENQ4		"openQ4"
 #define SAVEGAME_VERSION						1834
-#define LEGACY_OPENQ4_SAVEGAME_VERSION			0
-#define LEGACY_OPENQ4_SAVEGAME_VERSION_ALT		1
+#define LEGACY_OPEND3_SAVEGAME_VERSION			0
+#define LEGACY_OPEND3_SAVEGAME_VERSION_ALT		1
 
 // editor info
 #define EDITOR_WINDOWTEXT				"QuakeEdit"

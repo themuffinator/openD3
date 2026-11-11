@@ -14,7 +14,7 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 RENDERER = ROOT / "src" / "renderer"
 GAME_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", str(ROOT))
+    os.environ.get("OPEND3_GAMELIBS_REPO", str(ROOT))
 ).resolve()
 
 
@@ -299,7 +299,7 @@ def main() -> int:
         "presentation.outputHeight",
         "!presentation.temporalAARequested",
         "blurEnabled || presentation.temporalAARequested",
-        "openQ4_ResolveTemporalPresentation(",
+        "openD3_ResolveTemporalPresentation(",
         "gameRender.postProcessRT[1]",
         "gameRender.forwardRenderPassResolvedRT",
     ):
@@ -328,7 +328,7 @@ def main() -> int:
 
     benchmarks = read(RENDERER / "RendererBenchmarks.cpp")
     marker = (
-        "OPENQ4_FRAME_TIMING_V1 map=%s backend=%s profile=%s "
+        "OPEND3_FRAME_TIMING_V1 map=%s backend=%s profile=%s "
         "cpuSamples=%d cpuP50Us=%llu cpuP95Us=%llu cpuP99Us=%llu "
         "gpuAvailable=%d gpuSamples=%d gpuP50Us=%lld gpuP95Us=%lld gpuP99Us=%lld"
     )
@@ -407,7 +407,7 @@ def main() -> int:
     require(source_contract, "RENDERER_VK_REQUIRED_SOURCES", "required Vulkan source contract")
 
     meson = read(ROOT / "meson.build")
-    require(meson, "'openq4-gpu-frame-timing-test'", "native timing test target")
+    require(meson, "'opend3-gpu-frame-timing-test'", "native timing test target")
     native_test = read(ROOT / "tools" / "tests" / "native" / "GpuFrameTimingTest.cpp")
     require(native_test, "INT_MAX, INT_MIN", "native frame-wrap test")
     require(native_test, "state.generation, 0, 1", "native zero-duration test")

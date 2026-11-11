@@ -83,14 +83,14 @@ class Presets(unittest.TestCase):
         # meson budget, so ui_system_number_fields.py (and
         # build_retained_screens.py --check) compares the whole document; this
         # rebuilds the generator's preset programs and gates.
-        doc=screens.Document('openq4.system');system.page_actions(doc);system.page_events(doc)
+        doc=screens.Document('opend3.system');system.page_actions(doc);system.page_events(doc)
         for name in ('preset','autoDetect'):self.assertEqual(self.page['actions'][name],doc.actions[name])
         self.assertEqual(self.page['events']['autoDetect'],doc.events['autoDetect'])
         current={'op':'==','args':[{'state':'page.tab'},GRAPHICS]}
         for id,enabled in (('settings_preset',system.QUIET),('settings_autodetect',system.both(system.QUIET,system.st('settings.render.autoDetect')))):
             self.assertEqual(next(b['value'] for b in self.page['bindings'] if b['id']==id+'.enabled'),{'op':'&&','args':[current,enabled]})
         self.assertEqual(tuple(system.PROFILES),PROFILES)
-        self.assertEqual(self.page['extensions']['openq4']['presets'],system.EXTENSIONS['presets'])
+        self.assertEqual(self.page['extensions']['opend3']['presets'],system.EXTENSIONS['presets'])
     def test_graphics_tab_placement_and_order(self):
         self.assertEqual([n['id'] for n in self.nodes['settings-body']['children']],['settings-page-graphics','settings-page-screen','settings-page-image'])
         # The column's heading leads it; the preset is the tab's first row.
@@ -128,8 +128,8 @@ class Presets(unittest.TestCase):
         for id,node in self.nodes.items():
             if id.startswith(('settings_preset','settings_autodetect')):self.assertNotEqual(node['type'],'image')
     def test_all_locales_have_every_profile_label(self):
-        files=sorted((ROOT/'content/baseoq4/pak0/strings').glob('*_openq4.lang'))
-        self.assertEqual({f.stem for f in files},{n+'_openq4' for n in ('english','french','german','italian','spanish','polish','russian',
+        files=sorted((ROOT/'content/baseod3/pak0/strings').glob('*_opend3.lang'))
+        self.assertEqual({f.stem for f in files},{n+'_opend3' for n in ('english','french','german','italian','spanish','polish','russian',
             'brazilian','czech','hungarian','turkish','ukrainian')})
         for file in files:
             for id in ('229976','229977','229978','230010'):
@@ -141,7 +141,7 @@ class Presets(unittest.TestCase):
         self.assertEqual(self.page['events']['autoDetect'][0]['then'],[{'op':'action','action':'autoDetect'}])
         self.assertEqual(self.nodes['settings_apply']['control']['event'],'apply')
         self.assertIn({'state':'ui.numberDraftsPending'},self.page['events']['apply'][0]['condition']['args'][1]['args'])
-        self.assertEqual(self.page['extensions']['openq4']['presets']['source'],'src/framework/PerformancePreset.cpp')
+        self.assertEqual(self.page['extensions']['opend3']['presets']['source'],'src/framework/PerformancePreset.cpp')
     def test_mutations_refused(self):
         def reject(change):
             p=copy.deepcopy(self.page);change(p)

@@ -264,8 +264,8 @@ public:
 	int lastSnapshotGameFrame = 0, lastSnapshotGameTime = 0, lastSnapshotFileOffset = 0;
 	int snapshotSequence = 0, snapshotCount = 0, reliableCount = 0, recordCount = 0;
 	idList<indexEntry_t> recordingIndex;
-	std::vector<openq4_mvd::Marker> markers;
-	std::vector<openq4_mvd::Keyframe> keyframes;
+	std::vector<opend3_mvd::Marker> markers;
+	std::vector<opend3_mvd::Keyframe> keyframes;
 	int markersDropped = 0;
 
 	void Clear() {
@@ -308,15 +308,15 @@ struct Layout {
 
 // A marker record as RecordMarker writes it.
 static std::vector<std::uint8_t> MarkerPayload( int frame, int time, int victim ) {
-	openq4_mvd::Marker marker;
+	opend3_mvd::Marker marker;
 	marker.gameTime = time;
 	marker.kind = 5;
 	marker.client = 1;
 	marker.value0 = victim;
 	marker.value1 = 7;
 	std::vector<std::uint8_t> payload;
-	openq4_mvd::AppendU32( payload, static_cast<std::uint32_t>( frame ) );
-	openq4_mvd::AppendMarkerBody( payload, marker );
+	opend3_mvd::AppendU32( payload, static_cast<std::uint32_t>( frame ) );
+	opend3_mvd::AppendMarkerBody( payload, marker );
 	return payload;
 }
 
@@ -324,10 +324,10 @@ static std::vector<std::uint8_t> MarkerPayload( int frame, int time, int victim 
 static std::vector<std::uint8_t> KeyframePayload( int frame, int time, int sequence, int reliables, int records ) {
 	std::vector<std::uint8_t> payload;
 	for ( int value : { frame, time, sequence, reliables, records } ) {
-		openq4_mvd::AppendU32( payload, static_cast<std::uint32_t>( value ) );
+		opend3_mvd::AppendU32( payload, static_cast<std::uint32_t>( value ) );
 	}
 	for ( int block = 0; block < 3; block++ ) {
-		openq4_mvd::AppendU32( payload, 3 );
+		opend3_mvd::AppendU32( payload, 3 );
 		payload.insert( payload.end(), { 7, 8, 9 } );
 	}
 	return payload;
@@ -424,8 +424,8 @@ struct Verdict {
 	int snapshots = 0, reliables = 0, records = 0, endRecords = 0, indexRecords = 0;
 	bool endMatches = false, indexValid = false;
 	int markerTables = 0, keyframeTables = 0;
-	std::vector<openq4_mvd::Marker> markers;
-	std::vector<openq4_mvd::Keyframe> keyframes;
+	std::vector<opend3_mvd::Marker> markers;
+	std::vector<opend3_mvd::Keyframe> keyframes;
 	std::vector<int> keyframeRecordOffsets;
 	bool directoriesValid = true;
 };
@@ -481,12 +481,12 @@ static Verdict ReadBack( const char *path ) {
 			verdict.keyframeRecordOffsets.push_back( offset );
 		} else if ( record.type == MVD_RECORD_MARKER_TABLE ) {
 			verdict.markerTables++;
-			verdict.directoriesValid = verdict.directoriesValid && openq4_mvd::ParseMarkerTable(
+			verdict.directoriesValid = verdict.directoriesValid && opend3_mvd::ParseMarkerTable(
 				record.payload.Ptr(), record.payload.Num(), verdict.markers, SERVER_MVD_MARKER_KIND_COUNT,
 				MAX_ASYNC_CLIENTS, 8 );
 		} else if ( record.type == MVD_RECORD_KEYFRAME_TABLE ) {
 			verdict.keyframeTables++;
-			verdict.directoriesValid = verdict.directoriesValid && indexOffset >= 0 && openq4_mvd::ParseKeyframeTable(
+			verdict.directoriesValid = verdict.directoriesValid && indexOffset >= 0 && opend3_mvd::ParseKeyframeTable(
 				record.payload.Ptr(), record.payload.Num(), static_cast<int>( MVD_HEADER_BYTES ), indexOffset,
 				verdict.keyframes );
 		}

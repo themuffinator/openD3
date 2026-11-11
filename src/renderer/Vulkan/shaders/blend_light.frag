@@ -1,6 +1,6 @@
 #version 450
 
-// openQ4 Vulkan blend light — fragment stage (Phase G2).
+// openD3 Vulkan blend light — fragment stage (Phase G2).
 //
 // The RB_BlendLight fixed-function result (draw_common.cpp:7508-7564):
 // projected stage texture (S/Q, T/Q) × falloff (S, 0.5) × the light

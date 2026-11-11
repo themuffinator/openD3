@@ -124,7 +124,7 @@ def validate_runtime_coverage() -> None:
     require(native, "idURLPolicy::IsAllowedHTTPURL( url )", "native production-policy execution")
     for case in (
         '"http://example.com", true',
-        '"HTTPS://example.com:443/releases?q=openq4#download", true',
+        '"HTTPS://example.com:443/releases?q=opend3#download", true',
         '"https://[2001:db8::1]:65535/path", true',
         '"file:///tmp/update", false',
         '"javascript:alert(1)", false',
@@ -186,7 +186,7 @@ def validate_network_download_integration() -> None:
         "URL guard before background-queue handoff",
     )
     require(download_worker, "else if ( bgl->opcode == DLTYPE_URL )", "worker URL opcode allowlist")
-    require(file_system, "OPENQ4_CURL_CAPABLE_BUILD", "compile-time libcurl capability gate")
+    require(file_system, "OPEND3_CURL_CAPABLE_BUILD", "compile-time libcurl capability gate")
     require(curl_init, "curl_global_init( CURL_GLOBAL_DEFAULT )", "explicit libcurl global initialization")
     require(curl_init, "versionInfo->version_num < 0x071304", "runtime libcurl version gate")
     require(curl_init, "CURL_VERSION_ASYNCHDNS", "nonblocking DNS capability gate")
@@ -215,7 +215,7 @@ def validate_no_file_url_handoffs() -> None:
 
 def validate_registration() -> None:
     for path in (
-        "tools/validation/openq4_validate.py",
+        "tools/validation/opend3_validate.py",
         ".github/workflows/commit-validation.yml",
         ".github/workflows/push-verification.yml",
     ):

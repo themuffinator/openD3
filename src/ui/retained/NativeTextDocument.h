@@ -10,7 +10,7 @@
 #include <string_view>
 #include <vector>
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 struct NativeTextIdentity {
 	std::uint64_t document = 0, editorLease = 0;
@@ -182,4 +182,4 @@ private:
 	struct Impl;
 	std::unique_ptr<Impl> impl;
 };
-} // namespace openq4::ui
+} // namespace opend3::ui

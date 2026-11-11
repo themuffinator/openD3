@@ -63,7 +63,7 @@ def run(args, case: str) -> dict:
     output = task_path(args.output / case)
     output.mkdir(parents=True)
     save = output / 'save'
-    for name in ('baseoq4','q4xbase'):
+    for name in ('baseod3','q4xbase'):
         (save / name).mkdir(parents=True)
     real = case.startswith('real-') or case in ('switch-sp','switch-mp','switch-arena','direct-mp','dedicated')
     if real:
@@ -73,7 +73,7 @@ def run(args, case: str) -> dict:
     width,height = args.size.split('x')
     settings = {
         'fs_basepath': str(args.retail.resolve(strict=True)), 'fs_savepath': str(save), 'fs_devpath': str(save),
-        'fs_cachepath': str(output / 'cache'), 'fs_awakeningpath': str(content), 'fs_game': 'baseoq4',
+        'fs_cachepath': str(output / 'cache'), 'fs_awakeningpath': str(content), 'fs_game': 'baseod3',
         'si_gameType': 'singleplayer', 'ui_autoJoin': '1', 's_noSound': '1',
         'win_allowMultipleInstances' if os.name == 'nt' else 'sys_allowMultipleInstances': '1',
         'in_mouse': '0', 'in_joystick': '0', 'in_joystickRumble': '0',
@@ -91,29 +91,29 @@ def run(args, case: str) -> dict:
     launch = ['+exec','selection.cfg']
     if case in ('switch-sp','switch-mp','switch-arena'):
         settings.update(g_autoExecAfterMapLoad='selection.cfg',g_autoExecAfterMapLoadDelayMs='500')
-        (save / 'baseoq4/selection.cfg').write_text('\n'.join(
-            ['openq4_assertMapState game/airdefense1'] + finish if case == 'switch-sp' else
+        (save / 'baseod3/selection.cfg').write_text('\n'.join(
+            ['opend3_assertMapState game/airdefense1'] + finish if case == 'switch-sp' else
             ['waitMsec 3000','screenshot screenshots/arena.tga'] + finish if case == 'switch-arena' else
-            ['waitMsec 3000','openq4_assertMPClientActive','openq4_reportMPState'] + finish) + '\n')
-        next_action = (['set fs_game baseoq4','campaignSelect quake4 start'] if case == 'switch-sp' else
-                       ['set fs_game baseoq4','campaignSelect arena'] if case == 'switch-arena' else
-                       ['set fs_game baseoq4','set si_gameType CTF','spawnServer mp/q4ctf1'])
+            ['waitMsec 3000','opend3_assertMPClientActive','opend3_reportMPState'] + finish) + '\n')
+        next_action = (['set fs_game baseod3','campaignSelect quake4 start'] if case == 'switch-sp' else
+                       ['set fs_game baseod3','campaignSelect arena'] if case == 'switch-arena' else
+                       ['set fs_game baseod3','set si_gameType CTF','spawnServer mp/q4ctf1'])
         if case == 'switch-mp':
-            (save / 'baseoq4/Quake4Config.cfg').write_text('set si_gameType DM\n')
+            (save / 'baseod3/Quake4Config.cfg').write_text('set si_gameType DM\n')
         if case == 'switch-arena':
             settings['fs_game'] = 'q4xbase'
             (save / 'q4xbase/autoexec.cfg').write_text('// Defer the base validation until the campaign mount changes.\n')
-            (save / 'baseoq4/autoexec.cfg').write_text('waitMsec 1000\nexec selection.cfg\n')
+            (save / 'baseod3/autoexec.cfg').write_text('waitMsec 1000\nexec selection.cfg\n')
         (save / 'q4xbase/selection.cfg').write_text('\n'.join(
-            ['waitMsec 3000','openq4_assertMapState game/m01_stranarus_trench1',
+            ['waitMsec 3000','opend3_assertMapState game/m01_stranarus_trench1',
              'echo AWAKENING_GAMEPLAY_BEFORE_SWITCH','set g_autoExecAfterMapLoad selection.cfg',*next_action]) + '\n')
         launch = ['+campaignSelect','awakening','start']
     elif case in ('direct-mp','dedicated'):
         settings.update(fs_game='q4xbase',si_gameType='CTF',com_gameMode='MP',
                         g_autoExecAfterMapLoad='selection.cfg',g_autoExecAfterMapLoadDelayMs='500')
-        stages = ['waitMsec 3000','openq4_reportMPState']
-        if case == 'direct-mp': stages.append('openq4_assertMPClientActive')
-        (save / 'baseoq4/selection.cfg').write_text('\n'.join(stages + finish) + '\n')
+        stages = ['waitMsec 3000','opend3_reportMPState']
+        if case == 'direct-mp': stages.append('opend3_assertMPClientActive')
+        (save / 'baseod3/selection.cfg').write_text('\n'.join(stages + finish) + '\n')
         launch = ['+spawnServer','mp/q4ctf1']
         if case == 'dedicated':
             settings.update(net_serverDedicated='1', com_skipRenderer='1')
@@ -122,8 +122,8 @@ def run(args, case: str) -> dict:
         stages = ['waitMsec 500','campaignList',*paths,
                   'campaignMenu' if case == 'real-singleplayer-retained' else 'campaignMenu campaigns',
                   'waitMsec 1200','ui_retainedStatus','screenshot screenshots/campaign.tga',f'echo {DONE}','quit']
-        (save / 'baseoq4/selection.cfg').write_text('\n'.join(stages) + '\n')
-    stem = 'openQ4-ded_x64' if case == 'dedicated' else 'openQ4-client_x64'
+        (save / 'baseod3/selection.cfg').write_text('\n'.join(stages) + '\n')
+    stem = 'openD3-ded_x64' if case == 'dedicated' else 'openD3-client_x64'
     exe = args.runtime.resolve() / (stem + ('.exe' if os.name == 'nt' else ''))
     command = [str(exe)]
     for key,value in settings.items(): command += ['+set',key,value]
@@ -144,7 +144,7 @@ def run(args, case: str) -> dict:
             process.wait()
             code = 'timeout'
     logs = {name:(save / name / 'logs/selection.log').read_text(encoding='latin1')
-            for name in ('baseoq4','q4xbase') if (save / name / 'logs/selection.log').exists()}
+            for name in ('baseod3','q4xbase') if (save / name / 'logs/selection.log').exists()}
     log = '\n'.join(logs.values())
     errors = re.findall(r'(?mi)^(?:\^\d)?(?:ERROR:|FATAL ERROR:|ASSERTION FAILED).*',log)
     readiness = re.findall(r'CAMPAIGN awakening present=(\d) available=(\d)',log)
@@ -161,7 +161,7 @@ def run(args, case: str) -> dict:
     if case in ('switch-mp','direct-mp','dedicated'):
         passed = passed and '"si_gameType" is:"CTF"' in log and '"com_activeGameModule" is:"game_mp"' in log
     if case == 'switch-arena':
-        passed = passed and 'CAMPAIGN_SELECTED id=arena gameDir=baseoq4 module=game_sp' in log
+        passed = passed and 'CAMPAIGN_SELECTED id=arena gameDir=baseod3 module=game_sp' in log
     shots = []
     for tga in save.rglob('screenshots/*.tga'):
         from PIL import Image
@@ -195,7 +195,7 @@ def main() -> int:
     args.output.mkdir(parents=True)
     report = dict(complete=False,renderer=args.renderer,results=[],
                   executable_sha256={path.name:hashlib.sha256(path.read_bytes()).hexdigest()
-                      for path in args.runtime.glob('openQ4-*') if path.suffix.lower() in ('','.exe')})
+                      for path in args.runtime.glob('openD3-*') if path.suffix.lower() in ('','.exe')})
     report_path = args.output / 'selection.json'
     for case in args.cases:
         report['results'].append(run(args,case))

@@ -48,7 +48,7 @@ ENGINE = r'''
 #include "src/ui/application/SettingsTransaction.h"
 // Player Setup's codec is qualified by UiPlayerSetupRequestTest. These
 // unrelated adapter/clipboard cases must never enter that operation.
-namespace openq4::ui {
+namespace opend3::ui {
 bool ValidPlayerSetupAction(const Action&) { std::abort(); }
 bool ResolvePlayerSetupRequest(const StateValues&,PlayerSetupRequest&,std::string&) { std::abort(); }
 bool EncodePlayerSetupRequest(const StateValues&,std::string&,std::string&) { std::abort(); }
@@ -218,7 +218,7 @@ struct Decls { const void* FindMaterial(const char*) { return nullptr; } } decls
 '''
 
 RUNTIME = r'''
-namespace openq4::ui {
+namespace opend3::ui {
 bool HasImageCoordinates(const Node& node) {
     return node.properties.contains("image-offset-x") || node.properties.contains("image-offset-y") ||
         node.properties.contains("image-scale-x") || node.properties.contains("image-scale-y");
@@ -683,14 +683,14 @@ public:
 };
 }
 struct retainedUIView_t {
-    openq4::ui::Runtime runtime;
+    opend3::ui::Runtime runtime;
     retainedUIViewCallback_t callback;
     void* owner;
 };
 static std::vector<retainedUIView_t*> views;
 static bool rejectLoad=false,rejectDraw=false;
 static double presentationTime=1;
-static openq4::ui::Viewport viewport;
+static opend3::ui::Viewport viewport;
 retainedUIView_t* RetainedUI_CreateView(retainedUIViewCallback_t callback,void* owner) {
     auto* view=new retainedUIView_t; view->callback=callback; view->owner=owner; views.push_back(view); return view;
 }
@@ -698,12 +698,12 @@ void RetainedUI_DestroyView(retainedUIView_t* view) {
     if(!view)return;
     views.erase(std::find(views.begin(),views.end(),view)); delete view;
 }
-openq4::ui::Runtime* RetainedUI_ViewRuntime(retainedUIView_t* view) { return view?&view->runtime:nullptr; }
+opend3::ui::Runtime* RetainedUI_ViewRuntime(retainedUIView_t* view) { return view?&view->runtime:nullptr; }
 bool RetainedUI_PrepareView(retainedUIView_t* view) { return view && view->runtime.loaded; }
-bool RetainedUI_LoadView(retainedUIView_t*,const std::string&,const std::string&,std::vector<openq4::ui::Diagnostic>&) { return !rejectLoad; }
-bool RetainedUI_LoadParsedView(retainedUIView_t*,const openq4::ui::Document&,const std::string&,std::vector<openq4::ui::Diagnostic>&) { return !rejectLoad; }
-bool UI_RetainedTakePrefetched(const std::string&,const std::string&,openq4::ui::Document&) { return false; }
-bool RetainedUI_DefaultViewport(openq4::ui::Viewport& result) { result=viewport; return viewport.width>0 && viewport.height>0; }
+bool RetainedUI_LoadView(retainedUIView_t*,const std::string&,const std::string&,std::vector<opend3::ui::Diagnostic>&) { return !rejectLoad; }
+bool RetainedUI_LoadParsedView(retainedUIView_t*,const opend3::ui::Document&,const std::string&,std::vector<opend3::ui::Diagnostic>&) { return !rejectLoad; }
+bool UI_RetainedTakePrefetched(const std::string&,const std::string&,opend3::ui::Document&) { return false; }
+bool RetainedUI_DefaultViewport(opend3::ui::Viewport& result) { result=viewport; return viewport.width>0 && viewport.height>0; }
 double RetainedUI_PresentationTime() { return presentationTime; }
 int promptGlyphsValue=0;
 int RetainedUI_PromptGlyphs() { return promptGlyphsValue; }
@@ -711,7 +711,7 @@ bool promptSwappedValue=false;
 bool RetainedUI_PromptSwapped() { return promptSwappedValue; }
 static std::vector<std::string> precachedImages;
 void RetainedUI_PrecacheImage(const std::string& source,bool) { precachedImages.push_back(source); }
-bool RetainedUI_DrawViewRoot(retainedUIView_t* view,const openq4::ui::Viewport&) {
+bool RetainedUI_DrawViewRoot(retainedUIView_t* view,const opend3::ui::Viewport&) {
     ++view->runtime.frames; view->runtime.pointerTransport.push_back("frame"); return !rejectDraw;
 }
 '''
@@ -722,7 +722,7 @@ SETTINGS = r'''
 // Transaction validation, conflict/rollback and the actual catalog have their
 // own production tests; prescribed service values here establish none of those.
 namespace SettingsBoundary {
-using namespace openq4::ui;
+using namespace opend3::ui;
 struct Dispatch { std::uint64_t owner; ActionInvocation invocation; bool accepted=false; };
 struct Draw { std::uint64_t owner; std::string request; int frames; };
 struct Service {
@@ -745,7 +745,7 @@ struct Service {
 } service;
 const std::map<std::string,std::size_t> fields{{"r_brightness",0},{"r_shadows",1}};
 }
-void UI_SettingsConfirmationDocument(std::uint64_t owner,const openq4::ui::DocumentModel& document) {
+void UI_SettingsConfirmationDocument(std::uint64_t owner,const opend3::ui::DocumentModel& document) {
     auto& service=SettingsBoundary::service;
     assert(service.owners.contains(owner));
     service.registrations.emplace_back(owner,document);
@@ -794,7 +794,7 @@ const std::map<std::string,std::size_t>& UI_SettingsStateSchema() {
         return result;
     }(); return schema;
 }
-bool UI_SettingsOperation(const openq4::ui::Action& action,std::string& error) {
+bool UI_SettingsOperation(const opend3::ui::Action& action,std::string& error) {
     auto& service=SettingsBoundary::service; service.descriptors.push_back(action);
     const auto& op=action.operation;
     if((op=="settings.system.begin" || op=="settings.system.defaults" || op=="settings.system.cancel" ||
@@ -809,8 +809,8 @@ bool UI_SettingsOperation(const openq4::ui::Action& action,std::string& error) {
     }
     error="stub operation shape rejected"; return false;
 }
-bool UI_SettingsInvocation(const openq4::ui::ActionInvocation& invocation,std::string& error) {
-    using namespace openq4::ui;
+bool UI_SettingsInvocation(const opend3::ui::ActionInvocation& invocation,std::string& error) {
+    using namespace opend3::ui;
     SettingsBoundary::service.invocations.push_back(invocation);
     Action action; action.operation=invocation.operation;
     for(const auto& [key,value]:invocation.arguments) {
@@ -819,7 +819,7 @@ bool UI_SettingsInvocation(const openq4::ui::ActionInvocation& invocation,std::s
     }
     return UI_SettingsOperation(action,error);
 }
-bool UI_SettingsDispatch(std::uint64_t owner,const openq4::ui::ActionInvocation& invocation,std::string& error) {
+bool UI_SettingsDispatch(std::uint64_t owner,const opend3::ui::ActionInvocation& invocation,std::string& error) {
     auto& service=SettingsBoundary::service;
     service.order.push_back("dispatch:"+invocation.operation);
     service.dispatches.push_back({owner,invocation});
@@ -852,13 +852,13 @@ bool UI_SettingsDispatch(std::uint64_t owner,const openq4::ui::ActionInvocation&
         else if(op=="settings.system.cancel") {
             if(service.cancelQueuesRestore) {
                 service.readOverrides["settings.busy"]=true;
-                service.readOverrides["settings.phase"]=static_cast<double>(openq4::ui::SettingsPhase::Restoring);
+                service.readOverrides["settings.phase"]=static_cast<double>(opend3::ui::SettingsPhase::Restoring);
             } else UI_SettingsCloseOwner(owner);
         }
     }
     service.dispatches.back().accepted=true; if(service.afterDispatch)service.afterDispatch(); return true;
 }
-bool UI_SettingsRead(std::uint64_t owner,openq4::ui::StateValues& values) {
+bool UI_SettingsRead(std::uint64_t owner,opend3::ui::StateValues& values) {
     auto& service=SettingsBoundary::service; service.reads.push_back(owner);
     if(!service.readAvailable || !service.owners.contains(owner))return false;
     const bool own=service.active==owner,dirty=own && service.draft!=service.baseline;
@@ -887,7 +887,7 @@ BASE += function_body(_native_lifetime_source, 'void idUserInterfaceManaged::Mar
 BASE += function_body(_native_lifetime_source, 'void idUserInterfaceManaged::SetNativeInputChanging(')
 
 MAIN = r'''
-using namespace openq4::ui;
+using namespace opend3::ui;
 static Runtime& Live() { assert(views.size()==1); return views.front()->runtime; }
 static std::vector<std::pair<std::string,std::string>> Dictionary(const idUserInterfaceRetained& gui) {
     std::vector<std::pair<std::string,std::string>> result;
@@ -1115,7 +1115,7 @@ static void Drain(idUserInterfaceRetained& gui,const std::vector<std::pair<std::
     assert(!close && cvars.history.size()==before+expected.size());
 }
 static bool Semantic(idUserInterfaceRetained& gui,const char* input,bool down) {
-    return UI_RetainedDiagnostic(&gui,idCmdArgs{{"openq4_retainedGui","menu",input,down?"1":"0"}});
+    return UI_RetainedDiagnostic(&gui,idCmdArgs{{"opend3_retainedGui","menu",input,down?"1":"0"}});
 }
 // Timeline completion programs run inside the runtime's frame. Redraw takes
 // their application writes and publishes them like event effects, leaving
@@ -1838,7 +1838,7 @@ static void CheckSettingsBoundary() {
 static void CheckNodeInspection() {
     assert(views.empty());
     idUserInterfaceRetained gui; assert(gui.InitFromFile("test.q4ui"));
-    auto inspect=[&](const std::string& id) {return UI_RetainedDiagnostic(&gui,idCmdArgs{{"openq4_retainedGui","inspect",id}});};
+    auto inspect=[&](const std::string& id) {return UI_RetainedDiagnostic(&gui,idCmdArgs{{"opend3_retainedGui","inspect",id}});};
     auto& runtime=Live();
     runtime.bounds={32,32,864,462}; runtime.stats={1,13,4,4,9,300,450};
     Value opacity; opacity.type=ValueType::Number; opacity.data[0]=.2;
@@ -2283,7 +2283,7 @@ static void CheckSettingsReturnBoundary() {
     assert(views.empty() && SettingsBoundary::service.owners.empty());
     const auto original=modelTemplate; auto& service=SettingsBoundary::service;
     service=SettingsBoundary::Service{}; eventPlans.clear(); eventHistory.clear();
-    modelTemplate.id="openq4.system";
+    modelTemplate.id="opend3.system";
     for(const auto& [key,type]:UI_SettingsStateSchema())
         modelTemplate.state[key]={type==0?StateValue(0.0):type==1?StateValue(false):StateValue(std::string()),""};
     modelTemplate.events["onactivate"]={"onActivate",{}}; modelTemplate.events["onback"]={"onBack",{}};
@@ -2891,8 +2891,8 @@ static void CheckNumberKeys() {
         runtime.menu.clear();pulse(K_SPACE);assert(runtime.menu.empty() && state().text=="1.25");
         // SDL omits Ctrl/Alt key events. Captured per-event modifiers remain
         // correct after the physical modifier has already been released.
-        const auto captured=[&](int key,bool down,openq4::KeyEventMetadata metadata){
-            auto bytes=openq4::EncodeKeyEventMetadata(metadata);sysEvent_t event{SE_KEY,key,down?1:0};
+        const auto captured=[&](int key,bool down,opend3::KeyEventMetadata metadata){
+            auto bytes=opend3::EncodeKeyEventMetadata(metadata);sysEvent_t event{SE_KEY,key,down?1:0};
             event.evPtr=bytes.data();event.evPtrLength=static_cast<int>(bytes.size());return gui.HandleEvent(&event,0,nullptr);
         };
         captured('a',true,{true,false,false,false});captured('a',false,{});

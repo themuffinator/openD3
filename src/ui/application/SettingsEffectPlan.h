@@ -3,7 +3,7 @@
 
 #include "SettingsValue.h"
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 // Versioned, read-only SYSTEM catalog projection. The effect bits match
 // SystemSettingEffect. No CVar, renderer, audio or persistence calls occur.
@@ -42,4 +42,4 @@ bool BuildSettingsEffectPlan(const StateValues& baseline, const StateValues& tar
 bool ValidateSettingsEffectPlan(const SettingsEffectPlan& plan, const StateValues& baseline,
 	const StateValues& target, const std::map<std::string,std::size_t>& catalog, std::string& error);
 
-} // namespace openq4::ui
+} // namespace opend3::ui

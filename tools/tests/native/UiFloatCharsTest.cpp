@@ -24,7 +24,7 @@
 #if defined(__cpp_lib_to_chars) && __cpp_lib_to_chars >= 201611L && !defined(UI_FLOAT_CHARS_LIBC_ORACLE)
 #define TEST_STD_ORACLE 1
 #endif
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks;
 #define CHECK(x) do{++checks;if(!(x)){std::fprintf(stderr,"FAIL %d: %s\n",__LINE__,#x);std::exit(1);}}while(false)
 #define CHECK_TEXT(x,got,want) do{++checks;if(!(x)){std::fprintf(stderr,"FAIL %d: %s\n  got  %s\n  want %s\n",__LINE__,#x,std::string(got).c_str(),std::string(want).c_str());std::exit(1);}}while(false)

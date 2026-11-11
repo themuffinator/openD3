@@ -13,7 +13,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 JAVA = r'''
-package com.darkmatter.openq4;
+package com.darkmatter.opend3;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.FileTime;
@@ -34,7 +34,7 @@ public final class PrivateExportTest {
     static void available()throws Exception {Object owner=StorageSession.INSTANCE.beginSetup();StorageSession.INSTANCE.endSetup(owner);}
     static void write(Path path,byte[] bytes)throws Exception {Files.createDirectories(path.getParent());Files.write(path,bytes);}
     static void noTemporary(Path cache)throws Exception {
-        Path work=cache.resolve("openq4-exports");
+        Path work=cache.resolve("opend3-exports");
         if(Files.exists(work))try(var files=Files.list(work)) {
             require(files.noneMatch(file->file.getFileName().toString().startsWith("export-")),"abandoned private snapshot");
         }
@@ -42,16 +42,16 @@ public final class PrivateExportTest {
     public static void main(String[] args)throws Exception {
         Path root=Path.of(args[0]),files=root.resolve("private"),cache=root.resolve("cache");
         byte[] save=new byte[180000];new Random(42).nextBytes(save);
-        Path source=files.resolve("saves/baseoq4/savegames/Campaign.save");write(source,save);
-        write(files.resolve("saves/baseoq4/savegames/Campaign.txt"),"Saved mission".getBytes());
-        write(files.resolve("saves/baseoq4/savegames/Campaign.tga"),new byte[]{1,2,3});
+        Path source=files.resolve("saves/baseod3/savegames/Campaign.save");write(source,save);
+        write(files.resolve("saves/baseod3/savegames/Campaign.txt"),"Saved mission".getBytes());
+        write(files.resolve("saves/baseod3/savegames/Campaign.tga"),new byte[]{1,2,3});
         write(files.resolve("saves/q4xbase/savegames/été.save"),"Awakening save".getBytes(java.nio.charset.StandardCharsets.UTF_8));
-        write(files.resolve("saves/baseoq4/logs/openq4.log"),"diagnostic log\n".getBytes());
-        write(files.resolve("saves/baseoq4/logs/fatal.txt"),"fatal details\n".getBytes());
-        write(files.resolve("saves/baseoq4/openq4.cfg"),"private settings not selected".getBytes());
+        write(files.resolve("saves/baseod3/logs/opend3.log"),"diagnostic log\n".getBytes());
+        write(files.resolve("saves/baseod3/logs/fatal.txt"),"fatal details\n".getBytes());
+        write(files.resolve("saves/baseod3/opend3.cfg"),"private settings not selected".getBytes());
         write(files.resolve("packages/keep.pk4"),"not game saves".getBytes());
-        Path keep=cache.resolve("openq4-exports/keep.txt");write(keep,"unrelated cache".getBytes());
-        Path abandoned=cache.resolve("openq4-exports/export-abandoned.zip.part");write(abandoned,new byte[100]);
+        Path keep=cache.resolve("opend3-exports/keep.txt");write(keep,"unrelated cache".getBytes());
+        Path abandoned=cache.resolve("opend3-exports/export-abandoned.zip.part");write(abandoned,new byte[100]);
         List<Long> progress=new ArrayList<>();
         PrivateExport.Snapshot snapshot=PrivateExport.create(files.toFile(),cache.toFile(),PrivateExport.Kind.SAVES,
             (name,done,count,bytes,total)->{require(bytes<=total && done<=count,"invalid progress");progress.add(bytes);return true;});
@@ -62,9 +62,9 @@ public final class PrivateExportTest {
         try{StorageSession.INSTANCE.beginSetup();throw new AssertionError("import overlapped a live export");}catch(StorageSession.Busy expected){}
         Files.copy(snapshot.file.toPath(),root.resolve("saves.zip"));
         try(ZipFile archive=new ZipFile(snapshot.file)) {
-            require(archive.size()==5 && archive.getEntry("baseoq4/openq4.cfg")==null && archive.getEntry("baseoq4/logs/openq4.log")==null,
+            require(archive.size()==5 && archive.getEntry("baseod3/opend3.cfg")==null && archive.getEntry("baseod3/logs/opend3.log")==null,
                 "save export included unrelated data");
-            require(Arrays.equals(archive.getInputStream(archive.getEntry("baseoq4/savegames/Campaign.save")).readAllBytes(),save),"save bytes changed");
+            require(Arrays.equals(archive.getInputStream(archive.getEntry("baseod3/savegames/Campaign.save")).readAllBytes(),save),"save bytes changed");
         }
         snapshot.close();snapshot.close();available();noTemporary(cache);
         try(PrivateExport.Snapshot logs=PrivateExport.create(files.toFile(),cache.toFile(),PrivateExport.Kind.LOGS,null)) {
@@ -72,7 +72,7 @@ public final class PrivateExportTest {
         }
         available();noTemporary(cache);
         Object diagnosticsOwner=StorageSession.INSTANCE.beginSetup();
-        Path diagnostic=files.resolve("saves/baseoq4/logs/setup.log");
+        Path diagnostic=files.resolve("saves/baseod3/logs/setup.log");
         try {
             IOException firstCause=new IOException("provider failure\n"+"é".repeat(8192));
             IOException secondCause=new IOException("nested cause",firstCause);firstCause.initCause(secondCause);
@@ -122,7 +122,7 @@ public final class PrivateExportTest {
         write(deep.resolve("depth.save"),new byte[1]);
         failure(PrivateExport.Code.LIMIT,()->PrivateExport.create(files.toFile(),cache.toFile(),PrivateExport.Kind.SAVES,null));
         Files.delete(deep.resolve("depth.save"));for(int i=0;i<18;++i){Files.delete(deep);deep=deep.getParent();}Files.delete(deep);Files.delete(deep.getParent());available();
-        Path obstruction=cache.resolve("openq4-exports/export-directory.zip.part");write(obstruction.resolve("keep.txt"),new byte[]{7});
+        Path obstruction=cache.resolve("opend3-exports/export-directory.zip.part");write(obstruction.resolve("keep.txt"),new byte[]{7});
         failure(PrivateExport.Code.CACHE_UNAVAILABLE,()->PrivateExport.create(files.toFile(),cache.toFile(),PrivateExport.Kind.SAVES,null));
         require(Files.readAllBytes(obstruction.resolve("keep.txt"))[0]==7,"cleanup recursively deleted an unexpected directory");
         Files.delete(obstruction.resolve("keep.txt"));Files.delete(obstruction);available();
@@ -136,10 +136,10 @@ public final class PrivateExportTest {
             failure(PrivateExport.Code.UNSAFE_PATH,()->PrivateExport.create(files.toFile(),cache.toFile(),PrivateExport.Kind.SAVES,null));Files.delete(link);available();
             Path reserved=source.resolveSibling("CON.save");Files.writeString(reserved,"reserved");
             failure(PrivateExport.Code.UNSAFE_PATH,()->PrivateExport.create(files.toFile(),cache.toFile(),PrivateExport.Kind.SAVES,null));Files.delete(reserved);available();
-            Path staleLink=cache.resolve("openq4-exports/export-link.zip.part");Files.createSymbolicLink(staleLink,source);
+            Path staleLink=cache.resolve("opend3-exports/export-link.zip.part");Files.createSymbolicLink(staleLink,source);
             failure(PrivateExport.Code.UNSAFE_PATH,()->PrivateExport.create(files.toFile(),cache.toFile(),PrivateExport.Kind.SAVES,null));Files.delete(staleLink);available();
-            Path linkedFiles=root.resolve("linked-diagnostics");Files.createDirectories(linkedFiles.resolve("saves/baseoq4"));
-            Files.createSymbolicLink(linkedFiles.resolve("saves/baseoq4/logs"),diagnostic.getParent());
+            Path linkedFiles=root.resolve("linked-diagnostics");Files.createDirectories(linkedFiles.resolve("saves/baseod3"));
+            Files.createSymbolicLink(linkedFiles.resolve("saves/baseod3/logs"),diagnostic.getParent());
             byte[] previousLog=Files.readAllBytes(diagnostic);
             Object owner=StorageSession.INSTANCE.beginSetup();
             try{require(!SetupDiagnostics.record(linkedFiles.toFile(),"must not escape",null),"diagnostics followed link");}
@@ -161,15 +161,15 @@ public final class PrivateExportTest {
 def verify_archive(path: Path, kind: str) -> None:
     with zipfile.ZipFile(path) as archive:
         assert archive.testzip() is None
-        manifest = archive.read('openq4-export.tsv').decode('utf-8').splitlines()
-        assert manifest[0] == f'openQ4-export-v1\t{kind}'
+        manifest = archive.read('opend3-export.tsv').decode('utf-8').splitlines()
+        assert manifest[0] == f'openD3-export-v1\t{kind}'
         indexed = set()
         for row in manifest[1:]:
             digest, size, name = row.split('\t')
             contents = archive.read(name)
             assert hashlib.sha256(contents).hexdigest() == digest and len(contents) == int(size)
             indexed.add(name)
-        assert indexed | {'openq4-export.tsv'} == set(archive.namelist())
+        assert indexed | {'opend3-export.tsv'} == set(archive.namelist())
 
 
 def main() -> None:
@@ -188,10 +188,10 @@ def main() -> None:
         classes.mkdir()
         javac = Path(args.javac).resolve()
         java = javac.with_name('java.exe' if os.name == 'nt' else 'java')
-        production = ROOT/'mobile/android/app/src/main/java/com/darkmatter/openq4'
+        production = ROOT/'mobile/android/app/src/main/java/com/darkmatter/opend3'
         subprocess.run([str(javac), '--release', '17', '-encoding', 'UTF-8', '-d', str(classes), str(source),
                         str(production/'PrivateExport.java'), str(production/'StorageSession.java'), str(production/'SetupDiagnostics.java')], check=True)
-        subprocess.run([str(java), '-cp', str(classes), 'com.darkmatter.openq4.PrivateExportTest', str(scratch)], check=True)
+        subprocess.run([str(java), '-cp', str(classes), 'com.darkmatter.opend3.PrivateExportTest', str(scratch)], check=True)
         verify_archive(scratch/'saves.zip', 'saves')
         verify_archive(scratch/'logs.zip', 'logs')
         verify_archive(scratch/'diagnostics.zip', 'logs')

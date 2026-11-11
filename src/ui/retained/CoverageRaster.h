@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace openq4::ui {
+namespace opend3::ui {
 struct CoverageBitmap {
 	int x=0, y=0, width=0, height=0;
 	std::vector<unsigned char> pixels;
@@ -57,4 +57,4 @@ inline bool RasterizeCoverage(const std::vector<Vertex>& vertices, const std::ve
 	}
 	result=std::move(bitmap); return true;
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

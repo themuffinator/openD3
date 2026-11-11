@@ -57,7 +57,7 @@ def main() -> None:
     require(common, '#include "../render_geo/RenderGeometry.h"', "common render-geometry dependency")
     require(
         common,
-        "#ifdef OPENQ4_RENDERER_MODULE_ONLY\n"
+        "#ifdef OPEND3_RENDERER_MODULE_ONLY\n"
         "// The executable and renderer module each link their own render-geometry\n"
         "// library. Track ownership of the executable copy used by offline tools.\n"
         "static bool commonOwnsRenderGeoTriSurfData;\n"
@@ -67,7 +67,7 @@ def main() -> None:
 
     require(
         init_game,
-        "#ifdef OPENQ4_RENDERER_MODULE_ONLY\n"
+        "#ifdef OPEND3_RENDERER_MODULE_ONLY\n"
         "\tif ( !commonOwnsRenderGeoTriSurfData ) {\n"
         "\t\tR_InitTriSurfData();\n"
         "\t\tcommonOwnsRenderGeoTriSurfData = true;\n"
@@ -79,7 +79,7 @@ def main() -> None:
 
     require(
         shutdown_game,
-        "#ifdef OPENQ4_RENDERER_MODULE_ONLY\n"
+        "#ifdef OPEND3_RENDERER_MODULE_ONLY\n"
         "\tif ( commonOwnsRenderGeoTriSurfData ) {\n"
         "\t\tR_ShutdownTriSurfData();\n"
         "\t\tcommonOwnsRenderGeoTriSurfData = false;\n"

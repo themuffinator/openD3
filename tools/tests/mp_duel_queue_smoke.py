@@ -23,8 +23,8 @@ class DuelQueueRun:
         self.args = args
         self.runtime, self.output = args.runtime_dir.resolve(), args.output_dir.resolve()
         verify_runtime_is_current(self.runtime, getattr(args, "executable_name", ""))
-        self.games = {role: self.output / role / "baseoq4" for role in ROLES}
-        self.logs = {role: game / "logs/openq4.log" for role, game in self.games.items()}
+        self.games = {role: self.output / role / "baseod3" for role in ROLES}
+        self.logs = {role: game / "logs/opend3.log" for role, game in self.games.items()}
         self.loops, self.processes, self.streams = {}, {}, []
         self.command_numbers = {role: 0 for role in ROLES}
         self.operation, self.stage = 0, "initialization"
@@ -42,7 +42,7 @@ class DuelQueueRun:
             self.loops[role] = game / "duel_queue_commands.cfg"
             write_script(self.loops[role], ["// Waiting for the first operation."])
             write_script(game / "duel_queue_pump.cfg", ["exec duel_queue_commands.cfg", "waitMsec 250",
-                         "openq4_reportMPState", "vstr oq4_duel_queue_pump"])
+                         "opend3_reportMPState", "vstr oq4_duel_queue_pump"])
             self.start_script(role, "MP_DUEL_QUEUE_LOADED")
 
     def start_script(self, role, marker):
@@ -58,13 +58,13 @@ class DuelQueueRun:
         cvars = {
             "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
             "fs_basepath": str(a.basepath.resolve()), "fs_savepath": str(self.games[role].parent),
-            "fs_devpath": str(self.games[role].parent), "fs_game": "baseoq4", "com_gameMode": "MP",
+            "fs_devpath": str(self.games[role].parent), "fs_game": "baseod3", "com_gameMode": "MP",
             "r_fullscreen": "0", "r_borderless": "0", "r_fullscreenDesktop": "0",
             "r_borderlessDefaultMigrated": "1", "r_mode": "-1", "r_customWidth": str(a.width),
             "r_customHeight": str(a.height), "r_windowWidth": str(a.width), "r_windowHeight": str(a.height),
             "r_hiddenWindow": "1", "in_mouse": "0", "in_joystick": "0", "s_noSound": "1",
             "r_renderApi": a.renderer, "com_maxfps": "60", "r_swapInterval": "0", "logFile": "2",
-            "logFileName": "logs/openq4.log", "developer": "1", "ui_autoJoin": "1",
+            "logFileName": "logs/opend3.log", "developer": "1", "ui_autoJoin": "1",
             # The smoke drives and captures the stock in-match menu, which the
             # retained Escape card would cover.
             "ui_retained": "0",
@@ -94,7 +94,7 @@ class DuelQueueRun:
         until = min(self.deadline, time.monotonic() + timeout)
         while time.monotonic() < until:
             texts = {role: read_log(path) for role, path in self.logs.items()}
-            if re.search(r"FATAL ERROR|ERROR:|Unknown command|usage: openq4_guiSet|rejected match.*transition",
+            if re.search(r"FATAL ERROR|ERROR:|Unknown command|usage: opend3_guiSet|rejected match.*transition",
                          "\n".join(texts.values())):
                 raise RuntimeError("engine or diagnostic failure during " + label)
             if any(p.poll() is not None for p in self.processes.values()):
@@ -118,8 +118,8 @@ class DuelQueueRun:
 
     def perform(self, role, label, actions):
         begin, end = f"MP_DUEL_QUEUE_BEGIN_{self.operation + 1}", f"MP_DUEL_QUEUE_END_{self.operation + 1}"
-        self.inject(role, ["echo " + begin, *actions, "openq4_reportMPState",
-                           "openq4_matchControl report", "echo " + end])
+        self.inject(role, ["echo " + begin, *actions, "opend3_reportMPState",
+                           "opend3_matchControl report", "echo " + end])
         texts = self.wait(label, lambda values: re.search(r"\n" + end + r"(?:\s|$)", values[role]))
         section = re.split(r"\n" + begin + r"(?:\s|$)", texts[role], maxsplit=1)[-1]
         return re.split(r"\n" + end + r"(?:\s|$)", section, maxsplit=1)[0]
@@ -147,10 +147,10 @@ class DuelQueueRun:
         self.shots.append(self.games[role] / "screenshots" / (name + ".tga"))
 
     def open_match_control(self, role):
-        return self.perform(role, role + " Match Control", ["openq4_assertMenuActivation 4000 game reopen", "waitMsec 1500",
-            "openq4_guiSet desktop::active 1", "openq4_guiSet desktop::dest 21",
+        return self.perform(role, role + " Match Control", ["opend3_assertMenuActivation 4000 game reopen", "waitMsec 1500",
+            "opend3_guiSet desktop::active 1", "opend3_guiSet desktop::dest 21",
             "GuiEvent hideMain", "GuiEvent chooseCurr", "GuiEvent resetMain0", "waitMsec 1500",
-            "openq4_guiSet desktop::match_tab 0", "waitMsec 350", "openq4_guiGet match_status_values::text"])
+            "opend3_guiSet desktop::match_tab 0", "waitMsec 350", "opend3_guiGet match_status_values::text"])
 
     def assert_last_result(self, role):
         text = self.open_match_control(role)
@@ -183,14 +183,14 @@ class DuelQueueRun:
             raise RuntimeError("third arrival displaced a seated contestant")
         self.screenshot("challenger", "queued")
         for repeat in range(2):
-            self.perform("challenger", "duplicate queue join", ["openq4_matchControl action queue_join", "waitMsec 750"])
+            self.perform("challenger", "duplicate queue join", ["opend3_matchControl action queue_join", "waitMsec 750"])
             duplicate = self.view("challenger", "duplicate-" + str(repeat))
             if (duplicate["participant"] != initial["participant"] or duplicate["active"] or
                     not duplicate["has_queue_position"] or duplicate["queue_position"] != 1 or
                     self.active_slots(duplicate) != {0, 1}):
                 raise RuntimeError("duplicate queue join changed the waiting player's seat or place")
-        self.perform("host", "force ready", ["openq4_matchControl action arm_force_ready", "waitMsec 100",
-                     "openq4_matchControl action confirm"])
+        self.perform("host", "force ready", ["opend3_matchControl action arm_force_ready", "waitMsec 100",
+                     "opend3_matchControl action confirm"])
         self.wait("live Duel", lambda t: re.search(r"phase=3 session_phase=3", self.current(t["host"])))
         self.view("client", "live", lambda v: v["phase"] == 3 and v["active"])
         winner_slot = 0 if self.args.winner_role == "host" else 1
@@ -201,8 +201,8 @@ class DuelQueueRun:
         scores = self.wait("remote player leads", lambda t:
             re.search(rf"MP_PLAYER slot={winner_slot} .*score=-1 ", self.current(t["host"])) and
             re.search(rf"MP_PLAYER slot={forfeiter_slot} .*score=0 ", self.current(t["host"])))
-        self.perform(forfeiter_role, "leading contestant forfeit", ["openq4_matchControl action arm_forfeit",
-                     "waitMsec 100", "openq4_matchControl action confirm"])
+        self.perform(forfeiter_role, "leading contestant forfeit", ["opend3_matchControl action arm_forfeit",
+                     "waitMsec 100", "opend3_matchControl action confirm"])
         for role in ROLES:
             review = self.view(role, "review", lambda v: v["phase"] == 5)
             if self.active_slots(review) != {0, 1}:
@@ -214,7 +214,7 @@ class DuelQueueRun:
                     review["result"]["winner_name"] != self.args.winner_name):
                 raise RuntimeError("accepted terminal forfeit outcome lost its actual winner")
             summary = self.perform(role, "actual forfeit summary", [
-                "openq4_guiGet summary_result::text"])
+                "opend3_guiGet summary_result::text"])
             if f'GUI_VALUE summary_result::text={self.args.winner_name} wins!' not in summary or "Match forfeited" not in summary:
                 raise RuntimeError("summary did not display the frozen winner and forfeit")
             self.screenshot(role, "review")
@@ -273,8 +273,8 @@ class DuelQueueRun:
                 raise RuntimeError("late joining replacement changed the departed winner's result")
             self.assert_last_result("client")
             self.screenshot("client", "late-join")
-        self.perform("host", "next match countdown", ["openq4_matchControl action arm_force_ready",
-                     "waitMsec 100", "openq4_matchControl action confirm"])
+        self.perform("host", "next match countdown", ["opend3_matchControl action arm_force_ready",
+                     "waitMsec 100", "opend3_matchControl action confirm"])
         for role in ROLES:
             fresh = self.view(role, "next-result-cleared", lambda v: v["phase"] in (2, 3))
             if (fresh["result"]["outcome"] != 0 or fresh["result"]["revision"] != 0 or
@@ -326,7 +326,7 @@ class DuelQueueRun:
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
-    parser.add_argument("--executable-name", default="openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    parser.add_argument("--executable-name", default="openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     parser.add_argument("--output-dir", type=Path, default=ROOT / ".tmp/mp-duel-queue-smoke")
     parser.add_argument("--basepath", type=Path, default=Path(r"C:\Program Files (x86)\Steam\steamapps\common\Quake 4"))
     parser.add_argument("--timeout", type=int, default=300)

@@ -31,11 +31,11 @@ static idStr savepath;
 static std::map<std::string,std::string> environment;
 static const char* TestGetenv(const char* name){auto i=environment.find(name);return i==environment.end()?nullptr:i->second.c_str();}
 #define getenv TestGetenv
-static const char* internalStorage="/data/user/0/com.darkmatter.openq4/files";
+static const char* internalStorage="/data/user/0/com.darkmatter.opend3/files";
 static const char* SDL_GetAndroidInternalStoragePath(){return internalStorage;}
 static const char* Posix_Cwd(){return "/legacy-cwd";}
 static constexpr int MAX_OSPATH=1024;
-static const char* OPENQ4_GAMEDIR="baseoq4";
+static const char* OPEND3_GAMEDIR="baseod3";
 static char posix_fatalBreadcrumbPath[MAX_OSPATH];
 static std::vector<std::string> created;
 static void Sys_Mkdir(const char* path){created.emplace_back(path);}
@@ -43,23 +43,23 @@ static void Sys_Mkdir(const char* path){created.emplace_back(path);}
 MAIN = r'''
 static void reset(){
     savepath.clear();environment.clear();created.clear();posix_fatalBreadcrumbPath[0]='\0';
-    internalStorage="/data/user/0/com.darkmatter.openq4/files";
+    internalStorage="/data/user/0/com.darkmatter.opend3/files";
 }
 int main(){try {
-    for(const char* root:{"/data/user/0/com.darkmatter.openq4/files/saves", "/private/player saves///", "/"}){
-        reset();environment[OPENQ4_ANDROID_SAVE_ROOT_ENV]=root;environment["USER_FILES"]="/legacy";
+    for(const char* root:{"/data/user/0/com.darkmatter.opend3/files/saves", "/private/player saves///", "/"}){
+        reset();environment[OPEND3_ANDROID_SAVE_ROOT_ENV]=root;environment["USER_FILES"]="/legacy";
         std::string expected=root;while(expected.size()>1 && expected.back()=='/')expected.pop_back();
         require(Sys_DefaultSavePath()==expected,"explicit save root did not win over legacy/default paths");
         Posix_InitFatalBreadcrumbPath();
-        std::string directory=expected+(expected.back()=='/'?"":"/")+"baseoq4";
+        std::string directory=expected+(expected.back()=='/'?"":"/")+"baseod3";
         require(posix_fatalBreadcrumbPath==directory+"/logs/fatal.txt","fatal report is outside the selected save root");
         require(created==std::vector<std::string>{directory,directory+"/logs"},"fatal directory creation changed");
-        environment[OPENQ4_ANDROID_SAVE_ROOT_ENV]="/different";
+        environment[OPEND3_ANDROID_SAVE_ROOT_ENV]="/different";
         require(Sys_DefaultSavePath()==expected,"cached save path moved during the same engine instance");
         Posix_InitFatalBreadcrumbPath();require(created.size()==2,"cached fatal path repeated initialization");
     }
     for(const char* invalid:{"", "relative/saves", "content://external/tree/saves"}){
-        reset();environment[OPENQ4_ANDROID_SAVE_ROOT_ENV]=invalid;environment["USER_FILES"]="/legacy///";
+        reset();environment[OPEND3_ANDROID_SAVE_ROOT_ENV]=invalid;environment["USER_FILES"]="/legacy///";
         require(std::string(Sys_DefaultSavePath())=="/legacy/quake4","invalid explicit path bypassed the legacy host");
     }
     reset();environment["USER_FILES"]="/legacy";
@@ -76,7 +76,7 @@ int main(){try {
 
 def source():
     header = (ROOT/'src/sys/android/android_public.h').read_text()
-    constant = re.search(r'^#define OPENQ4_ANDROID_SAVE_ROOT_ENV\s+"[^"]+"', header, re.M)
+    constant = re.search(r'^#define OPEND3_ANDROID_SAVE_ROOT_ENV\s+"[^"]+"', header, re.M)
     if not constant:
         raise RuntimeError('Android save-root environment contract is missing')
     return (SUPPORT + '\n' + constant.group() + '\n'

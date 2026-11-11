@@ -7,7 +7,7 @@ code as released under the GNU GPL version 3, the same licence as the engine.
 
 ## Import
 
-- Source: [OpenD3-GameLibs at `c450f9c`](https://github.com/themuffinator/OpenD3-GameLibs/tree/c450f9c),
+- Source: [openD3-GameLibs at `c450f9c`](https://github.com/themuffinator/openD3-GameLibs/tree/c450f9c),
   the companion repository openD3 used before the game library moved in-tree.
 - `src/game/` and `src/d3xp/` were imported at their existing paths without
   source edits, so their relative includes resolve against this repository's

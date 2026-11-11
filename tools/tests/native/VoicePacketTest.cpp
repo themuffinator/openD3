@@ -1,4 +1,4 @@
-// Copyright (C) 2026 openQ4 contributors. SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 openD3 contributors. SPDX-License-Identifier: GPL-3.0-or-later
 #include "src/sound/VoicePacket.h"
 #include "src/framework/async/VoiceTransport.h"
 #include <cmath>

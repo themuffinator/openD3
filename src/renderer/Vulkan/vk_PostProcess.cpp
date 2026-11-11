@@ -43,7 +43,7 @@
 ===============================================================================
 */
 
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
@@ -1897,7 +1897,7 @@ static int VK_Post_CompareMotionEntityHistory( const void *a, const void *b ) {
 // exactly (rigid or posed, the view weapon included), sorted for lookups.
 static void VK_Post_UpdateTemporalMotionEntityHistory( const viewDef_t *viewDef,
 		idList<vkPostMotionEntityHistory_t> &history, idList<vkPostMotionEntityHistory_t> &nextHistory ) {
-	// openQ4: keep the storage; Clear() made every frame regrow both lists
+	// openD3: keep the storage; Clear() made every frame regrow both lists
 	nextHistory.SetNum( 0, false );
 	for ( int i = 0; i < viewDef->numDrawSurfs; i++ ) {
 		const drawSurf_t *surf = viewDef->drawSurfs[ i ];
@@ -3815,4 +3815,4 @@ bool VK_PostProcess_DrawDebugView( const viewDef_t *viewDef, int mode ) {
 	return true;
 }
 
-#endif /* OPENQ4_RENDERER_VK_MODULE */
+#endif /* OPEND3_RENDERER_VK_MODULE */

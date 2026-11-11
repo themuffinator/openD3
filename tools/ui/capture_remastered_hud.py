@@ -70,7 +70,7 @@ def in_vehicle(vehicle):
         # A map's opening objective notice hides vehicle HUDs for 5 s.
         'set g_autoExecAfterMapLoad ""', 'notarget', 'god', 'waitMsec 9000',
         # Driving off closes a notice the player has not moved away from (64 u).
-        f'script "$player1.enterVehicle(${vehicle})"', 'openq4_testInput 1500 forward 127', 'waitMsec 700', shot('veh-enter'),
+        f'script "$player1.enterVehicle(${vehicle})"', 'opend3_testInput 1500 forward 127', 'waitMsec 700', shot('veh-enter'),
         'waitMsec 1700', shot('veh-line1'), 'waitMsec 700', shot('veh-line2'),
         *hud(gui, 'event vehicleHit'), 'waitMsec 60', shot('veh-hit'),
         *hud(gui, 'event electricWarningOn'), 'waitMsec 150', shot('veh-elec'), *hud(gui, 'event electricWarningOff'),
@@ -140,7 +140,7 @@ def mcc_cannon():
 
 
 def chaingun_turret():
-    """openQ4's HUD for the Awakening's chaingun turret (guis/vehicles/turret_hud.gui):
+    """openD3's HUD for the Awakening's chaingun turret (guis/vehicles/turret_hud.gui):
     the player boards m01's trench turret through enterVehicle and the gun's own
     fire heats it, past the warning level and then its limit; the script's
     setHealth gives the gunner low health, which god mode then keeps."""
@@ -148,12 +148,12 @@ def chaingun_turret():
     return [
         'set g_autoExecAfterMapLoad ""', 'notarget', 'god', 'waitMsec 2500',
         'script "$player1.enterVehicle($vehicle_q4x_turret_chaingun_1)"', 'waitMsec 2000', shot('chaingun'),
-        'openq4_testInput 7000 attack', 'waitMsec 2500', shot('chaingun-warm'),
+        'opend3_testInput 7000 attack', 'waitMsec 2500', shot('chaingun-warm'),
         'waitMsec 1800', shot('chaingun-hot'), 'waitMsec 1400', shot('chaingun-overheat'), 'waitMsec 3000',
         'script "$player1.setHealth( 20 );"', *hud(gui, 'state rhinochatter 1', 'event radioChatterUp'), 'waitMsec 700',
         shot('chaingun-low'),
         *hud(gui, 'event radioChatterDown'),
-        'openq4_testInput 4500 attack', 'waitMsec 4300',
+        'opend3_testInput 4500 attack', 'waitMsec 4300',
         'set ui_hudLayout 0', 'waitMsec 300', shot('chaingun-classic'), 'set ui_hudLayout 1', 'waitMsec 400', shot('chaingun-restored'),
         'set ui_hudLayout 2', 'waitMsec 400', shot('chaingun-minimal'), 'set ui_hudLayout 1',
     ]
@@ -168,7 +168,7 @@ def speeder():
     return [
         'set g_autoExecAfterMapLoad ""', 'notarget', 'god', 'waitMsec 6000', shot('speeder'),
         *hud(gui, 'event showprogress30'), 'waitMsec 200', shot('speeder-progress'),
-        'openq4_testInput 300 crouch', 'waitMsec 450', shot('speeder-boost'), 'waitMsec 900', shot('speeder-boost-full'),
+        'opend3_testInput 300 crouch', 'waitMsec 450', shot('speeder-boost'), 'waitMsec 900', shot('speeder-boost-full'),
         'waitMsec 2400', shot('speeder-recharge'),
         'script "AREA1_TIME_EXPIRED = sys.getTime() + 9.6"', 'waitMsec 500', shot('speeder-last10'),
         *hud(gui, 'state rhinochatter 1', 'event radioChatterUp'), 'waitMsec 700', shot('speeder-radio'),
@@ -202,8 +202,8 @@ def gev():
         'damage gev 4', 'waitMsec 300', shot('gev-shields'),
         'god', 'waitMsec 100', 'damage gev 306', 'waitMsec 100', 'god', 'waitMsec 200', shot('gev-hull'),
         'waitMsec 500', shot('gev-pulse'),
-        'openq4_testInput 100 impulse 1', 'waitMsec 600', shot('gev-mgun'),
-        'openq4_testInput 100 impulse 0', 'waitMsec 600', 'openq4_testInput 200 attack', 'waitMsec 450', shot('gev-charge'),
+        'opend3_testInput 100 impulse 1', 'waitMsec 600', shot('gev-mgun'),
+        'opend3_testInput 100 impulse 0', 'waitMsec 600', 'opend3_testInput 200 attack', 'waitMsec 450', shot('gev-charge'),
     ]
 
 
@@ -255,7 +255,7 @@ def objectives(gui):
     GUI's own events."""
     return [
         'set g_autoExecAfterMapLoad ""', 'notarget', 'god', 'waitMsec 7000', shot('obj-start'),
-        'waitMsec 5000', 'openq4_testInput 2000 scores', 'waitMsec 700', shot('obj-display'), 'waitMsec 1600',
+        'waitMsec 5000', 'opend3_testInput 2000 scores', 'waitMsec 700', shot('obj-display'), 'waitMsec 1600',
         *hud(gui, 'state oq4_new_title "Destroy the three Strogg communication relays before the convoy leaves"',
              'state oq4_new_shot gfx/objectives/none', 'event newObjective'), 'waitMsec 400', shot('obj-new'),
         *hud(gui, 'state oq4_done_title "Reach the hangar control room"', 'event newObjectiveComplete'), 'waitMsec 400',
@@ -273,10 +273,10 @@ def objectives_toggle():
     press."""
     return [
         'set g_autoExecAfterMapLoad ""', 'notarget', 'god', 'set g_objectivesToggle 1', 'waitMsec 12000',
-        'openq4_testInput 150 scores', 'waitMsec 1500', shot('obj-toggle-open'),
-        'openq4_testInput 150 scores', 'waitMsec 700', shot('obj-toggle-closed'),
-        'set ui_hudLayout 0', 'openq4_testInput 150 scores', 'waitMsec 1000', shot('obj-toggle-classic'),
-        'openq4_testInput 150 scores', 'waitMsec 300', 'set ui_hudLayout 1', 'set g_objectivesToggle 0',
+        'opend3_testInput 150 scores', 'waitMsec 1500', shot('obj-toggle-open'),
+        'opend3_testInput 150 scores', 'waitMsec 700', shot('obj-toggle-closed'),
+        'set ui_hudLayout 0', 'opend3_testInput 150 scores', 'waitMsec 1000', shot('obj-toggle-classic'),
+        'opend3_testInput 150 scores', 'waitMsec 300', 'set ui_hudLayout 1', 'set g_objectivesToggle 0',
     ]
 
 
@@ -314,16 +314,16 @@ def glyph_stages():
 
 def summary_stages(name, play):
     """Bots play until the match ends, then the summary: a chat line, the
-    chat field typing (openq4_summaryChat), then its SCOREBOARD and
+    chat field typing (opend3_summaryChat), then its SCOREBOARD and
     STATISTICS tabs in turn, the retained card's through its tab events and
     the stock summary's as a click would (each command does nothing to the
     other)."""
     return [
         'set g_autoExecAfterMapLoad ""', 'waitMsec 2500', *play, 'say Good game everyone, see you on the next map', 'waitMsec 600',
         shot(f'summary-{name}'),
-        'openq4_summaryChat Rematch on Phrantic?', 'waitMsec 400', shot(f'summary-{name}-typing'), 'openq4_summaryChat stop',
-        'openq4_guiAction b_score', 'openq4_retainedGui event tab_scoreboard', 'waitMsec 500', shot(f'summary-{name}-scoreboard'),
-        'openq4_guiAction b_stats', 'openq4_retainedGui event tab_statistics', 'waitMsec 500', shot(f'summary-{name}-stats'),
+        'opend3_summaryChat Rematch on Phrantic?', 'waitMsec 400', shot(f'summary-{name}-typing'), 'opend3_summaryChat stop',
+        'opend3_guiAction b_score', 'opend3_retainedGui event tab_scoreboard', 'waitMsec 500', shot(f'summary-{name}-scoreboard'),
+        'opend3_guiAction b_stats', 'opend3_retainedGui event tab_statistics', 'waitMsec 500', shot(f'summary-{name}-stats'),
     ]
 
 
@@ -481,7 +481,7 @@ SCENARIOS = {
     # (deathmatch, Team DM), or a Clan Arena duel's single round ends with your
     # elimination (its round modes share Team DM's layout), held open by
     # g_gameReviewPause, with its SCOREBOARD and STATISTICS tabs opened as a
-    # click would (openq4_guiAction).
+    # click would (opend3_guiAction).
     'mp-summary': ('mp:mp/q4dm1', summary_stages('dm', ['addbot', 'addbot', 'addbot', 'waitMsec 120000'])),
     'mp-summary-team': ('mp:mp/q4dm1', summary_stages('team', ['addbot', 'addbot', 'addbot', 'waitMsec 150000'])),
     'mp-summary-ca': ('mp:mp/q4dm1', summary_stages('ca', ['addbot', 'waitMsec 20000', 'kill 0', 'waitMsec 15000'])),
@@ -554,12 +554,12 @@ def main() -> int:
             capture.SCENARIO_CVARS[scenario].update({'si_gameType': 'Tourney', 'si_maxPlayers': '16'})
         if scenario in ('mp-spectator', 'mp-competitive-spec'):
             capture.SCENARIO_CVARS[scenario]['si_warmup'] = '1'
-        # The Awakening's scenarios run its game directory over baseoq4.
-        args.game_dir = 'q4xbase' if scenario in AWAKENING else 'baseoq4'
+        # The Awakening's scenarios run its game directory over baseod3.
+        args.game_dir = 'q4xbase' if scenario in AWAKENING else 'baseod3'
         if scenario in AWAKENING:
             if not args.awakening:
                 parser.error(f'--awakening is required for {scenario}')
-            capture.SCENARIO_CVARS[scenario].update({'fs_awakeningpath': str(args.awakening.resolve()), 'fs_game_base': 'baseoq4',
+            capture.SCENARIO_CVARS[scenario].update({'fs_awakeningpath': str(args.awakening.resolve()), 'fs_game_base': 'baseod3',
                                                      'com_gameMode': 'SP', 'si_gameType': 'singleplayer',
                                                      'com_nextGameModule': 'game_sp'})
         result = capture.run(args, scenario)

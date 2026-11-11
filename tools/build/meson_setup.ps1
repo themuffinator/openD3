@@ -65,8 +65,8 @@ function Get-openD3VsTargetArch {
     if (-not [string]::IsNullOrWhiteSpace($env:OPEND3_VS_TARGET_ARCH)) {
         return $env:OPEND3_VS_TARGET_ARCH.Trim().ToLowerInvariant()
     }
-    if (-not [string]::IsNullOrWhiteSpace($env:OPENQ4_VS_TARGET_ARCH)) {
-        return $env:OPENQ4_VS_TARGET_ARCH.Trim().ToLowerInvariant()
+    if (-not [string]::IsNullOrWhiteSpace($env:OPEND3_VS_TARGET_ARCH)) {
+        return $env:OPEND3_VS_TARGET_ARCH.Trim().ToLowerInvariant()
     }
 
     return Get-openD3VsProcessArch
@@ -76,8 +76,8 @@ function Get-openD3VsHostArch {
     if (-not [string]::IsNullOrWhiteSpace($env:OPEND3_VS_HOST_ARCH)) {
         return $env:OPEND3_VS_HOST_ARCH.Trim().ToLowerInvariant()
     }
-    if (-not [string]::IsNullOrWhiteSpace($env:OPENQ4_VS_HOST_ARCH)) {
-        return $env:OPENQ4_VS_HOST_ARCH.Trim().ToLowerInvariant()
+    if (-not [string]::IsNullOrWhiteSpace($env:OPEND3_VS_HOST_ARCH)) {
+        return $env:OPEND3_VS_HOST_ARCH.Trim().ToLowerInvariant()
     }
 
     return Get-openD3VsProcessArch
@@ -293,7 +293,7 @@ function Test-GameSourcesRefreshNeeded {
     if ($null -eq $python) { $python = Get-Command python3 -ErrorAction SilentlyContinue }
     if ($null -eq $python) { throw "Python is required to check canonical game sources." }
     # Content and git-state drift only refresh the snapshot; a membership change reconfigures.
-    & $python.Source (Join-Path $RepoRoot "tools\build\game_source_inventory.py") $RepoRoot --refresh (Join-Path $BuildDir "openq4_game_sources.json") | Out-Null
+    & $python.Source (Join-Path $RepoRoot "tools\build\game_source_inventory.py") $RepoRoot --refresh (Join-Path $BuildDir "opend3_game_sources.json") | Out-Null
     return ($LASTEXITCODE -ne 0)
 }
 
@@ -635,11 +635,11 @@ if ($effectiveArgs.Length -gt 0 -and ($effectiveArgs[0] -eq "compile" -or $effec
     }
 }
 
-if ($commandName -eq "install" -and $env:OPENQ4_INSTALL_CLOSE_RUNNING -ne "0") {
+if ($commandName -eq "install" -and $env:OPEND3_INSTALL_CLOSE_RUNNING -ne "0") {
     Stop-openD3RuntimeProcesses -InstallRoot (Join-Path $repoRoot ".install") | Out-Null
 }
 
-if (@("setup", "compile", "install").Contains($commandName) -and $env:OPENQ4_SKIP_ICON_SYNC -ne "1") {
+if (@("setup", "compile", "install").Contains($commandName) -and $env:OPEND3_SKIP_ICON_SYNC -ne "1") {
     if (-not (Test-Path $syncIconsScript)) {
         throw "Icon sync script not found: '$syncIconsScript'."
     }
@@ -666,9 +666,9 @@ if ($commandName -eq "install") {
 Invoke-Meson -MesonArgs $effectiveArgs -VsDevCmdPath $vsDevCmd -MesonCommand $mesonCommand -VsTargetArch $vsTargetArch -VsHostArch $vsHostArch
 $exitCode = [int]$LASTEXITCODE
 
-if ($commandName -eq "install" -and $exitCode -ne 0 -and $env:OPENQ4_INSTALL_RETRY_ON_FAILURE -ne "0") {
+if ($commandName -eq "install" -and $exitCode -ne 0 -and $env:OPEND3_INSTALL_RETRY_ON_FAILURE -ne "0") {
     Write-Host "Meson install failed; retrying once..."
-    if ($env:OPENQ4_INSTALL_CLOSE_RUNNING -ne "0") {
+    if ($env:OPEND3_INSTALL_CLOSE_RUNNING -ne "0") {
         Stop-openD3RuntimeProcesses -InstallRoot (Join-Path $repoRoot ".install") | Out-Null
     }
     Start-Sleep -Milliseconds 500

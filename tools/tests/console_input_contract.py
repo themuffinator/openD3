@@ -181,10 +181,10 @@ def validate_registration() -> None:
     native_block = meson[meson.find("if get_option('build_native_tests')"):]
     native_block = native_block[: native_block.find("\nendif")]
     require(native_block, "'tools/tests/native/ConsoleInputTest.cpp'", "meson.build native tests")
-    require(native_block, "'openq4-console-input'", "meson.build native tests")
+    require(native_block, "'opend3-console-input'", "meson.build native tests")
 
-    validator = read("tools/validation/openq4_validate.py")
-    require(validator, '"console_input_contract.py"', "openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
+    require(validator, '"console_input_contract.py"', "opend3_validate.py")
 
 
 def main() -> None:

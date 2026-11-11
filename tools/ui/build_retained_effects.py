@@ -7,7 +7,7 @@ def product(*args): return {'op':'*','args':list(args)}
 def state(name): return {'state':name}
 
 def document():
-    doc=ui.Document('openq4.view-effects')
+    doc=ui.Document('opend3.view-effects')
     for name in ('recovery_amount','death_amount','death_shock','death_focus','death_tunnel',
                  'crash_focus','crash_lids','wheel_amount'):
         doc.state[name]={'type':'number','initial':0}

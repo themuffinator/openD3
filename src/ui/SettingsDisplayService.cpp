@@ -7,8 +7,8 @@
 #include <cmath>
 #include <limits>
 
-using namespace openq4;
-using namespace openq4::ui;
+using namespace opend3;
+using namespace opend3::ui;
 bool EngineSettingsDisplayHost::SupportsMultisampling() const {
 	rendererDisplayState_t state{};
 	if (!R_RendererModule_QueryDisplay(&state) || !state.rendererReady || !state.windowValid || !state.presentation.available)

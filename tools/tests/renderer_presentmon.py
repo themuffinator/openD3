@@ -126,7 +126,7 @@ class Capture:
         self.directory = directory
         self.csv = directory / 'presentmon.csv'
         self.log = directory / 'presentmon.log'
-        self.session = f'OpenQ4Vk-{os.getpid()}-{pid}'
+        self.session = f'openD3Vk-{os.getpid()}-{pid}'
         self.command = [str(self.executable), '--process_id', str(pid), '--session_name', self.session,
             '--output_file', str(self.csv), '--no_track_input', '--no_console_stats', '--qpc_time_ms',
             '--v2_metrics', '--track_hybrid_present', '--track_etw_status', '--write_display_metadata',

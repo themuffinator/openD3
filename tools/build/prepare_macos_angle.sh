@@ -9,7 +9,7 @@
 # tools/build/prepare_macos_moltenvk.sh pins MoltenVK.
 #
 # The staged copies get an @rpath install name so a target can LINK against
-# them. That matters: openQ4's GL 1.x entry points bind at link time, so a
+# them. That matters: openD3's GL 1.x entry points bind at link time, so a
 # GLES build must resolve them from libGLESv2 rather than OpenGL.framework.
 #
 # Usage:
@@ -74,4 +74,4 @@ for lib in "${ANGLE_LIBS[@]}"; do
 done
 
 log "ANGLE staged to ${output_dir}"
-log "ANGLE is a translation layer for local development, not a shippable openQ4 dependency."
+log "ANGLE is a translation layer for local development, not a shippable openD3 dependency."

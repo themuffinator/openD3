@@ -1,6 +1,6 @@
 #version 450
 
-// openQ4 Vulkan shadow-map caster — fragment stage (Phase F2a).
+// openD3 Vulkan shadow-map caster — fragment stage (Phase F2a).
 //
 // GL shadow_proj_caster.fs alpha coverage parity:
 // - perforated casters alpha-test against the material's alpha map;

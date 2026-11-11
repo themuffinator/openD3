@@ -4,7 +4,7 @@
 #include "../../ui/UserInterfaceNativeText.h"
 #include "../EventQueueContinuity.h"
 
-namespace openq4::sys {
+namespace opend3::sys {
 namespace {
 NativeInputWindow Window(const NativeWindowPublication& w) noexcept {
     return {w.handle,w.window,w.lifetime,w.module,w.association,w.registration};
@@ -142,5 +142,5 @@ bool WindowsNativeInputRouteSource::InspectIssued(std::uint64_t id,const NativeI
     if(!inventory->Inspect(id,*binding,tag,candidate) || !Original(id,expected))return false;
     out=candidate;return true;
 }
-} // namespace openq4::sys
+} // namespace opend3::sys
 #endif

@@ -4,7 +4,7 @@
 #include "InputDisposition.h"
 #include "../../framework/EventLoop.h"
 
-namespace openq4 {
+namespace opend3 {
 namespace {
 bool TransferError(std::string& error,const char* text) noexcept {try{error=text;}catch(...){}return false;}
 NativeInputValue EventValue(const sysEvent_t& event) noexcept {
@@ -235,4 +235,4 @@ bool NativeInputTransfers::Release() noexcept {
     if(std::this_thread::get_id()!=thread || calling || !claimed || released || !inventory.ReleaseTransfers(*this))return false;
     claimed=false;released=true;return true;
 }
-} // namespace openq4
+} // namespace opend3

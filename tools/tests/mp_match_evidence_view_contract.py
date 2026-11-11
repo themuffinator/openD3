@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Preserved from openQ4-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
+# Preserved from openD3-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
 """Static and native contracts for the recipient-safe evidence projection."""
 
 from __future__ import annotations
@@ -210,7 +210,7 @@ static bool ResetEvidence( mpMatchEvidence &evidence ) {
 	metadata.seriesId = 0;
 	metadata.rulesDigest = UINT64_C( 0x0123456789abcdef );
 	metadata.modeId = 4;
-	metadata.build = "openQ4-test";
+	metadata.build = "openD3-test";
 	metadata.map = "maps/mp/test";
 	metadata.mode = "duel";
 	return evidence.Reset( metadata );

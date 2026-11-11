@@ -3,7 +3,7 @@
 #include <exception>
 #include <type_traits>
 
-namespace openq4 {
+namespace opend3 {
 namespace {
 static const std::array<PerformancePreset,PerformancePresetCount> Presets{{
 	// The three bottom recipes are for hardware at and below the documented
@@ -63,7 +63,7 @@ static const std::array<PerformancePreset,PerformancePresetCount> Presets{{
 		1, 2048, 0, 1, 1, 1, 0, 0, 1, 32, 4,
 		0, 1, 48, 512, 9, 9, 2, 0, 4096, 20, 5, 8, 0, 1, 1 },
 	// image_usePrecompressedTextures stays at 1 here even though retail's top
-	// machine spec used 0. In openQ4 that cvar also gates user-supplied DDS
+	// machine spec used 0. In openD3 that cvar also gates user-supplied DDS
 	// replacement packs, so 0 silently discarded a player's high-resolution BC7
 	// art the moment they touched the settings menu - the reverse of what the
 	// highest preset should do.
@@ -325,4 +325,4 @@ bool ResolveDetectedPerformancePreset(const PerformancePresetDetection& detectio
  resolved.screenFraction=detection.screenFraction;resolved.postAA=detection.postAA;resolved.maxFps=detection.maxFps;
  output=resolved;return true;
 }
-} // namespace openq4
+} // namespace opend3

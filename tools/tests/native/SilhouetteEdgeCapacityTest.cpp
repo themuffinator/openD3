@@ -125,7 +125,7 @@ static struct {
 // @PRODUCTION_EDGES@
 
 static void InitScratch() {
-#ifdef OPENQ4_FIXED_SIL_EDGE_SCRATCH
+#ifdef OPEND3_FIXED_SIL_EDGE_SCRATCH
 	silEdges = (silEdge_t *)R_StaticAlloc( MAX_SIL_EDGES * sizeof( silEdges[0] ) );
 #else
 	R_SetSilEdgeCapacity( MIN_SIL_EDGES );
@@ -297,7 +297,7 @@ static void TestLargeTangledSurfaceMatchesReference() {
 }
 
 static void TestScratchReturnsToRestingSize() {
-#ifndef OPENQ4_FIXED_SIL_EDGE_SCRATCH
+#ifndef OPEND3_FIXED_SIL_EDGE_SCRATCH
 	R_SetSilEdgeCapacity( 240000 );
 	Require( silEdgeHash.GetHashSize() == 4096 && silEdgeHash.GetIndexSize() == 240000,
 		"capacity: the hash did not grow with the scratch" );

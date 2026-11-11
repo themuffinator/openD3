@@ -4,7 +4,7 @@
 #include "TextEdit.h"
 #include <string_view>
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 enum class TextEditCommand { Left, Right, Home, End, WordLeft, WordRight, SelectAll, Backspace, Delete };
 
@@ -44,4 +44,4 @@ struct TextEditOperation {
 bool EvaluateTextEditCommand(const TextEditState& state, const TextEditBoundaryMap& boundaries,
 	TextEditCommand command, bool extendSelection, TextEditOperation& out, std::string& error);
 
-} // namespace openq4::ui
+} // namespace opend3::ui

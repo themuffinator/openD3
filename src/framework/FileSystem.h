@@ -220,12 +220,6 @@ private:
 // A built-in campaign is content, not a separately loaded game module.
 // "ready" checks the campaign's compiled maps and defining scripts/decls;
 // it does not certify the completeness of an unfinished third-party release.
-struct idCampaignContentInfo {
-    bool present = false;
-    bool ready = false;
-    idStr missing;
-};
-
 // mod list
 struct idModInfo {
 	idStr					directory;
@@ -234,7 +228,7 @@ struct idModInfo {
 	idStr					releaseDate;
 	idStr					website;
 	idStr					author;
-	idStr					requiredopenQ4Version;
+	idStr					requiredopenD3Version;
 	idStr					listLabel;
 };
 
@@ -249,9 +243,7 @@ public:
 	const char *			GetReleaseDate( int index ) const { return mods[index].releaseDate.c_str(); }
 	const char *			GetWebsite( int index ) const { return mods[index].website.c_str(); }
 	const char *			GetAuthor( int index ) const { return mods[index].author.c_str(); }
-	const char *			GetRequiredopenD3Version( int index ) const { return mods[index].requiredopenQ4Version.c_str(); }
-	// Temporary source-compatibility alias for callers using the inherited API.
-	const char *			GetRequiredopenQ4Version( int index ) const { return GetRequiredopenD3Version( index ); }
+	const char *			GetRequiredopenD3Version( int index ) const { return mods[index].requiredopenD3Version.c_str(); }
 	const idModInfo &		GetInfo( int index ) const { return mods[index]; }
 
 private:
@@ -454,7 +446,6 @@ public:
 	virtual void			DiscardGeneratedCache( generatedCacheKind_t kind,
 								const char *sourcePath, unsigned int parserVersion,
 								const char *settingsKey = "" ) = 0;
-	virtual idCampaignContentInfo GetAwakeningContentInfo() = 0;
 	virtual const char *GetActiveGameDir() const = 0;
 	// Appended for RENDER_API_VERSION 23: whether OpenGeneratedCacheRead can
 	// return, or WriteGeneratedCache store, a cache of this kind right now.
@@ -478,7 +469,7 @@ public:
 
 extern idFileSystem *		fileSystem;
 
-// Reports a missing or mismatched client-only openQ4 content pack that
+// Reports a missing or mismatched client-only openD3 content pack that
 // filesystem startup found, now that the string tables can localize it. Call
 // once after the startup language load; later filesystem restarts report such
 // a failure at once.

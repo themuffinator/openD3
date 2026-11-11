@@ -44,8 +44,8 @@ struct JobSystem {
         return schedule == Schedule::NoList ? nullptr : std::make_unique<idJobList>();
     }
 } jobSystem;
-static constexpr unsigned SESSION_OPENQ4_SAVEGAME_INTEGRITY_MAGIC = 0x4934514f;
-static constexpr unsigned SESSION_OPENQ4_SAVEGAME_INTEGRITY_VERSION = 1;
+static constexpr unsigned SESSION_OPEND3_SAVEGAME_INTEGRITY_MAGIC = 0x4934514f;
+static constexpr unsigned SESSION_OPEND3_SAVEGAME_INTEGRITY_VERSION = 1;
 // The CRC implementation has its own native test. This oracle checks the
 // worker hashes exactly the source bytes, then appends its little-endian value.
 static const std::string sourceBytes("snapshot\0with binary\xff", 21);
@@ -58,7 +58,7 @@ enum class StorageFault { None, WritePayload, ReadPayload, PayloadMismatch,
     WriteDescription, ReadDescription, DescriptionMismatch };
 static StorageFault fault;
 static std::map<std::string, std::string> disk;
-namespace openq4 {
+namespace opend3 {
 enum class DurableReadResult { Missing, Present, Failed };
 static bool DurableReplaceExact(const std::string &path, const std::string &bytes, std::string &error) {
     Check(path == "payload" || path == "description");
@@ -83,7 +83,7 @@ static DurableReadResult DurableReadExact(const std::string &path, size_t bound,
 
 int main() {
     std::string expected = sourceBytes;
-    for (unsigned value : {SESSION_OPENQ4_SAVEGAME_INTEGRITY_MAGIC, 1u,
+    for (unsigned value : {SESSION_OPEND3_SAVEGAME_INTEGRITY_MAGIC, 1u,
             static_cast<unsigned>(sourceBytes.size()), 0x98765432u})
         for (int shift = 0; shift < 32; shift += 8) expected.push_back(static_cast<char>(value >> shift));
     for (bool workerCopy : {false, true}) {

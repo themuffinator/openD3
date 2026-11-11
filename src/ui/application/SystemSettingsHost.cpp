@@ -17,7 +17,7 @@
 #include "../../renderer/RenderModuleAPI.h"
 #endif
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 SystemSettingDescriptor Number(const char* key, double minimum, double maximum,
 	const char* label = "", unsigned effects = SystemSettingImmediate,
@@ -391,9 +391,9 @@ int SystemSettingsHost::LegacyModeForSize(int width, int height) {
 		if (LegacyModes[mode][0]==width && LegacyModes[mode][1]==height) return mode;
 	return -1;
 }
-static bool BuildPerformancePresetPatch(const openq4::PerformancePreset& preset,StateValues& patch,std::string& error) {
- openq4::PerformancePresetAssignments assignments;
- if(!openq4::ExpandPerformancePreset(preset,assignments,error))return false;
+static bool BuildPerformancePresetPatch(const opend3::PerformancePreset& preset,StateValues& patch,std::string& error) {
+ opend3::PerformancePresetAssignments assignments;
+ if(!opend3::ExpandPerformancePreset(preset,assignments,error))return false;
  StateValues candidate;
  for(const auto& assignment:assignments){
   const auto field=SystemSettingsHost::Schema().find(assignment.key);
@@ -409,20 +409,20 @@ static bool BuildPerformancePresetPatch(const openq4::PerformancePreset& preset,
   }
   if(!candidate.emplace(assignment.key,std::move(value)).second)return Fail(error,assignment.key,"profile target is duplicated");
  }
- if(candidate.size()!=openq4::PerformancePresetTargetCount)return Fail(error,"com_performancePreset","profile footprint is incomplete");
+ if(candidate.size()!=opend3::PerformancePresetTargetCount)return Fail(error,"com_performancePreset","profile footprint is incomplete");
  patch.swap(candidate);error.clear();return true;
 }
 bool SystemSettingsHost::BuildPreset(const std::string& name,StateValues& patch,std::string& error) {
- const auto* preset=openq4::FindPerformancePreset(name);
+ const auto* preset=opend3::FindPerformancePreset(name);
  if(!preset)return Fail(error,"com_performancePreset","unknown performance profile");
  return BuildPerformancePresetPatch(*preset,patch,error);
 }
 bool SystemSettingsHost::BuildDetectedPreset(StateValues& patch,std::string& error) {
- openq4::PerformancePresetSignals signals;
+ opend3::PerformancePresetSignals signals;
  if(!Common_CapturePerformancePresetSignals(signals,error))return false;
- const auto detection=openq4::DetectPerformancePreset(signals);
- openq4::PerformancePreset resolved;
- if(!openq4::ResolveDetectedPerformancePreset(detection,resolved))return Fail(error,"com_performancePreset","detected profile is unavailable");
+ const auto detection=opend3::DetectPerformancePreset(signals);
+ opend3::PerformancePreset resolved;
+ if(!opend3::ResolveDetectedPerformancePreset(detection,resolved))return Fail(error,"com_performancePreset","detected profile is unavailable");
  return BuildPerformancePresetPatch(resolved,patch,error);
 }
 bool SystemSettingsHost::Read(StateValues& values, std::string& error) {
@@ -508,5 +508,5 @@ bool SystemSettingsHost::Write(const StateValues& changes, std::string& error) {
 bool SystemSettingsHost::NeedsConfirmation(const StateValues& before, const StateValues& target) const {
 	return ChangedRequiresDisplayRestart(before, target);
 }
-} // namespace openq4::ui
+} // namespace opend3::ui
 #endif // !ID_DEDICATED

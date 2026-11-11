@@ -50,15 +50,15 @@ public:
 
 #ifndef ID_DEDICATED
 #include "retained/Document.h"
-void UI_SettingsConfirmationDocument(std::uint64_t owner, const openq4::ui::DocumentModel& document);
+void UI_SettingsConfirmationDocument(std::uint64_t owner, const opend3::ui::DocumentModel& document);
 void UI_SettingsOwnerDrawn(std::uint64_t owner, const std::string& displayedRequest);
-bool UI_SettingsOperation(const openq4::ui::Action& action, std::string& error);
-bool UI_SettingsInvocation(const openq4::ui::ActionInvocation& action, std::string& error);
-bool UI_SettingsDispatch(std::uint64_t owner, const openq4::ui::ActionInvocation& action,
+bool UI_SettingsOperation(const opend3::ui::Action& action, std::string& error);
+bool UI_SettingsInvocation(const opend3::ui::ActionInvocation& action, std::string& error);
+bool UI_SettingsDispatch(std::uint64_t owner, const opend3::ui::ActionInvocation& action,
     std::string& error);
 // Service-owned values use the reserved settings.* namespace. A document may
 // bind any subset, but must declare the exact types and cannot supply CVar
 // sources for those keys. Other dictionary values are never replaced.
 const std::map<std::string,std::size_t>& UI_SettingsStateSchema();
-bool UI_SettingsRead(std::uint64_t owner, openq4::ui::StateValues& values);
+bool UI_SettingsRead(std::uint64_t owner, opend3::ui::StateValues& values);
 #endif

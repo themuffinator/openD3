@@ -802,5 +802,5 @@
    "vb": "0 0 48 24"
   }
  },
- "provenance": "First-party vector drawings from the openQ4 design atlas (docs/dev/ui-visual-design.md sections 14.15-14.16; the atlas A.ICONS, A.CROSSHAIRS, A.RHINO and A.SQUADS registries, Version 13). No retail images are embedded; tools/ui/hud_svg.py converts the markup to retained vector paths."
+ "provenance": "First-party vector drawings from the openD3 design atlas (docs/dev/ui-visual-design.md sections 14.15-14.16; the atlas A.ICONS, A.CROSSHAIRS, A.RHINO and A.SQUADS registries, Version 13). No retail images are embedded; tools/ui/hud_svg.py converts the markup to retained vector paths."
 }

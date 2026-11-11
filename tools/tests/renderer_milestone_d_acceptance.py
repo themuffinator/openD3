@@ -613,14 +613,14 @@ def validate_fixture_manifest(
     retrieved, retrieved_paths = _validated_fixture_records(
         manifest.get("retrieved"),
         set(FIXTURE_RETRIEVED_SHA256),
-        (evidence_root / "retrieved/baseoq4",),
+        (evidence_root / "retrieved/baseod3",),
         "retrieved",
         FIXTURE_RETRIEVED_SHA256,
     )
     generated, generated_paths = _validated_fixture_records(
         manifest.get("generated"),
         FIXTURE_GENERATED_PATHS,
-        (evidence_root / "compile/baseoq4", runtime_dir / "baseoq4"),
+        (evidence_root / "compile/baseod3", runtime_dir / "baseod3"),
         "generated",
     )
     generated_by_path = {record["path"]: record for record in generated}
@@ -630,7 +630,7 @@ def validate_fixture_manifest(
     ):
         raise EvidenceError("staged fixture video does not match the pinned retail ROQ")
 
-    runtime_game = runtime_dir / "baseoq4"
+    runtime_game = runtime_dir / "baseod3"
     text_contracts = {
         "maps/tools/milestone_d_nested_dynamic.map": (
             "shaderDemos/transparentMirror",

@@ -5,7 +5,7 @@
 #include <cmath>
 #include <limits>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 std::optional<PlayerSetupField> Field(const std::string& name) {
     if (name=="name") return PlayerSetupField::Name;

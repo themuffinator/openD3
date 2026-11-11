@@ -751,7 +751,7 @@ void Key_ListBinds_f( const idCmdArgs &args ) {
 ============
 Key_TestPromptDevice_f
 
-openQ4: testPromptDevice controller|desktop sets the device the prompts name
+openD3: testPromptDevice controller|desktop sets the device the prompts name
 until the next real input, so headless captures can show controller glyphs.
 ============
 */

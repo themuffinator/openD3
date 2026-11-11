@@ -11,7 +11,7 @@
 #include <SDL3/SDL.h>
 #endif
 
-namespace openq4::ui {
+namespace opend3::ui {
 #if defined(ID_DEDICATED)
 namespace { bool Unsupported(std::string& error) { error="Display settings require a client renderer"; return false; } }
 bool CaptureDisplayTopology(SystemDisplayTopology&,std::string& error) { return Unsupported(error); }
@@ -740,4 +740,4 @@ bool SystemDisplaySelectionPatch(const SystemDisplayCatalog& catalog, SystemDisp
 	patch=std::move(result); error.clear(); return true;
 }
 #endif // !ID_DEDICATED
-} // namespace openq4::ui
+} // namespace opend3::ui

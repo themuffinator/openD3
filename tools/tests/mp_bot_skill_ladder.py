@@ -107,7 +107,7 @@ def write_launch(game: Path, save: Path, args, roster, map_name: str, port: int,
         "r_mode": "-1", "r_customWidth": "640", "r_customHeight": "480", "r_renderApi": "gl",
         "r_swapInterval": "0", "com_maxfps": "60", "ui_retained": "0",
         "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(save), "fs_devpath": str(save),
-        "fs_game": "baseoq4", "com_gameMode": "MP", "logFile": "2", "logFileName": "logs/openq4.log",
+        "fs_game": "baseod3", "com_gameMode": "MP", "logFile": "2", "logFileName": "logs/opend3.log",
         "developer": "1", "ui_autoJoin": "1", "ui_spectate": "Play", "ui_name": "BotLadderObserver",
         "net_serverDedicated": "0", "net_LANServer": "1", "net_ip": "127.0.0.1", "net_enableIPv6": "0",
         "net_allowCheats": "1", "sv_cheats": "1",
@@ -133,7 +133,7 @@ def write_launch(game: Path, save: Path, args, roster, map_name: str, port: int,
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
-    parser.add_argument("--executable-name", default="openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    parser.add_argument("--executable-name", default="openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     parser.add_argument("--basepath", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, default=ROOT / ".tmp/mp-bot-skill-ladder")
     parser.add_argument("--map", dest="maps", action="append", default=None,
@@ -184,9 +184,9 @@ def main() -> int:
     creationflags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
     for index, map_name in enumerate(maps):
         match_dir = output / f"{index}-{map_name.replace('/', '_')}"
-        game = match_dir / "save" / "baseoq4"
+        game = match_dir / "save" / "baseod3"
         game.mkdir(parents=True, exist_ok=True)
-        log_path = game / "logs/openq4.log"
+        log_path = game / "logs/opend3.log"
         if log_path.exists():
             log_path.unlink()
         command = write_launch(game, match_dir / "save", args, roster, map_name, args.port + 4 * index, match_dir)

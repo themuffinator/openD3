@@ -2,7 +2,7 @@
 #extension GL_GOOGLE_include_directive : require
 #include "pbr_vertex.glsl"
 
-// openQ4 Vulkan interaction pipeline — vertex stage (Phase F1,
+// openD3 Vulkan interaction pipeline — vertex stage (Phase F1,
 // docs/dev/archive/2026-10-18/plans/2026-07-19-vulkan-phase-f.md).
 //
 // Per-light bump/diffuse/specular interaction, mirroring the stock Quake 4

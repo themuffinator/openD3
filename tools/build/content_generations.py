@@ -32,9 +32,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable, Mapping, Sequence
 
-from openq4_pak import (
-    OPENQ4_CONTENT_PACKS,
-    OPENQ4_CONTENT_PACKS_BY_NAME,
+from opend3_pak import (
+    OPEND3_CONTENT_PACKS,
+    OPEND3_CONTENT_PACKS_BY_NAME,
     ContentPackSpec,
     Pk4BuildResult,
     create_game_pk4,
@@ -46,7 +46,7 @@ from openq4_pak import (
     pack_rule_drops,
     validate_pk4_arcname,
     _should_skip_pk4_entry,
-    OPENQ4_PK4_FORBIDDEN_FILES,
+    OPEND3_PK4_FORBIDDEN_FILES,
 )
 
 
@@ -109,7 +109,7 @@ def generation_listing(source_root: Path, spec: ContentPackSpec, commit: str) ->
         if len(fields) != 3 or fields[1] != "blob" or not path.startswith(prefix):
             continue
         relative = Path(path[len(prefix):])
-        if relative.name.lower() in OPENQ4_PK4_FORBIDDEN_FILES or _should_skip_pk4_entry(relative):
+        if relative.name.lower() in OPEND3_PK4_FORBIDDEN_FILES or _should_skip_pk4_entry(relative):
             continue
         entries[validate_pk4_arcname(relative.as_posix(), spec.name)] = fields[2]
     dropped = pack_rule_drops(spec.name, list(entries))
@@ -232,7 +232,7 @@ def build_content_pack(
     source_root: Path,
     spec: ContentPackSpec,
     pak_out: Path,
-    specs: Sequence[ContentPackSpec] = OPENQ4_CONTENT_PACKS,
+    specs: Sequence[ContentPackSpec] = OPEND3_CONTENT_PACKS,
 ) -> Pk4BuildResult:
     """Build any table pack: a plain pack, a generation-pinned bulk pack, or its overlay."""
     if not spec.generation_commit:
@@ -243,12 +243,12 @@ def build_content_pack(
         # A shallow CI checkout lacks the generation commit. Its packs never ship
         # (releases build them in the content_packs job, which has the history,
         # and require it), so pack what is checked out and say so.
-        if os.environ.get("OPENQ4_REQUIRE_CONTENT_GENERATIONS", "").strip() == "1":
+        if os.environ.get("OPEND3_REQUIRE_CONTENT_GENERATIONS", "").strip() == "1":
             raise GenerationError(f"{base.name}'s generation commit {base.generation_commit} is not in this checkout")
         print(f"warning: {base.name} generation commit {base.generation_commit[:12]} is not in this checkout; "
               f"{spec.name} is packed from the working tree and will not match the published pack", file=sys.stderr)
         if spec.overlay_of:
-            return write_pk4_from_entries(pak_out, spec.name, [("openq4-overlay-unavailable.txt", lambda: b"")], required_files=set())
+            return write_pk4_from_entries(pak_out, spec.name, [("opend3-overlay-unavailable.txt", lambda: b"")], required_files=set())
         return create_game_pk4(source_root / spec.source, pak_out, pak_name=spec.name)
     diff = diff_against_generation(source_root, base)
     if diff.removed:
@@ -280,7 +280,7 @@ def build_content_pack(
 
 
 def effective_source_digest(
-    source_root: Path, spec: ContentPackSpec, specs: Sequence[ContentPackSpec] = OPENQ4_CONTENT_PACKS
+    source_root: Path, spec: ContentPackSpec, specs: Sequence[ContentPackSpec] = OPEND3_CONTENT_PACKS
 ) -> tuple[str, int]:
     """The source digest of exactly the files a pack carries.
 

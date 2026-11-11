@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 
 
-MANIFEST_NAME = "openq4_gamelibs_stage_manifest.json"
+MANIFEST_NAME = "opend3_gamelibs_stage_manifest.json"
 
 
 def stage_root(source_root: Path, system: str, cpu_family: str, layer: str | None = None) -> Path:

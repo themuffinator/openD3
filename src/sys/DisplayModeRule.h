@@ -8,7 +8,7 @@
 // strict window service and legacy startup, vid_restart and Alt+Enter
 // (src/sys/sdl3/sdl3_backend.cpp) all choose through it, so the rate a player
 // applies is the rate the next start chooses.
-namespace openq4 {
+namespace opend3 {
 
 // A fullscreen mode as the rule reads it: its size in physical pixels (SDL's
 // size times its pixel density, rounded) and SDL's finalized refresh rate.
@@ -54,4 +54,4 @@ int SelectDisplayMode(int count, Read&& read, int width, int height, int refresh
 	return chosen;
 }
 
-} // namespace openq4
+} // namespace opend3

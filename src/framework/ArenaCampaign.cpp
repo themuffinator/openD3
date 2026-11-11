@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 
-openQ4 arena campaign
+openD3 arena campaign
 
 The campaign is presented as single-player, but every arena is an offline
 listen-server match hosted by game_mp.  Keeping orchestration in the framework
@@ -19,7 +19,7 @@ for the final score.
 
 namespace {
 
-static const char *ARENA_CAMPAIGN_FILE = "arena/openq4_campaign.cfg";
+static const char *ARENA_CAMPAIGN_FILE = "arena/opend3_campaign.cfg";
 static const int ARENA_TIER_COUNT = 5;
 static const int ARENA_MATCHES_PER_TIER = 4;
 static const int ARENA_TOTAL_MATCHES = ARENA_TIER_COUNT * ARENA_MATCHES_PER_TIER;

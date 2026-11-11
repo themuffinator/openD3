@@ -4,7 +4,7 @@
 #include "../../sys/sdl3/NativeQueueBatch.h"
 #include <thread>
 
-namespace openq4::ui {
+namespace opend3::ui {
 enum class NativeClosedCollectionKind { Pump, Lifecycle };
 // Copied from an explicitly CLOSED native-store collection, never guessed from
 // event counts or a pending watermark. The platform adapter maps its exact scope
@@ -131,4 +131,4 @@ private:
 	NativeClosedTextCollection closed;
 	const std::thread::id thread = std::this_thread::get_id();
 };
-} // namespace openq4::ui
+} // namespace opend3::ui

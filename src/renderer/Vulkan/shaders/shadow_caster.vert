@@ -1,6 +1,6 @@
 #version 450
 
-// openQ4 Vulkan shadow-map caster — vertex stage (Phase F2a,
+// openD3 Vulkan shadow-map caster — vertex stage (Phase F2a,
 // docs/dev/archive/2026-10-18/plans/2026-07-19-vulkan-phase-f.md).
 //
 // Depth-only caster into the projected-light shadow atlas, mirroring the GL

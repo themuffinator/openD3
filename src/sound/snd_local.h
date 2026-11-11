@@ -504,11 +504,11 @@ public:
 	float		spatializedDistance;
 	idVec3		spatializedOrigin;
 	int			occludingPortalCount;
-	bool		crossesLiquidBoundary;	// openQ4: emitter and listener are in different media
+	bool		crossesLiquidBoundary;	// openD3: emitter and listener are in different media
 
 	// The shaders and samples this emitter started most recently. Retail's fixed channel
 	// slots kept a finished sound's sample, so no_dups also skipped the variant that had
-	// just ended; openQ4 frees finished channels and needs to remember it here.
+	// just ended; openD3 frees finished channels and needs to remember it here.
 	static const int	RECENT_SAMPLES = 8;
 	const idSoundShader*	recentShaders[ RECENT_SAMPLES ];
 	const idSoundSample*	recentSamples[ RECENT_SAMPLES ];

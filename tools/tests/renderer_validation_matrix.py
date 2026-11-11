@@ -1406,7 +1406,7 @@ def build_safe_cases(tiers: tuple[str, ...]) -> list[dict[str, Any]]:
             ],
             "checks": [
                 ["SDL3: current video driver: x11"],
-                ["OPEND3_FORCE_X11=1", "OPENQ4_FORCE_X11=1"],
+                ["OPEND3_FORCE_X11=1", "OPEND3_FORCE_X11=1"],
                 ["SDL3: detected"],
                 ["display(s):"],
                 ["contentScale"],

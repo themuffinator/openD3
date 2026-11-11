@@ -1,7 +1,7 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
 // Retained screens: image nodes, path blends and view-height canvases in the
 // canonical schema and runtime, then the production title, pause and loading
-// documents (content/baseoq4/pak0/guis) loaded, laid out and driven by state.
+// documents (content/baseod3/pak0/guis) loaded, laid out and driven by state.
 #include "src/ui/retained/Runtime.h"
 #include "src/ui/retained/PlayerSetupRequest.h"
 #include <algorithm>
@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 static int checks = 0;
 static void Check(bool condition, const char* message) {
 	++checks;
@@ -140,7 +140,7 @@ static bool Loads(const std::string& source) {
 }
 
 static std::string Wrap(const std::string& root, const std::string& extra = "") {
-	return R"({"format":"openq4-ui","version":1,"id":"screens-schema")"+extra+R"(,"root":)"+root+"}";
+	return R"({"format":"opend3-ui","version":1,"id":"screens-schema")"+extra+R"(,"root":)"+root+"}";
 }
 
 static void CheckSchema() {
@@ -417,7 +417,7 @@ static void CheckEscape(ScreenHost& host, const char* path) {
 	Document document; std::vector<Diagnostic> diagnostics;
 	const bool valid = document.Load(source,diagnostics);
 	for (const auto& diagnostic : diagnostics) std::fprintf(stderr,"mp_escape %s: %s\n",diagnostic.pointer.c_str(),diagnostic.message.c_str());
-	Check(valid && document.Model().id == "openq4.mp_escape" && document.Model().canvasHeight == 720,"the Escape card validates");
+	Check(valid && document.Model().id == "opend3.mp_escape" && document.Model().canvasHeight == 720,"the Escape card validates");
 	CheckSessionActions(document);
 	// The softened view stands outside the card's composition: a node inside
 	// a composited group gets no soft focus.
@@ -670,7 +670,7 @@ static void CheckEscape(ScreenHost& host, const char* path) {
 	runtime.Frame(viewport,6.8);
 	// The Server page: its rules and rotation, the current map in orange and
 	// the slots past the rotation hidden; its tab keeps the focus.
-	Check(runtime.SetState({{"mp.server.name",std::string("openQ4 test")},{"mp.server.message",std::string("Welcome\nRules: be fair")},
+	Check(runtime.SetState({{"mp.server.name",std::string("openD3 test")},{"mp.server.message",std::string("Welcome\nRules: be fair")},
 		{"mp.rule0",std::string("Team Deathmatch")},{"mp.rotation0",std::string("The Fragging Yard")},{"mp.rotation1",std::string("Lost Fleet")},
 		{"mp.rotation2",std::string("Bloodwork")},{"mp.rotation_count",3.0},{"mp.rotation_current",1.0}},error,6.85),"publish the Server page");
 	Check(runtime.RunEvent("tab_server",6.9,effects,error),"to the Server tab");
@@ -1774,7 +1774,7 @@ static void CheckWelcome(ScreenHost& host, const char* path) {
 	Document document; std::vector<Diagnostic> diagnostics;
 	const bool valid = document.Load(source,diagnostics);
 	for (const auto& diagnostic : diagnostics) std::fprintf(stderr,"mp_welcome %s: %s\n",diagnostic.pointer.c_str(),diagnostic.message.c_str());
-	Check(valid && document.Model().id == "openq4.mp_welcome" && document.Model().canvasHeight == 720,"the Welcome card validates");
+	Check(valid && document.Model().id == "opend3.mp_welcome" && document.Model().canvasHeight == 720,"the Welcome card validates");
 	CheckSessionActions(document);
 	Runtime runtime(host);
 	Check(runtime.Initialize() && runtime.LoadDocument(source,"guis/menu/mp_welcome.q4ui",diagnostics),"the Welcome card loads into a runtime");
@@ -1793,7 +1793,7 @@ static void CheckWelcome(ScreenHost& host, const char* path) {
 	};
 	// A team mode: the balance rule refuses the Marines, the Strogg are open,
 	// and Auto join names the team it picks.
-	Check(runtime.SetState({{"mp.welcome.title",std::string("WELCOME TO OPENQ4")},{"mp.welcome.players",std::string("6/12 PLAYERS")},
+	Check(runtime.SetState({{"mp.welcome.title",std::string("WELCOME TO OPEND3")},{"mp.welcome.players",std::string("6/12 PLAYERS")},
 		{"mp.welcome.match",std::string("Team Deathmatch - The Fragging Yard")},{"mp.welcome.state",std::string("MATCH IN PROGRESS")},
 		{"mp.clock",std::string("9:12")},{"mp.welcome.limit",std::string("Frag limit 50")},{"mp.welcome.team_mode",true},
 		{"mp.welcome.team0.score",std::string("12")},{"mp.welcome.team0.count",std::string("4")},{"mp.welcome.team0.flag",std::string("FLAG AT BASE")},
@@ -2259,7 +2259,7 @@ static void CheckLoadPage(ScreenHost& host, const char* path, bool strogg = fals
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%u:%u %s %s\n",unsigned(d.line),unsigned(d.column),d.pointer.c_str(),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == (strogg ? "openq4.loadgame_strogg" : "openq4.loadgame") &&
+	Check(diagnostics.empty() && document.Model().id == (strogg ? "opend3.loadgame_strogg" : "opend3.loadgame") &&
 		document.Model().canvasHeight == 720,"the Load Game page validates");
 	CheckSessionActions(document);
 	Check(!document.Model().FindNode("band-top") && !document.Model().FindNode("scene-softfocus") && !document.Model().FindNode("title"),
@@ -2486,7 +2486,7 @@ static void CheckSavePage(ScreenHost& host, const char* path, bool strogg = fals
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%u:%u %s %s\n",unsigned(d.line),unsigned(d.column),d.pointer.c_str(),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == (strogg ? "openq4.savegame_strogg" : "openq4.savegame") &&
+	Check(diagnostics.empty() && document.Model().id == (strogg ? "opend3.savegame_strogg" : "opend3.savegame") &&
 		document.Model().canvasHeight == 720,"the Save Game page validates");
 	CheckSessionActions(document);
 	const auto* field = document.Model().FindNode("save-name");
@@ -2605,7 +2605,7 @@ static void CheckRestartPage(ScreenHost& host, const char* path, bool strogg = f
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%u:%u %s %s\n",unsigned(d.line),unsigned(d.column),d.pointer.c_str(),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == (strogg ? "openq4.restartlevel_strogg" : "openq4.restartlevel") &&
+	Check(diagnostics.empty() && document.Model().id == (strogg ? "opend3.restartlevel_strogg" : "opend3.restartlevel") &&
 		document.Model().canvasHeight == 720,"the Restart Level page validates");
 	CheckSessionActions(document);
 	const auto go = document.Model().actions.find("go"), back = document.Model().actions.find("back");
@@ -2665,7 +2665,7 @@ static void CheckDemosPage(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%u:%u %s %s\n",unsigned(d.line),unsigned(d.column),d.pointer.c_str(),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.demos" && document.Model().canvasHeight == 720,"the Demos page validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.demos" && document.Model().canvasHeight == 720,"the Demos page validates");
 	CheckSessionActions(document);
 	const std::pair<const char*,const char*> verbs[] = {{"back","demosBack"},{"select","demosSelect"},{"play","demosPlay"},
 		{"delete","demosDelete"},{"refresh","demosRefresh"},{"filter","demosFilter"},{"newer","demosNewer"},{"older","demosOlder"}};
@@ -2830,7 +2830,7 @@ static void CheckModsDialog(ScreenHost& host, const char* path) {
 		return effects.actions.size() == 1 && effects.actions[0].action == action && effects.actions[0].operation == "session.menu";
 	};
 	StateValues values{{"mods.count",2.0},{"mods.selected",1.0},{"mods.author",std::string("Ritual")},{"mods.date",std::string("2005")},
-		{"mods.engine",std::string("0.11")},{"mods.directory",std::string("q4xbase")},{"mods.row0.name",std::string("openQ4")},
+		{"mods.engine",std::string("0.11")},{"mods.directory",std::string("q4xbase")},{"mods.row0.name",std::string("openD3")},
 		{"mods.row0.version",std::string("0.13")},{"mods.row1.name",std::string("The Awakening")},{"mods.row1.version",std::string("1.0")}};
 	Check(runtime.SetState(values,error,0),"publish two mods");
 	runtime.Frame(viewport,1);
@@ -2881,7 +2881,7 @@ static void CheckRestartMenu(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%u:%u %s %s\n",unsigned(d.line),unsigned(d.column),d.pointer.c_str(),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.restartmenu" && document.Model().canvasHeight == 720,"the restart screen validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.restartmenu" && document.Model().canvasHeight == 720,"the restart screen validates");
 	CheckSessionActions(document);
 	const std::pair<const char*,const char*> verbs[] = {{"restart","deathRestart"},{"load","deathLoad"},{"menu","deathMenu"},{"quit","quit"}};
 	for (const auto& [action, command] : verbs) {
@@ -2937,7 +2937,7 @@ static void CheckCreditsPage(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%u:%u %s %s\n",unsigned(d.line),unsigned(d.column),d.pointer.c_str(),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.credits" && document.Model().canvasHeight == 720,"the Credits page validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.credits" && document.Model().canvasHeight == 720,"the Credits page validates");
 	CheckSessionActions(document);
 	const auto back = document.Model().actions.find("back");
 	Check(back != document.Model().actions.end() && std::get<std::string>(back->second.arguments.at("command").literal) == "creditsBack",
@@ -3000,7 +3000,7 @@ static void CheckArenaPage(ScreenHost& host, const char* pagePath, const char* p
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%u:%u %s %s\n",unsigned(d.line),unsigned(d.column),d.pointer.c_str(),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.arena" && document.Model().canvasHeight == 720,"the Arena page validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.arena" && document.Model().canvasHeight == 720,"the Arena page validates");
 	CheckSessionActions(document);
 	const std::pair<const char*,const char*> verbs[] = {{"back","arenaBack"},{"tier0","arenaTier0"},{"tier4","arenaTier4"},{"match0","arenaMatch0"},
 		{"match3","arenaMatch3"},{"start","arenaStart"},{"tierPrevious","arenaTierPrevious"},{"tierNext","arenaTierNext"},{"easier","arenaEasier"},
@@ -3243,7 +3243,7 @@ static void CheckMultiplayerPage(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%u:%u %s %s\n",unsigned(d.line),unsigned(d.column),d.pointer.c_str(),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.multiplayer" && document.Model().canvasHeight == 720,"the Multiplayer page validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.multiplayer" && document.Model().canvasHeight == 720,"the Multiplayer page validates");
 	CheckSessionActions(document);
 	const std::pair<const char*,const char*> verbs[] = {{"back","multiplayerBack"},{"multiplayerJoin","multiplayerJoin"},
 		{"multiplayerCreate","multiplayerCreate"},{"multiplayerDemos","multiplayerDemos"},{"multiplayerSetup","multiplayerSetup"}};
@@ -3404,7 +3404,7 @@ static void CheckJoinGamePage(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%u:%u %s %s\n",unsigned(d.line),unsigned(d.column),d.pointer.c_str(),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.joingame" && document.Model().canvasHeight == 720,"the Join Game page validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.joingame" && document.Model().canvasHeight == 720,"the Join Game page validates");
 	CheckSessionActions(document);
 	const std::pair<const char*,const char*> menu[] = {{"back","joinBack"},{"joinPick","joinPick"},{"joinServer","joinServer"},
 		{"joinSpectate","joinSpectate"},{"joinClearSort","joinClearSort"},{"serversNewer","joinNewer"},{"serversOlder","joinOlder"},{"joinRefresh","joinRefresh"},
@@ -4401,7 +4401,7 @@ static void CheckSettingsPage(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%u:%u %s %s\n",unsigned(d.line),unsigned(d.column),d.pointer.c_str(),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.settings" && document.Model().canvasHeight == 720,
+	Check(diagnostics.empty() && document.Model().id == "opend3.settings" && document.Model().canvasHeight == 720,
 		"the SETTINGS page validates on the 4:3 canvas");
 	CheckSessionActions(document);
 	const std::pair<const char*,const char*> sections[] = {{"controls","settingsControls"},{"game","settingsGame"},
@@ -4654,7 +4654,7 @@ static void CheckControlsPage(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%u:%u %s %s\n",unsigned(d.line),unsigned(d.column),d.pointer.c_str(),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.controls" && document.Model().canvasHeight == 720,
+	Check(diagnostics.empty() && document.Model().id == "opend3.controls" && document.Model().canvasHeight == 720,
 		"the CONTROLS page validates on the 4:3 canvas");
 	CheckSessionActions(document);
 	for (int row = 0; row < 49; ++row) {
@@ -4783,7 +4783,7 @@ static void CheckGamePage(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%u:%u %s %s\n",unsigned(d.line),unsigned(d.column),d.pointer.c_str(),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.game" && document.Model().canvasHeight == 720,
+	Check(diagnostics.empty() && document.Model().id == "opend3.game" && document.Model().canvasHeight == 720,
 		"the GAME page validates on the 4:3 canvas");
 	CheckSessionActions(document);
 	const std::pair<const char*,const char*> settings[] = {{"game_freelook","in_freeLook"},{"game_msensitivity","sensitivity"},
@@ -4944,7 +4944,7 @@ static void CheckAudioPage(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%u:%u %s %s\n",unsigned(d.line),unsigned(d.column),d.pointer.c_str(),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.audio" && document.Model().canvasHeight == 720,
+	Check(diagnostics.empty() && document.Model().id == "opend3.audio" && document.Model().canvasHeight == 720,
 		"the AUDIO page validates on the 4:3 canvas");
 	CheckSessionActions(document);
 	const std::pair<const char*,const char*> rows[] = {{"audio_volume","audioVolume"},{"audio_music","audioMusic"},
@@ -5047,7 +5047,7 @@ static void CheckCreateServerPage(ScreenHost& host, const char* path) {
 	const auto source = Read(path);
 	Document document; std::vector<Diagnostic> diagnostics;
 	if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%u:%u %s %s\n",unsigned(d.line),unsigned(d.column),d.pointer.c_str(),d.message.c_str());
-	Check(diagnostics.empty() && document.Model().id == "openq4.createserver" && document.Model().canvasHeight == 720,"the Create Server page validates");
+	Check(diagnostics.empty() && document.Model().id == "opend3.createserver" && document.Model().canvasHeight == 720,"the Create Server page validates");
 	CheckSessionActions(document);
 	const char* const verbs[] = {"createLan","createDedicated","createGameType","createAutoBalance","createFragLimit","createCaptureLimit",
 		"createControlTime","createTimeLimit","createMaxPlayers","createMinPlayers","createVoting","createTeamDamage","createTourneyLimit",
@@ -5735,7 +5735,7 @@ static void CheckSubtitles(ScreenHost& host, const char* path) {
 	Document document; std::vector<Diagnostic> diagnostics;
 	const bool valid = document.Load(source,diagnostics);
 	for (const auto& d : diagnostics) std::fprintf(stderr,"subtitles %s: %s\n",d.pointer.c_str(),d.message.c_str());
-	Check(valid && document.Model().id == "openq4.subtitles", "subtitle document validates");
+	Check(valid && document.Model().id == "opend3.subtitles", "subtitle document validates");
 	Runtime runtime(host);
 	Check(runtime.Initialize() && runtime.LoadDocument(source,"guis/hud/subtitles.q4ui",diagnostics), "subtitle runtime loads");
 	std::string error;
@@ -5896,7 +5896,7 @@ static void CheckPagesTextScale(ScreenHost& host, char** argv) {
 // OBJECTIVES page, with its objectives and empty.
 static void CheckMenusTextScale(ScreenHost& host, char** argv) {
 	StateValues mods{{"mods.count",3.0},{"mods.selected",0.0},{"mods.author",std::string("DarkMatter Productions")},
-		{"mods.date",std::string("11/03/2026")},{"mods.engine",std::string("openQ4 0.13")},{"mods.directory",std::string("baseoq4")}};
+		{"mods.date",std::string("11/03/2026")},{"mods.engine",std::string("openD3 0.13")},{"mods.directory",std::string("baseod3")}};
 	for (int row = 0; row < 3; ++row) {
 		mods["mods.row"+std::to_string(row)+".name"] = std::string("A modification");
 		mods["mods.row"+std::to_string(row)+".version"] = std::string("1.0");
@@ -6036,7 +6036,7 @@ int main(int argc, char** argv) {
          if (path.find("_medchange") != std::string::npos) { CheckRemasteredMedchangeHud(host,argv[i]); continue; }
          if (path.find("_objectives") != std::string::npos) { CheckRemasteredObjectivesHud(host,argv[i],strogg); continue; }
          if (path.find("_scoreboard") != std::string::npos) { CheckRemasteredScoreboardHud(host,argv[i]); continue; }
-         CheckRemasteredHud(host,argv[i],std::string("openq4.hud.remastered.")+(strogg ? "strogg" : "marine")+(awakening ? ".awakening" : ""),strogg);
+         CheckRemasteredHud(host,argv[i],std::string("opend3.hud.remastered.")+(strogg ? "strogg" : "marine")+(awakening ? ".awakening" : ""),strogg);
      }
      std::printf("Remastered HUD: %d checks passed\n",checks); return 0;
  }
@@ -6087,7 +6087,7 @@ int main(int argc, char** argv) {
 		const auto source = Read(argv[1]);
 		Document document; std::vector<Diagnostic> diagnostics;
 		if (!document.Load(source,diagnostics)) for (const auto& d : diagnostics) std::fprintf(stderr,"%u:%u %s %s\n",unsigned(d.line),unsigned(d.column),d.pointer.c_str(),d.message.c_str());
-		Check(diagnostics.empty() && document.Model().id == "openq4.title" && document.Model().canvasHeight == 720,"title document validates");
+		Check(diagnostics.empty() && document.Model().id == "opend3.title" && document.Model().canvasHeight == 720,"title document validates");
 		CheckSessionActions(document);
 		Runtime runtime(host);
 		Check(runtime.Initialize(),"retained runtime");
@@ -6341,7 +6341,7 @@ int main(int argc, char** argv) {
 		Document document; std::vector<Diagnostic> diagnostics;
 		const bool valid = document.Load(source,diagnostics);
 		for (const auto& diagnostic : diagnostics) std::fprintf(stderr,"pause %s: %s\n",diagnostic.pointer.c_str(),diagnostic.message.c_str());
-		Check(valid && document.Model().id == "openq4.pause","pause document validates");
+		Check(valid && document.Model().id == "opend3.pause","pause document validates");
 		CheckSessionActions(document);
 		Runtime runtime(host);
 		Check(runtime.Initialize() && runtime.LoadDocument(source,"guis/menu/pause.q4ui",diagnostics),"pause loads into a runtime");
@@ -6652,7 +6652,7 @@ int main(int argc, char** argv) {
 		Document document; std::vector<Diagnostic> diagnostics;
 		const bool valid = document.Load(source,diagnostics);
 		for (const auto& diagnostic : diagnostics) std::fprintf(stderr,"strogg pause %s: %s\n",diagnostic.pointer.c_str(),diagnostic.message.c_str());
-		Check(valid && document.Model().id == "openq4.pause_strogg","the Strogg pause validates");
+		Check(valid && document.Model().id == "opend3.pause_strogg","the Strogg pause validates");
 		CheckSessionActions(document);
 		Runtime runtime(host);
 		Check(runtime.Initialize() && runtime.LoadDocument(source,"guis/menu/pause_strogg.q4ui",diagnostics),"the Strogg pause loads into a runtime");
@@ -6841,7 +6841,7 @@ int main(int argc, char** argv) {
 	if (runs("loading-hud")) {
 		const auto source = Read(argv[3]);
 		Document document; std::vector<Diagnostic> diagnostics;
-		Check(document.Load(source,diagnostics) && document.Model().id == "openq4.loading" && document.Model().actions.empty(),"loading document validates");
+		Check(document.Load(source,diagnostics) && document.Model().id == "opend3.loading" && document.Model().actions.empty(),"loading document validates");
 		Runtime runtime(host);
 		Check(runtime.Initialize() && runtime.LoadDocument(source,"guis/loading/loading.q4ui",diagnostics),"loading loads into a runtime");
 		Viewport viewport; viewport.canvasHeight = 720;
@@ -6911,7 +6911,7 @@ int main(int argc, char** argv) {
 		Check(runtime.SetState({{"prompt.glyphs",0.0}},error,2.2),"back to the desktop prompt");
 		const auto spCard = runtime.PresentedValue("server","display");
 		Check(spCard && spCard->text == "none","single player shows no server card");
-		Check(runtime.SetState({{"loading_mp",true},{"loading_ready",false},{"map_loading",1.0},{"server_name",std::string("openQ4 Test Server")},
+		Check(runtime.SetState({{"loading_mp",true},{"loading_ready",false},{"map_loading",1.0},{"server_name",std::string("openD3 Test Server")},
 			{"server_gametype",std::string("Deathmatch")}},error,3),"multiplayer composition");
 		runtime.Frame(viewport,3);
 		// Remastered multiplayer keeps the band low, with the server card on the
@@ -6955,7 +6955,7 @@ int main(int argc, char** argv) {
 		const auto stroggHead = runtime.PresentedValue("server-team-b-head","color");
 		Check(marineHead && Near(static_cast<float>(marineHead->data[0]),0x6a/255.f,.002f) && stroggHead &&
 			Near(static_cast<float>(stroggHead->data[0]),1,.002f),"the heads read in the team colors");
-		Check(runtime.SetState({{"server_message",std::string("Welcome to the openQ4 test server")}},error,3.2),"a one-line message");
+		Check(runtime.SetState({{"server_message",std::string("Welcome to the openD3 test server")}},error,3.2),"a one-line message");
 		runtime.Frame(viewport,3.2);
 		Bounds message;
 		Check(runtime.GetBounds("server-card",cardBox) && runtime.GetBounds("server-message",message) && Near(message.height,20) &&

@@ -1,6 +1,6 @@
 #version 450
 
-// openQ4 Vulkan shadow-map debug overlay — solid fills and glyphs
+// openD3 Vulkan shadow-map debug overlay — solid fills and glyphs
 // (r_shadowMapDebugOverlay).
 //
 // Declares no sampler at all, which is the whole point: the frame, the

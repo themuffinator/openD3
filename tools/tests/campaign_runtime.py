@@ -89,7 +89,7 @@ def run_case(args, save_root: Path, game: str, map_name: str, load: bool) -> dic
     marker = f"CAMPAIGN_RUNTIME_{label}"
     cfg_name = f"campaign_runtime_{args.phase}.cfg"
     save_name = f"campaign_{map_name}"
-    lines = ["waitMsec 3000", f"openq4_assertMapState game/{map_name}", f"echo {marker}"]
+    lines = ["waitMsec 3000", f"opend3_assertMapState game/{map_name}", f"echo {marker}"]
     if not load:
         lines += [f"saveGame {save_name}", "waitMsec 500"]
     lines += ["quit"]
@@ -153,11 +153,11 @@ def main() -> int:
     parser.add_argument("--retail", type=Path, required=True)
     parser.add_argument("--awakening-content", type=Path)
     parser.add_argument("--awakening-root", type=Path, help="read-only installed content root or q4xbase directory")
-    parser.add_argument("--exe", type=Path, default=ROOT / ".install/openQ4-client_x64.exe")
+    parser.add_argument("--exe", type=Path, default=ROOT / ".install/openD3-client_x64.exe")
     parser.add_argument("--save-root", type=Path, default=ROOT / ".tmp/game-consolidation/saves")
     parser.add_argument("--phase", default="candidate")
     parser.add_argument("--renderer", choices=("gl", "vulkan"), default="gl")
-    parser.add_argument("--game", choices=("baseoq4", "q4xbase", "both"), default="both")
+    parser.add_argument("--game", choices=("baseod3", "q4xbase", "both"), default="both")
     parser.add_argument("--load-only", action="store_true")
     parser.add_argument("--maps", nargs="*")
     parser.add_argument("--timeout", type=int, default=240)
@@ -175,16 +175,16 @@ def main() -> int:
     report = {"schema": 1, "phase": args.phase, "renderer": args.renderer,
               "executable_sha256": sha256(args.exe),
               "module_sha256": {path.name: sha256(path) for path in
-                                sorted((args.exe.parent / "baseoq4").glob("game-sp_*"))
+                                sorted((args.exe.parent / "baseod3").glob("game-sp_*"))
                                 if path.suffix.lower() in (".dll", ".so", ".dylib")},
               "complete": False, "results": results}
     def write_report():
         report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     write_report()
-    for game in ("baseoq4", "q4xbase"):
+    for game in ("baseod3", "q4xbase"):
         if args.game != "both" and args.game != game:
             continue
-        maps = args.maps if args.maps is not None else (STOCK_MAPS if game == "baseoq4" else AWAKENING_MAPS)
+        maps = args.maps if args.maps is not None else (STOCK_MAPS if game == "baseod3" else AWAKENING_MAPS)
         for name in maps:
             if not args.load_only:
                 results.append(run_case(args, save_root, game, name, False))

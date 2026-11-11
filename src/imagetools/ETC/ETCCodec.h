@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 
-openQ4 ETC2 / EAC encoder.
+openD3 ETC2 / EAC encoder.
 Original implementation by Emile Belanger (emileb), contributed via
 https://github.com/emileb/openQ4/tree/gles-shader-variants (GPLv3).
 

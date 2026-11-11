@@ -5488,7 +5488,7 @@ static const char *programBaseName = "glprogs/shadow_interaction";
 	GLhandleARB fragmentShader = glCreateShaderObjectARB( GL_FRAGMENT_SHADER_ARB );
 	RB_ReceiverShaderSource( vertexShader, vertexBuffer, NULL, NULL, g_receiverProgramVertexLibrary );
 	RB_ReceiverShaderSource( fragmentShader, fragmentBuffer, NULL,
-		depthCompareMode ? "#define OPENQ4_SHADOW_COMPARE 1\n" : NULL, g_receiverProgramFragmentLibrary );
+		depthCompareMode ? "#define OPEND3_SHADOW_COMPARE 1\n" : NULL, g_receiverProgramFragmentLibrary );
 	glCompileShaderARB( vertexShader );
 	glCompileShaderARB( fragmentShader );
 
@@ -5874,7 +5874,7 @@ static const char *programBaseName = "glprogs/shadow_point_interaction";
 	RB_ReceiverShaderSource( vertexShader, vertexBuffer, NULL, NULL, g_receiverProgramVertexLibrary );
 	RB_ReceiverShaderSource( fragmentShader, fragmentBuffer,
 		depthCompareMode ? "#version 130\n" : NULL,
-		depthCompareMode ? "#define OPENQ4_POINT_SHADOW_COMPARE 1\n" : NULL, g_receiverProgramFragmentLibrary );
+		depthCompareMode ? "#define OPEND3_POINT_SHADOW_COMPARE 1\n" : NULL, g_receiverProgramFragmentLibrary );
 	glCompileShaderARB( vertexShader );
 	glCompileShaderARB( fragmentShader );
 
@@ -6043,7 +6043,7 @@ static const char *programBaseName = "glprogs/shadow_point_caster";
 		// fragment depth stays defined on every execution path.
 		const char *fragmentVersionEnd = strchr( fragmentBuffer, '\n' );
 		if ( fragmentVersionEnd != NULL ) {
-			static const GLcharARB casterDepthDefine[] = "#define OPENQ4_POINT_SHADOW_CASTER_DEPTH 1\n";
+			static const GLcharARB casterDepthDefine[] = "#define OPEND3_POINT_SHADOW_CASTER_DEPTH 1\n";
 			const GLcharARB *fragmentSources[3] = {
 				(const GLcharARB *)fragmentBuffer,
 				casterDepthDefine,
@@ -17511,7 +17511,7 @@ typedef struct {
 
 static	const int	MAX_GLPROGS = 200;
 
-// openQ4's own programs ship inside the renderer instead of glprogs/. Their ids
+// openD3's own programs ship inside the renderer instead of glprogs/. Their ids
 // sit past the last PROG_USER + index a material program can take, clear of
 // the retail fixed range too.
 static const GLuint	FPROG_STENCIL_SHADOW_DEBUG = PROG_USER + MAX_GLPROGS;

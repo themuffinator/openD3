@@ -251,7 +251,7 @@ def validate_controls_diagnostics_and_registration() -> None:
     matrix = read("tools/tests/renderer_validation_matrix.py")
     baseline = read("tools/validation/stock_asset_baseline.py")
     benchmark = read("tools/tests/renderer_gameplay_benchmark.py")
-    registry = read("tools/validation/openq4_validate.py")
+    registry = read("tools/validation/opend3_validate.py")
     docs = read("docs/dev/classic-subview-domain-modernization.md")
     for token in (
         'r_rendererSharedSubview( "r_rendererSharedSubview", "0"',

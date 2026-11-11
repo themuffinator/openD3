@@ -11,7 +11,7 @@
 // Transport grammar shared by the renderer and the atomic settings journal.
 // This validates framing/integrity, NEVER image semantics, VFS authority or GPU
 // completion. Process-local lease identities are deliberately absent.
-namespace openq4::imageRecovery {
+namespace opend3::imageRecovery {
 constexpr size_t EncodedMaxBytes = 1536 * 1024;
 constexpr size_t RawMaxBytes = EncodedMaxBytes / 4 * 3;
 constexpr size_t ChunkBytes = 4096;
@@ -83,7 +83,7 @@ inline bool Pack(std::string_view raw,unsigned direction,std::string_view attemp
             candidate.emplace(std::piecewise_construct,std::forward_as_tuple(key.data(),key.size()),
                 std::forward_as_tuple(std::in_place_type<double>,value));
         };
-        text("codec","openq4.image-recovery.1");text("attempt",attempt);
+        text("codec","opend3.image-recovery.1");text("attempt",attempt);
         number("direction",double(direction));number("chunks",double(count));number("bytes",double(raw.size()));
         for(size_t i=0;i<count;++i){const std::string key=Key(i);std::string value(key,6);value+=':';
             value.append(encoded,i*ChunkBytes,ChunkBytes);text(key,value);}
@@ -97,7 +97,7 @@ inline bool Unpack(const Values& input,unsigned direction,std::string_view attem
         const auto num=[&](const char* key)->const double*{const auto i=input.find(key);return i==input.end()?nullptr:std::get_if<double>(&i->second);};
         const auto codec=str("codec"),id=str("attempt");const auto dir=num("direction"),chunks=num("chunks"),bytes=num("bytes");
         const size_t count=input.size()-5;
-        if(!codec||*codec!="openq4.image-recovery.1"||!id||*id!=attempt||!dir||*dir!=direction||!chunks||*chunks!=double(count)||
+        if(!codec||*codec!="opend3.image-recovery.1"||!id||*id!=attempt||!dir||*dir!=direction||!chunks||*chunks!=double(count)||
             !bytes||!(*bytes>=double(HeaderBytes+4)&&*bytes<=double(RawMaxBytes)))return false;
         std::string text(0,'\0');text.reserve(count*ChunkBytes);
         for(size_t i=0;i<count;++i){const auto key=Key(i);const auto item=input.find(key);
@@ -111,4 +111,4 @@ inline bool Unpack(const Values& input,unsigned direction,std::string_view attem
         output.swap(raw);return true;
     }catch(...){return false;}
 }
-} // namespace openq4::imageRecovery
+} // namespace opend3::imageRecovery

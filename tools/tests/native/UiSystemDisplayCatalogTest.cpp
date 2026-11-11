@@ -343,7 +343,7 @@ static void Recreate(View& v,const std::string& source) {
  Check(ClosedText(v,Device)==Encoded(Two[1])&&v.runtime.TakeActions().empty(),"the recreated row reads the current list and replays no pick");
 }
 static void Run(const std::string& source,const std::string& folder,const char* locale,float expansion) {
- View v(source,folder+"/"+locale+"_openq4.lang",1,1280,720,expansion,folder+"/"+locale+"_guis.lang");
+ View v(source,folder+"/"+locale+"_opend3.lang",1,1280,720,expansion,folder+"/"+locale+"_guis.lang");
  for(const auto* key:{"#str_229912","#str_229914","#str_229915","#str_200059","#str_229975","#str_229945"})Check(v.host.strings.contains(key),"every display row label is translated");
  Check(Shown(v,Device)=="none"&&Shown(v,Span)=="none","before the service publishes lists both rows stay hidden");
  // The display rows live on the SCREEN tab.

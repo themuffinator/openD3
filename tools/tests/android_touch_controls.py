@@ -66,11 +66,11 @@ struct Console {bool active=false;bool Active(){return active;}} consoleValue,*c
 struct Game {bool cinematic=false;bool InCinematic(){return cinematic;}} gameValue,*game=&gameValue;
 static bool retainedOpen=false,loading=false;
 static bool RetainedUI_IsOpen(){return retainedOpen;}
-static bool openQ4_AcceptingLoadingContinueInput(){return loading;}
+static bool openD3_AcceptingLoadingContinueInput(){return loading;}
 static int now=1000;
 static int Sys_Milliseconds(){return now;}
 namespace idMath {static float ClampFloat(float lo,float hi,float v){return std::clamp(v,lo,hi);}}
-static openq4::touch::MotionState motion;
+static opend3::touch::MotionState motion;
 static void Sys_SetTouchMotion(float side,float forward,float yaw,float pitch,bool active,unsigned buttons,unsigned canceled,int next,int reload){
     motion.Submit({side,forward,yaw,pitch,active,buttons,canceled,next,reload});
 }
@@ -81,12 +81,12 @@ static std::vector<int> escape;
 static void Posix_QueEvent(int type,int key,int down,int,void*){check(type==SE_KEY && key==K_ESCAPE,"unexpected session input");escape.push_back(down);}
 @CVARS@
 static const float TOUCH_LOOK_DEGREES_PER_DP=0.25f;
-static openq4::touch::Controls touchControls;
-static openq4::touch::Contacts touchContacts;
+static opend3::touch::Controls touchControls;
+static opend3::touch::Contacts touchContacts;
 static float touchDisplayScale=1,touchWheelX=0,touchWheelY=0,touchPlayerScale=-1;
 static int touchPlayerPreset=-1;
 static idStr touchLayoutRecord;
-static openq4::touch::OrientationEdits touchLayoutEdits;
+static opend3::touch::OrientationEdits touchLayoutEdits;
 static bool touchLayoutValid=false;
 static int setupLoads=0;
 static void TouchControls_LoadSetup(){++setupLoads;}
@@ -109,7 +109,7 @@ static void reset(){
     usercmd.impulses.clear();commands.text.clear();escape.clear();now=1000;frame();motion.Take();
 }
 int main(){try{
-    using namespace openq4::touch;
+    using namespace opend3::touch;
     reset();int loaded=setupLoads,interfaceLoaded=interfaceLoads;frame();frame();
     check(setupLoads==loaded && interfaceLoads==interfaceLoaded,"setup read every frame");
     AndroidTouchControls_Release();frame();

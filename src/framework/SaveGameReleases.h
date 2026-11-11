@@ -18,14 +18,14 @@
 ===============================================================================
 */
 
-struct openQ4SaveGameRelease_t {
+struct openD3SaveGameRelease_t {
 	const char *	version;
 	const char *	sourceHash;
 	int				sourceFileCount;
 	int				build;
 };
 
-static const openQ4SaveGameRelease_t OPENQ4_SAVEGAME_RELEASES[] = {
+static const openD3SaveGameRelease_t OPEND3_SAVEGAME_RELEASES[] = {
 	{ "0.10.0",	"19351be39d2d4077a74294c0442707ef9565fc7a2fa9af9b81e05fc9aca8b220", 404, 657 },
 	{ "0.11.0",	"484e95b8e36bbe39960e6f2fa4f0805e2f7d19c57ee78ed8d5bef4d72d878a3e", 404, 693 },
 	{ "0.12.0",	"f4e6e8c84f7bc1b144489afc15eb4df110c91ffddd2d8a8816735457476ba81e", 404, 719 },
@@ -33,22 +33,22 @@ static const openQ4SaveGameRelease_t OPENQ4_SAVEGAME_RELEASES[] = {
 };
 
 // The build stamped by a shallow release checkout.
-static const int OPENQ4_SAVEGAME_SHALLOW_RELEASE_BUILD = 1;
+static const int OPEND3_SAVEGAME_SHALLOW_RELEASE_BUILD = 1;
 
 /*
 ====================
-OpenQ4_FindSaveGameRelease
+openD3_FindSaveGameRelease
 
 The release that wrote a payload stamped with the shallow-checkout build, or
 NULL for any other payload.
 ====================
 */
-static inline const openQ4SaveGameRelease_t *OpenQ4_FindSaveGameRelease( int savedBuild, const char *sourceHash, int sourceFileCount ) {
-	if ( savedBuild != OPENQ4_SAVEGAME_SHALLOW_RELEASE_BUILD || sourceHash == NULL ) {
+static inline const openD3SaveGameRelease_t *openD3_FindSaveGameRelease( int savedBuild, const char *sourceHash, int sourceFileCount ) {
+	if ( savedBuild != OPEND3_SAVEGAME_SHALLOW_RELEASE_BUILD || sourceHash == NULL ) {
 		return NULL;
 	}
-	for ( int i = 0; i < static_cast<int>( sizeof( OPENQ4_SAVEGAME_RELEASES ) / sizeof( OPENQ4_SAVEGAME_RELEASES[0] ) ); i++ ) {
-		const openQ4SaveGameRelease_t &release = OPENQ4_SAVEGAME_RELEASES[i];
+	for ( int i = 0; i < static_cast<int>( sizeof( OPEND3_SAVEGAME_RELEASES ) / sizeof( OPEND3_SAVEGAME_RELEASES[0] ) ); i++ ) {
+		const openD3SaveGameRelease_t &release = OPEND3_SAVEGAME_RELEASES[i];
 		if ( release.sourceFileCount == sourceFileCount && idStr::Icmp( release.sourceHash, sourceHash ) == 0 ) {
 			return &release;
 		}
@@ -62,9 +62,9 @@ static inline const openQ4SaveGameRelease_t *OpenQ4_FindSaveGameRelease( int sav
 	0.6.95 tag (22c7c52f), added four fields to each saved sound channel, and
 	every v2 payload stamped build 1 is a release from 0.6.95 on.
 */
-static const int OPENQ4_SAVEGAME_V2_VERSION = 2;
-static const int OPENQ4_SAVEGAME_V2_FIRST_RELEASE_BUILD = 546;
-static const char *OPENQ4_SAVEGAME_V2_WIRE_ABI = "windows-msvcabi-x64-le-raw1";
+static const int OPEND3_SAVEGAME_V2_VERSION = 2;
+static const int OPEND3_SAVEGAME_V2_FIRST_RELEASE_BUILD = 546;
+static const char *OPEND3_SAVEGAME_V2_WIRE_ABI = "windows-msvcabi-x64-le-raw1";
 
 /*
 	Version 5 (roadmap Q4-06) writes every field with an explicit width and byte
@@ -72,12 +72,12 @@ static const char *OPENQ4_SAVEGAME_V2_WIRE_ABI = "windows-msvcabi-x64-le-raw1";
 	Linux, macOS and Android, on x64 or ARM64. It carries the stamp below.
 	Versions 2 to 4 keep the exact raw1 stamp of the build that wrote them.
 */
-static const int OPENQ4_SAVEGAME_PORTABLE_VERSION = 5;
-static const char *OPENQ4_SAVEGAME_PORTABLE_WIRE_ABI = "le64-portable1";
+static const int OPEND3_SAVEGAME_PORTABLE_VERSION = 5;
+static const char *OPEND3_SAVEGAME_PORTABLE_WIRE_ABI = "le64-portable1";
 
 /*
 ====================
-OpenQ4_SaveGamePortableWireABI
+openD3_SaveGamePortableWireABI
 
 The stamp a version 5 payload carries and must carry to load. A build outside
 the portable family (pointers other than 64 bits, or big-endian) stamps its own
@@ -90,34 +90,34 @@ records (bitfields, script storage, structures written whole), so its payload
 carries the exact raw1 stamp of the build that wrote it and loads only there.
 ====================
 */
-static const bool OPENQ4_SAVEGAME_GAME_RECORDS_ARE_PORTABLE = false;
+static const bool OPEND3_SAVEGAME_GAME_RECORDS_ARE_PORTABLE = false;
 
-static inline const char *OpenQ4_SaveGamePortableWireABI( const char *nativeWireABI ) {
-	if ( !OPENQ4_SAVEGAME_GAME_RECORDS_ARE_PORTABLE ) {
+static inline const char *openD3_SaveGamePortableWireABI( const char *nativeWireABI ) {
+	if ( !OPEND3_SAVEGAME_GAME_RECORDS_ARE_PORTABLE ) {
 		return nativeWireABI;
 	}
 #if defined( __BYTE_ORDER__ ) && defined( __ORDER_BIG_ENDIAN__ ) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 	return nativeWireABI;
 #else
-	return sizeof( void * ) == 8 ? OPENQ4_SAVEGAME_PORTABLE_WIRE_ABI : nativeWireABI;
+	return sizeof( void * ) == 8 ? OPEND3_SAVEGAME_PORTABLE_WIRE_ABI : nativeWireABI;
 #endif
 }
 
 /*
 ====================
-OpenQ4_SaveGameLayoutBuild
+openD3_SaveGameLayoutBuild
 
 The build a payload's layout is read as: its release's build when a shallow
 release checkout stamped it, otherwise the build it carries.
 ====================
 */
-static inline int OpenQ4_SaveGameLayoutBuild( int version, int savedBuild, const char *sourceHash, int sourceFileCount ) {
-	const openQ4SaveGameRelease_t *release = OpenQ4_FindSaveGameRelease( savedBuild, sourceHash, sourceFileCount );
+static inline int openD3_SaveGameLayoutBuild( int version, int savedBuild, const char *sourceHash, int sourceFileCount ) {
+	const openD3SaveGameRelease_t *release = openD3_FindSaveGameRelease( savedBuild, sourceHash, sourceFileCount );
 	if ( release != NULL ) {
 		return release->build;
 	}
-	if ( version == OPENQ4_SAVEGAME_V2_VERSION && savedBuild == OPENQ4_SAVEGAME_SHALLOW_RELEASE_BUILD ) {
-		return OPENQ4_SAVEGAME_V2_FIRST_RELEASE_BUILD;
+	if ( version == OPEND3_SAVEGAME_V2_VERSION && savedBuild == OPEND3_SAVEGAME_SHALLOW_RELEASE_BUILD ) {
+		return OPEND3_SAVEGAME_V2_FIRST_RELEASE_BUILD;
 	}
 	return savedBuild;
 }
@@ -135,10 +135,10 @@ static inline int OpenQ4_SaveGameLayoutBuild( int version, int savedBuild, const
 ===============================================================================
 */
 
-static const int OPENQ4_SAVEGAME_BUILD_WITH_INTERPOLATOR_CACHE_FLAG = 1582;
+static const int OPEND3_SAVEGAME_BUILD_WITH_INTERPOLATOR_CACHE_FLAG = 1582;
 
 template< class type >
-struct openQ4SaveGameLegacyExtrapolate_t {
+struct openD3SaveGameLegacyExtrapolate_t {
 	extrapolation_t		extrapolationType;
 	float				startTime;
 	float				duration;
@@ -150,14 +150,14 @@ struct openQ4SaveGameLegacyExtrapolate_t {
 };
 
 template< class type >
-struct openQ4SaveGameLegacyInterpolate_t {
+struct openD3SaveGameLegacyInterpolate_t {
 	float				startTime;
 	float				accelTime;
 	float				linearTime;
 	float				decelTime;
 	type				startValue;
 	type				endValue;
-	openQ4SaveGameLegacyExtrapolate_t<type> extrapolate;
+	openD3SaveGameLegacyExtrapolate_t<type> extrapolate;
 
 	// The saved timing and endpoints; the extrapolator state is derived from them.
 	void				ToInterpolate( idInterpolateAccelDecelLinear<type> &lerp ) const {
@@ -165,8 +165,8 @@ struct openQ4SaveGameLegacyInterpolate_t {
 						}
 };
 
-static inline bool OpenQ4_SaveGameHasInterpolatorCacheFlag( int layoutBuild ) {
-	return layoutBuild >= OPENQ4_SAVEGAME_BUILD_WITH_INTERPOLATOR_CACHE_FLAG;
+static inline bool openD3_SaveGameHasInterpolatorCacheFlag( int layoutBuild ) {
+	return layoutBuild >= OPEND3_SAVEGAME_BUILD_WITH_INTERPOLATOR_CACHE_FLAG;
 }
 
 /*
@@ -177,7 +177,7 @@ static inline bool OpenQ4_SaveGameHasInterpolatorCacheFlag( int layoutBuild ) {
 	A GUI's saved state follows the structure of the .gui file that built it,
 	so an edit to a GUI that saves leaves older payloads with records in the
 	previous structure. Each such file keeps its previous revision under
-	guis/savecompat/ (a GUI openQ4 reads from its own definition in place of a
+	guis/savecompat/ (a GUI openD3 reads from its own definition in place of a
 	game's file names that file itself, which is parsed as written). A record
 	from a payload whose layout build predates the
 	edit, and whose blob does not name a window only the current revision has
@@ -188,7 +188,7 @@ static inline bool OpenQ4_SaveGameHasInterpolatorCacheFlag( int layoutBuild ) {
 ===============================================================================
 */
 
-struct openQ4SaveGameGuiRevision_t {
+struct openD3SaveGameGuiRevision_t {
 	const char *	name;
 	int				build;				// first build with the current revision
 	const char *	savedDefinition;	// the revision earlier builds saved
@@ -197,7 +197,7 @@ struct openQ4SaveGameGuiRevision_t {
 
 // A GUI edited more than once lists its revisions oldest first: a record is
 // read through the first revision whose build its payload predates.
-static const openQ4SaveGameGuiRevision_t OPENQ4_SAVEGAME_GUI_REVISIONS[] = {
+static const openD3SaveGameGuiRevision_t OPEND3_SAVEGAME_GUI_REVISIONS[] = {
 	// 38bdc6872: reduced flashing gave the hit indicator a second window and new scripts
 	{ "guis/hud.gui",			1562,	"guis/savecompat/hud_r1.gui",			"hit_indicator_reduced" },
 	{ "guis/hud_strogg.gui",	1562,	"guis/savecompat/hud_strogg_r1.gui",	"hit_indicator_reduced" },
@@ -210,10 +210,10 @@ static const openQ4SaveGameGuiRevision_t OPENQ4_SAVEGAME_GUI_REVISIONS[] = {
 	{ "guis/hud.gui",			2323,	"guis/savecompat/hud_r3.gui",			"hit_chevron" },
 	{ "guis/hud_strogg.gui",	2323,	"guis/savecompat/hud_strogg_r3.gui",	"hit_chevron" },
 	{ "guis/vehicles/hud.gui",	2323,	"guis/savecompat/vehicle_hud_r2.gui",	"oq4_prompt_padlock" },
-	// The Awakening's on-foot HUD is read from openQ4's laid-out definition of it
+	// The Awakening's on-foot HUD is read from openD3's laid-out definition of it
 	// (idLegacyHudLayout::DefinitionFor); earlier records follow the expansion's own file
 	{ "guis/q4xhud.gui",		2330,	"guis/q4xhud.gui",						"p_pickup0" },
-	// The Awakening's dropship gun, MCC gun and speeder bike HUDs, read from openQ4's definitions likewise
+	// The Awakening's dropship gun, MCC gun and speeder bike HUDs, read from openD3's definitions likewise
 	{ "guis/vehicles/airassault/turretplayerhud.gui",	2334,	"guis/vehicles/airassault/turretplayerhud.gui",	"oq4_prompt" },
 	{ "guis/vehicles/mcc/cannonplayerhud.gui",	2334,	"guis/vehicles/mcc/cannonplayerhud.gui",	"oq4_prompt" },
 	{ "guis/vehicles/speederplayerhud.gui",	2334,	"guis/vehicles/speederplayerhud.gui",	"oq4_prompt" },
@@ -225,9 +225,9 @@ static const openQ4SaveGameGuiRevision_t OPENQ4_SAVEGAME_GUI_REVISIONS[] = {
 	{ "guis/vehicles/speederplayerhud.gui",	2342,	"guis/savecompat/q4x_speederplayerhud_r1.gui",	"lock_state_msg" },
 };
 
-static inline const openQ4SaveGameGuiRevision_t *OpenQ4_FindSaveGameGuiRevision( const char *guiName, int layoutBuild ) {
-	for ( int i = 0; i < static_cast<int>( sizeof( OPENQ4_SAVEGAME_GUI_REVISIONS ) / sizeof( OPENQ4_SAVEGAME_GUI_REVISIONS[0] ) ); i++ ) {
-		const openQ4SaveGameGuiRevision_t &revision = OPENQ4_SAVEGAME_GUI_REVISIONS[i];
+static inline const openD3SaveGameGuiRevision_t *openD3_FindSaveGameGuiRevision( const char *guiName, int layoutBuild ) {
+	for ( int i = 0; i < static_cast<int>( sizeof( OPEND3_SAVEGAME_GUI_REVISIONS ) / sizeof( OPEND3_SAVEGAME_GUI_REVISIONS[0] ) ); i++ ) {
+		const openD3SaveGameGuiRevision_t &revision = OPEND3_SAVEGAME_GUI_REVISIONS[i];
 		if ( idStr::Icmp( guiName, revision.name ) == 0 && layoutBuild < revision.build ) {
 			return &revision;
 		}
@@ -243,24 +243,24 @@ use the format version and layout of the build that wrote it; every other read,
 such as an in-memory GUI snapshot, uses the current ones. Defined in
 ui/Window.cpp, which every engine target links.
 */
-struct openQ4SaveGameRestore_t {
+struct openD3SaveGameRestore_t {
 	const idFile *		file;
 	int					layoutBuild;
 	int					version;		// payload version; 0 for an unstamped payload
 };
-extern openQ4SaveGameRestore_t openQ4_saveGameRestore;
+extern openD3SaveGameRestore_t openD3_saveGameRestore;
 
-static const int OPENQ4_SAVEGAME_CURRENT_LAYOUT = 0x7fffffff;
+static const int OPEND3_SAVEGAME_CURRENT_LAYOUT = 0x7fffffff;
 
 // The layout build of what `file` holds: the restored payload's, or current.
-static inline int OpenQ4_SaveGameRestoreLayoutBuild( const idFile *file ) {
-	return file != NULL && file == openQ4_saveGameRestore.file ? openQ4_saveGameRestore.layoutBuild : OPENQ4_SAVEGAME_CURRENT_LAYOUT;
+static inline int openD3_SaveGameRestoreLayoutBuild( const idFile *file ) {
+	return file != NULL && file == openD3_saveGameRestore.file ? openD3_saveGameRestore.layoutBuild : OPEND3_SAVEGAME_CURRENT_LAYOUT;
 }
 
 // Whether what `file` holds uses the version 5 encodings: the restored payload
 // from version 5 on, and anything the current build wrote.
-static inline bool OpenQ4_SaveGameRestoreIsPortable( const idFile *file ) {
-	return file == NULL || file != openQ4_saveGameRestore.file || openQ4_saveGameRestore.version >= OPENQ4_SAVEGAME_PORTABLE_VERSION;
+static inline bool openD3_SaveGameRestoreIsPortable( const idFile *file ) {
+	return file == NULL || file != openD3_saveGameRestore.file || openD3_saveGameRestore.version >= OPEND3_SAVEGAME_PORTABLE_VERSION;
 }
 #endif
 

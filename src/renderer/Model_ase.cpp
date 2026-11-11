@@ -226,7 +226,7 @@ static bool ASE_HasGameDirAssetPath( const idStr &path )
 	// bypasses the converter so it does not generate warning noise.
 	const char *gameDirs[] = {
 		BASE_GAMEDIR,
-		OPENQ4_GAMEDIR,
+		OPEND3_GAMEDIR,
 		cvarSystem != NULL ? cvarSystem->GetCVarString( "fs_game" ) : "",
 		cvarSystem != NULL ? cvarSystem->GetCVarString( "fs_game_base" ) : ""
 	};

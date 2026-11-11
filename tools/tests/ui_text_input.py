@@ -60,9 +60,9 @@ def main() -> int:
     codec_exe = scratch / ("UiTextInputTest" + executable_suffix)
     commands.append([compiler, *flags, str(codec), str(ROOT / SOURCES[4]), "-o", str(codec_exe)])
     commands.append([str(codec_exe)])
-    for name, definitions in (("sdl-client", ["-DUSE_SDL3", "-DOPENQ4_SDL3_CHECKED_CLIPBOARD=1"]),
-                              ("unverified-sdl", ["-DUSE_SDL3"]), ("unverified-sdl-zero", ["-DUSE_SDL3", "-DOPENQ4_SDL3_CHECKED_CLIPBOARD=0"]),
-                              ("no-sdl", []), ("dedicated", ["-DUSE_SDL3", "-DID_DEDICATED", "-DOPENQ4_SDL3_CHECKED_CLIPBOARD=1"])):
+    for name, definitions in (("sdl-client", ["-DUSE_SDL3", "-DOPEND3_SDL3_CHECKED_CLIPBOARD=1"]),
+                              ("unverified-sdl", ["-DUSE_SDL3"]), ("unverified-sdl-zero", ["-DUSE_SDL3", "-DOPEND3_SDL3_CHECKED_CLIPBOARD=0"]),
+                              ("no-sdl", []), ("dedicated", ["-DUSE_SDL3", "-DID_DEDICATED", "-DOPEND3_SDL3_CHECKED_CLIPBOARD=1"])):
         executable = scratch / (name + executable_suffix)
         commands.append([compiler, *flags, *definitions, "-I", str(stub.parents[1]), str(codec), str(clipboard),
                          str(ROOT / SOURCES[5]), "-o", str(executable)])
@@ -70,7 +70,7 @@ def main() -> int:
     if args.sdl_include:
         if not (args.sdl_include / "SDL3" / "SDL.h").is_file():
             raise RuntimeError("Real SDL include directory does not contain SDL3/SDL.h")
-        commands.append([compiler, *flags, "-DUSE_SDL3", "-DOPENQ4_SDL3_CHECKED_CLIPBOARD=1", "-I", str(args.sdl_include), "-c", str(clipboard),
+        commands.append([compiler, *flags, "-DUSE_SDL3", "-DOPEND3_SDL3_CHECKED_CLIPBOARD=1", "-I", str(args.sdl_include), "-c", str(clipboard),
                          "-o", str(scratch / "real-sdl-header.o")])
     source_hashes = {name: sha(ROOT / name) for name in SOURCES}
     evidence = {"passed": False, "platform": platform.platform(), "sources": source_hashes,

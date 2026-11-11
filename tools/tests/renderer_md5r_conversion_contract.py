@@ -321,8 +321,8 @@ def validate_static_conversion(source: str, local: str) -> None:
 
 
 def validate_registration() -> None:
-    validator = read("tools/validation/openq4_validate.py")
-    require(validator, '"renderer_md5r_conversion_contract.py"', "openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
+    require(validator, '"renderer_md5r_conversion_contract.py"', "opend3_validate.py")
     for workflow in (".github/workflows/commit-validation.yml", ".github/workflows/push-verification.yml"):
         text = read(workflow)
         require(text, "tools/tests/renderer_md5r_conversion_contract.py \\", workflow)

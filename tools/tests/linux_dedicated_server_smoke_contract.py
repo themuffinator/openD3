@@ -40,7 +40,7 @@ def main() -> None:
     gl_stub = read("src/sys/stub/stub_gl.cpp")
     openal_stub = read("src/sys/stub/stub_openal.cpp")
     glew_meson = read("subprojects/glew/meson.build")
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
 
     for token in (
         'prey_base / "pak000.pk4"',
@@ -144,11 +144,11 @@ def main() -> None:
 
     for token in (
         "dedicated_engine_source_paths",
-        "openq4_dedicated_sources",
+        "opend3_dedicated_sources",
         "dedicated_deps = [",
         "glew_dedicated_dep",
         "openal_dep.partial_dependency(",
-        "'-DUSE_SDL3=1', '-DOPENQ4_HAVE_X11_HELPERS=1'",
+        "'-DUSE_SDL3=1', '-DOPEND3_HAVE_X11_HELPERS=1'",
     ):
         require(meson, token, "Linux dedicated Meson split")
     require_count(meson, "dependencies: dedicated_deps", 3, "dedicated target dependency split")
@@ -156,12 +156,12 @@ def main() -> None:
     # argument list: it also carries -DGLAPI=extern so the GL-free dedicated
     # targets can satisfy GL 1.1 references from plain stub definitions.
     dedicated_glew_block = glew_meson[glew_meson.index("glew_dedicated_lib = static_library(") :]
-    for define in ("'-DGLEW_NO_GLU'", "'-DOPENQ4_GLEW_SDL3_LOADER'"):
+    for define in ("'-DGLEW_NO_GLU'", "'-DOPEND3_GLEW_SDL3_LOADER'"):
         require(dedicated_glew_block, define, "headless dedicated GLEW resolver")
 
     require(linux_dedicated, "Sys_GetDesktopResolution", "Linux dedicated platform stubs")
     reject(linux_dedicated, '#include "local.h"', "Linux dedicated X11-free platform stubs")
-    require(gl_stub, "OpenQ4_GlewGetProcAddress", "Linux dedicated GLEW stub")
+    require(gl_stub, "openD3_GlewGetProcAddress", "Linux dedicated GLEW stub")
     require(gl_stub, "GLimp_SetScreenParms", "Linux dedicated GLimp stubs")
     require(openal_stub, "alcOpenDevice", "Linux dedicated OpenAL stubs")
     require(openal_stub, "alBufferSamplesSOFT", "Linux dedicated OpenAL extension stubs")

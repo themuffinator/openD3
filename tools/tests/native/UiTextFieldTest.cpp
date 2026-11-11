@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks=0;
 static void Check(bool value,const char* message) { ++checks;if(!value){std::fprintf(stderr,"FAIL: %s\n",message);std::exit(1);} }
 static Json::Value Typed(const char* type,Json::Value value,const char* unit=nullptr) {
@@ -36,7 +36,7 @@ static void Colour(Json::Value& node,std::initializer_list<double> colour) { nod
 // A host-bound name reads back from the host instead. `masked` and
 // `allowEmpty` make it a password field's.
 static Json::Value Source(bool hostBound=false,bool masked=false,bool allowEmpty=false) {
-	Json::Value source;source["format"]="openq4-ui";source["version"]=1;source["id"]="text-field";
+	Json::Value source;source["format"]="opend3-ui";source["version"]=1;source["id"]="text-field";
 	source["state"]["name"]["type"]="string";source["state"]["name"]["initial"]="";
 	if(hostBound)source["state"]["name"]["cvar"]="ui_text_test";
 	source["actions"]["rename"]["input"]="string";source["actions"]["rename"]["operation"]="test.rename";source["actions"]["rename"]["arguments"]["value"]["input"]="value";

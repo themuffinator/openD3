@@ -466,7 +466,7 @@ def validate_phase3_plan_status() -> None:
 
 def validate_docs_and_wiring() -> None:
     platform_support = read("docs/dev/platform-support.md")
-    local_runner = read("tools/validation/openq4_validate.py")
+    local_runner = read("tools/validation/opend3_validate.py")
 
     require(platform_support, "macOS arm64/x64/universal2", "macOS platform boundary")
     require(platform_support, "Experimental and gated", "macOS platform boundary")

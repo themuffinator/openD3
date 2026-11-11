@@ -94,13 +94,13 @@ def validate_vulkan_module_build_contract() -> None:
         meson,
         (
             "renderer_vk_module_args = engine_cpp_args + [",
-            "'-DOPENQ4_RENDERER_VK_MODULE'",
+            "'-DOPEND3_RENDERER_VK_MODULE'",
             "renderer_vk_module_target = shared_module(",
         ),
         "Vulkan renderer module build",
     )
-    if meson.count("'-DOPENQ4_RENDERER_VK_MODULE'") != 1:
-        raise AssertionError("OPENQ4_RENDERER_VK_MODULE should be defined only for the Vulkan renderer module")
+    if meson.count("'-DOPEND3_RENDERER_VK_MODULE'") != 1:
+        raise AssertionError("OPEND3_RENDERER_VK_MODULE should be defined only for the Vulkan renderer module")
 
     target = parenthesized_body(
         meson,
@@ -145,7 +145,7 @@ def validate_runtime_gate_helpers() -> None:
     require_order(
         packed_gate,
         (
-            "#if defined( OPENQ4_RENDERER_VK_MODULE )",
+            "#if defined( OPEND3_RENDERER_VK_MODULE )",
             "return false;",
             "#else",
             "return true;",
@@ -178,7 +178,7 @@ def validate_runtime_gate_helpers() -> None:
     require_order(
         tangent_gate,
         (
-            "#if defined( OPENQ4_RENDERER_VK_MODULE )",
+            "#if defined( OPEND3_RENDERER_VK_MODULE )",
             "return false;",
             "#else",
             "return r_useDeferredTangents.GetBool();",
@@ -645,7 +645,7 @@ def validate_native_file_loading() -> None:
 
 
 def validate_ci_registration() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
 

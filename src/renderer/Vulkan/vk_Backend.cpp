@@ -18,7 +18,7 @@
 ===============================================================================
 */
 
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
@@ -2011,4 +2011,4 @@ VK_GL_SELFTEST_STUB( RendererRenderGraphResource_RunSelfTest )
 VK_GL_SELFTEST_STUB( RendererUpload_RunSelfTest )
 VK_GL_SELFTEST_STUB( RendererVisiblePath_RunSelfTest )
 
-#endif /* OPENQ4_RENDERER_VK_MODULE */
+#endif /* OPEND3_RENDERER_VK_MODULE */

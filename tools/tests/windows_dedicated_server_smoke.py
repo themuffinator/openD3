@@ -18,7 +18,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-READY_MARKER = "OPENQ4_WINDOWS_DEDICATED_SMOKE_READY"
+READY_MARKER = "OPEND3_WINDOWS_DEDICATED_SMOKE_READY"
 IPV4_SELF_TEST_MARKER = "IPv4 network self-test: passed"
 CANONICAL_GAMETYPE_MARKER = '"si_gameType" is:"DM"'
 LOG_FILE_NAME = "windows-dedicated-smoke.log"
@@ -44,7 +44,7 @@ FATAL_MARKERS = (
     "wrong game DLL API version",
 )
 
-# IMAGE_FILE_HEADER.Machine for each architecture openQ4 packages on Windows.
+# IMAGE_FILE_HEADER.Machine for each architecture openD3 packages on Windows.
 PE_MACHINES = {
     "x64": 0x8664,
     "arm64": 0xAA64,
@@ -155,7 +155,7 @@ def create_minimal_base(base_path: Path) -> Path:
     pak_path = q4base / "pak001.pk4"
     with zipfile.ZipFile(pak_path, "w", compression=zipfile.ZIP_STORED) as archive:
         archive.writestr(
-            "openq4-windows-dedicated-smoke.txt",
+            "opend3-windows-dedicated-smoke.txt",
             "Generated test-only media marker; contains no proprietary Quake 4 data.\n",
         )
     return pak_path
@@ -236,7 +236,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--install-root",
         type=Path,
         default=ROOT / ".install",
-        help="Staged package root containing the Windows dedicated server and baseoq4 module.",
+        help="Staged package root containing the Windows dedicated server and baseod3 module.",
     )
     parser.add_argument(
         "--output-root",
@@ -267,8 +267,8 @@ def main(argv: list[str]) -> int:
     if arch == "arm64" and host_arch != "arm64":
         raise RuntimeError(f"arm64 binaries cannot start on this {host_arch} host")
     install_root = args.install_root.resolve()
-    executable = (args.executable or install_root / f"openQ4-ded_{arch}.exe").resolve()
-    game_module = install_root / "baseoq4" / f"game-mp_{arch}.dll"
+    executable = (args.executable or install_root / f"openD3-ded_{arch}.exe").resolve()
+    game_module = install_root / "baseod3" / f"game-mp_{arch}.dll"
     # The server imports OpenAL32.dll directly, so the loader needs a matching
     # one beside the executable before any engine code runs.
     openal_runtime = executable.parent / "OpenAL32.dll"
@@ -311,7 +311,7 @@ def main(argv: list[str]) -> int:
         "+set", "fs_homepath", str(home_path),
         "+set", "fs_savepath", str(home_path),
         "+set", "fs_devpath", str(install_root),
-        "+set", "fs_game", "baseoq4",
+        "+set", "fs_game", "baseod3",
         "+set", "fs_validateOfficialPaks", "0",
         "+set", "g_allowAssetlessStartup", "1",
         "+set", "si_gameType", "dm",

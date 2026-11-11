@@ -27,7 +27,7 @@ from typing import Any
 # contract in tools/tests/renderer_gpu_skinning.py fails when the two drift.
 REPORT_SCHEMA_VERSION = 5
 EVIDENCE_SCHEMA_VERSION = 1
-EVIDENCE_KIND = "openq4-gpu-skinning-paired-evidence"
+EVIDENCE_KIND = "opend3-gpu-skinning-paired-evidence"
 DEFAULT_MINIMUM_CPU_P95_IMPROVEMENT = 1.0
 DEFAULT_IMAGE_RMS_THRESHOLD = 2.0
 DEFAULT_IMAGE_MAX_THRESHOLD = 24
@@ -77,7 +77,7 @@ FALLBACK_MARKER = re.compile(
 )
 COUNTER = re.compile(r"(?P<name>[A-Za-z][A-Za-z0-9]*)=(?P<value>\d+)")
 TIMING_MARKER = re.compile(
-    r"^OPENQ4_FRAME_TIMING_V1\s+map=(?P<map>\S+)\s+"
+    r"^OPEND3_FRAME_TIMING_V1\s+map=(?P<map>\S+)\s+"
     r"backend=(?P<backend>\S+)\s+profile=(?P<profile>\S+)\s+"
     r"cpuSamples=(?P<cpuSamples>\d+)\s+cpuP50Us=(?P<cpuP50Us>\d+)\s+"
     r"cpuP95Us=(?P<cpuP95Us>\d+)\s+cpuP99Us=(?P<cpuP99Us>\d+)\s+"
@@ -848,7 +848,7 @@ def build_test_report(root: Path, enabled: bool, cpu_p95: int) -> Path:
         f"{name}={fallback_values[name]}" for name in FALLBACK_NAMES
     )
     timing_line = (
-        "OPENQ4_FRAME_TIMING_V1 map=game/airdefense2 backend=opengl profile=baseline "
+        "OPEND3_FRAME_TIMING_V1 map=game/airdefense2 backend=opengl profile=baseline "
         f"cpuSamples=600 cpuP50Us=7000 cpuP95Us={cpu_p95} cpuP99Us={cpu_p95 + 2000} "
         "gpuAvailable=1 gpuSamples=598 gpuP50Us=5000 gpuP95Us=7000 gpuP99Us=8000"
     )
@@ -916,8 +916,8 @@ def build_test_report(root: Path, enabled: bool, cpu_p95: int) -> Path:
         "schemaVersion": REPORT_SCHEMA_VERSION,
         "status": "pass",
         "dryRun": False,
-        "git": {"policy": "current-openq4-head-and-dirty-state-v1", "revision": "a" * 40, "dirty": False},
-        "runtime": {"path": ".install", "executable": "openQ4-client_x64.exe", "files": [{"path": "openQ4-client_x64.exe", "size": 1, "sha256": "0" * 64}]},
+        "git": {"policy": "current-opend3-head-and-dirty-state-v1", "revision": "a" * 40, "dirty": False},
+        "runtime": {"path": ".install", "executable": "openD3-client_x64.exe", "files": [{"path": "openD3-client_x64.exe", "size": 1, "sha256": "0" * 64}]},
         "runtimeVerificationFailures": [],
         "budgetContract": {"contractId": "self-test", "sha256": "1" * 64},
         "budgetEnforced": True,
@@ -943,7 +943,7 @@ def build_test_report(root: Path, enabled: bool, cpu_p95: int) -> Path:
 
 
 def run_self_test() -> None:
-    with tempfile.TemporaryDirectory(prefix="openq4-gpu-skinning-evidence-") as raw:
+    with tempfile.TemporaryDirectory(prefix="opend3-gpu-skinning-evidence-") as raw:
         root = Path(raw)
         cpu = build_test_report(root / "cpu", False, 10000)
         gpu = build_test_report(root / "gpu", True, 8500)

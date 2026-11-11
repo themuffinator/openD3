@@ -63,7 +63,7 @@ typedef struct vrFrameState_s {
 	int						frameNumber;	// counts XR frames opened by the engine
 	bool					active;			// a session is presenting to a headset this frame
 	bool					stereo;			// eye targets exist: render the first-person 3D pass per eye
-	bool					focused;		// the runtime routes controller input to openQ4
+	bool					focused;		// the runtime routes controller input to openD3
 	vrPose_t				head;
 	vrEyeView_t				eyes[VR_NUM_EYES];
 	vrPose_t				grip[VR_NUM_HANDS];	// where the hand holds the controller
@@ -147,7 +147,7 @@ public:
 extern idVRSystem *			vrSystem;
 
 // True while a session presents and the runtime routes controller input to
-// openQ4. Menus then take that input whether or not the desktop window, which
+// openD3. Menus then take that input whether or not the desktop window, which
 // the player cannot see, holds focus (engine only).
 bool						VR_HasInputFocus( void );
 

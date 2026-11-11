@@ -14,10 +14,10 @@ struct Value {
 };
 struct idVec4 : Value { idVec4(float,float,float,float) {} };
 struct Rect {float x=0,y=0,w=0,h=0;};
-static bool OpenQ4_IsFiniteSaveGameRectangle(const Rect& r) {
+static bool openD3_IsFiniteSaveGameRectangle(const Rect& r) {
     return std::isfinite(r.x)&&std::isfinite(r.y)&&std::isfinite(r.w)&&std::isfinite(r.h);
 }
-static bool OpenQ4_IsFiniteSaveGameVec2(const Value& v) {return std::isfinite(v.v);}
+static bool openD3_IsFiniteSaveGameVec2(const Value& v) {return std::isfinite(v.v);}
 struct Common {[[noreturn]] void Error(const char*,...) {throw std::runtime_error("rejected layout");}} commonObject;
 static auto* common=&commonObject;
 struct GUI {const char* GetSourceFile() const{return "offscreen-terminal.gui";}} guiObject;

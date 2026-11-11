@@ -51,20 +51,20 @@ def main():
     runtime = ROOT / '.install'
     verify_runtime_is_current(runtime)
     save = output / 'save'
-    game = save / 'baseoq4'
+    game = save / 'baseod3'
     game.mkdir(parents=True, exist_ok=True)
     configured = args.startup_preset or args.saved_preset
     if args.startup_preset and args.saved_preset:
         raise ValueError('Choose either a fresh autoexec or an existing saved config')
     if configured:
-        if (game/'config.spec').exists() or (game/'openQ4Config.cfg').exists():
+        if (game/'config.spec').exists() or (game/'openD3Config.cfg').exists():
             raise ValueError('Configuration tests require a fresh test profile')
-        write_script(game/('autoexec.cfg' if args.startup_preset else 'openQ4Config.cfg'),
+        write_script(game/('autoexec.cfg' if args.startup_preset else 'openD3Config.cfg'),
                      [f'seta com_performancePreset {configured}', 'seta com_machineSpec '+('-1' if args.unset_machine_spec else '3'),
                       'seta r_multiSamples 0', 'seta r_screenFraction '+('50' if args.startup_preset else '67')])
     spec = benchmark.RunSpec('preset-audit', 'SP', 'game/airdefense1', 'game/airdefense1',
         'functional preset coverage', 'spawn', 'auto', '60', '0', 'windowed', 'default', 'best', args.render_api)
-    launch = benchmark.common_args(ROOT, runtime, save, 'openq4.log', '', spec, args.width, args.height,
+    launch = benchmark.common_args(ROOT, runtime, save, 'opend3.log', '', spec, args.width, args.height,
         'baseline', False, False, (('in_mouse', '0'), ('in_joystick', '0'), ('ui_retained', '1')), 'presets.cfg')
     for key, value in [('si_gameType', 'singleplayer'), ('com_gameMode', 'SP'),
                        ('r_vkDevice', str(args.vk_device)), ('r_vkValidation', '1')]:
@@ -99,11 +99,11 @@ def main():
     write_script(game / 'presets.cfg', lines)
     (output / 'launch.json').write_text(json.dumps(launch, indent=2), encoding='utf-8')
     (output / 'runtime.json').write_text(json.dumps({str(p.relative_to(runtime)):
-        hashlib.sha256(p.read_bytes()).hexdigest() for p in [runtime/'openQ4-client_x64.exe',
-        runtime/f'renderer-{args.render_api}_x64.dll', runtime/'baseoq4/game-sp_x64.dll']}, indent=2), encoding='utf-8')
-    code, timeout, elapsed = benchmark.launch_and_wait(runtime/'openQ4-client_x64.exe', launch,
+        hashlib.sha256(p.read_bytes()).hexdigest() for p in [runtime/'openD3-client_x64.exe',
+        runtime/f'renderer-{args.render_api}_x64.dll', runtime/'baseod3/game-sp_x64.dll']}, indent=2), encoding='utf-8')
+    code, timeout, elapsed = benchmark.launch_and_wait(runtime/'openD3-client_x64.exe', launch,
         runtime, output/'stdout.txt', output/'stderr.txt', 600)
-    text = (game/'logs/openq4.log').read_text(encoding='utf-8', errors='replace')
+    text = (game/'logs/opend3.log').read_text(encoding='utf-8', errors='replace')
     failures = []
     if code or timeout:
         failures.append(f'process exit={code}, timeout={timeout}')

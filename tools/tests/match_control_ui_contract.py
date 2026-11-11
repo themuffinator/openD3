@@ -11,10 +11,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
-GUI_ROOT = ROOT / "content" / "baseoq4" / "pak0" / "guis"
-STRINGS_ROOT = ROOT / "content" / "baseoq4" / "pak0" / "strings"
+GUI_ROOT = ROOT / "content" / "baseod3" / "pak0" / "guis"
+STRINGS_ROOT = ROOT / "content" / "baseod3" / "pak0" / "strings"
 MP_MENU = GUI_ROOT / "mpmain.gui"
 MATCH_GUI = GUI_ROOT / "matchcontrol.gui"
 CONTRACT_DOC = ROOT / "docs" / "dev" / "match-control-ui-contract.md"
@@ -24,16 +24,16 @@ OPERATIONS_SOURCE = GAME_ROOT / "src" / "mpgame" / "mp" / "match" / "MatchOperat
 SERIES_SOURCE = GAME_ROOT / "src" / "mpgame" / "mp" / "match" / "MatchSeries.cpp"
 MULTIPLAYER_SOURCE = GAME_ROOT / "src" / "mpgame" / "MultiplayerGame.cpp"
 LANGUAGES = (
-    "english_openq4.lang",
-    "german_openq4.lang",
-    "french_openq4.lang",
-    "italian_openq4.lang",
-    "spanish_openq4.lang",
-    "brazilian_openq4.lang",
-    "czech_openq4.lang",
-    "hungarian_openq4.lang",
-    "turkish_openq4.lang",
-    "ukrainian_openq4.lang",
+    "english_opend3.lang",
+    "german_opend3.lang",
+    "french_opend3.lang",
+    "italian_opend3.lang",
+    "spanish_opend3.lang",
+    "brazilian_opend3.lang",
+    "czech_opend3.lang",
+    "hungarian_opend3.lang",
+    "turkish_opend3.lang",
+    "ukrainian_opend3.lang",
 )
 REQUIRED_DYNAMIC_LOCALIZATION_IDS = {
     "#str_41795",
@@ -484,7 +484,7 @@ def main() -> None:
         require(match_gui, f"windowDef match_follow_{direction}_button", "camera button")
         require(match_gui, f'rect\t{x},344,116,24', "camera button layout")
         require(match_gui, f'"matchControl follow_{direction}"', "fixed camera command")
-    for language in (*LANGUAGES, "polish_openq4.lang", "russian_openq4.lang"):
+    for language in (*LANGUAGES, "polish_opend3.lang", "russian_opend3.lang"):
         table = parse_language(STRINGS_ROOT / language)
         for identifier in range(42885, 42889):
             if not table.get(f"#str_{identifier}", "").strip():

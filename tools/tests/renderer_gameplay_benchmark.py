@@ -132,16 +132,16 @@ BENCHMARK_EVIDENCE_MARKERS = (
     "Selected renderer tier:",
     "MODE:",
     "Map:",
-    "OPENQ4_BENCHMARK_VIEW_",
+    "OPEND3_BENCHMARK_VIEW_",
     "openD3 map state:",
     "origin:",
 )
-VIEW_BEGIN = "OPENQ4_BENCHMARK_VIEW_BEGIN"
-VIEW_END = "OPENQ4_BENCHMARK_VIEW_END"
-POST_MAP_CVARS_BEGIN = "// OPENQ4_BENCHMARK_POST_MAP_CVARS_V1_BEGIN"
-POST_MAP_CVARS_END = "// OPENQ4_BENCHMARK_POST_MAP_CVARS_V1_END"
-EXEC_COMMANDS_BEGIN = "// OPENQ4_BENCHMARK_EXEC_COMMANDS_V1_BEGIN"
-EXEC_COMMANDS_END = "// OPENQ4_BENCHMARK_EXEC_COMMANDS_V1_END"
+VIEW_BEGIN = "OPEND3_BENCHMARK_VIEW_BEGIN"
+VIEW_END = "OPEND3_BENCHMARK_VIEW_END"
+POST_MAP_CVARS_BEGIN = "// OPEND3_BENCHMARK_POST_MAP_CVARS_V1_BEGIN"
+POST_MAP_CVARS_END = "// OPEND3_BENCHMARK_POST_MAP_CVARS_V1_END"
+EXEC_COMMANDS_BEGIN = "// OPEND3_BENCHMARK_EXEC_COMMANDS_V1_BEGIN"
+EXEC_COMMANDS_END = "// OPEND3_BENCHMARK_EXEC_COMMANDS_V1_END"
 # Each role already owns an isolated save path. Keep the engine-side log name
 # deliberately short so the complete fs_savepath/baseod3/logs path remains
 # below the legacy Windows MAX_PATH boundary even for descriptive MP case IDs.
@@ -626,7 +626,7 @@ def scene_view_contract(case_id: str) -> dict[str, Any] | None:
 def scene_snapshot_commands(marker: str, map_name: str, entity_filter: str) -> list[str]:
     return [
         f"echo {marker}",
-        f"openq4_assertMapState {map_name} {entity_filter}",
+        f"opend3_assertMapState {map_name} {entity_filter}",
         "viewpos",
     ]
 
@@ -1096,7 +1096,7 @@ def parse_benchmark_config(text: str) -> BenchmarkConfigEvidence:
     scene_map = entity_filter = ""
     if lines[cursor : cursor + 1] == [f"echo {VIEW_BEGIN}"]:
         assertion = re.fullmatch(
-            r"openq4_assertMapState ([A-Za-z0-9_./-]+) ([A-Za-z0-9_-]+)",
+            r"opend3_assertMapState ([A-Za-z0-9_./-]+) ([A-Za-z0-9_-]+)",
             lines[cursor + 1] if cursor + 1 < len(lines) else "",
         )
         if assertion is None:

@@ -6,7 +6,7 @@ case "${BASH_SOURCE[0]}" in
     *) script_dir=. ;;
 esac
 script_dir="$(CDPATH= cd "${script_dir}" && pwd)"
-runner="${script_dir}/openq4_validate.py"
+runner="${script_dir}/opend3_validate.py"
 
 python_cmd=""
 if command -v python3 >/dev/null 2>&1; then

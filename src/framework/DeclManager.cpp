@@ -69,7 +69,7 @@ missing reload over a previously explicit definition
 #define USE_COMPRESSED_DECLS
 //#define GET_HUFFMAN_FREQUENCIES
 
-static idDecl *openQ4_AllocEffectDecl( void ) {
+static idDecl *openD3_AllocEffectDecl( void ) {
 	if ( bseAllocDeclEffect == NULL ) {
 		common->FatalError( "DECL_EFFECT allocator is not installed. AttachBSE must run before declManager->Init()." );
 	}
@@ -87,13 +87,13 @@ static idDecl *openQ4_AllocEffectDecl( void ) {
 	return decl;
 }
 
-static void openQ4_VerifyEffectDeclAllocator( void ) {
-	idDecl *decl = openQ4_AllocEffectDecl();
+static void openD3_VerifyEffectDeclAllocator( void ) {
+	idDecl *decl = openD3_AllocEffectDecl();
 	delete decl;
 }
 
 enum declSingleFileWriteMode_t {
-	DECL_SINGLEFILE_WRITE_OPENQ4 = 0,
+	DECL_SINGLEFILE_WRITE_OPEND3 = 0,
 	DECL_SINGLEFILE_WRITE_RETAIL
 };
 
@@ -226,19 +226,19 @@ public:
 	idDeclLocal *				decls;
 };
 
-static bool DeclManager_IsopenQ4OverrideDeclFile( const idDeclFile *sourceFile ) {
+static bool DeclManager_IsopenD3OverrideDeclFile( const idDeclFile *sourceFile ) {
 	if ( sourceFile == NULL ) {
 		return false;
 	}
 
-	// openQ4 re-declares a game's decls from *_openq4 files named to load
+	// openD3 re-declares a game's decls from *_opend3 files named to load
 	// first ("00_" prefixes); the game's later copy is expected, not a clash
 	idStr fileName = sourceFile->fileName;
 	fileName.BackSlashesToSlashes();
-	if ( fileName.Icmpn( "def/", 4 ) == 0 && fileName.Find( "_openq4.def", false ) >= 0 ) {
+	if ( fileName.Icmpn( "def/", 4 ) == 0 && fileName.Find( "_opend3.def", false ) >= 0 ) {
 		return true;
 	}
-	return fileName.Icmpn( "materials/", 10 ) == 0 && fileName.Find( "_openq4.mtr", false ) >= 0;
+	return fileName.Icmpn( "materials/", 10 ) == 0 && fileName.Find( "_opend3.mtr", false ) >= 0;
 }
 
 static bool DeclManager_DeclNameHasPrefix( const idStr &name, const char *prefix ) {
@@ -250,7 +250,7 @@ static bool DeclManager_IsStockMaterialRedeclaration( declType_t type, const idS
 		return false;
 	}
 
-	if ( DeclManager_IsopenQ4OverrideDeclFile( previousSourceFile ) || DeclManager_IsopenQ4OverrideDeclFile( currentSourceFile ) ) {
+	if ( DeclManager_IsopenD3OverrideDeclFile( previousSourceFile ) || DeclManager_IsopenD3OverrideDeclFile( currentSourceFile ) ) {
 		return false;
 	}
 
@@ -436,7 +436,7 @@ static const declType_t declSingleFileFrameworkTypes[] = {
 	DECL_MAPDEF
 };
 
-static const declType_t declSingleFileopenQ4GameTypes[] = {
+static const declType_t declSingleFileopenD3GameTypes[] = {
 	DECL_ENTITYDEF,
 	DECL_MODELDEF,
 	DECL_MAPDEF,
@@ -477,7 +477,7 @@ static void DeclManager_GetSingleDeclFileName( idStr &fileName ) {
 }
 
 static void DeclManager_ShowReloadProgress( int fileIndex, int fileCount, const char *fileName ) {
-	openQ4_ToolPrint( va( "%d/%d: %s\n", fileIndex + 1, fileCount, fileName ) );
+	openD3_ToolPrint( va( "%d/%d: %s\n", fileIndex + 1, fileCount, fileName ) );
 }
 
 idDeclManagerLocal	declManagerLocal;
@@ -921,9 +921,9 @@ static const char *DeclManager_GetSingleDeclWriteModeName( declSingleFileWriteMo
 		case DECL_SINGLEFILE_WRITE_RETAIL:
 			return "retail";
 
-		case DECL_SINGLEFILE_WRITE_OPENQ4:
+		case DECL_SINGLEFILE_WRITE_OPEND3:
 		default:
-			return "openq4";
+			return "opend3";
 	}
 }
 
@@ -932,7 +932,7 @@ static declSingleFileWriteMode_t DeclManager_GetConfiguredSingleDeclWriteMode( v
 		return DECL_SINGLEFILE_WRITE_RETAIL;
 	}
 
-	return DECL_SINGLEFILE_WRITE_OPENQ4;
+	return DECL_SINGLEFILE_WRITE_OPEND3;
 }
 
 static bool DeclManager_ParseSingleDeclWriteMode( const char *modeName, declSingleFileWriteMode_t &writeMode ) {
@@ -940,8 +940,8 @@ static bool DeclManager_ParseSingleDeclWriteMode( const char *modeName, declSing
 		return false;
 	}
 
-	if ( !idStr::Icmp( modeName, "openq4" ) || !idStr::Icmp( modeName, "0" ) ) {
-		writeMode = DECL_SINGLEFILE_WRITE_OPENQ4;
+	if ( !idStr::Icmp( modeName, "opend3" ) || !idStr::Icmp( modeName, "0" ) ) {
+		writeMode = DECL_SINGLEFILE_WRITE_OPEND3;
 		return true;
 	}
 
@@ -959,7 +959,7 @@ static void DeclManager_MakeGameDeclTypeList( idList<declType_t> &list, declSing
 		return;
 	}
 
-	MakeDeclTypeList( list, declSingleFileopenQ4GameTypes, sizeof( declSingleFileopenQ4GameTypes ) / sizeof( declSingleFileopenQ4GameTypes[0] ) );
+	MakeDeclTypeList( list, declSingleFileopenD3GameTypes, sizeof( declSingleFileopenD3GameTypes ) / sizeof( declSingleFileopenD3GameTypes[0] ) );
 }
 
 static bool DeclManager_WriteProgramImagesEnabled( void ) {
@@ -1121,7 +1121,7 @@ int idDeclFile::LoadAndParse( bool unique ) {
 				// a layered copy only fills in what the mod's copy above it left out
 				const bool shadowedByLayerAbove = !layerGameDir.IsEmpty() && newDecl->sourceFile != NULL &&
 					newDecl->sourceFile->fileName.Icmp( fileName ) == 0;
-				if ( !shadowedByLayerAbove && !DeclManager_IsopenQ4OverrideDeclFile( newDecl->sourceFile ) &&
+				if ( !shadowedByLayerAbove && !DeclManager_IsopenD3OverrideDeclFile( newDecl->sourceFile ) &&
 						!DeclManager_IsStockMaterialRedeclaration( identifiedType, name, newDecl->sourceFile, this ) ) {
 					src.Warning( "%s '%s' previously defined at %s:%i", declManagerLocal.GetDeclNameFromType( identifiedType ),
 									name.c_str(), newDecl->sourceFile->fileName.c_str(), newDecl->sourceLine );
@@ -1160,7 +1160,7 @@ int idDeclFile::LoadAndParse( bool unique ) {
 			if ( aliasDecl ) {
 				if ( aliasDecl->sourceFile == this && !aliasDecl->redefinedInReload ) {
 					referencedThisLevel = aliasDecl->referencedThisLevel;
-				} else if ( !DeclManager_IsopenQ4OverrideDeclFile( aliasDecl->sourceFile ) ) {
+				} else if ( !DeclManager_IsopenD3OverrideDeclFile( aliasDecl->sourceFile ) ) {
 					aliasDecl = NULL;
 				}
 			} else {
@@ -1350,7 +1350,7 @@ int idDeclFile::LoadAndParse( idFile *file ) {
 		idDeclLocal *decl = declManagerLocal.FindTypeWithoutParsing( identifiedType, name, false );
 		if ( decl ) {
 			if ( decl->sourceFile != this || decl->redefinedInReload ) {
-				if ( !DeclManager_IsopenQ4OverrideDeclFile( decl->sourceFile ) &&
+				if ( !DeclManager_IsopenD3OverrideDeclFile( decl->sourceFile ) &&
 						!DeclManager_IsStockMaterialRedeclaration( identifiedType, name, decl->sourceFile, this ) ) {
 					src.Warning( "%s '%s' previously defined at %s:%i",
 						declManagerLocal.GetDeclNameFromType( identifiedType ),
@@ -1409,7 +1409,7 @@ const char *listDeclStrings[] = { "current", "all", "ever", NULL };
 
 // material decls are renderer-owned types; allocate through the renderer
 // interface so framework code carries no renderer symbol dependency
-static idDecl *openQ4_MaterialDeclAllocator( void ) {
+static idDecl *openD3_MaterialDeclAllocator( void ) {
 	return renderSystem->AllocMaterialDecl();
 }
 
@@ -1438,7 +1438,7 @@ void idDeclManagerLocal::Init( void ) {
 
 	// decls used throughout the engine
 	RegisterDeclType( "table",				DECL_TABLE,			idDeclAllocator<idDeclTable> );
-	RegisterDeclType( "material",			DECL_MATERIAL,		openQ4_MaterialDeclAllocator );
+	RegisterDeclType( "material",			DECL_MATERIAL,		openD3_MaterialDeclAllocator );
 	RegisterDeclType( "skin",				DECL_SKIN,			idDeclAllocator<idDeclSkin> );
 	RegisterDeclType( "sound",				DECL_SOUND,			idDeclAllocator<idSoundShader> );
 	RegisterDeclType( "entityDef",			DECL_ENTITYDEF,		idDeclAllocator<idDeclEntityDef> );
@@ -1449,8 +1449,8 @@ void idDeclManagerLocal::Init( void ) {
 	RegisterDeclType(  "materialType",		DECL_MATERIALTYPE,  idDeclAllocator<rvDeclMatType>);
 	RegisterDeclType(  "lipSync",			DECL_LIPSYNC,		idDeclAllocator<rvDeclLipSync>);
 	RegisterDeclType(  "playback",			DECL_PLAYBACK,		idDeclAllocator<rvDeclPlayback>);
-	openQ4_VerifyEffectDeclAllocator();
-	RegisterDeclType(	"effect",			DECL_EFFECT,		openQ4_AllocEffectDecl);
+	openD3_VerifyEffectDeclAllocator();
+	RegisterDeclType(	"effect",			DECL_EFFECT,		openD3_AllocEffectDecl);
 // jmarshall end
 
 // jmarshall: Raven Decl Support
@@ -1469,7 +1469,7 @@ void idDeclManagerLocal::Init( void ) {
 		LoadDeclsFromFile();
 		cmdSystem->AddCommand( "flushDecls", FlushDecls_f, CMD_FL_SYSTEM, "deallocates current decl data" );
 	} else {
-		cmdSystem->AddCommand( "writeDeclFile", WriteDeclFile_f, CMD_FL_SYSTEM, "writes parsed decls to a packed .decls file (optional mode: openq4 or retail)" );
+		cmdSystem->AddCommand( "writeDeclFile", WriteDeclFile_f, CMD_FL_SYSTEM, "writes parsed decls to a packed .decls file (optional mode: opend3 or retail)" );
 
 		RegisterDeclFolderWrapper( "materials",		".mtr",			DECL_MATERIAL );
 		RegisterDeclFolderWrapper( "skins",			".skin",		DECL_SKIN );
@@ -1817,7 +1817,7 @@ bool idDeclManagerLocal::EvaluateGuide( idStr &name, idLexer *src, idStr &defini
 }
 
 bool idDeclManagerLocal::EvaluateInlineGuide( idStr &name, idStr &definition ) {
-	// openQ4: every decl comes through here as its file is read, and without
+	// openD3: every decl comes through here as its file is read, and without
 	// this test each body was copied and tokenised from end to end to look for
 	// a keyword almost none of them has. The loop below matches the keyword as
 	// a whole token, so a body that does not contain it cannot match.
@@ -2170,9 +2170,9 @@ it replaces that whole file in the search path, and every decl the mod's copy
 leaves out disappears with it. The Awakening expansion does this to retail's
 player.def, debris.def, persona.def and music.sndshd, losing hundreds of decls
 its own content still uses. The mod's copy is parsed first, so its decls win;
-each shadowed copy below it (fs_game_base, the openQ4 runtime, then retail) is
+each shadowed copy below it (fs_game_base, the openD3 runtime, then retail) is
 parsed afterwards from its own directory and adds only the decls still missing.
-Only copies the mod itself supplies are layered, so the openQ4 runtime's own
+Only copies the mod itself supplies are layered, so the openD3 runtime's own
 replacements of retail files keep replacing them.
 ===================
 */
@@ -2182,7 +2182,7 @@ void idDeclManagerLocal::LoadDeclFileLayers( const char *fileName, declType_t de
 	}
 
 	const char *modDir = cvarSystem->GetCVarString( "fs_game" );
-	if ( modDir[0] == '\0' || !idStr::Icmp( modDir, BASE_GAMEDIR ) || !idStr::Icmp( modDir, OPENQ4_GAMEDIR ) ) {
+	if ( modDir[0] == '\0' || !idStr::Icmp( modDir, BASE_GAMEDIR ) || !idStr::Icmp( modDir, OPEND3_GAMEDIR ) ) {
 		return;
 	}
 
@@ -2193,7 +2193,7 @@ void idDeclManagerLocal::LoadDeclFileLayers( const char *fileName, declType_t de
 	fileSystem->CloseFile( modCopy );
 
 	const char *modBaseDir = cvarSystem->GetCVarString( "fs_game_base" );
-	const char *lowerDirs[] = { modBaseDir, OPENQ4_GAMEDIR, BASE_GAMEDIR };
+	const char *lowerDirs[] = { modBaseDir, OPEND3_GAMEDIR, BASE_GAMEDIR };
 	for ( int i = 0; i < (int)( sizeof( lowerDirs ) / sizeof( lowerDirs[0] ) ); i++ ) {
 		const char *gameDir = lowerDirs[i];
 		if ( gameDir[0] == '\0' || !idStr::Icmp( gameDir, modDir ) ) {
@@ -3223,7 +3223,7 @@ void idDeclManagerLocal::MakeNameCanonical( const char *name, char *result, int 
 	int i, lastDot;
 
 	lastDot = -1;
-	// openQ4: leave room for the terminator; a name of maxLength or more
+	// openD3: leave room for the terminator; a name of maxLength or more
 	// characters with no dot wrote it one past the caller's buffer
 	for ( i = 0; i < maxLength - 1 && name[i] != '\0'; i++ ) {
 		int c = name[i];
@@ -3416,14 +3416,14 @@ idDeclManagerLocal::WriteDeclFile_f
 */
 void idDeclManagerLocal::WriteDeclFile_f( const idCmdArgs &args ) {
 	if ( args.Argc() > 2 ) {
-		common->Printf( "usage: writeDeclFile [openq4|retail]\n" );
+		common->Printf( "usage: writeDeclFile [opend3|retail]\n" );
 		return;
 	}
 
 	if ( args.Argc() == 2 ) {
 		declSingleFileWriteMode_t writeMode;
 		if ( !DeclManager_ParseSingleDeclWriteMode( args.Argv( 1 ), writeMode ) ) {
-			common->Printf( "Unknown packed decl write mode '%s'. Use 'openq4' or 'retail'.\n", args.Argv( 1 ) );
+			common->Printf( "Unknown packed decl write mode '%s'. Use 'opend3' or 'retail'.\n", args.Argv( 1 ) );
 			return;
 		}
 
@@ -4056,7 +4056,7 @@ void idDeclLocal::ParseLocal( bool noCaching ) {
 			common->Warning( "You should precache: %s", GetName() );
 
 			idFile *stubSource = fileSystem->OpenFileRead( sourceFile->fileName.c_str() );
-			// openQ4: the offset and length are numbers out of the decl text. They
+			// openD3: the offset and length are numbers out of the decl text. They
 			// went straight to _alloca and Read, so a stub naming a huge or negative
 			// length overflowed the stack or read into it. Hold them to the file
 			// and take the buffer from the heap.
@@ -4114,7 +4114,7 @@ void idDeclLocal::ParseLocal( bool noCaching ) {
 	// only after runtime rasterization.
 	const bool generatedRetainedResource = type == DECL_MATERIAL && generatedDefaultText && IsImplicit() &&
 		( name.Icmp("_retainedsolid") == 0 || name.Icmp("_retainedmultiply") == 0 || name.Icmp("_retainedPauseScene") == 0 || name.Icmpn("_retained/_ttfatlas_",20) == 0 || name.Icmpn("_retained/_ttfatlasx_",21) == 0 || name.Icmpn("_retained/_ttfatlasr_",21) == 0 || name.Icmpn("_retainedLayer/",15) == 0 || name.Icmpn("_retainedMask/",14) == 0 || name.Icmpn("_retainedLinearMask/",20) == 0 || name.Icmpn("_retainedBlur/",14) == 0 || name.Icmpn("_retainedAtlas/",15) == 0 || name.Icmpn("_retainedMultiplyAtlas/",23) == 0 || name.Icmpn("_retainedModel/",15) == 0 || name.Icmpn("_retainedModelResolve/",22) == 0 );
-	if ( common->IsInitialized() && !declManagerLocal.GetInsideLoad() && !openQ4_IsAnyToolActive() && !generatedRetainedResource ) {
+	if ( common->IsInitialized() && !declManagerLocal.GetInsideLoad() && !openD3_IsAnyToolActive() && !generatedRetainedResource ) {
 		common->Warning( "Loading non pre-cached %s decl %s", declManagerLocal.GetDeclNameFromType( type ), name.c_str() );
 	}
 

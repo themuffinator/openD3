@@ -35,7 +35,7 @@ def main():
     parser.add_argument('--map', default='game/airdefense1')
     parser.add_argument('--size', default='1280x720')
     args = parser.parse_args()
-    root = args.output.resolve(); game = root / 'save/baseoq4'; game.mkdir(parents=True, exist_ok=True)
+    root = args.output.resolve(); game = root / 'save/baseod3'; game.mkdir(parents=True, exist_ok=True)
     wav(game / 'sound/graph/pattern.wav', 4, lambda t: .4 if .8 <= t < 1.6 else .8 if 2.4 <= t < 3.2 else 0)
     wav(game / 'sound/graph/silence.wav', 4, lambda t: 0)
     wav(game / 'sound/graph/tone.wav', 1, lambda t: .6)
@@ -66,7 +66,7 @@ def main():
     width, height = args.size.split('x')
     cvars = {
         'fs_basepath': str(args.assets.resolve()), 'fs_savepath': str(root / 'save'), 'fs_devpath': str(root / 'save'),
-        'fs_game': 'baseoq4', 'com_gameMode': 'SP', 'logFile': '2', 'logFileName': 'logs/openq4.log',
+        'fs_game': 'baseod3', 'com_gameMode': 'SP', 'logFile': '2', 'logFileName': 'logs/opend3.log',
         'r_fullscreen': '0', 'r_fullscreenDesktop': '0', 'r_borderless': '0', 'r_borderlessDefaultMigrated': '1', 'r_hiddenWindow': '1',
         'r_windowWidth': width, 'r_windowHeight': height, 'r_mode': '-1', 'r_customWidth': width, 'r_customHeight': height,
         'r_renderApi': args.renderer, 'r_multiSamples': '0', 'r_swapInterval': '1',
@@ -75,7 +75,7 @@ def main():
         'ui_autoJoin': '0', 'ui_retained': '1', 'ui_retainedReducedMotion': '0',
         'g_autoExecAfterMapLoad': 'audio-graphs.cfg', 'g_autoExecAfterMapLoadDelayMs': '3000'
     }
-    command = [str(ROOT / '.install' / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64'))]
+    command = [str(ROOT / '.install' / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64'))]
     for key, value in cvars.items(): command += ['+set', key, value]
     command += ['+map', args.map]
     options = {'env': {**os.environ, 'ALSOFT_DRIVERS': 'null', 'TEMP': str(ROOT / '.tmp'), 'TMP': str(ROOT / '.tmp')}}
@@ -85,7 +85,7 @@ def main():
     started = time.time()
     with (root / 'process.log').open('w', encoding='utf-8') as log:
         result = subprocess.run(command, cwd=ROOT / '.install', stdout=log, stderr=subprocess.STDOUT, timeout=180, **options)
-    log = (game / 'logs/openq4.log').read_text(encoding='utf-8', errors='replace')
+    log = (game / 'logs/opend3.log').read_text(encoding='utf-8', errors='replace')
     rows = [[float(v) for v in row.split()] for row in re.findall(r'^AUDIO_GRAPH (.*)$', log, re.M)]
     report = {'renderer': args.renderer, 'map': args.map, 'returncode': result.returncode, 'peaks': rows,
               'complete': 'AUDIO_GRAPHS_COMPLETE' in log, 'audio_output': 'OpenAL null', 'microphone': False,

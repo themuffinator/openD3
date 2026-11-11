@@ -62,7 +62,7 @@ ID_INLINE int GetSegmentParticleCap() {
 }
 
 ID_INLINE bool BSESpawnTraceEnabled() {
-	// openQ4: asked for every particle spawned, so find the cvar once. It is
+	// openD3: asked for every particle spawned, so find the cvar once. It is
 	// registered by the renderer; the cvar system's own record of it, which is
 	// what Find returns, outlives a renderer reload.
 	static idCVar* frameCounters = NULL;

@@ -1,16 +1,16 @@
 /*
 ===========================================================================
 
-openQ4 learned level-load manifest and generated-cache coordinator
+openD3 learned level-load manifest and generated-cache coordinator
 
-Copyright (C) 2026 openQ4 contributors
+Copyright (C) 2026 openD3 contributors
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software
 Foundation, either version 3 of the License, or (at your option) any later
 version.
 
-This is an original openQ4 implementation.  Cache and manifest files are
+This is an original openD3 implementation.  Cache and manifest files are
 private derived data: the selected VFS source is opened and identified before
 any cached payload can be accepted.
 

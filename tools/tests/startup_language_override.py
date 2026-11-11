@@ -232,7 +232,7 @@ def validate_language_media_diagnostic() -> None:
 def validate_ci_smoke() -> None:
     push = read(".github/workflows/push-verification.yml")
     commit = read(".github/workflows/commit-validation.yml")
-    runner = read("tools/validation/openq4_validate.py")
+    runner = read("tools/validation/opend3_validate.py")
 
     for source, context in (
         (push, "push verification workflow"),

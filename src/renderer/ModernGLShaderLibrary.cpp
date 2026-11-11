@@ -1936,7 +1936,7 @@ static void R_ModernGLShaderLibrary_BuildFragmentSource( int glslVersion, modern
 		return;
 	}
 	idStr source( buffer, 0, static_cast<int>( body - buffer + 1 ) );
-	source += OPENQ4_PBR_SCALAR_GLSL;
+	source += OPEND3_PBR_SCALAR_GLSL;
 	source += "\n// PBR colour samplers use sRGB storage: filtering and decode happen before shading.\n";
 	// Filter the NDF width by the pixel footprint of the final shading normal.
 	// Call before coverage discard, so helper-lane derivatives remain defined.

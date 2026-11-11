@@ -36,7 +36,7 @@ def package_manifest(directory: Path) -> bytes:
             entries[name] = path
     if len(entries) > 4096 or not required_package_files() <= entries.keys():
         raise ValueError('Invalid package manifest file count or missing required file')
-    lines = ['openQ4-package-v1\n']
+    lines = ['openD3-package-v1\n']
     total = 0
     for name, path in sorted(entries.items()):
         size = path.stat().st_size

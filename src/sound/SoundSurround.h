@@ -1,7 +1,7 @@
-// Copyright (C) 2026 openQ4 contributors
+// Copyright (C) 2026 openD3 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
-#ifndef OPENQ4_SOUND_SURROUND_H
-#define OPENQ4_SOUND_SURROUND_H
+#ifndef OPEND3_SOUND_SURROUND_H
+#define OPEND3_SOUND_SURROUND_H
 #include <algorithm>
 #include <cmath>
 

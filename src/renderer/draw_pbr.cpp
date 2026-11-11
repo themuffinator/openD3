@@ -62,7 +62,7 @@ static const int GL_PBR_PROBE_INDEX_WIDTH = 1024;
 GLSL libraries
 
 The receiver programs (glprogs/shadow_interaction and shadow_point_interaction)
-compile their own sources with OPENQ4_PBR defined; the vertex library supplies
+compile their own sources with OPEND3_PBR defined; the vertex library supplies
 the orthonormal object-space frame and the fragment library the BRDF. Both are
 appended after the program's own declarations, so they may use its uniforms
 and varyings by name. They mirror pbr_vertex.glsl and pbr_direct.glsl, the
@@ -112,7 +112,7 @@ static const char *glPBRVertexLibrary =
 	"}\n" \
 	/* Ordered transparency: the albedo supplies the per-texel coverage the */ \
 	/* authored stage would have sampled. Additive draws keep zero alpha.   */ \
-	"float OpenQ4PBRAlpha() {\n" \
+	"float openD3PBRAlpha() {\n" \
 	"	return uPBRTransparent.x > 0.0\n" \
 	"		? clamp( texture2D( uDiffuseMap, vDiffuseTexCoord ).a * uPBRTransparent.x, 0.0, 1.0 ) : 0.0;\n" \
 	"}\n" \
@@ -187,7 +187,7 @@ static void RB_GLPBR_BuildFragmentLibrary( void ) {
 		return;
 	}
 	glPBRFragmentLibrary = "\n// openD3 native PBR shading (draw_pbr.cpp)\n";
-	glPBRFragmentLibrary += OPENQ4_PBR_SCALAR_GLSL;
+	glPBRFragmentLibrary += OPEND3_PBR_SCALAR_GLSL;
 	glPBRFragmentLibrary += "\n";
 	glPBRFragmentLibrary += GL_PBR_MATERIAL_GLSL;
 	glPBRFragmentLibrary +=
@@ -215,7 +215,7 @@ static void RB_GLPBR_BuildFragmentLibrary( void ) {
 		"	vec3 diffuse = ( vec3( 1.0 ) - fresnel ) * diffuseColor * PBRMultiBounceAOColor( ao, diffuseColor );\n"
 		"	return ( diffuse + specular ) * irradiance * ( 1.0 / 3.14159265 );\n"
 		"}\n"
-		"vec3 OpenQ4PBRDirect( vec3 shadow ) {\n"
+		"vec3 openD3PBRDirect( vec3 shadow ) {\n"
 		// Color uses sRGB storage and decodes before filtering. Data stays linear.
 		"	vec3 albedo = texture2D( uDiffuseMap, vDiffuseTexCoord ).rgb;\n"
 		"	vec3 data = PBRMaterialData( vSpecularTexCoord );\n"
@@ -262,7 +262,7 @@ static void RB_GLPBR_BuildFragmentLibrary( void ) {
 }
 
 const char *RB_GLPBR_ReceiverDefines( bool unshadowed ) {
-	return unshadowed ? "#define OPENQ4_PBR 1\n#define OPENQ4_PBR_UNSHADOWED 1\n" : "#define OPENQ4_PBR 1\n";
+	return unshadowed ? "#define OPEND3_PBR 1\n#define OPEND3_PBR_UNSHADOWED 1\n" : "#define OPEND3_PBR 1\n";
 }
 
 const char *RB_GLPBR_VertexLibrary( void ) {
@@ -652,7 +652,7 @@ static const char *RB_GLPBR_EnvironmentFragment( void ) {
 		"uniform vec4 uProbeHeader[7];\n"
 		"uniform sampler2D uProbeRecords;\n"	// six RGBA32F texels per record
 		"uniform sampler2D uProbeIndices;\n";	// two record indices per cluster, -1 for none
-	glPBREnvironmentFragment += OPENQ4_PBR_SCALAR_GLSL;
+	glPBREnvironmentFragment += OPEND3_PBR_SCALAR_GLSL;
 	glPBREnvironmentFragment += "\n";
 	glPBREnvironmentFragment += GL_PBR_MATERIAL_GLSL;
 	// The baked light grid, sampled exactly as the modern path and Vulkan do
@@ -661,8 +661,8 @@ static const char *RB_GLPBR_EnvironmentFragment( void ) {
 	// identity and uBakedGrid[6] carries a zero origin.
 	glPBREnvironmentFragment +=
 		"#define MODERN_HAS_TEXTURE_TABLE 0\n"
-		"struct OpenQ4BakedBasis { vec4 viewToWorldX; vec4 viewToWorldY; vec4 viewToWorldZ; };\n"
-		"const OpenQ4BakedBasis uClusterGrid = OpenQ4BakedBasis( vec4( 1.0, 0.0, 0.0, 0.0 ),\n"
+		"struct openD3BakedBasis { vec4 viewToWorldX; vec4 viewToWorldY; vec4 viewToWorldZ; };\n"
+		"const openD3BakedBasis uClusterGrid = openD3BakedBasis( vec4( 1.0, 0.0, 0.0, 0.0 ),\n"
 		"	vec4( 0.0, 1.0, 0.0, 0.0 ), vec4( 0.0, 0.0, 1.0, 0.0 ) );\n";
 	glPBREnvironmentFragment += modernLightGridGLSL;
 	glPBREnvironmentFragment +=
@@ -821,7 +821,7 @@ static const char *RB_GLPBR_EnvironmentFragment( void ) {
 		"	return vec3( mode == 3 ? data.x : mode == 4 ? PBRRoughness( data.y ) : data.z );\n"
 		"}\n"
 		"void main() {\n"
-		"	float alpha = OpenQ4PBRAlpha();\n"
+		"	float alpha = openD3PBRAlpha();\n"
 		// A translucent surface owes the frame its coverage before any light:
 		// the background keeps 1 - alpha (black composited through the alpha).
 		"	if ( uPBRTransparent.y > 0.5 ) {\n"
@@ -935,7 +935,7 @@ static const char *RB_GLPBR_EmissionFragment( void ) {
 		"uniform sampler2D uEmissiveMap;\n"
 		"uniform vec4 uEmissiveColor;\n"	// rgb linear strength, w display-referred
 		"varying vec2 vTexCoord;\n";
-	glPBREmissionFragment += OPENQ4_PBR_SCALAR_GLSL;
+	glPBREmissionFragment += OPEND3_PBR_SCALAR_GLSL;
 	glPBREmissionFragment +=
 		"\nvoid main() {\n"
 		"	vec3 radiance = min( texture2D( uEmissiveMap, vTexCoord ).rgb * uEmissiveColor.rgb, vec3( 65504.0 ) );\n"

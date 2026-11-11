@@ -19,8 +19,8 @@ ROOT = Path(__file__).resolve().parents[2]
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
-    parser.add_argument("--executable-name", default="openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
-    parser.add_argument("--server-name", default="openQ4-ded_x64.exe" if os.name == "nt" else "openQ4-ded_x64")
+    parser.add_argument("--executable-name", default="openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
+    parser.add_argument("--server-name", default="openD3-ded_x64.exe" if os.name == "nt" else "openD3-ded_x64")
     parser.add_argument("--output-dir", type=Path, default=ROOT / ".tmp/mp-browser-smoke")
     parser.add_argument("--basepath", type=Path, default=Path(r"C:\Program Files (x86)\Steam\steamapps\common\Quake 4"))
     parser.add_argument("--renderer", choices=("gl", "vulkan"), default="gl")
@@ -28,8 +28,8 @@ def main() -> int:
     args = parser.parse_args()
     runtime, output = args.runtime_dir.resolve(), args.output_dir.resolve()
     verify_runtime_is_current(runtime, getattr(args, "executable_name", ""))
-    games = {role: output / role / "baseoq4" for role in ("server", "client")}
-    logs = {role: game / "logs/openq4.log" for role, game in games.items()}
+    games = {role: output / role / "baseod3" for role in ("server", "client")}
+    logs = {role: game / "logs/opend3.log" for role, game in games.items()}
     loops, streams, processes, failures, exits = {}, [], {}, [], {}
     for role, game in games.items():
         game.mkdir(parents=True, exist_ok=True)
@@ -55,8 +55,8 @@ def main() -> int:
         cvars = {
             "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
             "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(games[role].parent),
-            "fs_devpath": str(games[role].parent), "fs_game": "baseoq4", "com_gameMode": "MP",
-            "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1",
+            "fs_devpath": str(games[role].parent), "fs_game": "baseod3", "com_gameMode": "MP",
+            "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1",
             "ui_autoJoin": "1", "ui_spectate": "Play", "ui_name": "BrowserPlayer",
             "net_allowCheats": "1", "com_skipLoadingContinue": "1",
             "com_skipLogoVideos": "1",
@@ -91,7 +91,7 @@ def main() -> int:
         until = min(deadline, time.monotonic() + seconds)
         while time.monotonic() < until:
             texts = {role: read_log(path) for role, path in logs.items()}
-            if re.search(r"FATAL ERROR|ERROR:|Unknown command|usage: openq4_|\.gui, line", "\n".join(texts.values())):
+            if re.search(r"FATAL ERROR|ERROR:|Unknown command|usage: opend3_|\.gui, line", "\n".join(texts.values())):
                 raise RuntimeError("engine/GUI error during " + label)
             if any(p.poll() is not None for p in processes.values()):
                 raise RuntimeError("process ended during " + label)
@@ -114,7 +114,7 @@ def main() -> int:
         nonlocal stage
         stage = label
         begin = f"MP_BROWSER_BEGIN_{sequence + 1}"
-        marker = inject("client", ["echo " + begin, *actions, *(["openq4_browser report"] if report else [])])
+        marker = inject("client", ["echo " + begin, *actions, *(["opend3_browser report"] if report else [])])
         text = wait(label, lambda t: "\n" + marker + " " in t["client"])["client"]
         section = text.partition("\n" + begin + " ")[2].partition("\n" + marker + " ")[0]
         with (output / "browser-steps.log").open("a", encoding="utf-8") as evidence:
@@ -139,11 +139,11 @@ def main() -> int:
                 break
             if time.monotonic() >= menu_deadline:
                 raise RuntimeError("main menu never became ready for browser navigation")
-        perform("open LAN browser", ["openq4_browser open", "waitMsec 1800",
-            "openq4_browser source lan", "openq4_browser action updateServers", "waitMsec 2500"])
+        perform("open LAN browser", ["opend3_browser open", "waitMsec 1800",
+            "opend3_browser source lan", "opend3_browser action updateServers", "waitMsec 2500"])
         found = perform("LAN results", ["waitMsec 1500"])
         row = arena_row(found)
-        selected = perform("select server", [f"openq4_browser select {row}", "waitMsec 250",
+        selected = perform("select server", [f"opend3_browser select {row}", "waitMsec 250",
             'screenshot "screenshots/browser-selected.tga"'])
         address = re.search(r"BROWSER_DETAIL key=server_IP value=([^\r\n]+)", selected)
         if not address or not address[1].strip().endswith(":" + str(port)):
@@ -151,35 +151,35 @@ def main() -> int:
         selected_endpoint = address[1].strip()
         if not re.search(r"BROWSER_WINDOW key=p_mp_browse::visible found=1 value=1(?:\.0*)?\s", selected):
             raise RuntimeError("the populated browser panel is not visible")
-        sorted_rows = perform("sort retains endpoint", ["openq4_browser action sortPing"])
+        sorted_rows = perform("sort retains endpoint", ["opend3_browser action sortPing"])
         if "value=" + selected_endpoint not in sorted_rows:
             raise RuntimeError("sorting changed the selected endpoint")
-        perform("save favorite", ["openq4_browser action toggleFavorite"])
+        perform("save favorite", ["opend3_browser action toggleFavorite"])
         favorites = games["client"] / "server_favorites.list"
         if not favorites.is_file() or selected_endpoint not in favorites.read_text(encoding="utf-8"):
             raise RuntimeError("favorite endpoint was not persisted")
-        perform("remove favorite", ["openq4_browser action toggleFavorite"])
+        perform("remove favorite", ["opend3_browser action toggleFavorite"])
         if selected_endpoint in favorites.read_text(encoding="utf-8"):
             raise RuntimeError("favorite endpoint was not removed")
         hidden = perform("filter clears unavailable selection", ["set gui_filter_players 2",
-            "openq4_browser action FilterServers", "waitMsec 250"])
+            "opend3_browser action FilterServers", "waitMsec 250"])
         if re.search(r"BROWSER_STATE [^\r\n]*selected=1", hidden):
             raise RuntimeError("filter retained a joinable hidden selection")
-        restored = perform("restore empty servers", ["set gui_filter_players 0", "openq4_browser action FilterServers"])
+        restored = perform("restore empty servers", ["set gui_filter_players 0", "opend3_browser action FilterServers"])
         stage = "join selected LAN server"
         following = games["client"] / "browser_play_idle.cfg"
-        write_script(following, ["waitMsec 250", "openq4_reportMPState", f"exec {following.name}"])
+        write_script(following, ["waitMsec 250", "opend3_reportMPState", f"exec {following.name}"])
         write_script(games["client"] / "browser_joined.cfg", ["echo MP_BROWSER_MAP_LOADED", f"exec {following.name}"])
         # A first connection from the main menu may reload game_sp to game_mp.
         # Let this finite script drain so the queued module reload can execute;
         # an endlessly inserted idle loop would starve the appended handoff.
-        write_script(loops["client"], [f"openq4_browser select {arena_row(restored)}",
-            "openq4_browser action connect"])
+        write_script(loops["client"], [f"opend3_browser select {arena_row(restored)}",
+            "opend3_browser action connect"])
         loops["client"] = following
         wait(stage, lambda t: "\nMP_BROWSER_MAP_LOADED " in t["client"] and re.search(
             r"MP_PLAYER slot=\d+ .*spectating=0 wantSpectate=0 ingame=1",
             t["client"].rsplit("\nMP_STATE ", 1)[-1]), seconds=75)
-        perform("joined gameplay", ["openq4_reportMPState", "openq4_assertMPClientActive",
+        perform("joined gameplay", ["opend3_reportMPState", "opend3_assertMPClientActive",
             'screenshot "screenshots/browser-gameplay.tga"'], report=False)
         log = read_log(logs["client"])
         if not re.search(r"MP_PLAYER slot=\d+ .*spectating=0 wantSpectate=0 ingame=1", log):

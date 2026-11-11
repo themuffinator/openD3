@@ -56,11 +56,11 @@ static Observed Normalize(const char* text,int flags,float minimum,float maximum
 CASES=r'''
 static unsigned precisionChecks;
 #define CHECK(x) do{++precisionChecks;if(!(x)){std::fprintf(stderr,"FAIL %d: %s\n",__LINE__,#x);std::exit(1);}}while(false)
-struct FloatMode:openq4::test::FloatFlushMode{FloatMode():FloatFlushMode(false){}void Flush(){Set(true);}};
+struct FloatMode:opend3::test::FloatFlushMode{FloatMode():FloatFlushMode(false){}void Flush(){Set(true);}};
 static void ExactSerialization(){
  for(const std::uint64_t bits:{1ULL,2ULL,255ULL,0x8000000000000ULL,0xfffffffffffffULL,0x10000000000000ULL,0x10000000000001ULL,0x8000000000000001ULL,0x800fffffffffffffULL}){
   const double value=std::bit_cast<double>(bits);const auto text=Serialize(StateValue(value));CHECK(!text.empty()&&text.size()<=1077&&text.find_first_of("eE")==std::string::npos);CHECK(idNumericString::IsDecimal(text.c_str()));
-  double parsed=0;const auto result=openq4::ui::FloatFromChars(text.data(),text.data()+text.size(),parsed,std::chars_format::fixed);CHECK(result.ec==std::errc{}&&result.ptr==text.data()+text.size());CHECK(std::memcmp(&value,&parsed,sizeof(value))==0);
+  double parsed=0;const auto result=opend3::ui::FloatFromChars(text.data(),text.data()+text.size(),parsed,std::chars_format::fixed);CHECK(result.ec==std::errc{}&&result.ptr==text.data()+text.size());CHECK(std::memcmp(&value,&parsed,sizeof(value))==0);
  }
 }
 static void Precision(){
@@ -120,7 +120,7 @@ def source():
     validation='\n'.join(function_body(document,name) for name in ('bool Utf8(', 'bool ValidStateValue('))
     host='\n'.join(line for line in host.splitlines() if not line.startswith('#include '))
     return (CVAR_SUPPORT+function_body(strings,'ID_INLINE idStr::idStr( const float f )')+'\n'+function_body(cvars,'void idInternalCVar::UpdateValue( void )')+CVAR_END+support+
-        function_body(cvars,'\nbool CVar_ReadDefault(')+'\nnamespace openq4::ui {\n'+validation+'\n}\n'+host+
+        function_body(cvars,'\nbool CVar_ReadDefault(')+'\nnamespace opend3::ui {\n'+validation+'\n}\n'+host+
         original.MAIN.replace('int main()', 'static void ExistingHostCases()')+CASES)
 
 def main():

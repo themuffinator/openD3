@@ -46,7 +46,7 @@ def validate_meson_provider_switch() -> None:
         "dependency('openal', required: true, method: 'pkg-config')",
         "if macos_openal_provider == 'system'",
         "-DUSE_OPENAL_SOFT_INCLUDES=1",
-        "@loader_path/Frameworks:@loader_path/../Frameworks:@loader_path/openQ4.app/Contents/Frameworks",
+        "@loader_path/Frameworks:@loader_path/../Frameworks:@loader_path/openD3.app/Contents/Frameworks",
         "install_rpath: macos_openal_install_rpath",
         "'macOS OpenAL provider': macos_openal_provider",
     ):
@@ -154,7 +154,7 @@ def validate_release_workflows() -> None:
 def validate_package_contract() -> None:
     package = read("tools/build/package_nightly.py")
     assembler = read("tools/build/assemble_macos_universal2.py")
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     for token in (
         'MACOS_OPENAL_SOFT_DYLIB_NAME = "libopenal.1.dylib"',
         'MACOS_OPENAL_SOFT_INSTALL_NAME = f"@rpath/{MACOS_OPENAL_SOFT_DYLIB_NAME}"',
@@ -199,7 +199,7 @@ def validate_nonfatal_allocation_policy() -> None:
     voice_source = read("src/sound/OpenAL/AL_SoundVoice.cpp")
     require(sample_header, "openalBufferUploadFailed", "OpenAL sample state")
     for token in (
-        "openQ4_openALBufferAllocationWarningIssued",
+        "openD3_openALBufferAllocationWarningIssued",
         "continuing with streaming fallback where resources permit",
         "Further allocation failures are suppressed",
         "openalBufferUploadFailed = true",
@@ -231,7 +231,7 @@ def validate_docs_and_attribution() -> None:
     for token in (
         "-Dmacos_openal_provider=system",
         "checksum-pinned OpenAL Soft 1.25.2",
-        "openQ4.app/Contents/Frameworks/libopenal.1.dylib",
+        "openD3.app/Contents/Frameworks/libopenal.1.dylib",
         "@rpath/libopenal.1.dylib",
         "Codesigning and notarization",
         "COPYING",
@@ -240,7 +240,7 @@ def validate_docs_and_attribution() -> None:
         "openal-soft-1.25.2.tar.gz",
         "Allocation-failure behavior",
         "logs/openal-summary.txt",
-        "must not launch openQ4",
+        "must not launch openD3",
     ):
         require(policy, token, "macOS OpenAL provider policy")
     for source, context in (
@@ -262,7 +262,7 @@ def validate_support_and_wiring() -> None:
     template = read(".github/ISSUE_TEMPLATE/macos-crash-report.yml")
     collector = read("tools/macos/collect_macos_support_info.sh")
     support_doc = read("docs/user/macos-support-data.md")
-    local_runner = read("tools/validation/openq4_validate.py")
+    local_runner = read("tools/validation/opend3_validate.py")
     for token in (
         "OpenAL vendor:",
         "OpenAL renderer:",

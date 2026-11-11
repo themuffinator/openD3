@@ -11,7 +11,7 @@
 #include <new>
 #include <sstream>
 
-namespace openq4::ui {
+namespace opend3::ui {
 static_assert(sizeof(TESSreal) == sizeof(double), "Refresh libtess2 with Meson subprojects update --reset libtess2; openD3 requires the precision patch");
 namespace {
 constexpr double Pi = 3.14159265358979323846;
@@ -683,4 +683,4 @@ bool HitTestPath(const VectorPath& path, const VectorOptions& options, VectorPoi
 	}
 	return true;
 }
-} // namespace openq4::ui
+} // namespace opend3::ui

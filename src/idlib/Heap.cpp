@@ -1533,7 +1533,7 @@ void Mem_GetStats( memoryStats_t &stats ) {
 
 /*
 ==================
-openQ4_Mem_GetModuleStats
+openD3_Mem_GetModuleStats
 
 The cross-binary half of Mem_GetProcessStats. Exported with default visibility
 so it survives the hidden-visibility preset the modules are built with, and
@@ -1542,7 +1542,7 @@ game module built before this existed simply fails the lookup and is left out
 of the total, instead of failing to load.
 ==================
 */
-extern "C" MEM_MODULE_STATS_EXPORT void openQ4_Mem_GetModuleStats( memoryStats_t *stats ) {
+extern "C" MEM_MODULE_STATS_EXPORT void openD3_Mem_GetModuleStats( memoryStats_t *stats ) {
 	if ( stats == NULL ) {
 		return;
 	}

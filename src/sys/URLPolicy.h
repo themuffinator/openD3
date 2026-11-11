@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 
-openQ4 external URL validation helpers.
+openD3 external URL validation helpers.
 Copyright (C) 2026 DarkMatter Productions
 
 This program is free software: you can redistribute it and/or modify it under

@@ -37,10 +37,10 @@ int main() {
         require(fs_basepath.value=="/retail" && !discoveryCalls,"valid host path changed");
         for(bool available: {false,true}) {
             discover=available;discoveryCalls=0;
-            fs_basepath.SetString("/storage/emulated/0/Android/data/com.darkmatter.openq4/files");
+            fs_basepath.SetString("/storage/emulated/0/Android/data/com.darkmatter.opend3/files");
             SelectBasePath();
 #ifdef __ANDROID__
-            require(fs_basepath.value=="/storage/emulated/0/Android/data/com.darkmatter.openq4/files",
+            require(fs_basepath.value=="/storage/emulated/0/Android/data/com.darkmatter.opend3/files",
                 "missing Android retail media discarded the host's data folder");
             require(!discoveryCalls,"Android host path triggered desktop install discovery");
 #else

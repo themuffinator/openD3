@@ -41,7 +41,7 @@ static struct {
     bool GetInsideLoad(){return insideLoad;}
     const char* GetDeclNameFromType(int){return "test";}
 } declManagerLocal;
-static bool openQ4_IsAnyToolActive(){return tool;}
+static bool openD3_IsAnyToolActive(){return tool;}
 struct Decl {
     int type=DECL_MATERIAL;
     bool generatedDefaultText=true,implicit=true;
@@ -81,7 +81,7 @@ def main():
     source = (ROOT/'src/framework/DeclManager.cpp').read_text(encoding='utf-8')
     guard = re.search(r'\tconst bool generatedRetainedResource = [\s\S]*?;',source)
     assert guard
-    branch = function_body(source,'if ( common->IsInitialized() && !declManagerLocal.GetInsideLoad() && !openQ4_IsAnyToolActive() && !generatedRetainedResource )')
+    branch = function_body(source,'if ( common->IsInitialized() && !declManagerLocal.GetInsideLoad() && !openD3_IsAnyToolActive() && !generatedRetainedResource )')
     fonts = (ROOT/'src/renderer/tr_fontTTF.cpp').read_text(encoding='utf-8')
     for prefix in ('_ttfatlas_','_ttfatlasx_'):
         assert f'va( "{prefix}%s_%i"' in fonts

@@ -50,7 +50,7 @@ OpenGL keeps the native packed path.
 ========================
 */
 static ID_INLINE bool R_MD5R_UsePackedRuntimeSurfaces() {
-#if defined( OPENQ4_RENDERER_VK_MODULE )
+#if defined( OPEND3_RENDERER_VK_MODULE )
 	return false;
 #else
 	return true;
@@ -84,7 +84,7 @@ MD5R surfaces therefore need their current-pose basis immediately.
 ========================
 */
 static ID_INLINE bool R_MD5R_DeferDynamicTangents() {
-#if defined( OPENQ4_RENDERER_VK_MODULE )
+#if defined( OPEND3_RENDERER_VK_MODULE )
 	return false;
 #else
 	return r_useDeferredTangents.GetBool();
@@ -437,7 +437,7 @@ static void R_MD5R_CopyIndexes( rvMD5RIndexBufferDesc &indexBuffer, const glInde
 ===========================
 R_MD5R_CalcMeshGeometryProfile
 
-Retail rvMesh tracks aggregate geometry counts across prim batches. openQ4 uses
+Retail rvMesh tracks aggregate geometry counts across prim batches. openD3 uses
 the same accounting now so later rvMesh porting can plug into already-populated
 metadata instead of reparsing the MD5R text file.
 ===========================
@@ -1438,7 +1438,7 @@ bool R_MD5R_CreateDecalTriangles( idRenderModelDecal *decalModel, const srfTrian
 			&& silTraceVertexBuffer != NULL );
 
 	// Retail rvMesh::CreateDecalTriangles walks the compact sil-trace topology.
-	// openQ4's tri->silTraceVerts on packed surfaces mirrors the materialized
+	// openD3's tri->silTraceVerts on packed surfaces mirrors the materialized
 	// draw-vertex order instead, so only use the true packed sil-trace buffers
 	// here and let the classic fallback handle anything else.
 	if ( silTraceVertexBuffer == NULL ) {

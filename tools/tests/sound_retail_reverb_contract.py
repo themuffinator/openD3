@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pin openQ4's port of retail Quake 4's per-area EAX reverb (docs/dev/retail-audio-reverb.md).
+"""Pin openD3's port of retail Quake 4's per-area EAX reverb (docs/dev/retail-audio-reverb.md).
 
 The numeric behaviour is exercised by tools/tests/native/SoundReverbCoreTest.cpp; this check keeps
 the retail constants, file names, messages, cvars and the engine wiring from drifting.
@@ -163,7 +163,7 @@ def main() -> int:
     require("SoundReverbCore.h" in local, "snd_local.h must include the shared core", failures)
 
     # tests and documentation
-    require("tools/tests/native/SoundReverbCoreTest.cpp" in meson and "'openq4-sound-reverb-core'" in meson,
+    require("tools/tests/native/SoundReverbCoreTest.cpp" in meson and "'opend3-sound-reverb-core'" in meson,
             "the native core test must stay registered", failures)
     for token in ("0x101742d0", "0x10173780", "0x1016e6a9", "efx-presets.h", "s_useEAXOcclusion", "s_muteEAXReverb"):
         require(token in doc, f"docs/dev/retail-audio-reverb.md lost: {token}", failures)

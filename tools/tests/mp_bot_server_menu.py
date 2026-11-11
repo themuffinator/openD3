@@ -28,10 +28,10 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_LIBS_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)).resolve()
+GAME_LIBS_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)).resolve()
 
-MAIN_MENU = ROOT / "content" / "baseoq4" / "pak0" / "guis" / "mainmenu.gui"
-STRINGS = ROOT / "content" / "baseoq4" / "pak0" / "strings"
+MAIN_MENU = ROOT / "content" / "baseod3" / "pak0" / "guis" / "mainmenu.gui"
+STRINGS = ROOT / "content" / "baseod3" / "pak0" / "strings"
 
 VIRTUAL_SCREEN_HEIGHT = 480
 
@@ -98,9 +98,9 @@ def gui_value(block: str, key: str, widget_name: str) -> str:
 
 
 def localized_tables() -> list[tuple[str, Path]]:
-    tables = [(path.stem.split("_", 1)[0], path) for path in sorted(STRINGS.glob("*_openq4.lang"))]
+    tables = [(path.stem.split("_", 1)[0], path) for path in sorted(STRINGS.glob("*_opend3.lang"))]
     if not tables:
-        raise AssertionError("No openQ4 string tables found")
+        raise AssertionError("No openD3 string tables found")
     return tables
 
 

@@ -1,6 +1,6 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
 #pragma once
-#include <SDL3/SDL_openq4_native_fence.h>
+#include <SDL3/SDL_opend3_native_fence.h>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -9,7 +9,7 @@
 #include <vector>
 #include <thread>
 
-namespace openq4 {
+namespace opend3 {
 struct NativeQueueStatus {
     bool mainThread = false, healthy = false;
     std::uint64_t providerEpoch = 0, generation = 0, engineToken = 0;
@@ -123,4 +123,4 @@ private:
     std::unique_ptr<NativeQueueQuarantine> quarantine;
     NativeQueueFailureBoundary failure;
 };
-} // namespace openq4
+} // namespace opend3

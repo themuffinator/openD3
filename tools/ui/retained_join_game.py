@@ -754,7 +754,7 @@ def check_join_fits() -> None:
 def join_game_document() -> dict:
     """The Join Game sub-page (see the module's description)."""
     check_join_fits()
-    doc = Document("openq4.joingame")
+    doc = Document("opend3.joingame")
     doc.session("back", "joinBack")
     doc.session("joinPick", "joinPick")
     doc.session("joinServer", "joinServer")

@@ -74,7 +74,7 @@ def main() -> None:
     ):
         require(winvar, token, "GUI window-variable finite-state validation")
 
-    validation = read("tools/validation/openq4_validate.py")
+    validation = read("tools/validation/opend3_validate.py")
     require(validation, "ui_cursor_state_safety.py", "GUI cursor regression wiring")
     print("GUI cursor state safety: ok")
 

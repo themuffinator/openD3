@@ -6,7 +6,7 @@
 #include <map>
 #include <stdexcept>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 namespace {
 int checks = 0;
 void Check(bool ok, const char* message) {

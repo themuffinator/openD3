@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-# Preserved from openQ4-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
-"""Static ARM64 ABI guardrails for openQ4 GameLibs."""
+# Preserved from openD3-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
+"""Static ARM64 ABI guardrails for openD3 GameLibs."""
 
 from __future__ import annotations
 

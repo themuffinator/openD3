@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace openq4::ui {
+namespace opend3::ui {
 // An evaluated HUD draw, in the engine's 640x480 submission space. The quad
 // already includes GUI anchoring, clipping and transforms. UVs retain the
 // original unclipped artwork extent, including mirrored and tiled artwork.

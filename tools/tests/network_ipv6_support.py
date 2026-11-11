@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_LIBS_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)).resolve()
+GAME_LIBS_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)).resolve()
 
 WINDOWS_NET = "src/sys/win32/win_net.cpp"
 POSIX_NET = "src/sys/posix/posix_net.cpp"
@@ -910,7 +910,7 @@ def validate_network_contract_wiring() -> None:
             require(workflow, f"{test_path} \\", f"{relative_path} focused regression syntax-check wiring")
             require(workflow, f"python {test_path}", f"{relative_path} focused regression execution wiring")
 
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     for test_path in test_paths:
         filename = Path(test_path).name
         require(validator, f'"tools" / "tests" / "{filename}"', "local validation focused regression wiring")

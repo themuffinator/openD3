@@ -4,7 +4,7 @@
 #include <functional>
 #include <utility>
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 struct SettingsDisplayObservation {
 	std::uint64_t epoch = 0, generation = 0, submitted = 0, presented = 0, failures = 0;
@@ -105,4 +105,4 @@ private:
 	std::string restoreReason;
 };
 
-} // namespace openq4::ui
+} // namespace opend3::ui

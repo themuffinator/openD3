@@ -243,7 +243,7 @@ idInternalCVar::Update
 ============
 */
 void idInternalCVar::Update( const idCVar *cvar ) {
-	if (nameString.Icmp("com_asyncInput") == 0) openq4::NativeInputBeforeInputBlockerChange();
+	if (nameString.Icmp("com_asyncInput") == 0) opend3::NativeInputBeforeInputBlockerChange();
 	const bool privateValue = ( ( flags | cvar->GetFlags() ) & CVAR_PRIVATE ) != 0;
 
 	// if this is a statically declared variable
@@ -419,14 +419,14 @@ void idInternalCVar::Set( const char *newValue, bool force, bool fromServer ) {
 		}
 	}
 
-	openq4::CVarAssignmentCapture::Record( nameString.c_str() );
+	opend3::CVarAssignmentCapture::Record( nameString.c_str() );
 	const bool unchanged = ( flags & CVAR_CASE_SENSITIVE ) ?
 		valueString.Cmp( newValue ) == 0 : valueString.Icmp( newValue ) == 0;
 	if ( unchanged ) {
 		return;
 	}
 
-	if (nameString.Icmp("com_asyncInput") == 0) openq4::NativeInputBeforeInputBlockerChange();
+	if (nameString.Icmp("com_asyncInput") == 0) opend3::NativeInputBeforeInputBlockerChange();
 #ifndef ID_DEDICATED
 	if ( flags & CVAR_RENDERER ) R_RendererModule_SyncConfiguration();
 #endif
@@ -448,7 +448,7 @@ void idInternalCVar::Reset( void ) {
 	if ( ( flags & CVAR_RENDERER ) && valueString.Cmp( resetString.c_str() ) != 0 ) R_RendererModule_SyncConfiguration();
 #endif
 	if (nameString.Icmp("com_asyncInput") == 0 && valueString.Cmp(resetString.c_str()) != 0)
-		openq4::NativeInputBeforeInputBlockerChange();
+		opend3::NativeInputBeforeInputBlockerChange();
 	CVar_AssignString( valueString, resetString.c_str(), ( flags & CVAR_PRIVATE ) != 0 );
 	value = valueString.c_str();
 	UpdateValue();

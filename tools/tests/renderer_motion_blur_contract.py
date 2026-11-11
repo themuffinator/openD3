@@ -121,7 +121,7 @@ def main() -> int:
         forbid(strip_comments(source), "TemporalRigidMotionEligible", f"{label} motion blur is no longer rigid-only")
 
     for shader in (
-        ROOT / "content" / "baseoq4" / "pak0" / "glprogs" / "motionblur.fs",
+        ROOT / "content" / "baseod3" / "pak0" / "glprogs" / "motionblur.fs",
         RENDERER / "Vulkan" / "shaders" / "post_motionblur.frag",
     ):
         require(read(shader), "velocityPixels *= ( motionBlurObjectParams.z > 0.0 ) ? motionBlurObjectParams.z : 1.0;",

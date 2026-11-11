@@ -323,7 +323,7 @@ static SDL_Renderer *Posix_CreateSupportRenderer( SDL_Window *window, const char
 
 	const char *purposeName = purpose != NULL ? purpose : "support";
 
-#if defined( MACOS_X ) && defined( OPENQ4_MACOS_METAL_BRIDGE )
+#if defined( MACOS_X ) && defined( OPEND3_MACOS_METAL_BRIDGE )
 	SDL_Renderer *renderer = SDL_CreateRenderer( window, NULL );
 	if ( renderer != NULL ) {
 		// Report the driver SDL actually created, not just the requested hint;

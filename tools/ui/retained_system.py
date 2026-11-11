@@ -538,7 +538,7 @@ def check_system_text(notes: list, apply_w: float, message_w: float) -> None:
 
 
 def system_document() -> dict:
-    doc = Document("openq4.system")
+    doc = Document("opend3.system")
     doc.state.update(page_state())
     page_actions(doc)
     page_events(doc)
@@ -772,7 +772,7 @@ def finish(document: dict) -> dict:
     document["presentationVariables"] = {name: {"type": document["state"][key]["type"], "initial": document["state"][key]["initial"],
                                                 "value": st(key)} for name, key in PRESENTED}
     document["aliases"] = {name: {"variable": name} for name, _key in PRESENTED}
-    document["extensions"] = {"openq4": EXTENSIONS}
+    document["extensions"] = {"opend3": EXTENSIONS}
     return document
 
 

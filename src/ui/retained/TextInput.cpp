@@ -3,7 +3,7 @@
 
 #include <utility>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 
 bool Fail(std::string& error, const char* diagnostic) {
@@ -142,4 +142,4 @@ bool MakeTextInputPreedit(std::string_view text, TextIndexUnit units,
 
 void MakeTextInputCancel(TextInputEvent& out) { out = TextInputEvent{}; }
 
-} // namespace openq4::ui
+} // namespace opend3::ui

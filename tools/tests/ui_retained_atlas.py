@@ -40,7 +40,7 @@ struct Renderer {
         if(!uploadOk||failImage==name)return false;uploaded[name].assign(pixels,pixels+w*h*4);return true;
     }
 ''')
-    support += 'namespace openq4::ui {\n' + function_body(raster, 'struct CoverageBitmap {') + ';\n'
+    support += 'namespace opend3::ui {\n' + function_body(raster, 'struct CoverageBitmap {') + ';\n'
     support += function_body(raster, 'inline bool RasterizeCoverage(') + '\n}\n'
     support += r'''
 struct {bool enabled=true;bool GetBool()const{return enabled;}} ui_retainedAtlas;
@@ -67,7 +67,7 @@ struct Host {
 int main(){
     constexpr int extent=Host::AtlasSize-2, width=2*extent+260;
     static_assert(Host::AtlasSize*Host::AtlasSize*Host::AtlasPages*4==32*1024*1024,"unchanged pixel storage budget");
-    std::vector<openq4::ui::Vertex> vertices;std::vector<int> indices;
+    std::vector<opend3::ui::Vertex> vertices;std::vector<int> indices;
     for(int i=0;i<width;++i){
         const int base=int(vertices.size());const float x=float(i);
         for(auto p:std::array<std::array<float,2>,4>{{{x,0},{x+1,0},{x+1,2},{x,2}}})
@@ -171,7 +171,7 @@ int main(){
 
     // Independent pages share physical images without sharing allocation or
     // retirement. Fill each page so this reaches every row and the next image.
-    Host grouped;openq4::ui::CoverageBitmap bitmap;bitmap.width=bitmap.height=extent;
+    Host grouped;opend3::ui::CoverageBitmap bitmap;bitmap.width=bitmap.height=extent;
     bitmap.pixels.resize(extent*extent*4);
     const int createsBefore=renderer.creates;
     for(int page=0;page<=Host::AtlasGroup;++page){

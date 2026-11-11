@@ -88,7 +88,7 @@ def main() -> int:
          "setup": ["bot_probeHealth 1 18 180"],
          "command": f"bot_probeAir 1 {pose} 0.7071 0.7071 0"},
     ]
-    executable = "openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64"
+    executable = "openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64"
     pose = "350.388 1160.896 0.250 184.511 -712.429 -33.655"
     ctf_trials = [
         # Hold the settled recovery before normal goal selection sends the bot

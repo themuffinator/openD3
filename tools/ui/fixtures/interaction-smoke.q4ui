@@ -1,6 +1,6 @@
 // Semantic button qualification: editable states and a separate modal scope.
 {
-  "format":"openq4-ui",
+  "format":"opend3-ui",
   "version":1,
   "id":"interaction-qualification",
   "tokens":{
@@ -1930,5 +1930,5 @@
     }
   ],
   "editor":{"zoom":1,"selection":["panel"]},
-  "extensions":{"openq4.fixture":{"productionDesign":false,"interactive":false,"nativeVectors":true,"coverageAntialiasingQualified":false}}
+  "extensions":{"opend3.fixture":{"productionDesign":false,"interactive":false,"nativeVectors":true,"coverageAntialiasingQualified":false}}
 }

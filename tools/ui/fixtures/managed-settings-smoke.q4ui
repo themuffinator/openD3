@@ -1,7 +1,7 @@
 // Authored vector controls adapted from interaction-smoke.q4ui.
 // Bounded managed adapter qualification; no shipped menu replacement acceptance.
 {
-  "format": "openq4-ui",
+  "format": "opend3-ui",
   "version": 1,
   "id": "managed-settings-smoke",
   "tokens": {
@@ -3020,7 +3020,7 @@
     ]
   },
   "extensions": {
-    "openq4.fixture": {
+    "opend3.fixture": {
       "productionDesign": false,
       "interactive": true,
       "nativeVectors": true,

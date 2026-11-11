@@ -215,7 +215,7 @@ public:
 	searchpath_t *addonPaks = nullptr;
 	ListStub<pack_t *> serverPaks;
 	ListStub<int> restartChecksums;
-	idStr gameFolder = "baseoq4";
+	idStr gameFolder = "baseod3";
 	bool loadedFileFromDir = false;
 	bool loadedImageCacheFromDir = false;
 	int loadCount = 0, loadStack = 0;
@@ -284,7 +284,7 @@ struct Fixture {
 		pak.pakFilename = "pak001.pk4";
 		pak.hashTable[7] = &member;
 		dir.path = "C:/Game/";
-		dir.gamedir = "baseoq4";
+		dir.gamedir = "baseod3";
 		dirPath.dir = &dir;
 		dirPath.next = &pakPath;
 		pakPath.pack = &pak;
@@ -379,7 +379,7 @@ static void LooseDirectoryMemo() {
 	{
 		// outside a level load every lookup still tries the open
 		Fixture f;
-		existingDirectories.insert( "c:/game/baseoq4" );
+		existingDirectories.insert( "c:/game/baseod3" );
 		assert( !f.fs.LooseDirectoryMissing( &f.dir, "textures/base/wall.tga" ) );
 		assert( directoryStats == 0 );
 		void *buffer = nullptr;
@@ -390,7 +390,7 @@ static void LooseDirectoryMemo() {
 	{
 		// in a level load a missing directory is checked once and then skipped
 		Fixture f;
-		existingDirectories.insert( "c:/game/baseoq4" );
+		existingDirectories.insert( "c:/game/baseod3" );
 		f.fs.SetLooseDirectoryCacheActive( true );
 		void *buffer = nullptr;
 		assert( f.fs.ReadFile( "textures/base/wall.tga", &buffer, nullptr ) == 70000 );
@@ -412,9 +412,9 @@ static void LooseDirectoryMemo() {
 	{
 		// an existing chain still opens, and is checked only once per directory
 		Fixture f;
-		existingDirectories.insert( "c:/game/baseoq4" );
-		existingDirectories.insert( "c:/game/baseoq4/textures" );
-		existingDirectories.insert( "c:/game/baseoq4/textures/base" );
+		existingDirectories.insert( "c:/game/baseod3" );
+		existingDirectories.insert( "c:/game/baseod3/textures" );
+		existingDirectories.insert( "c:/game/baseod3/textures/base" );
 		f.fs.looseFiles.push_back( "textures/base/wall.tga" );
 		f.fs.SetLooseDirectoryCacheActive( true );
 		assert( f.fs.ReadFile( "textures/base/wall.tga", nullptr, nullptr ) == 99 );
@@ -432,14 +432,14 @@ static void LooseDirectoryMemo() {
 	{
 		// a directory the engine creates mid-load is seen by the next lookup
 		Fixture f;
-		existingDirectories.insert( "c:/game/baseoq4" );
+		existingDirectories.insert( "c:/game/baseod3" );
 		f.fs.SetLooseDirectoryCacheActive( true );
 		assert( f.fs.LooseDirectoryMissing( &f.dir, "generated/images/a.bimage" ) );
-		f.fs.CreateOSPath( "C:/Game/baseoq4/generated/images/a.bimage" );
-		assert( existingDirectories.count( "c:/game/baseoq4/generated/images" ) == 1 );
+		f.fs.CreateOSPath( "C:/Game/baseod3/generated/images/a.bimage" );
+		assert( existingDirectories.count( "c:/game/baseod3/generated/images" ) == 1 );
 		assert( !f.fs.LooseDirectoryMissing( &f.dir, "generated/images/a.bimage" ) );
 		// positive answers survive the invalidation
-		assert( f.fs.looseDirectoryExists.at( "c:/game/baseoq4" ) );
+		assert( f.fs.looseDirectoryExists.at( "c:/game/baseod3" ) );
 	}
 	{
 		// opted out, or on a case-sensitive filesystem, the memo stays off

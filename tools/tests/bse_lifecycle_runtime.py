@@ -38,8 +38,8 @@ def quiet(text: str) -> bool:
 def check(write_log: str, load_log: str) -> dict[str, bool]:
     phases = {}
     for start, end in zip(MARKERS, MARKERS[1:]):
-        begin = f"OPENQ4_BSE_{start} "
-        finish = f"OPENQ4_BSE_{end} "
+        begin = f"OPEND3_BSE_{start} "
+        finish = f"OPEND3_BSE_{end} "
         _, seen_begin, tail = write_log.partition(begin)
         phase, seen_end, _ = tail.partition(finish)
         phases[start] = phase if seen_begin and seen_end else ""
@@ -48,20 +48,20 @@ def check(write_log: str, load_log: str) -> dict[str, bool]:
         "stopped": quiet(phases["STOP"]),
         "restarted": active(phases["RESTART"]),
         "deleted": quiet(phases["DELETE"]),
-        "restored": active(load_log.partition("OPENQ4_BSE_RESTORED ")[2]),
+        "restored": active(load_log.partition("OPEND3_BSE_RESTORED ")[2]),
     }
 
 
 def self_test() -> None:
     live = "bse_active: 1 particles: 20 traces: 5 segments: 4\n"
     dead = "bse_active: 0 particles: 0 traces: 0 segments: 0\n" * 20
-    text = "".join(f"OPENQ4_BSE_{mark} \n{value}" for mark, value in
+    text = "".join(f"OPEND3_BSE_{mark} \n{value}" for mark, value in
                    zip(MARKERS, (live, dead, live, dead, "")))
-    restored = "OPENQ4_BSE_RESTORED \n" + live
+    restored = "OPEND3_BSE_RESTORED \n" + live
     assert all(check(text, restored).values())
     assert not check(text.replace("traces: 5", "traces: 0"), restored)["started"]
     assert not check(text.replace(dead, live), restored)["stopped"]
-    assert not check(text.replace("OPENQ4_BSE_END", "MISSING_END"), restored)["deleted"]
+    assert not check(text.replace("OPEND3_BSE_END", "MISSING_END"), restored)["deleted"]
     assert not check(text, "")["restored"]
     assert not any(check("", "").values())
     print("bse_lifecycle_runtime: self-test ok")
@@ -86,28 +86,28 @@ def main() -> int:
     common = ["--install-root", str(args.install_root.resolve()), "--basepath", str(args.basepath.resolve()),
               "--timeout", str(args.timeout), "--set", "r_renderApi", args.renderer,
               "--set", "bse_speeds", "1", "--set", "bse_singleEffect", EFFECT]
-    commands = ["echo OPENQ4_BSE_START",
+    commands = ["echo OPEND3_BSE_START",
                 f"spawn func_fx name q4_bse_probe fx {EFFECT} loop 1 start_on 1", "wait 90",
-                "echo OPENQ4_BSE_STOP", "trigger q4_bse_probe", "wait 240",
-                "echo OPENQ4_BSE_RESTART", "trigger q4_bse_probe", "wait 90",
-                "saveGame bse_live", "wait 5", "echo OPENQ4_BSE_DELETE",
-                "remove q4_bse_probe", "wait 240", "echo OPENQ4_BSE_END"]
+                "echo OPEND3_BSE_STOP", "trigger q4_bse_probe", "wait 240",
+                "echo OPEND3_BSE_RESTART", "trigger q4_bse_probe", "wait 90",
+                "saveGame bse_live", "wait 5", "echo OPEND3_BSE_DELETE",
+                "remove q4_bse_probe", "wait 240", "echo OPEND3_BSE_END"]
     write_args = saves.parse_args(["write", *common, "--home", str(output / "write"),
                                   "--tag", "finished", "--map", "game/airdefense1", "--settle-frames", "5",
                                   *[part for command in commands for part in ("--after-load", command)]])
     if saves.run_leg(write_args):
         return 1
-    write_log = output / "write/baseoq4/logs" / saves.LOG_NAME
+    write_log = output / "write/baseod3/logs" / saves.LOG_NAME
     if "Saved 'bse_live'" not in write_log.read_text(encoding="utf-8", errors="replace"):
         print("bse_lifecycle_runtime: live-effect save did not commit", file=sys.stderr)
         return 1
     load_args = saves.parse_args(["load", *common, "--home", str(output / "load"),
                                  "--tag", "restored", "--play-frames", "120",
-                                 "--input", str(output / "write/baseoq4/savegames/bse_live.save"),
-                                 "--after-load", "echo OPENQ4_BSE_RESTORED"])
+                                 "--input", str(output / "write/baseod3/savegames/bse_live.save"),
+                                 "--after-load", "echo OPEND3_BSE_RESTORED"])
     if saves.run_leg(load_args):
         return 1
-    logs = [output / leg / "baseoq4/logs" / saves.LOG_NAME for leg in ("write", "load")]
+    logs = [output / leg / "baseod3/logs" / saves.LOG_NAME for leg in ("write", "load")]
     checks = check(*(path.read_text(encoding="utf-8", errors="replace") for path in logs))
     report = {"effect": EFFECT, "renderer": args.renderer, "checks": checks,
               "passed": all(checks.values()), "logs": [str(path) for path in logs],

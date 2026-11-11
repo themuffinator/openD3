@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <limits>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 bool ValidIdentity(const TextEditorIdentity& id) {
 	if (!id.allocation || !id.backend || !id.document || !id.modal || !id.window ||
@@ -321,4 +321,4 @@ bool TextInputBroker::Complete(std::uint64_t token, TextDeliveryOutcome outcome,
 	context = after; pending.reset(); error.clear(); return true;
 }
 
-} // namespace openq4::ui
+} // namespace opend3::ui

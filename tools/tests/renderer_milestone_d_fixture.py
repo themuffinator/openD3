@@ -4,7 +4,7 @@
 The fixture is deliberately not shipping content.  It retrieves the stock
 ``maps/tools/mv2.map`` shell and a stock ROQ from a user-owned extracted Quake 4
 asset tree, adds original test-only mirror and authored-post geometry, compiles
-the result with openQ4's in-tree dmap, and stages an isolated runtime below
+the result with openD3's in-tree dmap, and stages an isolated runtime below
 ``.tmp/stock-runtime`` for the gameplay benchmark harness.
 """
 
@@ -31,7 +31,7 @@ SOURCE_SHA256 = {
     SOURCE_MAP_REL: "412fc796e569660c92dca5d55359e5c4eb3d572754bd1cdff8ce994b0b802fe2",
     SOURCE_VIDEO_REL: "375c9641c96359c2e0d49cdd3905cc2cdc66a7b067c9a8910d80bf36fb06c8f4",
 }
-STOCK_GAME_DIRECTORIES = ("q4base", "baseoq4")
+STOCK_GAME_DIRECTORIES = ("q4base", "baseod3")
 FIXTURE_MAP_REL = Path("maps/tools/milestone_d_nested_dynamic.map")
 FIXTURE_MATERIAL_REL = Path("materials/milestone_d_validation.mtr")
 FIXTURE_VIDEO_REL = Path("video/milestone_d_idlogo.roq")
@@ -218,7 +218,7 @@ def inventory_summary(records: list[dict[str, Any]]) -> dict[str, Any]:
 
 
 def stock_dependency_inventory(basepath: Path) -> dict[str, Any]:
-    """Hash every effective stock PK4/loose file below q4base/baseoq4."""
+    """Hash every effective stock PK4/loose file below q4base/baseod3."""
     basepath = basepath.resolve()
     records: list[dict[str, Any]] = []
 
@@ -257,7 +257,7 @@ def stock_dependency_inventory(basepath: Path) -> dict[str, Any]:
     records.sort(key=lambda record: record["path"].casefold())
     if not records:
         raise FileNotFoundError(
-            f"stock base path has no effective q4base/baseoq4 files: {basepath}"
+            f"stock base path has no effective q4base/baseod3 files: {basepath}"
         )
     return inventory_summary(records)
 
@@ -266,14 +266,14 @@ def find_dmap_executable(runtime_dir: Path) -> Path:
     suffix = ".exe" if os.name == "nt" else ""
     architecture = host_arch()
     candidates = (
-        runtime_dir / f"openQ4-ded_{architecture}{suffix}",
-        runtime_dir / f"openQ4-client_{architecture}{suffix}",
+        runtime_dir / f"openD3-ded_{architecture}{suffix}",
+        runtime_dir / f"openD3-client_{architecture}{suffix}",
     )
     for candidate in candidates:
         if candidate.is_file():
             return candidate
     raise FileNotFoundError(
-        "temporary runtime has no host-matching openQ4 dedicated/client executable"
+        "temporary runtime has no host-matching openD3 dedicated/client executable"
     )
 
 
@@ -284,8 +284,8 @@ def validate_runtime_components(runtime_dir: Path) -> list[dict[str, Any]]:
         ".dll" if os.name == "nt" else (".dylib" if sys.platform == "darwin" else ".so")
     )
     required = [
-        runtime_dir / f"openQ4-client_{architecture}{executable_suffix}",
-        runtime_dir / "baseoq4" / f"game-sp_{architecture}{module_suffix}",
+        runtime_dir / f"openD3-client_{architecture}{executable_suffix}",
+        runtime_dir / "baseod3" / f"game-sp_{architecture}{module_suffix}",
         runtime_dir / f"renderer-vk_{architecture}{module_suffix}",
     ]
     # macOS keeps OpenGL statically linked and intentionally does not build the
@@ -418,7 +418,7 @@ def compile_fixture(
         "+set", "logFileName", "logs/milestone_d_dmap.log",
         "+set", "fs_savepath", str(compile_root),
         "+set", "fs_devpath", str(compile_root),
-        "+set", "fs_game", "baseoq4",
+        "+set", "fs_game", "baseod3",
     ]
     if basepath is not None:
         command += ["+set", "fs_basepath", str(basepath)]
@@ -432,14 +432,14 @@ def compile_fixture(
         command, compile_root, output_dir / "dmap-process.log", timeout_seconds
     )
 
-    runtime_proc = runtime_dir / "baseoq4" / FIXTURE_MAP_REL.with_suffix(".proc")
-    compile_proc = compile_root / "baseoq4" / FIXTURE_MAP_REL.with_suffix(".proc")
+    runtime_proc = runtime_dir / "baseod3" / FIXTURE_MAP_REL.with_suffix(".proc")
+    compile_proc = compile_root / "baseod3" / FIXTURE_MAP_REL.with_suffix(".proc")
     if not runtime_proc.is_file() or runtime_proc.stat().st_size == 0:
         raise FileNotFoundError(f"dmap did not produce {runtime_proc}")
     compile_proc.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(runtime_proc, compile_proc)
 
-    engine_log = compile_root / "baseoq4/logs/milestone_d_dmap.log"
+    engine_log = compile_root / "baseod3/logs/milestone_d_dmap.log"
     if not engine_log.is_file():
         raise FileNotFoundError(f"dmap engine log was not written: {engine_log}")
     log_text = engine_log.read_text(encoding="utf-8", errors="replace")
@@ -528,7 +528,7 @@ def main(argv: list[str]) -> int:
             )
 
     output_dir.mkdir(parents=True)
-    retrieved_root = output_dir / "retrieved/baseoq4"
+    retrieved_root = output_dir / "retrieved/baseod3"
     compile_root = output_dir / "compile"
     for source, relative in (
         (source_map, SOURCE_MAP_REL),
@@ -544,7 +544,7 @@ def main(argv: list[str]) -> int:
                 f"expected {SOURCE_SHA256[relative]}, got {copied_hash}"
             )
 
-    compile_game = compile_root / "baseoq4"
+    compile_game = compile_root / "baseod3"
     map_path = compile_game / FIXTURE_MAP_REL
     material_path = compile_game / FIXTURE_MATERIAL_REL
     video_path = compile_game / FIXTURE_VIDEO_REL
@@ -583,7 +583,7 @@ def main(argv: list[str]) -> int:
                 f"{map_path.with_suffix('.proc')}"
             )
 
-    runtime_game = runtime_dir / "baseoq4"
+    runtime_game = runtime_dir / "baseod3"
     for source in generated_files:
         relative = source.relative_to(compile_game)
         target = runtime_game / relative

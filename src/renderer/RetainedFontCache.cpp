@@ -4,7 +4,7 @@
 #include <charconv>
 #include <cstring>
 
-namespace openq4::fonts {
+namespace opend3::fonts {
 namespace {
 bool ValidFace(const std::string& face, int pixels) {
 	return !face.empty() && face.size() <= 128 && pixels > 0 && pixels <= Cache::MaxPixelSize;

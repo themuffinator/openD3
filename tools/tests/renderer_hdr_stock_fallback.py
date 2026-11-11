@@ -82,7 +82,7 @@ def validate(captures: dict, reports: dict, backend: str) -> list[str]:
 def run_map(args, runtime: Path, basepath: Path, output: Path, map_name: str) -> dict:
     slug = map_name.split("/")[-1]
     save = output / slug / "savepath"
-    game = save / "baseoq4"
+    game = save / "baseod3"
     (game / "screenshots").mkdir(parents=True)
     case_id = f"hdr-fallback-{args.backend}-{slug}"
     settings = {
@@ -119,7 +119,7 @@ def run_map(args, runtime: Path, basepath: Path, output: Path, map_name: str) ->
     (game / "fallback.cfg").write_text("\n".join(commands) + "\n", encoding="utf-8")
     exit_code, timeout, elapsed = gameplay.launch_and_wait(matrix.find_client_executable(runtime), launch,
         runtime, output / slug / "stdout.txt", output / slug / "stderr.txt", 420)
-    log_path = matrix.find_log(save, "openq4_validation_" + case_id + ".log")
+    log_path = matrix.find_log(save, "opend3_validation_" + case_id + ".log")
     log = log_path.read_text(encoding="utf-8", errors="replace") if log_path else ""
     warnings = matrix.count_warning_signatures(log)
     checks = [[f"Renderer API: requested={args.backend} active={args.backend} disposition=module"],

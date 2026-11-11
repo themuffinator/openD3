@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 
-openQ4
+openD3
 Copyright (C) 2026 DarkMatter Productions
 
 This program is free software: you can redistribute it and/or modify

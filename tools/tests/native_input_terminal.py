@@ -31,7 +31,7 @@ def main():
         sdl=prepared/'include'
     if not (sdl/'SDL3/SDL_events.h').is_file():raise RuntimeError('SDL public headers unavailable')
     sources=['src/framework/NativeInputRoute.cpp','src/sys/EventDisposition.cpp','src/sys/EventQueueContinuity.cpp','src/sys/sdl3/NativeQueueBatch.cpp','src/sys/sdl3/NativeEventDisposition.cpp','src/ui/retained/TextInput.cpp']
-    files=list(dict.fromkeys(storage.FILES+sources+['src/sys/sdl3/NativeInputTransfers.h','src/sys/sdl3/NativeInputTransfers.cpp','src/sys/sdl3/NativeInputEmissionInventory.h','src/sys/sdl3/NativeInputEmissionInventory.cpp','tools/tests/native_input_terminal.py','tools/tests/native/NativeInputTerminalTest.cpp','tools/tests/native/NativeEventDispositionTest.cpp','src/sys/sdl3/NativeEventDisposition.h','src/sys/sdl3/NativeQueueBatch.h','src/ui/retained/TextInput.h','subprojects/packagefiles/sdl3/include/SDL3/SDL_openq4_native_fence.h']))
+    files=list(dict.fromkeys(storage.FILES+sources+['src/sys/sdl3/NativeInputTransfers.h','src/sys/sdl3/NativeInputTransfers.cpp','src/sys/sdl3/NativeInputEmissionInventory.h','src/sys/sdl3/NativeInputEmissionInventory.cpp','tools/tests/native_input_terminal.py','tools/tests/native/NativeInputTerminalTest.cpp','tools/tests/native/NativeEventDispositionTest.cpp','src/sys/sdl3/NativeEventDisposition.h','src/sys/sdl3/NativeQueueBatch.h','src/ui/retained/TextInput.h','subprojects/packagefiles/sdl3/include/SDL3/SDL_opend3_native_fence.h']))
     files += ['tools/tests/sdl3_clipboard_status.py','subprojects/sdl3.wrap']
     before={n:sha(ROOT/n) for n in files}
     headers={name:sha(sdl/'SDL3'/name) for name in disposition_test.SDL_HEADERS}
@@ -60,16 +60,16 @@ def main():
         common.append(compile(inv,'inventory'))
         invbody=inv.read_text();projections={};objects={}
         model=read('tools/tests/native/NativeEventDispositionTest.cpp')
-        allocator=model[:model.index('using namespace openq4;')]
+        allocator=model[:model.index('using namespace opend3;')]
         fixture=model[model.index('struct Source final'):model.index('static void OrderedBatch(')]
         for target in ['windows','posix']:
             body=storage.projection(target,{'platform':read('src/sys/win32/win_main.cpp' if target=='windows' else 'src/sys/posix/posix_main.cpp'),'loop':read('src/framework/EventLoop.cpp'),'sdl':read('src/sys/sdl3/sdl3_backend.cpp')})
             body=body.replace('#include "tools/tests/native/NativeEventRetirementTest.cpp"','')
             body=body.replace('static void Mem_Free(void* pointer) {','static std::function<void()> onFree;\nstatic void Mem_Free(void* pointer) {\n    auto callback=std::exchange(onFree,nullptr);if(callback)callback();')
-            body='#include <functional>\n#include <utility>\n'+allocator+body+'\nusing namespace openq4;\n#define CHECK(...) Check((__VA_ARGS__),#__VA_ARGS__)\n'+fixture
+            body='#include <functional>\n#include <utility>\n'+allocator+body+'\nusing namespace opend3;\n#define CHECK(...) Check((__VA_ARGS__),#__VA_ARGS__)\n'+fixture
             body+=read('src/sys/sdl3/NativeInputTransfers.cpp').replace('#include "../../idlib/precompiled.h"\n','')
             body+='\n#include "tools/tests/native/NativeInputTerminalTest.cpp"\n'
-            path=out/(target+'.cpp');path.write_text(body,newline='\n');extra=['/DOPENQ4_SDL3_POSIX_HOST'] if msvc else ['-DOPENQ4_SDL3_POSIX_HOST']
+            path=out/(target+'.cpp');path.write_text(body,newline='\n');extra=['/DOPEND3_SDL3_POSIX_HOST'] if msvc else ['-DOPEND3_SDL3_POSIX_HOST']
             originalFlags=list(flags)
             if target=='posix':flags+=extra
             obj=compile(path,target);binary=out/(target+'.exe');r=run([a.compiler]+flags+[str(p) for p in common+[obj]]+(['/Fe:'+str(binary)] if msvc else ['-o',str(binary)]),target+'-link');flags[:]=originalFlags

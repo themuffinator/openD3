@@ -33,7 +33,7 @@ If you have questions concerning this license or the applicable additional terms
 const char * sysLanguageNames[] = {
 	"english", "spanish", "italian", "german", "french", "russian",
 	"polish", "korean", "japanese", "chinese",
-	// openQ4 additions, text only: no retail media archive exists for these.
+	// openD3 additions, text only: no retail media archive exists for these.
 	"brazilian", "czech", "hungarian", "turkish", "ukrainian", NULL
 };
 

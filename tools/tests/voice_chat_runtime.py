@@ -120,14 +120,14 @@ def main() -> int:
     width, height = args.size.split('x')
     verify_runtime_is_current(runtime)
     output.mkdir(parents=True, exist_ok=True)
-    exe = runtime / ('openQ4-client_x64.exe' if os.name == 'nt' else 'openQ4-client_x64')
-    server_exe = runtime / ('openQ4-ded_x64.exe' if os.name == 'nt' else 'openQ4-ded_x64') if args.dedicated else exe
+    exe = runtime / ('openD3-client_x64.exe' if os.name == 'nt' else 'openD3-client_x64')
+    server_exe = runtime / ('openD3-ded_x64.exe' if os.name == 'nt' else 'openD3-ded_x64') if args.dedicated else exe
     verify_runtime_is_current(runtime, server_exe.name)
     roles = ('host', 'peer', 'spectator', 'server') if args.dedicated else ('host', 'peer', 'spectator')
     server_role = 'server' if args.dedicated else 'host'
     saves = {role: output / role for role in roles}
-    games = {role: saves[role] / 'baseoq4' for role in roles}
-    logs = {role: games[role] / 'logs/openq4.log' for role in roles}
+    games = {role: saves[role] / 'baseod3' for role in roles}
+    logs = {role: games[role] / 'logs/opend3.log' for role in roles}
     polls = {role: games[role] / 'voice_poll.cfg' for role in roles}
     processes, streams, phases, checks, clock_drift = {}, [], {}, {}, {}
     proxy = LocalProxy(args.port + 10, args.port)
@@ -152,19 +152,19 @@ def main() -> int:
         # vstr appends here (it does not insert). Append both the phase and the
         # next driver call in order, keeping only one iteration queued at a time.
         # Underscores keep the unquoted filename inside each CVar one token.
-        write_script(games[role] / 'voice_driver.cfg', ['waitMsec 250', 'openq4_reportMPState',
+        write_script(games[role] / 'voice_driver.cfg', ['waitMsec 250', 'opend3_reportMPState',
                                                        'vstr voiceHarnessStep', 'vstr voiceHarnessLoop'])
         write_script(games[role] / 'voice_start.cfg', start_script(polls[role]))
         (saves[role] / 'alsoft.conf').write_text('[general]\ndrivers=wave\nchannels=stereo\nhrtf=false\n[wave]\nfile=' + str(saves[role] / 'mix.wav') + '\n')
 
     common = {
-        'fs_basepath': str(args.assets.resolve()), 'fs_game': 'baseoq4', 'com_gameMode': 'MP',
+        'fs_basepath': str(args.assets.resolve()), 'fs_game': 'baseod3', 'com_gameMode': 'MP',
         'r_fullscreen': '0', 'r_borderless': '0', 'r_fullscreenDesktop': '0', 'r_borderlessDefaultMigrated': '1',
         'r_mode': '-1', 'r_customWidth': width, 'r_customHeight': height, 'r_windowWidth': width, 'r_windowHeight': height,
         'r_hiddenWindow': '1', 'r_renderApi': args.render_api, 'r_multiSamples': '0', 'r_swapInterval': '0', 'com_maxfps': '60',
         'in_mouse': '0', 'in_joystick': '0', 'in_joystickRumble': '0', 's_noSound': '0', 's_muteUnfocused': '0',
         's_volume': '.5', 's_musicVolume': '0', 's_voiceChatCapture': '0', 's_voiceChatSend': '1', 's_voiceChatReceive': '1',
-        's_voiceChatEcho': '0', 's_voiceVolume': '1', 'logFile': '2', 'logFileName': 'logs/openq4.log', 'developer': '1',
+        's_voiceChatEcho': '0', 's_voiceVolume': '1', 'logFile': '2', 'logFileName': 'logs/opend3.log', 'developer': '1',
         'g_voiceChatDebug': '3', 'ui_retained': '1', 'ui_autoJoin': '1', 'ui_spectate': 'Play', 'ui_ready': 'Ready',
         'net_allowCheats': '1', 'com_skipLoadingContinue': '1', 'g_autoExecAfterMapLoad': 'voice_start.cfg',
         'g_autoExecAfterMapLoadDelayMs': '500', 'win_allowMultipleInstances' if os.name == 'nt' else 'sys_allowMultipleInstances': '1'
@@ -435,7 +435,7 @@ def main() -> int:
               'capture_driver': 'SDL dummy (silence)' if args.dummy_capture else None,
               'engine_sha256': hashlib.sha256(exe.read_bytes()).hexdigest(),
               'dedicated': args.dedicated, 'server_sha256': hashlib.sha256(server_exe.read_bytes()).hexdigest(),
-              'game_sha256': hashlib.sha256((runtime / 'baseoq4/game-mp_x64.dll').read_bytes()).hexdigest() if os.name == 'nt' else None,
+              'game_sha256': hashlib.sha256((runtime / 'baseod3/game-mp_x64.dll').read_bytes()).hexdigest() if os.name == 'nt' else None,
               'harness_sha256': harness_sha256}
     (output / 'result.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps({'result': str(output / 'result.json'), 'checks': checks, 'error': error}, indent=2))

@@ -4,7 +4,7 @@
 #include <array>
 #include <string>
 
-namespace openq4 {
+namespace opend3 {
 
 struct SaveGameTransactionFile {
 	std::string temporary, final, backup;
@@ -101,4 +101,4 @@ SaveGameTransactionResult CommitSaveGame( std::array<SaveGameTransactionFile, 3>
 	return result;
 }
 
-} // namespace openq4
+} // namespace opend3

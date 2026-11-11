@@ -15,7 +15,7 @@
 	colour to [0,1], and the stock light interaction programs depend on that:
 	interaction.vfp, SimpleInteraction.vfp and test.vfp never saturate N.L, so a
 	light behind the surface writes a negative colour that the fixed-point buffer
-	turns into zero. openQ4 draws the view into an RGBA16F target whenever a post
+	turns into zero. openD3 draws the view into an RGBA16F target whenever a post
 	effect is on (SSAO, bloom, tone mapping, TAA and the rest). A float target
 	keeps the sign, and the additive interaction blend then subtracts that light
 	instead of adding nothing. noShadows surfaces show it worst, because their

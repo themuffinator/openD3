@@ -11,7 +11,7 @@
 ===============================================================================
 */
 
-#ifdef OPENQ4_RENDERER_GLES_MODULE
+#ifdef OPEND3_RENDERER_GLES_MODULE
 
 #include "../../idlib/precompiled.h"
 #pragma hdrstop
@@ -374,4 +374,4 @@ void R_GLESD3_SetupProgramForDraw( const glesProgram_t *program, const float mvp
 	}
 }
 
-#endif /* OPENQ4_RENDERER_GLES_MODULE */
+#endif /* OPEND3_RENDERER_GLES_MODULE */

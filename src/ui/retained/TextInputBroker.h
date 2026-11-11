@@ -4,7 +4,7 @@
 #include "TextInput.h"
 #include <array>
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 // Process-local identities only. The adapter supplies nonzero, never-reused
 // allocation/backend/document/modal/window/edit-session tokens. Revision changes
@@ -139,4 +139,4 @@ private:
 	bool healthy = true, sequenceBoundary = false;
 };
 
-} // namespace openq4::ui
+} // namespace opend3::ui

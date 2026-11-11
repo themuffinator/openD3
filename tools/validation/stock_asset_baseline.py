@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capture and verify the retail-PK4 openQ4 SP/MP compatibility baseline.
+"""Capture and verify the retail-PK4 openD3 SP/MP compatibility baseline.
 
 The harness is intentionally non-interactive. It launches only windowed
 clients, drives registered console commands through generated cfg files, and
@@ -40,8 +40,8 @@ from renderer_budget_contract import (  # noqa: E402
 SCHEMA_VERSION = 10
 RETAIL_MANIFEST_SCHEMA_VERSION = 1
 RUNTIME_MANIFEST_SCHEMA_VERSION = 2
-ASSET_COMPATIBILITY_MODEL = "retail-pk4-fallback-with-packaged-openq4-overlays-v1"
-GIT_PROVENANCE_POLICY = "current-openq4-head-and-dirty-state-v1"
+ASSET_COMPATIBILITY_MODEL = "retail-pk4-fallback-with-packaged-opend3-overlays-v1"
+GIT_PROVENANCE_POLICY = "current-opend3-head-and-dirty-state-v1"
 TOP_LEVEL_FAILURE_ARRAYS = (
     "assetComparisonFailures",
     "preflightFailures",
@@ -66,12 +66,12 @@ SP_SAVE_PREVIEW_MAX_COMPENSATED_RGB_ERROR = 48.0
 SP_SAVE_PREVIEW_COMPARISON_ALGORITHM = (
     "same-state-center-aspect-bilinear-luma-affine-rgb-v3"
 )
-MP_CLIENT_ACTIVE_MARKER = "OPENQ4_STOCK_BASELINE_MP_CLIENT_ACTIVE"
+MP_CLIENT_ACTIVE_MARKER = "OPEND3_STOCK_BASELINE_MP_CLIENT_ACTIVE"
 MP_CLIENT_ACTIVE_PATTERN = re.compile(
     rf"^{MP_CLIENT_ACTIVE_MARKER} client=\d+ spectating=0 wantSpectate=0 ingame=1 menu=0 disableHud=0$",
     re.MULTILINE,
 )
-MP_CLIENT_VIEW_MARKER = "OPENQ4_STOCK_BASELINE_MP_CLIENT_VIEW"
+MP_CLIENT_VIEW_MARKER = "OPEND3_STOCK_BASELINE_MP_CLIENT_VIEW"
 MP_CLIENT_VIEW_PATTERN = re.compile(
     rf"^{MP_CLIENT_VIEW_MARKER} gui=0$",
     re.MULTILINE,
@@ -115,19 +115,19 @@ def display_contract() -> dict[str, Any]:
 
 ROLE_EVIDENCE_CONTRACT: dict[str, dict[str, Any]] = {
     "sp-capture": {
-        "marker": "OPENQ4_STOCK_BASELINE_SP_SAVE_LOAD_COMPLETE",
+        "marker": "OPEND3_STOCK_BASELINE_SP_SAVE_LOAD_COMPLETE",
         "saveDir": "sp",
         "logName": "stock_baseline_sp.log",
         "budget": {"map": SP_MAP, "backend": "opengl", "profile": "baseline"},
         "expected": {
-            "screenshot": f"baseoq4/screenshots/{BASELINE_DIR}/sp_after_load.tga",
+            "screenshot": f"baseod3/screenshots/{BASELINE_DIR}/sp_after_load.tga",
             "saveReferenceScreenshot": (
-                f"baseoq4/screenshots/{BASELINE_DIR}/sp_before_save.tga"
+                f"baseod3/screenshots/{BASELINE_DIR}/sp_before_save.tga"
             ),
-            "renderDemo": f"baseoq4/demos/{SP_DEMO_NAME}.demo",
-            "savePayload": f"baseoq4/savegames/{SP_SAVE_NAME}.save",
-            "savePreview": f"baseoq4/savegames/{SP_SAVE_NAME}.tga",
-            "saveDescription": f"baseoq4/savegames/{SP_SAVE_NAME}.txt",
+            "renderDemo": f"baseod3/demos/{SP_DEMO_NAME}.demo",
+            "savePayload": f"baseod3/savegames/{SP_SAVE_NAME}.save",
+            "savePreview": f"baseod3/savegames/{SP_SAVE_NAME}.tga",
+            "saveDescription": f"baseod3/savegames/{SP_SAVE_NAME}.txt",
         },
     },
     "sp-demo-playback": {
@@ -137,24 +137,24 @@ ROLE_EVIDENCE_CONTRACT: dict[str, dict[str, Any]] = {
         "expected": {},
     },
     "mp-server": {
-        "marker": "OPENQ4_STOCK_BASELINE_MP_SERVER_COMPLETE",
+        "marker": "OPEND3_STOCK_BASELINE_MP_SERVER_COMPLETE",
         "saveDir": "mp-server",
         "logName": "stock_baseline_server.log",
         "budget": {"map": MP_MAP, "backend": "opengl", "profile": "baseline"},
         "expected": {
-            "screenshot": f"baseoq4/screenshots/{BASELINE_DIR}/mp_server.tga",
-            "renderDemo": f"baseoq4/demos/stock_baseline_mp_server.demo",
+            "screenshot": f"baseod3/screenshots/{BASELINE_DIR}/mp_server.tga",
+            "renderDemo": f"baseod3/demos/stock_baseline_mp_server.demo",
         },
     },
     "mp-client": {
-        "marker": "OPENQ4_STOCK_BASELINE_MP_CLIENT_COMPLETE",
+        "marker": "OPEND3_STOCK_BASELINE_MP_CLIENT_COMPLETE",
         "requiredMarkers": [MP_CLIENT_ACTIVE_MARKER, MP_CLIENT_VIEW_MARKER],
         "saveDir": "mp-client",
         "logName": "stock_baseline_client.log",
         "budget": {"map": MP_MAP, "backend": "opengl", "profile": "baseline"},
         "expected": {
-            "screenshot": f"baseoq4/screenshots/{BASELINE_DIR}/mp_client.tga",
-            "renderDemo": f"baseoq4/demos/stock_baseline_mp_client.demo",
+            "screenshot": f"baseod3/screenshots/{BASELINE_DIR}/mp_client.tga",
+            "renderDemo": f"baseod3/demos/stock_baseline_mp_client.demo",
         },
     },
 }
@@ -242,10 +242,10 @@ def is_link_or_junction(path: Path) -> bool:
 def validate_asset_root(asset_root: Path, allow_asset_dir_links: bool = False) -> None:
     if not asset_root.is_dir():
         raise FileNotFoundError(f"Quake 4 asset root does not exist: {asset_root}")
-    direct_game_dir = asset_root / "baseoq4"
+    direct_game_dir = asset_root / "baseod3"
     if direct_game_dir.is_dir() and any(direct_game_dir.iterdir()):
         raise ValueError(
-            f"asset root contains non-empty {direct_game_dir}; fs_game=baseoq4 would load "
+            f"asset root contains non-empty {direct_game_dir}; fs_game=baseod3 would load "
             "that unapproved content ahead of the stock q4base fallback. Use a clean asset "
             "view containing q4base/q4mp only."
         )
@@ -317,7 +317,7 @@ def collect_loose_asset_files(
 
 
 def collect_overlay_pk4s(runtime_dir: Path) -> list[dict[str, Any]]:
-    game_dir = runtime_dir / "baseoq4"
+    game_dir = runtime_dir / "baseod3"
     if not game_dir.is_dir():
         return []
     files = sorted(
@@ -381,12 +381,12 @@ def collect_retail_path_collisions(
     runtime_dir: Path,
     overlay_pk4s: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Inventory packaged openQ4 members that supersede retail virtual paths."""
+    """Inventory packaged openD3 members that supersede retail virtual paths."""
 
     if not overlay_pk4s:
         return []
     retail_index = pk4_member_index(asset_root, stock_pk4s, "retail")
-    overlay_index = pk4_member_index(runtime_dir, overlay_pk4s, "openQ4 overlay")
+    overlay_index = pk4_member_index(runtime_dir, overlay_pk4s, "openD3 overlay")
     collisions: list[dict[str, Any]] = []
     for key in sorted(set(retail_index) & set(overlay_index)):
         retail = retail_index[key]
@@ -395,7 +395,7 @@ def collect_retail_path_collisions(
             {
                 "path": str(retail["path"]),
                 "retailPk4s": sorted(retail["archives"], key=str.casefold),
-                "openQ4OverlayPk4s": sorted(overlay["archives"], key=str.casefold),
+                "openD3OverlayPk4s": sorted(overlay["archives"], key=str.casefold),
             }
         )
     collisions.sort(key=lambda item: str(item["path"]).casefold())
@@ -411,9 +411,9 @@ def runtime_kind(path: Path, executable: Path) -> str:
     if path.resolve() == executable.resolve():
         return "clientExecutable"
     name = path.name.casefold()
-    if name.startswith("openq4-ded_"):
+    if name.startswith("opend3-ded_"):
         return "dedicatedServerExecutable" if path.suffix.casefold() != ".pdb" else "diagnosticSymbols"
-    if name.startswith("openq4-client_") and path.suffix.casefold() == ".pdb":
+    if name.startswith("opend3-client_") and path.suffix.casefold() == ".pdb":
         return "diagnosticSymbols"
     if name.startswith("renderer-gl_"):
         return "rendererModuleOpenGL" if path.suffix.casefold() != ".pdb" else "diagnosticSymbols"
@@ -444,8 +444,8 @@ def collect_runtime_files(runtime_dir: Path, executable: Path) -> list[dict[str,
             lower_name = path.name.casefold()
             if (
                 is_shared_library(path)
-                or lower_name.startswith("openq4-client_")
-                or lower_name.startswith("openq4-ded_")
+                or lower_name.startswith("opend3-client_")
+                or lower_name.startswith("opend3-ded_")
                 or path.suffix.casefold() == ".pdb"
             ):
                 candidates[path.resolve()] = path
@@ -469,9 +469,9 @@ def collect_overlay_loose_files(
     runtime_dir: Path, runtime_files: list[dict[str, Any]]
 ) -> tuple[list[dict[str, Any]], list[str]]:
     """Hash loose fs_game files and reject content outside the minimal package surface."""
-    game_dir = runtime_dir / "baseoq4"
+    game_dir = runtime_dir / "baseod3"
     if not game_dir.is_dir():
-        return [], [f"openQ4 overlay directory is missing: {game_dir}"]
+        return [], [f"openD3 overlay directory is missing: {game_dir}"]
     runtime_paths = {item["path"].casefold() for item in runtime_files}
     files: list[Path] = []
     for parent_name, dir_names, file_names in os.walk(game_dir, followlinks=False):
@@ -479,22 +479,22 @@ def collect_overlay_loose_files(
         for dir_name in list(dir_names):
             directory = parent / dir_name
             if is_link_or_junction(directory):
-                raise ValueError(f"openQ4 overlay contains a symlink or junction: {directory}")
+                raise ValueError(f"openD3 overlay contains a symlink or junction: {directory}")
         for file_name in file_names:
             path = parent / file_name
             if is_link_or_junction(path):
-                raise ValueError(f"openQ4 overlay contains a symlink or junction: {path}")
+                raise ValueError(f"openD3 overlay contains a symlink or junction: {path}")
             if path.suffix.casefold() != ".pk4":
                 files.append(path)
     files.sort(key=lambda path: path.relative_to(runtime_dir).as_posix().casefold())
     records = [file_record(path, runtime_dir) for path in files]
-    allowed = runtime_paths | {"baseoq4/mod.json"}
+    allowed = runtime_paths | {"baseod3/mod.json"}
     unexpected = [
-        f"unexpected loose openQ4 overlay file: {item['path']}"
+        f"unexpected loose openD3 overlay file: {item['path']}"
         for item in records
         if item["path"].casefold() not in allowed
         and not (
-            Path(item["path"]).parent.as_posix().casefold() == "baseoq4"
+            Path(item["path"]).parent.as_posix().casefold() == "baseod3"
             and Path(item["path"]).suffix.casefold() == ".pdb"
         )
     ]
@@ -549,14 +549,14 @@ def compare_asset_records(expected: list[dict[str, Any]], actual: list[dict[str,
 
 def find_client(runtime_dir: Path) -> Path:
     suffix = ".exe" if os.name == "nt" else ""
-    preferred = runtime_dir / f"openQ4-client_{host_arch()}{suffix}"
+    preferred = runtime_dir / f"openD3-client_{host_arch()}{suffix}"
     if preferred.is_file():
         return preferred
-    candidates = sorted(runtime_dir.glob(f"openQ4-client_*{suffix}"))
+    candidates = sorted(runtime_dir.glob(f"openD3-client_*{suffix}"))
     for candidate in candidates:
         if candidate.is_file():
             return candidate
-    raise FileNotFoundError(f"openQ4 client executable not found under {runtime_dir}")
+    raise FileNotFoundError(f"openD3 client executable not found under {runtime_dir}")
 
 
 def validate_runtime_dir(runtime_dir: Path, source_root: Path) -> Path:
@@ -608,9 +608,9 @@ def add_command(args: list[str], name: str, *values: Any) -> None:
 
 def write_cfg(savepath: Path, relative: str, lines: list[str]) -> None:
     payload = "\n".join(lines) + "\n"
-    # baseoq4 is authoritative; q4base mirrors the file for legacy path
+    # baseod3 is authoritative; q4base mirrors the file for legacy path
     # diagnostics without adding any asset override to the repository.
-    for game_dir in ("baseoq4", "q4base"):
+    for game_dir in ("baseod3", "q4base"):
         path = savepath / game_dir / Path(relative)
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(payload, encoding="utf-8")
@@ -706,7 +706,7 @@ def common_args(
     # generated collision caches and other developer outputs must never mutate
     # the package after it is hashed.
     add_set(args, "fs_devpath", savepath)
-    add_set(args, "fs_game", "baseoq4")
+    add_set(args, "fs_game", "baseod3")
     # Re-apply the complete display contract after queued +set commands.  This
     # makes the renderer state, not only the eventual CVar values, authoritative.
     add_command(args, "vid_restart")
@@ -802,7 +802,7 @@ def prepare_plans(
         sp_savepath,
         sp_stage2,
         [
-            "echo OPENQ4_STOCK_BASELINE_SP_SAVE_LOAD_COMPLETE",
+            "echo OPEND3_STOCK_BASELINE_SP_SAVE_LOAD_COMPLETE",
             "waitMsec 2500",
             *display_cfg_lines(width, height),
             "framePacingReset",
@@ -825,18 +825,18 @@ def prepare_plans(
         "SP",
         sp_savepath,
         "stock_baseline_sp.log",
-        "OPENQ4_STOCK_BASELINE_SP_SAVE_LOAD_COMPLETE",
+        "OPEND3_STOCK_BASELINE_SP_SAVE_LOAD_COMPLETE",
         sp_args,
         [
-            ("screenshot", f"baseoq4/screenshots/{BASELINE_DIR}/sp_after_load.tga"),
+            ("screenshot", f"baseod3/screenshots/{BASELINE_DIR}/sp_after_load.tga"),
             (
                 "saveReferenceScreenshot",
-                f"baseoq4/screenshots/{BASELINE_DIR}/sp_before_save.tga",
+                f"baseod3/screenshots/{BASELINE_DIR}/sp_before_save.tga",
             ),
-            ("renderDemo", f"baseoq4/demos/{SP_DEMO_NAME}.demo"),
-            ("savePayload", f"baseoq4/savegames/{SP_SAVE_NAME}.save"),
-            ("savePreview", f"baseoq4/savegames/{SP_SAVE_NAME}.tga"),
-            ("saveDescription", f"baseoq4/savegames/{SP_SAVE_NAME}.txt"),
+            ("renderDemo", f"baseod3/demos/{SP_DEMO_NAME}.demo"),
+            ("savePayload", f"baseod3/savegames/{SP_SAVE_NAME}.save"),
+            ("savePreview", f"baseod3/savegames/{SP_SAVE_NAME}.tga"),
+            ("saveDescription", f"baseod3/savegames/{SP_SAVE_NAME}.txt"),
         ],
     )
 
@@ -872,7 +872,7 @@ def prepare_plans(
     ):
         savepath = output_dir / "savepaths" / role_id
         cfg = f"{BASELINE_DIR}/{role_name}.cfg"
-        marker = f"OPENQ4_STOCK_BASELINE_MP_{role_name.upper()}_COMPLETE"
+        marker = f"OPEND3_STOCK_BASELINE_MP_{role_name.upper()}_COMPLETE"
         demo_name = f"stock_baseline_mp_{role_name}"
         role_commands = [
             *display_cfg_lines(width, height),
@@ -884,8 +884,8 @@ def prepare_plans(
         if role_name == "client":
             role_commands.extend(
                 (
-                    "openq4_assertMPClientActive",
-                    "openq4_assertMPGameplayView",
+                    "opend3_assertMPClientActive",
+                    "opend3_assertMPGameplayView",
                 )
             )
         role_commands.extend(
@@ -901,12 +901,12 @@ def prepare_plans(
         )
         if role_name == "client":
             role_commands.extend(
-                ("openq4_assertMPClientActive", "openq4_assertMPGameplayView")
+                ("opend3_assertMPClientActive", "opend3_assertMPGameplayView")
             )
         role_commands.append(f'screenshot "screenshots/{BASELINE_DIR}/mp_{role_name}.tga"')
         if role_name == "client":
             role_commands.extend(
-                ("openq4_assertMPClientActive", "openq4_assertMPGameplayView")
+                ("opend3_assertMPClientActive", "opend3_assertMPGameplayView")
             )
         role_commands.extend((f"echo {marker}", "wait 5", "quit"))
         write_cfg(
@@ -926,8 +926,8 @@ def prepare_plans(
             marker,
             role_args,
             [
-                ("screenshot", f"baseoq4/screenshots/{BASELINE_DIR}/mp_{role_name}.tga"),
-                ("renderDemo", f"baseoq4/demos/{demo_name}.demo"),
+                ("screenshot", f"baseod3/screenshots/{BASELINE_DIR}/mp_{role_name}.tga"),
+                ("renderDemo", f"baseod3/demos/{demo_name}.demo"),
             ],
         )
 
@@ -1034,7 +1034,7 @@ def wait_processes_until(
 
 
 def find_log(plan: RolePlan) -> Path | None:
-    for game_dir in ("baseoq4", "q4base"):
+    for game_dir in ("baseod3", "q4base"):
         candidate = plan.savepath / game_dir / "logs" / plan.log_name
         if candidate.is_file():
             return candidate
@@ -1134,7 +1134,7 @@ def runtime_window_failure(
 
 
 def decode_tga_rgb(data: bytes) -> tuple[int, int, bytes] | str:
-    """Decode the uncompressed true-colour TGA subset written by openQ4."""
+    """Decode the uncompressed true-colour TGA subset written by openD3."""
 
     if len(data) < 18:
         return "TGA header is truncated"
@@ -1769,10 +1769,10 @@ def verify_recorded_files(
         ):
             failures.append("baseline git provenance policy/shape differs")
         if not current_git.get("revision"):
-            failures.append("current openQ4 git revision is unavailable")
+            failures.append("current openD3 git revision is unavailable")
         elif revision != current_git.get("revision"):
             failures.append(
-                "baseline git revision is not the current openQ4 HEAD: "
+                "baseline git revision is not the current openD3 HEAD: "
                 f"recorded {revision!r}, current {current_git.get('revision')!r}"
             )
         if isinstance(recorded_git.get("dirty"), bool) and (
@@ -1891,7 +1891,7 @@ def verify_recorded_files(
         current_overlay_pk4s = collect_overlay_pk4s(selected_runtime_dir)
         failures.extend(
             compare_file_records(
-                assets.get("openQ4OverlayPk4s", []), current_overlay_pk4s, "openQ4 overlay PK4"
+                assets.get("openD3OverlayPk4s", []), current_overlay_pk4s, "openD3 overlay PK4"
             )
         )
         current_overlay_loose, unexpected = collect_overlay_loose_files(
@@ -1899,9 +1899,9 @@ def verify_recorded_files(
         )
         failures.extend(
             compare_file_records(
-                assets.get("openQ4OverlayLooseFiles", []),
+                assets.get("openD3OverlayLooseFiles", []),
                 current_overlay_loose,
-                "openQ4 overlay loose file",
+                "openD3 overlay loose file",
             )
         )
         failures.extend(unexpected)
@@ -1934,7 +1934,7 @@ def verify_recorded_files(
             )
             if recorded_collisions != current_collisions:
                 failures.append(
-                    "recorded retail/openQ4 virtual-path collision inventory differs"
+                    "recorded retail/openD3 virtual-path collision inventory differs"
                 )
         except (OSError, ValueError) as exc:
             failures.append(str(exc))
@@ -2018,7 +2018,7 @@ def verify_recorded_files(
             "fs_basepath": str(selected_asset_root),
             "fs_savepath": str(canonical_savepath),
             "fs_devpath": str(canonical_savepath),
-            "fs_game": "baseoq4",
+            "fs_game": "baseod3",
         }
         if role in ("mp-server", "mp-client"):
             launch_contract["ui_autoJoin"] = "1"
@@ -2153,7 +2153,7 @@ def verify_recorded_files(
         log_path = str(artifact_by_kind["engineLog"].get("path", "")).replace("\\", "/")
         allowed_log_paths = {
             f"savepaths/{contract['saveDir']}/{game_dir}/logs/{contract['logName']}"
-            for game_dir in ("baseoq4", "q4base")
+            for game_dir in ("baseod3", "q4base")
         }
         if log_path not in allowed_log_paths:
             failures.append(f"{role}: engineLog artifact path differs")
@@ -2256,7 +2256,7 @@ def write_reports(output_dir: Path, payload: dict[str, Any]) -> tuple[Path, Path
     report_json = output_dir / "stock_asset_baseline_report.json"
     report_md = output_dir / "stock_asset_baseline_report.md"
     asset_json = output_dir / "stock_pk4_manifest.json"
-    runtime_json = output_dir / "openq4_runtime_manifest.json"
+    runtime_json = output_dir / "opend3_runtime_manifest.json"
     report_json.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
     asset_json.write_text(
         json.dumps(
@@ -2277,8 +2277,8 @@ def write_reports(output_dir: Path, payload: dict[str, Any]) -> tuple[Path, Path
                 "schemaVersion": RUNTIME_MANIFEST_SCHEMA_VERSION,
                 "runtimeRoot": payload["runtimeRoot"],
                 "runtimeFiles": payload["runtimeFiles"],
-                "openQ4OverlayPk4s": payload["assets"]["openQ4OverlayPk4s"],
-                "openQ4OverlayLooseFiles": payload["assets"]["openQ4OverlayLooseFiles"],
+                "openD3OverlayPk4s": payload["assets"]["openD3OverlayPk4s"],
+                "openD3OverlayLooseFiles": payload["assets"]["openD3OverlayLooseFiles"],
                 "compatibilityModel": payload["assets"]["compatibilityModel"],
                 "retailPathCollisionCount": payload["assets"]["retailPathCollisionCount"],
                 "retailPathCollisions": payload["assets"]["retailPathCollisions"],
@@ -2292,10 +2292,10 @@ def write_reports(output_dir: Path, payload: dict[str, Any]) -> tuple[Path, Path
     collisions = payload["assets"].get("retailPathCollisions", [])
     collision_counts_by_overlay: dict[str, int] = {}
     for collision in collisions:
-        for archive in collision.get("openQ4OverlayPk4s", []):
+        for archive in collision.get("openD3OverlayPk4s", []):
             collision_counts_by_overlay[archive] = collision_counts_by_overlay.get(archive, 0) + 1
     lines = [
-        "# Retail-PK4 Compatibility Baseline With Packaged openQ4 Overlays",
+        "# Retail-PK4 Compatibility Baseline With Packaged openD3 Overlays",
         "",
         f"- Status: **{payload['status']}**",
         f"- Generated: {payload['generatedUtc']}",
@@ -2311,10 +2311,10 @@ def write_reports(output_dir: Path, payload: dict[str, Any]) -> tuple[Path, Path
         f"`{str(payload['assets']['retailArchiveBytesMatchExpected']).lower()}`",
         f"- Expected-assets manifest bound: `{str(payload['expectedAssets']['supplied']).lower()}`",
         f"- Expected-assets SHA-256: `{payload['expectedAssets']['sha256'] or 'not supplied'}`",
-        f"- openQ4 runtime root: `{payload['runtimeRoot']}`",
-        f"- openQ4 runtime files: {len(payload['runtimeFiles'])}",
-        f"- openQ4 overlay PK4s: {len(payload['assets']['openQ4OverlayPk4s'])}",
-        f"- openQ4 loose overlay files: {len(payload['assets']['openQ4OverlayLooseFiles'])}",
+        f"- openD3 runtime root: `{payload['runtimeRoot']}`",
+        f"- openD3 runtime files: {len(payload['runtimeFiles'])}",
+        f"- openD3 overlay PK4s: {len(payload['assets']['openD3OverlayPk4s'])}",
+        f"- openD3 loose overlay files: {len(payload['assets']['openD3OverlayLooseFiles'])}",
         f"- Retail virtual paths superseded by packaged overlays: {len(collisions)}",
         "- Retail virtual-path namespace untouched: "
         f"`{str(payload['assets']['retailPathNamespaceUntouched']).lower()}`",
@@ -2339,7 +2339,7 @@ def write_reports(output_dir: Path, payload: dict[str, Any]) -> tuple[Path, Path
     ]
     if collisions:
         lines.append(
-            "The verified retail PK4 archive bytes are unchanged, but packaged openQ4 "
+            "The verified retail PK4 archive bytes are unchanged, but packaged openD3 "
             f"overlays supersede **{len(collisions)}** retail virtual paths. This is a "
             "retail-asset compatibility run, not an overlay-free or stock-only run."
         )
@@ -2353,7 +2353,7 @@ def write_reports(output_dir: Path, payload: dict[str, Any]) -> tuple[Path, Path
         )
     else:
         lines.append(
-            "No member of a packaged openQ4 overlay PK4 supersedes a path present in the "
+            "No member of a packaged openD3 overlay PK4 supersedes a path present in the "
             "verified retail PK4 set."
         )
     lines += [
@@ -2451,7 +2451,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--runtime-dir",
         default="",
         help=(
-            "Resolved openQ4 package directory containing the client and baseoq4/. "
+            "Resolved openD3 package directory containing the client and baseod3/. "
             "Defaults to repository .install; alternates must be fresh ordinary directories below .tmp/stock-runtime/."
         ),
     )
@@ -2463,8 +2463,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         action="store_true",
         help="Permit q4base/q4mp symlinks or junctions in an intentionally clean asset view; resolved targets are recorded and nested links remain forbidden.",
     )
-    parser.add_argument("--verify-report", default="", help="Verify an existing report's PK4 and artifact hashes without launching openQ4.")
-    parser.add_argument("--dry-run", action="store_true", help="Write the exact windowed launch/config plan and manifests without launching openQ4.")
+    parser.add_argument("--verify-report", default="", help="Verify an existing report's PK4 and artifact hashes without launching openD3.")
+    parser.add_argument("--dry-run", action="store_true", help="Write the exact windowed launch/config plan and manifests without launching openD3.")
     parser.add_argument("--list", action="store_true", help="List baseline cases and safety invariants without hashing or launching.")
     parser.add_argument(
         "--timeout",
@@ -2635,8 +2635,8 @@ def main(argv: list[str]) -> int:
             "directoryViews": directory_views,
             "stockPk4s": stock_pk4s,
             "looseFiles": loose_files,
-            "openQ4OverlayPk4s": overlay_pk4s,
-            "openQ4OverlayLooseFiles": overlay_loose_files,
+            "openD3OverlayPk4s": overlay_pk4s,
+            "openD3OverlayLooseFiles": overlay_loose_files,
             "retailArchiveBytesMatchExpected": (
                 expected_assets_path is not None and not asset_failures
             ),

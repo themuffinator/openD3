@@ -29,7 +29,7 @@ enum { AL_INITIAL, AL_PLAYING, AL_STOPPED, AL_SOURCE_STATE, AL_BUFFERS_PROCESSED
 enum { AL_SAMPLE_OFFSET, AL_FORMAT_51CHN16 };
 enum { AL_BUFFER = 100, AL_LOOPING, AL_SOURCE_TYPE, AL_STREAMING, AL_STATIC, AL_UNDETERMINED };
 constexpr int AL_FALSE = 0;
-#define OPENQ4_OPENAL_CENTER_ROUTING_SUPPORTED 1
+#define OPEND3_OPENAL_CENTER_ROUTING_SUPPORTED 1
 static int sourceState = AL_PLAYING;
 static int sourceQueued = 0;
 // Detaching the buffer empties the queue; other source properties are not modelled.
@@ -124,7 +124,7 @@ struct idSoundSample_OpenAL {
 		pcm.assign(full, full + playLength * channels); std::free(full);
 		// As LoadOggStream records a stream without length metadata.
 		if (probe.Frames() == 0) {
-			stb_vorbis_openq4_granule_page page{};
+			stb_vorbis_opend3_granule_page page{};
 			Check(probe.FindLastGranulePage(page), "lengthless fixture has a positioned page");
 			streamCountedLength = true;
 			streamPageStart = page.page_start; streamPageEnd = page.page_end; streamPageGranule = page.granule;

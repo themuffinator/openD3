@@ -555,7 +555,7 @@ void idAsyncClient::DisconnectFromServer( void ) {
 	idBitMsg	msg;
 	byte		msgBuf[MAX_MESSAGE_SIZE];
 
-	// openQ4: the pure lock is taken while still connecting, when the server's
+	// openD3: the pure lock is taken while still connecting, when the server's
 	// pak list arrives. It was only released from a full connection, so an
 	// attempt that ended first - a full server, a refusal, a cancelled download
 	// or the player backing out - left it on: loose files and every pak the
@@ -575,7 +575,7 @@ void idAsyncClient::DisconnectFromServer( void ) {
 		msg.WriteByte( CLIENT_RELIABLE_MESSAGE_DISCONNECT );
 		msg.WriteString( "disconnect" );
 
-		// openQ4: a full reliable queue is ordinary backpressure, not a programming
+		// openD3: a full reliable queue is ordinary backpressure, not a programming
 		// error, and here the connection is already being torn down - there is nothing
 		// left to salvage by killing the process.  Drop the backlog and carry on.
 		if ( !channel.SendReliableMessage( msg ) ) {
@@ -718,7 +718,7 @@ void idAsyncClient::GetNETServers( void ) {
 	// The master is asked for every server: the list filters by password,
 	// players and the full game type registry itself (idServerScan::IsFiltered),
 	// so a filter changed after a scan never needs a new list, and the legacy
-	// two-bit fields, which cannot name openQ4's added modes, never withhold a
+	// two-bit fields, which cannot name openD3's added modes, never withhold a
 	// server the list would show.
 	msg.WriteBits( 0, 2 );
 	msg.WriteBits( 0, 2 );
@@ -1174,7 +1174,7 @@ void idAsyncClient::SendUserInfoToServer( void ) {
 	msg.WriteByte( CLIENT_RELIABLE_MESSAGE_CLIENTINFO );
 	msg.WriteDeltaDict( info, &sessLocal.mapSpawnData.userInfo[ clientNum ] );
 
-	// openQ4: a full reliable queue is backpressure, not a programming error, so it
+	// openD3: a full reliable queue is backpressure, not a programming error, so it
 	// must not bring the whole process down through common->Error.  Warn and take the
 	// ordinary disconnect path, the way idAsyncServer::SendReliableMessage drops a
 	// client it can no longer talk to.  Unlike the server we deliberately leave the
@@ -1416,7 +1416,7 @@ void idAsyncClient::ProcessUnreliableServerMessage( const idBitMsg &msg ) {
 			}
 			pureWait = serverSI.GetBool( "si_pure" );
 
-			// openQ4: the loading screen's server card lists the players this
+			// openD3: the loading screen's server card lists the players this
 			// map starts with; InitGame below clears their user info.
 			sessLocal.ClearRetainedLoadingRoster();
 			for ( int slot = 0; slot < MAX_ASYNC_CLIENTS; slot++ ) {
@@ -1548,7 +1548,7 @@ void idAsyncClient::ProcessUnreliableServerMessage( const idBitMsg &msg ) {
 			}
 
 			// adjust the client prediction time based on the snapshot time
-			// openQ4: the original wrote each one-unit step as ( 1 - ( INTSIGNBITSET( x ) << 1 ) ),
+			// openD3: the original wrote each one-unit step as ( 1 - ( INTSIGNBITSET( x ) << 1 ) ),
 			// which is unsigned: 1 or 4294967295, a -1 only once 32-bit arithmetic wraps it back.
 			// Widened to 64 bits below, 4294967295 stayed 4294967295, so every time this client was
 			// behind its target the catch-up was slammed to -maximumPredictionMsec - full slowdown
@@ -1568,7 +1568,7 @@ void idAsyncClient::ProcessUnreliableServerMessage( const idBitMsg &msg ) {
 			lastSnapshotTime = clientTime;
 
 			if ( idAsyncNetwork::verbose.GetInteger() == 2 ) {
-				// openQ4: with the prediction controller's state, so a lead that does not follow
+				// openD3: with the prediction controller's state, so a lead that does not follow
 				// its target can be read from the log: the time this client had predicted to,
 				// whether the snapshot forced a resync, the server's view of how early this
 				// client's commands arrive, and the target and catch-up the controller now holds.
@@ -1638,7 +1638,7 @@ void idAsyncClient::ProcessReliableMessagePure( const idBitMsg &msg ) {
 	outMsg.WriteLong( 0 );
 	outMsg.WriteLong( gamePakChecksum );
 
-	// openQ4: backpressure, not a programming error - see SendUserInfoToServer.
+	// openD3: backpressure, not a programming error - see SendUserInfoToServer.
 	if ( !channel.SendReliableMessage( outMsg ) ) {
 		common->Warning( "client->server reliable message queue overflowed, disconnecting" );
 		// Deliberately NOT ClearReliableMessages(): that re-inits reliableSend to
@@ -1677,7 +1677,7 @@ void idAsyncClient::ProcessReliableServerMessages( void ) {
 
 	msg.Init( msgBuf, sizeof( msgBuf ) );
 
-	// openQ4: and none of the reliable messages queued behind that one
+	// openD3: and none of the reliable messages queued behind that one
 	while ( clientState >= CS_CONNECTED && channel.GetReliableMessage( msg ) ) {
 		id = msg.ReadByte();
 		if ( msg.IsReadOverflowed() ) {
@@ -1690,7 +1690,7 @@ void idAsyncClient::ProcessReliableServerMessages( void ) {
 				int clientNum;
 				clientNum = msg.ReadByte();
 
-				// openQ4: wire value, so it indexes nothing until it is known to be a
+				// openD3: wire value, so it indexes nothing until it is known to be a
 				// client slot.  userInfo only has MAX_ASYNC_CLIENTS entries.
 				if ( msg.IsReadOverflowed() || clientNum < 0 || clientNum >= MAX_ASYNC_CLIENTS ) {
 					common->Warning( "SERVER_RELIABLE_MESSAGE_CLIENTINFO: bad client number %d, ignored", clientNum );
@@ -1762,7 +1762,7 @@ void idAsyncClient::ProcessReliableServerMessages( void ) {
 				char string[MAX_STRING_CHARS];
 				clientNum = msg.ReadLong( );
 				ReadLocalizedServerString( msg, string, MAX_STRING_CHARS );
-				// openQ4: wire value - see SERVER_RELIABLE_MESSAGE_CLIENTINFO above.
+				// openD3: wire value - see SERVER_RELIABLE_MESSAGE_CLIENTINFO above.
 				if ( clientNum < 0 || clientNum >= MAX_ASYNC_CLIENTS ) {
 					common->Warning( "SERVER_RELIABLE_MESSAGE_DISCONNECT: bad client number %d, ignored", clientNum );
 					break;
@@ -1901,7 +1901,7 @@ void idAsyncClient::ProcessChallengeResponseMessage( const netadr_t from, const 
 ==================
 AsyncClient_ReadConnectRoster
 
-openQ4: the players already in the game when the server names them after its
+openD3: the players already in the game when the server names them after its
 server info, and this client joining them, for the loading screen's card. A
 server that sends no block, or a malformed one, leaves the roster unknown;
 the connection goes on either way.
@@ -1970,7 +1970,7 @@ void idAsyncClient::ProcessConnectResponseMessage( const netadr_t from, const id
 	serverGameTime = msg.ReadLong();
 	msg.ReadDeltaDict( serverSI, NULL );
 
-	// openQ4: this wire value ends up indexing userInfo and userCmds for the whole
+	// openD3: this wire value ends up indexing userInfo and userCmds for the whole
 	// session, so refuse the connection outright rather than accept a bad slot.
 	if ( msg.IsReadOverflowed() || serverClientNum < 0 || serverClientNum >= MAX_ASYNC_CLIENTS ||
 		 !AsyncClient_ValidNetworkTiming( serverGameFrame, serverGameTime ) ) {
@@ -2140,7 +2140,7 @@ void idAsyncClient::ProcessPrintMessage( const netadr_t from, const idBitMsg &ms
 	}
 #endif
 	// The server's answer to the Admin page's password check: "rcon
-	// verified", or the bad password reply, by Doom 3's id from openQ4
+	// verified", or the bad password reply, by Doom 3's id from openD3
 	// servers or Quake 4's from retail ones.
 	if ( opcode != SERVER_PRINT_GAMEDENY && rconVerifyPending && !rconVerifyRefused &&
 		AsyncClient_SameEndpoint( from, rconVerifyAddress ) ) {
@@ -2333,7 +2333,7 @@ bool idAsyncClient::ValidatePureServerChecksums( const netadr_t from, const idBi
 	numChecksums = 0;
 	do {
 		i = msg.ReadLong( );
-		// openQ4: a list naming one pak twice passes every check here, asks for
+		// openD3: a list naming one pak twice passes every check here, asks for
 		// a pure restart, and the restart then cannot match the second copy to
 		// a pak and ends the client with a fatal error. Refuse the list.
 		for ( int j = 0; i != 0 && j < numChecksums; j++ ) {
@@ -2641,7 +2641,7 @@ void idAsyncClient::ProcessMessage( const netadr_t from, idBitMsg &msg ) {
 
 	lastPacketTime = clientTime;
 	ProcessReliableServerMessages();
-	// openQ4: a reliable message can end the connection - a disconnect, or
+	// openD3: a reliable message can end the connection - a disconnect, or
 	// one this client refuses - and that shuts the channel down. The packet's
 	// unreliable part was processed all the same: a ping then answered through
 	// the dead channel's compressor, and a snapshot was read into a game whose
@@ -2757,7 +2757,7 @@ void idAsyncClient::SendReliableGameMessage( const idBitMsg &msg ) {
 	outMsg.Init( msgBuf, sizeof( msgBuf ) );
 	outMsg.WriteByte( CLIENT_RELIABLE_MESSAGE_GAME );
 	outMsg.WriteData( msg.GetData(), msg.GetSize() );
-	// openQ4: backpressure, not a programming error - see SendUserInfoToServer.  The
+	// openD3: backpressure, not a programming error - see SendUserInfoToServer.  The
 	// disconnect is buffered rather than immediate because this runs from game code.
 	if ( !channel.SendReliableMessage( outMsg ) ) {
 		common->Warning( "client->server reliable message queue overflowed, disconnecting" );
@@ -2916,7 +2916,7 @@ void idAsyncClient::RunFrame( bool allowBlocking ) {
 
 		// update time
 		gameFrame++;
-		// openQ4: keep the client's game clock on the same ladder the game itself
+		// openD3: keep the client's game clock on the same ladder the game itself
 		// uses (see idAsyncServer::RunFrame) so replicated timestamps compare
 		// against a clock that means the same thing on both ends.
 		gameTime = gameFrame * common->GetUserCmdMSec();

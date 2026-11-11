@@ -1,6 +1,6 @@
-// Copyright (C) 2026 openQ4 contributors. SPDX-License-Identifier: GPL-3.0-or-later
-#ifndef OPENQ4_VOICE_PACKET_H
-#define OPENQ4_VOICE_PACKET_H
+// Copyright (C) 2026 openD3 contributors. SPDX-License-Identifier: GPL-3.0-or-later
+#ifndef OPEND3_VOICE_PACKET_H
+#define OPEND3_VOICE_PACKET_H
 
 #include <algorithm>
 #include <cstddef>
@@ -9,7 +9,7 @@
 // Versioned, independently decodable 20 ms frames. Mu-law companding at 8 kHz
 // keeps the whole frame below the game's old 382-byte voice limit, without an
 // allocator or an inter-packet codec dependency (64 kbit/s of narrowband audio).
-// This is an openQ4 packet envelope, not RTP. Never treat audio as routing authority.
+// This is an openD3 packet envelope, not RTP. Never treat audio as routing authority.
 namespace oq4voice {
 constexpr int Rate = 8000;
 constexpr int FrameMsec = 20;

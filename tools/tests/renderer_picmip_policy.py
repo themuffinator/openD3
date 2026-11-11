@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Pins the diffuse-only picmip contract across the image pipeline.
 
-openQ4 reduces textures in three separate loaders (raw 2D, cube, precompressed
+openD3 reduces textures in three separate loaders (raw 2D, cube, precompressed
 DDS) and caches the result in generated .bimage files. A picmip that is applied
 in one loader but not another, or that is not folded into the cache key, shows
 up as a texture stuck at the wrong size long after the cvar changed. These

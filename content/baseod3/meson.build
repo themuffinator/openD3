@@ -109,7 +109,7 @@ if build_game_d3xp
 endif
 
 baseod3_manifest_conf = configuration_data()
-baseod3_manifest_conf.set('OPEND3_VERSION_BASE', openq4_version_base)
+baseod3_manifest_conf.set('OPEND3_VERSION_BASE', opend3_version_base)
 baseod3_manifest = configure_file(
   input: 'mod.json.in',
   output: 'mod.json',

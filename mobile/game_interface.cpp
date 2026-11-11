@@ -1,5 +1,5 @@
 // Android/SigmaTouch support by emileb: https://github.com/emileb/openQ4/tree/android
-// Integrated and adapted for current openQ4; licensed under GPL-3.0-or-later.
+// Integrated and adapted for current openD3; licensed under GPL-3.0-or-later.
 
 // Quake 4's Portable* implementation. See docs/engines/quake4.md in Sigma Touch.
 //
@@ -23,7 +23,7 @@
 #include "game_interface.h"
 #include "quake4_bridge.h"
 
-#define LOG_TAG "openQ4"
+#define LOG_TAG "openD3"
 #define Q4_LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__))
 
 // Set by the shared JNI glue (Clibs_OpenTouch/android_jni_inc.cpp) before it
@@ -123,11 +123,11 @@ void PortableInit(int argc, const char **argv)
     redirect_stdio_to_logcat();
 
     if (nativeLibsPath && nativeLibsPath[0])
-        setenv("OPENQ4_NATIVE_LIBS", nativeLibsPath, 1);
+        setenv("OPEND3_NATIVE_LIBS", nativeLibsPath, 1);
 
     Q4_LOGI("PortableInit, starting engine");
 
-    OpenQ4_AndroidMain(argc, argv); // never returns
+    openD3_AndroidMain(argc, argv); // never returns
 }
 
 // -------------------------------------------------------------------------

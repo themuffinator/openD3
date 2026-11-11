@@ -19,13 +19,13 @@ import json  # noqa: E402
 import hashlib  # noqa: E402
 
 from game_layer import PACKAGED_LAYER_GAME_DIRS  # noqa: E402
-from openq4_pak import OPENQ4_BULK_PACK_NAMES, OPENQ4_PACK_NAMES  # noqa: E402
+from opend3_pak import OPEND3_BULK_PACK_NAMES, OPEND3_PACK_NAMES  # noqa: E402
 
 
 PRODUCT_NAME = "openD3"
 PRODUCT_PUBLISHER = "DarkMatter Productions"
 SETUP_ICON_RELATIVE = Path("assets") / "icons" / "doom3.ico"
-TEMPLATE_RELATIVE = Path("tools") / "build" / "openQ4Installer.iss.in"
+TEMPLATE_RELATIVE = Path("tools") / "build" / "openD3Installer.iss.in"
 SUPPORTED_ARCHES = ("x64", "x86", "arm64")
 VERSION_RE = re.compile(r"^[0-9]+(?:\.[0-9]+){2,3}$")
 FILENAME_TOKEN_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
@@ -170,7 +170,7 @@ def validate_package_dir(package_dir: Path, arch: str) -> None:
         package_dir / "LICENSES" / "PREY-SDK-EULA.rtf",
         package_dir / "docs" / "index.html",
         package_dir / "baseod3" / "mod.json",
-        *(package_dir / "baseod3" / pack_name for pack_name in OPENQ4_PACK_NAMES),
+        *(package_dir / "baseod3" / pack_name for pack_name in OPEND3_PACK_NAMES),
         package_dir / "baseod3" / f"game_{arch}.dll",
     ]
     # a packaged game-library layer (q4xbase) must be complete: its mod.json and modules.
@@ -263,7 +263,7 @@ def read_download_packs(manifest_path: Path, package_dir: Path, base_url: str) -
     document = json.loads(manifest_path.read_text(encoding="utf-8"))
     records = {pack["name"]: pack for pack in document.get("packs", [])}
     packs = []
-    for name in OPENQ4_BULK_PACK_NAMES:
+    for name in OPEND3_BULK_PACK_NAMES:
         record = records.get(name)
         if record is None:
             raise RuntimeError(f"{manifest_path} does not list the bulk pack {name}")
@@ -443,7 +443,7 @@ def render_install_delete(download_packs: list[dict[str, object]]) -> str:
         'Type: files; Name: "{app}\\baseod3\\*.pdb"',
         *(f'Type: files; Name: "{{app}}\\{layer}\\*.pdb"' for layer in PACKAGED_LAYER_GAME_DIRS),
     ]
-    used = set(OPENQ4_PACK_NAMES)
+    used = set(OPEND3_PACK_NAMES)
     lines += [
         f'Type: files; Name: "{{app}}\\baseod3\\pak{number}.pk4"'
         for number in CONTENT_PACK_NUMBERS

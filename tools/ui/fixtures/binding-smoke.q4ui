@@ -1,6 +1,6 @@
 // Live state qualification using existing Marine vector fixtures.
 {
-  "format": "openq4-ui",
+  "format": "opend3-ui",
   "version": 1,
   "id": "binding-qualification",
   "tokens": {
@@ -2056,7 +2056,7 @@
     ]
   },
   "extensions": {
-    "openq4.fixture": {
+    "opend3.fixture": {
       "productionDesign": false,
       "interactive": false,
       "nativeVectors": true,

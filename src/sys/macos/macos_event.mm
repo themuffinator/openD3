@@ -62,7 +62,7 @@ static const void *sKLKCHRData	= NULL;
 static float	s_scrollWheelRemainderY = 0.0f;
 static const int MAX_MOUSE_WHEEL_STEPS_PER_EVENT = 64;
 
-int	vkeyToopenQ4Key[256] = {
+int	vkeyToopenD3Key[256] = {
 	/*0x00*/	'a', 's', 'd', 'f', 'h', 'g', 'z', 'x',
 	/*0x08*/	'c', 'v', '?', 'b', 'q', 'w', 'e', 'r',
 	/*0x10*/	'y', 't', '1', '2', '3', '4', '6', '5',
@@ -81,7 +81,7 @@ int	vkeyToopenQ4Key[256] = {
 	/*0x78*/	K_F2, K_PGDN, K_F1, K_LEFTARROW, K_RIGHTARROW, K_DOWNARROW, K_UPARROW, K_POWER
 };
 
-int	vkeyToopenQ4Key_French[256] = {
+int	vkeyToopenD3Key_French[256] = {
 	/*0x00*/	'q',	's',		'd',	'f',		'h',		'g',		'w',		'x',
 	/*0x08*/	'c',	'v',		'?',	'b',		'a',		'z',		'e',		'r',
 	/*0x10*/	'y',	't',		'1',	'2',		'3',		'4',		'6',		'5',
@@ -100,7 +100,7 @@ int	vkeyToopenQ4Key_French[256] = {
 	/*0x78*/	K_F2, K_PGDN, K_F1, K_LEFTARROW, K_RIGHTARROW, K_DOWNARROW, K_UPARROW, K_POWER
 };
 
-int	vkeyToopenQ4Key_German[256] = {
+int	vkeyToopenD3Key_German[256] = {
 	/*0x00*/	'a',	's',		'd',	'f',		'h',		'g',		'y',		'x',
 	/*0x08*/	'c',	'v',		'?',	'b',		'q',		'w',		'e',		'r',
 	/*0x10*/	'z',	't',		'1',	'2',		'3',		'4',		'6',		'5',
@@ -119,7 +119,7 @@ int	vkeyToopenQ4Key_German[256] = {
 	/*0x78*/	K_F2, K_PGDN, K_F1, K_LEFTARROW, K_RIGHTARROW, K_DOWNARROW, K_UPARROW, K_POWER
 };
 
-static const int *vkeyTable = vkeyToopenQ4Key;
+static const int *vkeyTable = vkeyToopenD3Key;
 
 static int OSX_MapVirtualKey( unsigned short vkey ) {
 	if ( vkey >= 256 ) {
@@ -196,11 +196,11 @@ void Sys_InitScanTable( void ) {
 	}
 
 	if ( lang.Icmp( "english" ) == 0 ) {
-		vkeyTable = vkeyToopenQ4Key;
+		vkeyTable = vkeyToopenD3Key;
 	} else if ( lang.Icmp( "french" ) == 0 ) {
-		vkeyTable = vkeyToopenQ4Key_French;
+		vkeyTable = vkeyToopenD3Key_French;
 	} else if ( lang.Icmp( "german" ) == 0 ) {
-		vkeyTable = vkeyToopenQ4Key_German;
+		vkeyTable = vkeyToopenD3Key_German;
 	}
 
 	(void)kbLayout;
@@ -649,7 +649,7 @@ unsigned char Sys_MapCharForKey( int key ) {
  ===============
  */
 unsigned char Sys_GetConsoleKey( bool shifted ) {
-	if ( vkeyTable == vkeyToopenQ4Key_French ) {
+	if ( vkeyTable == vkeyToopenD3Key_French ) {
 		return shifted ? '>' : '<';
 	}
 	else {

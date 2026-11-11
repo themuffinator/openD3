@@ -71,7 +71,7 @@ def qualify(report, output):
         failures.append('case set differs from the profile')
         return dict(status='fail', failures=failures, checks=checks, files=files)
     log = Path(next(iter(rows.values()))['log']).read_text(errors='replace')
-    screenshots = output / 'batch/baseoq4'
+    screenshots = output / 'batch/baseod3'
     for name, row in rows.items():
         failures += [name + ': ' + error for error in row['failures']]
         shots = written(log, name)
@@ -133,7 +133,7 @@ def compare(left, right):
         if reports[0].get(key) != reports[1].get(key):
             failures.append('different ' + key)
     # Resolve captures beside each report, so retained evidence can be moved.
-    roots = [path.resolve().parent / 'batch/baseoq4' for path in (left, right)]
+    roots = [path.resolve().parent / 'batch/baseod3' for path in (left, right)]
     files = [report.get('tiledCaptureProof', {}).get('files', {}) for report in reports]
     for name in CASES:
         for key in ('window',) + tuple(f'{w}x{h}' for w, h in SIZES):

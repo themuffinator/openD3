@@ -13,7 +13,7 @@
 #include <stdexcept>
 #include <string_view>
 
-namespace openq4::ui {
+namespace opend3::ui {
 bool ValidProperty(const std::string& name, const Value& value) {
 	for (double component : value.data) if (!std::isfinite(component) || std::abs(component) > 1000000) return false;
 	if (value.type == ValueType::Colour) for (size_t i = 0; i < 4; ++i) if (value.data[i] < 0 || value.data[i] > 1) return false;
@@ -271,7 +271,7 @@ public:
 	State Read(const Json::Value& root, bool treeCheck) {
 		if (treeCheck) FiniteTree(root);
 		Fields(root,"",{"format","version","id","canvas","tokens","symbols","root","timelines","state","bindings","actions","presentationVariables","aliases","events","detail","editor","extensions"});
-		Require(root["format"] == "openq4-ui",root,"/format","Expected format 'openq4-ui'");
+		Require(root["format"] == "opend3-ui",root,"/format","Expected format 'opend3-ui'");
 		Require(root["version"].isUInt() && root["version"].asUInt() == 1,root["version"],"/version","Unsupported document version; expected 1");
 		model.id = Id(root["id"],"/id");
 		if (root.isMember("extensions")) {
@@ -2156,4 +2156,4 @@ std::string Document::BuildMarkup() const {
 	return result+"</body></rml>";
 }
 
-} // namespace openq4::ui
+} // namespace opend3::ui

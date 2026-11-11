@@ -53,7 +53,7 @@ def configure(manifest: dict, samples: int, ambient_lights: bool = False) -> dic
                                         '-120 -1000 220', '120 -1000 220')):
                 commands += [f'spawn light name capacity_light_{i} origin "{origin}" angle 0 '
                              'light_radius "1000 1000 1000" _color "1 1 1" noshadows 1'
-                             + (' texture "lights/openq4/pbr_lab/ambient"' if ambient_lights else '')]
+                             + (' texture "lights/opend3/pbr_lab/ambient"' if ambient_lights else '')]
         # Separate commands avoid overflowing the engine's console string limit.
         commands += [f'script "$capacity_{i}.{"show" if i < count else "hide"}()"'
                      for i in range(65)]

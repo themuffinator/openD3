@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Pin how a pure lock treats the generated image cache.
 
-openQ4 writes derived images to <fs_cachepath>/<gameDir>/generated/images/.
+openD3 writes derived images to <fs_cachepath>/<gameDir>/generated/images/.
 An entry's header names its source by a stamp built from the pak member's
 CRC-32 and length. Anyone can read those from the pak and copy them into a
 forged entry with edited pixels, so the cache cannot be trusted on a pure

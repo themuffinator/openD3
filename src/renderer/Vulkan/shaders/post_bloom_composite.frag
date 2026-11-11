@@ -1,7 +1,7 @@
 #version 450
 
 // Bloom composite, HDR tone map and colour grade in one pass. A port of
-// content/baseoq4/pak0/glprogs/bloom.fs (RB_STD_Bloom). The scene owner must
+// content/baseod3/pak0/glprogs/bloom.fs (RB_STD_Bloom). The scene owner must
 // explicitly select the numeric domain; an FP16 target alone is not proof of
 // linear lighting. Native mixed scenes retain the stock branch.
 // fragUV is OpenGL's texture coordinate; see post_ssao.frag.

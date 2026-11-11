@@ -7,7 +7,7 @@
 #include "../framework/Session_local.h"
 #include <limits>
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 std::uint64_t catalogSerial=0;
 bool Desktop() {

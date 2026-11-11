@@ -14,7 +14,7 @@ from PIL import Image
 import renderer_pbr_laboratory as lab
 from renderer_vulkan_material_programs import tga
 
-PREFIX = 'textures/openq4/authored_lighting'
+PREFIX = 'textures/opend3/authored_lighting'
 PROGRAM = 'tests/oq4_lighting.glsl'
 CASES = ('clear', 'base', 'lights_off', 'second_light', 'tint', 'matrix', 'vertex', 'inverse',
          'condition_off', 'double_stage', 'diagnostics', 'rotated', 'projected',
@@ -106,11 +106,11 @@ def write_fixture(save):
     for name, image, falloff in (('plain', '_white', '_white'),
                                   ('pattern', PREFIX + '/projected', '_white'),
                                   ('falloff', PREFIX + '/projected', PREFIX + '/falloff')):
-        materials += (f'lights/openq4/authored_lighting/{name}\n{{\nlightFalloffImage {falloff}\n'
+        materials += (f'lights/opend3/authored_lighting/{name}\n{{\nlightFalloffImage {falloff}\n'
                       f'{{\nmap {image}\ncolored\n}}\n}}\n')
     files = {'glprogs/tests/oq4_lighting.glslvp': VERTEX.encode(),
              'glprogs/tests/oq4_lighting.glslfp': FRAGMENT.encode(),
-             'materials/openq4_authored_lighting_test.mtr': materials.encode()}
+             'materials/opend3_authored_lighting_test.mtr': materials.encode()}
     for name in ('pattern', 'projected', 'falloff'):
         pixels = []
         for y in range(32):
@@ -122,7 +122,7 @@ def write_fixture(save):
         files[f'{PREFIX}/{name}.tga'] = tga(32, 32, bytes(pixels))
     hashes = {}
     for name, data in files.items():
-        target = save / 'baseoq4' / name
+        target = save / 'baseod3' / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(data)
         hashes[name] = lab.digest(target)
@@ -261,7 +261,7 @@ def main():
                 commands += [f'spawn light name {projector} origin "100 -500 400" angle 0 '
                              f'light_target "0 660 -280" light_right "400 0 0" light_up "0 180 425" '
                              f'light_start "0 15 -6.36" light_end "0 1000 -424.24" _color "1.5 1.3 1" '
-                             f'texture "lights/openq4/authored_lighting/{texture}"']
+                             f'texture "lights/opend3/authored_lighting/{texture}"']
             else:
                 commands += [f'script "${light}.On()"']
             if suffix == 'second_light': commands += ['script "$blue_fill.On()"']
@@ -283,9 +283,9 @@ def main():
 
     def startup_args(cvars, save):
         options = startup(cvars, save)
-        with (save / 'baseoq4/autoexec.cfg').open('a', encoding='utf-8') as config:
+        with (save / 'baseod3/autoexec.cfg').open('a', encoding='utf-8') as config:
             for mat in MATERIALS: config.write(f'touch material {PREFIX}/{mat}\n')
-            for mat in ('plain', 'pattern', 'falloff'): config.write(f'touch material lights/openq4/authored_lighting/{mat}\n')
+            for mat in ('plain', 'pattern', 'falloff'): config.write(f'touch material lights/opend3/authored_lighting/{mat}\n')
         return options
 
     lab.write_capture_commands, lab.startup_args = write_commands, startup_args
@@ -300,7 +300,7 @@ def main():
     shutil.copy2(__file__, args.output_dir / 'harness' / Path(__file__).name)
     report['harnessSources'][Path(__file__).name] = source_hash
     report.update(authoredProfile=profile, authoredSources=source_hashes)
-    report['authoredSourcesUnchanged'] = all(lab.digest(args.output_dir / 'batch/baseoq4' / name) == value
+    report['authoredSourcesUnchanged'] = all(lab.digest(args.output_dir / 'batch/baseod3' / name) == value
                                            for name, value in source_hashes.items())
     report['lightingProof'] = prove(report)
     path.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')

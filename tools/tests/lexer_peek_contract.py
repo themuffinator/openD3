@@ -10,7 +10,7 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_LIBS_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
 
 
@@ -78,7 +78,7 @@ def main() -> None:
     if 'lexer.PeekTokenString( "{" )' not in bot_character:
         raise AssertionError("BotCharacter parser no longer exercises lexer lookahead")
 
-    validator = (ROOT / "tools/validation/openq4_validate.py").read_text(encoding="utf-8")
+    validator = (ROOT / "tools/validation/opend3_validate.py").read_text(encoding="utf-8")
     if "lexer_peek_contract.py" not in validator:
         raise AssertionError("Validation runner does not execute the lexer lookahead contract")
 

@@ -153,10 +153,10 @@ static const char *Sys_GetFallbackProcessorName( const cpuid_t cpuid ) {
 	return "generic CPU";
 }
 
-static const DWORD OPENQ4_MIN_WINDOWS_MAJOR_VERSION = 6;
-static const DWORD OPENQ4_MIN_WINDOWS_MINOR_VERSION = 1;
-static const DWORD OPENQ4_VALIDATED_WINDOWS_MAJOR_VERSION = 10;
-static const DWORD OPENQ4_VALIDATED_WINDOWS_MINOR_VERSION = 0;
+static const DWORD OPEND3_MIN_WINDOWS_MAJOR_VERSION = 6;
+static const DWORD OPEND3_MIN_WINDOWS_MINOR_VERSION = 1;
+static const DWORD OPEND3_VALIDATED_WINDOWS_MAJOR_VERSION = 10;
+static const DWORD OPEND3_VALIDATED_WINDOWS_MINOR_VERSION = 0;
 
 static void Sys_GetProcessorTopology( int &logicalCores, int &physicalCores, int &packages ) {
 	SYSTEM_INFO systemInfo;
@@ -315,7 +315,7 @@ bool Sys_HandlePrintScreenHotkey( bool pressed ) {
 	return true;
 }
 
-static int Sys_openQ4ProtocolHexValue( const char c ) {
+static int Sys_openD3ProtocolHexValue( const char c ) {
 	if ( c >= '0' && c <= '9' ) {
 		return c - '0';
 	}
@@ -328,14 +328,14 @@ static int Sys_openQ4ProtocolHexValue( const char c ) {
 	return -1;
 }
 
-static void Sys_DecodeopenQ4ProtocolComponent( const idStr &source, idStr &decoded ) {
+static void Sys_DecodeopenD3ProtocolComponent( const idStr &source, idStr &decoded ) {
 	decoded.Clear();
 
 	for ( int i = 0; i < source.Length(); ++i ) {
 		const char c = source[ i ];
 		if ( c == '%' && ( i + 2 ) < source.Length() ) {
-			const int hi = Sys_openQ4ProtocolHexValue( source[ i + 1 ] );
-			const int lo = Sys_openQ4ProtocolHexValue( source[ i + 2 ] );
+			const int hi = Sys_openD3ProtocolHexValue( source[ i + 1 ] );
+			const int lo = Sys_openD3ProtocolHexValue( source[ i + 2 ] );
 			if ( hi >= 0 && lo >= 0 ) {
 				decoded.Append( static_cast<char>( ( hi << 4 ) | lo ) );
 				i += 2;
@@ -346,7 +346,7 @@ static void Sys_DecodeopenQ4ProtocolComponent( const idStr &source, idStr &decod
 	}
 }
 
-static bool Sys_IsValidopenQ4ConnectTarget( const idStr &target ) {
+static bool Sys_IsValidopenD3ConnectTarget( const idStr &target ) {
 	if ( target.Length() <= 0 || target.Length() > 255 ) {
 		return false;
 	}
@@ -377,7 +377,7 @@ static bool Sys_IsValidopenQ4ConnectTarget( const idStr &target ) {
 	return true;
 }
 
-static bool Sys_TryReadopenQ4ProtocolQueryValue( const idStr &query, const char *key, idStr &value ) {
+static bool Sys_TryReadopenD3ProtocolQueryValue( const idStr &query, const char *key, idStr &value ) {
 	int start = 0;
 
 	value.Clear();
@@ -406,7 +406,7 @@ static bool Sys_TryReadopenQ4ProtocolQueryValue( const idStr &query, const char 
 	return false;
 }
 
-static bool Sys_TryTranslateopenQ4ProtocolCommandLine( const char *rawCmdLine, idStr &translatedCmdLine ) {
+static bool Sys_TryTranslateopenD3ProtocolCommandLine( const char *rawCmdLine, idStr &translatedCmdLine ) {
 	idCmdArgs args;
 	idStr uriPayload;
 	idStr path;
@@ -456,9 +456,9 @@ static bool Sys_TryTranslateopenQ4ProtocolCommandLine( const char *rawCmdLine, i
 	}
 
 	if ( encodedTarget.Length() == 0 ) {
-		if ( !Sys_TryReadopenQ4ProtocolQueryValue( query, "server", encodedTarget ) ) {
-			if ( !Sys_TryReadopenQ4ProtocolQueryValue( query, "target", encodedTarget ) ) {
-				Sys_TryReadopenQ4ProtocolQueryValue( query, "address", encodedTarget );
+		if ( !Sys_TryReadopenD3ProtocolQueryValue( query, "server", encodedTarget ) ) {
+			if ( !Sys_TryReadopenD3ProtocolQueryValue( query, "target", encodedTarget ) ) {
+				Sys_TryReadopenD3ProtocolQueryValue( query, "address", encodedTarget );
 			}
 		}
 	}
@@ -474,8 +474,8 @@ static bool Sys_TryTranslateopenQ4ProtocolCommandLine( const char *rawCmdLine, i
 		return true;
 	}
 
-	Sys_DecodeopenQ4ProtocolComponent( encodedTarget, decodedTarget );
-	if ( !Sys_IsValidopenQ4ConnectTarget( decodedTarget ) ) {
+	Sys_DecodeopenD3ProtocolComponent( encodedTarget, decodedTarget );
+	if ( !Sys_IsValidopenD3ConnectTarget( decodedTarget ) ) {
 		return true;
 	}
 
@@ -1024,7 +1024,7 @@ void Sys_Error(const char* error, ...) {
 
 	// Common::Shutdown may already have torn down the renderer path.
 	// Avoid forcing GL shutdown when there is no active GL context.
-#ifndef OPENQ4_RENDERER_MODULE_ONLY
+#ifndef OPEND3_RENDERER_MODULE_ONLY
 	if ( renderSystem->IsOpenGLRunning() ) {
 		GLimp_Shutdown();
 	}
@@ -1493,7 +1493,7 @@ void Sys_DLL_Unload(INT_PTR dllHandle) {
 	}
 	if (FreeLibrary((HMODULE)dllHandle) == 0) {
 		int lastError = GetLastError();
-		// openQ4: without FROM_SYSTEM the call fails and writes nothing, and the
+		// openD3: without FROM_SYSTEM the call fails and writes nothing, and the
 		// error below then formatted an uninitialised pointer with %s
 		LPVOID lpMsgBuf = NULL;
 		FormatMessage(
@@ -1605,18 +1605,18 @@ sysEventTransfer_t Sys_PeekEventDispositionTag(sysEventDispositionTag_t& out) no
     out = eventDispositionTags[eventTail & MASK_QUED_EVENTS];
     return sysEventTransfer_t::Ready;
 }
-sysEventTransfer_t Sys_PeekEventForRetirement(openq4::NativeInputHead& out) noexcept {
+sysEventTransfer_t Sys_PeekEventForRetirement(opend3::NativeInputHead& out) noexcept {
     if (!Sys_EventDispositionBoundThread()) return sysEventTransfer_t::Refused;
     if (eventHead <= eventTail) return sysEventTransfer_t::Empty;
     const unsigned slot = static_cast<unsigned>(eventTail & MASK_QUED_EVENTS);
     if (!eventRetirementSerials[slot] || !eventDispositionTags[slot].ShapeValid()) return sysEventTransfer_t::Refused;
-    out = Sys_EventRetirementHead(openq4::NativeInputLane::Platform, eventRetirementSerials[slot], slot,
+    out = Sys_EventRetirementHead(opend3::NativeInputLane::Platform, eventRetirementSerials[slot], slot,
         eventQue[slot], eventDispositionTags[slot]);
     return sysEventTransfer_t::Ready;
 }
-sysEventTransfer_t Sys_TakeEventForRetirement(openq4::NativeInputRoute& route,
-    const openq4::NativeInputRoute::CancellationPermit& permit, sysEvent_t& event, sysEventDispositionTag_t& tag) noexcept {
-    openq4::NativeInputHead head;
+sysEventTransfer_t Sys_TakeEventForRetirement(opend3::NativeInputRoute& route,
+    const opend3::NativeInputRoute::CancellationPermit& permit, sysEvent_t& event, sysEventDispositionTag_t& tag) noexcept {
+    opend3::NativeInputHead head;
     const auto status = Sys_PeekEventForRetirement(head);
     if (status != sysEventTransfer_t::Ready) return status;
     if (!route.AllowsCancellation(permit, head)) return sysEventTransfer_t::Refused;
@@ -1968,12 +1968,12 @@ void Sys_Init(void) {
 		Sys_Error( "Couldn't query Windows version" );
 	}
 
-	if ( !Sys_IsWindowsVersionOrGreater( win32.osversion, OPENQ4_MIN_WINDOWS_MAJOR_VERSION, OPENQ4_MIN_WINDOWS_MINOR_VERSION ) ) {
+	if ( !Sys_IsWindowsVersionOrGreater( win32.osversion, OPEND3_MIN_WINDOWS_MAJOR_VERSION, OPEND3_MIN_WINDOWS_MINOR_VERSION ) ) {
 		Sys_Error( GAME_NAME " requires Windows 7 or newer" );
 	}
 
 	win32.sys_arch.SetString( Sys_FormatWindowsVersion( win32.osversion ) );
-	if ( !Sys_IsWindowsVersionOrGreater( win32.osversion, OPENQ4_VALIDATED_WINDOWS_MAJOR_VERSION, OPENQ4_VALIDATED_WINDOWS_MINOR_VERSION ) ) {
+	if ( !Sys_IsWindowsVersionOrGreater( win32.osversion, OPEND3_VALIDATED_WINDOWS_MAJOR_VERSION, OPEND3_VALIDATED_WINDOWS_MINOR_VERSION ) ) {
 		common->Printf(
 			"WARNING: %s is outside openD3's actively validated Windows support matrix.\n",
 			win32.sys_arch.GetString() );
@@ -2234,7 +2234,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	Sys_GetCurrentMemoryStatus(exeLaunchMemoryStats);
 
 	win32.hInstance = hInstance;
-	if ( Sys_TryTranslateopenQ4ProtocolCommandLine( lpCmdLine, translatedCmdLine ) ) {
+	if ( Sys_TryTranslateopenD3ProtocolCommandLine( lpCmdLine, translatedCmdLine ) ) {
 		effectiveCmdLine = translatedCmdLine.c_str();
 	}
 	idStr::Copynz(sys_cmdline, effectiveCmdLine, sizeof(sys_cmdline));

@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 
-openQ4 private command matching helpers
+openD3 private command matching helpers
 Copyright (C) 2026 DarkMatter Productions
 
 This program is free software: you can redistribute it and/or modify it under

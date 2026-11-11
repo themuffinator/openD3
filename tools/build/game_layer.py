@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Read and validate a game-library layer manifest (layer.json).
 
-A game layer is a companion repository that extends openQ4-game into a
+A game layer is a companion repository that extends openD3-game into a
 separate mod game directory without replacing any of its files. The layer
-contributes whole new sources only; openQ4 links them together with the
-unchanged openQ4-game objects, so a layer build is always "the current openQ4
-game plus the layer". openQ4-game-awakening, which targets the Quake 4: The
+contributes whole new sources only; openD3 links them together with the
+unchanged openD3-game objects, so a layer build is always "the current openD3
+game plus the layer". openD3-game-awakening, which targets the Quake 4: The
 Awakening expansion (q4xbase), is the first layer.
 
 layer.json:
@@ -27,7 +27,7 @@ layer.json:
 
 usage:
     game_layer.py field <layer-root> <gameDir|id|name|version>
-    game_layer.py mod-json <layer-root> --openq4-version <x.y.z> --out <path>
+    game_layer.py mod-json <layer-root> --opend3-version <x.y.z> --out <path>
 """
 
 from __future__ import annotations
@@ -49,14 +49,14 @@ LAYER_TREE_MODULES = {
     "mpgame": ("mpgame",),
 }
 MOD_FIELDS = ("name", "version", "releaseDate", "website", "author")
-RESERVED_GAME_DIRS = {"q4base", "baseoq4", "q4mp", "base"}
-# Game directories that packages carry beside baseoq4 when their layer was built. Each holds
+RESERVED_GAME_DIRS = {"q4base", "baseod3", "q4mp", "base"}
+# Game directories that packages carry beside baseod3 when their layer was built. Each holds
 # exactly its two game modules (plus their Windows .pdb files) and the mod.json below.
 # Awakening SP is compiled into the canonical game_sp. Its user-supplied
 # campaign assets and obsolete layer DLLs are never package collateral.
 PACKAGED_LAYER_GAME_DIRS = ()
 RETIRED_LAYER_GAME_DIRS = ("q4xbase",)
-LAYER_MOD_JSON_FIELDS = ("layer", "version", "requiredopenQ4Version")
+LAYER_MOD_JSON_FIELDS = ("layer", "version", "requiredopenD3Version")
 
 _IDENTIFIER = re.compile(r"[a-z][a-z0-9_]*\Z")
 _GAME_DIR = re.compile(r"[a-z0-9][a-z0-9_\-]*\Z")
@@ -139,12 +139,12 @@ def load_layer(layer_root: Path) -> dict:
     }
 
 
-def render_mod_json(layer: dict, openq4_version: str) -> str:
-    if not _VERSION.match(openq4_version):
-        raise LayerError(f"openQ4 version must be major.minor.patch, got '{openq4_version}'")
+def render_mod_json(layer: dict, opend3_version: str) -> str:
+    if not _VERSION.match(opend3_version):
+        raise LayerError(f"openD3 version must be major.minor.patch, got '{opend3_version}'")
     manifest = dict(layer["mod"])
     # the layer is rebuilt with each engine, so it needs exactly this engine
-    manifest["requiredopenQ4Version"] = openq4_version
+    manifest["requiredopenD3Version"] = opend3_version
     manifest["layer"] = layer["id"]
     return json.dumps(manifest, indent=2) + "\n"
 
@@ -152,7 +152,7 @@ def render_mod_json(layer: dict, openq4_version: str) -> str:
 def read_layer_mod_json(path: Path) -> dict:
     """Read the mod.json that render_mod_json wrote into a layer's game directory.
 
-    Its "version" is the layer's own; "requiredopenQ4Version" is the engine the layer was
+    Its "version" is the layer's own; "requiredopenD3Version" is the engine the layer was
     built with. A base game's mod.json, which has no "layer", is not a layer's.
     """
     if path.is_symlink() or not path.is_file():
@@ -167,20 +167,20 @@ def read_layer_mod_json(path: Path) -> dict:
         value = manifest.get(field)
         if not isinstance(value, str) or not value.strip():
             raise LayerError(f"{path}: a layer mod.json needs a non-empty {field!r}")
-    if not _VERSION.match(manifest["requiredopenQ4Version"]):
-        raise LayerError(f"{path}: requiredopenQ4Version must be major.minor.patch")
+    if not _VERSION.match(manifest["requiredopenD3Version"]):
+        raise LayerError(f"{path}: requiredopenD3Version must be major.minor.patch")
     return manifest
 
 
 def main(argv: list[str]) -> int:
-    parser = argparse.ArgumentParser(description="openQ4 game-library layer manifests")
+    parser = argparse.ArgumentParser(description="openD3 game-library layer manifests")
     sub = parser.add_subparsers(dest="command", required=True)
     field = sub.add_parser("field", help="print one manifest field")
     field.add_argument("layer_root", type=Path)
     field.add_argument("name", choices=("gameDir", "id", "name", "version"))
     mod_json = sub.add_parser("mod-json", help="write the mod.json for the layer's game directory")
     mod_json.add_argument("layer_root", type=Path)
-    mod_json.add_argument("--openq4-version", required=True)
+    mod_json.add_argument("--opend3-version", required=True)
     mod_json.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv[1:])
 
@@ -190,7 +190,7 @@ def main(argv: list[str]) -> int:
             value = layer["mod"][args.name] if args.name in ("name", "version") else layer[args.name]
             print(value)
         else:
-            text = render_mod_json(layer, args.openq4_version)
+            text = render_mod_json(layer, args.opend3_version)
             args.out.parent.mkdir(parents=True, exist_ok=True)
             if not args.out.is_file() or args.out.read_text(encoding="utf-8") != text:
                 args.out.write_text(text, encoding="utf-8")

@@ -31,9 +31,9 @@ SUPPORT = r'''
 #include <string>
 #include <vector>
 static unsigned nativePublicationInvalidations=0;
-bool openQ4_UpdateInitialization(){return false;}
+bool openD3_UpdateInitialization(){return false;}
 void RetainedUI_PrecacheModelWorlds(){}
-namespace openq4 { void NativeInputBeforeUiChange(std::uint64_t,std::uint64_t) noexcept {++nativePublicationInvalidations;} }
+namespace opend3 { void NativeInputBeforeUiChange(std::uint64_t,std::uint64_t) noexcept {++nativePublicationInvalidations;} }
 using ID_TIME_T = long long;
 struct idStr : std::string {
     using std::string::string;
@@ -694,7 +694,7 @@ def production_source():
         'void idUserInterfaceManagerLocal::RunAlwaysThinkGUIs(',
     )
     return ('#include "src/ui/UserInterfaceText.h"\n#include "src/ui/UserInterfaceClipboard.h"\n#include "src/ui/UserInterfaceNativeText.h"\n#include <limits>\n' +
-            'namespace openq4 { bool SDL3_ReadTextClipboard(std::string&,std::string&) { return false; } bool SDL3_WriteTextClipboard(const std::string&,std::string&) { return false; } }\n' + SUPPORT + public + managed + declarations + deferred + MANAGER +
+            'namespace opend3 { bool SDL3_ReadTextClipboard(std::string&,std::string&) { return false; } bool SDL3_WriteTextClipboard(const std::string&,std::string&) { return false; } }\n' + SUPPORT + public + managed + declarations + deferred + MANAGER +
             '\n'.join(function_body(source, signature) for signature in signatures) +
             function_body(hud_source, 'void idUserInterfaceManagerLocal::ClearHudPrimitives()') +
             deferred_source[deferred_source.index('idUserInterfaceDeferred::idUserInterfaceDeferred()'):])

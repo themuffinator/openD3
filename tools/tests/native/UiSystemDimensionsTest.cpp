@@ -58,7 +58,7 @@ static void Propose(View& v,const Dimension& field) {
  for(const auto& [key,value]:before)Check(SettingsValueEqual(v.tx.Draft().at(key),expected.contains(key)?expected.at(key):value),"dimension commit preserves unrelated draft fields");
 }
 static void Run(const std::string& source,const std::string& directory,const char* locale,float expansion) {
- View v(source,directory+"/"+locale+"_openq4.lang",1,1280,720,expansion,directory+"/"+locale+"_guis.lang");v.canApply=true;
+ View v(source,directory+"/"+locale+"_opend3.lang",1,1280,720,expansion,directory+"/"+locale+"_guis.lang");v.canApply=true;
  for(const auto& field:dimensions)Check(v.host.strings.contains(field.label),"dimension label is localized");
  for(const char* key:{"#str_230021","#str_230022","#str_230023","#str_230024","#str_229943"})Check(v.host.strings.contains(key),"dimension help and validation are localized");
  const auto baseline=v.host.live;

@@ -24,13 +24,13 @@ def validate_package_layout_policy_doc() -> None:
     for token in (
         "# macOS Package Layout And Release Policy",
         "self-contained, drag-installable",
-        "`openQ4.app`",
-        "`Contents/Resources/baseoq4/`",
+        "`openD3.app`",
+        "`Contents/Resources/baseod3/`",
         "`Contents/Frameworks/`",
         "Mach-O game modules deliberately live in `Contents/Frameworks`",
-        "the large `baseoq4` payload is not duplicated",
-        "Double-click `openQ4.app` from the mounted signed/notarized DMG payload.",
-        "Drag only `openQ4.app` to `/Applications`",
+        "the large `baseod3` payload is not duplicated",
+        "Double-click `openD3.app` from the mounted signed/notarized DMG payload.",
+        "Drag only `openD3.app` to `/Applications`",
         "Launch the app executable from Terminal with any working directory.",
         "legacy adjacent-package fallback",
         "`fs_basepath`, `fs_cdpath`, and `fs_savepath`",
@@ -44,7 +44,7 @@ def validate_package_layout_policy_doc() -> None:
 
 def validate_signoff_evidence_contract() -> None:
     workflow_doc = read("docs/dev/macos-vm-testing-workflow.md")
-    guest = read("tools/macos/guest/openq4-macos-sync-build-test.sh")
+    guest = read("tools/macos/guest/opend3-macos-sync-build-test.sh")
     validator = read("tools/macos/validate_signoff_archive.py")
     evidence = read("docs/dev/macos-signoff-evidence.md")
     recorder = read("tools/macos/record_signoff_evidence.py")
@@ -64,7 +64,7 @@ def validate_signoff_evidence_contract() -> None:
     for token in (
         "Package layout contract is self-contained app",
         "mounted signed/notarized DMG",
-        "Drag only openQ4.app",
+        "Drag only openD3.app",
         "whole package payload",
         "Contents/Resources",
         "Contents/Frameworks",
@@ -107,7 +107,7 @@ def validate_release_workflow_gate() -> None:
         "macos_support_tier",
         "macOS release support tier",
         "first-class",
-        "OPENQ4_MACOS_SUPPORT_TIER",
+        "OPEND3_MACOS_SUPPORT_TIER",
         "First-class macOS releases require signed/notarized DMGs",
         "missing Apple signing/notary repository secrets",
         "Preview macOS unsigned/unnotarized tar.gz release artifacts enabled as fallback output",
@@ -132,22 +132,22 @@ def validate_user_docs_and_package_readme() -> None:
 
     require(
         getting_started,
-        "drag `openQ4.app` to `/Applications`",
+        "drag `openD3.app` to `/Applications`",
         "getting started macOS package layout",
     )
     require(
         getting_started,
-        "The app contains openQ4's `baseoq4` data and signed SP/MP modules",
+        "The app contains openD3's `baseod3` data and signed SP/MP modules",
         "getting started self-contained app contract",
     )
     require(
         package_readme,
-        "drag <code>openQ4.app</code> to <code>/Applications</code>",
+        "drag <code>openD3.app</code> to <code>/Applications</code>",
         "packaged README macOS package layout",
     )
     require(
         package_readme,
-        "The app contains openQ4's runtime data and signed SP/MP modules",
+        "The app contains openD3's runtime data and signed SP/MP modules",
         "packaged README self-contained app contract",
     )
     require(
@@ -164,7 +164,7 @@ def validate_user_docs_and_package_readme() -> None:
 
 def validate_plan_status_and_ci_wiring() -> None:
     plan = read("docs/dev/archive/2026-10-18/plan/2026-06-30-macos-compatibility-support.md")
-    local_runner = read("tools/validation/openq4_validate.py")
+    local_runner = read("tools/validation/opend3_validate.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
 

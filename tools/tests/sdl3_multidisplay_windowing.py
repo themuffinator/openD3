@@ -241,7 +241,7 @@ def validate_platform_wrappers() -> None:
 
 
 def validate_ci_hooks() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     push = read(".github/workflows/push-verification.yml")
     commit = read(".github/workflows/commit-validation.yml")
     renderer = read("tools/tests/renderer_validation_matrix.py")

@@ -22,7 +22,7 @@ SUPPORT = r'''
 #include <memory>
 #include <string>
 #include <vector>
-namespace openq4::ui {
+namespace opend3::ui {
 struct Vertex {float x=0,y=0,u=0,v=0,r=1,g=1,b=1,a=1;};
 struct Bounds {float x=0,y=0,width=0,height=0;};
 }
@@ -57,8 +57,8 @@ struct Host {
     std::vector<Layer> layers;
     idRenderTexture* boundTarget=nullptr;
     int viewportWidth=1280,viewportHeight=720;
-    std::vector<openq4::ui::Vertex> drawn;std::uintptr_t drawnMaterial=0;
-    void Draw(const std::vector<openq4::ui::Vertex>& vertices,const std::vector<int>& indices,std::uintptr_t material){
+    std::vector<opend3::ui::Vertex> drawn;std::uintptr_t drawnMaterial=0;
+    void Draw(const std::vector<opend3::ui::Vertex>& vertices,const std::vector<int>& indices,std::uintptr_t material){
         assert(indices.size()==6);drawn=vertices;drawnMaterial=material;
     }
 '''
@@ -103,7 +103,7 @@ int main(){
     for (const auto& vertex : host.drawn) assert(near(vertex.r,.5f) && near(vertex.a,.5f)); // Premultiplied opacity.
     host.MaskLayer(1,2,{0,0,1280,720});
     assert(renderer.bound==host.layers[1].target && near(host.drawn[0].v,1) && near(host.drawn[2].v,0) && near(host.drawn[0].a,1));
-    const std::vector<openq4::ui::Vertex> mask={{100,200,0,0,1,0,0,.25f},{400,200,0,0,0,1,0,.5f},
+    const std::vector<opend3::ui::Vertex> mask={{100,200,0,0,1,0,0,.25f},{400,200,0,0,0,1,0,.5f},
         {400,250,0,0,0,0,1,.75f},{100,250,0,0,1,1,1,1}};
     host.CompositeMaskedLayer(2,mask,{0,1,2,0,2,3},.5f);
     assert(renderer.bound==nullptr && host.drawnMaterial==reinterpret_cast<std::uintptr_t>(host.layers[1].material));
@@ -129,7 +129,7 @@ DRAW_SUPPORT = r'''
 #include <vector>
 typedef unsigned char byte;
 typedef int glIndex_t;
-namespace openq4::ui { struct Vertex {float x=0,y=0,u=0,v=0,r=1,g=1,b=1,a=1;}; }
+namespace opend3::ui { struct Vertex {float x=0,y=0,u=0,v=0,r=1,g=1,b=1,a=1;}; }
 struct idVec3 {float x=0,y=0,z=0; void Set(float a,float b,float c){x=a;y=b;z=c;}};
 struct idVec2 {float x=0,y=0; void Set(float a,float b){x=a;y=b;}};
 struct idDrawVert {idVec3 xyz; idVec2 st; idVec3 normal; idVec3 tangents[2]; byte color[4]={}; byte color2[4]={}; void Clear(){*this=idDrawVert{};}};
@@ -172,7 +172,7 @@ DRAW_MAIN = r'''
 };
 int main(){
     // Half-tinted premultiplied quad: rgb and a at 0.5.
-    std::vector<openq4::ui::Vertex> quad(4);
+    std::vector<opend3::ui::Vertex> quad(4);
     for (auto& vertex : quad) {vertex.r=vertex.g=vertex.b=vertex.a=.5f;}
     const std::vector<int> indices{0,1,2,0,2,3};
     Host host;
@@ -209,7 +209,7 @@ int main(){
     assert(host.meshes.empty());
     // Large meshes split into whole-triangle chunks under the engine's surface
     // limits, each passing the contiguous vertex range it uses.
-    std::vector<openq4::ui::Vertex> strip(4*7000);
+    std::vector<opend3::ui::Vertex> strip(4*7000);
     std::vector<int> cells;
     for (int cell=0;cell<7000;++cell) { const int base=4*cell; cells.insert(cells.end(),{base,base+1,base+2,base,base+2,base+3}); }
     renderer.calls=renderer.largestVertices=0; renderer.largestIndices=renderer.totalIndices=0;
@@ -217,7 +217,7 @@ int main(){
     assert(renderer.calls==3 && renderer.largestVertices==12000 && renderer.largestIndices<=36000 && renderer.totalIndices==cells.size());
     assert(renderer.material==&declarations.solid);
     // A triangle spanning more than a chunk draws from its own copy.
-    std::vector<openq4::ui::Vertex> far(13001);
+    std::vector<opend3::ui::Vertex> far(13001);
     far[13000].x=7;
     renderer.calls=0;
     host.Draw(far,{0,13000,1},0);
@@ -238,7 +238,7 @@ SOFT_SUPPORT = r'''
 #include <vector>
 typedef unsigned char byte;
 typedef int glIndex_t;
-namespace openq4::ui { struct Bounds {float x=0,y=0,width=0,height=0;}; }
+namespace opend3::ui { struct Bounds {float x=0,y=0,width=0,height=0;}; }
 struct idVec3 {float x=0,y=0,z=0; void Set(float a,float b,float c){x=a;y=b;z=c;}};
 struct idVec2 {float x=0,y=0; void Set(float a,float b){x=a;y=b;}};
 struct idDrawVert {idVec3 xyz; idVec2 st; idVec3 normal; idVec3 tangents[2]; byte color[4]={}; byte color2[4]={}; void Clear(){*this=idDrawVert{};}};
@@ -328,7 +328,7 @@ static int Count(const char* op){int n=0;for(const auto& call:renderer.calls)n+=
 int main(){
     Host host;
     idRenderTexture destination;host.layers.resize(3);host.layers[2].target=&destination;
-    const openq4::ui::Bounds region{100,200,300,100};
+    const opend3::ui::Bounds region{100,200,300,100};
     // A host without soft focus, or an inactive destination, leaves the layer.
     host.softFocus=false;
     assert(!host.SoftenBackdrop(3,10,.8f,region) && renderer.calls.empty());
@@ -404,7 +404,7 @@ int main(){
     assert(Count("clear")==0); // Both passes cover the view; scratch is wholly overwritten.
     for(const auto& call:renderer.calls) if(call.op=="draw") for(const auto& vertex:call.vertices)
         assert(vertex.xyz.x>=-1e-4f && vertex.xyz.x<=640.0001f && vertex.xyz.y>=-1e-4f && vertex.xyz.y<=480.0001f);
-    const openq4::ui::Bounds fullView{0,0,1600,900};
+    const opend3::ui::Bounds fullView{0,0,1600,900};
     renderer.calls.clear();
     assert(host.CanSoftenBackdropDirect(4,.9f,fullView) && renderer.calls.empty());
     assert(!host.CanSoftenBackdropDirect(4,.9f,region) && !host.CanSoftenBackdropDirect(NAN,.9f,fullView));
@@ -446,7 +446,7 @@ int main(){
     declarations.scratch.state=1; ui_retainedHalfBlur.enabled=true;
     Host reduced; reduced.viewportWidth=reduced.captureWidth=1280;
     reduced.viewportHeight=reduced.captureHeight=720; reduced.viewportX=reduced.viewportY=0;
-    const openq4::ui::Bounds reducedView{0,0,1280,720};
+    const opend3::ui::Bounds reducedView{0,0,1280,720};
     renderer.calls.clear();
     assert(reduced.DrawSoftenedBackdrop(nullptr,7.5f,.8f,reducedView));
     assert(Count("capture")==1 && Count("draw")==3 && Count("clear")==0);

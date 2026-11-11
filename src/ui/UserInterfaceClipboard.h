@@ -8,12 +8,12 @@
 struct uiNumberEditorTarget_t {
 	std::uint64_t backend = 0, document = 0, modal = 0;
 	std::string control;
-	openq4::ui::NumberEditIdentity edit;
+	opend3::ui::NumberEditIdentity edit;
 	bool operator==(const uiNumberEditorTarget_t&) const = default;
 };
 struct uiNumberEditorSnapshot_t {
 	uiNumberEditorTarget_t target;
-	openq4::ui::NumberEditView editor;
+	opend3::ui::NumberEditView editor;
 };
 enum class uiClipboardOperation_t { Copy, Cut, Paste };
 struct uiClipboardRequest_t {

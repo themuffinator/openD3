@@ -46,7 +46,7 @@ class HostLoad:
             for process in self.psutil.process_iter(["name", "exe"]):
                 name = (process.info["name"] or "").lower()
                 executable = process.info["exe"]
-                game = name.startswith("openq4")
+                game = name.startswith("opend3")
                 compiler = name in ("cl.exe", "link.exe", "ninja.exe", "ninja", "cc1plus", "clang++")
                 if game and executable and Path(executable).resolve().parent == own_runtime:
                     continue

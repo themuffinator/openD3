@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 
-openQ4 demo library and format-neutral playback controls.
+openD3 demo library and format-neutral playback controls.
 
 ===========================================================================
 */
@@ -198,7 +198,7 @@ static bool DemoReadRenderSessionInfo( const char *path, demoRenderSessionInfo_t
 		return true;
 	}
 	int record = 0;
-	if ( info.streamVersion >= OPENQ4_RENDERDEMO_SESSION_VERSION &&
+	if ( info.streamVersion >= OPEND3_RENDERDEMO_SESSION_VERSION &&
 		 probe.ReadInt( token ) == sizeof( token ) && token == DS_SESSION &&
 		 probe.ReadInt( record ) == sizeof( record ) && record == DSC_HEADER ) {
 		probe.ReadDict( info.header );
@@ -218,17 +218,14 @@ static bool DemoReadRenderSessionInfo( const char *path, demoRenderSessionInfo_t
 	probe.Close();
 	if ( info.session ) {
 		info.summarized = idDemoFile::ReadTrailer( path, info.summary ) &&
-			info.summary.GetInt( "version" ) >= OPENQ4_RENDERDEMO_SESSION_VERSION;
+			info.summary.GetInt( "version" ) >= OPEND3_RENDERDEMO_SESSION_VERSION;
 	}
 	return true;
 }
 
 // The campaign a game directory holds, as players know it.
 static idStr DemoCampaignName( const char *gameDir ) {
-	if ( !idStr::Icmp( gameDir, "q4xbase" ) ) {
-		return DemoLocalized( "#str_41585" );
-	}
-	if ( gameDir[0] == '\0' || !idStr::Icmp( gameDir, OPENQ4_GAMEDIR ) ) {
+	if ( gameDir[0] == '\0' || !idStr::Icmp( gameDir, OPEND3_GAMEDIR ) ) {
 		return DemoLocalized( "#str_41584" );
 	}
 	return DemoSanitizeText( gameDir, 32 );
@@ -404,35 +401,35 @@ static void DemoProbeEntry( demoLibraryEntry_t &entry ) {
 		const bool ambiguousWrapper = havePrefix && prefixBytes >= static_cast<int>( sizeof( AMBIGUOUS_MAGIC ) ) &&
 			memcmp( prefix, AMBIGUOUS_MAGIC, sizeof( AMBIGUOUS_MAGIC ) ) == 0;
 
-		bool decodedOpenQ4Stream = false;
-		bool supportedOpenQ4Stream = false;
+		bool decodedopenD3Stream = false;
+		bool supportedopenD3Stream = false;
 		int streamVersion = 1;
 		idDemoFile probe;
 		if ( probe.OpenForReading( entry.path.c_str(), false, true ) ) {
 			int firstToken = DS_FINISHED;
 			if ( probe.ReadInt( firstToken ) == sizeof( firstToken ) ) {
 				if ( firstToken == DS_VERSION ) {
-					decodedOpenQ4Stream =
+					decodedopenD3Stream =
 						probe.ReadInt( streamVersion ) == sizeof( streamVersion );
-					supportedOpenQ4Stream =
-						decodedOpenQ4Stream &&
+					supportedopenD3Stream =
+						decodedopenD3Stream &&
 						streamVersion >= 1 &&
-						streamVersion <= OPENQ4_RENDERDEMO_CURRENT_VERSION;
+						streamVersion <= OPEND3_RENDERDEMO_CURRENT_VERSION;
 				} else if ( firstToken == DS_RENDER || firstToken == DS_SOUND ) {
 					// Pre-version render demos use the original v1 command stream.
-					decodedOpenQ4Stream = true;
-					supportedOpenQ4Stream = true;
+					decodedopenD3Stream = true;
+					supportedopenD3Stream = true;
 				}
 			}
 		}
 		probe.Close();
 
-		if ( ambiguousWrapper && !decodedOpenQ4Stream ) {
+		if ( ambiguousWrapper && !decodedopenD3Stream ) {
 			entry.type = DEMO_LIBRARY_LEGACY_RENDER;
 			entry.format = DemoLocalized( "#str_41544" );
 			entry.status = DemoLocalized( "#str_41547" );
 			entry.details = DemoLocalized( "#str_41547" );
-		} else if ( supportedOpenQ4Stream ) {
+		} else if ( supportedopenD3Stream ) {
 			entry.type = DEMO_LIBRARY_RENDER;
 			entry.format = streamVersion > 1
 				? va( "%s v%d", DemoLocalized( "#str_41541" ), streamVersion )
@@ -446,7 +443,7 @@ static void DemoProbeEntry( demoLibraryEntry_t &entry ) {
 				DEMO_CAP_SEEK | DEMO_CAP_STEP;
 
 			demoRenderSessionInfo_t info;
-			if ( streamVersion >= OPENQ4_RENDERDEMO_SESSION_VERSION &&
+			if ( streamVersion >= OPEND3_RENDERDEMO_SESSION_VERSION &&
 				 DemoReadRenderSessionInfo( entry.path.c_str(), info ) && info.session ) {
 				const char *recordedGame = info.header.GetString( "game", "" );
 				const idStr campaign = DemoCampaignName( recordedGame );
@@ -494,12 +491,12 @@ static void DemoProbeEntry( demoLibraryEntry_t &entry ) {
 		} else {
 			entry.type = DEMO_LIBRARY_RENDER;
 			entry.format =
-				decodedOpenQ4Stream && streamVersion > 0
+				decodedopenD3Stream && streamVersion > 0
 					? va( "%s v%d", DemoLocalized( "#str_41541" ), streamVersion )
 					: DemoLocalized( "#str_41541" );
 			const bool unsupportedVersion =
-				decodedOpenQ4Stream &&
-				streamVersion > OPENQ4_RENDERDEMO_CURRENT_VERSION;
+				decodedopenD3Stream &&
+				streamVersion > OPEND3_RENDERDEMO_CURRENT_VERSION;
 			entry.status = DemoLocalized(
 				unsupportedVersion ? "#str_41547" : "#str_41548" );
 			entry.details = entry.status;
@@ -652,11 +649,11 @@ static void Session_DemoStop_f( const idCmdArgs &args ) {
 	sessLocal.StopDemoPlayback();
 }
 
-static void Session_OpenQ4DemoLibrary_f( const idCmdArgs &args ) {
+static void Session_openD3DemoLibrary_f( const idCmdArgs &args ) {
 	idUserInterface *gui = session->GetActiveGUI();
 	if ( gui == NULL || gui != sessLocal.guiDemoMenu || !sessLocal.demoBrowserMode ||
 		sessLocal.guiDemoList == NULL ) {
-		common->Printf( "openq4_demoLibrary requires the active demo library\n" );
+		common->Printf( "opend3_demoLibrary requires the active demo library\n" );
 		return;
 	}
 	const int selected = sessLocal.guiDemoList->GetSelection( NULL, 0 );
@@ -676,7 +673,7 @@ static void Session_OpenQ4DemoLibrary_f( const idCmdArgs &args ) {
 	if ( args.Argc() == 2 && !idStr::Icmp( args.Argv( 1 ), "play" ) ) {
 		if ( selected < 0 || selected >= sessLocal.demoLibrary.Num() ||
 			( sessLocal.demoLibrary[selected].capabilities & DEMO_CAP_PLAY ) == 0 ) {
-			common->Printf( "openq4_demoLibrary play requires a playable selected recording\n" );
+			common->Printf( "opend3_demoLibrary play requires a playable selected recording\n" );
 			return;
 		}
 		// Invoke the same engine action as the library's Play button, without
@@ -684,7 +681,7 @@ static void Session_OpenQ4DemoLibrary_f( const idCmdArgs &args ) {
 		sessLocal.HandleDemoMenuCommand( "demoPlay" );
 		return;
 	}
-	common->Printf( "usage: openq4_demoLibrary report | play\n" );
+	common->Printf( "usage: opend3_demoLibrary report | play\n" );
 }
 #endif
 
@@ -754,7 +751,7 @@ void idSessionLocal::InitDemoSystem() {
 #endif
 
 	cmdSystem->AddCommand( "demoMenu", Session_DemoMenu_f, CMD_FL_SYSTEM, "opens the demo library or playback controls" );
-	cmdSystem->AddCommand( "openq4_demoLibrary", Session_OpenQ4DemoLibrary_f, CMD_FL_SYSTEM | CMD_FL_CHEAT, "reports the active demo library or invokes its selected Play action for runtime validation" );
+	cmdSystem->AddCommand( "opend3_demoLibrary", Session_openD3DemoLibrary_f, CMD_FL_SYSTEM | CMD_FL_CHEAT, "reports the active demo library or invokes its selected Play action for runtime validation" );
 	cmdSystem->AddCommand( "demoPause", Session_DemoPause_f, CMD_FL_SYSTEM, "toggles unified demo playback pause" );
 	cmdSystem->AddCommand( "demoSpeed", Session_DemoSpeed_f, CMD_FL_SYSTEM, "sets unified demo playback speed" );
 	cmdSystem->AddCommand( "demoSeek", Session_DemoSeek_f, CMD_FL_SYSTEM, "seeks to a unified demo time in seconds" );
@@ -1875,7 +1872,7 @@ void idSessionLocal::ResetRenderDemoPlaybackSession() {
 
 	idDict summary;
 	if ( !idDemoFile::ReadTrailer( activeRenderDemoName.c_str(), summary ) ||
-		 summary.GetInt( "version" ) < OPENQ4_RENDERDEMO_SESSION_VERSION ) {
+		 summary.GetInt( "version" ) < OPEND3_RENDERDEMO_SESSION_VERSION ) {
 		return;
 	}
 	renderDemoUserCmdHz = idMath::ClampInt( 0, 1000, summary.GetInt( "userCmdHz" ) );
@@ -1988,10 +1985,10 @@ bool idSessionLocal::ProcessRenderDemoSessionRecord( bool &finished ) {
 				// The level loads in one indivisible step: say which one first.
 				guiLoading->SetStateString( "demo", Session_LevelDisplayName( segment.map, segment.entityFilter ).c_str() );
 				guiLoading->StateChanged( common->GetPresentationTime() );
-				openq4::NativeInputBeforeSessionChange();
+				opend3::NativeInputBeforeSessionChange();
 				insideExecuteMapChange = true;
 				UpdateScreen();
-				openq4::NativeInputBeforeSessionChange();
+				opend3::NativeInputBeforeSessionChange();
 				insideExecuteMapChange = false;
 				guiLoading->SetStateString( "demo", "" );
 			}

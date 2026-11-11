@@ -597,7 +597,7 @@ def main(argv: list[str]) -> int:
     )
     environment.pop("DISPLAY", None)
     environment.pop("OPEND3_FORCE_X11", None)
-    environment.pop("OPENQ4_FORCE_X11", None)
+    environment.pop("OPEND3_FORCE_X11", None)
 
     started = time.monotonic()
     process: subprocess.Popen[str] | None = None
@@ -814,7 +814,7 @@ def main(argv: list[str]) -> int:
             "SDL_VIDEODRIVER": "wayland",
             "DISPLAYRemoved": "DISPLAY" not in environment,
             "OPEND3_FORCE_X11Removed": "OPEND3_FORCE_X11" not in environment,
-            "OPENQ4_FORCE_X11Removed": "OPENQ4_FORCE_X11" not in environment,
+            "OPEND3_FORCE_X11Removed": "OPEND3_FORCE_X11" not in environment,
         },
     }
     report_json, report_markdown = write_reports(run_dir, report)

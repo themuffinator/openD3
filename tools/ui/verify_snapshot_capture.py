@@ -80,9 +80,9 @@ def verify_capture(folder: Path) -> dict:
             not preview.get('resume_script') or preview.get('timeline') or preview.get('state_data') or
             capture.get('legacy_import')):
         return {'passed': False, 'reason': 'capture failed or uses a different snapshot qualification flow'}
-    game = folder / 'save/baseoq4'
+    game = folder / 'save/baseod3'
     cfg_path = game / 'ui-baseline.cfg'
-    log_path = game / 'logs/openq4.log'
+    log_path = game / 'logs/opend3.log'
     image_path = game / 'screenshots/ui-baseline.tga'
     image = capture['screenshot']
     # Read the fixed engine target path, never a path selected by metadata.

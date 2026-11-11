@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)).resolve()
+GAME_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)).resolve()
 
 
 def read(path: Path) -> str:
@@ -52,11 +52,11 @@ def main() -> None:
 
     common = read(ROOT / "src/framework/Common.cpp")
     setter = function_body(common, "void idCommonLocal::SetGameTimeScale( float scale ) {")
-    require(setter, "openQ4_gameTimeScale.store", "atomic transient time-scale publication")
+    require(setter, "openD3_gameTimeScale.store", "atomic transient time-scale publication")
     require(setter, "soundWorld->SetSlowmoSpeed( scale );", "transient audio slowdown")
     require(
         common,
-        "com_timescale.GetFloat() * openQ4_gameTimeScale.load",
+        "com_timescale.GetFloat() * openD3_gameTimeScale.load",
         "engine effective time-scale composition",
     )
 

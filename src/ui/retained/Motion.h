@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 using PropertyKey = std::pair<std::string, std::string>;
 using PropertyValues = std::map<PropertyKey, Value>;
@@ -121,4 +121,4 @@ struct Motion::Checkpoint {
 	bool changedAll = true, sampled = false;
 };
 
-} // namespace openq4::ui
+} // namespace opend3::ui

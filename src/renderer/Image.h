@@ -62,7 +62,7 @@ typedef enum {
 	// Preserve retail Quake 4's explicit high-quality / uncompressed material
 	// bucket without renumbering the existing generated-image cache keys.
 	TD_HIGH_QUALITY,
-	// Appended openQ4 PBR usages keep all historical binary-image cache keys
+	// Appended openD3 PBR usages keep all historical binary-image cache keys
 	// stable. Colour inputs receive gamma-correct mip generation; material
 	// data (ORM/metallic/roughness/AO) always remains linear.
 	TD_PBR_COLOR,

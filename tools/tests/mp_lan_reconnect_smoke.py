@@ -96,11 +96,11 @@ def main() -> int:
     runtime, output, assets = args.runtime_dir.resolve(), args.output_dir.resolve(), args.basepath.resolve()
     verify_runtime_is_current(runtime)
     paths = {
-        "engine": runtime / f"openQ4-client_x64{SUFFIX}",
-        "dedicated": runtime / f"openQ4-ded_x64{SUFFIX}",
-        "game_mp": runtime / "baseoq4" / ("game-mp_x64" + (".dll" if os.name == "nt" else ".so")),
-        "pak0": runtime / "baseoq4/pak0.pk4", "pak1": runtime / "baseoq4/pak1.pk4",
-        "mod.json": runtime / "baseoq4/mod.json",
+        "engine": runtime / f"openD3-client_x64{SUFFIX}",
+        "dedicated": runtime / f"openD3-ded_x64{SUFFIX}",
+        "game_mp": runtime / "baseod3" / ("game-mp_x64" + (".dll" if os.name == "nt" else ".so")),
+        "pak0": runtime / "baseod3/pak0.pk4", "pak1": runtime / "baseod3/pak1.pk4",
+        "mod.json": runtime / "baseod3/mod.json",
     }
     if any(not path.is_file() for path in paths.values()) or not (assets / "q4base").is_dir():
         parser.error("a complete staged runtime and the retail PK4 assets are required")
@@ -125,15 +125,15 @@ def main() -> int:
         "assets_sha256": {path.name: digest(path) for path in sorted((assets / "q4base").glob("*.pk4"))},
         "discovery": {}, "joins": [], "commands": {}, "exit_codes": {}, "failures": [],
     }
-    games = {role: output / role / "baseoq4" for role in ("server", "client")}
-    logs = {role: game / "logs/openq4.log" for role, game in games.items()}
+    games = {role: output / role / "baseod3" for role in ("server", "client")}
+    logs = {role: game / "logs/opend3.log" for role, game in games.items()}
     for game in games.values():
         game.mkdir(parents=True)
     family = {"net_enableIPv4": "1", "net_enableIPv6": "0", "net_ip": str(address)} if address.version == 4 else \
              {"net_enableIPv4": "0", "net_enableIPv6": "1", "net_ip6": str(address)}
     common = {
-        "fs_basepath": str(assets), "fs_game": "baseoq4", "com_gameMode": "MP", "si_gameType": "DM",
-        "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1", "s_noSound": "1",
+        "fs_basepath": str(assets), "fs_game": "baseod3", "com_gameMode": "MP", "si_gameType": "DM",
+        "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1", "s_noSound": "1",
         "in_mouse": "0", "in_joystick": "0", "com_skipLoadingContinue": "1", "net_allowCheats": "1",
         "net_LANServer": "1", "net_clientDownload": "0",
         "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1", **family,
@@ -211,7 +211,7 @@ def main() -> int:
         wait(label + ": map load", lambda t: t["client"].count("\nLAN_MAP_LOADED") > loads)
         deadline = time.monotonic() + args.timeout
         while True:
-            section = step(label + ": state", ["openq4_reportMPState"]).rsplit("\nMP_STATE ", 1)[-1]
+            section = step(label + ": state", ["opend3_reportMPState"]).rsplit("\nMP_STATE ", 1)[-1]
             if ACTIVE.search(section):
                 break
             if time.monotonic() >= deadline:

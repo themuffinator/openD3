@@ -260,7 +260,7 @@ def validate_collision_contents_names() -> None:
         "bool idCollisionModelManagerLocal::LoadCollisionModelFile( const char *name, unsigned int mapFileCRC )",
         "collision file loader",
     )
-    # Quake 4's own versions ("2", "3") use the shifted pairing; openQ4's "4" does not.
+    # Quake 4's own versions ("2", "3") use the shifted pairing; openD3's "4" does not.
     require(loader, "const bool retailContentsNames = ( token != CM_FILEVERSION );", "collision file loader")
     require(files, "b->contents = ContentsFromString( token, retailContentsNames );", "collision brush parser")
     # Caches decoded the old way must not be reused.
@@ -268,7 +268,7 @@ def validate_collision_contents_names() -> None:
 
 
 def validate_ci_wiring() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     if validator.count("aas_compiler_contract.py") != 1:
         raise AssertionError("Local validation must register the AAS compiler contract exactly once")
 

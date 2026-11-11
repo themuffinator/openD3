@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 
-openQ4 simulated network impairment.
+openD3 simulated network impairment.
 
 A delay line for UDP datagrams that both platform socket layers use when
 net_forceLatency, net_forceJitter, net_forceDrop, net_forceDuplicate or

@@ -25,7 +25,7 @@ import build_retained_screens as ui
 import hud_svg
 
 ROOT = Path(__file__).resolve().parents[2]
-OUT = ROOT / "content/baseoq4/pak0/guis/hud"
+OUT = ROOT / "content/baseod3/pak0/guis/hud"
 U = 1.5
 
 
@@ -78,7 +78,7 @@ def face_metrics(face: str) -> dict:
     """Vertical metrics of a shipped face. The retained text engine sizes a
     face so that ascent plus descent equals the font size, so the baseline
     sits `ascent` of the size below the top of a line box of that height."""
-    data = (ROOT / "content/baseoq4/pak0/fonts" / f"{face}.ttf").read_bytes()
+    data = (ROOT / "content/baseod3/pak0/fonts" / f"{face}.ttf").read_bytes()
     tables = {}
     for index in range(struct.unpack(">H", data[4:6])[0]):
         tag, _, offset, length = struct.unpack(">4sIII", data[12 + 16 * index:28 + 16 * index])
@@ -414,7 +414,7 @@ def status_scale(mp) -> dict:
 
 
 def join_events(doc: HudDocument, pairs: list) -> list:
-    """extensions.openq4.joinEvents: [stock window variable, event] pairs the
+    """extensions.opend3.joinEvents: [stock window variable, event] pairs the
     engine peer replays when the variable holds at its join ("!" inverts),
     so state that only events carry survives a peer rebuilt mid-game (the
     layout switched to Classic and back). Each event must be one the document

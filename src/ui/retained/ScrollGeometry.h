@@ -1,7 +1,7 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
 #pragma once
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 // All values use the same local layout units. The adapter measures the actual
 // scroll viewport and projects incoming pointer coordinates into the track's
@@ -29,4 +29,4 @@ bool ScrollDragOffset(const ScrollGeometry&, double pointer, double grabFraction
 // step is one semantic pulse; repeat timing and source ownership stay in Input.
 bool ScrollStepOffset(const ScrollGeometry&, ScrollStep, double line, double& out) noexcept;
 
-} // namespace openq4::ui
+} // namespace opend3::ui

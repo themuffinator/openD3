@@ -217,7 +217,7 @@ idGuiModel::ReadFromDemo
 ================
 */
 bool idGuiModel::ReadFromDemo( idDemoFile *demo ) {
-	if ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_SESSION_VERSION ) {
+	if ( session->renderdemoVersion >= OPEND3_RENDERDEMO_SESSION_VERSION ) {
 		return ReadSurfacesFromDemo( demo );
 	}
 
@@ -285,7 +285,7 @@ bool idGuiModel::ReadFromDemo( idDemoFile *demo ) {
 		guiModelSurface_t	*surf = &surfaces[j];
 		bool				hasMaterial = false;
 		
-		if ( session->renderdemoVersion >= OPENQ4_RENDERDEMO_POINTER_FREE_VERSION ) {
+		if ( session->renderdemoVersion >= OPEND3_RENDERDEMO_POINTER_FREE_VERSION ) {
 			if ( demo->ReadBool( hasMaterial ) != sizeof( byte ) ) {
 				Clear();
 				return R_RejectGuiModelDemo( demo, "truncated material flag" );

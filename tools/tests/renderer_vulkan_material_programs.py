@@ -19,7 +19,7 @@ from PIL import Image
 
 import renderer_pbr_laboratory as lab
 
-PREFIX = 'textures/openq4/authored_glsl'
+PREFIX = 'textures/opend3/authored_glsl'
 PROGRAM = 'tests/oq4_authored.glsl'
 CAPACITY_CASES = ('capacity', 'parameter-last', *('texture-' + str(i) for i in range(8)))
 CASES = ('clear', 'base', 'tint', 'offset', 'coordinates', *CAPACITY_CASES,
@@ -128,7 +128,7 @@ def write_fixture(save: Path):
     files = {
         'glprogs/tests/oq4_authored.glslvp': VERTEX.encode('utf-8'),
         'glprogs/tests/oq4_authored.glslfp': FRAGMENT.encode('utf-8'),
-        'materials/openq4_authored_glsl_test.mtr': (
+        'materials/opend3_authored_glsl_test.mtr': (
             material('base') + material('tint', tint='0.1, 0.65, 0.4, 1')
             + material('offset', offset='80, 45, 0, 0')
             + material('coordinates', mode=1)
@@ -150,7 +150,7 @@ def write_fixture(save: Path):
         files[f'{PREFIX}/cube_alternate_{face}.tga'] = tga(4, 4, bytes((220, 200, 240, 255)) * 16)
     hashes = {}
     for name, data in files.items():
-        path = save / 'baseoq4' / name
+        path = save / 'baseod3' / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
         hashes[name] = lab.digest(path)
@@ -285,7 +285,7 @@ def main():
 
     def startup_args(cvars, save):
         options = startup(cvars, save)
-        with (save / 'baseoq4/autoexec.cfg').open('a', encoding='utf-8') as config:
+        with (save / 'baseod3/autoexec.cfg').open('a', encoding='utf-8') as config:
             for mat in ('base', 'tint', 'offset', 'coordinates', *CAPACITY_CASES):
                 config.write(f'touch material {PREFIX}/{mat.replace("-", "_")}\n')
         return options
@@ -304,7 +304,7 @@ def main():
     report['harnessSources'][Path(__file__).name] = source_hash
     report.update(authoredProfile=profile, authoredSources=source_hashes)
     report['authoredSourcesUnchanged'] = all(
-        lab.digest(args.output_dir / 'batch/baseoq4' / name) == expected for name, expected in source_hashes.items())
+        lab.digest(args.output_dir / 'batch/baseod3' / name) == expected for name, expected in source_hashes.items())
     report['authoredProof'] = prove(report)
     path.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(report['authoredProof'], indent=2))

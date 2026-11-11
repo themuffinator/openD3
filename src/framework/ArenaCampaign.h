@@ -1,7 +1,7 @@
 /*
 ===========================================================================
 
-openQ4 arena campaign
+openD3 arena campaign
 
 Framework-side orchestration for the single-player arena ladder.  The actual
 matches run in game_mp; this class owns campaign data, menu state, progression,

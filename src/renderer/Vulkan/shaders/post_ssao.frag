@@ -1,7 +1,7 @@
 #version 450
 
 // Screen-space ambient occlusion. A port of
-// content/baseoq4/pak0/glprogs/ssao.fs, which RB_STD_SSAO draws on the OpenGL
+// content/baseod3/pak0/glprogs/ssao.fs, which RB_STD_SSAO draws on the OpenGL
 // backend; the body below is that file with the uniforms moved into a block.
 //
 // fragUV is OpenGL's texture coordinate (0,0 = bottom-left of the view): the

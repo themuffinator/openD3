@@ -303,7 +303,7 @@ void ListSounds_f( const idCmdArgs& args )
 ========================
 ListSamples_f
 
-Compatibility name retained for OpenQ4 scripts.
+Compatibility name retained for openD3 scripts.
 ========================
 */
 void ListReverbs_f( const idCmdArgs& args )
@@ -342,7 +342,7 @@ void ListSubtitles_f( const idCmdArgs& args )
 ========================
 ListSoundDecoders_f
 
-OpenQ4's OpenAL path decodes through hardware voices rather than retail's persistent idSampleDecoder objects.
+openD3's OpenAL path decodes through hardware voices rather than retail's persistent idSampleDecoder objects.
 ========================
 */
 void ListSoundDecoders_f( const idCmdArgs& args )
@@ -742,7 +742,7 @@ void idSoundSystemLocal::Shutdown()
 idSoundSystemLocal::ShutdownHW
 
 SpawnServer_f calls this when a client turns into a dedicated server, and on every
-spawn of openQ4-ded. The engine keeps running: sound shaders, emitters and BSE
+spawn of openD3-ded. The engine keeps running: sound shaders, emitters and BSE
 effects keep pointers to the sample objects, so unlike Shutdown() this keeps every
 one of them and frees only what the device and the decoded audio hold.
 ========================
@@ -2198,7 +2198,7 @@ bool idSoundReverb::ReadEffect( idLexer& src, effect_t& effect )
 idSoundReverb::LoadEffectFile
 
 Retail idEFXFile::LoadFile. Quake4.exe 1.4.2 skips an effect that fails to
-parse and keeps reading. Its lexer errors are fatal; openQ4 reports them as
+parse and keeps reading. Its lexer errors are fatal; openD3 reports them as
 warnings so a damaged mod file cannot end the session.
 ========================
 */

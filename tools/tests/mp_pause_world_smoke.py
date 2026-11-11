@@ -26,7 +26,7 @@ class WorldRun(SeriesRun):
         if role == "host":
             names += ["oq4_pause_rotater", "oq4_pause_rocket", "item_armor_large_1"]
         self.perform(role, label, ["echo " + marker,
-            *("openq4_reportMPWorld " + name for name in names),
+            *("opend3_reportMPWorld " + name for name in names),
             f'screenshot "screenshots/{label}-{role}.tga"'])
         section = read_log(self.logs[role]).rsplit("\n" + marker + " ", 1)[-1]
         grouped = {kind: [fields(line) for line in section.splitlines() if line.startswith(kind + " ")]
@@ -70,12 +70,12 @@ class WorldRun(SeriesRun):
         self.admission()
         for role in self.games:
             self.open_menu(role)
-            self.perform(role, "status tab", ["openq4_guiSet desktop::match_tab 0"])
+            self.perform(role, "status tab", ["opend3_guiSet desktop::match_tab 0"])
         self.action("host", "force_ready", confirm=True)
         self.await_view("host", "live world", lambda v: v["phase"] == 3)
         self.perform("host", "stock world fixtures", [
             'spawn func_rotating name oq4_pause_rotater model models/mapobjects/strogg/barrels/medium1_low.lwo origin "-4720 6640 340" speed 35 nopush 1 solid 0 neverDormant 1',
-            'openq4_launchMPTestProjectile projectile_rocket_mp oq4_pause_rocket "-4768 6600 360" "0 -1 0" 4 45',
+            'opend3_launchMPTestProjectile projectile_rocket_mp oq4_pause_rocket "-4768 6600 360" "0 -1 0" 4 45',
             "trigger item_armor_large_1", "give quad", "waitMsec 500"])
         for number, hold in ((1, 28000), (2, 3500)):
             self.action("host", "tech_pause")
@@ -119,7 +119,7 @@ class WorldRun(SeriesRun):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
-    parser.add_argument("--executable-name", default="openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    parser.add_argument("--executable-name", default="openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     parser.add_argument("--output-dir", type=Path, default=ROOT / ".tmp/mp-pause-world")
     parser.add_argument("--basepath", type=Path, default=Path(r"C:\Program Files (x86)\Steam\steamapps\common\Quake 4"))
     parser.add_argument("--timeout", type=int, default=480)

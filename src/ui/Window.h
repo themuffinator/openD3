@@ -66,7 +66,7 @@ const int WIN_MATCOVER		= 0x02000000;
 const int WIN_MATFIT		= 0x04000000;
 const int WIN_MATCANVASFILL	= 0x08000000;
 const int WIN_NATIVESCREENOVERLAY = 0x20000000;
-const int WIN_CHATWINDOW	= 0x40000000;	// retail Q4 used 0x20000000; openQ4 keeps that bit for native overlays
+const int WIN_CHATWINDOW	= 0x40000000;	// retail Q4 used 0x20000000; openD3 keeps that bit for native overlays
 
 const int WIN_DESKTOP		= 0x10000000;
 
@@ -507,7 +507,7 @@ protected:
 	float textAligny;
 	unsigned char screenAlignX;
 	unsigned char screenAlignY;
-	// openQ4: "hudanchorx" and "hudanchory" name the screen anchor a HUD
+	// openD3: "hudanchorx" and "hudanchory" name the screen anchor a HUD
 	// window's group scales about (idLegacyHudGroup) where its alignment does
 	// not say: a window Remastered places on an edge through oq4_hudEdge* while
 	// the stock layout keeps it centered. HUD_ANCHOR_UNSET follows the alignment.
@@ -568,19 +568,19 @@ protected:
 	idWinFloat	textScale;
 	idWinFloat	rotate;
 	idWinStr	text;
-	// openQ4: "textwidth", the drawn text's widest line in virtual units, and
+	// openD3: "textwidth", the drawn text's widest line in virtual units, and
 	// "textlines", its explicit line count, which other windows' expressions
 	// read (a plate fitted to its text). Measured only once something
 	// references either, as the window draws; never saved.
 	idWinFloat	textWidth;
 	idWinFloat	textLines;
 	bool		measureTextWidth = false;
-	// openQ4: "ellipsis 1" ends a single line too long for its rectangle with
+	// openD3: "ellipsis 1" ends a single line too long for its rectangle with
 	// "..." rather than cutting it at the edge; textwidth then reports the
 	// shortened line. What was last measured, and for which text, scale, font,
 	// spacing and width, so an unchanged line is measured once.
 	bool		textEllipsis = false;
-	// openQ4: in a HUD's Remastered layout (the stock windows keep their
+	// openD3: in a HUD's Remastered layout (the stock windows keep their
 	// stock look in Classic), "keynames 1" writes a key escape in the text as
 	// the key's name instead of drawing its keycap, for a notice that names a
 	// key in passing, and "oneline 1" joins the text's explicit lines.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Preserved from openQ4-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
+# Preserved from openD3-game; Quake 4 SDK EULA applies. See docs/dev/game-test-coverage.md.
 """Static contract checks for applying crosshair cvar changes to the cursor GUI at once,
 and for the animated crosshair that draws the combat picture in the cursor GUI's place."""
 

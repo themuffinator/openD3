@@ -30,21 +30,21 @@ def main() -> int:
     parser.add_argument("--timeout",type=int,default=150)
     args = parser.parse_args()
     runtime,output = args.runtime_dir.resolve(),args.output_dir.resolve()
-    executable = "openQ4-client_x64.exe" if os.name=="nt" else "openQ4-client_x64"
+    executable = "openD3-client_x64.exe" if os.name=="nt" else "openD3-client_x64"
     verify_runtime_is_current(runtime,executable)
     output.mkdir(parents=True,exist_ok=False)
     save=output / "save"
-    game=save / "baseoq4"
+    game=save / "baseod3"
     game.mkdir(parents=True)
     captures=("initial","reopened","restart")
     script=["waitMsec 1500","god","notarget","getviewpos","echo GENERATED_IMAGE_GAMEPLAY_BEGIN"]
-    if args.mode=="MP": script.append("openq4_reportMPState")
+    if args.mode=="MP": script.append("opend3_reportMPState")
     for name in captures:
         if name=="restart":
             script += ["vid_restart","waitMsec 1000"]
         script += ["ui_retainedImageProbe 1","waitMsec 500",f"screenshot screenshots/generated/{name}.tga",
                    "ui_retainedImageProbe 0","waitMsec 500"]
-    if args.mode=="MP": script.append("openq4_reportMPState")
+    if args.mode=="MP": script.append("opend3_reportMPState")
     script += ["getviewpos","echo GENERATED_IMAGE_GAMEPLAY_END","quit"]
     (game / "generated_probe.cfg").write_text("\n".join(script)+"\n",encoding="utf-8")
     settings={
@@ -55,9 +55,9 @@ def main() -> int:
         "r_windowWidth":"640","r_windowHeight":"480","r_renderApi":args.renderer,"r_swapInterval":"0",
         "r_gamma":"1","r_brightness":"1","r_hdrToneMap":"0","com_maxfps":"60","s_noSound":"1",
         "fs_basepath":str(args.basepath.resolve()),"fs_savepath":str(save),"fs_devpath":str(save),
-        "fs_game":"baseoq4","com_gameMode":args.mode,"si_gameType":"DM" if args.mode=="MP" else "singleplayer","ui_autoJoin":"1",
+        "fs_game":"baseod3","com_gameMode":args.mode,"si_gameType":"DM" if args.mode=="MP" else "singleplayer","ui_autoJoin":"1",
         "ui_retained":"1","com_skipLoadingContinue":"1","g_autoSkipCinematics":"1",
-        "logFile":"2","logFileName":"logs/openq4.log","developer":"1",
+        "logFile":"2","logFileName":"logs/opend3.log","developer":"1",
         "g_autoExecAfterMapLoad":"generated_probe.cfg","g_autoExecAfterMapLoadDelayMs":"500",
     }
     if args.mode=="MP":
@@ -72,8 +72,8 @@ def main() -> int:
             "runtime_sha256":{},"samples":{},"failures":[]}
     for path in sorted(runtime.glob("*")):
         if path.is_file() and path.suffix in (".exe",".dll"): report["runtime_sha256"][path.name]=digest(path)
-    for path in sorted((runtime / "baseoq4").glob("game-*")):
-        if path.is_file(): report["runtime_sha256"]["baseoq4/"+path.name]=digest(path)
+    for path in sorted((runtime / "baseod3").glob("game-*")):
+        if path.is_file(): report["runtime_sha256"]["baseod3/"+path.name]=digest(path)
     with (output / "console.log").open("w",encoding="utf-8") as stream:
         process=subprocess.Popen(command,cwd=runtime,stdout=stream,stderr=subprocess.STDOUT)
         try:
@@ -82,7 +82,7 @@ def main() -> int:
             process.terminate();process.wait(timeout=15);report["exit_code"]=process.returncode
             report["failures"].append("gameplay probe timed out")
     if report["exit_code"]!=0: report["failures"].append(f"engine exited {report['exit_code']}")
-    log=(game / "logs/openq4.log").read_text(encoding="utf-8",errors="replace")
+    log=(game / "logs/opend3.log").read_text(encoding="utf-8",errors="replace")
     for marker in ("GENERATED_IMAGE_GAMEPLAY_BEGIN","GENERATED_IMAGE_GAMEPLAY_END"):
         if marker not in log: report["failures"].append("missing "+marker)
     if log.count("Retained generated-image probe ready:")!=3:

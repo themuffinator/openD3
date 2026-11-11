@@ -3,7 +3,7 @@
 #include <atomic>
 #include <limits>
 
-namespace openq4 {
+namespace opend3 {
 namespace {
 std::atomic<std::uint64_t> nativeInputRouteHighwater{0};
 std::uint64_t NextRoute() noexcept {
@@ -223,4 +223,4 @@ NativeInputRoute::Phase NativeInputRoute::State() const noexcept {
     if (!OnThread()) return Phase::Unavailable;
     return phase;
 }
-} // namespace openq4
+} // namespace opend3

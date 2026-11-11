@@ -353,7 +353,7 @@ void R_GpuSkinning_RecordCpuSkinning( uint64 elapsedMicroseconds,
 	if ( numVerts <= 0 ) {
 		return;
 	}
-	// openQ4: one lock for the call. This runs for every skinned surface every
+	// openD3: one lock for the call. This runs for every skinned surface every
 	// frame, and each counter used to take the mutex for itself.
 	std::lock_guard<std::recursive_mutex> lock( rg_gpuSkinningStatsMutex );
 	R_GpuSkinning_AddLocked( rg_gpuSkinningStats.cpuSkinVertices, numVerts );

@@ -4,7 +4,7 @@
 #include "SettingsTransaction.h"
 #include "SettingsEffectPlan.h"
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 enum class SettingsJournalState { Pending, Confirmed };
 struct SettingsRecoveryJournal {
@@ -91,4 +91,4 @@ bool EncodeSettingsJournalRecord(const SettingsJournalRecord& journal,
 bool DecodeSettingsJournalRecord(const std::string& bytes,
 	const std::map<std::string,std::size_t>& catalog, SettingsJournalRecord& journal, std::string& error);
 
-} // namespace openq4::ui
+} // namespace opend3::ui

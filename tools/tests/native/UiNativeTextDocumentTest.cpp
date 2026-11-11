@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 namespace {
 int checks=0;
 std::string error;

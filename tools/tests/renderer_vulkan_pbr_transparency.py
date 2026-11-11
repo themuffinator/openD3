@@ -20,7 +20,7 @@ def light_commands(reverse: bool = False) -> list[str]:
     if reverse:
         positions.reverse()
     return [f'spawn light name alpha_{side} origin "{x} -1000 380" angle 0 '
-            'texture "lights/openq4/pbr_lab/projected" light_target "0 300 0" '
+            'texture "lights/opend3/pbr_lab/projected" light_target "0 300 0" '
             'light_right "70 0 0" light_up "0 0 100" light_start "0 1 0" '
             'light_end "0 340 0" _color "1 1 1" noshadows 1' for side, x in positions]
 

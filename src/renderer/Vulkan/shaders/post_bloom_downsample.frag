@@ -1,7 +1,7 @@
 #version 450
 
 // Bloom pyramid downsample. A port of
-// content/baseoq4/pak0/glprogs/bloom_downsample.fs (RB_STD_Bloom).
+// content/baseod3/pak0/glprogs/bloom_downsample.fs (RB_STD_Bloom).
 
 layout(set = 0, binding = 0) uniform sampler2D Scene;
 

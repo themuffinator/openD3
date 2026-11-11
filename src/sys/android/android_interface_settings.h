@@ -5,7 +5,7 @@
 // C string comparisons, and by standalone native tests.
 #include <cstddef>
 
-namespace openq4 { namespace android {
+namespace opend3 { namespace android {
 struct InterfaceSetup {
     char revision[33] = {};
     int profile = 0;

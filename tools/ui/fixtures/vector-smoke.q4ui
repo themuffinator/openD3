@@ -1,6 +1,6 @@
 // Native path integration fixture; coverage AA and production artwork qualification remain open.
 {
-  "format":"openq4-ui",
+  "format":"opend3-ui",
   "version":1,
   "id":"vector-smoke",
   "tokens":{
@@ -400,5 +400,5 @@
     }
   ],
   "editor":{"zoom":1,"selection":["panel"]},
-  "extensions":{"openq4.fixture":{"productionDesign":false,"interactive":false,"nativeVectors":true,"coverageAntialiasingQualified":false}}
+  "extensions":{"opend3.fixture":{"productionDesign":false,"interactive":false,"nativeVectors":true,"coverageAntialiasingQualified":false}}
 }

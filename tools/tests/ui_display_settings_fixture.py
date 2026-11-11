@@ -27,7 +27,7 @@ SOURCE = r'''
 #include <fstream>
 #include <iterator>
 #include <set>
-using namespace openq4::ui;
+using namespace opend3::ui;
 static struct {std::set<std::uint64_t> owners{17},confirmationOwners;} service;
 static auto& Settings(){return service;}
 static const std::map<std::string,std::size_t>& UI_SettingsStateSchema(){

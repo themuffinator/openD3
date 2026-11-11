@@ -1,10 +1,10 @@
 /*
 ===========================================================================
 
-openQ4 portable parallel job system
+openD3 portable parallel job system
 
 The job-list architecture is informed by id Software's GPLv3 Doom 3 BFG
-idParallelJobList design.  This implementation is original openQ4 code: it
+idParallelJobList design.  This implementation is original openD3 code: it
 uses portable C++ sleepable synchronization, explicit bounds and cooperative
 cancellation instead of carrying over BFG's platform-specific worker code or
 spin-wait behavior.

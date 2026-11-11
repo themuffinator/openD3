@@ -19,7 +19,7 @@ every case captures the same relative screenshot name.
 
 1. Build and stage a known-good tree (`tools\build\meson_setup.ps1 compile` + `install`).
 2. Capture: `python tools\tests\renderer_gameplay_benchmark.py --profile shadow-regression --output-dir .tmp\renderer-gameplay\shadow-refgen`
-3. Copy each case's `savepaths\<case-id>\baseoq4\screenshots\renderer-bench\sp_0.tga`
+3. Copy each case's `savepaths\<case-id>\baseod3\screenshots\renderer-bench\sp_0.tga`
    to `.tmp\renderer-references\shadow-regression\windows-x64\<case-id>\screenshots\renderer-bench\sp_0.tga`.
 4. Update `shadow-regression-manifest.txt` with the new SHA256s and blessing commit.
 

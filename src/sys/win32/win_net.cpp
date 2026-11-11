@@ -52,7 +52,7 @@ idCVar net_mcast6addr( "net_mcast6addr", "ff02::1", CVAR_SYSTEM | CVAR_ARCHIVE, 
 idCVar net_mcast6iface( "net_mcast6iface", "0", CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_INTEGER, "IPv6 interface index used for LAN server discovery, 0 selects the default route" );
 idCVar net_forceLatency( "net_forceLatency", "0", CVAR_SYSTEM | CVAR_INTEGER, "milliseconds latency" );
 idCVar net_forceDrop( "net_forceDrop", "0", CVAR_SYSTEM | CVAR_INTEGER, "percentage packet loss" );
-// openQ4: the rest of a real link, for testing on one machine (NetworkImpairment.h).
+// openD3: the rest of a real link, for testing on one machine (NetworkImpairment.h).
 idCVar net_forceJitter( "net_forceJitter", "0", CVAR_SYSTEM | CVAR_INTEGER, "random extra milliseconds of latency per packet; packets closer together than this arrive out of order" );
 idCVar net_forceDuplicate( "net_forceDuplicate", "0", CVAR_SYSTEM | CVAR_INTEGER, "percentage of packets delivered twice" );
 idCVar net_forceSeed( "net_forceSeed", "0", CVAR_SYSTEM | CVAR_INTEGER, "seed for simulated loss, jitter and duplication when a port opens, 0 picks a new one" );
@@ -1133,7 +1133,7 @@ void Net_SendUDPPacket( SOCKET netSocket, int length, const void *data, const ne
 	int				ret;
 	struct sockaddr_storage addr;
 	int				addrLen = 0;
-	// openQ4: look the cvar up once, not by name for every packet sent
+	// openD3: look the cvar up once, not by name for every packet sent
 	static idCVar *	netVerbose = NULL;
 	if ( netVerbose == NULL && cvarSystem != NULL ) {
 		netVerbose = cvarSystem->Find( "net_verbose" );
@@ -1629,7 +1629,7 @@ bool Sys_CompareNetAdrBase( const netadr_t a, const netadr_t b ) {
 ==================
 Simulated network conditions
 
-openQ4: each port's two delay lines (NetworkImpairment.h) replace the inherited lag
+openD3: each port's two delay lines (NetworkImpairment.h) replace the inherited lag
 queue, which held datagrams of at most 1400 bytes - a larger one was silently
 dropped while net_forceLatency was set - released sends only when another send
 came along, and had no jitter, reordering or duplication.

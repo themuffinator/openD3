@@ -5,7 +5,7 @@
  */
  #include "SDL_internal.h"
 +#if defined(SDL_VIDEO_DRIVER_WINDOWS) && !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
-+#include "../video/windows/SDL_openq4_text_provenance.h"
++#include "../video/windows/SDL_opend3_text_provenance.h"
 +#endif
  
  // General event handling code for SDL
@@ -42,7 +42,7 @@
  */
  #include "SDL_internal.h"
 +#if defined(SDL_VIDEO_DRIVER_WINDOWS) && !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
-+#include "../video/windows/SDL_openq4_text_provenance.h"
++#include "../video/windows/SDL_opend3_text_provenance.h"
 +#endif
  
  // General keyboard handling code for SDL
@@ -76,7 +76,7 @@
  #ifdef SDL_VIDEO_DRIVER_WINDOWS
  
  #include "SDL_windowsvideo.h"
-+#include "SDL_openq4_text_provenance.h"
++#include "SDL_opend3_text_provenance.h"
  #include "../../events/SDL_events_c.h"
  #include "../../events/SDL_touch_c.h"
  #include "../../events/scancodes_windows.h"
@@ -122,7 +122,7 @@
  #if defined(SDL_VIDEO_DRIVER_WINDOWS) && !defined(SDL_PLATFORM_XBOXONE) && !defined(SDL_PLATFORM_XBOXSERIES)
  
  #include "SDL_windowsvideo.h"
-+#include "SDL_openq4_text_provenance.h"
++#include "SDL_opend3_text_provenance.h"
  
  #include "../../events/SDL_keyboard_c.h"
  #include "../../events/scancodes_windows.h"

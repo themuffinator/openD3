@@ -1,7 +1,7 @@
 #version 450
 
 // Baked light-grid indirect diffuse. A port of
-// content/baseoq4/pak0/glprogs/lightgrid_indirect.vs, which
+// content/baseod3/pak0/glprogs/lightgrid_indirect.vs, which
 // RB_STD_LightGridIndirect draws on the OpenGL backend. The uniforms are split
 // between the push range (projection and texture matrices) and the 256-byte
 // LightGridBlock shared with lightgrid_indirect.frag; see that file for the

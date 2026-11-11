@@ -3,7 +3,7 @@
 
 #include <cmath>
 
-namespace openq4 {
+namespace opend3 {
 
 // Draw-only late-look policy shared by the input sampler and both game modules.
 // Nothing here is serialized, transmitted or written back into a usercmd: it
@@ -91,4 +91,4 @@ inline PresentationLookCorrection ComputePresentationLook(const PresentationLook
 	return out;
 }
 
-} // namespace openq4
+} // namespace opend3

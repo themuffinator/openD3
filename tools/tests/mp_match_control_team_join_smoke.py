@@ -20,14 +20,14 @@ from pathlib import Path
 from mp_round_remote_smoke import verify_runtime_is_current
 
 ROOT = Path(__file__).resolve().parents[2]
-STRINGS = ROOT / "content/baseoq4/pak0/strings/english_openq4.lang"
+STRINGS = ROOT / "content/baseod3/pak0/strings/english_opend3.lang"
 # Reports, and the two join requests between them, in the order they run.
 CHECKPOINTS = ("LOBBY", "OPEN", "REFUSED", "REBALANCED", "JOINED")
 MARKERS = ("LOBBY", "OPEN", "REFUSE", "REFUSED", "REBALANCED", "ALLOW", "JOINED")
 
 
 def checkpoint(name: str) -> list[str]:
-    return [f"echo MP_TEAMJOIN_{name.upper()}", "openq4_reportMPState", "openq4_matchControl report"]
+    return [f"echo MP_TEAMJOIN_{name.upper()}", "opend3_reportMPState", "opend3_matchControl report"]
 
 
 def english(key: str) -> str:
@@ -69,13 +69,13 @@ def main() -> int:
     args = parser.parse_args()
     runtime, output = args.runtime_dir.resolve(), args.output_dir.resolve()
     suffix = ".exe" if os.name == "nt" else ""
-    executable = args.executable_name or f"openQ4-client_x64{suffix}"
+    executable = args.executable_name or f"openD3-client_x64{suffix}"
     verify_runtime_is_current(runtime, executable)
     exe = runtime / executable
     if not exe.is_file() or not args.basepath.is_dir():
         parser.error("the runtime executable and installed Quake 4 assets are required")
     savepath = output / "save"
-    gamepath = savepath / "baseoq4"
+    gamepath = savepath / "baseod3"
     gamepath.mkdir(parents=True, exist_ok=True)
     # Each bot takes the side with fewer players: Strogg, Marine, Strogg. The
     # human (slot 0) and Rhodes (slot 2) are Marine; Cortez and Sledge Strogg.
@@ -83,13 +83,13 @@ def main() -> int:
         "addbot Cortez 3 exact", "waitMsec 400", "addbot Rhodes 3 exact", "waitMsec 400",
         "addbot Sledge 3 exact", "waitMsec 3000",
         *checkpoint("lobby"),
-        "openq4_matchControl open", "waitMsec 1500",
+        "opend3_matchControl open", "waitMsec 1500",
         *checkpoint("open"),
-        "echo MP_TEAMJOIN_REFUSE", "openq4_matchControl action team_join_strogg", "waitMsec 3000",
+        "echo MP_TEAMJOIN_REFUSE", "opend3_matchControl action team_join_strogg", "waitMsec 3000",
         *checkpoint("refused"),
         "kick 3", "waitMsec 2500",
         *checkpoint("rebalanced"),
-        "echo MP_TEAMJOIN_ALLOW", "openq4_matchControl action team_join_strogg", "waitMsec 3000",
+        "echo MP_TEAMJOIN_ALLOW", "opend3_matchControl action team_join_strogg", "waitMsec 3000",
         *checkpoint("joined"),
         "quit",
     ]
@@ -97,13 +97,13 @@ def main() -> int:
     cvars = {
         "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
         "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(savepath),
-        "fs_devpath": str(savepath), "fs_game": "baseoq4", "com_gameMode": "MP",
+        "fs_devpath": str(savepath), "fs_game": "baseod3", "com_gameMode": "MP",
         "r_fullscreen": "0", "r_borderless": "0", "r_fullscreenDesktop": "0",
         "r_borderlessDefaultMigrated": "1", "r_mode": "-1", "r_customWidth": "960",
         "r_customHeight": "540", "r_windowWidth": "960", "r_windowHeight": "540",
         "r_hiddenWindow": "1", "in_mouse": "0", "in_joystick": "0", "s_noSound": "1",
         "r_renderApi": "gl", "com_maxfps": "60", "r_swapInterval": "0",
-        "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1",
+        "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1",
         "net_port": "28851", "net_ip": "127.0.0.1", "net_enableIPv6": "0",
         "net_serverDedicated": "0", "net_LANServer": "1", "si_pure": "0",
         "si_maxPlayers": "8", "si_gameType": "Team DM", "si_warmup": "1", "si_useReady": "1",
@@ -130,7 +130,7 @@ def main() -> int:
             process.wait()
             code = -1
 
-    log_path = gamepath / "logs/openq4.log"
+    log_path = gamepath / "logs/opend3.log"
     log = log_path.read_text(encoding="utf-8", errors="replace") if log_path.is_file() else ""
     states = {name: snapshot(section(log, name)) for name in CHECKPOINTS}
     team_join = english("#str_42313")

@@ -26,7 +26,7 @@ def main() -> None:
     runner = read("tools/tests/macos_dedicated_server_smoke.py")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     platform_support = read("docs/dev/platform-support.md")
     plan = read("docs/dev/archive/2026-10-18/plan/2026-06-30-macos-compatibility-support.md")
     release_completion = read("docs/dev/release-completion.md")
@@ -34,7 +34,7 @@ def main() -> None:
 
     for token in (
         'sys.platform != "darwin"',
-        'f"openQ4-ded_{arch}"',
+        'f"openD3-ded_{arch}"',
         'f"game-mp_{arch}.dylib"',
         "executable.is_symlink()",
         "game_module.is_symlink()",
@@ -109,15 +109,15 @@ def main() -> None:
     # drops the callback-free native input facade for the client's driver. It
     # links only if it takes the facade back, and never takes the driver.
     meson = read("meson.build")
-    snapshot = meson.index("openq4_dedicated_sources = openq4_engine_sources")
-    facade = meson.index("openq4_dedicated_sources += files('src/framework/NativeInputDispatchDisabled.cpp')")
+    snapshot = meson.index("opend3_dedicated_sources = opend3_engine_sources")
+    facade = meson.index("opend3_dedicated_sources += files('src/framework/NativeInputDispatchDisabled.cpp')")
     driver = meson.index("'src/sys/sdl3/NativeInputDriver.cpp')")
     guard = meson.rindex("if dedicated_shares_client_sources", 0, facade)
     if not snapshot < guard < facade < driver:
         raise AssertionError("macOS dedicated server: take back the disabled native input facade after the client snapshot")
     # Sharing is the default every target without its own list inherits.
     require(meson[snapshot:snapshot + 120], "\n  dedicated_shares_client_sources = true\n", "dedicated targets share the client list by default")
-    for added in re.finditer(r"openq4_dedicated_sources\s*\+=\s*(files\([^)]*\)|\[[^\]]*\])", meson):
+    for added in re.finditer(r"opend3_dedicated_sources\s*\+=\s*(files\([^)]*\)|\[[^\]]*\])", meson):
         reject(added.group(1), "NativeInputDriver", "the dedicated server never links the client's native input driver")
     for platform in ("  if windows_gl_free_ded\n", "  if host_system == 'linux'\n"):
         block = meson[meson.index(platform, snapshot):facade]

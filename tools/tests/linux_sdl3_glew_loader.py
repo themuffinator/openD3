@@ -48,16 +48,16 @@ def validate_meson_selection() -> None:
 
     require(root_meson, "glew_default_options = fallback_opt", "root Meson GLEW defaults")
     require(root_meson, "if host_system == 'linux' and use_sdl3_backend", "root Meson Linux SDL3 branch")
-    require(root_meson, "glew_default_options += ['openq4_sdl3_loader=true']", "root Meson GLEW SDL3 loader option")
+    require(root_meson, "glew_default_options += ['opend3_sdl3_loader=true']", "root Meson GLEW SDL3 loader option")
     require(root_meson, "glew_sp = subproject('glew', default_options: glew_default_options)", "root Meson bundled GLEW selection")
     require(root_meson, "glew_dep = glew_sp.get_variable('glew_dep')", "root Meson bundled GLEW dependency")
-    require_before(root_meson, "glew_default_options += ['openq4_sdl3_loader=true']", "glew_sp = subproject('glew'", "root Meson GLEW option order")
+    require_before(root_meson, "glew_default_options += ['opend3_sdl3_loader=true']", "glew_sp = subproject('glew'", "root Meson GLEW option order")
 
-    require(glew_options, "'openq4_sdl3_loader'", "GLEW subproject option")
-    require(glew_options, "Use openQ4 SDL3 OpenGL proc-address lookup", "GLEW subproject option description")
+    require(glew_options, "'opend3_sdl3_loader'", "GLEW subproject option")
+    require(glew_options, "Use openD3 SDL3 OpenGL proc-address lookup", "GLEW subproject option description")
     require(glew_meson, "glew_c_args = ['-DGLEW_NO_GLU']", "GLEW subproject c_args")
-    require(glew_meson, "if get_option('openq4_sdl3_loader')", "GLEW subproject SDL3 option")
-    require(glew_meson, "glew_c_args += ['-DOPENQ4_GLEW_SDL3_LOADER']", "GLEW subproject SDL3 define")
+    require(glew_meson, "if get_option('opend3_sdl3_loader')", "GLEW subproject SDL3 option")
+    require(glew_meson, "glew_c_args += ['-DOPEND3_GLEW_SDL3_LOADER']", "GLEW subproject SDL3 define")
     require(glew_meson, "c_args: glew_c_args", "GLEW subproject c_args use")
 
 
@@ -66,22 +66,22 @@ def validate_glew_loader_hook() -> None:
         source = read(relative_path)
         glew_init = function_body(source, "GLenum GLEWAPIENTRY glewInit (void)")
 
-        require(source, "typedef void ( *openQ4GlewProcAddress_t ) (void);", f"{relative_path} openQ4 resolver typedef")
-        require(source, "extern openQ4GlewProcAddress_t OpenQ4_GlewGetProcAddress(const unsigned char *name);", f"{relative_path} openQ4 resolver declaration")
-        require(source, "#elif defined(OPENQ4_GLEW_SDL3_LOADER)\n#  define glewGetProcAddress(name) OpenQ4_GlewGetProcAddress(name)", f"{relative_path} openQ4 resolver macro")
-        require(glew_init, "#elif defined(OPENQ4_GLEW_SDL3_LOADER)\n  return r;", f"{relative_path} GLXEW skip for SDL3 loader")
-        require_before(glew_init, "#elif defined(OPENQ4_GLEW_SDL3_LOADER)\n  return r;", "#elif defined(_WIN32)", f"{relative_path} SDL3 loader avoids GLXEW init")
+        require(source, "typedef void ( *openD3GlewProcAddress_t ) (void);", f"{relative_path} openD3 resolver typedef")
+        require(source, "extern openD3GlewProcAddress_t openD3_GlewGetProcAddress(const unsigned char *name);", f"{relative_path} openD3 resolver declaration")
+        require(source, "#elif defined(OPEND3_GLEW_SDL3_LOADER)\n#  define glewGetProcAddress(name) openD3_GlewGetProcAddress(name)", f"{relative_path} openD3 resolver macro")
+        require(glew_init, "#elif defined(OPEND3_GLEW_SDL3_LOADER)\n  return r;", f"{relative_path} GLXEW skip for SDL3 loader")
+        require_before(glew_init, "#elif defined(OPEND3_GLEW_SDL3_LOADER)\n  return r;", "#elif defined(_WIN32)", f"{relative_path} SDL3 loader avoids GLXEW init")
 
 
 def validate_sdl3_backend_hook() -> None:
     # post-B5b the GLEW hook lives in the renderer-owned context seam TU and
     # resolves through the window services rather than direct SDL calls
     source = read("src/renderer/OpenGL/gl_ContextSDL3.cpp")
-    hook = function_body(source, 'extern "C" openQ4GlewProcAddress_t OpenQ4_GlewGetProcAddress(const unsigned char *name) {')
+    hook = function_body(source, 'extern "C" openD3GlewProcAddress_t openD3_GlewGetProcAddress(const unsigned char *name) {')
     extension_pointer = function_body(source, "void *GLimp_ExtensionPointer(const char *name) {")
 
-    require(source, "#if defined(OPENQ4_SDL3_LINUX_HOST)", "SDL3 Linux-only GLEW hook guard")
-    require(source, "typedef void ( *openQ4GlewProcAddress_t ) (void);", "SDL3 GLEW hook typedef")
+    require(source, "#if defined(OPEND3_SDL3_LINUX_HOST)", "SDL3 Linux-only GLEW hook guard")
+    require(source, "typedef void ( *openD3GlewProcAddress_t ) (void);", "SDL3 GLEW hook typedef")
     require(hook, "if (name == NULL || name[0] == '\\0') {", "SDL3 GLEW hook null-name guard")
     require(hook, 'SDL3_EnsureGLContextCurrent("GLEW proc lookup")', "SDL3 GLEW hook current-context guard")
     require(hook, "s_glWindowServices->GetGLProcAddress(reinterpret_cast<const char *>(name))", "SDL3 GLEW hook resolver")
@@ -92,7 +92,7 @@ def validate_sdl3_backend_hook() -> None:
     # compiling out both wglew halves (declarations and implementation)
     for relative_path in ("subprojects/glew/src/glew.c", "src/external/glew/glew.c"):
         glew_source = read(relative_path)
-        require(glew_source, "#elif defined(_WIN32) && !defined(OPENQ4_GLEW_SDL3_LOADER)", f"{relative_path} wglew gating")
+        require(glew_source, "#elif defined(_WIN32) && !defined(OPEND3_GLEW_SDL3_LOADER)", f"{relative_path} wglew gating")
 
 
 def validate_renderer_context_guard(source: str | None = None) -> None:
@@ -165,7 +165,7 @@ def validate_platform_context_contract() -> None:
     require(linux_dedicated, "Sys_GetDesktopResolution", "Linux dedicated desktop-resolution stub")
     require(
         backends["Linux dedicated GL stub"],
-        "OpenQ4_GlewGetProcAddress",
+        "openD3_GlewGetProcAddress",
         "Linux dedicated GLEW resolver stub",
     )
 
@@ -173,7 +173,7 @@ def validate_platform_context_contract() -> None:
 def validate_ci_smoke() -> None:
     push = read(".github/workflows/push-verification.yml")
     commit = read(".github/workflows/commit-validation.yml")
-    runner = read("tools/validation/openq4_validate.py")
+    runner = read("tools/validation/opend3_validate.py")
 
     require(push, "tools/tests/linux_sdl3_glew_loader.py", "push verification workflow")
     require(push, "python tools/tests/linux_sdl3_glew_loader.py", "push script-smoke regression check")

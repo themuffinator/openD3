@@ -14,7 +14,7 @@
 #include "DocumentEdit.h"
 #include "Hud.h"
 
-namespace openq4::ui {
+namespace opend3::ui {
 
 // The retained library owns layout in physical pixels. Engine conversion to
 // its 640x480 submission space happens only at the final drawing boundary.
@@ -467,4 +467,4 @@ private:
 	std::unique_ptr<Impl> impl;
 };
 
-} // namespace openq4::ui
+} // namespace opend3::ui

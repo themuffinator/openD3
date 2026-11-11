@@ -10,7 +10,7 @@
 #include <memory>
 #include <set>
 
-using namespace openq4::ui;
+using namespace opend3::ui;
 static unsigned checks = 0;
 static void Check(bool value, const char* message) {
 	++checks; if (!value) { std::fprintf(stderr,"FAIL: %s\n",message); std::exit(1); }
@@ -67,7 +67,7 @@ static Json::Value Slider(Json::Value& source, const char* id, const char* state
 // All semantic parts are real, explicitly authored canonical elements. None is
 // a synthetic hit rectangle or a host widget; Runtime/RmlUi own layout and paint.
 static std::string Source() {
-	Json::Value source; source["format"]="openq4-ui"; source["version"]=1; source["id"]="value-runtime";
+	Json::Value source; source["format"]="opend3-ui"; source["version"]=1; source["id"]="value-runtime";
 	for (const auto& [name,value]:std::map<std::string,Json::Value>{{"flag",false},{"mixed",false},{"level",1.05},{"verticalLevel",1.0},{"choice",0},{"thirdEnabled",false}}) {
 		source["state"][name]["type"]=value.isBool()?"boolean":"number"; source["state"][name]["initial"]=value;
 	}
@@ -119,7 +119,7 @@ static std::string Source() {
 	return Text(source);
 }
 static std::string ScrollSource(bool normalFlow, bool nested = false, bool clipped = false) {
-	Json::Value source; source["format"]="openq4-ui"; source["version"]=1; source["id"]="scroll-runtime";
+	Json::Value source; source["format"]="opend3-ui"; source["version"]=1; source["id"]="scroll-runtime";
 	source["state"]["flag"]["type"]="boolean"; source["state"]["flag"]["initial"]=false;
 	auto root=Box("root",0,0,640,400), body=Box("body",20,30,240,100), content=Box("body-content",0,0,220,320);
 	body["properties"]["overflow"]=Typed("keyword","auto"); Colour(body,{.1,.1,.1,1});

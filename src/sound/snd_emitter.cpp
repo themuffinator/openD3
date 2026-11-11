@@ -63,9 +63,9 @@ static const int Q4_SOUND_CHANNEL_RADIO_CHATTER = 10;
 static const float SOUND_FREQUENCY_SHIFT_MIN = 0.25f;
 static const float SOUND_FREQUENCY_SHIFT_MAX = 4.0f;
 static const float SOUND_ENVIROSUIT_OCCLUSION = 0.5f;
-// openQ4: heavier than the enviro suit - water swallows high frequencies far more than a helmet
+// openD3: heavier than the enviro suit - water swallows high frequencies far more than a helmet
 static const float SOUND_UNDERWATER_OCCLUSION = 0.75f;
-// openQ4: sound crossing the water surface. Most of the energy hitting an air/water boundary is
+// openD3: sound crossing the water surface. Most of the energy hitting an air/water boundary is
 // reflected rather than transmitted, which is why a world above the surface goes distant and dull
 // the moment your head goes under - and why a pump running underwater is suddenly the loudest
 // thing you can hear.
@@ -879,7 +879,7 @@ void idSoundChannel::UpdateVolume( int currentTime )
 		const float distance = noOcclusion ? emitter->directDistance : emitter->spatializedDistance;
 		SoundWorldApplyDistanceFalloff( volumeScale, distance, parms.minDistance, parms.maxDistance );
 
-		// OpenQ4 keeps the SDK's SSF_IS_VO name for bit 13; retail uses the same bit to bypass
+		// openD3 keeps the SDK's SSF_IS_VO name for bit 13; retail uses the same bit to bypass
 		// this extra speaker/radio attenuation pass.
 		if( ( parms.soundShaderFlags & SSF_IS_VO ) == 0 && ReceivesQuake4ExtraAttenuation( this ) )
 		{
@@ -1067,7 +1067,7 @@ void idSoundChannel::UpdateHardware( float volumeAdd, int currentTime )
 	hardwareVoice->SetReverbSource( soundSystemLocal.reverb.SlotForArea( emitter->lastValidPortalArea ), reverbRoomMB,
 		reverbOcclusionMB, leadinSample->NumChannels() == 1 );
 
-	// openQ4: a surface between the emitter and the ear is a far stronger barrier than a doorway
+	// openD3: a surface between the emitter and the ear is a far stronger barrier than a doorway
 	float liquidOcclusion = 0.0f;
 	if( emitter->crossesLiquidBoundary && ( parms.soundShaderFlags & SSF_NO_OCCLUSION ) == 0 )
 	{
@@ -1075,7 +1075,7 @@ void idSoundChannel::UpdateHardware( float volumeAdd, int currentTime )
 	}
 
 	hardwareVoice->SetOcclusion( liquidOcclusion );
-	// openQ4: the enviro suit and being underwater both muffle the mix; take whichever is heavier
+	// openD3: the enviro suit and being underwater both muffle the mix; take whichever is heavier
 	// rather than letting one cancel the other out
 	float environmentMuffle = soundWorld->enviroSuitActive ? SOUND_ENVIROSUIT_OCCLUSION : 0.0f;
 	if( !global && soundWorld->underwaterActive && SOUND_UNDERWATER_OCCLUSION > environmentMuffle )
@@ -1462,7 +1462,7 @@ void idSoundEmitterLocal::Update( int currentTime )
 		}
 		if( useOcclusion && s_useOcclusion.GetBool() )
 		{
-			// openQ4: does this sound have to cross a liquid surface to reach the ear? Asked here
+			// openD3: does this sound have to cross a liquid surface to reach the ear? Asked here
 			// because this is already the per-emitter geometry step, and it is the same thread.
 			if( soundWorld->liquidTest != NULL )
 			{

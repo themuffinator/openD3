@@ -4,7 +4,7 @@
 #include "../../framework/NativeInputDispatch.h"
 #include "../../ui/application/NativeTextCollectionCoordinator.h"
 
-namespace openq4 {
+namespace opend3 {
 class NativeInputDriver;
 // Production Windows implementation uses the exact retained controller/source.
 // No callback may destroy/rebind these collaborators during a driver call.
@@ -101,4 +101,4 @@ private:
     bool sessionScope=false;
     bool sessionNativeSeen=false,mouseNativeSeen=false,keyboardNativeSeen=false;
 };
-} // namespace openq4
+} // namespace opend3

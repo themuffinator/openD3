@@ -53,7 +53,7 @@ def main():
              'src/sys/sdl3/NativeQueueBatch.h', 'src/sys/sdl3/NativeQueueBatch.cpp',
              'src/ui/retained/TextInput.h', 'src/ui/retained/TextInput.cpp',
              'src/sys/EventQueueContinuity.h', 'tools/tests/native/NativeEventDispositionTest.cpp',
-             'subprojects/packagefiles/sdl3/include/SDL3/SDL_openq4_native_fence.h',
+             'subprojects/packagefiles/sdl3/include/SDL3/SDL_opend3_native_fence.h',
              'tools/tests/native_event_disposition.py', 'tools/tests/sdl3_clipboard_status.py', 'subprojects/sdl3.wrap',
              'tools/tests/native/NativeRouteAccountingTest.cpp', args.test_source]
     before = {name: sha(ROOT/name) for name in names}

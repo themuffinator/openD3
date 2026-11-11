@@ -100,7 +100,7 @@ struct idStr : std::string {
     int Cmp(const char* other) const { return std::strcmp(c_str(), other); }
 };
 template<typename T> static T Min(T a, T b) { return a < b ? a : b; }
-namespace openq4 { static int sessionChanges = 0; static void NativeInputBeforeSessionChange() { ++sessionChanges; } }
+namespace opend3 { static int sessionChanges = 0; static void NativeInputBeforeSessionChange() { ++sessionChanges; } }
 template<typename T> struct idList : std::vector<T> {
     using std::vector<T>::vector;
     int Num() const { return static_cast<int>(this->size()); }
@@ -148,9 +148,9 @@ struct idCampaignContentInfo { bool ready = true, present = true; idStr missing;
 #define MAX_STRING_CHARS 1024
 static const int MAX_ASYNC_CLIENTS = 32;
 #define BASE_GAMEDIR "q4base"
-#define OPENQ4_GAMEDIR "baseoq4"
+#define OPEND3_GAMEDIR "baseod3"
 struct idFile {};
-struct idModInfo { idStr directory, displayName, version, releaseDate, website, author, requiredopenQ4Version, listLabel; };
+struct idModInfo { idStr directory, displayName, version, releaseDate, website, author, requiredopenD3Version, listLabel; };
 struct idDict {
     std::map<std::string, std::string> values;
     const char* GetString(const char* key, const char* fallback = "") const { const auto found = values.find(key); return found == values.end() ? fallback : found->second.c_str(); }
@@ -193,7 +193,7 @@ struct FileSystem {
         std::snprintf(buffer, length, "%s", found == screenshots.end() ? "gfx/guis/loadscreens/generic.tga" : found->second.c_str());
     }
     idCampaignContentInfo GetAwakeningContentInfo() { return {}; }
-    std::string activeGameDir = "baseoq4";
+    std::string activeGameDir = "baseod3";
     const char* GetActiveGameDir() const { return activeGameDir.c_str(); }
     // The installed mods, and how often their list was made and freed.
     struct ModList {
@@ -518,7 +518,7 @@ struct idServerScan {
         if (!favorites.erase(address)) favorites.insert(address);
         ++revision; return true;
     }
-    idUserInterface* menu = nullptr; std::vector<std::string> mods = {"All", "baseoq4"}; int mod = 0;
+    idUserInterface* menu = nullptr; std::vector<std::string> mods = {"All", "baseod3"}; int mod = 0;
     void UpdateFilterByMod(int direction) {
         calls.push_back("UpdateFilterByMod " + std::to_string(direction));
         mod = (mod + static_cast<int>(mods.size()) + direction) % static_cast<int>(mods.size());
@@ -859,7 +859,7 @@ static idSessionLocal Session(bool gate, bool inGame = false) {
     systemCanReturn = true;
     fileSystemObject.files = std::set<std::string>(std::begin(DOCUMENTS), std::end(DOCUMENTS)); arenaCampaign = ArenaCampaign{};
     fileSystemObject.gameDirFiles.clear(); fileSystemObject.opens = fileSystemObject.closes = 0; cvarSystemObject = CVarSystem{};
-    fileSystemObject.activeGameDir = "baseoq4"; fileSystemObject.modList = {}; fileSystemObject.modLists = fileSystemObject.modFrees = 0;
+    fileSystemObject.activeGameDir = "baseod3"; fileSystemObject.modList = {}; fileSystemObject.modLists = fileSystemObject.modFrees = 0;
     legacyMissing.clear(); legacyEventsMissing.clear(); reloaded.clear(); describedShot = "savegames/quick.tga"; mapDecls.clear();
     fileSystemObject.screenshots.clear();
     saveSlots.clear(); driveSpace = 1000;
@@ -952,7 +952,7 @@ int main() {
         s.HandleRetainedSessionRequest(s.guiMainMenu, "quit");
         CHECK(commonObject.quits == 0 && legacyActions.empty());
         s.ReportRetainedScreens();
-        CHECK(commonObject.output.find("OPENQ4_RETAINED enabled=0 system=0 multiplayer=0 welcome=0 home=- title=0 pause=0 strogg=0 handoff=0 release=0 mp=- views=0 stock=-") != std::string::npos);
+        CHECK(commonObject.output.find("OPEND3_RETAINED enabled=0 system=0 multiplayer=0 welcome=0 home=- title=0 pause=0 strogg=0 handoff=0 release=0 mp=- views=0 stock=-") != std::string::npos);
         // Off, the campaign selectors are the stock ones and nothing retained loads.
         s.OpenCampaignSelector(false); CHECK(arenaCampaign.selectors == 1 && managerObject.loads.empty());
         s.OpenCampaignSelector(true); CHECK((managerObject.loads == std::vector<std::string>{"guis/campaign_menu.gui"}));
@@ -1423,9 +1423,9 @@ int main() {
         auto s = Session(true); s.PreloadRetainedScreens(); s.UpdateRetainedHome(); auto* title = s.guiRetainedHome;
         auto mod = [](const char* dir, const char* name, const char* version) {
             idModInfo m; m.directory = dir; m.displayName = name; m.version = version; m.author = "Raven"; m.releaseDate = "2005";
-            m.requiredopenQ4Version = "0.11"; return m;
+            m.requiredopenD3Version = "0.11"; return m;
         };
-        fileSystemObject.modList.mods = {mod("baseoq4", "openQ4", "0.13"), mod("q4xbase", "", "1.0"), mod("dmplus", "DM Plus", "2.1")};
+        fileSystemObject.modList.mods = {mod("baseod3", "openD3", "0.13"), mod("q4xbase", "", "1.0"), mod("dmplus", "DM Plus", "2.1")};
         cvarSystemObject.strings["fs_game"] = "q4xbase";
         s.HandleRetainedSessionRequest(title, "mods");
         CHECK(legacyActions.empty() && title->named.back() == "modsModalShow" && s.played.back() == "play main_menu_selection");
@@ -1650,7 +1650,7 @@ int main() {
                                  idDict{{{"path", "mp/q4dm5"}, {"DM", "1"}}}};
         fileSystemObject.screenshots["mp/q4dm5"] = "gfx/guis/loadscreens/q4dm5";
         fileSystemObject.files.insert("gfx/guis/loadscreens/q4dm5.tga");
-        cvarSystemObject.strings = {{"si_gameType", "DM"}, {"si_map", "mp/q4dm5"}, {"si_name", "openQ4 Server"}, {"si_fragLimit", "20"},
+        cvarSystemObject.strings = {{"si_gameType", "DM"}, {"si_map", "mp/q4dm5"}, {"si_name", "openD3 Server"}, {"si_fragLimit", "20"},
                                     {"si_maxPlayers", "8"}, {"si_minPlayers", "2"}, {"si_teamDamage", "1"}, {"g_mapCycle", "mapcycle"},
                                     {"bot_skill", "9"}, {"g_password", "hunter2"}};
         s.PreloadRetainedScreens(); s.UpdateRetainedHome();
@@ -1677,7 +1677,7 @@ int main() {
         CHECK(s.retainedLevelshots.Num() == 0 && latePrecaches == late);
         CHECK(std::count(precached.begin(), precached.end(), std::string("gfx/guis/loadscreens/q4dm5")) == 1);
         CHECK(create->state["create.gametype"] == "0" && create->state["create.fraglimit"] == "20" && create->state["create.maxplayers"] == "8" &&
-              create->state["create.teamdamage"] == "1" && create->state["create.botskill"] == "5" && create->state["create.name"] == "openQ4 Server");
+              create->state["create.teamdamage"] == "1" && create->state["create.botskill"] == "5" && create->state["create.name"] == "openD3 Server");
         CHECK(create->state["create.password"] == "hunter2" && create->state["create.rconpassword"] == "" && create->state["create.mapcycle"] == "mapcycle");
         CHECK(create->state["create.map_count"] == "2" && create->state["create.map0"] == "#str_q4dm1" && create->state["create.map1"] == "mp/q4dm5" &&
               create->state["create.map2"] == "" && create->state["create.map_selected"] == "1" &&
@@ -1928,7 +1928,7 @@ int main() {
         commonObject.time += 4000; s.UpdateRetainedNotices(); commonObject.time += 200; s.UpdateRetainedNotices();
         CHECK(s.retainedNotices.empty() && join->state["notice.0.shown"] == "0");
         // MOD's spinner shows the next and the previous mod.
-        s.HandleRetainedSessionRequest(join, "joinModNext"); CHECK(scan.calls.back() == "UpdateFilterByMod 1" && join->state["join.mod"] == "baseoq4");
+        s.HandleRetainedSessionRequest(join, "joinModNext"); CHECK(scan.calls.back() == "UpdateFilterByMod 1" && join->state["join.mod"] == "baseod3");
         s.HandleRetainedSessionRequest(join, "joinModPrevious"); CHECK(scan.calls.back() == "UpdateFilterByMod -1" && join->state["join.mod"] == "All");
         // The filter row: each tag toggles its filter, which the session
         // publishes as the tag's state; the spinner steps the game type round
@@ -2290,7 +2290,7 @@ int main() {
         CHECK((Stock(title) == std::vector<std::string>{"guis/menu/title.q4ui"}));
     }
     {   // A mod's own copy of a stock loading screen stays; the stock screens of
-        // openQ4, the stock game and the Awakening are replaced.
+        // openD3, the stock game and the Awakening are replaced.
         auto s = Session(true); idUserInterface splevel("guis/loading/splevel.gui"), mplevel("guis/loading/mplevel.gui");
         cvarSystemObject.strings["fs_game"] = "mymod";
         fileSystemObject.gameDirFiles["mymod"] = {"guis/loading/splevel.gui"};
@@ -2302,7 +2302,7 @@ int main() {
         cvarSystemObject.strings["fs_game"] = "mymod"; cvarSystemObject.strings["fs_game_base"] = "mybase";
         fileSystemObject.gameDirFiles["mybase"] = {"guis/loading/intro.gui"};
         CHECK(based.SelectRetainedLoadingGui(&intro, false) == &intro);  // the mod's own base supplies it
-        for (const char* firstParty : {"baseoq4", "q4base", "q4xbase", "Q4XBASE"}) {
+        for (const char* firstParty : {"baseod3", "q4base", "q4xbase", "Q4XBASE"}) {
             auto own = Session(true); idUserInterface generic("guis/loading/generic.gui");
             cvarSystemObject.strings["fs_game"] = firstParty; fileSystemObject.gameDirFiles[firstParty] = {"guis/loading/generic.gui"};
             CHECK(own.SelectRetainedLoadingGui(&generic, false) != &generic && fileSystemObject.opens == 0);
@@ -2532,7 +2532,7 @@ int main() {
         // page's verbs run the campaign's own commands; Back plays the page's half
         // and Single Player returns at 300 ms onto ARENA.
         // In the campaign's game directory and module: no reload first.
-        const auto home = [] { cvarSystemObject.strings["fs_game"] = "baseoq4"; cvarSystemObject.strings["com_activeGameModule"] = "game_sp"; };
+        const auto home = [] { cvarSystemObject.strings["fs_game"] = "baseod3"; cvarSystemObject.strings["com_activeGameModule"] = "game_sp"; };
         auto s = Session(true); home(); s.OpenCampaignSelector(false); auto* page = s.guiActive;
         CHECK(page->state["from_arena"] == "0");
         s.HandleRetainedSessionRequest(page, "campaignArena");
@@ -2542,7 +2542,7 @@ int main() {
         commonObject.time += 349; s.UpdateRetainedSubpage(); CHECK(arenaCampaign.browsers == 0);
         commonObject.time += 1; s.UpdateRetainedSubpage();
         CHECK(arenaCampaign.browsers == 1 && s.retainedSubpageFrom == nullptr && s.retainedSubpageKind != RETAINED_SUBPAGE_ARENA &&
-              commonObject.output.find("CAMPAIGN_SELECTED id=arena gameDir=baseoq4") != std::string::npos);
+              commonObject.output.find("CAMPAIGN_SELECTED id=arena gameDir=baseod3") != std::string::npos);
         // The campaign presents the page (idArenaCampaign::OpenBrowser).
         auto* arena = s.RetainedArenaPage();
         CHECK(arena && std::string(arena->Name()) == "guis/menu/arena.q4ui" && s.RetainedArenaGui() == arena);
@@ -2608,7 +2608,7 @@ int main() {
         // each one works there; ui_retainedSystem opts into it until it falls back.
         const bool complete = RETAINED_SYSTEM_MISSING_SETTINGS[0] == NULL && RETAINED_SYSTEM_INCOMPLETE_SETTINGS[0] == NULL;
         auto s = Session(true); CHECK(s.RetainedSystemAvailable() == complete);
-        s.ReportRetainedScreens(); CHECK(commonObject.output.find(complete ? "OPENQ4_RETAINED enabled=1 system=1 multiplayer=" : "OPENQ4_RETAINED enabled=1 system=0 multiplayer=") != std::string::npos);
+        s.ReportRetainedScreens(); CHECK(commonObject.output.find(complete ? "OPEND3_RETAINED enabled=1 system=1 multiplayer=" : "OPEND3_RETAINED enabled=1 system=0 multiplayer=") != std::string::npos);
         auto off = Session(false); CHECK(!off.RetainedSystemAvailable());
         ui_retainedSystem.value = true; CHECK(s.RetainedSystemAvailable() && off.RetainedSystemAvailable());
         s.retainedStock.Append("guis/menu/settings/system.q4ui"); CHECK(!s.RetainedSystemAvailable());
@@ -2622,7 +2622,7 @@ int main() {
         auto s = Session(true); CHECK(s.RetainedAudioAvailable());
         // The sound system's list, its items quoted with backslash escapes.
         audioDeviceNames = "\"Default device (Realtek)\";\"Speakers\";\"Headset \\\"Pro\\\"\"";
-        audioDeviceValues = "\"__OPENQ4_DEFAULT_AUDIO_DEVICE__\";\"Speakers (Realtek)\";\"Headset \\\"Pro\\\";USB\"";
+        audioDeviceValues = "\"__OPEND3_DEFAULT_AUDIO_DEVICE__\";\"Speakers (Realtek)\";\"Headset \\\"Pro\\\";USB\"";
         for (const auto& [cvar, value] : std::map<std::string, std::string>{{"s_volume", "0.7"}, {"s_musicVolume", "0.4"},
                  {"s_dialogueVolume", "1"}, {"s_useOpenAL", "1"}, {"s_deviceName", "Headset \"Pro\";USB"}, {"s_useEAXReverb", "1"},
                  {"s_numberOfSpeakers", "6"}, {"s_openALHRTF", "2"}, {"ui_subtitles", "1"}, {"ui_subtitleScale", "1.5"},
@@ -2646,9 +2646,9 @@ int main() {
         s.HandleRetainedSessionRequest(page, "audioDevice 1");
         CHECK(cvarSystemObject.strings["s_deviceName"] == "Speakers (Realtek)" && s.played.back() == "sound drivar" && page->state["audio.device"] == "1");
         s.HandleRetainedSessionRequest(page, "audioDevice 0");
-        CHECK(cvarSystemObject.strings["s_deviceName"] == "__OPENQ4_DEFAULT_AUDIO_DEVICE__" && page->state["audio.device"] == "0");
+        CHECK(cvarSystemObject.strings["s_deviceName"] == "__OPEND3_DEFAULT_AUDIO_DEVICE__" && page->state["audio.device"] == "0");
         s.played.clear(); s.HandleRetainedSessionRequest(page, "audioDevice 3"); s.HandleRetainedSessionRequest(page, "audioDevice -1");
-        CHECK(cvarSystemObject.strings["s_deviceName"] == "__OPENQ4_DEFAULT_AUDIO_DEVICE__" && (s.played == std::vector<std::string>{"play main_menu_selection", "play main_menu_selection"}));
+        CHECK(cvarSystemObject.strings["s_deviceName"] == "__OPEND3_DEFAULT_AUDIO_DEVICE__" && (s.played == std::vector<std::string>{"play main_menu_selection", "play main_menu_selection"}));
         s.HandleRetainedSessionRequest(page, "audioEax 0");
         CHECK(cvarSystemObject.strings["s_useEAXReverb"] == "0" && s.played.back() == "sound eax" && page->state["audio.eax"] == "0");
         s.HandleRetainedSessionRequest(page, "audioSpeakers 1");
@@ -3582,7 +3582,7 @@ STOCK_SYSTEM_PAGE_CONTROLS = {'set_sys_section_choice'}
 
 def stock_system_settings() -> set[str]:
     """Every setting the stock SYSTEM page offers a control for."""
-    gui = (ROOT / 'content/baseoq4/pak0/guis/menu/settings/system.gui').read_text(encoding='utf-8', errors='replace')
+    gui = (ROOT / 'content/baseod3/pak0/guis/menu/settings/system.gui').read_text(encoding='utf-8', errors='replace')
     gui = re.sub(r'/\*.*?\*/', '', re.sub(r'//[^\n]*', '', gui), flags=re.S)
     settings = set()
     definitions = list(re.finditer(r'\b(?:windowDef|choiceDef|sliderDef|editDef|listDef|bindDef)\s+(\w+)', gui))
@@ -3622,7 +3622,7 @@ OPERATION_RESETS = {'settings.system.display': {'r_mode', 'r_displayRefresh'},
 
 
 def retained_system_document() -> dict:
-    text = (ROOT / 'content/baseoq4/pak0/guis/menu/settings/system.q4ui').read_text(encoding='utf-8')
+    text = (ROOT / 'content/baseod3/pak0/guis/menu/settings/system.q4ui').read_text(encoding='utf-8')
     return json.loads(re.sub(r'^\s*//.*$', '', text, flags=re.M))
 
 
@@ -3933,7 +3933,7 @@ def check_strogg_faces(compiler: str, directory: Path) -> int:
                       function_body(host, 'static std::uint32_t RuneScalar(') + FACES_MAIN, encoding='utf-8')
     subprocess.run([compiler, '-std=c++20', '-Wall', '-Wextra', str(source), '-o', str(binary)], check=True)
     shipped = set()
-    for table in (ROOT / 'content/baseoq4/pak0/strings').glob('*.lang'):
+    for table in (ROOT / 'content/baseod3/pak0/strings').glob('*.lang'):
         shipped.update(ord(ch) for ch in table.read_text(encoding='utf-8'))
     scalars = sorted(shipped | {s for s in range(0x20, 0x10000) if not 0xD800 <= s <= 0xDFFF})
     result = subprocess.run([str(binary)], input='\n'.join(map(str, scalars)), capture_output=True, text=True, timeout=60, check=True)
@@ -3941,7 +3941,7 @@ def check_strogg_faces(compiler: str, directory: Path) -> int:
     families = dict(line.split()[1:] for line in lines if line.startswith('family '))
     assert families == {'marine': 'marine', 'lowpixel': 'lowpixel', 'profont': 'profont', 'r_strogg': 'r_strogg', 'strogg': 'strogg',
                         'chain': 'chain', 'Marine': 'chain', 'unknown': 'chain'}, families
-    runes = font_code_points(ROOT / 'content/baseoq4/pak0/fonts/strogg.ttf')
+    runes = font_code_points(ROOT / 'content/baseod3/pak0/fonts/strogg.ttf')
     folded = dict(tuple(map(int, line.split())) for line in lines if not line.startswith('family '))
     assert set(folded) == set(scalars)
     missing = sorted(hex(s) for s, f in folded.items() if f != 0x20 and f not in runes)
@@ -4197,7 +4197,7 @@ def check_server_card(compiler: str, directory: Path) -> None:
     sys.path.insert(0, str(ROOT / 'tools/ui'))
     import build_retained_screens as layout
     card_width = layout.U * 250 - 30
-    for table in sorted((ROOT / 'content/baseoq4/pak0/strings').glob('*_openq4.lang')):
+    for table in sorted((ROOT / 'content/baseod3/pak0/strings').glob('*_opend3.lang')):
         text = table.read_text(encoding='utf-8')
         lines = {key: re.search(rf'"{key}"\s+"([^"]*)"', text) for key in ('#str_230070', '#str_230071', '#str_230072')}
         assert all(lines.values()), f'{table.name} lacks the server card roster lines'
@@ -4634,7 +4634,7 @@ def check_prompt_glyphs(compiler: str, directory: Path) -> None:
                     return first['args'][1], False
         return None
     documents, shoulders, swapping = 0, 0, 0
-    for path in sorted((ROOT / 'content/baseoq4/pak0/guis').rglob('*.q4ui')):
+    for path in sorted((ROOT / 'content/baseod3/pak0/guis').rglob('*.q4ui')):
         document = json.loads(re.sub(r'^\s*//.*$', '', path.read_text(encoding='utf-8'), flags=re.M))
         if generator.PROMPT_GLYPHS not in document.get('state', {}):
             continue
@@ -4734,7 +4734,7 @@ def check_loading_hold(compiler: str, directory: Path) -> None:
     assert 'retained->HandleNamedEvent( "present" );' in function_body(menu, 'idUserInterface *idSessionLocal::SelectRetainedLoadingGui(')
     # The loading document's hand-off: the whole screen fades over the
     # session's hand-off time, and present makes it whole again.
-    text = (ROOT / 'content/baseoq4/pak0/guis/loading/loading.q4ui').read_text(encoding='utf-8')
+    text = (ROOT / 'content/baseod3/pak0/guis/loading/loading.q4ui').read_text(encoding='utf-8')
     document = json.loads(re.sub(r'^\s*//.*$', '', text, flags=re.M))
     handoff_ms = int(re.search(r'RETAINED_LOADING_HANDOFF_MSEC = (\d+);', menu).group(1))
     timelines = {timeline['id']: timeline for timeline in document['timelines']}
@@ -4818,7 +4818,7 @@ def check_retained_match(menu: str) -> None:
     # the rule value up to the largest value a rule takes, which the adapter
     # and the session both allow.
     assert re.search(r'RETAINED_MP_MATCH_SCOPES\[\] = \{ "global", "side" \};', menu)
-    stock_page = (ROOT / 'content/baseoq4/pak0/guis/matchcontrol.gui').read_text(encoding='utf-8')
+    stock_page = (ROOT / 'content/baseod3/pak0/guis/matchcontrol.gui').read_text(encoding='utf-8')
     assert 'choices\t"#str_41794"' in stock_page and 'values\t"global;side"' in stock_page
     assert 'strcmp( scope, "global" ) == 0' in handler and 'strcmp( scope, "side" ) == 0' in handler
     assert [key for key, _value in cards.MATCH_SCOPES] == ['#str_41738', '#str_41739']
@@ -4892,7 +4892,7 @@ def check_retained_match(menu: str) -> None:
     protocol = (ROOT / 'src/mpgame/mp/match/MatchProtocol.cpp').read_text(encoding='utf-8')
     descriptors = dict(re.findall(r'\{ MP_MATCH_OP_\w+, "(\w+)",\s+MP_MATCH_LOCALIZATION_OPERATION_\w+,\s+(MP_MATCH_LOCALIZATION_\w+),', protocol))
     assert len(descriptors) == protocol.count('{ MP_MATCH_OP_'), 'every protocol descriptor reads'
-    stock = (ROOT / 'content/baseoq4/pak0/guis/matchcontrol.gui').read_text(encoding='utf-8')
+    stock = (ROOT / 'content/baseod3/pak0/guis/matchcontrol.gui').read_text(encoding='utf-8')
     for name, token, _accessible, body in cards.MATCH_ACTIONS:
         confirmed = descriptors[prefixes[name]] != 'MP_MATCH_LOCALIZATION_NONE'
         assert (body is not None) == confirmed == token.startswith('arm_'), (name, token, confirmed)
@@ -4998,7 +4998,7 @@ def check_create_server(menu: str) -> None:
     # Nothing of the stock page is missing, so the page is the default.
     missing = re.search(r'RETAINED_CREATE_SERVER_MISSING\[\] = \{([^}]*)\};', text).group(1)
     assert missing.strip() == 'NULL', missing
-    document = json.loads(re.sub(r'^\s*//.*$', '', (ROOT / 'content/baseoq4/pak0/guis/menu/createserver.q4ui').read_text(encoding='utf-8'), flags=re.M))
+    document = json.loads(re.sub(r'^\s*//.*$', '', (ROOT / 'content/baseod3/pak0/guis/menu/createserver.q4ui').read_text(encoding='utf-8'), flags=re.M))
     assert {'createBanList', 'createBanPick', 'createBanRemove'} <= set(document['actions'])
     assert re.search(r'RETAINED_CREATE_BAN_ROWS = (\d+);', text).group(1) == str(create.BAN_ROWS)
     # Retail's session commands for the stock page: the player counts' guards
@@ -5063,7 +5063,7 @@ def check_join_game(menu: str) -> None:
     assert [(verb, order.index(sort)) for verb, sort in sorts] == [(verb, sort) for _c, sort, _k, _l, _w, verb in join.COLUMNS], sorts
     assert order.index('SORT_NONE') == 11  # the page marks no column for it
     adapter = (ROOT / 'src/ui/UserInterfaceRetained.cpp').read_text(encoding='utf-8', errors='replace')
-    document = json.loads(re.sub(r'^\s*//.*$', '', (ROOT / 'content/baseoq4/pak0/guis/menu/joingame.q4ui').read_text(encoding='utf-8'), flags=re.M))
+    document = json.loads(re.sub(r'^\s*//.*$', '', (ROOT / 'content/baseod3/pak0/guis/menu/joingame.q4ui').read_text(encoding='utf-8'), flags=re.M))
     commands = {action['arguments']['command'] for action in document['actions'].values() if action['operation'] == 'session.menu'}
     # The page's own verbs, and the session's notice layer's (section 13.13).
     shared = {f'noticeAction{slot}' for slot in range(3)}
@@ -5075,7 +5075,7 @@ def check_join_game(menu: str) -> None:
         node = pending.pop()
         nodes.add(node['id'])
         pending += node.get('children', [])
-    legacy_menu = (ROOT / 'content/baseoq4/pak0/guis/mainmenu.gui').read_text(encoding='utf-8', errors='replace')
+    legacy_menu = (ROOT / 'content/baseod3/pak0/guis/mainmenu.gui').read_text(encoding='utf-8', errors='replace')
     stock = set()
     for match in re.finditer(r'windowDef (mp_b_browse_\w+)\s*\{', legacy_menu):
         following = legacy_menu.find('windowDef ', match.end())
@@ -5121,7 +5121,7 @@ def check_join_game(menu: str) -> None:
     # document defines the card on join.detail, and each row names its row.
     assert re.search(r'RETAINED_JOIN_DETAIL_PLAYERS = (\d+);', text).group(1) == str(join.DETAIL_PLAYERS)
     assert re.search(r'RETAINED_JOIN_DETAIL_SETTINGS = (\d+);', text).group(1) == str(join.DETAIL_SETTINGS)
-    page = json.loads(re.sub(r'^\s*//.*$', '', (ROOT / 'content/baseoq4/pak0/guis/menu/joingame.q4ui').read_text(encoding='utf-8'), flags=re.M))
+    page = json.loads(re.sub(r'^\s*//.*$', '', (ROOT / 'content/baseod3/pak0/guis/menu/joingame.q4ui').read_text(encoding='utf-8'), flags=re.M))
     assert page['detail'] == {'state': 'join.detail', 'card': 'join-detail', 'none': -1}, page['detail']
     rows = {}
     stack = [page['root']]
@@ -5147,7 +5147,7 @@ def check_retained_multiplayer(menu: str, session: str) -> None:
             '\treturn ui_retainedMultiplayer.GetBool() || ( Session_RetainedScreensEnabled() && missing[0] == NULL );') in menu.replace('\r\n', '\n')
     sys.path.insert(0, str(ROOT / 'tools' / 'ui'))
     import retained_mp_menus
-    text = (ROOT / 'content/baseoq4/pak0/guis/menu/mp_escape.q4ui').read_text(encoding='utf-8')
+    text = (ROOT / 'content/baseod3/pak0/guis/menu/mp_escape.q4ui').read_text(encoding='utf-8')
     document = json.loads(re.sub(r'^\s*//.*$', '', text, flags=re.M))
     # A page is missing while it hands off to its stock page.
     handoffs = {name[len('stock_'):] for name in document['events'] if name.startswith('stock_')}
@@ -5157,7 +5157,7 @@ def check_retained_multiplayer(menu: str, session: str) -> None:
     assert listed == handoffs, f'RETAINED_MP_ESCAPE_MISSING_PAGES lists {sorted(listed)}; the card hands off {sorted(handoffs)}'
     pages = re.search(r'RETAINED_MP_STOCK_PAGES\[\] = \{([^}]*)\};', menu).group(1)
     assert re.findall(r'"([a-z_]+)"', pages) == [window for _ident, _key, window in retained_mp_menus.ESCAPE_TABS]
-    stock_menu = (ROOT / 'content/baseoq4/pak0/guis/mpmain.gui').read_text(encoding='utf-8', errors='replace')
+    stock_menu = (ROOT / 'content/baseod3/pak0/guis/mpmain.gui').read_text(encoding='utf-8', errors='replace')
     for window in re.findall(r'"([a-z_]+)"', pages):
         assert f'windowDef {window}\n' in stock_menu.replace('\r\n', '\n'), f'the stock menu has no {window}'
     for index, (ident, _key, _window) in enumerate(retained_mp_menus.ESCAPE_TABS):
@@ -5166,7 +5166,7 @@ def check_retained_multiplayer(menu: str, session: str) -> None:
             assert event == [{'op': 'setState', 'values': {'card.stock_page': index}}, {'op': 'action', 'action': 'mpStockPage'}], ident
     # The Welcome card: its missing pages are its hand-offs, and each presses
     # the join panel's button for its page.
-    welcome_text = (ROOT / 'content/baseoq4/pak0/guis/menu/mp_welcome.q4ui').read_text(encoding='utf-8')
+    welcome_text = (ROOT / 'content/baseod3/pak0/guis/menu/mp_welcome.q4ui').read_text(encoding='utf-8')
     welcome_document = json.loads(re.sub(r'^\s*//.*$', '', welcome_text, flags=re.M))
     welcome_handoffs = {name[len('stock_'):] for name in welcome_document['events'] if name.startswith('stock_')}
     welcome_missing = re.search(r'RETAINED_MP_WELCOME_MISSING_PAGES\[\] = \{([^}]*)\};', menu).group(1)
@@ -5277,9 +5277,9 @@ def check_retained_multiplayer(menu: str, session: str) -> None:
         menu_event.index('menuCommand = card->HandleEvent(')
     typing = function_body(menu, 'bool idSessionLocal::RetainedSummaryChatEvent(')
     assert 'DispatchCommand( guiActive, "chatmessage" );' in typing and 'RETAINED_SUMMARY_CHAT_LIMIT' in typing
-    gui_text = (ROOT / 'content/baseoq4/pak0/guis/summary.gui').read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n')
+    gui_text = (ROOT / 'content/baseod3/pak0/guis/summary.gui').read_text(encoding='utf-8', errors='replace').replace('\r\n', '\n')
     assert 'onNamedEvent oq4_chatFocus {\n\t\tsetfocus "chat_enter" ;' in gui_text and 'onNamedEvent oq4_chatBlur {' in gui_text
-    summary_text = (ROOT / 'content/baseoq4/pak0/guis/menu/mp_summary.q4ui').read_text(encoding='utf-8')
+    summary_text = (ROOT / 'content/baseod3/pak0/guis/menu/mp_summary.q4ui').read_text(encoding='utf-8')
     summary_document = json.loads(re.sub(r'^\s*//.*$', '', summary_text, flags=re.M))
     assert summary_document['events']['onBack'] == [{'op': 'action', 'action': 'mpClose'}]
     assert summary_document['events']['summary_chat'] == [{'op': 'action', 'action': 'mpSummaryChat'}]
@@ -5511,7 +5511,7 @@ def main() -> int:
     assert 'guiMainMenu->SetStateBool( "retainedAudio", RetainedAudioAvailable() );' in menu
     audio_route = function_body(menu, 'void idSessionLocal::OpenRetainedAudioRoute(')
     assert 'UI_RunLegacyWindowAction( guiMainMenu, "set_b_audio", false, command )' in audio_route
-    stock_menu = (ROOT / 'content/baseoq4/pak0/guis/mainmenu.gui').read_text(encoding='utf-8', errors='replace')
+    stock_menu = (ROOT / 'content/baseod3/pak0/guis/mainmenu.gui').read_text(encoding='utf-8', errors='replace')
     audio_button = stock_menu[stock_menu.index('windowDef set_b_audio'):]
     audio_action = audio_button[audio_button.index('onAction'):audio_button.index('windowDef', 1)]
     assert 'if ("gui::retainedAudio" == 1) {' in audio_action and 'set "cmd" "openRetainedAudio" ;' in audio_action
@@ -5521,7 +5521,7 @@ def main() -> int:
     adapter_audio = [verb for verb in cpp_allowlist(adapter, 'bool SessionMenuValueCommand(') if verb.startswith('audio')]
     assert set(adapter_audio) == set(audio_verbs) and len(adapter_audio) == len(audio_verbs) == 12
     assert [verb for _section, _heading, rows in retained_audio.SECTIONS for _kind, _ident, _label, verb, _state, _extra in rows] == audio_verbs
-    audio_document = json.loads(re.sub(r'^\s*//.*$', '', (ROOT / 'content/baseoq4/pak0/guis/menu/settings/audio.q4ui').read_text(encoding='utf-8'), flags=re.M))
+    audio_document = json.loads(re.sub(r'^\s*//.*$', '', (ROOT / 'content/baseod3/pak0/guis/menu/settings/audio.q4ui').read_text(encoding='utf-8'), flags=re.M))
     assert audio_document['canvas']['height'] == 720 and audio_document['actions']['back'] == {'operation': 'session.menu', 'arguments': {'command': 'audioBack'}}
     for verb in audio_verbs:
         assert audio_document['actions'][verb]['operation'] == 'session.menuValue' and \
@@ -5550,7 +5550,7 @@ def main() -> int:
     game_verbs = re.findall(r'"(game[A-Za-z]+)"', re.search(r'RETAINED_GAME_VERBS\[\] = \{([^}]*)\};', menu).group(1))
     adapter_game = [verb for verb in cpp_allowlist(adapter, 'bool SessionMenuValueCommand(') if verb.startswith('game')]
     assert game_verbs == list(retained_game.VERBS) and sorted(adapter_game) == sorted(game_verbs)
-    game_document = json.loads(re.sub(r'^\s*//.*$', '', (ROOT / 'content/baseoq4/pak0/guis/menu/settings/game.q4ui').read_text(encoding='utf-8'), flags=re.M))
+    game_document = json.loads(re.sub(r'^\s*//.*$', '', (ROOT / 'content/baseod3/pak0/guis/menu/settings/game.q4ui').read_text(encoding='utf-8'), flags=re.M))
     assert game_document['canvas']['height'] == 720 and game_document['actions']['back'] == {'operation': 'session.menu', 'arguments': {'command': 'gameBack'}}
     for verb in game_verbs:
         assert game_document['actions'][verb]['arguments'] == {'command': verb, 'value': {'input': 'value'}}, verb
@@ -5559,7 +5559,7 @@ def main() -> int:
                     'MainMenuPublishCrosshair( guiMainMenu, 0 );', 'ApplyMainMenuCorpseTimeChoice( guiMainMenu );',
                     'HandleMainMenuCommands( "reloadLanguage ; reloadGuis" );'):
         assert applied in game_request, applied
-    stock_game = (ROOT / 'content/baseoq4/pak0/guis/menu/settings/game.gui').read_text(encoding='utf-8', errors='replace')
+    stock_game = (ROOT / 'content/baseod3/pak0/guis/menu/settings/game.gui').read_text(encoding='utf-8', errors='replace')
     stock_languages = re.search(r'values\s+"(english;[^"]+)"', stock_game).group(1).split(';')
     assert re.findall(r'"([a-z]+)"', re.search(r'RETAINED_GAME_LANGUAGES\[\] = \{([^}]*)\};', menu).group(1)) == stock_languages
     assert len(stock_languages) == retained_game.LANGUAGES
@@ -5601,11 +5601,11 @@ def main() -> int:
     assert re.search(r'if \( "gui::retainedControls" == 1 \) \{\s*set "set_b_controls::visible" "1" ;\s*'
                      r'namedevent "p_btns::hideSetControls" ;', arrival)
     import retained_controls
-    stock_controls = (ROOT / 'content/baseoq4/pak0/guis/menu/settings/controls.gui').read_text(encoding='utf-8', errors='replace')
+    stock_controls = (ROOT / 'content/baseod3/pak0/guis/menu/settings/controls.gui').read_text(encoding='utf-8', errors='replace')
     stock_bindings = [binding.strip('"') for binding in re.findall(r'bindDef\s+\w+\s*\{[^}]*?\bbind\s+("[^"]+"|\S+)', stock_controls)]
     session_bindings = re.findall(r'"([^"]+)"', re.search(r'RETAINED_CONTROLS_BINDINGS\[\] = \{([^}]*)\};', menu).group(1))
     assert list(retained_controls.BINDINGS) == stock_bindings == session_bindings and len(stock_bindings) == 49
-    controls_document = json.loads(re.sub(r'^\s*//.*$', '', (ROOT / 'content/baseoq4/pak0/guis/menu/settings/controls.q4ui').read_text(encoding='utf-8'), flags=re.M))
+    controls_document = json.loads(re.sub(r'^\s*//.*$', '', (ROOT / 'content/baseod3/pak0/guis/menu/settings/controls.q4ui').read_text(encoding='utf-8'), flags=re.M))
     assert [controls_document['state'][f'controls.{row}.keys']['keyBinding'] for row in range(49)] == session_bindings
     controls_publish = function_body(menu, 'void idSessionLocal::PublishRetainedControls(')
     assert controls_publish.index('gui->SetKeyBindingNames();') < controls_publish.index('retainedControlsCapture >= 0') < controls_publish.index('gui->StateChanged(')
@@ -5640,7 +5640,7 @@ def main() -> int:
     page_sections = [(verb, ident) for ident, _key, verb in retained_settings_page.SECTIONS if verb]
     assert [(verb, ident) for verb, ident, _dest in session_sections] == page_sections
     assert {ident: int(dest) for _verb, ident, dest in session_sections} == {'controls': 4, 'game': 21, 'display': 22, 'audio': 36}
-    settings_document = json.loads(re.sub(r'^\s*//.*$', '', (ROOT / 'content/baseoq4/pak0/guis/menu/settings.q4ui').read_text(encoding='utf-8'), flags=re.M))
+    settings_document = json.loads(re.sub(r'^\s*//.*$', '', (ROOT / 'content/baseod3/pak0/guis/menu/settings.q4ui').read_text(encoding='utf-8'), flags=re.M))
     assert {name: action['arguments']['command'] for name, action in settings_document['actions'].items()
          if action['operation'] == 'session.menu' and not name.startswith('notice')} == \
         {**{verb: verb for verb, _ident in page_sections}, 'back': 'settingsBack', 'settingsDefaults': 'settingsDefaults'}
@@ -5670,7 +5670,7 @@ def main() -> int:
             '\t\t\tconst char *section = left == 14 ? "join" : left == 17 ? "create" : left == 18 ? "setup" : NULL;\n'
             '\t\t\tif ( !OpenRetainedMultiplayerPage( section ) && guiMainMenu != NULL ) {\n'
             '\t\t\t\tguiMainMenu->HandleNamedEvent( "openMultiplayerStock" );') in main_menu
-    legacy_menu = (ROOT / 'content/baseoq4/pak0/guis/mainmenu.gui').read_text(encoding='utf-8', errors='replace')
+    legacy_menu = (ROOT / 'content/baseod3/pak0/guis/mainmenu.gui').read_text(encoding='utf-8', errors='replace')
     assert legacy_menu.count('set "cmd" "multiplayerOpen" ;') == 4
     for leaving in ('anim_mpSetOut', 'anim_mpBrowseOut', 'anim_mpFriendsOut', 'anim_mpCreateOut'):
         start = legacy_menu.index(f'windowDef {leaving}\n')
@@ -5775,7 +5775,7 @@ def main() -> int:
     assert session.count('guiRetainedReleasing->Redraw(') == 1
     release_ms = int(re.search(r'static const int RETAINED_RELEASE_MSEC = (\d+);', menu).group(1))
     for name in ('pause', 'pause_strogg'):
-        text = (ROOT / f'content/baseoq4/pak0/guis/menu/{name}.q4ui').read_text(encoding='utf-8')
+        text = (ROOT / f'content/baseod3/pak0/guis/menu/{name}.q4ui').read_text(encoding='utf-8')
         document = json.loads(re.sub(r'^\s*//.*$', '', text, flags=re.M))
         release = next(item for item in document['timelines'] if item['id'] == 'release')
         assert release['durationMs'] == release_ms, name
@@ -5794,7 +5794,7 @@ def main() -> int:
     assert arsenal_count == 20 and 'if ( numIcons >= 20 ) {' in icon_body
     publish = function_body(session, 'void idSessionLocal::PublishRetainedLoadingIcon(')
     assert 'guiLoading->HandleNamedEvent( va( "arsenal%d", index ) );' in publish and '!retainedLoadingActive' in publish
-    loading_text = (ROOT / 'content/baseoq4/pak0/guis/loading/loading.q4ui').read_text(encoding='utf-8')
+    loading_text = (ROOT / 'content/baseod3/pak0/guis/loading/loading.q4ui').read_text(encoding='utf-8')
     loading_doc = json.loads(re.sub(r'^\s*//.*$', '', loading_text, flags=re.M))
     fades = [item for item in loading_doc['timelines'] if item['id'].startswith('arsenal')]
     assert sorted(item['id'] for item in fades) == sorted(f'arsenal{index}' for index in range(1, arsenal_count + 1))
@@ -5829,7 +5829,7 @@ def main() -> int:
                         ('joingame', 'subpageLeave'), ('demos', 'subpageLeave'),
                         *[('settings', enter) for *_rest, enter in settings_subpages],
                         *[(f'settings/{page}', 'subpageLeave') for page in ('controls', 'game', 'system', 'audio')]):
-        text = (ROOT / f'content/baseoq4/pak0/guis/menu/{name}.q4ui').read_text(encoding='utf-8')
+        text = (ROOT / f'content/baseod3/pak0/guis/menu/{name}.q4ui').read_text(encoding='utf-8')
         document = json.loads(re.sub(r'^\s*//.*$', '', text, flags=re.M))
         timelines = {item['id']: item for item in document['timelines']}
         assert timelines[event]['durationMs'] == waits['DEEPER' if event.startswith('subpageEnter') else 'BACK'], name
@@ -5846,7 +5846,7 @@ def main() -> int:
                   if item['id'] == 'rest' or item['id'].startswith('crumbRest') for track in item['tracks']}
         assert moved <= rested, (name, sorted(moved - rested))
     reversals = sorted(int(item['id'][len('subpageReverse'):]) for item in json.loads(re.sub(r'^\s*//.*$', '',
-        (ROOT / 'content/baseoq4/pak0/guis/menu/singleplayer.q4ui').read_text(encoding='utf-8'), flags=re.M))['timelines']
+        (ROOT / 'content/baseod3/pak0/guis/menu/singleplayer.q4ui').read_text(encoding='utf-8'), flags=re.M))['timelines']
         if item['id'].startswith('subpageReverse'))
     assert reversals == [150, 200, 250, 300], reversals
     saving = function_body(session, 'bool idSessionLocal::SaveGame(')
@@ -5877,12 +5877,12 @@ def main() -> int:
     settings_sections = menu[menu.index('RETAINED_SETTINGS_SECTIONS[] = {'):menu.index('RETAINED_SETTINGS_SECTION_COUNT')]
     handled |= set(re.findall(r'\{ "(settings[A-Za-z]*)",', settings_sections))
     assert allowlist == handled, f'allowlist {sorted(allowlist)} differs from session handlers {sorted(handled)}'
-    for relative in ('content/baseoq4/pak0/guis/menu/title.q4ui', 'content/baseoq4/pak0/guis/menu/pause.q4ui',
-                     'content/baseoq4/pak0/guis/menu/pause_strogg.q4ui', 'content/baseoq4/pak0/guis/loading/loading.q4ui',
-                     'content/baseoq4/pak0/guis/menu/singleplayer.q4ui', 'content/baseoq4/pak0/guis/menu/campaigns.q4ui',
-                     'content/baseoq4/pak0/guis/menu/mp_escape.q4ui', 'content/baseoq4/pak0/guis/menu/campaign_skill.q4ui',
-                     'content/baseoq4/pak0/guis/menu/chapters.q4ui',
-                     'content/baseoq4/pak0/guis/menu/mp_summary.q4ui', 'content/baseoq4/pak0/guis/menu/loadgame.q4ui'):
+    for relative in ('content/baseod3/pak0/guis/menu/title.q4ui', 'content/baseod3/pak0/guis/menu/pause.q4ui',
+                     'content/baseod3/pak0/guis/menu/pause_strogg.q4ui', 'content/baseod3/pak0/guis/loading/loading.q4ui',
+                     'content/baseod3/pak0/guis/menu/singleplayer.q4ui', 'content/baseod3/pak0/guis/menu/campaigns.q4ui',
+                     'content/baseod3/pak0/guis/menu/mp_escape.q4ui', 'content/baseod3/pak0/guis/menu/campaign_skill.q4ui',
+                     'content/baseod3/pak0/guis/menu/chapters.q4ui',
+                     'content/baseod3/pak0/guis/menu/mp_summary.q4ui', 'content/baseod3/pak0/guis/menu/loadgame.q4ui'):
         text = (ROOT / relative).read_text(encoding='utf-8')
         document = json.loads(re.sub(r'^\s*//.*$', '', text, flags=re.M))
         # The 4:3 canvas shrinks to a narrower view's width: every menu fits

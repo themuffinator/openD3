@@ -53,26 +53,26 @@ def main():
     args = parser.parse_args()
     runtime = args.runtime.resolve()
     arch = "arm64" if platform.machine().lower() in ("aarch64", "arm64") else "x64"
-    executable = runtime / (f"openQ4-client_{arch}" + (".exe" if os.name == "nt" else ""))
+    executable = runtime / (f"openD3-client_{arch}" + (".exe" if os.name == "nt" else ""))
     if not executable.is_file():
         parser.error(f"Missing client: {executable}")
     output = (args.output or ROOT / ".tmp/android-gles-smoke" / f"{args.render_api}-{args.mode}-{time.time_ns()}").resolve()
     output.mkdir(parents=True, exist_ok=False)
     save = output / "save"
-    game = save / "baseoq4"
+    game = save / "baseod3"
     game.mkdir(parents=True)
     screenshot = game / "screenshots/android-gles-smoke.tga"
     (game / "android-gles-smoke.cfg").write_text(
         'gfxInfo\nr_actualRenderApi\nrendererTierSelfTest\n'
         'screenshot "screenshots/android-gles-smoke.tga"\n'
-        'echo OPENQ4_SMOKE_DONE\nquit\n', encoding="utf-8")
+        'echo OPEND3_SMOKE_DONE\nquit\n', encoding="utf-8")
     cvars = {
         "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(save),
-        "fs_cachepath": str(output / "cache"), "fs_game": "baseoq4",
+        "fs_cachepath": str(output / "cache"), "fs_game": "baseod3",
         "r_renderApi": "vulkan" if args.render_api == "vk" else args.render_api,
         "r_renderer": "glesd3" if args.render_api == "gles" else "arb2",
         "r_mode": "-1", "r_customWidth": "960", "r_customHeight": "540",
-        "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1",
+        "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1",
         "com_skipIntroVideos": "1", "com_skipLoadingContinue": "1",
         "g_autoSkipCinematics": "1", "g_autoScreenshot": "0",
         "g_autoExecAfterMapLoad": "android-gles-smoke.cfg",
@@ -101,10 +101,10 @@ def main():
             exit_code = result.returncode
         except subprocess.TimeoutExpired:
             timed_out, exit_code = True, -1
-    log_path = game / "logs/openq4.log"
+    log_path = game / "logs/opend3.log"
     log = log_path.read_text(encoding="utf-8", errors="replace") if log_path.exists() else ""
     screenshot_check = inspect_screenshot(screenshot)
-    complete = "OPENQ4_SMOKE_DONE" in log and all(
+    complete = "OPEND3_SMOKE_DONE" in log and all(
         screenshot_check[key] for key in ("valid", "nonBlack", "colorVariation"))
     active_match = re.search(r'"r_actualRenderApi" is:"([^"\r\n]+)"', log)
     active_api = active_match.group(1) if active_match else None

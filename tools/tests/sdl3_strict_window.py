@@ -34,7 +34,7 @@ SUPPORT = r'''
 #include <map>
 #include <string>
 #include <vector>
-#define OPENQ4_RENDERER_MODULE_ONLY
+#define OPEND3_RENDERER_MODULE_ONLY
 #include "src/renderer/RenderModuleAPI.h"
 #include "src/sys/DisplayModeRule.h"
 using SDL_DisplayID=unsigned;

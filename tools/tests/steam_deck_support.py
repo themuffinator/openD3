@@ -63,7 +63,7 @@ def validate_launcher_templates() -> None:
     relative_path = "assets/linux/openD3-steamdeck.in"
     launcher = read(relative_path)
     require(launcher, 'export OPEND3_STEAMDECK="${OPEND3_STEAMDECK:-1}"', relative_path)
-    require(launcher, 'if [ "${OPEND3_FORCE_X11:-${OPENQ4_FORCE_X11:-0}}" = "1" ]; then', relative_path)
+    require(launcher, 'if [ "${OPEND3_FORCE_X11:-${OPEND3_FORCE_X11:-0}}" = "1" ]; then', relative_path)
     require(launcher, "export SDL_VIDEO_DRIVER=x11", relative_path)
     require(launcher, "export SDL_VIDEODRIVER=x11", relative_path)
     require(launcher, 'exec "$SCRIPT_DIR/@OPEND3_CLIENT_BINARY@" +set com_platformProfile steamdeck +set r_fullscreen 0 "$@"', relative_path)
@@ -101,8 +101,8 @@ def validate_common_profile_detection() -> None:
     for token in (
         '"OPEND3_STEAMDECK"',
         '"OPEND3_AUTODETECT_STEAMDECK"',
-        '"OPENQ4_STEAMDECK"',
-        '"OPENQ4_AUTODETECT_STEAMDECK"',
+        '"OPEND3_STEAMDECK"',
+        '"OPEND3_AUTODETECT_STEAMDECK"',
         '"SteamDeck"',
         '"STEAM_DECK"',
         '"STEAMDECK"',
@@ -121,8 +121,8 @@ def validate_common_profile_detection() -> None:
     require(automatic, 'com_platformProfile.GetString(), "default"', "automatic platform profile default gate")
     require(automatic, '"OPEND3_DISABLE_STEAMDECK_AUTODETECT"', "automatic platform profile disable knob")
     require(automatic, '"OPEND3_NO_STEAMDECK_AUTODETECT"', "automatic platform profile disable knob")
-    require(automatic, '"OPENQ4_DISABLE_STEAMDECK_AUTODETECT"', "automatic platform profile migration alias")
-    require(automatic, '"OPENQ4_NO_STEAMDECK_AUTODETECT"', "automatic platform profile migration alias")
+    require(automatic, '"OPEND3_DISABLE_STEAMDECK_AUTODETECT"', "automatic platform profile migration alias")
+    require(automatic, '"OPEND3_NO_STEAMDECK_AUTODETECT"', "automatic platform profile migration alias")
     require(automatic, "Common_HasSteamDeckHostSignal()", "automatic platform profile host signal")
     require(automatic, 'com_platformProfile.SetString( "steamdeck" );', "automatic platform profile assignment")
     require(profile_name, 'sanitized.Icmp( "steamdeck" )', "platform profile allow-list")
@@ -158,8 +158,8 @@ def validate_filesystem_discovery() -> None:
         '"Prey"',
     ):
         require(steam, token, "optional Prey Steam install discovery")
-    reject(source, '"OPENQ4_QUAKE4_PATH"', "Quake 4 install discovery")
-    reject(source, '"OPENQ4_QUAKE4_ROOT"', "Quake 4 install discovery")
+    reject(source, '"OPEND3_QUAKE4_PATH"', "Quake 4 install discovery")
+    reject(source, '"OPEND3_QUAKE4_ROOT"', "Quake 4 install discovery")
     require_order(automatic, "FS_BuildRegistryInstallCandidates", "FS_BuildKnownInstallCandidates", "CD-era discovery precedence")
     require_order(automatic, "FS_BuildKnownInstallCandidates", "FS_BuildSteamInstallCandidates", "legacy install discovery precedence")
     require(source, 'FS_LogPathList( "Steam Prey install candidates", candidates );', "Steam discovery logging")
@@ -223,7 +223,7 @@ def validate_sdl3_input_and_lifecycle() -> None:
     require(finger, "in_touchscreen.GetBool()", "touchscreen route cvar")
     require(finger, "SDL_EVENT_FINGER_CANCELED", "touchscreen cancel handling")
     require(finger, "SDL3_SetRoutedCursorFromWindowPosition", "touchscreen cursor routing")
-    require(finger, "openQ4_AcceptingLoadingContinueInput()", "touchscreen loading-continue routing")
+    require(finger, "openD3_AcceptingLoadingContinueInput()", "touchscreen loading-continue routing")
     require(finger, "SDL3_QueueMouseButtonEvent(K_MOUSE1", "touchscreen tap queueing")
 
     for token in (
@@ -276,7 +276,7 @@ def validate_sdl3_input_and_lifecycle() -> None:
         require(foreground, token, "SDL3 foreground transition")
 
     require(perf, "SDL3_IsSteamDeckPlatformProfile()", "Steam Deck performance defaults")
-    require(perf, "OPENQ4_GLOBAL_DEFAULT_MAXFPS = 240", "Steam Deck performance defaults")
+    require(perf, "OPEND3_GLOBAL_DEFAULT_MAXFPS = 240", "Steam Deck performance defaults")
     require(perf, "com_maxfps.SetInteger(deckFrameCap);", "Steam Deck performance defaults")
     require(startup, "SDL3_ApplySteamDeckPerformanceDefaults();", "SDL3 startup performance defaults")
     require(startup, 'cmdSystem->AddCommand("listControllers"', "SDL3 controller diagnostics command")
@@ -329,7 +329,7 @@ def validate_menu_and_docs() -> None:
 
 
 def validate_packaging_metadata_checks() -> None:
-    runner = read("tools/validation/openq4_validate.py")
+    runner = read("tools/validation/opend3_validate.py")
     packager = read("tools/build/package_nightly.py")
     staged = python_function_body(runner, "def validate_linux_steamdeck_launcher(path: Path, root: Path, client_candidates: list[Path]) -> None:")
     packaged = python_function_body(packager, "def validate_linux_steamdeck_launcher(path: Path, expected_client: str) -> None:")
@@ -360,7 +360,7 @@ def validate_couch_profile() -> None:
     """The Couch viewing profile (ui-visual-design.md 13.2) shares the platform
     profile machinery: Big Picture (SteamTenfoot) picks it on anything but a
     Steam Deck, and its config raises the interface, text and HUD scales."""
-    profile = read("content/baseoq4/pak0/openq4_profile_couch.cfg")
+    profile = read("content/baseod3/pak0/opend3_profile_couch.cfg")
     for token in (
         'seta in_joystick "1"',
         'seta ui_retainedScale "1.5"',
@@ -372,20 +372,20 @@ def validate_couch_profile() -> None:
     host_signal = function_body(source, "static bool Common_HasCouchHostSignal( void ) {")
     automatic = function_body(source, "void idCommonLocal::ApplyAutomaticPlatformProfile( void ) {")
     profile_name = function_body(source, "static idStr Common_BuildPlatformProfileConfigName( const char *profileName ) {")
-    for token in ('"OPENQ4_COUCH"', '"OPENQ4_AUTODETECT_COUCH"', '"SteamTenfoot"'):
+    for token in ('"OPEND3_COUCH"', '"OPEND3_AUTODETECT_COUCH"', '"SteamTenfoot"'):
         require(host_signal, token, "Couch host signal detection")
     require(automatic, 'com_platformProfile.SetString( "couch" );', "automatic Couch profile assignment")
     require_order(automatic, 'com_platformProfile.SetString( "steamdeck" );', "Common_HasCouchHostSignal()",
                   "a Steam Deck keeps the Handheld profile in Big Picture")
     require(profile_name, 'sanitized.Icmp( "couch" )', "platform profile allow-list")
-    require(read("tools/build/check_staged_content_edits.py"), '"openq4_profile_couch.cfg"', "stale loose profile pruning")
+    require(read("tools/build/check_staged_content_edits.py"), '"opend3_profile_couch.cfg"', "stale loose profile pruning")
     require(read("docs/user/display-settings.md"), "com_platformProfile couch", "Couch profile player docs")
 
 
 def validate_ci_smoke() -> None:
     push = read(".github/workflows/push-verification.yml")
     commit = read(".github/workflows/commit-validation.yml")
-    runner = read("tools/validation/openq4_validate.py")
+    runner = read("tools/validation/opend3_validate.py")
 
     require(push, "tools/tests/steam_deck_support.py", "push workflow Python compile list")
     require(push, "python tools/tests/steam_deck_support.py", "push script-smoke regression check")

@@ -1,4 +1,4 @@
-// Copyright (C) 2026 openQ4 contributors. GPL-3.0-or-later.
+// Copyright (C) 2026 openD3 contributors. GPL-3.0-or-later.
 #pragma once
 #include <atomic>
 #include <cassert>

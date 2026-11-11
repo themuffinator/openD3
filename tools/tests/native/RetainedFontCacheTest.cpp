@@ -8,7 +8,7 @@
 #include <limits>
 #include <set>
 
-using namespace openq4::fonts;
+using namespace opend3::fonts;
 static unsigned checks = 0;
 static void Check(bool ok, const char* message) {
 	++checks; if (!ok) { std::fprintf(stderr,"FAIL: %s\n",message); std::exit(1); }

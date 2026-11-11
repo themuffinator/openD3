@@ -52,7 +52,7 @@ bool R_TemporalPresentation_TemporalAARequested( void );
 // The history slot of the view being prepared: 1 for a VR frame's right eye, else 0 (VR-05).
 int R_TemporalPresentation_HistorySlot( void );
 bool R_TemporalPresentation_ScreenSpaceEffectsRequested( void );
-// openQ4 VR: the presentation extent follows the eye or virtual-screen target
+// openD3 VR: the presentation extent follows the eye or virtual-screen target
 // the front end is rendering to (idRenderSystem::SetVRRenderTarget).
 void R_TemporalPresentation_SetVRExtent( int width, int height );
 // backend: a VR target command restores the state its target was built with

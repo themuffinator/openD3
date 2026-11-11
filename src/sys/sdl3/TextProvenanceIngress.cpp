@@ -3,17 +3,17 @@
 #include "../../ui/retained/TextInputBrokerWire.h"
 #include <algorithm>
 
-#if defined(OPENQ4_SDL_TEXT_PROVENANCE)
-#include <SDL3/SDL_openq4_text_provenance.h>
+#if defined(OPEND3_SDL_TEXT_PROVENANCE)
+#include <SDL3/SDL_opend3_text_provenance.h>
 #endif
 
-namespace openq4::ui {
+namespace opend3::ui {
 namespace {
 bool Fail(std::string& error, const char* message) { error = message; return false; }
 }
 
 bool TextProvenanceSupported() {
-#if defined(OPENQ4_SDL_TEXT_PROVENANCE)
+#if defined(OPEND3_SDL_TEXT_PROVENANCE)
 	return true;
 #else
 	return false;
@@ -22,7 +22,7 @@ bool TextProvenanceSupported() {
 
 bool ImportTextProvenanceRecord(const OQ4_TextRecord& native,
 	std::string_view copiedUtf8, TextNativeRecord& out, std::string& error) {
-#if defined(OPENQ4_SDL_TEXT_PROVENANCE)
+#if defined(OPEND3_SDL_TEXT_PROVENANCE)
 	if (native.version != 1 || !native.sequence || !native.window_lifetime || !native.window_id ||
 		native.text_bytes != copiedUtf8.size() || copiedUtf8.size() > TextInputMaxBytes)
 		return Fail(error, "Invalid native text record version, length or window identity");
@@ -112,4 +112,4 @@ TextMarkerConsumption TextMarkerLedger::Consume(std::uint32_t association, TextN
 	return TextMarkerConsumption::Failed;
 }
 
-} // namespace openq4::ui
+} // namespace opend3::ui

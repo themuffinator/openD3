@@ -1,6 +1,6 @@
 // Composition qualification fixture. Matching panels at full and half group opacity.
 {
-  "format":"openq4-ui",
+  "format":"opend3-ui",
   "version":1,
   "id":"composition-smoke",
   "tokens":{
@@ -636,6 +636,6 @@
   "timelines":[],
   "editor":{"zoom":1,"selection":["panel"]},
   "extensions":{
-    "openq4.fixture":{"productionDesign":false,"interactive":false,"nativeVectors":true,"coverageAntialiasingQualified":false}
+    "opend3.fixture":{"productionDesign":false,"interactive":false,"nativeVectors":true,"coverageAntialiasingQualified":false}
   }
 }

@@ -3,7 +3,7 @@
 #include <atomic>
 #include <limits>
 
-namespace openq4 {
+namespace opend3 {
 namespace {
 constexpr std::array<NativeDispositionPass,4> SessionFirstOrder{
     NativeDispositionPass::SessionInitial, NativeDispositionPass::MousePoll,
@@ -311,9 +311,9 @@ bool NativeEventDispositionLedger::QueryRetirement(NativeDispositionRetirement& 
     out = {receipt, issued, inFlight ? plannedInFlight : 0};
     return true;
 }
-} // namespace openq4
+} // namespace opend3
 
-bool openq4::NativeEventDispositionLedger::QueryProgress(NativeDispositionProgress& out) const noexcept {
+bool opend3::NativeEventDispositionLedger::QueryProgress(NativeDispositionProgress& out) const noexcept {
     if(std::this_thread::get_id()!=thread || calling || !planned || !translationClosed ||
         (phase!=Phase::Delivering && phase!=Phase::Complete && !(phase==Phase::Between && passesComplete)))return false;
     NativeDispositionProgress value;value.receipt=receipt;value.pass=currentPass;
@@ -328,7 +328,7 @@ bool openq4::NativeEventDispositionLedger::QueryProgress(NativeDispositionProgre
     out=value;return true;
 }
 
-bool openq4::NativeEventDispositionLedger::DisposeTakenAfterRetirement(NativeDispositionTicket ticket) noexcept {
+bool opend3::NativeEventDispositionLedger::DisposeTakenAfterRetirement(NativeDispositionTicket ticket) noexcept {
     if(std::this_thread::get_id()!=thread || calling || phase!=Phase::Retired || !PlannedTicketMatches(ticket))return false;
     auto& emission=emissions[static_cast<std::size_t>(ticket.emission-1)];
     if(emission.done || (inFlight && plannedInFlight!=ticket.emission))return false;

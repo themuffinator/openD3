@@ -15,7 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
 MATCH_ROOT = GAME_ROOT / "src/mpgame/mp/match"
 HEADER = MATCH_ROOT / "MatchControlLocalization.h"
@@ -23,19 +23,19 @@ SOURCE = MATCH_ROOT / "MatchControlLocalization.cpp"
 PROJECTION_SOURCE = MATCH_ROOT / "MatchControlProjection.cpp"
 MULTIPLAYER_SOURCE = GAME_ROOT / "src/mpgame/MultiplayerGame.cpp"
 PROTOCOL_HEADER = MATCH_ROOT / "MatchProtocol.h"
-STRINGS_ROOT = ROOT / "content/baseoq4/pak0/strings"
-MATCH_CONTROL_GUI = ROOT / "content/baseoq4/pak0/guis/matchcontrol.gui"
+STRINGS_ROOT = ROOT / "content/baseod3/pak0/strings"
+MATCH_CONTROL_GUI = ROOT / "content/baseod3/pak0/guis/matchcontrol.gui"
 LANGUAGE_FILES = (
-    "english_openq4.lang",
-    "german_openq4.lang",
-    "french_openq4.lang",
-    "italian_openq4.lang",
-    "spanish_openq4.lang",
-    "brazilian_openq4.lang",
-    "czech_openq4.lang",
-    "hungarian_openq4.lang",
-    "turkish_openq4.lang",
-    "ukrainian_openq4.lang",
+    "english_opend3.lang",
+    "german_opend3.lang",
+    "french_opend3.lang",
+    "italian_opend3.lang",
+    "spanish_opend3.lang",
+    "brazilian_opend3.lang",
+    "czech_opend3.lang",
+    "hungarian_opend3.lang",
+    "turkish_opend3.lang",
+    "ukrainian_opend3.lang",
 )
 ENTRY_RE = re.compile(r'^\s*"(?P<id>#str_\d+)"\s+"(?P<value>.*)"\s*$')
 FIXED_RETURN_RE = re.compile(r"\breturn\s+([^;]+);")

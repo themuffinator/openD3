@@ -22,7 +22,7 @@ UPDATEPAKS_PATH = ROOT / "src" / "sys" / "linux" / "pk4" / "updatepaks.sh"
 
 
 def load_id_utils():
-    spec = importlib.util.spec_from_file_location("openq4_legacy_id_utils_test", ID_UTILS_PATH)
+    spec = importlib.util.spec_from_file_location("opend3_legacy_id_utils_test", ID_UTILS_PATH)
     if spec is None or spec.loader is None:
         raise AssertionError(f"could not load id_utils.py from {ID_UTILS_PATH}")
     module = importlib.util.module_from_spec(spec)
@@ -103,9 +103,9 @@ def main() -> None:
         update_script = UPDATEPAKS_PATH.read_text(encoding="utf-8")
         for token in (
             "set -eu",
-            "mktemp -d \"${TMPDIR:-/tmp}/openq4-updatepaks.XXXXXX\"",
+            "mktemp -d \"${TMPDIR:-/tmp}/opend3-updatepaks.XXXXXX\"",
             "trap cleanup EXIT HUP INT TERM",
-            "OPENQ4_UPDATEPAKS_ASSUME_YES",
+            "OPEND3_UPDATEPAKS_ASSUME_YES",
             "unzip -Z1",
             "zip -b \"$tmpdir\" \"$new_pak\" -@",
         ):

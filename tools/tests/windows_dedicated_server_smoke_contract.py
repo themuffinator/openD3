@@ -52,7 +52,7 @@ def validate_runner() -> None:
         '"arm64": 0xAA64',
         "IsWow64Process2",
         'f"arm64 binaries cannot start on this {host_arch} host"',
-        'f"openQ4-ded_{arch}.exe"',
+        'f"openD3-ded_{arch}.exe"',
         'f"game-mp_{arch}.dll"',
         'executable.parent / "OpenAL32.dll"',
         'require_pe_arch(executable, arch, "dedicated-server executable")',
@@ -119,20 +119,20 @@ def validate_smoke_job(job: str, context: str, arch: str, artifact: str, build_s
 
 def validate_arm64_job(job: str, context: str, profile: str) -> None:
     require(job, "runs-on: windows-11-arm", context)
-    require(job, "OPENQ4_VS_TARGET_ARCH: arm64", context)
-    validation = f"python tools/validation/openq4_validate.py {profile}"
+    require(job, "OPEND3_VS_TARGET_ARCH: arm64", context)
+    validation = f"python tools/validation/opend3_validate.py {profile}"
     require_order(
         job,
         (
             'prepare_windows_openal.ps1 -Architecture "arm64"',
-            "OPENQ4_OPENAL_ROOT=$outputRoot",
+            "OPEND3_OPENAL_ROOT=$outputRoot",
             validation,
         ),
         context,
     )
     # The bundled OpenAL import library is x64-only; an arm64 link needs the
     # OpenAL Soft package prepared above.
-    require(job, '"--extra-setup-arg=-Dopenal_root_override=$env:OPENQ4_OPENAL_ROOT"', context)
+    require(job, '"--extra-setup-arg=-Dopenal_root_override=$env:OPEND3_OPENAL_ROOT"', context)
     reject(job, 'prepare_windows_openal.ps1 -Architecture "x64"', context)
 
 
@@ -155,7 +155,7 @@ def validate_workflows() -> None:
         "push verification Windows ARM64 job",
         "arm64",
         "push-windows-arm64-dedicated-smoke",
-        "python tools/validation/openq4_validate.py push --install",
+        "python tools/validation/opend3_validate.py push --install",
     )
 
     commit_x64 = job_block(commit, "windows-x64", "commit validation")
@@ -173,7 +173,7 @@ def validate_workflows() -> None:
         "commit validation Windows ARM64 job",
         "arm64",
         "commit-windows-arm64-dedicated-smoke",
-        "python tools/validation/openq4_validate.py pr",
+        "python tools/validation/opend3_validate.py pr",
     )
 
     for workflow, context in ((push, "push verification"), (commit, "commit validation")):
@@ -185,7 +185,7 @@ def validate_workflows() -> None:
 
 
 def validate_local_runner() -> None:
-    validator = read("tools/validation/openq4_validate.py")
+    validator = read("tools/validation/opend3_validate.py")
     require(validator, 'root / "tools" / "tests" / "windows_dedicated_server_smoke_contract.py"', "local validation runner")
 
 

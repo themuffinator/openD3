@@ -3,7 +3,7 @@
 #include "Interaction.h"
 #include <memory>
 namespace Rml { class Element; class ElementDocument; }
-namespace openq4::ui {
+namespace opend3::ui {
 // Derived layout only. Authored vector parts and canonical ancestry remain intact.
 class ScrollbarView {
 public:

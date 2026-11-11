@@ -248,7 +248,7 @@ def game_row(doc: Document, row: tuple, value_x: float) -> dict:
 
 
 def game_document() -> dict:
-    doc = Document("openq4.game")
+    doc = Document("opend3.game")
     doc.state.update({
         "game.gunPosition": {"type": "number", "initial": -1}, "game.forceModel": {"type": "boolean", "initial": False},
         "game.crosshair": {"type": "number", "initial": 1}, "game.crosshairImage": {"type": "string", "initial": ""},

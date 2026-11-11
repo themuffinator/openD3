@@ -63,12 +63,12 @@
         {
           "vertexSHA256": "1f23bd1fadaf1aa2c6f5f6dea1896480e8a74d96415622c4ae109070e072b27b",
           "fragmentSHA256": "354db7c6eb41aad13a4d26ba49ebc178704c6c76519061e943d6a0f5aaf5312d",
-          "origin": "openQ4 reviewed source"
+          "origin": "openD3 reviewed source"
         },
         {
           "vertexSHA256": "1f23bd1fadaf1aa2c6f5f6dea1896480e8a74d96415622c4ae109070e072b27b",
           "fragmentSHA256": "2ac8172e0586313ba1c8c759f17fd544a57ffc951b8453a4743030062a298e5e",
-          "origin": "openQ4 feathered legacy aperture; reviewed with native material_sniper_stretch2.frag"
+          "origin": "openD3 feathered legacy aperture; reviewed with native material_sniper_stretch2.frag"
         }
       ]
     },
@@ -119,7 +119,7 @@
         {
           "vertexSHA256": "77a308f377fc95c3e0a206c91706cc489d73a32e560aad1a9c40f5c2a11421f1",
           "fragmentSHA256": "189971e7aa42aef06f2e464abf254de8c62f15b969c19284c59faccd15344835",
-          "origin": "openQ4 reviewed source"
+          "origin": "openD3 reviewed source"
         }
       ]
     },
@@ -130,7 +130,7 @@
         {
           "vertexSHA256": "cbdbbbe08cfe40b4cac0ebdcbd97db2cae33ffdb9bc5245400eae80fa54ab3e1",
           "fragmentSHA256": "c89b2777b0aba93f00be233dc1844710bad75d2e87702d956112e58e63b428af",
-          "origin": "openQ4 reviewed source"
+          "origin": "openD3 reviewed source"
         }
       ]
     },
@@ -141,7 +141,7 @@
         {
           "vertexSHA256": "cbdbbbe08cfe40b4cac0ebdcbd97db2cae33ffdb9bc5245400eae80fa54ab3e1",
           "fragmentSHA256": "d0df2a9847a623c872a23c852d78fb39fa88ca7f1515d7ebbe3888503d4d4180",
-          "origin": "openQ4 reviewed source"
+          "origin": "openD3 reviewed source"
         }
       ]
     },
@@ -152,7 +152,7 @@
         {
           "vertexSHA256": "cbdbbbe08cfe40b4cac0ebdcbd97db2cae33ffdb9bc5245400eae80fa54ab3e1",
           "fragmentSHA256": "7a164d7be8963869380dceb06d23c852c9a00689762a5c22fe4b13dd52a1bc41",
-          "origin": "openQ4 reviewed source"
+          "origin": "openD3 reviewed source"
         }
       ]
     }

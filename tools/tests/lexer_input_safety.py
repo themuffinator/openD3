@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GAME_ROOT = Path(os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)).resolve()
+GAME_ROOT = Path(os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)).resolve()
 
 
 def read(path: Path) -> str:
@@ -87,7 +87,7 @@ def main() -> None:
     if engine_contract != game_contract:
         raise AssertionError("engine and GameLib lexer/token safety contracts diverged")
 
-    validation = (ROOT / "tools" / "validation" / "openq4_validate.py").read_text(encoding="utf-8")
+    validation = (ROOT / "tools" / "validation" / "opend3_validate.py").read_text(encoding="utf-8")
     if "lexer_input_safety.py" not in validation:
         raise AssertionError("lexer input-safety regression is not wired into validation")
     print("lexer input safety: ok")

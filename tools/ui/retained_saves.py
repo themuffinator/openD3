@@ -497,9 +497,9 @@ def backing(ident: str = "load-backing") -> dict:
 
 def table_text(key: str) -> dict:
     """`key` in every shipped language, as the engine resolves it: a
-    language's openQ4 table, else the stock GUI table that openQ4 ships for
+    language's openD3 table, else the stock GUI table that openD3 ships for
     every language (a few stock strings are corrected in some languages'
-    openQ4 tables only)."""
+    openD3 tables only)."""
     found = localized(key)
     for language in LANGUAGES:
         if language in found:
@@ -676,7 +676,7 @@ def save_browser(doc: Document, prefix: str, left: float, width: float, family: 
 
 def load_game_document(family: Family = MARINE) -> dict:
     check_text_fits(family)
-    doc = Document(f"openq4.loadgame{family.suffix}")
+    doc = Document(f"opend3.loadgame{family.suffix}")
     doc.state.update({
         "load.ingame": {"type": "boolean", "initial": False},
         "load.count": {"type": "number", "initial": 0},
@@ -1118,7 +1118,7 @@ def check_save_text_fits(family: Family = MARINE) -> None:
 
 def save_game_document(family: Family = MARINE) -> dict:
     check_save_text_fits(family)
-    doc = Document(f"openq4.savegame{family.suffix}")
+    doc = Document(f"opend3.savegame{family.suffix}")
     doc.state.update({
         "save.count": {"type": "number", "initial": 0},
         "save.first": {"type": "number", "initial": 0},

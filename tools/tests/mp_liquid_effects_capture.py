@@ -43,25 +43,25 @@ def main() -> int:
     parser.add_argument("--renderer", choices=("gl", "vulkan"), default="gl")
     parser.add_argument("--port", type=int, default=28974)
     parser.add_argument("--tree-def", action="store_true",
-                        help="load the working tree's def/liquids_openq4.def as a loose override "
+                        help="load the working tree's def/liquids_opend3.def as a loose override "
                              "instead of the staged pak0 copy")
     args = parser.parse_args()
     runtime, output = args.runtime_dir.resolve(), args.output_dir.resolve()
     verify_runtime_is_current(runtime)
-    exe = runtime / ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    exe = runtime / ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     if output.exists() or not exe.is_file() or not (args.basepath / "q4base").is_dir():
         parser.error("use a new output directory, a staged client and installed retail assets")
     output.mkdir(parents=True)
-    paths = [exe, *sorted((runtime / "baseoq4").glob("game-mp*")), *sorted(runtime.glob("renderer-*")),
-             runtime / "baseoq4/pak0.pk4", runtime / "baseoq4/pak1.pk4"]
+    paths = [exe, *sorted((runtime / "baseod3").glob("game-mp*")), *sorted(runtime.glob("renderer-*")),
+             runtime / "baseod3/pak0.pk4", runtime / "baseod3/pak1.pk4"]
     paths = [p for p in paths if p.is_file() and p.suffix not in (".pdb", ".lib", ".exp")]
     identity = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths}
-    game = output / "host" / "baseoq4"
+    game = output / "host" / "baseod3"
     game.mkdir(parents=True)
     if args.tree_def:
-        source = ROOT / "content/baseoq4/pak0/def/liquids_openq4.def"
+        source = ROOT / "content/baseod3/pak0/def/liquids_opend3.def"
         (game / "def").mkdir()
-        (game / "def/liquids_openq4.def").write_bytes(source.read_bytes())
+        (game / "def/liquids_opend3.def").write_bytes(source.read_bytes())
 
     steps = ['set g_autoExecAfterMapLoad ""', "god", "notarget", "set g_debugLiquid 1",
              "set pm_thirdPerson 1", "set pm_thirdPersonRange 170", "set pm_thirdPersonAngle 60",
@@ -104,10 +104,10 @@ def main() -> int:
              "r_borderlessDefaultMigrated": "1", "r_hiddenWindow": "1", "r_renderApi": args.renderer,
              "r_mode": "-1", "r_customWidth": "960", "r_customHeight": "540", "r_windowWidth": "960",
              "r_windowHeight": "540", "r_swapInterval": "0", "com_maxfps": "60", "s_noSound": "1",
-             "ui_autoJoin": "1", "ui_spectate": "Play", "ui_name": "LiquidFx", "fs_game": "baseoq4",
+             "ui_autoJoin": "1", "ui_spectate": "Play", "ui_name": "LiquidFx", "fs_game": "baseod3",
              "com_gameMode": "MP", "com_nextGameModule": "game_mp",
              "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(game.parent),
-             "fs_devpath": str(game.parent), "logFile": "2", "logFileName": "logs/openq4.log",
+             "fs_devpath": str(game.parent), "logFile": "2", "logFileName": "logs/opend3.log",
              "developer": "1", "net_allowCheats": "1", "net_serverDedicated": "0", "net_LANServer": "1",
              "net_port": str(args.port), "net_ip": "127.0.0.1", "net_enableIPv6": "0", "si_pure": "0",
              "si_gameType": "DM", "si_minPlayers": "1", "si_maxPlayers": "4", "si_warmup": "0",
@@ -128,7 +128,7 @@ def main() -> int:
             process.kill()
             process.wait()
             failures.append("host timed out")
-    log = re.sub(r"\^[0-9A-Za-z]", "", read_log(game / "logs/openq4.log"))
+    log = re.sub(r"\^[0-9A-Za-z]", "", read_log(game / "logs/opend3.log"))
     if "LIQUID_FX_COMPLETE" not in log or re.search(r"ERROR:|FATAL:|Unknown command", log):
         failures.append("host did not complete cleanly")
     if not re.search(rf"Renderer API: {args.renderer} \(", log):
@@ -161,7 +161,7 @@ def main() -> int:
         failures.append(f"missing captures: {missing}")
     report = {"status": "fail" if failures else "pass", "renderer": args.renderer, "identity": identity,
               "tree_def": args.tree_def, "transitions": events, "played_effects": played, "captures": [str(game / f"screenshots/{s}.tga") for s in shots],
-              "failures": failures, "log": str(game / "logs/openq4.log")}
+              "failures": failures, "log": str(game / "logs/opend3.log")}
     (output / "report.json").write_text(json.dumps(report, indent=2) + "\n")
     print(json.dumps({"status": report["status"], "failures": failures, "transitions": events}, indent=2))
     return int(bool(failures))

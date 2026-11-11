@@ -51,7 +51,7 @@ def main():
     assert len(result['screenshots']) == 5, result['screenshots']
 
     from PIL import Image, ImageStat
-    shots = args.output / 'legacy-ui/save/baseoq4/screenshots'
+    shots = args.output / 'legacy-ui/save/baseod3/screenshots'
     metrics = {}
     for name in ('legacy-scope', 'retained-scope', 'legacy-return'):
         im = Image.open(shots / (name + '.tga')).convert('RGB')

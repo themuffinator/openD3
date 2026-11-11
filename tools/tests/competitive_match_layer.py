@@ -10,7 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_ROOT = Path(
-    os.environ.get("OPENQ4_GAMELIBS_REPO", ROOT)
+    os.environ.get("OPEND3_GAMELIBS_REPO", ROOT)
 ).resolve()
 
 PUBLIC_VALUES = (
@@ -208,10 +208,10 @@ def main() -> None:
 
     game_types = read(GAME_ROOT, "src/mpgame/mp/GameTypes.cpp")
     multiplayer = read(GAME_ROOT, "src/mpgame/MultiplayerGame.cpp")
-    main_menu = read(ROOT, "content/baseoq4/pak0/guis/mainmenu.gui")
-    mp_menu = read(ROOT, "content/baseoq4/pak0/guis/mpmain.gui")
-    mp_hud = read(ROOT, "content/baseoq4/pak0/guis/mphud.gui")
-    scoreboard = read(ROOT, "content/baseoq4/pak0/guis/scoreboard.gui")
+    main_menu = read(ROOT, "content/baseod3/pak0/guis/mainmenu.gui")
+    mp_menu = read(ROOT, "content/baseod3/pak0/guis/mpmain.gui")
+    mp_hud = read(ROOT, "content/baseod3/pak0/guis/mphud.gui")
+    scoreboard = read(ROOT, "content/baseod3/pak0/guis/scoreboard.gui")
     presentation_contract = read(ROOT, "docs/dev/managed-match-presentation-contract.md")
     server_scan = read(ROOT, "src/framework/async/ServerScan.cpp")
     async_client = read(ROOT, "src/framework/async/AsyncClient.cpp")

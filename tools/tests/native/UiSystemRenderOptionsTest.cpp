@@ -109,7 +109,7 @@ static void Unoffered(View& v) {
  Check(v.runtime.SetState({{"settings.renderer.fallback",false}},v.error,v.time),v.error.c_str());v.Sync();v.Frame();
 }
 static void Run(const std::string& source,const std::string& folder,const char* locale,float expansion) {
- View v(source,folder+"/"+locale+"_openq4.lang",1,1280,720,expansion,folder+"/"+locale+"_guis.lang");
+ View v(source,folder+"/"+locale+"_opend3.lang",1,1280,720,expansion,folder+"/"+locale+"_guis.lang");
  Check(Presented(v,StatusLine,"display")=="none","no loaded map shows no light-grid status");
  // The toggle proposes the preload through the ordinary edit and writes nothing.
  Check(v.TabOf(Row)=="image"&&v.TabOf(RendererRow)=="graphics","Preload Light Grids is on IMAGE QUALITY, Renderer Fallback on GRAPHICS");

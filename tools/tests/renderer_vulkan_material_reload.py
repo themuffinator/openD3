@@ -23,7 +23,7 @@ from PIL import Image
 import renderer_pbr_laboratory as lab
 import renderer_vulkan_material_programs as authored
 
-PREFIX = 'textures/openq4/authored_reload'
+PREFIX = 'textures/opend3/authored_reload'
 PROGRAMS = {'namespace': 'tests/Displacement.glsl',
             'canonical': 'glsl/Displacement.glsl', 'partial': 'glsl/Water.glsl'}
 CASES = ('clear', 'namespace', 'canonical', 'fragment_edit', 'vertex_edit',
@@ -76,7 +76,7 @@ def material(name: str) -> str:
 
 
 def write_fixture(save: Path) -> dict[str, str]:
-    files = {'materials/openq4_authored_reload_test.mtr': ''.join(material(n) for n in PROGRAMS).encode('utf-8')}
+    files = {'materials/opend3_authored_reload_test.mtr': ''.join(material(n) for n in PROGRAMS).encode('utf-8')}
     for name, program in PROGRAMS.items():
         files[source_path(program, True)] = authored.FRAGMENT.encode('utf-8')
         if name != 'partial':
@@ -85,7 +85,7 @@ def write_fixture(save: Path) -> dict[str, str]:
                    for component in (64 + 128 * ((x // 8 + y // 8) % 2), 32 + 7 * y, 32 + 7 * x, 255))
     files[f'{PREFIX}/pattern.tga'] = authored.tga(32, 32, pixels)
     for name, data in files.items():
-        path = save / 'baseoq4' / name
+        path = save / 'baseod3' / name
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
     return {name: sha(data) for name, data in files.items()}
@@ -304,7 +304,7 @@ def main() -> int:
 
     def startup_args(cvars, directory):
         options = startup(cvars, directory)
-        with (directory / 'baseoq4/autoexec.cfg').open('a', encoding='utf-8') as config:
+        with (directory / 'baseod3/autoexec.cfg').open('a', encoding='utf-8') as config:
             for name in PROGRAMS:
                 config.write(f'touch material {PREFIX}/{name}\n')
         return options
@@ -313,7 +313,7 @@ def main() -> int:
         stop = threading.Event()
 
         def watch():
-            log = save / 'baseoq4/logs/openq4.log'
+            log = save / 'baseod3/logs/opend3.log'
             pending = list(EDITS)
             started = time.monotonic()
             try:
@@ -326,7 +326,7 @@ def main() -> int:
                         continue
                     entry = dict(edit=edit, seconds=time.monotonic() - started, files={})
                     for name, content in EDITS[edit].items():
-                        path = save / 'baseoq4' / name
+                        path = save / 'baseod3' / name
                         before = lab.digest(path) if path.is_file() else None
                         temporary = path.with_suffix(path.suffix + '.pending')
                         temporary.write_bytes(content.encode('utf-8'))
@@ -363,7 +363,7 @@ def main() -> int:
         shutil.copy2(source, args.output_dir / 'harness' / source.name)
         report['harnessSources'][source.name] = digest
     names = set(source_hashes) | {name for edits in EDITS.values() for name in edits}
-    final_sources = {name: lab.digest(save / 'baseoq4' / name) if (save / 'baseoq4' / name).is_file() else None
+    final_sources = {name: lab.digest(save / 'baseod3' / name) if (save / 'baseod3' / name).is_file() else None
                      for name in sorted(names)}
     report.update(reloadProfile=profile, initialSources=source_hashes, finalSources=final_sources,
                   sourceEdits=journal, sourceEditErrors=errors)

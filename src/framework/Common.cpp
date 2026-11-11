@@ -75,18 +75,18 @@ float Sys_SDL_GetWindowRefreshHz( void );
 #define	MAX_PRINT_MSG_SIZE	4096
 #define MAX_WARNING_LIST	256
 
-void openQ4_PrintFramePacingSnapshot( const char *reason );
-void openQ4_RecordMultiplayerFramePacing( void );
+void openD3_PrintFramePacingSnapshot( const char *reason );
+void openD3_RecordMultiplayerFramePacing( void );
 void Session_FinishPendingSave();
 static void Com_ProfileFrameWork_f( const idCmdArgs &args );
 
-#ifdef OPENQ4_RENDERER_MODULE_ONLY
+#ifdef OPEND3_RENDERER_MODULE_ONLY
 // The executable and renderer module each link their own render-geometry
 // library. Track ownership of the executable copy used by offline tools.
 static bool commonOwnsRenderGeoTriSurfData;
 #endif
 
-static const int OPENQ4_ENTITYDEF_MEDIA_CACHE_TOOL_MASK =
+static const int OPEND3_ENTITYDEF_MEDIA_CACHE_TOOL_MASK =
 	EDITOR_RADIANT |
 	EDITOR_MODVIEW |
 	EDITOR_AAS |
@@ -101,15 +101,15 @@ typedef enum {
 } errorParm_t;
 
 struct version_s {
-			version_s( void ) { idStr::snPrintf( string, sizeof( string ), "%s", OPENQ4_PRODUCT_VERSION_FULL ); }
+			version_s( void ) { idStr::snPrintf( string, sizeof( string ), "%s", OPEND3_PRODUCT_VERSION_FULL ); }
 	char	string[256];
 } version;
 
 struct build_info_s {
 #if defined( _DEBUG )
-			build_info_s( void ) { idStr::snPrintf( string, sizeof( string ), "%s (debug, %s, %s %s)", OPENQ4_PRODUCT_VERSION_FULL, BUILD_STRING, __DATE__, __TIME__ ); }
+			build_info_s( void ) { idStr::snPrintf( string, sizeof( string ), "%s (debug, %s, %s %s)", OPEND3_PRODUCT_VERSION_FULL, BUILD_STRING, __DATE__, __TIME__ ); }
 #else
-			build_info_s( void ) { idStr::snPrintf( string, sizeof( string ), "%s (%s, %s %s)", OPENQ4_PRODUCT_VERSION_FULL, BUILD_STRING, __DATE__, __TIME__ ); }
+			build_info_s( void ) { idStr::snPrintf( string, sizeof( string ), "%s (%s, %s %s)", OPEND3_PRODUCT_VERSION_FULL, BUILD_STRING, __DATE__, __TIME__ ); }
 #endif
 	char	string[256];
 } buildInfo;
@@ -137,12 +137,12 @@ idCVar com_memoryMarker( "com_memoryMarker", "-1", CVAR_INTEGER | CVAR_SYSTEM | 
 idCVar com_preciseTic( "com_preciseTic", "1", CVAR_BOOL|CVAR_SYSTEM, "run one game tick every async thread update" );
 idCVar com_asyncInput( "com_asyncInput", "0", CVAR_BOOL|CVAR_SYSTEM, "sample input from the async thread" );
 #if defined( ID_DEDICATED )
-static const char *OPENQ4_JOBS_DETERMINISTIC_DEFAULT = "1";
+static const char *OPEND3_JOBS_DETERMINISTIC_DEFAULT = "1";
 #else
-static const char *OPENQ4_JOBS_DETERMINISTIC_DEFAULT = "0";
+static const char *OPEND3_JOBS_DETERMINISTIC_DEFAULT = "0";
 #endif
 idCVar jobs_enable( "jobs_enable", "1", CVAR_BOOL | CVAR_ARCHIVE | CVAR_INIT | CVAR_SYSTEM, "enable the portable job service; 0 preserves all work by executing job lists synchronously" );
-idCVar jobs_deterministic( "jobs_deterministic", OPENQ4_JOBS_DETERMINISTIC_DEFAULT, CVAR_BOOL | CVAR_ARCHIVE | CVAR_INIT | CVAR_SYSTEM, "execute every job inline in deterministic insertion order (default on dedicated servers)" );
+idCVar jobs_deterministic( "jobs_deterministic", OPEND3_JOBS_DETERMINISTIC_DEFAULT, CVAR_BOOL | CVAR_ARCHIVE | CVAR_INIT | CVAR_SYSTEM, "execute every job inline in deterministic insertion order (default on dedicated servers)" );
 idCVar jobs_numThreads( "jobs_numThreads", "0", CVAR_INTEGER | CVAR_ARCHIVE | CVAR_INIT | CVAR_SYSTEM, "portable job worker threads (0 = automatic, 1..32 = explicit)", 0, 32, idCmdSystem::ArgCompletion_Integer<0,32> );
 idCVar jobs_queueCapacity( "jobs_queueCapacity", "64", CVAR_INTEGER | CVAR_ARCHIVE | CVAR_INIT | CVAR_SYSTEM, "maximum admitted job lists; saturated submissions fail explicitly and remain retryable", 1, 1024, idCmdSystem::ArgCompletion_Integer<1,1024> );
 #define ASYNCSOUND_INFO "0: mix sound inline, 1: memory mapped async mix, 2: callback mixing, 3: write async mix"
@@ -271,7 +271,7 @@ static void Common_MigrateLegacyBorderlessWindowDefault( void ) {
 Common_MigrateLegacyNetworkRateCaps
 
 net_serverMaxClientRate / net_clientMaxRate are archived, so raising their
-defaults reaches new installs only.  Everyone who has ever run openQ4 keeps the
+defaults reaches new installs only.  Everyone who has ever run openD3 keeps the
 25600 B/s these shipped with, and that cap does not shed bytes - the channel's
 token bucket refuses whole snapshots until the previous packet has been paid
 for, so any snapshot over ~1280 bytes drags the update rate below the one the
@@ -349,11 +349,11 @@ Step 2:
   off gets it back.
 ==================
 */
-static const int OPENQ4_AUDIO_DEFAULTS_MIGRATION_STEPS = 2;
+static const int OPEND3_AUDIO_DEFAULTS_MIGRATION_STEPS = 2;
 
 static void Common_MigrateLegacyAudioDefaults( void ) {
 	const int applied = s_audioDefaultsMigrated.GetInteger();
-	if ( applied >= OPENQ4_AUDIO_DEFAULTS_MIGRATION_STEPS ) {
+	if ( applied >= OPEND3_AUDIO_DEFAULTS_MIGRATION_STEPS ) {
 		return;
 	}
 	if ( applied < 1 ) {
@@ -380,7 +380,7 @@ static void Common_MigrateLegacyAudioDefaults( void ) {
 			}
 		}
 	}
-	s_audioDefaultsMigrated.SetInteger( OPENQ4_AUDIO_DEFAULTS_MIGRATION_STEPS );
+	s_audioDefaultsMigrated.SetInteger( OPEND3_AUDIO_DEFAULTS_MIGRATION_STEPS );
 }
 
 static int commonLastPresentationCap = -1;
@@ -400,7 +400,7 @@ static int commonThrottleSpinWaits = 0;
 
 // How late the precise wait's recent sleeps woke; the spin covers their 95th
 // percentile (PresentationPacing.h).
-static openq4::LimiterOversleepWindow commonLimiterOversleep;
+static opend3::LimiterOversleepWindow commonLimiterOversleep;
 
 static void Common_ResetPresentationThrottle( void ) {
 	commonNextPresentationFrameClock = 0.0;
@@ -440,7 +440,7 @@ static int Common_GetRequestedPresentationCap( void ) {
 
 	// A window that shows nothing never presents faster than 60 Hz, uncapped
 	// included, so a hidden or minimized client does not spin (HF-07).
-	return openq4::PresentationCapForWindow( com_maxfps.GetInteger(), Common_IsGameWindowShown() );
+	return opend3::PresentationCapForWindow( com_maxfps.GetInteger(), Common_IsGameWindowShown() );
 }
 
 // Whether the limiter waits on the high-resolution timer (PresentationPacing.h).
@@ -465,14 +465,14 @@ static void Common_PreciseSleep( double msec ) {
 
 /*
 =================
-openQ4_PrintPresentationThrottleStats
+openD3_PrintPresentationThrottleStats
 
 The limiter's wake lateness since the last framePacingReset: a frame that
 had to wait wakes this long after its target. Frames that arrive already
 late (the work took longer than the cap) never wait and are not counted.
 =================
 */
-void openQ4_PrintPresentationThrottleStats( const char *reason ) {
+void openD3_PrintPresentationThrottleStats( const char *reason ) {
 	const int count = commonThrottleLatenessCount;
 	if ( count <= 0 ) {
 		common->Printf( "Presentation throttle%s: no waits\n", reason );
@@ -490,7 +490,7 @@ void openQ4_PrintPresentationThrottleStats( const char *reason ) {
 		commonThrottleSpinWaits > 0 ? commonThrottleSpinMsec / commonThrottleSpinWaits : 0.0 );
 }
 
-void openQ4_ResetPresentationThrottleStats( void ) {
+void openD3_ResetPresentationThrottleStats( void ) {
 	commonThrottleLatenessCount = 0;
 	commonThrottleLatenessNext = 0;
 	commonThrottleSpinMsec = 0.0;
@@ -564,13 +564,13 @@ static idStr Common_InputToSwapPercentiles( const commonInputToSwapRing_t &ring 
 	return va( "p50=%.3f p95=%.3f p99=%.3f max=%.3f ms", at( 0.5f ), at( 0.95f ), at( 0.99f ), sorted[ count - 1 ] );
 }
 
-void openQ4_PrintPresentationLatencyStats( const char *reason ) {
+void openD3_PrintPresentationLatencyStats( const char *reason ) {
 	common->Printf( "Presentation latency%s: lookSamples=%d sampleToSwap %s; flashes=%d pressToSwap %s\n",
 		reason, commonLookSampleToSwap.count, Common_InputToSwapPercentiles( commonLookSampleToSwap ).c_str(),
 		commonFlashPressToSwap.count, Common_InputToSwapPercentiles( commonFlashPressToSwap ).c_str() );
 }
 
-void openQ4_ResetPresentationLatencyStats( void ) {
+void openD3_ResetPresentationLatencyStats( void ) {
 	// A threaded frame handed off before this reset may retire afterwards.
 	commonInputToSwapResetClock = Common_GetPresentationClockNow();
 	commonLookSampleToSwap.count = commonLookSampleToSwap.next = 0;
@@ -579,13 +579,13 @@ void openQ4_ResetPresentationLatencyStats( void ) {
 
 /*
 =================
-openQ4_GetPresentationThrottleLatenessP95
+openD3_GetPresentationThrottleLatenessP95
 
 The com_showFramePacing overlay's view of the same lateness: p95 over the
 recent waits, sorted at most four times a second, 0 with no waits.
 =================
 */
-float openQ4_GetPresentationThrottleLatenessP95( void ) {
+float openD3_GetPresentationThrottleLatenessP95( void ) {
 	static int lastSortMsec = 0;
 	static float latenessP95 = 0.0f;
 	const int nowMsec = Sys_Milliseconds();
@@ -605,7 +605,7 @@ float openQ4_GetPresentationThrottleLatenessP95( void ) {
 	return latenessP95;
 }
 
-int openQ4_GetRequestedPresentationCap( void ) {
+int openD3_GetRequestedPresentationCap( void ) {
 	return Common_GetRequestedPresentationCap();
 }
 
@@ -647,8 +647,8 @@ static void Common_ThrottlePresentationFrame( void ) {
 	// timer, a fixed eighth of the frame for millisecond sleeps.
 	const bool preciseWait = Common_UsePreciseFrameWait();
 	const double sleepSlackMsec = preciseWait
-		? openq4::LimiterSpinMsec( commonLimiterOversleep )
-		: openq4::LegacyLimiterSpinMsec( frameMsec );
+		? opend3::LimiterSpinMsec( commonLimiterOversleep )
+		: opend3::LegacyLimiterSpinMsec( frameMsec );
 
 	// Never wait longer than a few frame periods here however the clock behaves. The
 	// tail of this loop is a deliberate busy-spin for sub-millisecond precision, so a
@@ -708,7 +708,7 @@ static void Common_ThrottlePresentationFrame( void ) {
 	commonNextPresentationFrameClock += frameClockUnits;
 }
 
-void openQ4_BeginPresentationFrame( void ) {
+void openD3_BeginPresentationFrame( void ) {
     static std::uint64_t nativeInputPresentation = 0;
     if (nativeInputPresentation != UINT64_MAX) ++nativeInputPresentation;
     NativeInput_BeginFrame(nativeInputPresentation);
@@ -722,7 +722,7 @@ void openQ4_BeginPresentationFrame( void ) {
 	commonPresentationFrameStartClock = Common_GetPresentationClockNow();
 }
 
-double openQ4_GetPresentationFrameStartMsec( void ) {
+double openD3_GetPresentationFrameStartMsec( void ) {
 	const double clockUnitsPerSecond = Common_GetPresentationClockUnitsPerSecond();
 	if ( commonPresentationFrameStartClock <= 0.0 || clockUnitsPerSecond <= 0.0 ) {
 		return 0.0;
@@ -736,11 +736,11 @@ double openQ4_GetPresentationFrameStartMsec( void ) {
 // as key events so a click can dismiss the gate.
 static bool commonLoadingContinueInputActive = false;
 
-void openQ4_SetLoadingContinueInputActive( bool active ) {
+void openD3_SetLoadingContinueInputActive( bool active ) {
 	commonLoadingContinueInputActive = active;
 }
 
-bool openQ4_AcceptingLoadingContinueInput( void ) {
+bool openD3_AcceptingLoadingContinueInput( void ) {
 	return commonLoadingContinueInputActive;
 }
 
@@ -759,10 +759,10 @@ bool			com_editorActive;		//  true if an editor has focus
 
 /*
 ==================
-openQ4_GetActiveToolFlags
+openD3_GetActiveToolFlags
 ==================
 */
-int openQ4_GetActiveToolFlags( int flags ) {
+int openD3_GetActiveToolFlags( int flags ) {
 	if ( flags == EDITOR_ALL ) {
 		return com_editors;
 	}
@@ -772,19 +772,19 @@ int openQ4_GetActiveToolFlags( int flags ) {
 
 /*
 ==================
-openQ4_IsAnyToolActive
+openD3_IsAnyToolActive
 ==================
 */
-bool openQ4_IsAnyToolActive( void ) {
-	return com_editorActive || LevelEditor_UIIsActive() || openQ4_GetActiveToolFlags( EDITOR_ALL ) != 0;
+bool openD3_IsAnyToolActive( void ) {
+	return com_editorActive || LevelEditor_UIIsActive() || openD3_GetActiveToolFlags( EDITOR_ALL ) != 0;
 }
 
 /*
 ==================
-openQ4_ToolPrint
+openD3_ToolPrint
 ==================
 */
-void openQ4_ToolPrint( const char *text ) {
+void openD3_ToolPrint( const char *text ) {
 	bool toolPrinted = false;
 
 	if ( text == NULL || text[0] == '\0' ) {
@@ -792,21 +792,21 @@ void openQ4_ToolPrint( const char *text ) {
 	}
 
 #ifdef ID_ALLOW_TOOLS
-	if ( openQ4_GetActiveToolFlags( EDITOR_DECL ) != 0 ) {
+	if ( openD3_GetActiveToolFlags( EDITOR_DECL ) != 0 ) {
 		toolPrinted = DeclBrowserPrint( text ) || toolPrinted;
 	}
 
-	if ( openQ4_GetActiveToolFlags( EDITOR_DEBUGGER ) != 0 ) {
+	if ( openD3_GetActiveToolFlags( EDITOR_DEBUGGER ) != 0 ) {
 		DebuggerServerPrint( text );
 		toolPrinted = true;
 	}
 
-	if ( openQ4_GetActiveToolFlags( EDITOR_RADIANT ) != 0 ) {
+	if ( openD3_GetActiveToolFlags( EDITOR_RADIANT ) != 0 ) {
 		RadiantPrint( text );
 		toolPrinted = true;
 	}
 
-	if ( openQ4_GetActiveToolFlags( EDITOR_MATERIAL ) != 0 ) {
+	if ( openD3_GetActiveToolFlags( EDITOR_MATERIAL ) != 0 ) {
 		MaterialEditorPrintConsole( text );
 		toolPrinted = true;
 	}
@@ -819,11 +819,11 @@ void openQ4_ToolPrint( const char *text ) {
 
 /*
 ==================
-openQ4_ShouldCacheEntityDefMedia
+openD3_ShouldCacheEntityDefMedia
 ==================
 */
-bool openQ4_ShouldCacheEntityDefMedia( bool noCaching ) {
-	return !noCaching && openQ4_GetActiveToolFlags( OPENQ4_ENTITYDEF_MEDIA_CACHE_TOOL_MASK ) == 0;
+bool openD3_ShouldCacheEntityDefMedia( bool noCaching ) {
+	return !noCaching && openD3_GetActiveToolFlags( OPEND3_ENTITYDEF_MEDIA_CACHE_TOOL_MASK ) == 0;
 }
 
 #ifdef _WIN32
@@ -950,8 +950,8 @@ static bool Common_HasSteamDeckHostSignal( void ) {
 	const char *explicitSignals[] = {
 		"OPEND3_STEAMDECK",
 		"OPEND3_AUTODETECT_STEAMDECK",
-		"OPENQ4_STEAMDECK",
-		"OPENQ4_AUTODETECT_STEAMDECK",
+		"OPEND3_STEAMDECK",
+		"OPEND3_AUTODETECT_STEAMDECK",
 		"SteamDeck",
 		"STEAM_DECK",
 		"STEAMDECK",
@@ -996,14 +996,14 @@ static bool Common_HasSteamDeckHostSignal( void ) {
 	return false;
 }
 
-// openQ4: Steam's Big Picture mode (SteamTenfoot) means a television across the
+// openD3: Steam's Big Picture mode (SteamTenfoot) means a television across the
 // room, the Couch viewing profile of ui-visual-design.md section 13.2.
-// OPENQ4_COUCH forces the answer either way.
+// OPEND3_COUCH forces the answer either way.
 static bool Common_HasCouchHostSignal( void ) {
 	const char *explicitSignals[] = {
 		"OPEND3_COUCH",
-		"OPENQ4_COUCH",
-		"OPENQ4_AUTODETECT_COUCH",
+		"OPEND3_COUCH",
+		"OPEND3_AUTODETECT_COUCH",
 		"SteamTenfoot"
 	};
 	for ( int i = 0; i < static_cast<int>( sizeof( explicitSignals ) / sizeof( explicitSignals[0] ) ); ++i ) {
@@ -1021,9 +1021,9 @@ static bool Common_HasCouchHostSignal( void ) {
 static bool Common_HasRaspberryPiHostSignal( void ) {
 	const char *explicitSignals[] = {
 		"OPEND3_RASPBERRYPI",
-		"OPENQ4_RASPBERRYPI",
-		"OPENQ4_RPI",
-		"OPENQ4_AUTODETECT_RASPBERRYPI",
+		"OPEND3_RASPBERRYPI",
+		"OPEND3_RPI",
+		"OPEND3_AUTODETECT_RASPBERRYPI",
 		"RaspberryPi",
 		"RASPBERRY_PI",
 		"raspberrypi"
@@ -1055,9 +1055,9 @@ static bool Common_HasRaspberryPiHostSignal( void ) {
 static bool Common_HasExplicitLowPowerHostSignal( void ) {
 	const char *explicitSignals[] = {
 		"OPEND3_LOWPOWER",
-		"OPENQ4_LOWPOWER",
-		"OPENQ4_LOW_POWER",
-		"OPENQ4_AUTODETECT_LOWPOWER"
+		"OPEND3_LOWPOWER",
+		"OPEND3_LOW_POWER",
+		"OPEND3_AUTODETECT_LOWPOWER"
 	};
 	for ( int i = 0; i < static_cast<int>( sizeof( explicitSignals ) / sizeof( explicitSignals[0] ) ); ++i ) {
 		const char *value = Common_GetNonEmptyEnv( explicitSignals[i] );
@@ -1596,7 +1596,7 @@ idCommonLocal::PrintFramePacingSnapshot
 ==================
 */
 void idCommonLocal::PrintFramePacingSnapshot( const char *reason ) {
-	openQ4_PrintFramePacingSnapshot( reason );
+	openD3_PrintFramePacingSnapshot( reason );
 }
 
 /*
@@ -1865,7 +1865,7 @@ void idCommonLocal::Error( const char *fmt, ... ) {
 	// A save restore owns its partial object graph. Let it unwind before the
 	// session closes the save or releases the map's renderer/script resources.
 	// The load transaction reports this failure through the ordinary save UI.
-	if ( code == ERP_DROP && openQ4_saveGameRestore.file != NULL ) {
+	if ( code == ERP_DROP && openD3_saveGameRestore.file != NULL ) {
 		char restoreError[ sizeof( errorMessage ) ];
 		va_start( argptr, fmt );
 		idStr::vsnPrintf( restoreError, sizeof( restoreError ), fmt, argptr );
@@ -2403,14 +2403,14 @@ int idCommonLocal::GetUserCmdMSec( void ) const {
 	return USERCMD_MSEC;
 }
 
-static std::atomic<float> openQ4_gameTimeScale( 1.0f );
+static std::atomic<float> openD3_gameTimeScale( 1.0f );
 
 void idCommonLocal::SetGameTimeScale( float scale ) {
 	if ( FLOAT_IS_NAN( scale ) || FLOAT_IS_INF( scale ) ) {
 		scale = 1.0f;
 	}
 	scale = idMath::ClampFloat( 0.01f, 1.0f, scale );
-	openQ4_gameTimeScale.store( scale, std::memory_order_release );
+	openD3_gameTimeScale.store( scale, std::memory_order_release );
 
 	if ( soundSystem != NULL ) {
 		idSoundWorld *soundWorld = soundSystem->GetPlayingSoundWorld();
@@ -2421,7 +2421,7 @@ void idCommonLocal::SetGameTimeScale( float scale ) {
 }
 
 float idCommonLocal::GetGameTimeScale( void ) const {
-	return openQ4_gameTimeScale.load( std::memory_order_acquire );
+	return openD3_gameTimeScale.load( std::memory_order_acquire );
 }
 
 /*
@@ -2494,7 +2494,7 @@ idCommonLocal::DoingDeclValidation
 */
 bool idCommonLocal::DoingDeclValidation( void ) {
 	const int validationMask = EDITOR_DECL | EDITOR_DECL_VALIDATING;
-	return openQ4_GetActiveToolFlags( validationMask ) == validationMask;
+	return openD3_GetActiveToolFlags( validationMask ) == validationMask;
 }
 
 /*
@@ -2593,7 +2593,7 @@ public:
 	bool Failed() const { return failed; }
 	int Write( const void *buffer, int len ) override {
 		if ( failed || len < 0 || ( len > 0 && buffer == NULL ) ||
-			static_cast<size_t>( len ) > openq4::DurableFileMaxBytes - static_cast<size_t>( Length() ) ) {
+			static_cast<size_t>( len ) > opend3::DurableFileMaxBytes - static_cast<size_t>( Length() ) ) {
 			failed = true;
 			return 0;
 		}
@@ -2661,7 +2661,7 @@ static bool Common_SettingsSaveDirectory( std::string& directory, std::string& e
 		return false;
 	}
 	if ( root.back() != '/' ) root += '/';
-	directory = root + OPENQ4_GAMEDIR "/";
+	directory = root + OPEND3_GAMEDIR "/";
 	error.clear();
 	return true;
 }
@@ -2778,13 +2778,13 @@ bool idCommonLocal::WriteConfigToFileChecked( const char *filename, bool coordin
 
 	std::string journal, lock;
 	if ( !Common_SettingsPersistencePaths( journal, lock, error ) ) return false;
-	openq4::DurableFileLease lease;
+	opend3::DurableFileLease lease;
 	if ( !coordinatorOwnsLock ) {
 		if ( !lease.TryAcquire( lock, error ) ) return false;
 		std::string pending;
-		const openq4::DurableReadResult status = openq4::DurableReadExact( journal, openq4::DurableFileMaxBytes, pending, error );
-		if ( status == openq4::DurableReadResult::Failed ) return false;
-		if ( status == openq4::DurableReadResult::Present ) {
+		const opend3::DurableReadResult status = opend3::DurableReadExact( journal, opend3::DurableFileMaxBytes, pending, error );
+		if ( status == opend3::DurableReadResult::Failed ) return false;
+		if ( status == opend3::DurableReadResult::Present ) {
 			error = "settings recovery journal blocks configuration writes";
 			return false;
 		}
@@ -2818,7 +2818,7 @@ bool idCommonLocal::WriteConfigToFileChecked( const char *filename, bool coordin
 	if ( memory.Failed() ) { error = "configuration serialization failed or exceeded its size limit"; return false; }
 	const std::string bytes( memory.GetDataPtr(), memory.Length() );
 	Common_CreateSettingsParent( destination );
-	const bool committed = openq4::DurableReplaceExact( destination, bytes, error );
+	const bool committed = opend3::DurableReplaceExact( destination, bytes, error );
 	// A failed durability barrier may follow an already-visible rename.
 	fileSystem->ClearDirCache();
 	return committed;
@@ -3314,50 +3314,50 @@ void Com_SetMachineSpec_f( const idCmdArgs &args ) {
 	commonLocal.SetMachineSpec();
 }
 
-using openQ4PerformancePreset_t = openq4::PerformancePreset;
-static const auto& OPENQ4_PERFORMANCE_PRESETS = openq4::PerformancePresets();
-static const int OPENQ4_PERFORMANCE_PRESET_COUNT = openq4::PerformancePresetCount;
-static const char *OPENQ4_DEFAULT_PERFORMANCE_PRESET = openq4::PerformancePresetDefaultName;
-static const int OPENQ4_PERFORMANCE_PRESET_MAX_SHADOW_UPDATES = 1024;
-static const int OPENQ4_PERFORMANCE_PRESET_MIN_UPLOAD_FRAME_BUFFERS = 3;
-static const int OPENQ4_PERFORMANCE_PRESET_MAX_UPLOAD_FRAME_BUFFERS = 8;
-static const int OPENQ4_PERFORMANCE_PRESET_MAX_EMITTER_CHANNELS = 48;
-static const int OPENQ4_PERFORMANCE_PRESET_UNLIMITED_BUDGET_RANK = 0x7fffffff;
-static const int OPENQ4_PERFORMANCE_PRESET_UNKNOWN_SYSTEM_RAM_MB = openq4::PerformancePresetUnknownSystemRamMB;
-static const int OPENQ4_PERFORMANCE_PRESET_UNKNOWN_VIDEO_RAM_MB = openq4::PerformancePresetUnknownVideoRamMB;
-static const int OPENQ4_PERFORMANCE_PRESET_MAX_REASONABLE_SYSTEM_RAM_MB = openq4::PerformancePresetMaxSystemRamMB;
-static const int OPENQ4_PERFORMANCE_PRESET_MAX_REASONABLE_VIDEO_RAM_MB = openq4::PerformancePresetMaxVideoRamMB;
+using openD3PerformancePreset_t = opend3::PerformancePreset;
+static const auto& OPEND3_PERFORMANCE_PRESETS = opend3::PerformancePresets();
+static const int OPEND3_PERFORMANCE_PRESET_COUNT = opend3::PerformancePresetCount;
+static const char *OPEND3_DEFAULT_PERFORMANCE_PRESET = opend3::PerformancePresetDefaultName;
+static const int OPEND3_PERFORMANCE_PRESET_MAX_SHADOW_UPDATES = 1024;
+static const int OPEND3_PERFORMANCE_PRESET_MIN_UPLOAD_FRAME_BUFFERS = 3;
+static const int OPEND3_PERFORMANCE_PRESET_MAX_UPLOAD_FRAME_BUFFERS = 8;
+static const int OPEND3_PERFORMANCE_PRESET_MAX_EMITTER_CHANNELS = 48;
+static const int OPEND3_PERFORMANCE_PRESET_UNLIMITED_BUDGET_RANK = 0x7fffffff;
+static const int OPEND3_PERFORMANCE_PRESET_UNKNOWN_SYSTEM_RAM_MB = opend3::PerformancePresetUnknownSystemRamMB;
+static const int OPEND3_PERFORMANCE_PRESET_UNKNOWN_VIDEO_RAM_MB = opend3::PerformancePresetUnknownVideoRamMB;
+static const int OPEND3_PERFORMANCE_PRESET_MAX_REASONABLE_SYSTEM_RAM_MB = opend3::PerformancePresetMaxSystemRamMB;
+static const int OPEND3_PERFORMANCE_PRESET_MAX_REASONABLE_VIDEO_RAM_MB = opend3::PerformancePresetMaxVideoRamMB;
 
-static const auto& OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVARS = openq4::PerformancePresetTargets();
-static const int OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT = openq4::PerformancePresetTargetCount;
+static const auto& OPEND3_PERFORMANCE_PRESET_TOUCHED_CVARS = opend3::PerformancePresetTargets();
+static const int OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT = opend3::PerformancePresetTargetCount;
 
 static bool Common_PerformancePresetTargetIsDeclared( const char *name ) {
 	if ( name == NULL || name[0] == '\0' ) {
 		return false;
 	}
-	for ( int i = 0; i < OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
-		if ( idStr::Icmp( OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVARS[i], name ) == 0 ) {
+	for ( int i = 0; i < OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
+		if ( idStr::Icmp( OPEND3_PERFORMANCE_PRESET_TOUCHED_CVARS[i], name ) == 0 ) {
 			return true;
 		}
 	}
 	return false;
 }
 
-static const openQ4PerformancePreset_t *Common_FindPerformancePreset( const char *name ) {
- return name != NULL ? openq4::FindPerformancePreset(name) : NULL;
+static const openD3PerformancePreset_t *Common_FindPerformancePreset( const char *name ) {
+ return name != NULL ? opend3::FindPerformancePreset(name) : NULL;
 }
 
-static const openQ4PerformancePreset_t *Common_DefaultPerformancePreset( void ) {
-	return Common_FindPerformancePreset( OPENQ4_DEFAULT_PERFORMANCE_PRESET );
+static const openD3PerformancePreset_t *Common_DefaultPerformancePreset( void ) {
+	return Common_FindPerformancePreset( OPEND3_DEFAULT_PERFORMANCE_PRESET );
 }
 
 static void Common_BuildPerformancePresetNameList( idStr &names, const char *separator ) {
 	names.Clear();
-	for ( int i = 0; i < OPENQ4_PERFORMANCE_PRESET_COUNT; ++i ) {
+	for ( int i = 0; i < OPEND3_PERFORMANCE_PRESET_COUNT; ++i ) {
 		if ( i > 0 ) {
 			names += separator;
 		}
-		names += OPENQ4_PERFORMANCE_PRESETS[i].name;
+		names += OPEND3_PERFORMANCE_PRESETS[i].name;
 	}
 }
 
@@ -3377,8 +3377,8 @@ static bool Common_PerformancePresetTargetIsKnown( const char *name ) {
 
 static bool Common_PerformancePresetAllTargetsKnown( const char *presetName, bool quiet ) {
 	bool allKnown = true;
-	for ( int i = 0; i < OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
-		const char *cvarName = OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVARS[i];
+	for ( int i = 0; i < OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
+		const char *cvarName = OPEND3_PERFORMANCE_PRESET_TOUCHED_CVARS[i];
 		if ( !Common_PerformancePresetTargetIsKnown( cvarName ) ) {
 			if ( !quiet ) {
 				common->Warning( "Performance preset '%s' references unknown cvar '%s'", presetName, cvarName );
@@ -3447,16 +3447,16 @@ static bool Common_SetPerformancePresetInt( const char *presetName, const char *
 	return false;
 }
 
-struct openQ4PerformancePresetCVarBackup_t {
+struct openD3PerformancePresetCVarBackup_t {
 	const char *name;
 	bool valid;
 	int flags;
 	idStr value;
 };
 
-static void Common_BackupPerformancePresetCVars( openQ4PerformancePresetCVarBackup_t backups[OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT] ) {
-	for ( int i = 0; i < OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
-		backups[i].name = OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVARS[i];
+static void Common_BackupPerformancePresetCVars( openD3PerformancePresetCVarBackup_t backups[OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT] ) {
+	for ( int i = 0; i < OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
+		backups[i].name = OPEND3_PERFORMANCE_PRESET_TOUCHED_CVARS[i];
 		idCVar *cvar = cvarSystem->Find( backups[i].name );
 		backups[i].valid = ( cvar != NULL );
 		backups[i].flags = backups[i].valid ? cvar->GetFlags() : 0;
@@ -3473,8 +3473,8 @@ static void Common_RestorePerformancePresetCVarFlags( idCVar *cvar, int flags ) 
 	cvar->SetFlag( static_cast<cvarFlags_t>( flags ) );
 }
 
-static void Common_RestorePerformancePresetCVars( const openQ4PerformancePresetCVarBackup_t backups[OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT] ) {
-	for ( int i = 0; i < OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
+static void Common_RestorePerformancePresetCVars( const openD3PerformancePresetCVarBackup_t backups[OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT] ) {
+	for ( int i = 0; i < OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
 		idCVar *cvar = cvarSystem->Find( backups[i].name );
 		if ( backups[i].valid ) {
 			cvarSystem->SetCVarString( backups[i].name, backups[i].value.c_str(), CVAR_ARCHIVE );
@@ -3494,7 +3494,7 @@ static void Common_RestorePerformancePresetModifiedFlags( int modifiedFlags ) {
 	}
 }
 
-static bool Common_ApplyPerformancePreset( const openQ4PerformancePreset_t &preset, bool quiet = false ) {
+static bool Common_ApplyPerformancePreset( const openD3PerformancePreset_t &preset, bool quiet = false ) {
 	if ( !Common_PerformancePresetAllTargetsKnown( preset.name, quiet ) ) {
 		if ( !quiet ) {
 			common->Printf( "Performance preset '%s' did not apply because one or more target cvars are unavailable.\n", preset.name );
@@ -3502,13 +3502,13 @@ static bool Common_ApplyPerformancePreset( const openQ4PerformancePreset_t &pres
 		return false;
 	}
 
- openq4::PerformancePresetAssignments expansion; std::string expansionError;
- if (!openq4::ExpandPerformancePreset(preset,expansion,expansionError)) {
+ opend3::PerformancePresetAssignments expansion; std::string expansionError;
+ if (!opend3::ExpandPerformancePreset(preset,expansion,expansionError)) {
   if (!quiet) common->Warning("Performance preset '%s' could not expand: %s",preset.name,expansionError.c_str());
   return false;
  }
 
-	openQ4PerformancePresetCVarBackup_t backups[OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT];
+	openD3PerformancePresetCVarBackup_t backups[OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT];
 	const int savedModifiedFlags = cvarSystem->GetModifiedFlags();
 	Common_BackupPerformancePresetCVars( backups );
 
@@ -3542,7 +3542,7 @@ static bool Common_ApplyPerformancePreset( const openQ4PerformancePreset_t &pres
 // Retain the stock console command, but never revive its separate resolution,
 // texture, vsync and obsolete card-specific recipes.
 void Com_ExecMachineSpec_f( const idCmdArgs &args ) {
- const auto *preset=openq4::PerformancePresetForMachineSpec(com_machineSpec.GetInteger());
+ const auto *preset=opend3::PerformancePresetForMachineSpec(com_machineSpec.GetInteger());
  if(args.Argc()!=1||!preset){
   common->Printf("execMachineSpec requires no arguments and com_machineSpec 0..3. Settings were preserved.\n");
   return;
@@ -3551,11 +3551,11 @@ void Com_ExecMachineSpec_f( const idCmdArgs &args ) {
 }
 
 static int Common_SanitizePerformancePresetMemoryMB( int rawMegabytes, int fallbackMegabytes, int maxReasonableMegabytes ) {
- return openq4::SanitizePerformancePresetMemoryMB(rawMegabytes,fallbackMegabytes,maxReasonableMegabytes);
+ return opend3::SanitizePerformancePresetMemoryMB(rawMegabytes,fallbackMegabytes,maxReasonableMegabytes);
 }
 
-bool Common_CapturePerformancePresetSignals(openq4::PerformancePresetSignals& output,std::string& error) {
- openq4::PerformancePresetSignals signals;
+bool Common_CapturePerformancePresetSignals(opend3::PerformancePresetSignals& output,std::string& error) {
+ opend3::PerformancePresetSignals signals;
  if (!renderSystem || !renderSystem->GetGLConfig().isInitialized) {
   error="Renderer capability observation is unavailable";return false;
  }
@@ -3591,17 +3591,17 @@ bool Common_CapturePerformancePresetSignals(openq4::PerformancePresetSignals& ou
 #if defined( USE_SDL3 )
  signals.logicalCpus=SDL_GetNumLogicalCPUCores();
  // The display the window is on, so a detected start can match its rate.
- signals.displayRefreshHz=openq4::DisplayRefreshHertz(Sys_SDL_GetWindowRefreshHz());
+ signals.displayRefreshHz=opend3::DisplayRefreshHertz(Sys_SDL_GetWindowRefreshHz());
 #endif
  output=signals;error.clear();return true;
 }
-static bool Common_DetectPerformancePreset( openQ4PerformancePreset_t &preset, idStr &reason, int *videoRamMB = NULL ) {
- openq4::PerformancePresetSignals signals;std::string error;
+static bool Common_DetectPerformancePreset( openD3PerformancePreset_t &preset, idStr &reason, int *videoRamMB = NULL ) {
+ opend3::PerformancePresetSignals signals;std::string error;
  if (!Common_CapturePerformancePresetSignals(signals,error)) {reason=error.c_str();return false;}
- const auto detected=openq4::DetectPerformancePreset(signals);
+ const auto detected=opend3::DetectPerformancePreset(signals);
  if (videoRamMB!=NULL) *videoRamMB=detected.videoRamMB;
- if (!openq4::ResolveDetectedPerformancePreset(detected,preset)) {reason="detected profile is unavailable";return false;}
- using Reason=openq4::PerformancePresetReason;
+ if (!opend3::ResolveDetectedPerformancePreset(detected,preset)) {reason="detected profile is unavailable";return false;}
+ using Reason=opend3::PerformancePresetReason;
  const char* policy="unknown hardware; conservative starting point";
  switch(detected.reason){
   case Reason::ExplicitLowPower:policy="explicit low-power request";break;
@@ -3637,7 +3637,7 @@ static bool Common_ApplyPerformancePresetCommand( const idCmdArgs &args, bool qu
 
 	const bool explicitPreset = args.Argc() > 1;
 	const char *presetName = explicitPreset ? args.Argv( 1 ) : com_performancePreset.GetString();
-	const openQ4PerformancePreset_t *preset = Common_FindPerformancePreset( presetName );
+	const openD3PerformancePreset_t *preset = Common_FindPerformancePreset( presetName );
 	if ( preset == NULL ) {
 		if ( explicitPreset ) {
 			if ( !quiet ) {
@@ -3647,10 +3647,10 @@ static bool Common_ApplyPerformancePresetCommand( const idCmdArgs &args, bool qu
 			return false;
 		}
 
-		const openQ4PerformancePreset_t *defaultPreset = Common_DefaultPerformancePreset();
+		const openD3PerformancePreset_t *defaultPreset = Common_DefaultPerformancePreset();
 		if ( defaultPreset == NULL ) {
 			if ( !quiet ) {
-				common->Printf( "Unknown selected performance preset '%s' and default preset '%s' is unavailable.\n", presetName != NULL ? presetName : "", OPENQ4_DEFAULT_PERFORMANCE_PRESET );
+				common->Printf( "Unknown selected performance preset '%s' and default preset '%s' is unavailable.\n", presetName != NULL ? presetName : "", OPEND3_DEFAULT_PERFORMANCE_PRESET );
 			}
 			return false;
 		}
@@ -3677,7 +3677,7 @@ static bool Common_AutoDetectPerformancePresetCommand( const idCmdArgs &args, bo
 	}
 
 	idStr reason;
-	openQ4PerformancePreset_t preset;
+	openD3PerformancePreset_t preset;
 	if ( !Common_DetectPerformancePreset( preset, reason ) ) {
 		if ( !quiet ) common->Printf( "Auto-detect unavailable: %s. Settings were preserved.\n", reason.c_str() );
 		return false;
@@ -3711,7 +3711,7 @@ static void Common_PrintQualityProfile( bool firstLaunchBootstrap = false ) {
 }
 
 static bool Common_BootstrapStartupPerformancePreset(
-	openQ4PerformancePresetCVarBackup_t bootstrap[OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT] ) {
+	openD3PerformancePresetCVarBackup_t bootstrap[OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT] ) {
 	const auto *preset = Common_FindPerformancePreset( "minimum" );
 	if ( preset == NULL || !Common_ApplyPerformancePreset( *preset, true ) ) return false;
 	Common_BackupPerformancePresetCVars( bootstrap );
@@ -3723,14 +3723,14 @@ static bool Common_BootstrapStartupPerformancePreset(
 // a named profile is an explicit choice, including Minimum. Existing saved
 // configurations never enter this path just because their spec marker is gone.
 static bool Common_ApplyStartupPerformancePreset(
-	const openQ4PerformancePresetCVarBackup_t bootstrap[OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT],
-	const bool assigned[OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT] ) {
+	const openD3PerformancePresetCVarBackup_t bootstrap[OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT],
+	const bool assigned[OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT] ) {
 	idStr reason;
 	bool explicitPreset = false;
-	for ( int i = 0; i < OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
+	for ( int i = 0; i < OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
 		if ( assigned[i] && idStr::Icmp( bootstrap[i].name, "com_performancePreset" ) == 0 ) explicitPreset = true;
 	}
-	openQ4PerformancePreset_t detectedPreset;
+	openD3PerformancePreset_t detectedPreset;
 	int detectedVideoRamMB = 0;
 	const char *name = explicitPreset ? com_performancePreset.GetString() : "auto";
 	const auto *preset = explicitPreset ? Common_FindPerformancePreset( name ) :
@@ -3740,12 +3740,12 @@ static bool Common_ApplyStartupPerformancePreset(
 			name != NULL ? name : "", reason.c_str() );
 		return false;
 	}
-	openQ4PerformancePresetCVarBackup_t configured[OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT];
+	openD3PerformancePresetCVarBackup_t configured[OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT];
 	Common_BackupPerformancePresetCVars( configured );
 	const int modifiedFlags = cvarSystem->GetModifiedFlags();
 	if ( !Common_ApplyPerformancePreset( *preset, true ) ) return false;
 	bool restored = true;
-	for ( int i = 0; i < OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
+	for ( int i = 0; i < OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
 		const auto &value = configured[i];
 		if ( idStr::Icmp( value.name, "com_performancePreset" ) == 0 ) continue;
 		if ( value.valid && ( assigned[i] || value.value != bootstrap[i].value || Common_HasStartupVariable( value.name ) ) ) {
@@ -3784,14 +3784,14 @@ static bool Common_CommandIsRegistered( const char *name ) {
 
 static bool Common_ValidatePerformancePresetTargetCVars( void ) {
 	bool passed = true;
-	for ( int i = 0; i < OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
-		const char *cvarName = OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVARS[i];
+	for ( int i = 0; i < OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
+		const char *cvarName = OPEND3_PERFORMANCE_PRESET_TOUCHED_CVARS[i];
 		if ( !Common_PerformancePresetTargetIsKnown( cvarName ) ) {
 			common->Printf( "PerformancePreset self-test failed: target cvar '%s' is not registered\n", cvarName );
 			passed = false;
 		}
-		for ( int j = i + 1; j < OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++j ) {
-			const char *otherCvarName = OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVARS[j];
+		for ( int j = i + 1; j < OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++j ) {
+			const char *otherCvarName = OPEND3_PERFORMANCE_PRESET_TOUCHED_CVARS[j];
 			if ( idStr::Icmp( cvarName, otherCvarName ) == 0 ) {
 				common->Printf( "PerformancePreset self-test failed: duplicate target cvar '%s'\n", cvarName );
 				passed = false;
@@ -3801,9 +3801,9 @@ static bool Common_ValidatePerformancePresetTargetCVars( void ) {
 	return passed;
 }
 
-static bool Common_ValidatePerformancePresetCVarsRestored( const openQ4PerformancePresetCVarBackup_t backups[OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT] ) {
+static bool Common_ValidatePerformancePresetCVarsRestored( const openD3PerformancePresetCVarBackup_t backups[OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT] ) {
 	bool passed = true;
-	for ( int i = 0; i < OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
+	for ( int i = 0; i < OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
 		idCVar *cvar = cvarSystem->Find( backups[i].name );
 		if ( backups[i].valid ) {
 			if ( cvar == NULL ) {
@@ -3873,8 +3873,8 @@ static bool Common_CheckPerformancePresetInt( const char *presetName, const char
 
 static bool Common_CheckPerformancePresetTargetsArchived( const char *presetName ) {
 	bool passed = true;
-	for ( int i = 0; i < OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
-		const char *cvarName = OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVARS[i];
+	for ( int i = 0; i < OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT; ++i ) {
+		const char *cvarName = OPEND3_PERFORMANCE_PRESET_TOUCHED_CVARS[i];
 		const idCVar *cvar = cvarSystem->Find( cvarName );
 		if ( cvar == NULL || ( cvar->GetFlags() & CVAR_ARCHIVE ) == 0 ) {
 			common->Printf( "PerformancePreset self-test failed: %s did not archive cvar %s\n", presetName, cvarName );
@@ -3898,15 +3898,15 @@ static bool Common_PerformancePresetBenchmarkNameIsValid( const char *name ) {
 		idStr::Icmp( name, "high-end" ) == 0;
 }
 
-static bool Common_PerformancePresetIsNamed( const openQ4PerformancePreset_t &preset, const char *name ) {
+static bool Common_PerformancePresetIsNamed( const openD3PerformancePreset_t &preset, const char *name ) {
 	return preset.name != NULL && name != NULL && idStr::Icmp( preset.name, name ) == 0;
 }
 
 static int Common_PerformancePresetBudgetRank( int value ) {
-	return value == 0 ? OPENQ4_PERFORMANCE_PRESET_UNLIMITED_BUDGET_RANK : value;
+	return value == 0 ? OPEND3_PERFORMANCE_PRESET_UNLIMITED_BUDGET_RANK : value;
 }
 
-static bool Common_PerformancePresetCheckExpectedInt( const openQ4PerformancePreset_t &preset, const char *fieldName, int value, int expected ) {
+static bool Common_PerformancePresetCheckExpectedInt( const openD3PerformancePreset_t &preset, const char *fieldName, int value, int expected ) {
 	if ( value == expected ) {
 		return true;
 	}
@@ -3914,7 +3914,7 @@ static bool Common_PerformancePresetCheckExpectedInt( const openQ4PerformancePre
 	return false;
 }
 
-static bool Common_PerformancePresetCheckIntAtLeast( const openQ4PerformancePreset_t &preset, const char *fieldName, int value, int minimum ) {
+static bool Common_PerformancePresetCheckIntAtLeast( const openD3PerformancePreset_t &preset, const char *fieldName, int value, int minimum ) {
 	if ( value >= minimum ) {
 		return true;
 	}
@@ -3922,7 +3922,7 @@ static bool Common_PerformancePresetCheckIntAtLeast( const openQ4PerformancePres
 	return false;
 }
 
-static bool Common_PerformancePresetCheckIntAtMost( const openQ4PerformancePreset_t &preset, const char *fieldName, int value, int maximum ) {
+static bool Common_PerformancePresetCheckIntAtMost( const openD3PerformancePreset_t &preset, const char *fieldName, int value, int maximum ) {
 	if ( value <= maximum ) {
 		return true;
 	}
@@ -3930,7 +3930,7 @@ static bool Common_PerformancePresetCheckIntAtMost( const openQ4PerformancePrese
 	return false;
 }
 
-static bool Common_PerformancePresetCheckBenchmarkPreset( const openQ4PerformancePreset_t &preset, const char *expected ) {
+static bool Common_PerformancePresetCheckBenchmarkPreset( const openD3PerformancePreset_t &preset, const char *expected ) {
 	if ( preset.rendererBenchmarkPreset != NULL && expected != NULL && idStr::Icmp( preset.rendererBenchmarkPreset, expected ) == 0 ) {
 		return true;
 	}
@@ -3938,18 +3938,18 @@ static bool Common_PerformancePresetCheckBenchmarkPreset( const openQ4Performanc
 	return false;
 }
 
-static bool Common_PerformancePresetCheckRestoredAudio( const openQ4PerformancePreset_t &preset ) {
+static bool Common_PerformancePresetCheckRestoredAudio( const openD3PerformancePreset_t &preset ) {
 	bool passed = true;
 	// The speaker layout is the output device's, not a performance tier's.
 	passed &= Common_PerformancePresetCheckExpectedInt( preset, "s_numberOfSpeakers", preset.numberOfSpeakers, 0 );
 	// Room reverb is part of the authored mix; every tier keeps it.
 	passed &= Common_PerformancePresetCheckExpectedInt( preset, "s_useEAXReverb", preset.useEAXReverb, 1 );
-	passed &= Common_PerformancePresetCheckExpectedInt( preset, "s_maxEmitterChannels", preset.maxEmitterChannels, OPENQ4_PERFORMANCE_PRESET_MAX_EMITTER_CHANNELS );
+	passed &= Common_PerformancePresetCheckExpectedInt( preset, "s_maxEmitterChannels", preset.maxEmitterChannels, OPEND3_PERFORMANCE_PRESET_MAX_EMITTER_CHANNELS );
 	passed &= Common_PerformancePresetCheckExpectedInt( preset, "s_maxSoundsPerShader", preset.maxSoundsPerShader, 0 );
 	return passed;
 }
 
-static bool Common_ValidatePerformancePresetIntent( const openQ4PerformancePreset_t &preset ) {
+static bool Common_ValidatePerformancePresetIntent( const openD3PerformancePreset_t &preset ) {
 	bool passed = true;
 
 	// Enhanced is the affordable modern-effects tier; lower tiers retain stencil.
@@ -3983,7 +3983,7 @@ static bool Common_ValidatePerformancePresetIntent( const openQ4PerformancePrese
 		passed &= Common_PerformancePresetCheckExpectedInt( preset, "s_useEAXReverb", preset.useEAXReverb, 1 );
 		passed &= Common_PerformancePresetCheckIntAtMost( preset, "s_maxEmitterChannels", preset.maxEmitterChannels, 32 );
 		passed &= Common_PerformancePresetCheckIntAtMost( preset, "r_rendererUploadMegs", preset.uploadMegs, 8 );
-		passed &= Common_PerformancePresetCheckExpectedInt( preset, "r_rendererUploadFrameBuffers", preset.uploadFrameBuffers, OPENQ4_PERFORMANCE_PRESET_MIN_UPLOAD_FRAME_BUFFERS );
+		passed &= Common_PerformancePresetCheckExpectedInt( preset, "r_rendererUploadFrameBuffers", preset.uploadFrameBuffers, OPEND3_PERFORMANCE_PRESET_MIN_UPLOAD_FRAME_BUFFERS );
 	} else if ( Common_PerformancePresetIsNamed( preset, "performance" ) ) {
 		passed &= Common_PerformancePresetCheckExpectedInt( preset, "com_machineSpec", preset.machineSpec, 1 );
 		passed &= Common_PerformancePresetCheckBenchmarkPreset( preset, "baseline" );
@@ -4082,7 +4082,7 @@ static bool Common_ValidatePerformancePresetIntent( const openQ4PerformancePrese
 	return passed;
 }
 
-static bool Common_PerformancePresetCheckNonDecreasingInt( const openQ4PerformancePreset_t &previousPreset, const openQ4PerformancePreset_t &preset, const char *fieldName, int previousValue, int value ) {
+static bool Common_PerformancePresetCheckNonDecreasingInt( const openD3PerformancePreset_t &previousPreset, const openD3PerformancePreset_t &preset, const char *fieldName, int previousValue, int value ) {
 	if ( value >= previousValue ) {
 		return true;
 	}
@@ -4090,7 +4090,7 @@ static bool Common_PerformancePresetCheckNonDecreasingInt( const openQ4Performan
 	return false;
 }
 
-static bool Common_PerformancePresetCheckNonDecreasingBudget( const openQ4PerformancePreset_t &previousPreset, const openQ4PerformancePreset_t &preset, const char *fieldName, int previousValue, int value ) {
+static bool Common_PerformancePresetCheckNonDecreasingBudget( const openD3PerformancePreset_t &previousPreset, const openD3PerformancePreset_t &preset, const char *fieldName, int previousValue, int value ) {
 	if ( Common_PerformancePresetBudgetRank( value ) >= Common_PerformancePresetBudgetRank( previousValue ) ) {
 		return true;
 	}
@@ -4098,7 +4098,7 @@ static bool Common_PerformancePresetCheckNonDecreasingBudget( const openQ4Perfor
 	return false;
 }
 
-static bool Common_PerformancePresetCheckNonIncreasingInt( const openQ4PerformancePreset_t &previousPreset, const openQ4PerformancePreset_t &preset, const char *fieldName, int previousValue, int value ) {
+static bool Common_PerformancePresetCheckNonIncreasingInt( const openD3PerformancePreset_t &previousPreset, const openD3PerformancePreset_t &preset, const char *fieldName, int previousValue, int value ) {
 	if ( value <= previousValue ) {
 		return true;
 	}
@@ -4108,9 +4108,9 @@ static bool Common_PerformancePresetCheckNonIncreasingInt( const openQ4Performan
 
 static bool Common_ValidatePerformancePresetProgression( void ) {
 	bool passed = true;
-	for ( int i = 1; i < OPENQ4_PERFORMANCE_PRESET_COUNT; ++i ) {
-		const openQ4PerformancePreset_t &previousPreset = OPENQ4_PERFORMANCE_PRESETS[i - 1];
-		const openQ4PerformancePreset_t &preset = OPENQ4_PERFORMANCE_PRESETS[i];
+	for ( int i = 1; i < OPEND3_PERFORMANCE_PRESET_COUNT; ++i ) {
+		const openD3PerformancePreset_t &previousPreset = OPEND3_PERFORMANCE_PRESETS[i - 1];
+		const openD3PerformancePreset_t &preset = OPEND3_PERFORMANCE_PRESETS[i];
 
 		passed &= Common_PerformancePresetCheckNonDecreasingInt( previousPreset, preset, "com_machineSpec", previousPreset.machineSpec, preset.machineSpec );
 		passed &= Common_PerformancePresetCheckNonDecreasingInt( previousPreset, preset, "r_screenFraction", previousPreset.screenFraction, preset.screenFraction );
@@ -4151,7 +4151,7 @@ static bool Common_ValidatePerformancePresetProgression( void ) {
 	return passed;
 }
 
-static bool Common_ValidatePerformancePresetDefinition( const openQ4PerformancePreset_t &preset ) {
+static bool Common_ValidatePerformancePresetDefinition( const openD3PerformancePreset_t &preset ) {
 	bool passed = true;
 	if ( preset.name == NULL || preset.name[0] == '\0' || Common_FindPerformancePreset( preset.name ) != &preset ) {
 		common->Printf( "PerformancePreset self-test failed: invalid preset name\n" );
@@ -4186,7 +4186,7 @@ static bool Common_ValidatePerformancePresetDefinition( const openQ4PerformanceP
 		 preset.bloomMipCount < 1 || preset.bloomMipCount > 5 ||
 		 preset.motionBlurSamples < 1 || preset.motionBlurSamples > 16 ||
 
-		 preset.shadowMapMaxUpdates < 0 || preset.shadowMapMaxUpdates > OPENQ4_PERFORMANCE_PRESET_MAX_SHADOW_UPDATES ||
+		 preset.shadowMapMaxUpdates < 0 || preset.shadowMapMaxUpdates > OPEND3_PERFORMANCE_PRESET_MAX_SHADOW_UPDATES ||
 		 ( preset.bloom != 0 && preset.bloom != 1 ) ||
 		 ( preset.ssao != 0 && preset.ssao != 1 ) ||
 		 ( preset.hdrToneMap != 0 && preset.hdrToneMap != 1 ) ||
@@ -4194,10 +4194,10 @@ static bool Common_ValidatePerformancePresetDefinition( const openQ4PerformanceP
 		 ( preset.crt != 0 && preset.crt != 1 ) ||
 		 ( preset.useLightGrid != 0 && preset.useLightGrid != 1 ) ||
 		 preset.uploadMegs < 1 || preset.uploadMegs > 128 ||
-		 preset.uploadFrameBuffers < OPENQ4_PERFORMANCE_PRESET_MIN_UPLOAD_FRAME_BUFFERS || preset.uploadFrameBuffers > OPENQ4_PERFORMANCE_PRESET_MAX_UPLOAD_FRAME_BUFFERS ||
+		 preset.uploadFrameBuffers < OPEND3_PERFORMANCE_PRESET_MIN_UPLOAD_FRAME_BUFFERS || preset.uploadFrameBuffers > OPEND3_PERFORMANCE_PRESET_MAX_UPLOAD_FRAME_BUFFERS ||
 		 ( preset.numberOfSpeakers != 0 && preset.numberOfSpeakers != 2 && preset.numberOfSpeakers != 6 ) ||
 		 ( preset.useEAXReverb != 0 && preset.useEAXReverb != 1 ) ||
-		 preset.maxEmitterChannels <= 0 || preset.maxEmitterChannels > OPENQ4_PERFORMANCE_PRESET_MAX_EMITTER_CHANNELS ) {
+		 preset.maxEmitterChannels <= 0 || preset.maxEmitterChannels > OPEND3_PERFORMANCE_PRESET_MAX_EMITTER_CHANNELS ) {
 		common->Printf( "PerformancePreset self-test failed: %s has out-of-range values\n", preset.name );
 		passed = false;
 	}
@@ -4209,7 +4209,7 @@ static bool Common_ValidatePerformancePresetNameList( const char *listName, cons
 	bool passed = true;
 	int argCount = 0;
 	for ( ; names[argCount] != NULL; ++argCount ) {
-		if ( argCount >= OPENQ4_PERFORMANCE_PRESET_COUNT ) {
+		if ( argCount >= OPEND3_PERFORMANCE_PRESET_COUNT ) {
 			common->Printf( "PerformancePreset self-test failed: %s has more entries than preset definitions\n", listName );
 			passed = false;
 			continue;
@@ -4225,24 +4225,24 @@ static bool Common_ValidatePerformancePresetNameList( const char *listName, cons
 			}
 		}
 	}
-	if ( argCount != OPENQ4_PERFORMANCE_PRESET_COUNT ) {
-		common->Printf( "PerformancePreset self-test failed: %s has %d entries for %d preset definitions\n", listName, argCount, OPENQ4_PERFORMANCE_PRESET_COUNT );
+	if ( argCount != OPEND3_PERFORMANCE_PRESET_COUNT ) {
+		common->Printf( "PerformancePreset self-test failed: %s has %d entries for %d preset definitions\n", listName, argCount, OPEND3_PERFORMANCE_PRESET_COUNT );
 		passed = false;
 	}
-	if ( defaultMustBeFirst && ( names[0] == NULL || idStr::Icmp( names[0], OPENQ4_DEFAULT_PERFORMANCE_PRESET ) != 0 ) ) {
-		common->Printf( "PerformancePreset self-test failed: %s must start with default preset '%s'\n", listName, OPENQ4_DEFAULT_PERFORMANCE_PRESET );
+	if ( defaultMustBeFirst && ( names[0] == NULL || idStr::Icmp( names[0], OPEND3_DEFAULT_PERFORMANCE_PRESET ) != 0 ) ) {
+		common->Printf( "PerformancePreset self-test failed: %s must start with default preset '%s'\n", listName, OPEND3_DEFAULT_PERFORMANCE_PRESET );
 		passed = false;
 	}
-	for ( int i = 0; i < OPENQ4_PERFORMANCE_PRESET_COUNT; ++i ) {
+	for ( int i = 0; i < OPEND3_PERFORMANCE_PRESET_COUNT; ++i ) {
 		bool found = false;
 		for ( int j = 0; names[j] != NULL; ++j ) {
-			if ( idStr::Icmp( OPENQ4_PERFORMANCE_PRESETS[i].name, names[j] ) == 0 ) {
+			if ( idStr::Icmp( OPEND3_PERFORMANCE_PRESETS[i].name, names[j] ) == 0 ) {
 				found = true;
 				break;
 			}
 		}
 		if ( !found ) {
-			common->Printf( "PerformancePreset self-test failed: preset '%s' is missing from %s\n", OPENQ4_PERFORMANCE_PRESETS[i].name, listName );
+			common->Printf( "PerformancePreset self-test failed: preset '%s' is missing from %s\n", OPEND3_PERFORMANCE_PRESETS[i].name, listName );
 			passed = false;
 		}
 	}
@@ -4254,16 +4254,16 @@ static bool Common_ValidatePerformancePresetDefinitions( void ) {
 	passed &= Common_ValidatePerformancePresetNameList( "command completion choices", com_performancePresetArgs, false );
 	passed &= Common_ValidatePerformancePresetNameList( "cvar value strings", com_performancePresetValueStrings, true );
 	if ( Common_DefaultPerformancePreset() == NULL ) {
-		common->Printf( "PerformancePreset self-test failed: default preset '%s' is missing\n", OPENQ4_DEFAULT_PERFORMANCE_PRESET );
+		common->Printf( "PerformancePreset self-test failed: default preset '%s' is missing\n", OPEND3_DEFAULT_PERFORMANCE_PRESET );
 		passed = false;
 	}
-	for ( int i = 0; i < OPENQ4_PERFORMANCE_PRESET_COUNT; ++i ) {
-		if ( !Common_ValidatePerformancePresetDefinition( OPENQ4_PERFORMANCE_PRESETS[i] ) ) {
+	for ( int i = 0; i < OPEND3_PERFORMANCE_PRESET_COUNT; ++i ) {
+		if ( !Common_ValidatePerformancePresetDefinition( OPEND3_PERFORMANCE_PRESETS[i] ) ) {
 			passed = false;
 		}
-		for ( int j = i + 1; j < OPENQ4_PERFORMANCE_PRESET_COUNT; ++j ) {
-			if ( idStr::Icmp( OPENQ4_PERFORMANCE_PRESETS[i].name, OPENQ4_PERFORMANCE_PRESETS[j].name ) == 0 ) {
-				common->Printf( "PerformancePreset self-test failed: duplicate preset '%s'\n", OPENQ4_PERFORMANCE_PRESETS[i].name );
+		for ( int j = i + 1; j < OPEND3_PERFORMANCE_PRESET_COUNT; ++j ) {
+			if ( idStr::Icmp( OPEND3_PERFORMANCE_PRESETS[i].name, OPEND3_PERFORMANCE_PRESETS[j].name ) == 0 ) {
+				common->Printf( "PerformancePreset self-test failed: duplicate preset '%s'\n", OPEND3_PERFORMANCE_PRESETS[i].name );
 				passed = false;
 			}
 		}
@@ -4272,7 +4272,7 @@ static bool Common_ValidatePerformancePresetDefinitions( void ) {
 	return passed;
 }
 
-static bool Common_ValidatePerformancePresetApplied( const openQ4PerformancePreset_t &preset ) {
+static bool Common_ValidatePerformancePresetApplied( const openD3PerformancePreset_t &preset ) {
 	bool passed = true;
 	passed &= Common_CheckPerformancePresetString( preset.name, "com_performancePreset", preset.name );
 	passed &= Common_CheckPerformancePresetInt( preset.name, "com_machineSpec", preset.machineSpec );
@@ -4355,7 +4355,7 @@ static void Com_PerformancePresetSelfTest_f( const idCmdArgs &args ) {
 	passed &= targetsPassed;
 
 	idStr reason;
-	openQ4PerformancePreset_t detectedPreset;
+	openD3PerformancePreset_t detectedPreset;
 	if ( !Common_DetectPerformancePreset( detectedPreset, reason ) ) {
 		common->Printf( "PerformancePreset self-test failed: %s\n", reason.c_str() );
 		return;
@@ -4369,24 +4369,24 @@ static void Com_PerformancePresetSelfTest_f( const idCmdArgs &args ) {
 		common->Printf( "PerformancePreset self-test failed: auto-detect selected Maximum, which has no frame-rate target\n" );
 		passed = false;
 	}
-	if ( Common_SanitizePerformancePresetMemoryMB( 0, OPENQ4_PERFORMANCE_PRESET_UNKNOWN_VIDEO_RAM_MB, OPENQ4_PERFORMANCE_PRESET_MAX_REASONABLE_VIDEO_RAM_MB ) != OPENQ4_PERFORMANCE_PRESET_UNKNOWN_VIDEO_RAM_MB ||
-		 Common_SanitizePerformancePresetMemoryMB( OPENQ4_PERFORMANCE_PRESET_MAX_REASONABLE_VIDEO_RAM_MB + 1, OPENQ4_PERFORMANCE_PRESET_UNKNOWN_VIDEO_RAM_MB, OPENQ4_PERFORMANCE_PRESET_MAX_REASONABLE_VIDEO_RAM_MB ) != OPENQ4_PERFORMANCE_PRESET_UNKNOWN_VIDEO_RAM_MB ||
-		 Common_SanitizePerformancePresetMemoryMB( 6144, OPENQ4_PERFORMANCE_PRESET_UNKNOWN_VIDEO_RAM_MB, OPENQ4_PERFORMANCE_PRESET_MAX_REASONABLE_VIDEO_RAM_MB ) != 6144 ) {
+	if ( Common_SanitizePerformancePresetMemoryMB( 0, OPEND3_PERFORMANCE_PRESET_UNKNOWN_VIDEO_RAM_MB, OPEND3_PERFORMANCE_PRESET_MAX_REASONABLE_VIDEO_RAM_MB ) != OPEND3_PERFORMANCE_PRESET_UNKNOWN_VIDEO_RAM_MB ||
+		 Common_SanitizePerformancePresetMemoryMB( OPEND3_PERFORMANCE_PRESET_MAX_REASONABLE_VIDEO_RAM_MB + 1, OPEND3_PERFORMANCE_PRESET_UNKNOWN_VIDEO_RAM_MB, OPEND3_PERFORMANCE_PRESET_MAX_REASONABLE_VIDEO_RAM_MB ) != OPEND3_PERFORMANCE_PRESET_UNKNOWN_VIDEO_RAM_MB ||
+		 Common_SanitizePerformancePresetMemoryMB( 6144, OPEND3_PERFORMANCE_PRESET_UNKNOWN_VIDEO_RAM_MB, OPEND3_PERFORMANCE_PRESET_MAX_REASONABLE_VIDEO_RAM_MB ) != 6144 ) {
 		common->Printf( "PerformancePreset self-test failed: memory telemetry sanitizer returned an unexpected value\n" );
 		passed = false;
 	}
 
-	openQ4PerformancePresetCVarBackup_t backups[OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT];
+	openD3PerformancePresetCVarBackup_t backups[OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT];
 	const int savedModifiedFlags = cvarSystem->GetModifiedFlags();
 	Common_BackupPerformancePresetCVars( backups );
 
 	if ( definitionsPassed && targetsPassed ) {
-		for ( int i = 0; i < OPENQ4_PERFORMANCE_PRESET_COUNT; ++i ) {
-			if ( !Common_ApplyPerformancePreset( OPENQ4_PERFORMANCE_PRESETS[i], true ) ) {
-				common->Printf( "PerformancePreset self-test failed: %s did not apply cleanly\n", OPENQ4_PERFORMANCE_PRESETS[i].name );
+		for ( int i = 0; i < OPEND3_PERFORMANCE_PRESET_COUNT; ++i ) {
+			if ( !Common_ApplyPerformancePreset( OPEND3_PERFORMANCE_PRESETS[i], true ) ) {
+				common->Printf( "PerformancePreset self-test failed: %s did not apply cleanly\n", OPEND3_PERFORMANCE_PRESETS[i].name );
 				passed = false;
 			}
-			if ( !Common_ValidatePerformancePresetApplied( OPENQ4_PERFORMANCE_PRESETS[i] ) ) {
+			if ( !Common_ValidatePerformancePresetApplied( OPEND3_PERFORMANCE_PRESETS[i] ) ) {
 				passed = false;
 			}
 		}
@@ -4419,8 +4419,8 @@ static void Com_PerformancePresetSelfTest_f( const idCmdArgs &args ) {
 		}
 
 		com_performancePreset.SetString( "not-a-preset" );
-		if ( idStr::Icmp( com_performancePreset.GetString(), OPENQ4_DEFAULT_PERFORMANCE_PRESET ) != 0 ) {
-			common->Printf( "PerformancePreset self-test failed: invalid stored cvar did not normalize to '%s'\n", OPENQ4_DEFAULT_PERFORMANCE_PRESET );
+		if ( idStr::Icmp( com_performancePreset.GetString(), OPEND3_DEFAULT_PERFORMANCE_PRESET ) != 0 ) {
+			common->Printf( "PerformancePreset self-test failed: invalid stored cvar did not normalize to '%s'\n", OPEND3_DEFAULT_PERFORMANCE_PRESET );
 			passed = false;
 		}
 		if ( !Common_ApplyPerformancePresetCommand( noArgArgs, true ) ||
@@ -4438,10 +4438,10 @@ static void Com_PerformancePresetSelfTest_f( const idCmdArgs &args ) {
 			}
 		}
 
-		const openQ4PerformancePreset_t *performancePreset = Common_FindPerformancePreset( "performance" );
+		const openD3PerformancePreset_t *performancePreset = Common_FindPerformancePreset( "performance" );
 		if ( performancePreset != NULL ) {
 			Common_ApplyPerformancePreset( *performancePreset, true );
-			openQ4PerformancePreset_t invalidPreset = *performancePreset;
+			openD3PerformancePreset_t invalidPreset = *performancePreset;
 			invalidPreset.anisotropy = 17;
 			if ( Common_ApplyPerformancePreset( invalidPreset, true ) ||
 				 !Common_ValidatePerformancePresetApplied( *performancePreset ) ) {
@@ -4461,21 +4461,21 @@ static void Com_PerformancePresetSelfTest_f( const idCmdArgs &args ) {
 	Common_RestorePerformancePresetModifiedFlags( savedModifiedFlags );
 
 	if ( passed ) {
-		common->Printf( "PerformancePreset self-test passed (presets=%d autodetect=%s reason='%s')\n", OPENQ4_PERFORMANCE_PRESET_COUNT, detectedPresetName, reason.c_str() );
+		common->Printf( "PerformancePreset self-test passed (presets=%d autodetect=%s reason='%s')\n", OPEND3_PERFORMANCE_PRESET_COUNT, detectedPresetName, reason.c_str() );
 	} else {
 		common->Printf( "PerformancePreset self-test failed\n" );
 	}
 }
 
-typedef struct openQ4JobSelfTestStage_s {
+typedef struct openD3JobSelfTestStage_s {
 	std::atomic<int> *phase;
 	std::atomic<bool> *failed;
 	int expectedPhase;
 	int replacementPhase;
-} openQ4JobSelfTestStage_t;
+} openD3JobSelfTestStage_t;
 
 static void Common_JobSelfTestStage( const idJobContext &context ) {
-	openQ4JobSelfTestStage_t *stage = static_cast<openQ4JobSelfTestStage_t *>( context.data );
+	openD3JobSelfTestStage_t *stage = static_cast<openD3JobSelfTestStage_t *>( context.data );
 	if ( stage == NULL || stage->phase == NULL || stage->failed == NULL ) {
 		return;
 	}
@@ -4534,8 +4534,8 @@ static void Com_JobsSelfTest_f( const idCmdArgs &args ) {
 	std::atomic<int> phase( 0 );
 	std::atomic<bool> dependencyFailed( false );
 	std::atomic<int> parallelCount( 0 );
-	openQ4JobSelfTestStage_t rootData = { &phase, &dependencyFailed, 0, 1 };
-	openQ4JobSelfTestStage_t dependentData = { &phase, &dependencyFailed, 1, 2 };
+	openD3JobSelfTestStage_t rootData = { &phase, &dependencyFailed, 0, 1 };
+	openD3JobSelfTestStage_t dependentData = { &phase, &dependencyFailed, 1, 2 };
 	const idJobSystemMetrics before = jobSystem.GetMetrics();
 
 	std::unique_ptr<idJobList> root = jobSystem.CreateJobList( "engine-self-test-root", 1, 0, idJobPriority::HIGH );
@@ -5232,7 +5232,7 @@ Common_AppendLanguagesWithStringTables
 ListAvailableLanguagePacks only sees the retail zpak_<language> media archives,
 because those are what carry a language's recorded dialogue. That is the right
 test for a retail localisation, but it is the wrong one for a language whose
-text ships in the base paks with no media pack of its own - openQ4 translates
+text ships in the base paks with no media pack of its own - openD3 translates
 its own strings for languages id never recorded VO for, and gating on the media
 pack rejected them before the tables were ever consulted.
 
@@ -6525,7 +6525,7 @@ namespace {
 thread_local bool initializationActive = false;
 bool initializationDrawing = false;
 idStr initializationMessage;
-openq4::InitializationPresentation initializationPacing;
+opend3::InitializationPresentation initializationPacing;
 int initializationFrames = 0;
 double initializationLastFrame = 0, initializationMaxGap = 0, initializationDrawMsec = 0;
 // Trace-only: where loading starves presentation, and what each frame costs.
@@ -6558,7 +6558,7 @@ struct InitializationScope {
 };
 }
 
-bool openQ4_UpdateInitialization( void ) {
+bool openD3_UpdateInitialization( void ) {
 	// Thread-local ownership is checked before touching shared renderer/UI state.
 	if ( !initializationActive ) return false;
 	if ( !initializationDrawing ) {
@@ -6570,7 +6570,7 @@ bool openQ4_UpdateInitialization( void ) {
 		}
 	}
 	if ( initializationDrawing || initializationMessage.IsEmpty() ||
-		!initializationPacing.Due( InitializationMilliseconds(), openQ4_GetRequestedPresentationCap() ) ||
+		!initializationPacing.Due( InitializationMilliseconds(), openD3_GetRequestedPresentationCap() ) ||
 		!RetainedUI_CanUpdateInitialization() ) return true;
 	commonLocal.PrintLoadingMessage( initializationMessage.c_str() );
 	if ( cvarSystem->GetCVarBool( "ui_retainedTrace" ) ) {
@@ -6748,7 +6748,7 @@ static void Common_PresentationStallProbe( void ) {
 	Sys_Sleep( stallMsec );
 }
 
-static openq4::FrameWorkProfile commonFrameWorkProfile;
+static opend3::FrameWorkProfile commonFrameWorkProfile;
 static idStr commonFrameWorkTracePath( "diagnostics/frame-work.csv" );
 
 static double Common_FrameWorkNow() {
@@ -6784,7 +6784,7 @@ static void Common_WriteFrameWorkTrace() {
 		fileSystem->CloseFile(file);
 	}
 	std::vector<double> values; values.reserve(samples.size());
-	for (int phase=-1; phase<static_cast<int>(openq4::FrameWorkPhase::Count); ++phase) {
+	for (int phase=-1; phase<static_cast<int>(opend3::FrameWorkPhase::Count); ++phase) {
 		values.clear(); double total=0;
 		for (const auto& sample:samples) {
 			const double value=phase<0 ? sample.Total() : sample.milliseconds[phase];
@@ -6825,7 +6825,7 @@ static void Com_ProfileFrameWork_f( const idCmdArgs &args ) {
 	common->Printf( "Frame work profile: requested %d complete frames -> %s\n", frames, commonFrameWorkTracePath.c_str() );
 }
 
-static void Common_MarkFrameWork(openq4::FrameWorkPhase phase) {
+static void Common_MarkFrameWork(opend3::FrameWorkPhase phase) {
 	if (commonFrameWorkProfile.Active()) commonFrameWorkProfile.Mark(phase,Common_FrameWorkNow());
 }
 
@@ -6838,13 +6838,13 @@ void idCommonLocal::Frame( void ) {
 	try {
 		Common_FlushOffMainThreadPrints();
 		if (commonFrameWorkProfile.Active()) commonFrameWorkProfile.Begin(Common_FrameWorkNow());
-		openQ4_BeginPresentationFrame();
+		openD3_BeginPresentationFrame();
 		Common_PresentationStallProbe();
-		Common_MarkFrameWork(openq4::FrameWorkPhase::Wait);
+		Common_MarkFrameWork(opend3::FrameWorkPhase::Wait);
 
 		// pump all the events
 		Sys_GenerateEvents();
-		Common_MarkFrameWork(openq4::FrameWorkPhase::Events);
+		Common_MarkFrameWork(opend3::FrameWorkPhase::Events);
 
 		// Settings cleanup/confirmation is independent of GUI/input ownership and
 		// SP pause. Finish it before deciding which values may reach disk.
@@ -6856,7 +6856,7 @@ void idCommonLocal::Frame( void ) {
 		if ( com_forceGenericSIMD.IsModified() ) {
 			InitSIMD();
 		}
-		Common_MarkFrameWork(openq4::FrameWorkPhase::Configuration);
+		Common_MarkFrameWork(opend3::FrameWorkPhase::Configuration);
 
 		eventLoop->RunEventLoop();
 
@@ -6871,27 +6871,27 @@ void idCommonLocal::Frame( void ) {
 		// called by the ordinary multiplayer branch below.
 		arenaCampaign.Frame();
 #endif
-		Common_MarkFrameWork(openq4::FrameWorkPhase::Commands);
+		Common_MarkFrameWork(opend3::FrameWorkPhase::Commands);
 
 	if ( idAsyncNetwork::IsActive() ) {
 		if ( idAsyncNetwork::serverDedicated.GetInteger() != 1 ) {
 			// Keep netplay flow the same as stock, but ensure audio mixes each frame.
 			soundSystem->Render();
 			session->GuiFrameEvents();
-			openQ4_RecordMultiplayerFramePacing();
-			Common_MarkFrameWork(openq4::FrameWorkPhase::Session);
+			openD3_RecordMultiplayerFramePacing();
+			Common_MarkFrameWork(opend3::FrameWorkPhase::Session);
 			session->UpdateScreen( false );
 		} else {
-			Common_MarkFrameWork(openq4::FrameWorkPhase::Session);
+			Common_MarkFrameWork(opend3::FrameWorkPhase::Session);
 		}
 	} else {
 			session->Frame();
-			Common_MarkFrameWork(openq4::FrameWorkPhase::Session);
+			Common_MarkFrameWork(opend3::FrameWorkPhase::Session);
 
 			// normal, in-sequence screen update
 			session->UpdateScreen( false );
 		}
-		Common_MarkFrameWork(openq4::FrameWorkPhase::Draw);
+		Common_MarkFrameWork(opend3::FrameWorkPhase::Draw);
 
 		// report timing information
 		if ( com_speeds.GetBool() ) {
@@ -6930,7 +6930,7 @@ idCommonLocal::GUIFrame
 */
 void idCommonLocal::GUIFrame( bool execCmd, bool network ) {
 	Common_FlushOffMainThreadPrints();
-	openQ4_BeginPresentationFrame();
+	openD3_BeginPresentationFrame();
 	Sys_GenerateEvents();
 	UI_SettingsFrame( false ); // Poll only: loading callbacks must never restart recursively.
 	eventLoop->RunEventLoop( execCmd );	// and execute any commands
@@ -6975,7 +6975,7 @@ int prevAsyncMsec;
 double	lastTicMsec;
 bool	lastTicMsecValid;
 
-void openQ4_GetAsyncTimingStats( openq4AsyncTimingStats_t &stats, int maxSamples ) {
+void openD3_GetAsyncTimingStats( opend3AsyncTimingStats_t &stats, int maxSamples ) {
 	memset( &stats, 0, sizeof( stats ) );
 
 	if ( maxSamples <= 0 ) {
@@ -7040,10 +7040,10 @@ void openQ4_GetAsyncTimingStats( openq4AsyncTimingStats_t &stats, int maxSamples
 // registering its static CVars. Module swaps grow that registry on the main
 // thread and can invalidate an in-flight FindInternal traversal. Publish the
 // only bit of module state needed by the timer after game->Init() completes.
-static std::atomic<bool> openQ4_singleplayerGameModuleReady( false );
+static std::atomic<bool> openD3_singleplayerGameModuleReady( false );
 
-static bool openQ4_ShouldUseSmoothSingleplayerSlowTime( float effectiveTimeScale ) {
-	if ( !openQ4_singleplayerGameModuleReady.load( std::memory_order_acquire ) ||
+static bool openD3_ShouldUseSmoothSingleplayerSlowTime( float effectiveTimeScale ) {
+	if ( !openD3_singleplayerGameModuleReady.load( std::memory_order_acquire ) ||
 		 idAsyncNetwork::IsActive() ) {
 		return false;
 	}
@@ -7110,8 +7110,8 @@ void idCommonLocal::Async( void ) {
 
 	// Accelerated time produces more tics. Slow time keeps the normal tic cadence
 	// and lets the single-player game advance simulation by a smaller delta.
-	float timescale = com_timescale.GetFloat() * openQ4_gameTimeScale.load( std::memory_order_acquire );
-	const bool smoothSlowTime = openQ4_ShouldUseSmoothSingleplayerSlowTime( timescale );
+	float timescale = com_timescale.GetFloat() * openD3_gameTimeScale.load( std::memory_order_acquire );
+	const bool smoothSlowTime = openD3_ShouldUseSmoothSingleplayerSlowTime( timescale );
 	if ( !smoothSlowTime && timescale != 1.0f ) {
 		ticMsec /= timescale;
 		if ( ticMsec < 1.0 ) {
@@ -7130,7 +7130,7 @@ void idCommonLocal::Async( void ) {
 	const bool boundCatchup = smoothSlowTime || timescale == 1.0f;
 	const double clampedCatchupMsec = 10.0 * GetUserCmdMsecFloat();
 #endif
-	// openQ4: Sys_Milliseconds is an int and wraps to a large negative number
+	// openD3: Sys_Milliseconds is an int and wraps to a large negative number
 	// after 24.86 days of uptime. The last tic used to be an int as well and
 	// wrapped with it; as a double it stays up near 2^31, every test below is
 	// then false for the next 49.7 days, and no tic runs - a server that has
@@ -7170,7 +7170,7 @@ static bool openD3_IsValidGameModuleName( const char *moduleName ) {
 }
 
 // Upstream's split-module routing table. openD3 loads one unified 'game'
-// module, so openQ4_NormalizeGameTypeForModule only acts on legacy game_mp
+// module, so openD3_NormalizeGameTypeForModule only acts on legacy game_mp
 // requests; the table stays so upstream's call sites keep their meaning.
 // Mirror of the multiplayer rows in the GameLibs descriptor table
 // (src/mpgame/mp/GameTypes.cpp), including whether each row is selectable. The
@@ -7182,12 +7182,12 @@ static bool openD3_IsValidGameModuleName( const char *moduleName ) {
 // multiplayer" meant a typo, a stale config or a mod-specific value booted
 // game_mp and then forced a full renderer-tearing module swap on the first
 // New Game.
-struct openQ4GameTypeRoute_t {
+struct openD3GameTypeRoute_t {
 	const char *name;
 	bool selectable;
 };
 
-static const openQ4GameTypeRoute_t openQ4_multiplayerGameTypes[] = {
+static const openD3GameTypeRoute_t openD3_multiplayerGameTypes[] = {
 	{ "DM", true },
 	{ "Tourney", true },
 	{ "Team DM", true },
@@ -7210,12 +7210,12 @@ static const openQ4GameTypeRoute_t openQ4_multiplayerGameTypes[] = {
 	{ NULL, false }
 };
 
-static const char *openQ4_CanonicalMultiplayerGameType( const char *gameType, const bool selectableOnly ) {
+static const char *openD3_CanonicalMultiplayerGameType( const char *gameType, const bool selectableOnly ) {
 	if ( gameType == NULL || gameType[0] == '\0' ) {
 		return NULL;
 	}
-	for ( int i = 0; openQ4_multiplayerGameTypes[i].name != NULL; i++ ) {
-		const openQ4GameTypeRoute_t &route = openQ4_multiplayerGameTypes[i];
+	for ( int i = 0; openD3_multiplayerGameTypes[i].name != NULL; i++ ) {
+		const openD3GameTypeRoute_t &route = openD3_multiplayerGameTypes[i];
 		if ( idStr::Icmp( gameType, route.name ) == 0 && ( !selectableOnly || route.selectable ) ) {
 			return route.name;
 		}
@@ -7223,13 +7223,13 @@ static const char *openQ4_CanonicalMultiplayerGameType( const char *gameType, co
 	return NULL;
 }
 
-static void openQ4_NormalizeGameTypeForModule( const char *moduleName ) {
+static void openD3_NormalizeGameTypeForModule( const char *moduleName ) {
 	if ( idStr::Icmp( moduleName, "game_mp" ) != 0 ) {
 		return;
 	}
 
 	const char *currentGameType = cvarSystem->GetCVarString( "si_gameType" );
-	const char *canonicalGameType = openQ4_CanonicalMultiplayerGameType( currentGameType, true );
+	const char *canonicalGameType = openD3_CanonicalMultiplayerGameType( currentGameType, true );
 	if ( canonicalGameType != NULL ) {
 		if ( idStr::Cmp( currentGameType, canonicalGameType ) != 0 ) {
 			// CVar values use a case-insensitive early-out, so a direct "dm" ->
@@ -7274,7 +7274,6 @@ static void openD3_AddUniqueGameModuleCandidate( idStrList &candidates, const ch
 
 // Resurrection of Evil is its own game module. It is selected when d3xp is the
 // game directory, either directly or as the base of a mod built on it.
-#define OPEND3_EXPANSION_GAMEDIR "d3xp"
 
 static bool openD3_IsExpansionGameDirActive( void ) {
 	return idStr::Icmp( cvarSystem->GetCVarString( "fs_game" ), OPEND3_EXPANSION_GAMEDIR ) == 0 ||
@@ -7438,12 +7437,12 @@ idCommonLocal::LoadGameDLL
 =================
 */
 void idCommonLocal::LoadGameDLL( void ) {
-	openQ4_singleplayerGameModuleReady.store( false, std::memory_order_release );
+	openD3_singleplayerGameModuleReady.store( false, std::memory_order_release );
 	SetGameTimeScale( 1.0f );
 	gameShutdownCalled = false;
 	gameShutdownAfterDeclsCalled = false;
 	const char *gameModuleBaseName = openD3_SelectGameModuleBaseName();
-	openQ4_NormalizeGameTypeForModule( gameModuleBaseName );
+	openD3_NormalizeGameTypeForModule( gameModuleBaseName );
 
 #ifdef __DOOM_DLL__
 	char			dllPath[ MAX_OSPATH ];
@@ -7574,7 +7573,7 @@ void idCommonLocal::LoadGameDLL( void ) {
 	if ( game != NULL ) {
 		game->Init();
 	}
-	openQ4_singleplayerGameModuleReady.store(
+	openD3_singleplayerGameModuleReady.store(
 		// openD3's unified "game" module serves single player too; the async
 		// timer still rules out network sessions itself.
 		game != NULL && ( idStr::Icmp( gameModuleBaseName, "game" ) == 0 || idStr::Icmp( gameModuleBaseName, "game_sp" ) == 0 ),
@@ -7620,11 +7619,11 @@ void idCommonLocal::ApplyAutomaticPlatformProfile( void ) {
 
 	const char *disableAutoDetect = Common_GetNonEmptyEnv( "OPEND3_DISABLE_STEAMDECK_AUTODETECT" );
 	if ( disableAutoDetect == NULL ) {
-		disableAutoDetect = Common_GetNonEmptyEnv( "OPENQ4_DISABLE_STEAMDECK_AUTODETECT" );
+		disableAutoDetect = Common_GetNonEmptyEnv( "OPEND3_DISABLE_STEAMDECK_AUTODETECT" );
 	}
 	const char *noAutoDetect = Common_GetNonEmptyEnv( "OPEND3_NO_STEAMDECK_AUTODETECT" );
 	if ( noAutoDetect == NULL ) {
-		noAutoDetect = Common_GetNonEmptyEnv( "OPENQ4_NO_STEAMDECK_AUTODETECT" );
+		noAutoDetect = Common_GetNonEmptyEnv( "OPEND3_NO_STEAMDECK_AUTODETECT" );
 	}
 	if ( Common_IsEnvFlagTrue( disableAutoDetect ) || Common_IsEnvFlagTrue( noAutoDetect ) ) {
 		Printf( "Steam Deck platform profile auto-detection disabled by environment.\n" );
@@ -7634,7 +7633,7 @@ void idCommonLocal::ApplyAutomaticPlatformProfile( void ) {
 		return;
 	}
 
-	// openQ4: a television (Big Picture) takes the Couch profile.
+	// openD3: a television (Big Picture) takes the Couch profile.
 	if ( Common_HasCouchHostSignal() ) {
 		Printf( "Auto-selecting couch platform profile from host environment.\n" );
 		com_platformProfile.SetString( "couch" );
@@ -7647,7 +7646,7 @@ idCommonLocal::SetMachineSpec
 =================
 */
 void idCommonLocal::SetMachineSpec( void ) {
-	openq4::PerformancePresetSignals signals;
+	opend3::PerformancePresetSignals signals;
 	std::string error;
 	if ( !Common_CapturePerformancePresetSignals( signals, error ) ) {
 		// Before a device exists, keep only actual host memory/power facts.
@@ -7661,7 +7660,7 @@ void idCommonLocal::SetMachineSpec( void ) {
 		signals.raspberryPi = Common_HasRaspberryPiHostSignal();
 		signals.steamDeck = idStr::Icmp( com_platformProfile.GetString(), "steamdeck" ) == 0 || Common_HasSteamDeckHostSignal();
 	}
-	const auto detected = openq4::DetectPerformancePreset( signals );
+	const auto detected = opend3::DetectPerformancePreset( signals );
 	com_machineSpec.SetInteger( detected.preset->machineSpec );
 	com_videoRam.SetInteger( detected.videoRamMB );
 	Printf( "Detected performance profile '%s': GPU=%s, system memory=%d MiB, dedicated video memory=%d MiB (0=unknown/shared).\n",
@@ -7915,17 +7914,13 @@ void idCommonLocal::InitGame( void ) {
 	const idStr pendingGameModule = openD3_SelectGameModuleBaseName();
 	const bool preservePendingGameType = openD3_IsValidGameModuleName(
 		cvarSystem->GetCVarString( "com_nextGameModule" ) );
-	openQ4_NormalizeGameTypeForModule( pendingGameModule.c_str() );
+	openD3_NormalizeGameTypeForModule( pendingGameModule.c_str() );
 	const idStr pendingGameType = cvarSystem->GetCVarString( "si_gameType" );
 
-    if ( pendingGameModule == "game_mp" && !idStr::Icmp( cvarSystem->GetCVarString( "fs_game" ), "q4xbase" ) ) {
-        cvarSystem->SetCVarString( "fs_game", OPENQ4_GAMEDIR );
-        cvarSystem->SetCVarString( "fs_game_base", "" );
-    }
 	// initialize the file system
 	fileSystem->Init();
 
-#ifdef OPENQ4_RENDERER_MODULE_ONLY
+#ifdef OPEND3_RENDERER_MODULE_ONLY
 	if ( !commonOwnsRenderGeoTriSurfData ) {
 		R_InitTriSurfData();
 		commonOwnsRenderGeoTriSurfData = true;
@@ -7956,9 +7951,9 @@ void idCommonLocal::InitGame( void ) {
 	
 	idCmdArgs args;
 	bool detectStartupPreset = false;
-	openQ4PerformancePresetCVarBackup_t startupPresetBootstrap[OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT];
-	bool startupPresetAssigned[OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT] = {};
-	openq4::CVarAssignmentCapture startupPresetCapture;
+	openD3PerformancePresetCVarBackup_t startupPresetBootstrap[OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT];
+	bool startupPresetAssigned[OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT] = {};
+	opend3::CVarAssignmentCapture startupPresetCapture;
 #ifndef ID_DEDICATED
 	detectStartupPreset = sysDetect && !SafeMode() && fileSystem->ReadFile( CONFIG_FILE, NULL ) < 0;
 	if ( detectStartupPreset ) {
@@ -8004,9 +7999,9 @@ void idCommonLocal::InitGame( void ) {
 	cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "exec default.cfg\n" );
 	if ( fileSystem->ReadFile( "opend3_defaults.cfg", NULL ) >= 0 ) {
 		cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "exec opend3_defaults.cfg\n" );
-	} else if ( fileSystem->ReadFile( "openq4_defaults.cfg", NULL ) >= 0 ) {
+	} else if ( fileSystem->ReadFile( "opend3_defaults.cfg", NULL ) >= 0 ) {
 		// Temporary config migration alias for existing development installs.
-		cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "exec openq4_defaults.cfg\n" );
+		cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "exec opend3_defaults.cfg\n" );
 	}
 	if ( detectStartupPreset ) {
 		// Finish shipped defaults before taking the bootstrap baseline: they
@@ -8014,8 +8009,8 @@ void idCommonLocal::InitGame( void ) {
 		// autoexec and launch choices execute after this point and take priority.
 		cmdSystem->ExecuteCommandBuffer();
 		detectStartupPreset = Common_BootstrapStartupPerformancePreset( startupPresetBootstrap );
-		if ( detectStartupPreset ) startupPresetCapture.Begin( OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVARS.data(),
-			OPENQ4_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT, startupPresetAssigned );
+		if ( detectStartupPreset ) startupPresetCapture.Begin( OPEND3_PERFORMANCE_PRESET_TOUCHED_CVARS.data(),
+			OPEND3_PERFORMANCE_PRESET_TOUCHED_CVAR_COUNT, startupPresetAssigned );
 	}
 	const idStr platformProfileConfig = Common_BuildPlatformProfileConfigName( com_platformProfile.GetString() );
 	if ( platformProfileConfig.Length() > 0 && fileSystem->ReadFile( platformProfileConfig, NULL ) >= 0 ) {
@@ -8062,7 +8057,7 @@ void idCommonLocal::InitGame( void ) {
 		// A queued campaign/module handoff owns its mode. Replayed base configs
 		// and one-shot launch settings must not turn a requested CTF game into DM.
 		cvarSystem->SetCVarString( "si_gameType", pendingGameType.c_str() );
-		openQ4_NormalizeGameTypeForModule( pendingGameModule.c_str() );
+		openD3_NormalizeGameTypeForModule( pendingGameModule.c_str() );
 	}
 
 	// Reload the language dictionary after cfg/autoexec and command-line cvars
@@ -8208,7 +8203,7 @@ void idCommonLocal::ShutdownGame( bool reloading ) {
 	UI_SettingsShutdown();
 	// Stop advertising a ready single-player module before any shutdown work can
 	// race the async thread or mutate game-owned state.
-	openQ4_singleplayerGameModuleReady.store( false, std::memory_order_release );
+	openD3_singleplayerGameModuleReady.store( false, std::memory_order_release );
 	SetGameTimeScale( 1.0f );
 
 	// kill sound first
@@ -8264,7 +8259,7 @@ void idCommonLocal::ShutdownGame( bool reloading ) {
 		renderSystem->Shutdown();
 	}
 
-#ifdef OPENQ4_RENDERER_MODULE_ONLY
+#ifdef OPEND3_RENDERER_MODULE_ONLY
 	if ( commonOwnsRenderGeoTriSurfData ) {
 		R_ShutdownTriSurfData();
 		commonOwnsRenderGeoTriSurfData = false;

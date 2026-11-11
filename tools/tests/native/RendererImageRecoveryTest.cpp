@@ -17,7 +17,7 @@ TEST_NOINLINE void* operator new(std::size_t size) {if(failAfter==0)throw std::b
 TEST_NOINLINE void* operator new[](std::size_t size){return ::operator new(size);}
 TEST_NOINLINE void operator delete(void* p) noexcept {std::free(p);}TEST_NOINLINE void operator delete[](void* p) noexcept {std::free(p);}
 TEST_NOINLINE void operator delete(void* p,std::size_t) noexcept {std::free(p);}TEST_NOINLINE void operator delete[](void* p,std::size_t) noexcept {std::free(p);}
-using namespace openq4::imageRecovery;
+using namespace opend3::imageRecovery;
 static size_t checks=0;
 #define CHECK(x) do{++checks;if(!(x))throw std::runtime_error(#x);}while(false)
 static Data Fixture(size_t count=1){
@@ -42,7 +42,7 @@ int main(){try{
     Values fields;CHECK(Pack(raw,1,d.attempt,fields));std::string back="old";CHECK(Unpack(fields,1,d.attempt,back));CHECK(back==raw);
     CHECK(!Frame(raw,2,d.attempt));CHECK(!Pack(raw,2,d.attempt,fields));
     changed=raw;changed[60]^=1;CHECK(!Frame(changed,1,d.attempt));CHECK(!Pack(changed,1,d.attempt,fields));
-    auto bad=fields;bad["codec"]=std::string("openq4.image-recovery.2");CHECK(!Unpack(bad,1,d.attempt,back));CHECK(back==raw);
+    auto bad=fields;bad["codec"]=std::string("opend3.image-recovery.2");CHECK(!Unpack(bad,1,d.attempt,back));CHECK(back==raw);
     bad=fields;bad["direction"]=2.0;CHECK(!Unpack(bad,1,d.attempt,back));bad=fields;bad["bytes"]=1.5;CHECK(!Unpack(bad,1,d.attempt,back));
     bad=fields;bad["chunks"]=2.0;CHECK(!Unpack(bad,1,d.attempt,back));bad=fields;bad.erase(Key(0));CHECK(!Unpack(bad,1,d.attempt,back));
     bad=fields;bad[Key(0)]=std::string("0001:")+std::get<std::string>(fields.at(Key(0))).substr(5);CHECK(!Unpack(bad,1,d.attempt,back));

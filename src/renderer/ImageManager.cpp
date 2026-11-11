@@ -205,7 +205,7 @@ idCVar image_picmipMinSize(
 R_ImagePicmipFilterAllows
 
 image_picmip is scoped by namespace the same way Quake 3 style picmip filters
-scope shader paths. openQ4 classifies the image rather than the material because
+scope shader paths. openD3 classifies the image rather than the material because
 one idImage is shared by every material that names it, and because the diffuse
 usage check already keeps GUI, font, light, and sky images out of range.
 ===============

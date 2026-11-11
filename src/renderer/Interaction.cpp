@@ -126,7 +126,7 @@ static bool R_TranslucentShadowMapMomentsSupportedForLight( const idRenderLightL
 		cachedApiFrame = tr.frameCount;
 	}
 	if ( cachedVulkanApi ) {
-#ifdef OPENQ4_RENDERER_VK_MODULE
+#ifdef OPEND3_RENDERER_VK_MODULE
 		extern bool VK_ShadowMap_TranslucentMomentsAvailable( void );
 		return VK_ShadowMap_TranslucentMomentsAvailable();
 #else
@@ -1265,7 +1265,7 @@ static void R_CreateInteractionLightTris( const idRenderEntityLocal *ent,
 		const idRenderLightLocal *light, surfaceInteraction_t *sint ) {
 	bool needsPBR = false;
 	// Native owners: Vulkan and the classic OpenGL light loop (draw_pbr.cpp).
-#if !defined( OPENQ4_RENDERER_GLES_MODULE )
+#if !defined( OPEND3_RENDERER_GLES_MODULE )
 	needsPBR = sint->shader->HasPBR() && !light->lightShader->IsAmbientLight()
 		&& !light->lightShader->IsFogLight() && !light->lightShader->IsBlendLight()
 		&& !R_LightIncludesBackFaces( ent, light, sint->shader );
@@ -1950,7 +1950,7 @@ void idInteraction::CreateInteraction( const idRenderModel *model ) {
 		if ( ( surfaceCanCastDedicatedShadowMap || surfaceCanCastTranslucentShadowMap ) && shadowLODAdmitted ) {
 			// Dedicated shadow maps can consume ambient triangles even when the
 			// retail stencil-volume path has no silhouette volume to submit.
-			// Translucent moment casters are openQ4-specific, but they are still
+			// Translucent moment casters are openD3-specific, but they are still
 			// shadow output and need the same entity-level retail LOD admission.
 			interactionGenerated = true;
 		}

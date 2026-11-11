@@ -6,7 +6,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from openq4_pak import is_relative_to
+from opend3_pak import is_relative_to
 
 
 def normalize(path: str) -> str:

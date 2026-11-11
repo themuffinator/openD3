@@ -42,17 +42,17 @@ def main():
  try:
   document=doc.read_text(encoding='utf-8');names=('bool Identifier(','std::string PointerPart(','void Diagnose(','bool Utf8(','bool LexicalForms(','bool Parse(','bool ValidStateValue(','bool ParseStateValues(')
   parser='\n'.join(document[document.index(n):document.index('bool Parse(',document.index(n))] if n=='bool LexicalForms(' else function_body(document,n) for n in names)
-  parsed=out/'parsed.cpp';parsed.write_text('#include "src/ui/retained/Document.h"\n#include <json/json.h>\n#include <cmath>\n#include <algorithm>\n#include <memory>\nnamespace openq4::ui { constexpr size_t MaxSourceBytes=16*1024*1024;\n'+parser+'\n}\n',encoding='utf-8')
+  parsed=out/'parsed.cpp';parsed.write_text('#include "src/ui/retained/Document.h"\n#include <json/json.h>\n#include <cmath>\n#include <algorithm>\n#include <memory>\nnamespace opend3::ui { constexpr size_t MaxSourceBytes=16*1024*1024;\n'+parser+'\n}\n',encoding='utf-8')
   host=(app/'SystemSettingsHost.cpp').read_text(encoding='utf-8');legacy=host[host.index('constexpr int LegacyModes'):host.index('#if defined(USE_SDL3)',host.index('constexpr int LegacyModes'))]
   helpers=host[host.index('SystemSettingDescriptor Number('):host.index('bool Fail(')]+'\n'+'\n'.join(function_body(host,n) for n in ('bool SameValue(','bool Changed('))
   bodies='\n'.join(function_body(host,n) for n in ('const std::vector<SystemSettingDescriptor>& SystemSettingsHost::Catalog()','const std::map<std::string, size_t>& SystemSettingsHost::Schema()','unsigned SystemSettingsHost::ChangedEffects(','bool SystemSettingsHost::ResolveModeDimensions(','int SystemSettingsHost::LegacyModeForSize('))
-  catalog=out/'catalog.cpp';catalog.write_text('#include "src/ui/application/SystemSettingsHost.h"\nnamespace openq4::ui { namespace {\n'+helpers+'\n'+legacy+'\n}\n'+bodies+'\n}\n',encoding='utf-8')
+  catalog=out/'catalog.cpp';catalog.write_text('#include "src/ui/application/SystemSettingsHost.h"\nnamespace opend3::ui { namespace {\n'+helpers+'\n'+legacy+'\n}\n'+bodies+'\n}\n',encoding='utf-8')
   display=(app/'SystemDisplay.cpp').read_text(encoding='utf-8').replace('#include "../../idlib/precompiled.h"','')
   display_path=out/'display.cpp';display_path.write_text(display,encoding='utf-8')
   journal=(app/'SettingsJournal.cpp').read_text(encoding='utf-8');plan=(app/'SettingsEffectPlan.cpp').read_text(encoding='utf-8')
   # Compile the preserved schema-1 implementation again under separate symbols.
   # This excludes all schema-2 bodies and uses the unchanged old version gate.
-  old=journal[:journal.index('\nnamespace {\nconstexpr const char* EffectMagic')]+ '\n} // namespace openq4::ui\n'
+  old=journal[:journal.index('\nnamespace {\nconstexpr const char* EffectMagic')]+ '\n} // namespace opend3::ui\n'
   old=old.replace('EncodeSettingsJournal(', 'BaselineEncodeSettingsJournal(').replace('DecodeSettingsJournal(', 'BaselineDecodeSettingsJournal(')
   baseline=out/'baseline.cpp';baseline.write_text(old,encoding='utf-8')
   fixed=[compile_obj('parsed',parsed),compile_obj('catalog',catalog),compile_obj('baseline',baseline)]
@@ -65,7 +65,7 @@ def main():
   tx=compile_obj('transaction',app/'SettingsTransaction.cpp')
   for name in ('UiSettingsJournalTest','UiSettingsJournalExactTest'):
    t=compile_obj(name,ROOT/'tools/tests/native'/(name+'.cpp'));link_run(name,[t,tx,core['journal'],core['plan'],*fixed])
-  dedicated=out/'dedicated.cpp';dedicated.write_text('#define ID_DEDICATED\n'+display+'\nint main(){openq4::ui::StateValues v;std::string error;return openq4::ui::ValidateDisplayPreserveActualPair(v,v,v,v,error)||error.empty()?1:0;}\n',encoding='utf-8')
+  dedicated=out/'dedicated.cpp';dedicated.write_text('#define ID_DEDICATED\n'+display+'\nint main(){opend3::ui::StateValues v;std::string error;return opend3::ui::ValidateDisplayPreserveActualPair(v,v,v,v,error)||error.empty()?1:0;}\n',encoding='utf-8')
   stub=compile_obj('dedicated',dedicated);link_run('dedicated',[stub])
   changes={
    'image-unchecked-envelope':('journal','if (!imageRecovery::Unpack(map,direction,attempt,raw))','if (false && !imageRecovery::Unpack(map,direction,attempt,raw))'),

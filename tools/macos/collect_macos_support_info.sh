@@ -9,7 +9,7 @@ case "$0" in
     *) script_dir=. ;;
 esac
 SCRIPT_DIR=$(CDPATH= cd "${script_dir}" && pwd -P)
-PACKAGE_ROOT=${OPEND3_PACKAGE_ROOT:-${OPENQ4_PACKAGE_ROOT:-$SCRIPT_DIR}}
+PACKAGE_ROOT=${OPEND3_PACKAGE_ROOT:-${OPEND3_PACKAGE_ROOT:-$SCRIPT_DIR}}
 OUTPUT_DIR=${1:-$(pwd)}
 HOME_DIR=${HOME:-}
 STAMP=$(date -u +"%Y%m%d-%H%M%SZ")
@@ -151,7 +151,7 @@ path_exists_for_inspection() {
     [ -e "${inspect_path}" ]
 }
 
-write_openq4_log_candidate_paths() {
+write_opend3_log_candidate_paths() {
     target=$1
     : > "${target}"
     if [ -n "${HOME_DIR}" ]; then
@@ -161,7 +161,7 @@ write_openq4_log_candidate_paths() {
     printf '%s\n' "${PACKAGE_ROOT}/baseod3/logs/opend3.log" >> "${target}"
 }
 
-write_openq4_renderer_config_candidate_paths() {
+write_opend3_renderer_config_candidate_paths() {
     target=$1
     : > "${target}"
     if [ -n "${HOME_DIR}" ]; then
@@ -302,7 +302,7 @@ fi
     found_log=0
     path_lines="${WORK_PARENT}/path-lines.txt"
     log_candidates="${WORK_PARENT}/path-log-candidates.txt"
-    write_openq4_log_candidate_paths "${log_candidates}"
+    write_opend3_log_candidate_paths "${log_candidates}"
     while IFS= read -r log_path; do
         if [ -L "${log_path}" ]; then
             found_log=1
@@ -327,7 +327,7 @@ fi
 {
     printf 'Collector timestamp UTC: %s\n' "${STAMP}"
     printf 'Package root: %s\n' "${PACKAGE_ROOT}"
-    printf 'Expected package metadata keys: version, version_tag, platform, arch, openq4_commit, openq4_dirty, openq4_game_commit, openq4_game_dirty\n'
+    printf 'Expected package metadata keys: version, version_tag, platform, arch, opend3_commit, opend3_dirty, opend3_game_commit, opend3_game_dirty\n'
 
     for manifest_path in \
         "${PACKAGE_ROOT}/VERSION.txt" \
@@ -337,7 +337,7 @@ fi
         if [ -L "${manifest_path}" ]; then
             printf '(skipped symlink; support collector does not follow symlinks)\n'
         elif [ -f "${manifest_path}" ]; then
-            if ! grep -E '^(version|version_tag|platform|arch|openq4_commit|openq4_dirty|openq4_game_commit|openq4_game_dirty)=' "${manifest_path}" 2>/dev/null; then
+            if ! grep -E '^(version|version_tag|platform|arch|opend3_commit|opend3_dirty|opend3_game_commit|opend3_game_dirty)=' "${manifest_path}" 2>/dev/null; then
                 printf '(no recognized package build metadata keys found)\n'
             fi
         else
@@ -444,7 +444,7 @@ fi
     found_audio_line=0
     openal_lines="${WORK_PARENT}/openal-lines.txt"
     log_candidates="${WORK_PARENT}/openal-log-candidates.txt"
-    write_openq4_log_candidate_paths "${log_candidates}"
+    write_opend3_log_candidate_paths "${log_candidates}"
     while IFS= read -r log_path; do
         if [ -L "${log_path}" ]; then
             found_log=1
@@ -481,7 +481,7 @@ fi
     found_renderer_line=0
     renderer_lines="${WORK_PARENT}/renderer-lines.txt"
     log_candidates="${WORK_PARENT}/renderer-log-candidates.txt"
-    write_openq4_log_candidate_paths "${log_candidates}"
+    write_opend3_log_candidate_paths "${log_candidates}"
     while IFS= read -r log_path; do
         if [ -L "${log_path}" ]; then
             found_log=1
@@ -518,7 +518,7 @@ fi
     found_renderer_config_line=0
     renderer_config_lines="${WORK_PARENT}/renderer-config-lines.txt"
     renderer_config_candidates="${WORK_PARENT}/renderer-config-candidates.txt"
-    write_openq4_renderer_config_candidate_paths "${renderer_config_candidates}"
+    write_opend3_renderer_config_candidate_paths "${renderer_config_candidates}"
     while IFS= read -r config_path; do
         if [ -L "${config_path}" ]; then
             found_config=1

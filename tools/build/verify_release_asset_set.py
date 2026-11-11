@@ -20,9 +20,9 @@ from zipfile import BadZipFile, ZipFile
 MAX_RELEASE_ASSETS = 64
 MAX_ARCHIVE_EXPANDED_BYTES = 16 * 1024 * 1024 * 1024
 MAX_ARCHIVE_MEMBERS = 100000
-# Release assets are openq4-<tag>-... packages, plus the standalone content packs,
+# Release assets are opend3-<tag>-... packages, plus the standalone content packs,
 # published under their runtime names (pak1.pk4) so a player saves them as-is.
-SAFE_ASSET_NAME_RE = re.compile(r"openq4-[A-Za-z0-9][A-Za-z0-9._+-]{0,248}|pak[0-9]\.pk4")
+SAFE_ASSET_NAME_RE = re.compile(r"opend3-[A-Za-z0-9][A-Za-z0-9._+-]{0,248}|pak[0-9]\.pk4")
 
 
 def _lstat(path: Path, label: str) -> os.stat_result:

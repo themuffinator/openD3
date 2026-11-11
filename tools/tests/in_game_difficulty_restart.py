@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SESSION = "src/framework/Session.cpp"
 SESSION_MENU = "src/framework/Session_menu.cpp"
 SESSION_LOCAL = "src/framework/Session_local.h"
-MAIN_MENU = "content/baseoq4/pak0/guis/mainmenu.gui"
+MAIN_MENU = "content/baseod3/pak0/guis/mainmenu.gui"
 RESTART_LEVEL_STRING = "#str_229983"
 LANGUAGES = ("english", "german", "french", "italian", "polish", "russian", "spanish",
              "brazilian", "czech", "hungarian", "turkish", "ukrainian")
@@ -148,7 +148,7 @@ def validate_menu() -> None:
 
 def validate_strings() -> None:
     for language in LANGUAGES:
-        path = f"content/baseoq4/pak0/strings/{language}_openq4.lang"
+        path = f"content/baseod3/pak0/strings/{language}_opend3.lang"
         match = re.search(rf'"{RESTART_LEVEL_STRING}"\s+"([^"]*)"', read(path))
         if match is None:
             raise AssertionError(f"Missing {RESTART_LEVEL_STRING} in {path}")

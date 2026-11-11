@@ -28,7 +28,7 @@ def main():
     paths=[CORE/n for n in names]+[ROOT/'tools/tests/native'/n for n in tests]+[Path(__file__),ROOT/'tools/tests/filesystem_case_segments.py']
     before={str(p.relative_to(ROOT)):sha(p) for p in paths}
     doc=(CORE/'Document.cpp').read_text(encoding='utf-8')
-    valid=out/'valid.cpp';valid.write_text('#include "Interaction.h"\n#include <cmath>\nnamespace openq4::ui {\n'+
+    valid=out/'valid.cpp';valid.write_text('#include "Interaction.h"\n#include <cmath>\nnamespace opend3::ui {\n'+
         function_body(doc,'bool Utf8(')+function_body(doc,'bool ValidStateValue(')+'}\n',encoding='utf-8',newline='\n')
     working=out/'Interaction.cpp';source=(CORE/'Interaction.cpp').read_text(encoding='utf-8');working.write_text(source,encoding='utf-8',newline='\n')
     flags=[args.compiler,'-std=c++20','-Wall','-Wextra','-Werror','-Wno-missing-field-initializers','-I',str(ROOT),'-I',str(CORE)]

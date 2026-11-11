@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Write stock-asset console fixtures for windowed shadow-mapping tests.
 
-Put the generated cfg under the test's fs_savepath/baseoq4, then execute it
+Put the generated cfg under the test's fs_savepath/baseod3, then execute it
 after the relevant map has loaded. These commands manipulate engine state;
 they do not inject mouse/keyboard input. Capture with the engine screenshot
 command after the fixture completes. See docs/dev/shadowmapping-audit-2026-09-05.md.

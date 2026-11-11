@@ -36,7 +36,7 @@ def main() -> int:
     parser.add_argument("--basepath", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
-    parser.add_argument("--manifest", type=Path, default=ROOT / "builddir/openq4_xr_test_runtime.json")
+    parser.add_argument("--manifest", type=Path, default=ROOT / "builddir/opend3_xr_test_runtime.json")
     parser.add_argument("--fault", default="xrWaitSwapchainImage:2:timeout")
     parser.add_argument("--creation-fault", action="store_true", help="arm before the first XR session is created")
     parser.add_argument("--mode", choices=("SP", "MP"), default="SP")
@@ -53,12 +53,12 @@ def main() -> int:
     if args.fault != "none" and not re.fullmatch(r"[A-Za-z][A-Za-z0-9]*:[1-9][0-9]*:[a-z]+", args.fault):
         parser.error("fault must be call:positive-occurrence:value or none")
     runtime, output, manifest = args.runtime_dir.resolve(), args.output_dir.resolve(), args.manifest.resolve()
-    executable = runtime / ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    executable = runtime / ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     verify_runtime_is_current(runtime, executable.name)
     runtime_library = manifest.parent / json.loads(manifest.read_text())["runtime"]["library_path"]
     output.mkdir(parents=True, exist_ok=False)
     save = output / "save"
-    game = save / "baseoq4"
+    game = save / "baseod3"
     game.mkdir(parents=True)
     arm, receipt, xr_log = game / "xr_fault_arm.txt", output / "fault.once", output / "xr.jsonl"
     # Vulkan eye captures: the runtime writes the submitted eye images when the
@@ -83,7 +83,7 @@ def main() -> int:
     capture_wait = 1500 if slow else 300
     commands = ["waitMsec 1500", "god", "notarget", "getviewpos", "echo XR_FAULT_GAMEPLAY_BEGIN"]
     if args.mode == "MP":
-        commands += ["openq4_reportMPState", "openq4_assertMPGameplayView"]
+        commands += ["opend3_reportMPState", "opend3_assertMPGameplayView"]
     if vulkan:
         # the renderer restart itself takes seconds; then the session needs frames
         commands += ["vr_enable 1", "vr_restart", "waitMsec 6000", "wait 10", "waitMsec 4000",
@@ -112,11 +112,11 @@ def main() -> int:
     commands += ["vr_enable 0", "waitMsec 500", "echo XR_FAULT_DESKTOP", "vr_status",
                  'screenshot "screenshots/xr_desktop.tga"']
     if args.mode == "MP":
-        commands += ["openq4_reportMPState", "openq4_assertMPGameplayView"]
+        commands += ["opend3_reportMPState", "opend3_assertMPGameplayView"]
     commands += ["echo XR_FAULT_GAMEPLAY_END", "quit"]
     write_script(game / "xr_fault.cfg", commands)
     settings = {
-        "fs_game": "baseoq4", "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(save), "fs_devpath": str(save),
+        "fs_game": "baseod3", "fs_basepath": str(args.basepath.resolve()), "fs_savepath": str(save), "fs_devpath": str(save),
         "com_gameMode": args.mode, "si_gameType": "DM" if args.mode == "MP" else "singleplayer",
         "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
         "sys_consoleWindow": "0", "in_tty": "0", "in_mouse": "0", "in_joystick": "0", "s_noSound": "1",
@@ -124,8 +124,8 @@ def main() -> int:
         "r_hiddenWindow": "1", "r_mode": "-1", "r_customWidth": "640", "r_customHeight": "480",
         "r_windowWidth": "640", "r_windowHeight": "480", "r_renderApi": args.render_api, "r_swapInterval": "0",
         "com_maxfps": "60", "ui_retained": "1", "ui_autoJoin": "1", "com_skipLoadingContinue": "1",
-        "g_autoSkipCinematics": "1", "g_openQ4Storage1NoDropPodState": "1", "com_loadingContinueAutoAdvance": "1",
-        "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1", "vr_enable": "0", "vr_debug": "1",
+        "g_autoSkipCinematics": "1", "g_openD3Storage1NoDropPodState": "1", "com_loadingContinueAutoAdvance": "1",
+        "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1", "vr_enable": "0", "vr_debug": "1",
         "vr_roomScale": "0", "vr_physicalCrouch": "0", "vr_aimMode": "0", "vr_hapticStrength": "0",
         # the captures compare gameplay before and after the fault: keep single
         # player running across the loss instead of pausing it on the menu
@@ -143,15 +143,15 @@ def main() -> int:
     command += ["+spawnServer", "mp/q4dm1"] if args.mode == "MP" else ["+map", "game/storage1"]
     environment = dict(os.environ)
     for key in tuple(environment):
-        if key.startswith("OPENQ4_XR_TEST_"):
+        if key.startswith("OPEND3_XR_TEST_"):
             del environment[key]
-    environment.update(XR_RUNTIME_JSON=str(manifest), OPENQ4_XR_TEST_LOG=str(xr_log), OPENQ4_XR_TEST_NO_INPUT="1",
-                       OPENQ4_XR_TEST_EYE_SIZE="400x440", OPENQ4_XR_TEST_RATE="60",
-                       OPENQ4_XR_TEST_FAULT_AFTER=str(arm), OPENQ4_XR_TEST_FAULT_ONCE=str(receipt))
+    environment.update(XR_RUNTIME_JSON=str(manifest), OPEND3_XR_TEST_LOG=str(xr_log), OPEND3_XR_TEST_NO_INPUT="1",
+                       OPEND3_XR_TEST_EYE_SIZE="400x440", OPEND3_XR_TEST_RATE="60",
+                       OPEND3_XR_TEST_FAULT_AFTER=str(arm), OPEND3_XR_TEST_FAULT_ONCE=str(receipt))
     if args.fault != "none":
-        environment["OPENQ4_XR_TEST_FAULT"] = args.fault
+        environment["OPEND3_XR_TEST_FAULT"] = args.fault
     if vulkan:
-        environment["OPENQ4_XR_TEST_SCRIPT"] = str(output / "xr_script.txt")
+        environment["OPEND3_XR_TEST_SCRIPT"] = str(output / "xr_script.txt")
     sources = ["src/sys/openxr/OpenXRSystem.cpp", "src/game/PlayerView.cpp", "src/mpgame/PlayerView.cpp",
                "src/renderer/RenderSystem_vr.cpp", "src/renderer/OpenGL/gl_VRPresentation.cpp",
                "src/renderer/Vulkan/vk_VRPresentation.cpp", "src/renderer/Vulkan/vk_GuiExecutor.cpp",
@@ -163,8 +163,8 @@ def main() -> int:
               "source_sha256": {name: digest(ROOT / name) for name in sources},
               "command": command, "test_runtime": str(runtime_library), "captures": {}, "failures": [],
               "runtime_sha256": {(str(path.relative_to(ROOT)) if path.is_relative_to(ROOT) else str(path)): digest(path) for path in
-                                 [executable, runtime_library, runtime / "baseoq4/pak0.pk4", runtime / "baseoq4/pak1.pk4",
-                                  *sorted((runtime / "baseoq4").glob("game-*.dll" if os.name == "nt" else "game-*.so"))]},
+                                 [executable, runtime_library, runtime / "baseod3/pak0.pk4", runtime / "baseod3/pak1.pk4",
+                                  *sorted((runtime / "baseod3").glob("game-*.dll" if os.name == "nt" else "game-*.so"))]},
               "input": "all test-runtime controller actions inactive; physical input disabled; no input injection",
               "capture": f"engine screenshot{'' if not vulkan else ' plus test-runtime eye captures'}; "
                          f"hidden 640x480 {args.render_api} window; simulated XR, no physical-headset claim"}
@@ -182,7 +182,7 @@ def main() -> int:
             process.wait(timeout=20)
             report["exit_code"] = process.returncode
             report["failures"].append("engine timeout")
-    log = read_log(game / "logs/openq4.log")
+    log = read_log(game / "logs/opend3.log")
     events = [json.loads(line) for line in xr_log.read_text().splitlines() if line.strip()] if xr_log.exists() else []
     report["events"] = events
     if report["exit_code"] != 0:

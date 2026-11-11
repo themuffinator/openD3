@@ -4,7 +4,7 @@ deeper to it, as CREATE SERVER and JOIN GAME do to theirs.
 
 Built by tools/ui/build_retained_screens.py, which writes and checks it with
 the other retained screens. The page is the Load Game page's construction for
-the demo library openQ4's legacy browser (guis/demo_menu.gui) shows: the
+the demo library openD3's legacy browser (guis/demo_menu.gui) shows: the
 selected demo's map in the stock preview, 183x137 u at 25,78 u, with its kind
 and status below it; PLAY, DELETE and REFRESH as section navigation plates
 under them; the demos on the trailing side under Lowpixel NAME, MAP, DATE and
@@ -41,7 +41,7 @@ TITLE = "#str_41500"           # DEMOS, the Multiplayer page's section that open
 DETAIL_LEFT, DETAIL_W, KIND_TOP, STATUS_TOP, NOTE_TOP = 37.0, 165.0, 215.0, 230.0, 245.0
 # The plates and headings in capitals, as Join Game's and the save pages'
 # are (RmlUi's text-transform changes ASCII letters only): the pages' PLAY
-# and DELETE verbs, the stock capital MAP and DATE, and openQ4's REFRESH,
+# and DELETE verbs, the stock capital MAP and DATE, and openD3's REFRESH,
 # NAME and DURATION (the stock capital NAME names a player in Ukrainian, and
 # REFRESH LIST runs past a plate in German).
 PLATES = (("demo_play", "#str_231523", 21.0, 256.0, "play"), ("demo_delete", "#str_231521", 20.0, 293.0, None),
@@ -176,7 +176,7 @@ def check_demo_text_fits() -> None:
 
 def demos_document() -> dict:
     check_demo_text_fits()
-    doc = Document("openq4.demos")
+    doc = Document("opend3.demos")
     doc.state.update({
         "demos.count": {"type": "number", "initial": 0},
         "demos.first": {"type": "number", "initial": 0},

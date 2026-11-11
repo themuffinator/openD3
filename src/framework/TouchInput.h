@@ -1,11 +1,11 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
-#ifndef OPENQ4_TOUCH_INPUT_H
-#define OPENQ4_TOUCH_INPUT_H
+#ifndef OPEND3_TOUCH_INPUT_H
+#define OPEND3_TOUCH_INPUT_H
 
 #include <algorithm>
 #include <cmath>
 
-namespace openq4 {
+namespace opend3 {
 namespace touch {
 
 struct Motion {
@@ -72,5 +72,5 @@ private:
 };
 
 } // namespace touch
-} // namespace openq4
+} // namespace opend3
 #endif

@@ -397,12 +397,12 @@ def replay_session(runtime: Path, executable: str, basepath: Path, output: Path,
     """Run trials one after another with one isolated bot; returns (completed, clean log, exit code)."""
     from mp_round_remote_smoke import verify_runtime_is_current
     verify_runtime_is_current(runtime, executable)
-    identity_paths = [runtime / executable, *sorted((runtime / "baseoq4").glob("game-mp*"))]
+    identity_paths = [runtime / executable, *sorted((runtime / "baseod3").glob("game-mp*"))]
     identity_paths = [path for path in identity_paths if path.is_file() and path.suffix not in (".pdb", ".lib", ".exp")]
     def identity():
         return {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in identity_paths}
     before_identity = identity()
-    game = output / "save/baseoq4"
+    game = output / "save/baseod3"
     game.mkdir(parents=True, exist_ok=False)
     first = trials[0]["command"].split()
     observer = f"{float(first[2]):.0f} {float(first[3]):.0f} {float(first[4]) + 480:.0f} 60 0 0"
@@ -434,7 +434,7 @@ def replay_session(runtime: Path, executable: str, basepath: Path, output: Path,
             # This optional isolated-recovery mode stops issuing commands after
             # the controller has settled. World/player physics keeps running;
             # assessment requires rest BEFORE release as well as final survival.
-            script += [f"waitMsec {release}", "openq4_reportMPState",
+            script += [f"waitMsec {release}", "opend3_reportMPState",
                        f"echo MP_BOT_RELEASE_INPUT {trial['name']}", "set bot_pause 1",
                        f"waitMsec {observe - release}"]
         else:
@@ -447,8 +447,8 @@ def replay_session(runtime: Path, executable: str, basepath: Path, output: Path,
                 script += [f"waitMsec {step}"]
                 remaining -= step
                 if remaining:
-                    script += ["openq4_reportMPState"]
-        script += ["openq4_reportMPState",
+                    script += ["opend3_reportMPState"]
+        script += ["opend3_reportMPState",
                    f"echo MP_BOT_TRIAL_END {trial['name']}",
                    # A bot that died, or walked off later, would refuse or
                    # spoil the next trial: replace it with a fresh one.
@@ -470,7 +470,7 @@ def replay_session(runtime: Path, executable: str, basepath: Path, output: Path,
         "r_mode": "-1", "r_customWidth": "640", "r_customHeight": "480", "r_renderApi": "vulkan",
         "r_swapInterval": "0", "com_maxfps": "60", "ui_retained": "0",
         "fs_basepath": str(basepath), "fs_savepath": str(game.parent), "fs_devpath": str(game.parent),
-        "fs_game": "baseoq4", "com_gameMode": "MP", "logFile": "2", "logFileName": "logs/openq4.log",
+        "fs_game": "baseod3", "com_gameMode": "MP", "logFile": "2", "logFileName": "logs/opend3.log",
         "developer": "1", "ui_autoJoin": "1", "ui_spectate": "Play", "ui_name": "BotAuditObserver",
         "net_serverDedicated": "0", "net_LANServer": "1", "net_ip": "127.0.0.1", "net_enableIPv6": "0",
         "net_allowCheats": "1", "sv_cheats": "1", "net_port": str(port), "si_pure": "0",
@@ -497,7 +497,7 @@ def replay_session(runtime: Path, executable: str, basepath: Path, output: Path,
             process.kill()
             process.wait()
             code = -1
-    log_path = game / "logs/openq4.log"
+    log_path = game / "logs/opend3.log"
     clean = strip_colours(log_path.read_text(encoding="utf-8", errors="replace")) if log_path.exists() else ""
     clean = "\n" + "\n".join(line.rstrip() for line in clean.splitlines()) + "\n"
     fatal = re.search(r"^.*(?:ERROR:|FATAL:|Assertion failed).*$", clean, re.M)
@@ -514,8 +514,8 @@ def replay_session(runtime: Path, executable: str, basepath: Path, output: Path,
 
 
 def replay_identity(runtime: Path, executable: str) -> dict[str, str]:
-    paths = [runtime / executable, *sorted((runtime / "baseoq4").glob("game-mp*")),
-             *sorted(runtime.glob("renderer-*")), runtime / "baseoq4/pak0.pk4", runtime / "baseoq4/pak1.pk4"]
+    paths = [runtime / executable, *sorted((runtime / "baseod3").glob("game-mp*")),
+             *sorted(runtime.glob("renderer-*")), runtime / "baseod3/pak0.pk4", runtime / "baseod3/pak1.pk4"]
     return {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in paths
             if p.is_file() and p.suffix not in (".pdb", ".lib", ".exp")}
 
@@ -571,7 +571,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--report", type=Path, required=True, help="an mp_bot_audit.py report.json")
     parser.add_argument("--runtime-dir", type=Path, default=ROOT / ".install")
-    parser.add_argument("--executable-name", default="openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    parser.add_argument("--executable-name", default="openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     parser.add_argument("--basepath", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--port", type=int, default=28973)
@@ -580,7 +580,7 @@ def main() -> int:
     runtime = args.runtime_dir.resolve()
     for original, digest in report.get("runtime_identity", {}).items():
         source = Path(original)
-        current = runtime / ("baseoq4" if source.parent.name.lower() == "baseoq4" else "") / source.name
+        current = runtime / ("baseod3" if source.parent.name.lower() == "baseod3" else "") / source.name
         if not current.is_file() or hashlib.sha256(current.read_bytes()).hexdigest() != digest:
             parser.error(f"causality requires the match's recorded runtime: {source.name} differs")
     output = args.output_dir.resolve()

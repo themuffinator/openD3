@@ -14,7 +14,7 @@ This file is part of the Doom 3 GPL Source Code. See docs/legal for details.
 
 #include <ApplicationServices/ApplicationServices.h>
 
-#define OPENQ4_SDL3_DARWIN_HOST 1
+#define OPEND3_SDL3_DARWIN_HOST 1
 #include "../sdl3/sdl3_backend.cpp"
 
 bool QGL_Init(const char *dllname) {

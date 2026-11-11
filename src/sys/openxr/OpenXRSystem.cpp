@@ -469,7 +469,7 @@ private:
 	XrDuration				frameDisplayPeriod;	// the headset's refresh interval, as the runtime last predicted it
 	XrView					views[VR_NUM_EYES];
 	bool					viewsValid;
-	openq4::PresentationFrameDelta frameDelta;
+	opend3::PresentationFrameDelta frameDelta;
 	vrFrameState_t			frame;
 	// tracking origin in the base space (yaw only); its height is the head's
 	// at the recentre in seated play and the standing eye height above the
@@ -1323,7 +1323,7 @@ bool idVRSystemOpenXR::CreateSession( void ) {
 			static bool warned = false;
 			if ( !warned ) {
 				common->Warning( "OpenXR: the OpenGL renderer runs on EGL (native Wayland) and the active runtime cannot bind it (%s); "
-					"use r_renderApi vulkan, or start openD3 with OPENQ4_FORCE_X11=1", VR_EGL_ENABLE_EXTENSION_NAME );
+					"use r_renderApi vulkan, or start openD3 with OPEND3_FORCE_X11=1", VR_EGL_ENABLE_EXTENSION_NAME );
 				warned = true;
 			}
 			return false;
@@ -2425,7 +2425,7 @@ void idVRSystemOpenXR::SyncInput( float frameSeconds ) {
 	const float deadzone = idMath::ClampFloat( 0.0f, 0.9f, vr_stickDeadzone.GetFloat() );
 	UpdateMenuPointer( weaponHand, menu );
 
-	// Buttons are the SDL gamepad's JOY keys (content/baseoq4/pak0/default.cfg):
+	// Buttons are the SDL gamepad's JOY keys (content/baseod3/pak0/default.cfg):
 	// RT attack, LT zoom, A jump, B crouch, X reload, Y flashlight, LB weapon
 	// wheel, RB last weapon, Start menu, L3 run, R3 centre view. Menus navigate
 	// with the same keys and the D-pad keys below. A trigger pulled while the

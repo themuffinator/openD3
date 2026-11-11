@@ -34,7 +34,7 @@ def load_module(module_name: str, path: Path):
     return module
 
 
-VALIDATOR = load_module("openq4_validate_under_test", ROOT / "tools" / "validation" / "openq4_validate.py")
+VALIDATOR = load_module("opend3_validate_under_test", ROOT / "tools" / "validation" / "opend3_validate.py")
 PACKAGER = load_module("package_nightly_under_test", ROOT / "tools" / "build" / "package_nightly.py")
 SHARED_METADATA = load_module("linux_metadata_under_test", ROOT / "tools" / "build" / "linux_metadata.py")
 
@@ -151,7 +151,7 @@ def random_component(rng: random.Random) -> str:
 def validate_stage_manifest_fuzz() -> None:
     rng = random.Random(0x514A6E)
     project_root = WORK / "stage" / "openD3"
-    gamelibs_root = WORK / "stage" / "OpenD3-GameLibs"
+    gamelibs_root = WORK / "stage" / "openD3-GameLibs"
     stage_root = project_root / "builddir" / ".tmp" / "opend3_gamelibs_stage"
 
     write_text(gamelibs_root / "src" / "game" / "Game_local.cpp", "// canonical game\n")
@@ -200,7 +200,7 @@ def validate_stage_manifest_fuzz() -> None:
 
 
 def validate_source_contracts() -> None:
-    validator = (ROOT / "tools" / "validation" / "openq4_validate.py").read_text(encoding="utf-8")
+    validator = (ROOT / "tools" / "validation" / "opend3_validate.py").read_text(encoding="utf-8")
     packager = (ROOT / "tools" / "build" / "package_nightly.py").read_text(encoding="utf-8")
     shared = (ROOT / "tools" / "build" / "linux_metadata.py").read_text(encoding="utf-8")
     validation_runner = validator
@@ -237,7 +237,7 @@ def validate_source_contracts() -> None:
             raise AssertionError(f"missing fuzz wiring token: {token}")
 
     for token in (
-        "Canonical companion game sources now stage directly from `OpenD3-GameLibs`",
+        "Canonical companion game sources now stage directly from `openD3-GameLibs`",
         "`src/game`, `src/Prey`, and `src/preyengine`",
     ):
         if token not in release_notes:

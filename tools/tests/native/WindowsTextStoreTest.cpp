@@ -8,8 +8,8 @@
 #include <thread>
 #include <stdexcept>
 #include <new>
-using namespace openq4::sys;
-using namespace openq4::ui;
+using namespace opend3::sys;
+using namespace opend3::ui;
 static unsigned checks=0;
 static bool rejectAllocations=false;
 void* operator new(std::size_t size){if(rejectAllocations)throw std::bad_alloc();if(void* p=std::malloc(size?size:1))return p;throw std::bad_alloc();}

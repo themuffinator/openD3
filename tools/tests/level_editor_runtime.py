@@ -37,12 +37,12 @@ def run(args: argparse.Namespace) -> dict:
     output.relative_to(ROOT / ".tmp")
     output.mkdir(parents=True, exist_ok=False)
     runtime = ROOT / ".install"
-    executable = runtime / ("openQ4-client_x64.exe" if os.name == "nt" else "openQ4-client_x64")
+    executable = runtime / ("openD3-client_x64.exe" if os.name == "nt" else "openD3-client_x64")
     if not executable.is_file():
         raise RuntimeError(f"stage the current build first: {executable}")
     before = collect_runtime_files(runtime)
     (output / "runtime-before.json").write_text(json.dumps(before, indent=2) + "\n", encoding="utf-8")
-    game = output / "baseoq4"
+    game = output / "baseod3"
     (game / "maps/tools").mkdir(parents=True)
     # An installation may contain unrelated loose authoring overrides. Seed
     # this isolated source from the retail PK4 so the byte comparison is known.
@@ -52,9 +52,9 @@ def run(args: argparse.Namespace) -> dict:
     (game / "maps/tools/editor_invalid.map").write_text("Version 3\n{ broken }\n", encoding="ascii")
     commands = [
         "editorExperimental open game/airdefense1",
-        'editorExperimental set "1x" _openq4_editor_test invalid',  # a partial numeric handle must not target entity 1
+        'editorExperimental set "1x" _opend3_editor_test invalid',  # a partial numeric handle must not target entity 1
         "editorExperimental savecopy tools/editor_roundtrip",
-        "editorExperimental set 1 _openq4_editor_test first",
+        "editorExperimental set 1 _opend3_editor_test first",
         "editorExperimental autosave",
         "editorExperimental close",  # must refuse to discard dirty work
         "editorExperimental savecopy tools/editor_dirtycopy",
@@ -64,7 +64,7 @@ def run(args: argparse.Namespace) -> dict:
         "editorExperimental save",
         "editorExperimental undo",
         "editorExperimental redo",
-        "editorExperimental set 1 _openq4_editor_test second",
+        "editorExperimental set 1 _opend3_editor_test second",
         "editorExperimental autosave",
         "editorExperimental close discard",
         "editorExperimental recover game/airdefense1",
@@ -89,11 +89,11 @@ def run(args: argparse.Namespace) -> dict:
     launch = [str(executable)]
     settings = {
         "fs_basepath": str(args.assets.resolve()), "fs_savepath": str(output),
-        "fs_devpath": str(output), "fs_game": "baseoq4", "si_gameType": "singleplayer",
+        "fs_devpath": str(output), "fs_game": "baseod3", "si_gameType": "singleplayer",
         "r_fullscreen": "0", "r_hiddenWindow": "1", "r_renderApi": "vulkan" if args.renderer == "vk" else "gl",
         "r_mode": "-1", "r_customWidth": "960", "r_customHeight": "540",
         "in_mouse": "0", "in_joystick": "0", "s_noSound": "1",
-        "logFile": "2", "logFileName": "logs/openq4.log", "developer": "1",
+        "logFile": "2", "logFileName": "logs/opend3.log", "developer": "1",
         "com_allowConsole": "1", "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances": "1",
         "com_skipLoadingContinue": "1", "com_loadingContinueAutoAdvance": "1", "g_autoSkipCinematics": "1",
         "editorExperimental_autoSaveSeconds": "0", "r_useLightGrid": "0",
@@ -107,7 +107,7 @@ def run(args: argparse.Namespace) -> dict:
         process = subprocess.run(launch, cwd=runtime, stdout=stream, stderr=subprocess.STDOUT, timeout=180)
     after = collect_runtime_files(runtime)
     check(before == after, "shared runtime changed during qualification")
-    log_path = game / "logs/openq4.log"
+    log_path = game / "logs/opend3.log"
     log = log_path.read_text(encoding="utf-8", errors="replace")
     require = check
     require(process.returncode == 0, f"engine exited with {process.returncode}")
@@ -126,10 +126,10 @@ def run(args: argparse.Namespace) -> dict:
     require((game / "maps/tools/editor_undo.map").read_bytes() == original, "undo altered original bytes")
     require((game / (SOURCE_MAP + ".bak")).read_bytes() == original, "backup differs from original")
     edited = (game / SOURCE_MAP).read_bytes()
-    require(b'"_openq4_editor_test" "first"' in edited, "published edit is missing")
+    require(b'"_opend3_editor_test" "first"' in edited, "published edit is missing")
     require((game / "maps/tools/editor_dirtycopy.map").read_bytes() == edited, "save-copy differs from edited map")
     recovery = (game / "editor_experimental/recovery" / SOURCE_MAP).read_bytes()
-    require(b'"_openq4_editor_test" "second"' in recovery, "recovery lost latest edit")
+    require(b'"_opend3_editor_test" "second"' in recovery, "recovery lost latest edit")
     require((game / "maps/tools/editor_recovered.map").read_bytes() == recovery, "recovered source differs")
     require(not list(game.rglob("*.editor-tmp")), "unpublished staging files remain")
     capture = game / "screenshots/editor-authoring.tga"
