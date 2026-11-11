@@ -270,11 +270,13 @@ Listed roughly by how much they block a player.
    the bake created, that read fails, and the bake reports that another copy
    comes first although the pack loads on the next start.
 10. **Shadow-map follow-ups.**
-    - The **Enhanced** performance preset (the one startup picked on the test
-      machine) sets `r_shadowMapPointLights 0`, so its shadow maps cover
-      projected lights only and Doom 3's point lights, most of its lighting,
-      keep stencil shadows. That split comes from upstream's measurements of
-      Quake 4 content. It has not been measured on Doom 3.
+    - The performance presets are openQ4's, unchanged by decision: openD3
+      follows upstream's table (identical to openQ4 `822de6800`). So the
+      **Enhanced** preset (the one startup picked on the test machine) sets
+      `r_shadowMapPointLights 0`: its shadow maps cover projected lights only,
+      and Doom 3's point lights, most of its lighting, keep stencil shadows.
+      Quality and above shadow-map every light. The split was measured by
+      upstream on Quake 4 content, not on Doom 3.
     - A light whose pass has nothing to cast (three lights at the start of
       `hell1`) is treated as a failed pass: the engine restores its stencil
       volumes, which are empty too, lets it leave the fallback after 240 views
