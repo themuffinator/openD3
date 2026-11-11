@@ -34,9 +34,8 @@ idCVar idDemoFile::com_compressDemos( "com_compressDemos", "1", CVAR_SYSTEM | CV
 idCVar idDemoFile::com_preloadDemos( "com_preloadDemos", "0", CVAR_SYSTEM | CVAR_BOOL | CVAR_ARCHIVE, "Load the whole demo in to RAM before running it" );
 
 static const char DEMO_MAGIC[] = GAME_NAME " RDEMO";
-static const char INTERIM_DEMO_MAGIC[] = "OpenPREY RDEMO";
-static const char LEGACY_DEMO_MAGIC[] = "OpenPrey RDEMO";
-static_assert( sizeof( DEMO_MAGIC ) == sizeof( INTERIM_DEMO_MAGIC ), "render-demo magic length changed" );
+// Render demos recorded before the openD3 casing settled carry this spelling.
+static const char LEGACY_DEMO_MAGIC[] = "OpenD3 RDEMO";
 static_assert( sizeof( DEMO_MAGIC ) == sizeof( LEGACY_DEMO_MAGIC ), "render-demo magic length changed" );
 #define MAX_DEMO_HASH_STRINGS 65536
 #define MAX_DEMO_DICT_ENTRIES 4096
@@ -125,7 +124,6 @@ bool idDemoFile::OpenForReading( const char *fileName, bool allowPreload, bool q
 		return false;
 	}
 	if ( memcmp( magicBuffer, DEMO_MAGIC, magicLen ) == 0 ||
-		 memcmp( magicBuffer, INTERIM_DEMO_MAGIC, magicLen ) == 0 ||
 		 memcmp( magicBuffer, LEGACY_DEMO_MAGIC, magicLen ) == 0 ) {
 		if ( f->ReadInt( compression ) != sizeof( compression ) ) {
 			Close();

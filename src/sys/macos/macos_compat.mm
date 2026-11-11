@@ -483,9 +483,9 @@ static void Sys_AppendAlternateMacOSPackageRootEntries( const idStr &packageDire
 			continue;
 		}
 
-		idStr::snPrintf( entry, sizeof( entry ), "openPREY-client_%s", arch );
+		idStr::snPrintf( entry, sizeof( entry ), "openD3-client_%s", arch );
 		Sys_AppendAlternateMacOSPackageRootEntryIfPresent( packageDirectory, entry, foundEntries );
-		idStr::snPrintf( entry, sizeof( entry ), "openPREY-ded_%s", arch );
+		idStr::snPrintf( entry, sizeof( entry ), "openD3-ded_%s", arch );
 		Sys_AppendAlternateMacOSPackageRootEntryIfPresent( packageDirectory, entry, foundEntries );
 		Sys_AppendAlternateMacOSPackageRootGameModuleEntries( packageDirectory, OPENQ4_GAMEDIR, arch, foundEntries );
 		Sys_AppendAlternateMacOSPackageRootGameModuleEntries( packageDirectory, BASE_GAMEDIR, arch, foundEntries );
@@ -502,7 +502,7 @@ static void Sys_AppendAlternateMacOSPackageRootEntries( const idStr &packageDire
 static idStr Sys_LocalizedMacOSPackageRootString( const char *key, const char *fallback ) {
 	NSString *keyString = [NSString stringWithUTF8String:key != NULL ? key : ""];
 	NSString *fallbackString = [NSString stringWithUTF8String:fallback != NULL ? fallback : ""];
-	NSString *localizedString = [[NSBundle mainBundle] localizedStringForKey:keyString value:fallbackString table:@"OpenPREYPackageRoot"];
+	NSString *localizedString = [[NSBundle mainBundle] localizedStringForKey:keyString value:fallbackString table:@"OpenQ4PackageRoot"];
 	if ( localizedString == nil || [localizedString length] == 0 ) {
 		localizedString = fallbackString;
 	}
@@ -566,22 +566,22 @@ static bool Sys_MacOSAppBundleHasEmbeddedRuntimeMarker( const idStr &resourceDir
 static bool Sys_MacOSAppBundleDeclaresSelfContainedRuntime( const idStr &appDirectory ) {
 	NSString *appPath = [NSString stringWithUTF8String:appDirectory.c_str()];
 	NSBundle *appBundle = appPath != nil ? [NSBundle bundleWithPath:appPath] : nil;
-	NSString *runtimeLayout = [appBundle objectForInfoDictionaryKey:@"OpenPREYRuntimeLayout"];
+	NSString *runtimeLayout = [appBundle objectForInfoDictionaryKey:@"OpenQ4RuntimeLayout"];
 	return runtimeLayout != nil && [runtimeLayout isEqualToString:@"self-contained-v1"];
 }
 
 static void Sys_ErrorIfMacOSAppBundleRuntimeIncomplete( const idStr &appDirectory, const idStr &resourceDirectory, const idStr &frameworkDirectory, const idStr &missingEntries ) {
 	idStr title = Sys_LocalizedMacOSPackageRootString(
-		"OpenPREYBundleRuntimeMissingTitle",
-		"openPREY.app is incomplete"
+		"OpenQ4BundleRuntimeMissingTitle",
+		"openD3.app is incomplete"
 	);
 	idStr body = Sys_LocalizedMacOSPackageRootString(
-		"OpenPREYBundleRuntimeMissingBody",
-		"Reinstall the complete openPREY.app. Its game data and signed game module must remain inside the application bundle."
+		"OpenQ4BundleRuntimeMissingBody",
+		"Reinstall the complete openD3.app. Its game data and signed game module must remain inside the application bundle."
 	);
 
 	Sys_Error(
-		"%s\n\n%s\n\nExpected self-contained app contract: data in Contents/Resources/basepr and a signed game module in Contents/Frameworks.\nExpected runtime architecture: %s\nApp path: %s\nResource root: %s\nModule root: %s\nMissing or unusable entries: %s",
+		"%s\n\n%s\n\nExpected self-contained app contract: data in Contents/Resources/baseod3 and a signed game module in Contents/Frameworks.\nExpected runtime architecture: %s\nApp path: %s\nResource root: %s\nModule root: %s\nMissing or unusable entries: %s",
 		title.c_str(),
 		body.c_str(),
 		Sys_MacOSPackageRuntimeArchSuffix(),
@@ -600,8 +600,8 @@ static void Sys_ErrorIfMacOSAppBundlePackageRootIncomplete( const idStr &appDire
 	char dedicatedEntry[64];
 	char gameModuleEntry[96];
 
-	idStr::snPrintf( clientEntry, sizeof( clientEntry ), "openPREY-client_%s", arch );
-	idStr::snPrintf( dedicatedEntry, sizeof( dedicatedEntry ), "openPREY-ded_%s", arch );
+	idStr::snPrintf( clientEntry, sizeof( clientEntry ), "openD3-client_%s", arch );
+	idStr::snPrintf( dedicatedEntry, sizeof( dedicatedEntry ), "openD3-ded_%s", arch );
 	idStr::snPrintf( gameModuleEntry, sizeof( gameModuleEntry ), "%s/game_%s.dylib", OPENQ4_GAMEDIR, arch );
 
 	Sys_RequireMacOSPackageRootDirectory( packageDirectory, OPENQ4_GAMEDIR, missingEntries );
@@ -616,16 +616,16 @@ static void Sys_ErrorIfMacOSAppBundlePackageRootIncomplete( const idStr &appDire
 	Sys_AppendAlternateMacOSPackageRootEntries( packageDirectory, arch, foundMismatchedEntries );
 
 	idStr title = Sys_LocalizedMacOSPackageRootString(
-		"OpenPREYPackageRootMissingTitle",
-		"openPREY.app adjacent package root is incomplete"
+		"OpenQ4PackageRootMissingTitle",
+		"openD3.app adjacent package root is incomplete"
 	);
 	idStr body = Sys_LocalizedMacOSPackageRootString(
-		"OpenPREYPackageRootMissingBody",
-		"This legacy package layout needs openPREY.app, basepr/, openPREY-client_<arch>, and openPREY-ded_<arch> together in the same package folder. Current self-contained packages support moving only openPREY.app to /Applications; reinstall this package to use that layout."
+		"OpenQ4PackageRootMissingBody",
+		"This legacy package layout needs openD3.app, baseod3/, openD3-client_<arch>, and openD3-ded_<arch> together in the same package folder. Current self-contained packages support moving only openD3.app to /Applications; reinstall this package to use that layout."
 	);
 
 	Sys_Error(
-		"%s\n\n%s\n\nExpected adjacent package-root contract: openPREY.app, loose binaries, and basepr/ together.\nExpected runtime architecture: %s\nPackage root: %s\nApp path: %s\nMissing or unusable entries: %s\nExisting mismatched runtime entries: %s",
+		"%s\n\n%s\n\nExpected adjacent package-root contract: openD3.app, loose binaries, and baseod3/ together.\nExpected runtime architecture: %s\nPackage root: %s\nApp path: %s\nMissing or unusable entries: %s\nExisting mismatched runtime entries: %s",
 		title.c_str(),
 		body.c_str(),
 		arch,
@@ -668,7 +668,7 @@ static bool Sys_SelectMacOSAppBundleRuntimeRoots( const idStr &exeDirectory, idS
 
 static bool Sys_GetSiblingSelfContainedAppRuntimeRoots( const idStr &exeDirectory, idStr &contentRoot, idStr &moduleRoot ) {
 	idStr appDirectory = exeDirectory;
-	appDirectory.AppendPath( "openPREY.app" );
+	appDirectory.AppendPath( "openD3.app" );
 	idStr resourceDirectory;
 	idStr frameworkDirectory;
 	Sys_GetMacOSAppBundleRuntimeDirectories( appDirectory, resourceDirectory, frameworkDirectory );
@@ -739,7 +739,7 @@ Sys_DefaultCDPath
 
 Finder and LaunchServices do not guarantee an application's process working
 directory. Self-contained app launches use Contents/Resources; loose packaged
-binaries use that same content root when a sibling openPREY.app is present.
+binaries use that same content root when a sibling openD3.app is present.
 Legacy adjacent packages remain supported by the runtime-root selector.
 =============
 */
@@ -775,9 +775,9 @@ const char *Sys_DefaultSavePath( void ) {
 		candidate.AppendPath( "Library" );
 		candidate.AppendPath( "Application Support" );
 #if defined( ID_DEMO_BUILD )
-		candidate.AppendPath( "openPREY Demo" );
+		candidate.AppendPath( "openD3 Demo" );
 #else
-		candidate.AppendPath( "openPREY" );
+		candidate.AppendPath( "openD3" );
 #endif
 		if ( Sys_SetUsableMacOSSavePath( candidate, "Application Support" ) ) {
 			return savepath.c_str();

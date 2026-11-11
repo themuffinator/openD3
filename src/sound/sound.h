@@ -102,7 +102,7 @@ typedef struct
 	float					maxDistance;
 	float					volume;					// linear scale (1.0 = nominal)
 	float					attenuatedVolume;		// Quake 4 archived field; retained for retail ABI/save-demo layout
-	// OPENPREY-ABI: Prey's unified game module requires these archived fields.
+	// OPEND3-ABI: Prey's unified game module requires these archived fields.
 	// Keep them immediately after the upstream ABI field in engine and staged SDK headers.
 	int						subIndex;
 	int						profanityIndex;

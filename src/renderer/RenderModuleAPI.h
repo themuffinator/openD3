@@ -102,11 +102,11 @@
 //      ReloadGeneratedCacheImages, which the client must run once the lock is
 //      in place (a stale module would leave derived pixels on the GPU of a
 //      pure session).
-// 34 - openPREY: the Prey render-entity ABI and a late-bound game time-group
+// 34 - openD3: the Prey render-entity ABI and a late-bound game time-group
 //      query, so renderer modules do not import the engine's mutable
 //      `game` global; glyphInfo_t carries the per-glyph material retail
 //      Doom 3/Prey bitmap fonts need, whose glyphs span several atlases.
-//      (openPREY's own pre-sync numbering called these 8 and 9.)
+//      (openD3's own pre-sync numbering called these 8 and 9.)
 #define RENDER_API_VERSION			34
 #define RENDER_API_ENTRY_POINT		"GetRenderAPI"
 

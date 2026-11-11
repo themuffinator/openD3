@@ -1,5 +1,5 @@
 project(
-  'openPREY',
+  'openD3',
   ['c', 'cpp'],
   version: '0.0.1',
   meson_version: '>=1.6.0',
@@ -9,7 +9,7 @@ project(
 host_system = host_machine.system()
 host_cpu_family = host_machine.cpu_family()
 if not ['windows', 'linux', 'darwin', 'android'].contains(host_system)
-  error('Unsupported host system for openPREY Meson build: ' + host_system)
+  error('Unsupported host system for openD3 Meson build: ' + host_system)
 endif
 
 binary_arch = host_cpu_family
@@ -50,7 +50,7 @@ endif
 
 if host_cpu_family != 'x86_64' and not (host_system == 'linux' and host_cpu_family == 'aarch64')
   warning(
-    'openPREY currently targets x64 as the active compatibility baseline. '
+    'openD3 currently targets x64 as the active compatibility baseline. '
     + 'Non-x64 builds are considered experimental during platform bring-up.'
   )
 endif
@@ -224,14 +224,14 @@ build_game_sp = get_option('build_game_sp')
 build_game_mp = get_option('build_game_mp')
 needs_game_headers = build_engine or build_games
 install_root_dir = meson.project_source_root() / '.install'
-install_game_dir = install_root_dir / 'basepr'
+install_game_dir = install_root_dir / 'baseod3'
 install_module_dir = install_game_dir
 install_engine_dir = install_root_dir
 if host_system == 'android'
   # Keep mobile assets/native libraries together without replacing a staged
   # desktop installation. The host app copies these into assets/ and jniLibs/.
   install_root_dir = install_root_dir / 'android' / android_abi
-  install_game_dir = install_root_dir / 'basepr'
+  install_game_dir = install_root_dir / 'baseod3'
   install_module_dir = install_root_dir / 'lib'
   install_engine_dir = install_module_dir
 endif
@@ -245,11 +245,11 @@ endif
 if build_sigmatouch and sigmatouch_controls_root == ''
   error('sigmatouch_root requires sigmatouch_controls_root.')
 endif
-# The Prey game library lives in this checkout (src/game, src/Prey and
-# src/preyengine) under the Prey SDK EULA; see LICENSING.md.
+# The Doom 3 game library lives in this checkout: src/game is the base game and
+# src/d3xp is Resurrection of Evil. Both are GPLv3, like the engine.
 game_libs_repo_root = meson.project_source_root()
 game_libs_source_root = game_libs_repo_root / 'src'
-game_libs_repo_summary = 'in-tree (src/game, src/Prey and src/preyengine)'
+game_libs_repo_summary = 'in-tree (src/game and src/d3xp)'
 game_stage_root = meson.project_source_root()
 game_stage_game_root = game_stage_root / 'src' / 'game'
 game_stage_src_include_rel = 'src'
@@ -1960,7 +1960,7 @@ if build_engine or build_games
         '--out',
         '@OUTPUT@',
         '--stage-out',
-        meson.current_build_dir() / 'basepr' / openq4_pack_name,
+        meson.current_build_dir() / 'baseod3' / openq4_pack_name,
         '--source-root',
         meson.project_source_root(),
       ] + openq4_prebuilt_pack_args,
@@ -1996,9 +1996,9 @@ if build_engine or build_games
 endif
 
 if needs_game_headers
-  foreach game_tree : ['game', 'Prey', 'preyengine']
+  foreach game_tree : ['game', 'd3xp']
     if not fs_mod.is_dir(game_libs_source_root / game_tree)
-      error('Prey game source directory not found: ' + game_libs_source_root / game_tree)
+      error('Doom 3 game source directory not found: ' + game_libs_source_root / game_tree)
     endif
   endforeach
   game_module_defs_file = game_stage_game_root / 'Game.def'
@@ -2185,6 +2185,8 @@ if build_games
     'src/game',
     'src/game/Callbacks.cpp',
     'src/game/gamesys/Callbacks.cpp',
+    # Legacy end-of-level screen source that id's own project never compiled.
+    'src/game/EndLevel.cpp',
     check: true,
   )
   game_source_paths = game_source_discovery.stdout().strip().split('\n')
@@ -2192,24 +2194,8 @@ if build_games
     error('tools/build/list_sources.py returned no base game source files.')
   endif
 
-  prey_source_discovery = run_command(
-    py,
-    meson.project_source_root() / 'tools' / 'build' / 'list_sources.py',
-    game_stage_root,
-    'src/Prey',
-    'src/Prey/ai_Navigator.cpp',
-    'src/Prey/game_events.cpp',
-    'src/Prey/particles_particles.cpp',
-    'src/Prey/prey_weapon.cpp',
-    check: true,
-  )
-  prey_source_paths = prey_source_discovery.stdout().strip().split('\n')
-  if prey_source_paths.length() == 0
-    error('tools/build/list_sources.py returned no Prey source files.')
-  endif
-
   game_absolute_paths = []
-  foreach rel_path : game_source_paths + prey_source_paths
+  foreach rel_path : game_source_paths
     game_absolute_paths += [game_stage_root / rel_path]
   endforeach
   game_sources = files(game_absolute_paths)
@@ -2276,7 +2262,7 @@ openq4_version_resources = []
 if host_system == 'windows' and resource_compiler.found()
   windows_mod = import('windows')
   openq4_version_resources = windows_mod.compile_resources(
-    'src/sys/win32/rc/openprey_version.rc',
+    'src/sys/win32/rc/opend3_version.rc',
     include_directories: [root_include_dir],
     # rc.exe reports no header dependencies, so without this the version
     # strings stay at whichever commit first compiled the resource.
@@ -2351,8 +2337,8 @@ if build_engine
   # extracting PK4 members. A system copy does not contain that small extension.
   stb_vorbis_dep = subproject('stb_vorbis', default_options: fallback_opt).get_variable('stb_vorbis_dep')
 
-  # openPREY: libvorbisfile re-decodes retail Prey Oggs whose damaged pages stop
-  # stb_vorbis early. Configure libogg first so libvorbis and every consumer
+  # libvorbisfile re-decodes Ogg files whose damaged pages stop stb_vorbis
+  # early. Configure libogg first so libvorbis and every consumer
   # share the same static fallback and the public ogg headers propagate.
   ogg_dep = dependency(
     'ogg',
@@ -2821,8 +2807,10 @@ if build_engine and host_system == 'linux'
   ]
 endif
 
-shared_cpp_args = ['-DUSE_OPENAL', '-DGLEW_NO_GLU', '-DHUMANHEAD=1']
-shared_c_args = ['-DGLEW_NO_GLU', '-DHUMANHEAD=1']
+# OPEND3 marks the engine sites where Doom 3's game API and file formats differ
+# from upstream openQ4's Quake 4 ones (see docs/dev/doom3-rebase.md).
+shared_cpp_args = ['-DUSE_OPENAL', '-DGLEW_NO_GLU', '-DOPEND3=1']
+shared_c_args = ['-DGLEW_NO_GLU', '-DOPEND3=1']
 shared_objcpp_args = []
 shared_objc_args = []
 engine_link_args = []
@@ -2977,7 +2965,7 @@ else
   endforeach
   # GCC/Clang default to -ffp-contract=fast, which fuses a*b+c into an FMA
   # wherever the target has one. AArch64 always does; the x86-64 SSE2 baseline
-  # openPREY's x86-64 baseline does not. That makes identical source produce
+  # openD3's x86-64 baseline does not. That makes identical source produce
   # different float results per architecture in collision, AAS and physics
   # code, which is exactly the class of divergence behind arm64-only map and
   # savegame failures. MSVC already defaults to precise contraction.
@@ -3110,7 +3098,7 @@ if build_engine
   endif
 
   bse_library = static_library(
-    'openprey_bse',
+    'opend3_bse',
     bse_sources,
     include_directories: bse_client_include_dirs,
     cpp_args: bse_cpp_args,
@@ -3344,7 +3332,7 @@ if build_engine
 endif
 
 game_common_cpp_args = shared_cpp_args + common_header_cpp_args + ['-DGAME_DLL'] + linux_cross_dso_sanitizer_cpp_args
-# The Prey game library is 2006-era SDK code. Upstream's cleaned-warning errors
+# The Doom 3 game library is 2004-era code. Upstream's cleaned-warning errors
 # and strict string literals hold for the engine; the SDK-derived game targets
 # keep the relaxed settings they were written against.
 game_relaxed_cpp_args = []
@@ -3399,10 +3387,10 @@ endif
 
 game_idlib_library = disabler()
 if build_engine or build_games
-  # Prey uses one unified game module for both single-player and multiplayer,
+  # Doom 3 uses one game module for both single-player and multiplayer,
   # so a single idlib archive serves it.
   game_idlib_library = static_library(
-    'openprey_game_idlib',
+    'opend3_game_idlib',
     game_idlib_sources,
     include_directories: game_idlib_include_dirs,
     cpp_args: game_common_cpp_args,
@@ -3711,7 +3699,7 @@ if build_renderer_vk and build_engine
     '-DOPENQ4_RENDERER_MODULE',
     '-DOPENQ4_RENDERER_VK_MODULE',
     '-DOPENQ4_RENDERER_BACKEND_NAME="vulkan"',
-    '-DOPENQ4_RENDERER_BACKEND_DESC="openPREY native Vulkan renderer module"',
+    '-DOPENQ4_RENDERER_BACKEND_DESC="openD3 native Vulkan renderer module"',
     '-DVMA_STATIC_VULKAN_FUNCTIONS=0',
     '-DVMA_DYNAMIC_VULKAN_FUNCTIONS=1',
     # VK_KHR_portability_subset lives in vulkan_beta.h. Defined for every host so
@@ -3762,7 +3750,7 @@ if build_renderer_vk and build_engine
     # an MH_BUNDLE with -undefined dynamic_lookup, which drops the
     # undefined-symbol closure the other hosts get and breaks the otool -D /
     # install_name_tool expectations the universal2 assembler relies on.
-    # Mirrors the unified game module in content/basepr/meson.build.
+    # Mirrors the unified game module in content/baseod3/meson.build.
     renderer_vk_module_target = shared_library(
       renderer_vk_binary_name,
       renderer_vk_sources,
@@ -3801,12 +3789,12 @@ if build_renderer_vk and build_engine
 endif
 
 if build_engine or build_games
-  subdir('content/basepr')
+  subdir('content/baseod3')
 endif
 
 if build_games
   custom_target(
-    'openprey_stage_game_direct_run',
+    'opend3_stage_game_direct_run',
     input: game_module_target,
     output: 'stage-game-' + binary_arch + '.stamp',
     command: [
@@ -3815,7 +3803,7 @@ if build_games
       '--source',
       '@INPUT@',
       '--destination',
-      meson.current_build_dir() / 'basepr' / (module_filename_prefix + game_binary_name + game_module_filename_suffix),
+      meson.current_build_dir() / 'baseod3' / (module_filename_prefix + game_binary_name + game_module_filename_suffix),
       '--stamp',
       '@OUTPUT@',
     ],
@@ -3836,15 +3824,13 @@ if host_system == 'windows' and host_cpu_family == 'x86_64'
 endif
 
 install_data(
-  'assets/icons/prey.ico',
+  'assets/icons/doom3.ico',
   install_dir: install_root_dir,
-  rename: 'openPREY.ico',
+  rename: 'openD3.ico',
 )
 
 install_data('LICENSE', 'LICENSING.md', 'CONTRIBUTORS.md', install_dir: install_root_dir)
-# The Prey SDK agreement accompanies the SDK-derived game module it covers.
-install_data('LICENSES/PREY-SDK-EULA.rtf',
-  'LICENSES/DOOM-3-ADDITIONAL-TERMS.txt', 'LICENSES/DOOM-3-BFG-ADDITIONAL-TERMS.txt',
+install_data('LICENSES/DOOM-3-ADDITIONAL-TERMS.txt', 'LICENSES/DOOM-3-BFG-ADDITIONAL-TERMS.txt',
   install_dir: install_root_dir / 'licenses')
 install_data('LICENSES/KHRONOS-GLES-MIT.txt', install_dir: install_root_dir / 'licenses')
 install_data('LICENSES/RmlUi.txt', install_dir: install_root_dir / 'licenses')
@@ -3857,17 +3843,10 @@ if build_openxr
 endif
 
 install_data(
-  'assets/icons/prey.icns',
+  'assets/icons/doom3.icns',
   install_dir: install_root_dir,
-  rename: 'openPREY.icns',
+  rename: 'openD3.icns',
 )
-
-if host_system != 'windows'
-  install_data(
-    'assets/splash/prey_rt_bitmap_4001.bmp',
-    install_dir: install_root_dir / 'assets' / 'splash',
-  )
-endif
 
 if host_system == 'darwin'
   install_data(
@@ -3879,22 +3858,22 @@ endif
 
 if host_system == 'linux'
   linux_desktop_conf = configuration_data()
-  linux_desktop_conf.set('OPENPREY_CLIENT_BINARY', engine_client_binary_name)
-  linux_desktop_conf.set('OPENPREY_PROJECT_VERSION', openq4_version_short)
-  linux_desktop_conf.set('OPENPREY_PROJECT_VERSION_FULL', openq4_version_full)
+  linux_desktop_conf.set('OPEND3_CLIENT_BINARY', engine_client_binary_name)
+  linux_desktop_conf.set('OPEND3_PROJECT_VERSION', openq4_version_short)
+  linux_desktop_conf.set('OPEND3_PROJECT_VERSION_FULL', openq4_version_full)
   linux_steamdeck_launcher = configure_file(
-    input: 'assets/linux/openPREY-steamdeck.in',
-    output: 'openPREY-steamdeck',
+    input: 'assets/linux/openD3-steamdeck.in',
+    output: 'openD3-steamdeck',
     configuration: linux_desktop_conf,
   )
   linux_desktop_entry = configure_file(
-    input: 'assets/linux/openprey.desktop.in',
-    output: 'openprey.desktop',
+    input: 'assets/linux/opend3.desktop.in',
+    output: 'opend3.desktop',
     configuration: linux_desktop_conf,
   )
   linux_steamdeck_desktop_entry = configure_file(
-    input: 'assets/linux/openprey-steamdeck.desktop.in',
-    output: 'openprey-steamdeck.desktop',
+    input: 'assets/linux/opend3-steamdeck.desktop.in',
+    output: 'opend3-steamdeck.desktop',
     configuration: linux_desktop_conf,
   )
   install_data(
@@ -3911,22 +3890,22 @@ if host_system == 'linux'
     install_dir: install_root_dir / 'share' / 'applications',
   )
 
-  if fs_mod.is_file('assets/icons/prey.svg')
+  if fs_mod.is_file('assets/icons/doom3.svg')
     install_data(
-      'assets/icons/prey.svg',
+      'assets/icons/doom3.svg',
       install_dir: install_root_dir / 'share' / 'icons' / 'hicolor' / 'scalable' / 'apps',
-      rename: 'openprey.svg',
+      rename: 'opend3.svg',
     )
   endif
 
   icon_sizes = ['16', '20', '24', '32', '40', '48', '64', '128', '256', '512', '1024']
   foreach icon_size : icon_sizes
-    icon_png = 'assets/icons/prey_' + icon_size + '.png'
+    icon_png = 'assets/icons/doom3_' + icon_size + '.png'
     if fs_mod.is_file(icon_png)
       install_data(
         icon_png,
         install_dir: install_root_dir / 'share' / 'icons' / 'hicolor' / (icon_size + 'x' + icon_size) / 'apps',
-        rename: 'openprey.png',
+        rename: 'opend3.png',
       )
     endif
   endforeach

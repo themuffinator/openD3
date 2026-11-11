@@ -19,7 +19,7 @@ AUDIT_SCRIPT = ROOT / "tools" / "validation" / "prey_map_load_condump_audit.py"
 
 
 def load_audit_module():
-    spec = importlib.util.spec_from_file_location("openprey_map_load_audit", AUDIT_SCRIPT)
+    spec = importlib.util.spec_from_file_location("opend3_map_load_audit", AUDIT_SCRIPT)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"Could not load {AUDIT_SCRIPT}")
     module = importlib.util.module_from_spec(spec)
@@ -148,13 +148,13 @@ class AuditContracts(unittest.TestCase):
             "WARNING: Non-portable: path contains uppercase characters: "
             "base/models/mapobjects/RoadHouse/barrel"
         )
-        uppercase_basepr = uppercase_base.replace("base/", "basepr/", 1)
+        uppercase_baseod3 = uppercase_base.replace("base/", "baseod3/", 1)
         gl_probe = "X..GL_ATI_fragment_shader not found"
         ase_path = "WARNING: idFileSystem::OSPathToRelativePath failed on CAGE_ARM.TGA"
         replay = "\n".join(
             (
                 "------------- Warnings ---------------",
-                "during openPREY initialization...",
+                "during openD3 initialization...",
                 uppercase_base,
                 "1 warnings",
             )
@@ -165,7 +165,7 @@ class AuditContracts(unittest.TestCase):
             result = make_result(
                 run_root,
                 "source_order",
-                log_text="\n".join((uppercase_base, uppercase_basepr, replay, gl_probe, ase_path)),
+                log_text="\n".join((uppercase_base, uppercase_baseod3, replay, gl_probe, ase_path)),
                 stderr_text="\n".join((gl_probe, "ERROR: supplemental crash detail")),
                 stdout_text=uppercase_base,
             )
@@ -227,7 +227,7 @@ class AuditContracts(unittest.TestCase):
         )
         known_deathwalk = (
             "WARNING: Non-portable: path contains uppercase characters: "
-            "basepr/models/mapobjects/deathwalk/ASH"
+            "baseod3/models/mapobjects/deathwalk/ASH"
         )
         unknown = (
             "WARNING: Non-portable: path contains uppercase characters: "

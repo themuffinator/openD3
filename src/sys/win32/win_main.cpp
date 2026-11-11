@@ -426,7 +426,7 @@ static bool Sys_TryTranslateopenQ4ProtocolCommandLine( const char *rawCmdLine, i
 		return false;
 	}
 
-	if ( idStr::Icmpn( args.Argv( 0 ), "openprey://", 11 ) != 0 ) {
+	if ( idStr::Icmpn( args.Argv( 0 ), "opend3://", 11 ) != 0 ) {
 		return false;
 	}
 
@@ -582,7 +582,7 @@ static bool Sys_BuildWindowsProductSavePath( const char *root, idStr &savePath )
 		return false;
 	}
 	savePath.StripTrailing( '\\' );
-	savePath.AppendPath( "openPREY" );
+	savePath.AppendPath( "openD3" );
 	savePath.SlashesToBackSlashes();
 	return true;
 }
@@ -1859,13 +1859,13 @@ static HANDLE win_instanceMutex = NULL;
 ================
 Sys_AlreadyRunning
 
-returns true if there is a copy of openPREY running already
+returns true if there is a copy of openD3 running already
 ================
 */
 bool Sys_AlreadyRunning(void) {
 #ifndef DEBUG
 	if (!win32.win_allowMultipleInstances.GetBool()) {
-		win_instanceMutex = ::CreateMutex(NULL, FALSE, "openPREY");
+		win_instanceMutex = ::CreateMutex(NULL, FALSE, "openD3");
 		if (::GetLastError() == ERROR_ALREADY_EXISTS || ::GetLastError() == ERROR_ACCESS_DENIED) {
 			return true;
 		}
@@ -1975,7 +1975,7 @@ void Sys_Init(void) {
 	win32.sys_arch.SetString( Sys_FormatWindowsVersion( win32.osversion ) );
 	if ( !Sys_IsWindowsVersionOrGreater( win32.osversion, OPENQ4_VALIDATED_WINDOWS_MAJOR_VERSION, OPENQ4_VALIDATED_WINDOWS_MINOR_VERSION ) ) {
 		common->Printf(
-			"WARNING: %s is outside openPREY's actively validated Windows support matrix.\n",
+			"WARNING: %s is outside openD3's actively validated Windows support matrix.\n",
 			win32.sys_arch.GetString() );
 	}
 

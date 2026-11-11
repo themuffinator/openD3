@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build and verify an openPREY AppImage from a packaged Linux release tree."""
+"""Build and verify an openD3 AppImage from a packaged Linux release tree."""
 
 from __future__ import annotations
 
@@ -33,19 +33,19 @@ APPIMAGE_ARCHES = {
     "x64": "x86_64",
     "arm64": "aarch64",
 }
-APPIMAGE_PACKAGE_PATH = Path("usr") / "share" / "openprey"
+APPIMAGE_PACKAGE_PATH = Path("usr") / "share" / "opend3"
 APPIMAGE_TYPE2_MAGIC = b"AI\x02"
 MAX_APPIMAGE_BYTES = 4 * 1024 * 1024 * 1024
 CORE_RUNTIME_RELATIVE_PATHS = {
     "x64": (
-        Path("openPREY-client_x64"),
-        Path("openPREY-ded_x64"),
-        Path("basepr/game_x64.so"),
+        Path("openD3-client_x64"),
+        Path("openD3-ded_x64"),
+        Path("baseod3/game_x64.so"),
     ),
     "arm64": (
-        Path("openPREY-client_arm64"),
-        Path("openPREY-ded_arm64"),
-        Path("basepr/game_arm64.so"),
+        Path("openD3-client_arm64"),
+        Path("openD3-ded_arm64"),
+        Path("baseod3/game_arm64.so"),
     ),
 }
 RUNPATH_RE = re.compile(r"\((?:RPATH|RUNPATH)\).*?\[([^\]]*)\]")
@@ -117,7 +117,7 @@ def appimage_filename(version_tag: str, arch: str, package_suffix: str = "") -> 
     if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._+-]*", version_tag) is None or ".." in version_tag:
         raise AppImageError(f"unsafe AppImage version tag: {version_tag!r}")
     suffix = validate_package_suffix(package_suffix)
-    return f"openprey-{version_tag}{suffix}-{appimage_arch(arch)}.AppImage"
+    return f"opend3-{version_tag}{suffix}-{appimage_arch(arch)}.AppImage"
 
 
 def sha256_file(path: Path) -> str:
@@ -165,11 +165,11 @@ def render_appimage_desktop(source_text: str) -> str:
         if not in_desktop_entry or not line or line.startswith(("#", ";")):
             continue
         if line.startswith("Exec="):
-            lines[index] = "Exec=openprey"
+            lines[index] = "Exec=opend3"
             exec_count += 1
         elif line.startswith("Icon="):
-            if line != "Icon=openprey":
-                raise AppImageError("Linux desktop entry must use Icon=openprey")
+            if line != "Icon=opend3":
+                raise AppImageError("Linux desktop entry must use Icon=opend3")
             icon_count += 1
     if exec_count != 1:
         raise AppImageError(f"Linux desktop entry must contain exactly one Exec key; found {exec_count}")
@@ -179,22 +179,22 @@ def render_appimage_desktop(source_text: str) -> str:
 
 
 def render_apprun(arch: str) -> str:
-    client = f"openPREY-client_{arch}"
+    client = f"openD3-client_{arch}"
     return f"""#!/bin/sh
 set -eu
 
 if [ -n "${{APPDIR:-}}" ]; then
     case "${{APPDIR}}" in
         /*) appdir="${{APPDIR}}" ;;
-        *) echo "openPREY AppImage received a non-absolute APPDIR" >&2; exit 127 ;;
+        *) echo "openD3 AppImage received a non-absolute APPDIR" >&2; exit 127 ;;
     esac
 else
     appdir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)"
 fi
 
-package_root="${{appdir}}/usr/share/openprey"
-if [ ! -x "${{package_root}}/{client}" ] || [ ! -d "${{package_root}}/basepr" ]; then
-    echo "openPREY AppImage payload is incomplete" >&2
+package_root="${{appdir}}/usr/share/opend3"
+if [ ! -x "${{package_root}}/{client}" ] || [ ! -d "${{package_root}}/baseod3" ]; then
+    echo "openD3 AppImage payload is incomplete" >&2
     exit 127
 fi
 
@@ -254,7 +254,7 @@ def compare_packaged_payload(source_root: Path, appimage_package_root: Path, arc
         missing = sorted(path.as_posix() for path in source_files - packaged_files)
         unexpected = sorted(path.as_posix() for path in packaged_files - source_files)
         raise AppImageError(
-            "AppImage openPREY payload file set differs from the release package. "
+            "AppImage openD3 payload file set differs from the release package. "
             f"Missing: {missing or '<none>'}; unexpected: {unexpected or '<none>'}"
         )
 
@@ -337,16 +337,16 @@ def validate_appdir(
 ) -> None:
     appdir = require_directory(appdir, "AppDir")
     validate_tree_entries(appdir, "AppDir", allow_safe_symlinks=True)
-    package_root = require_directory(appdir / APPIMAGE_PACKAGE_PATH, "AppImage openPREY package root")
-    validate_tree_entries(package_root, "AppImage openPREY package payload", allow_safe_symlinks=False)
+    package_root = require_directory(appdir / APPIMAGE_PACKAGE_PATH, "AppImage openD3 package root")
+    validate_tree_entries(package_root, "AppImage openD3 package payload", allow_safe_symlinks=False)
 
     apprun = require_regular_file(appdir / "AppRun", "AppImage AppRun", executable=True)
     apprun_text = apprun.read_text(encoding="utf-8")
     for token in (
-        f"openPREY-client_{arch}",
-        "usr/share/openprey",
+        f"openD3-client_{arch}",
+        "usr/share/opend3",
         "LD_LIBRARY_PATH",
-        'exec "./openPREY-client_',
+        'exec "./openD3-client_',
         '"$@"',
     ):
         if token not in apprun_text:
@@ -362,22 +362,22 @@ def validate_appdir(
         command = desktop_exec_command(desktop_entry_exec(desktop_files[0]))
     except LinuxMetadataError as exc:
         raise AppImageError(f"AppImage desktop entry is malformed: {exc}") from exc
-    if command != "openprey":
-        raise AppImageError(f"AppImage desktop entry uses Exec={command!r}, expected 'openprey'")
+    if command != "opend3":
+        raise AppImageError(f"AppImage desktop entry uses Exec={command!r}, expected 'opend3'")
 
-    root_icons = [path for path in appdir.glob("openprey.*") if path.suffix in {".png", ".svg", ".xpm"}]
+    root_icons = [path for path in appdir.glob("opend3.*") if path.suffix in {".png", ".svg", ".xpm"}]
     if len(root_icons) != 1:
-        raise AppImageError(f"AppDir must contain exactly one root openprey icon; found {len(root_icons)}")
+        raise AppImageError(f"AppDir must contain exactly one root opend3 icon; found {len(root_icons)}")
     dir_icon = appdir / ".DirIcon"
     if not dir_icon.is_symlink() or dir_icon.resolve(strict=True) != root_icons[0].resolve(strict=True):
-        raise AppImageError("AppDir .DirIcon must be a safe link to the root openprey icon")
+        raise AppImageError("AppDir .DirIcon must be a safe link to the root opend3 icon")
 
     compare_packaged_payload(source_package_root, package_root, arch)
     expected = linux_release.expected_runtime_binaries(package_root, arch)
     linux_release.reject_unexpected_binary_variants(package_root, expected)
     staged_validator.validate_staged_architecture_set(
         package_root,
-        package_root / "basepr",
+        package_root / "baseod3",
         [expected[0][0]],
         [expected[1][0]],
     )
@@ -504,15 +504,15 @@ def validate_source_package(package_root: Path, symbols_root: Path, arch: str) -
     require_regular_file(package_root / "LICENSE", "Linux release license")
     require_regular_file(package_root / "README.html", "Linux release readme")
     require_regular_file(
-        package_root / "share/applications/openprey.desktop",
+        package_root / "share/applications/opend3.desktop",
         "Linux release desktop entry",
     )
     icon_candidates = (
-        package_root / "share/icons/hicolor/scalable/apps/openprey.svg",
-        package_root / "share/icons/hicolor/256x256/apps/openprey.png",
+        package_root / "share/icons/hicolor/scalable/apps/opend3.svg",
+        package_root / "share/icons/hicolor/256x256/apps/opend3.png",
     )
     if not any(path.is_file() and not path.is_symlink() for path in icon_candidates):
-        raise AppImageError("Linux release package has no scalable or 256x256 openprey icon")
+        raise AppImageError("Linux release package has no scalable or 256x256 opend3 icon")
 
     expected = linux_release.validate_linux_runtime_payload(package_root, arch)
     linux_release.validate_debuglink_pairs(package_root, symbols_root, expected)
@@ -552,16 +552,16 @@ def build_appimage(args: argparse.Namespace) -> Path:
 
     validate_source_package(package_root, symbols_root, arch)
 
-    with tempfile.TemporaryDirectory(prefix=f"openprey-appimage-{arch}-", dir=work_root) as temp_name:
+    with tempfile.TemporaryDirectory(prefix=f"opend3-appimage-{arch}-", dir=work_root) as temp_name:
         temp_root = Path(temp_name).resolve(strict=True)
-        appdir = temp_root / "openPREY.AppDir"
+        appdir = temp_root / "openD3.AppDir"
         appimage_package_root = appdir / APPIMAGE_PACKAGE_PATH
         appimage_package_root.parent.mkdir(parents=True)
         shutil.copytree(package_root, appimage_package_root)
 
         inputs = temp_root / "inputs"
-        desktop_source = package_root / "share/applications/openprey.desktop"
-        desktop_input = inputs / "openprey.desktop"
+        desktop_source = package_root / "share/applications/opend3.desktop"
+        desktop_input = inputs / "opend3.desktop"
         write_utf8_file(
             desktop_input,
             render_appimage_desktop(desktop_source.read_text(encoding="utf-8")),
@@ -569,8 +569,8 @@ def build_appimage(args: argparse.Namespace) -> Path:
         validate_desktop_file(desktop_input)
 
         icon_candidates = (
-            package_root / "share/icons/hicolor/scalable/apps/openprey.svg",
-            package_root / "share/icons/hicolor/256x256/apps/openprey.png",
+            package_root / "share/icons/hicolor/scalable/apps/opend3.svg",
+            package_root / "share/icons/hicolor/256x256/apps/opend3.png",
         )
         icon_input = next(path for path in icon_candidates if path.is_file() and not path.is_symlink())
         apprun_input = inputs / "AppRun"
@@ -604,10 +604,10 @@ def build_appimage(args: argparse.Namespace) -> Path:
             label="linuxdeploy AppDir construction",
         )
 
-        root_icons = [path for path in appdir.glob("openprey.*") if path.suffix in {".png", ".svg", ".xpm"}]
+        root_icons = [path for path in appdir.glob("opend3.*") if path.suffix in {".png", ".svg", ".xpm"}]
         if len(root_icons) != 1:
             raise AppImageError(
-                f"linuxdeploy produced {len(root_icons)} root openprey icons; expected exactly one"
+                f"linuxdeploy produced {len(root_icons)} root opend3 icons; expected exactly one"
             )
         dir_icon = appdir / ".DirIcon"
         if dir_icon.exists() or dir_icon.is_symlink():

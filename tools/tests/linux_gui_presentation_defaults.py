@@ -73,7 +73,7 @@ def validate_linux_sdl3_x11_helpers_are_optional() -> None:
     require(linux_sdl3, 'SDL3_EnvHasValue("WAYLAND_DISPLAY")', "SDL3 Linux pre-video Wayland-session VRAM probe")
     require(
         linux_sdl3,
-        'SDL3_EnvFlagEnabledWithLegacyAlias("OPENPREY_FORCE_X11", "OPENQ4_FORCE_X11")',
+        'SDL3_EnvFlagEnabledWithLegacyAlias("OPEND3_FORCE_X11", "OPENQ4_FORCE_X11")',
         "SDL3 Linux explicit XWayland VRAM probe",
     )
     require(linux_sdl3, 'Sys_IsWaylandVideoDriverName(getenv("SDL_VIDEO_DRIVER"))', "SDL3 Linux explicit Wayland VRAM probe")
@@ -94,19 +94,19 @@ def validate_linux_sdl3_x11_helpers_are_optional() -> None:
     reject(linux_sdl3, '#include "local.h"', "SDL3 Linux local X11 header dependency")
     reject(sdl3_backend, '../linux/local.h', "SDL3 backend local X11 header dependency")
     reject(linux_main, '#include "local.h"', "shared Linux main X11 header dependency")
-    require(linux_main, "OPENPREY_FORCE_X11=1", "Linux Wayland runtime XWayland fallback guidance")
-    require(linux_main, "OPENPREY_WAYLAND_DISABLE_LIBDECOR=1", "Linux Wayland runtime libdecor opt-out guidance")
-    require(linux_main, "OPENPREY_WAYLAND_PREFER_LIBDECOR=1", "Linux Wayland runtime libdecor guidance")
-    require(linux_main, "OPENPREY_WAYLAND_SYNC_WINDOW_OPS=1", "Linux Wayland runtime sync-window guidance")
+    require(linux_main, "OPEND3_FORCE_X11=1", "Linux Wayland runtime XWayland fallback guidance")
+    require(linux_main, "OPEND3_WAYLAND_DISABLE_LIBDECOR=1", "Linux Wayland runtime libdecor opt-out guidance")
+    require(linux_main, "OPEND3_WAYLAND_PREFER_LIBDECOR=1", "Linux Wayland runtime libdecor guidance")
+    require(linux_main, "OPEND3_WAYLAND_SYNC_WINDOW_OPS=1", "Linux Wayland runtime sync-window guidance")
     for primary_name, legacy_name in (
-        ("OPENPREY_FORCE_X11", "OPENQ4_FORCE_X11"),
-        ("OPENPREY_WAYLAND_DISABLE_LIBDECOR", "OPENQ4_WAYLAND_DISABLE_LIBDECOR"),
-        ("OPENPREY_WAYLAND_PREFER_LIBDECOR", "OPENQ4_WAYLAND_PREFER_LIBDECOR"),
-        ("OPENPREY_WAYLAND_SYNC_WINDOW_OPS", "OPENQ4_WAYLAND_SYNC_WINDOW_OPS"),
+        ("OPEND3_FORCE_X11", "OPENQ4_FORCE_X11"),
+        ("OPEND3_WAYLAND_DISABLE_LIBDECOR", "OPENQ4_WAYLAND_DISABLE_LIBDECOR"),
+        ("OPEND3_WAYLAND_PREFER_LIBDECOR", "OPENQ4_WAYLAND_PREFER_LIBDECOR"),
+        ("OPEND3_WAYLAND_SYNC_WINDOW_OPS", "OPENQ4_WAYLAND_SYNC_WINDOW_OPS"),
     ):
         require(sdl3_backend, primary_name, f"SDL3 Linux {primary_name} primary environment control")
         require(sdl3_backend, legacy_name, f"SDL3 Linux {legacy_name} migration alias")
-    require(sdl3_backend, 'PROJECT_VERSION, "openprey"', "SDL3 openPREY Wayland application id")
+    require(sdl3_backend, 'PROJECT_VERSION, "opend3"', "SDL3 openD3 Wayland application id")
 
     require(meson_sources, "LINUX_X11_HELPER_SOURCES", "optional Linux X11 helper sources")
     require(meson_sources, "--linux-x11-helpers", "optional Linux X11 helper source switch")

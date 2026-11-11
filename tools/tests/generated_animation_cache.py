@@ -191,7 +191,7 @@ def validate_documentation_contract() -> None:
     guide = read(ROOT, "docs/user/level-load-cache.md")
 
     for token in (
-        "<fs_savepath>/basepr/generated/animations/",
+        "<fs_savepath>/baseod3/generated/animations/",
         "g_useGeneratedAnimCache 1",
         "g_writeGeneratedAnimCache 1",
         "stale, truncated, corrupt, or mismatched cache is ignored",

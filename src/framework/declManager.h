@@ -55,7 +55,6 @@ typedef enum {
 // jscott: don't use these
 	DECL_FX,
 	DECL_PARTICLE,
-	DECL_BEAM,
 // RAVEN END
 	DECL_AF,
 	DECL_PDA,
@@ -322,7 +321,6 @@ class idMaterial;
 class idDeclTable;
 class idDeclSkin;
 class idSoundShader;
-class hhDeclBeam;
 
 // RAVEN BEGIN
 // jscott: new decl types
@@ -437,9 +435,6 @@ public:
 	virtual	const rvDeclPlayback *	FindPlayback( const char *name, bool makeDefault = true ) = 0;
 	virtual	const rvDeclEffect *	FindEffect( const char *name, bool makeDefault = true ) = 0;
 // RAVEN END
-	const hhDeclBeam *		FindBeam( const char *name, bool makeDefault = true ) {
-		return reinterpret_cast<const hhDeclBeam *>( FindType( DECL_BEAM, name, makeDefault ) );
-	}
 
 	virtual const idMaterial *		MaterialByIndex( int index, bool forceParse = true ) = 0;
 	virtual const idDeclTable *		TableByIndex( int index, bool forceParse = true ) = 0;
@@ -451,9 +446,6 @@ public:
 	virtual const rvDeclLipSync *	LipSyncByIndex( int index, bool forceParse = true ) = 0;
 	virtual	const rvDeclPlayback *	PlaybackByIndex( int index, bool forceParse = true ) = 0;
 	virtual const rvDeclEffect *	EffectByIndex( int index, bool forceParse = true ) = 0;
-	const hhDeclBeam *		BeamByIndex( int index, bool forceParse = true ) {
-		return reinterpret_cast<const hhDeclBeam *>( DeclByIndex( DECL_BEAM, index, forceParse ) );
-	}
 
 	virtual void					StartPlaybackRecord(rvDeclPlayback* playback) = 0;
 	virtual bool					SetPlaybackData(rvDeclPlayback* playback, int now, int control, class rvDeclPlaybackData* pbd) = 0;

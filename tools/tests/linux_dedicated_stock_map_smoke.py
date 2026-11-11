@@ -38,7 +38,7 @@ MAP_NAME = "game/dmroadhouse"
 SCREENSHOT_REL = "screenshots/linux-stock-dedicated/client.tga"
 SERVER_LOG_NAME = "linux-stock-dedicated-server.log"
 CLIENT_LOG_NAME = "linux-stock-dedicated-client.log"
-SERVER_VIDEO_DRIVER_CANARY = "openprey-dedicated-must-not-init-video"
+SERVER_VIDEO_DRIVER_CANARY = "opend3-dedicated-must-not-init-video"
 
 FATAL_PATTERNS = {
     "error": re.compile(r"^(?:\^[0-9])?ERROR:", re.MULTILINE),
@@ -145,7 +145,7 @@ def read_text(path: Path | None) -> str:
 
 def find_log(savepath: Path, name: str) -> Path | None:
     for candidate in (
-        savepath / "basepr" / "logs" / name,
+        savepath / "baseod3" / "logs" / name,
         savepath / "base" / "logs" / name,
         savepath / "logs" / name,
     ):
@@ -256,7 +256,7 @@ def write_client_autoexec(savepath: Path, settle_frames: int, sample_msec: int) 
             "r_rendererMetrics 0",
             "framePacingSnapshot",
             "gfxInfo",
-            f'echo OPENPREY_STOCK_DEDICATED_CLIENT_CAPTURE "{MAP_NAME}"',
+            f'echo OPEND3_STOCK_DEDICATED_CLIENT_CAPTURE "{MAP_NAME}"',
             f'screenshot "{SCREENSHOT_REL}"',
             "wait 5",
             "quit",
@@ -264,7 +264,7 @@ def write_client_autoexec(savepath: Path, settle_frames: int, sample_msec: int) 
         )
     )
     screenshot_rel = Path(SCREENSHOT_REL)
-    for game_dir in ("basepr", "base"):
+    for game_dir in ("baseod3", "base"):
         cfg_path = savepath / game_dir / Path(cfg_rel)
         cfg_path.parent.mkdir(parents=True, exist_ok=True)
         cfg_path.write_text(payload, encoding="utf-8")
@@ -274,7 +274,7 @@ def write_client_autoexec(savepath: Path, settle_frames: int, sample_msec: int) 
 
 def find_screenshot(savepath: Path) -> Path | None:
     rel = Path(SCREENSHOT_REL)
-    for game_dir in ("basepr", "base"):
+    for game_dir in ("baseod3", "base"):
         candidate = savepath / game_dir / rel
         if candidate.is_file():
             return candidate
@@ -400,13 +400,13 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--dedicated-executable",
         type=Path,
         default=None,
-        help="Override the packaged openPREY dedicated-server executable.",
+        help="Override the packaged openD3 dedicated-server executable.",
     )
     parser.add_argument(
         "--client-executable",
         type=Path,
         default=None,
-        help="Override the packaged openPREY client executable.",
+        help="Override the packaged openD3 client executable.",
     )
     parser.add_argument("--basepath", type=Path, required=True, help="Prey (2006) install root containing base retail PK4s.")
     parser.add_argument(
@@ -464,12 +464,12 @@ def main(argv: list[str]) -> int:
     install_root = args.install_root.resolve()
     basepath = args.basepath.resolve()
     game_libs_repo = args.game_libs_repo.resolve() if args.game_libs_repo else None
-    dedicated = (args.dedicated_executable or install_root / f"openPREY-ded_{arch}").resolve()
-    client = (args.client_executable or install_root / f"openPREY-client_{arch}").resolve()
-    game_module = install_root / "basepr" / f"game_{arch}.so"
-    mod_manifest = install_root / "basepr" / "mod.json"
-    openprey_pak0 = install_root / "basepr" / "pak0.pk4"
-    openprey_pak1 = install_root / "basepr" / "pak1.pk4"
+    dedicated = (args.dedicated_executable or install_root / f"openD3-ded_{arch}").resolve()
+    client = (args.client_executable or install_root / f"openD3-client_{arch}").resolve()
+    game_module = install_root / "baseod3" / f"game_{arch}.so"
+    mod_manifest = install_root / "baseod3" / "mod.json"
+    opend3_pak0 = install_root / "baseod3" / "pak0.pk4"
+    opend3_pak1 = install_root / "baseod3" / "pak1.pk4"
     retail_candidates = (
         basepath / "base" / "pak000.pk4",
         basepath / "base" / "pak_data.pk4",
@@ -479,9 +479,9 @@ def main(argv: list[str]) -> int:
         ("packaged dedicated server", dedicated),
         ("packaged client", client),
         ("packaged unified game module", game_module),
-        ("packaged openPREY mod manifest", mod_manifest),
-        ("packaged openPREY pak0.pk4", openprey_pak0),
-        ("packaged openPREY pak1.pk4", openprey_pak1),
+        ("packaged openD3 mod manifest", mod_manifest),
+        ("packaged openD3 pak0.pk4", opend3_pak0),
+        ("packaged openD3 pak1.pk4", opend3_pak1),
         ("retail Prey base PK4", retail_pak),
     ):
         if not path.is_file():
@@ -519,7 +519,7 @@ def main(argv: list[str]) -> int:
     run_dir = Path(tempfile.mkdtemp(prefix=f"{arch}-", dir=args.output_root.resolve()))
     server_home = run_dir / "server-home"
     client_home = run_dir / "client-home"
-    server_runtime_context = tempfile.TemporaryDirectory(prefix=f"openprey-ded-xdg-{arch}-")
+    server_runtime_context = tempfile.TemporaryDirectory(prefix=f"opend3-ded-xdg-{arch}-")
     server_runtime = Path(server_runtime_context.name)
     server_home.mkdir()
     client_home.mkdir()
@@ -527,8 +527,8 @@ def main(argv: list[str]) -> int:
     if len(os.fsencode(str(server_runtime / "wayland-0"))) >= 108:
         raise RuntimeError(f"private dedicated XDG runtime socket path would exceed the Linux limit: {server_runtime}")
     for home in (server_home, client_home):
-        (home / ".config" / "openprey").mkdir(parents=True)
-        (home / ".local" / "share" / "openprey").mkdir(parents=True)
+        (home / ".config" / "opend3").mkdir(parents=True)
+        (home / ".local" / "share" / "opend3").mkdir(parents=True)
     cfg_rel = write_client_autoexec(client_home, args.settle_frames, args.sample_msec)
 
     server_stdout = run_dir / "server.stdout.txt"
@@ -548,7 +548,7 @@ def main(argv: list[str]) -> int:
         ("fs_homepath", server_home),
         ("fs_savepath", server_home),
         ("fs_devpath", install_root),
-        ("fs_game", "basepr"),
+        ("fs_game", "baseod3"),
         ("net_serverDedicated", "1"),
         ("net_port", args.port),
         ("si_pure", "0"),
@@ -571,7 +571,7 @@ def main(argv: list[str]) -> int:
         ("fs_homepath", client_home),
         ("fs_savepath", client_home),
         ("fs_devpath", install_root),
-        ("fs_game", "basepr"),
+        ("fs_game", "baseod3"),
         ("r_ignoreGLErrors", "0"),
         ("r_fullscreen", "0"),
         ("r_mode", "3"),
@@ -608,7 +608,7 @@ def main(argv: list[str]) -> int:
     for name in (
         "DISPLAY",
         "WAYLAND_DISPLAY",
-        "OPENPREY_FORCE_X11",
+        "OPEND3_FORCE_X11",
         "OPENQ4_FORCE_X11",
         "GDK_BACKEND",
     ):
@@ -631,7 +631,7 @@ def main(argv: list[str]) -> int:
         }
     )
     client_environment.pop("DISPLAY", None)
-    client_environment.pop("OPENPREY_FORCE_X11", None)
+    client_environment.pop("OPEND3_FORCE_X11", None)
     client_environment.pop("OPENQ4_FORCE_X11", None)
 
     started = time.monotonic()
@@ -851,7 +851,7 @@ def main(argv: list[str]) -> int:
         "missingMarkers": missing,
         "fatalMarkers": fatal,
         "elapsedSeconds": round(elapsed, 3),
-        "openPREYCommit": git_commit(install_root.parent),
+        "openD3Commit": git_commit(install_root.parent),
         "OpenPreyGameCommit": git_commit(game_libs_repo),
         "sha256": binary_hashes,
         "elf": elf_metadata,

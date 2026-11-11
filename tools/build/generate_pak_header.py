@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the openPREY runtime PK4 integrity header from the content pack table."""
+"""Generate the openD3 runtime PK4 integrity header from the content pack table."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from openq4_pak import (
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Generate the openPREY engine pack table header.")
+    parser = argparse.ArgumentParser(description="Generate the openD3 engine pack table header.")
     parser.add_argument(
         "--pack",
         action="append",

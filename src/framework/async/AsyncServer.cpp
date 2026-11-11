@@ -494,8 +494,8 @@ void idAsyncServer::ExecuteMapChange( void ) {
 		localClientNum = -1;
 	}
 
-#if OPENPREY_ENABLE_BOTS
-	// OPENPREY-GATED(D9): the upstream bot lifecycle carries metadata through
+#if OPEND3_ENABLE_BOTS
+	// OPEND3-GATED(D9): the upstream bot lifecycle carries metadata through
 	// callbacks that do not exist in Prey's v7 game contract.
 	bool	botClient[MAX_ASYNC_CLIENTS];
 	idStr	botClientName[MAX_ASYNC_CLIENTS];
@@ -559,8 +559,8 @@ void idAsyncServer::ExecuteMapChange( void ) {
 		game->SetLocalClient( -1 );
 	}
 
-#if OPENPREY_ENABLE_BOTS
-	// OPENPREY-GATED(D9): restore engine-owned bot slots after a map change.
+#if OPEND3_ENABLE_BOTS
+	// OPEND3-GATED(D9): restore engine-owned bot slots after a map change.
 	for ( i = 0; i < MAX_ASYNC_CLIENTS; i++ ) {
 		if ( !botClient[i] ) {
 			continue;
@@ -938,7 +938,7 @@ void idAsyncServer::InitClient( int clientNum, int clientId, int clientRate ) {
 	}
 
 	// let the game know a player connected
-	game->ServerClientConnect( clientNum );
+	game->ServerClientConnect( clientNum, client.guid );
 }
 
 /*
@@ -1366,8 +1366,8 @@ bool idAsyncServer::SendEmptyToClient( int clientNum, bool force ) {
 bool idAsyncServer::LocalClientSendVoiceMessage( const idBitMsg &msg ) {
 	if ( localClientNum < 0 || localClientNum >= MAX_ASYNC_CLIENTS ||
 		clients[localClientNum].clientState != SCS_INGAME || msg.GetSize() <= 0 || msg.GetSize() > 384 ) return false;
-#if defined( HUMANHEAD )
-	// OPENPREY-GATED(D9): Prey's v7 idGame has no voice recipients.
+#if defined( OPEND3 )
+	// OPEND3-GATED(D9): Prey's v7 idGame has no voice recipients.
 	return false;
 #else
 	msg.BeginReading();
@@ -1381,8 +1381,8 @@ bool idAsyncServer::SendVoiceMessage( int clientNum, const idBitMsg &payload ) {
 	serverClient_t& client = clients[clientNum];
 	if ( client.clientState != SCS_INGAME ) return false;
 	if ( clientNum == localClientNum ) {
-#if defined( HUMANHEAD )
-		// OPENPREY-GATED(D9): Prey's v7 idGame has no voice recipients.
+#if defined( OPEND3 )
+		// OPEND3-GATED(D9): Prey's v7 idGame has no voice recipients.
 		return false;
 #else
 		payload.BeginReading();
@@ -1687,8 +1687,8 @@ void idAsyncServer::ProcessUnreliableClientMessage( int clientNum, const idBitMs
 	id = msg.ReadByte();
 	switch( id ) {
 		case CLIENT_UNRELIABLE_MESSAGE_VOICE: {
-#if !defined( HUMANHEAD )
-			// OPENPREY-GATED(D9): Prey's v7 idGame has no voice recipients.
+#if !defined( OPEND3 )
+			// OPEND3-GATED(D9): Prey's v7 idGame has no voice recipients.
 			if ( client.clientState == SCS_INGAME && msg.GetRemainingData() > 0 && msg.GetRemainingData() <= 384 ) {
 				game->ServerReceiveVoice( clientNum, msg );
 			}
@@ -3254,9 +3254,9 @@ void idAsyncServer::SendReliableGameMessage( int clientNum, const idBitMsg &msg,
 	idBitMsg	outMsg;
 	byte		msgBuf[MAX_MESSAGE_SIZE];
 
-	// OPENPREY-GATED(D9): the route constants and recorder are part of the
+	// OPEND3-GATED(D9): the route constants and recorder are part of the
 	// extended Q4 game/MVD contract, not Prey's game API v7.
-#if OPENPREY_ENABLE_MVD
+#if OPEND3_ENABLE_MVD
 	if ( captureDemo && idAsyncNetwork::multiViewDemo.IsRecording() ) {
 		const int routeClient = clientNum >= MAX_ASYNC_CLIENTS ? -1 : clientNum;
 		idAsyncNetwork::multiViewDemo.CaptureReliableMessage( msg, DEMO_RECORD_CLIENTNUM, routeClient );
@@ -3302,8 +3302,8 @@ void idAsyncServer::SendReliableGameMessageExcluding( int clientNum, const idBit
 	idBitMsg	outMsg;
 	byte		msgBuf[MAX_MESSAGE_SIZE];
 
-	// OPENPREY-GATED(D9): see SendReliableGameMessage above.
-#if OPENPREY_ENABLE_MVD
+	// OPEND3-GATED(D9): see SendReliableGameMessage above.
+#if OPEND3_ENABLE_MVD
 	if ( captureDemo && idAsyncNetwork::multiViewDemo.IsRecording() ) {
 		idAsyncNetwork::multiViewDemo.CaptureReliableMessage( msg, DEMO_RECORD_EXCLUDE, clientNum );
 	}
@@ -3912,8 +3912,8 @@ void idAsyncServer::ProcessDownloadRequestMessage( const netadr_t from, const id
 	}
 }
 
-#if OPENPREY_ENABLE_BOTS
-// OPENPREY-GATED(D9): no Prey v7 idNetworkSystem entry point exposes these
+#if OPEND3_ENABLE_BOTS
+// OPEND3-GATED(D9): no Prey v7 idNetworkSystem entry point exposes these
 // helpers. They remain isolated for a future bot-contract design.
 /*
 ===============

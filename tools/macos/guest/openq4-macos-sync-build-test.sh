@@ -538,7 +538,7 @@ validate_staged_macos_payload() {
     )
     local required_files=(
         "${install_root}/openQ4.icns"
-        "${install_root}/assets/splash/quake4_rt_bitmap_4001.bmp"
+        "${install_root}/assets/splash/doom3_splash.bmp"
     )
 
     local path

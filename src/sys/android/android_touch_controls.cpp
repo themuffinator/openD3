@@ -30,7 +30,7 @@
 #if !defined( OPENQ4_SIGMATOUCH )
 
 #include "../../framework/Session_local.h"
-#include "../../framework/PreyGameCompat.h"
+#include "../../framework/Doom3GameCompat.h"
 #include "../../ui/RetainedUI.h"
 #include "android_touch_controls.h"
 #include "android_interface_settings.h"
@@ -208,7 +208,7 @@ static bool TouchControls_Active( void ) {
 }
 
 static bool TouchControls_InCinematic( void ) {
-	return game != NULL && PreyGame_InCinematic();
+	return game != NULL && Doom3Game_InCinematic();
 }
 
 /*

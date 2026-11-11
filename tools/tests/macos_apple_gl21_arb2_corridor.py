@@ -160,7 +160,7 @@ def validate_simple_interaction_fail_closed() -> None:
     material_dispatch_body = function_body(source, "static void RB_DrawMaterialInteractions( const drawSurf_t *surf ) {")
     material_draw_body = function_body(source, "static bool RB_GLSLMaterial_CreateDrawInteractions( const drawSurf_t *surf, const bool forceNeutralEnhancements ) {")
     material_interaction_body = function_body(source, "static void RB_GLSLMaterial_DrawInteraction( const drawInteraction_t *din ) {")
-    material_fragment_shader = read("content/basepr/pak0/glprogs/material_interaction.fs")
+    material_fragment_shader = read("content/baseod3/pak0/glprogs/material_interaction.fs")
     arb_draw_body = source_section(
         source,
         "void RB_ARB2_CreateDrawInteractions( const drawSurf_t *surf ) {",
@@ -478,7 +478,7 @@ def validate_corridor_lighting_contract() -> None:
     """Pins the four lighting defects behind issue #73's "still not ok" image."""
 
     source = read("src/renderer/draw_arb2.cpp")
-    fragment = read("content/basepr/pak0/glprogs/material_interaction.fs")
+    fragment = read("content/baseod3/pak0/glprogs/material_interaction.fs")
 
     # The stock ARB2 interaction normalizes the half-angle through the
     # normalization cube map. The GLSL replacement fed the raw interpolated

@@ -4,23 +4,23 @@ set -euo pipefail
 script_dir="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(CDPATH= cd -- "${script_dir}/../.." && pwd)"
 
-install_root="${OPENPREY_INSTALL_ROOT:-${OPENQ4_INSTALL_ROOT:-${repo_root}/.install}}"
-desktop_dir="${OPENPREY_DESKTOP_DIR:-${OPENQ4_DESKTOP_DIR:-}}"
-launcher_name="${OPENPREY_DESKTOP_LAUNCHER_NAME:-${OPENQ4_DESKTOP_LAUNCHER_NAME:-openPREY.desktop}}"
-client_binary="${OPENPREY_CLIENT_BINARY:-${OPENQ4_CLIENT_BINARY:-}}"
-basepath="${OPENPREY_BASEPATH:-${OPENQ4_BASEPATH:-}}"
+install_root="${OPEND3_INSTALL_ROOT:-${OPENQ4_INSTALL_ROOT:-${repo_root}/.install}}"
+desktop_dir="${OPEND3_DESKTOP_DIR:-${OPENQ4_DESKTOP_DIR:-}}"
+launcher_name="${OPEND3_DESKTOP_LAUNCHER_NAME:-${OPENQ4_DESKTOP_LAUNCHER_NAME:-openD3.desktop}}"
+client_binary="${OPEND3_CLIENT_BINARY:-${OPENQ4_CLIENT_BINARY:-}}"
+basepath="${OPEND3_BASEPATH:-${OPENQ4_BASEPATH:-}}"
 
 usage() {
     cat <<'EOF'
 Usage: install_desktop_launcher.sh [options]
 
-Creates an openPREY launcher on the current Linux user's desktop.
+Creates an openD3 launcher on the current Linux user's desktop.
 
 Options:
-  --install-root PATH   Staged openPREY runtime root. Defaults to repo .install.
+  --install-root PATH   Staged openD3 runtime root. Defaults to repo .install.
   --desktop-dir PATH    Desktop directory. Defaults to xdg-user-dir DESKTOP.
-  --name FILENAME       Launcher filename. Defaults to openPREY.desktop.
-  --client PATH         Client binary. Defaults to openPREY-client_<host arch>.
+  --name FILENAME       Launcher filename. Defaults to openD3.desktop.
+  --client PATH         Client binary. Defaults to openD3-client_<host arch>.
   --basepath PATH       Prey (2006) install root containing base/.
   --no-basepath         Do not write fs_basepath into the launcher.
   -h, --help            Show this help.
@@ -134,7 +134,7 @@ find_client_binary() {
     if [[ -n "${client_binary}" ]]; then
         client_binary="$(canonicalize_existing_file "${client_binary}")"
         if [[ ! -x "${client_binary}" ]]; then
-            echo "openPREY client is not executable: ${client_binary}" >&2
+            echo "openD3 client is not executable: ${client_binary}" >&2
             exit 1
         fi
         printf '%s\n' "${client_binary}"
@@ -143,7 +143,7 @@ find_client_binary() {
 
     local arch
     arch="$(host_arch_suffix)"
-    local preferred="${install_root}/openPREY-client_${arch}"
+    local preferred="${install_root}/openD3-client_${arch}"
     if [[ -x "${preferred}" ]]; then
         canonicalize_existing_file "${preferred}"
         return
@@ -155,9 +155,9 @@ find_client_binary() {
             canonicalize_existing_file "${candidate}"
             return
         fi
-    done < <(find "${install_root}" -maxdepth 1 -type f -name 'openPREY-client_*' | sort)
+    done < <(find "${install_root}" -maxdepth 1 -type f -name 'openD3-client_*' | sort)
 
-    echo "No executable openPREY client was found under ${install_root}." >&2
+    echo "No executable openD3 client was found under ${install_root}." >&2
     echo "Run the Linux install step first, then retry this launcher install." >&2
     exit 1
 }
@@ -165,18 +165,18 @@ find_client_binary() {
 find_icon() {
     local candidate=""
     for candidate in \
-        "${install_root}/share/icons/hicolor/scalable/apps/openprey.svg" \
-        "${install_root}/share/icons/hicolor/256x256/apps/openprey.png" \
-        "${install_root}/share/icons/hicolor/128x128/apps/openprey.png" \
-        "${repo_root}/assets/icons/prey.svg" \
-        "${repo_root}/assets/icons/prey_256.png"; do
+        "${install_root}/share/icons/hicolor/scalable/apps/opend3.svg" \
+        "${install_root}/share/icons/hicolor/256x256/apps/opend3.png" \
+        "${install_root}/share/icons/hicolor/128x128/apps/opend3.png" \
+        "${repo_root}/assets/icons/doom3.svg" \
+        "${repo_root}/assets/icons/doom3_256.png"; do
         if [[ -f "${candidate}" ]]; then
             canonicalize_existing_file "${candidate}"
             return
         fi
     done
 
-    printf 'openprey\n'
+    printf 'opend3\n'
 }
 
 resolve_desktop_dir() {
@@ -229,7 +229,7 @@ fi
     printf '%s\n' '[Desktop Entry]'
     printf '%s\n' 'Version=1.0'
     printf '%s\n' 'Type=Application'
-    printf '%s\n' 'Name=openPREY'
+    printf '%s\n' 'Name=openD3'
     printf '%s\n' 'GenericName=First-person shooter'
     printf '%s\n' 'Comment=Modern open-source engine and game-code replacement for Prey (2006)'
     printf 'Exec=%s\n' "${exec_line}"
@@ -247,4 +247,4 @@ if command -v gio >/dev/null 2>&1; then
     gio set "${launcher_path}" metadata::trusted true >/dev/null 2>&1 || true
 fi
 
-echo "Installed openPREY desktop launcher: ${launcher_path}"
+echo "Installed openD3 desktop launcher: ${launcher_path}"

@@ -785,7 +785,7 @@ unsigned int idMapEntity::GetGeometryCRC( void ) const {
 		switch( mapPrim->GetType() ) {
 			case idMapPrimitive::TYPE_BRUSH:
 				crc ^= static_cast<idMapBrush*>(mapPrim)->GetGeometryCRC();
-#ifndef HUMANHEAD
+#ifndef OPEND3
 				if ( epairs.GetString( "model" ) ) {
 					crc ^= StringCRC( epairs.GetString( "model" ) );
 				}
@@ -793,7 +793,7 @@ unsigned int idMapEntity::GetGeometryCRC( void ) const {
 				break;
 			case idMapPrimitive::TYPE_PATCH:
 				crc ^= static_cast<idMapPatch*>(mapPrim)->GetGeometryCRC();
-#ifndef HUMANHEAD
+#ifndef OPEND3
 				if ( epairs.GetString( "model" ) ) {
 					crc ^= StringCRC( epairs.GetString( "model" ) );
 				}

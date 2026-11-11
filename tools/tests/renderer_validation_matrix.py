@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run and report the openPREY renderer validation matrix.
+"""Run and report the openD3 renderer validation matrix.
 
 The default matrix is intentionally safe: it starts the staged client, runs
 renderer self-tests and tier/startup probes, prints gfxInfo, then quits. Gameplay
@@ -539,7 +539,7 @@ def host_arch() -> str:
 def find_client_executable(runtime_dir: Path) -> Path:
     install_dir = runtime_dir
     suffix = ".exe" if os.name == "nt" else ""
-    candidate_prefixes = ("openPREY-client",)
+    candidate_prefixes = ("openD3-client",)
     for prefix in candidate_prefixes:
         preferred = install_dir / f"{prefix}_{host_arch()}{suffix}"
         if preferred.exists():
@@ -560,11 +560,11 @@ def find_client_executable(runtime_dir: Path) -> Path:
         if candidate.is_file():
             return candidate
 
-    raise FileNotFoundError(f"openPREY client executable not found under {install_dir}")
+    raise FileNotFoundError(f"openD3 client executable not found under {install_dir}")
 
 
 def default_basepath() -> str:
-    for name in ("OPENPREY_PREY_PATH", "OPENPREY_PREY_ROOT"):
+    for name in ("OPEND3_PREY_PATH", "OPEND3_PREY_ROOT"):
         configured = os.environ.get(name, "").strip()
         if configured:
             return configured
@@ -582,7 +582,7 @@ def common_args(
     savepath: Path,
     skip_official_pak_validation: bool,
 ) -> list[str]:
-    log_name = f"openprey_validation_{sanitize_case_id(case_id)}.log"
+    log_name = f"opend3_validation_{sanitize_case_id(case_id)}.log"
     args = [
         "+set",
         "win_allowMultipleInstances",
@@ -634,7 +634,7 @@ def common_args(
         str(savepath),
         "+set",
         "fs_game",
-        "basepr",
+        "baseod3",
     ]
     if skip_official_pak_validation:
         args += [
@@ -1397,7 +1397,7 @@ def build_safe_cases(tiers: tuple[str, ...]) -> list[dict[str, Any]]:
         {
             "id": "sdl3-force-x11-display-diagnostics",
             "category": "windowing",
-            "description": "openPREY XWayland fallback diagnostics smoke: OPENPREY_FORCE_X11 requests SDL's X11 driver and preserves display diagnostics.",
+            "description": "openD3 XWayland fallback diagnostics smoke: OPEND3_FORCE_X11 requests SDL's X11 driver and preserves display diagnostics.",
             "videoDriver": "x11",
             "assetless": True,
             "args": [
@@ -1406,7 +1406,7 @@ def build_safe_cases(tiers: tuple[str, ...]) -> list[dict[str, Any]]:
             ],
             "checks": [
                 ["SDL3: current video driver: x11"],
-                ["OPENPREY_FORCE_X11=1", "OPENQ4_FORCE_X11=1"],
+                ["OPEND3_FORCE_X11=1", "OPENQ4_FORCE_X11=1"],
                 ["SDL3: detected"],
                 ["display(s):"],
                 ["contentScale"],
@@ -1962,7 +1962,7 @@ def validate_case_prerequisites(cases: list[dict[str, Any]], runtime_dir: Path) 
 
 def find_log(savepath: Path, log_name: str) -> Path | None:
     candidates = [
-        savepath / "basepr" / "logs" / log_name,
+        savepath / "baseod3" / "logs" / log_name,
         savepath / "logs" / log_name,
     ]
     for candidate in candidates:
@@ -2104,7 +2104,7 @@ def run_case(
     skip_official_pak_validation: bool,
 ) -> dict[str, Any]:
     case_id = case["id"]
-    log_name = f"openprey_validation_{sanitize_case_id(case_id)}.log"
+    log_name = f"opend3_validation_{sanitize_case_id(case_id)}.log"
     stdout_path = output_dir / f"{sanitize_case_id(case_id)}.out.txt"
     stderr_path = output_dir / f"{sanitize_case_id(case_id)}.err.txt"
     log_path_guess = find_log(savepath, log_name)
@@ -2134,7 +2134,7 @@ def run_case(
     # cvars set on the command line are archived on exit; cases that opt
     # renderer selection cvars in must not leak them into later cases or
     # the user's config
-    config_path = savepath / "basepr" / "openPREYConfig.cfg"
+    config_path = savepath / "baseod3" / "openD3Config.cfg"
     preserve_config = bool(case.get("preservesConfig", False))
     saved_config = config_path.read_bytes() if preserve_config and config_path.exists() else None
     # drill lever: point the Vulkan loader at an empty driver manifest so the

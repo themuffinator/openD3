@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Windows CRT linkage and stage openPREY runtime payloads."""
+"""Validate Windows CRT linkage and stage openD3 runtime payloads."""
 
 from __future__ import annotations
 
@@ -13,9 +13,9 @@ from windows_runtime import is_windows_host, stage_runtime_payloads
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Validate Windows CRT linkage and stage non-CRT openPREY runtime payloads into build and install directories."
+        description="Validate Windows CRT linkage and stage non-CRT openD3 runtime payloads into build and install directories."
     )
-    parser.add_argument("--source-root", required=True, help="openPREY repository root.")
+    parser.add_argument("--source-root", required=True, help="openD3 repository root.")
     parser.add_argument("--build-dir", required=True, help="Meson build directory.")
     parser.add_argument(
         "--install-dir",

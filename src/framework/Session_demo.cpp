@@ -731,7 +731,7 @@ void idSessionLocal::InitDemoSystem() {
 	demoLibraryFilter = DEMO_FILTER_ALL;
 
 #ifndef ID_DEDICATED
-#if defined(HUMANHEAD)
+#if defined(OPEND3)
 	// Retail Prey ships no demo library GUI.  Direct demo playback commands
 	// remain available; a mod-authored replacement is still loaded and parsed
 	// normally, so a real GUI failure is not hidden.

@@ -14,7 +14,6 @@
 
 class idDemoFile;
 class idSoundEmitter;
-class hhDeclBeam;
 class idMapFile;
 class idDeclParticle;
 
@@ -139,11 +138,6 @@ struct renderEntity_s;
 struct renderView_s;
 typedef bool(*deferredEntityCallback_t)( renderEntity_s *, const renderView_s * );
 
-#define MAX_BEAM_NODES 32
-typedef struct hhBeamNodes_s {
-	idVec3 nodes[ MAX_BEAM_NODES ];
-} hhBeamNodes_t;
-
 enum {
 	// Draw the outline through whatever geometry is in front of the entity. Only
 	// the outline: the rimlight and the brightskin stay depth tested, because a
@@ -264,9 +258,6 @@ typedef struct renderEntity_s {
 													// NULL if non-deformable model.  NOT freed by renderer
 
 	float					modelDepthHack;			// squash depth range so particle effects don't clip into walls
-
-	const hhDeclBeam *		declBeam;				// Prey beam declaration data
-	hhBeamNodes_t *			beamNodes;				// per-beam node data
 
 	// options to override surface shader flags (replace with material parameters?)
 	bool					noSelfShadow;			// cast shadows onto other objects,but not self

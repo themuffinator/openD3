@@ -186,7 +186,7 @@ idCVar image_picmipFilter(
 // Retail Prey's "use high resolution version": materials mark double-size
 // sources with the stage option "highres", and retail loaded them one level
 // smaller unless this was set. Retail only set it for its top machine spec;
-// openPREY keeps the full-size default.
+// openD3 keeps the full-size default.
 idCVar image_useHighRes(
 	"image_useHighRes",
 	"1",
@@ -421,7 +421,7 @@ static void R_NormalizeInternalImageName( idStr& name ) {
 	}
 }
 
-static void openPREY_RemapLegacyImageName( idStr &name ) {
+static void openD3_RemapLegacyImageName( idStr &name ) {
 	struct legacyImageRemap_t {
 		const char *legacyName;
 		const char *replacementName;
@@ -462,11 +462,11 @@ static void openPREY_RemapLegacyImageName( idStr &name ) {
 	}
 }
 
-static void openPREY_NormalizeAndRemapImageName( idStr &name ) {
+static void openD3_NormalizeAndRemapImageName( idStr &name ) {
 	name.Replace( ".tga", "" );
 	name.BackSlashesToSlashes();
 	R_NormalizeInternalImageName( name );
-	openPREY_RemapLegacyImageName( name );
+	openD3_RemapLegacyImageName( name );
 }
 
 static bool R_IsQ4LightImageNamespace( const char *name ) {
@@ -1028,7 +1028,7 @@ idImage *idImageManager::ImageFromFunction( const char *_name, void (*generatorF
 
 	// strip any .tga file extensions from anywhere in the _name
 	idStr name = _name;
-	openPREY_NormalizeAndRemapImageName( name );
+	openD3_NormalizeAndRemapImageName( name );
 
 	// see if the image already exists
 	int hash = name.FileNameHash();
@@ -1069,7 +1069,7 @@ idImage	*idImageManager::GetImageWithParameters( const char *_name, textureFilte
 	usage = R_ImageUsageForName( _name, usage );
 	// strip any .tga file extensions from anywhere in the _name, including image program parameters
 	idStr name = _name;
-	openPREY_NormalizeAndRemapImageName( name );
+	openD3_NormalizeAndRemapImageName( name );
 	allowDownSize = R_AllowImageDownSizeForName( name.c_str(), allowDownSize );
 	int hash = name.FileNameHash();
 	for ( int i = imageHash.First( hash ); i != -1; i = imageHash.Next( i ) ) {
@@ -1121,7 +1121,7 @@ idImage	*idImageManager::ImageFromFile( const char *_name, textureFilter_t filte
 
 	// strip any .tga file extensions from anywhere in the _name, including image program parameters
 	idStr name = _name;
-	openPREY_NormalizeAndRemapImageName( name );
+	openD3_NormalizeAndRemapImageName( name );
 	allowDownSize = R_AllowImageDownSizeForName( name.c_str(), allowDownSize );
 
 	//
@@ -1210,7 +1210,7 @@ idImage *idImageManager::ImageHandleDeferred( const char *_name, textureFilter_t
 	usage = R_ImageUsageForName( _name, usage );
 
 	idStr name = _name;
-	openPREY_NormalizeAndRemapImageName( name );
+	openD3_NormalizeAndRemapImageName( name );
 	allowDownSize = R_AllowImageDownSizeForName( name.c_str(), allowDownSize );
 
 	int hash = name.FileNameHash();
@@ -1262,7 +1262,7 @@ idImage * idImageManager::ScratchImage( const char *_name, idImageOpts *imgOpts,
 	}
 
 	idStr name = _name;
-	openPREY_NormalizeAndRemapImageName( name );
+	openD3_NormalizeAndRemapImageName( name );
 
 	//
 	// see if the image is already loaded, unless we
@@ -1320,7 +1320,7 @@ idImage *idImageManager::GetImage( const char *_name ) const {
 
 	// strip any .tga file extensions from anywhere in the _name, including image program parameters
 	idStr name = _name;
-	openPREY_NormalizeAndRemapImageName( name );
+	openD3_NormalizeAndRemapImageName( name );
 
 	//
 	// look in loaded images

@@ -608,7 +608,7 @@ void rvDebrisParticle::FinishSpawn(rvBSE* effect, rvSegment* segment, float birt
 	}
 	ScaleRotation(idMath::TWO_PI);
 
-#if !defined(HUMANHEAD)
+#if !defined(OPEND3)
 	// The end rotation is the spin; a zero lifetime lets the entityDef's duration apply.
 	const idVec3 origin = effect->GetOriginalOrigin() + effect->GetOriginalAxis() * mInitPos;
 	const idVec3 velocity = effect->GetCurrentAxis() * mVelocity;
@@ -704,8 +704,8 @@ void rvParticle::EvaluatePosition(const rvBSE* effect, rvParticleTemplate* pt, i
 }
 
 bool rvParticle::RunPhysics(rvBSE* effect, rvSegmentTemplate* st, float time) {
-#if defined(HUMANHEAD)
-	// OPENPREY-GATED(D3): collision/effect callbacks are absent from Prey's v7 ABI.
+#if defined(OPEND3)
+	// OPEND3-GATED(D3): collision/effect callbacks are absent from Prey's v7 ABI.
 	return false;
 #else
 	if (!effect || !st || !bse_physics.GetBool() || session->readDemo) {
@@ -801,7 +801,7 @@ void rvParticle::Bounce(rvBSE* effect, rvParticleTemplate* pt, idVec3 endPos, id
 }
 
 void rvParticle::CheckTimeoutEffect(rvBSE* effect, rvSegmentTemplate* st, float time) {
-#if defined(HUMANHEAD)
+#if defined(OPEND3)
 	return;
 #else
 	if (!effect || !st || !game) {

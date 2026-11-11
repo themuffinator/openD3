@@ -84,7 +84,7 @@ the portable family (pointers other than 64 bits, or big-endian) stamps its own
 wire ABI instead, so it reads only its own payloads and refuses portable ones
 before map teardown.
 
-openPREY is such a build on every platform. The engine's own records use the
+openD3 is such a build on every platform. The engine's own records use the
 version 5 encodings, but the Prey game library still writes native-layout
 records (bitfields, script storage, structures written whole), so its payload
 carries the exact raw1 stamp of the build that wrote it and loads only there.

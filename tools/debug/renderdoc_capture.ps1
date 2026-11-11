@@ -26,13 +26,13 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $workspaceRoot = [System.IO.Path]::GetFullPath((Join-Path $scriptDir "..\.."))
 $installDir = Join-Path $workspaceRoot ".install"
 $savePath = Join-Path $workspaceRoot ".home"
-$exePath = Join-Path $installDir "openPREY-client_x64.exe"
-$captureTemplate = Join-Path $workspaceRoot ".home\basepr\renderdoc\openprey"
+$exePath = Join-Path $installDir "openD3-client_x64.exe"
+$captureTemplate = Join-Path $workspaceRoot ".home\baseod3\renderdoc\opend3"
 $captureDir = Split-Path -Parent $captureTemplate
 $renderDocDoc = Join-Path $workspaceRoot (Join-Path "docs" (Join-Path "dev" "renderdoc-workflow.md"))
 
 if (-not (Test-Path -LiteralPath $exePath)) {
-    throw "openPREY client executable not found: $exePath"
+    throw "openD3 client executable not found: $exePath"
 }
 
 if (-not [string]::IsNullOrWhiteSpace($BasePath) -and -not (Test-Path -LiteralPath (Join-Path $BasePath "base"))) {
@@ -68,14 +68,14 @@ if ([string]::IsNullOrWhiteSpace($Map)) {
 }
 
 if (-not $AllowUnsupported) {
-    throw "RenderDoc capture is not currently supported with the shipping openPREY OpenGL renderer. The renderer is still hard-wired to ARB2 / compatibility-profile features that RenderDoc drops during startup. See $renderDocDoc. Use -AllowUnsupported only if you intentionally want to reproduce this limitation while testing renderer modernization."
+    throw "RenderDoc capture is not currently supported with the shipping openD3 OpenGL renderer. The renderer is still hard-wired to ARB2 / compatibility-profile features that RenderDoc drops during startup. See $renderDocDoc. Use -AllowUnsupported only if you intentionally want to reproduce this limitation while testing renderer modernization."
 }
 
 New-Item -ItemType Directory -Force -Path $captureDir | Out-Null
 
 $gameArgs = @(
     "+set", "logFile", "2",
-    "+set", "logFileName", "logs/openprey.log",
+    "+set", "logFileName", "logs/opend3.log",
     "+set", "developer", "1",
     "+set", "r_fullscreen", "0",
     "+set", "r_postAA", $PostAA.ToString(),
@@ -83,7 +83,7 @@ $gameArgs = @(
     "+set", "r_shaderReport", "2",
     "+set", "fs_savepath", $savePath,
     "+set", "fs_devpath", $installDir,
-    "+set", "fs_game", "basepr"
+    "+set", "fs_game", "baseod3"
 )
 
 if (-not [string]::IsNullOrWhiteSpace($BasePath)) {
@@ -139,8 +139,8 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $logCandidates = @(
-    (Join-Path $workspaceRoot ".home\basepr\logs\openprey.log"),
-    (Join-Path $workspaceRoot ".home\base\logs\openprey.log")
+    (Join-Path $workspaceRoot ".home\baseod3\logs\opend3.log"),
+    (Join-Path $workspaceRoot ".home\base\logs\opend3.log")
 )
 $rendererCompatibilityFailure = $false
 
@@ -158,14 +158,14 @@ foreach ($logPath in $logCandidates) {
 }
 
 if ($rendererCompatibilityFailure) {
-    throw "RenderDoc did not launch successfully because the injected run dropped required openPREY compatibility / ARB2 OpenGL features. RenderDoc capture is not yet supported with the current openPREY renderer."
+    throw "RenderDoc did not launch successfully because the injected run dropped required openD3 compatibility / ARB2 OpenGL features. RenderDoc capture is not yet supported with the current openD3 renderer."
 }
 
 if ($LaunchOnly) {
     exit 0
 }
 
-$captures = Get-ChildItem -LiteralPath $captureDir -Filter "openprey*.rdc" -ErrorAction SilentlyContinue |
+$captures = Get-ChildItem -LiteralPath $captureDir -Filter "opend3*.rdc" -ErrorAction SilentlyContinue |
     Sort-Object LastWriteTime -Descending
 
 if (-not $captures) {

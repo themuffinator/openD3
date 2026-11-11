@@ -1,7 +1,7 @@
 // Copyright (C) 2026 DarkMatter Productions. GPL-3.0-or-later.
 #include "RetainedUI.h"
 #include "../framework/NativeInputPublications.h"
-#include "../framework/PreyGameCompat.h"
+#include "../framework/Doom3GameCompat.h"
 
 #ifndef ID_DEDICATED
 #include "LegacyGuiImport.h"
@@ -1580,7 +1580,7 @@ void Open_f(const idCmdArgs& args) {
 }
 void Ownership_f(const idCmdArgs&) {
 	common->Printf("Retained UI ownership: open=%d suspended=%d session_gui=%d game_time=%d requests=%u\n",
-		RetainedUI_IsOpen(),inputSuspended,session && session->IsGUIActive(),PreyGameEdit_GetGameTime(),
+		RetainedUI_IsOpen(),inputSuspended,session && session->IsGUIActive(),Doom3GameEdit_GetGameTime(),
 		static_cast<unsigned>(applicationRequests.size()));
 }
 void Close_f(const idCmdArgs&) { Close(); }

@@ -60,18 +60,18 @@ def require_order(haystack: str, first: str, second: str, context: str) -> None:
 
 
 def validate_launcher_templates() -> None:
-    relative_path = "assets/linux/openPREY-steamdeck.in"
+    relative_path = "assets/linux/openD3-steamdeck.in"
     launcher = read(relative_path)
-    require(launcher, 'export OPENPREY_STEAMDECK="${OPENPREY_STEAMDECK:-1}"', relative_path)
-    require(launcher, 'if [ "${OPENPREY_FORCE_X11:-${OPENQ4_FORCE_X11:-0}}" = "1" ]; then', relative_path)
+    require(launcher, 'export OPEND3_STEAMDECK="${OPEND3_STEAMDECK:-1}"', relative_path)
+    require(launcher, 'if [ "${OPEND3_FORCE_X11:-${OPENQ4_FORCE_X11:-0}}" = "1" ]; then', relative_path)
     require(launcher, "export SDL_VIDEO_DRIVER=x11", relative_path)
     require(launcher, "export SDL_VIDEODRIVER=x11", relative_path)
-    require(launcher, 'exec "$SCRIPT_DIR/@OPENPREY_CLIENT_BINARY@" +set com_platformProfile steamdeck +set r_fullscreen 0 "$@"', relative_path)
+    require(launcher, 'exec "$SCRIPT_DIR/@OPEND3_CLIENT_BINARY@" +set com_platformProfile steamdeck +set r_fullscreen 0 "$@"', relative_path)
     reject(launcher, "WAYLAND_DISPLAY", f"{relative_path} should not force X11 in mixed Wayland sessions")
 
 
 def validate_profile_defaults() -> None:
-    profile = read("content/basepr/pak0/openprey_profile_steamdeck.cfg")
+    profile = read("content/baseod3/pak0/opend3_profile_steamdeck.cfg")
     for token in (
         'seta in_joystick "1"',
         'seta in_gyro "1"',
@@ -99,8 +99,8 @@ def validate_common_profile_detection() -> None:
 
     require(source, 'idCVar com_platformProfile( "com_platformProfile", "default"', "platform profile cvar")
     for token in (
-        '"OPENPREY_STEAMDECK"',
-        '"OPENPREY_AUTODETECT_STEAMDECK"',
+        '"OPEND3_STEAMDECK"',
+        '"OPEND3_AUTODETECT_STEAMDECK"',
         '"OPENQ4_STEAMDECK"',
         '"OPENQ4_AUTODETECT_STEAMDECK"',
         '"SteamDeck"',
@@ -119,14 +119,14 @@ def validate_common_profile_detection() -> None:
         require(host_signal, token, "Steam Deck host signal detection")
 
     require(automatic, 'com_platformProfile.GetString(), "default"', "automatic platform profile default gate")
-    require(automatic, '"OPENPREY_DISABLE_STEAMDECK_AUTODETECT"', "automatic platform profile disable knob")
-    require(automatic, '"OPENPREY_NO_STEAMDECK_AUTODETECT"', "automatic platform profile disable knob")
+    require(automatic, '"OPEND3_DISABLE_STEAMDECK_AUTODETECT"', "automatic platform profile disable knob")
+    require(automatic, '"OPEND3_NO_STEAMDECK_AUTODETECT"', "automatic platform profile disable knob")
     require(automatic, '"OPENQ4_DISABLE_STEAMDECK_AUTODETECT"', "automatic platform profile migration alias")
     require(automatic, '"OPENQ4_NO_STEAMDECK_AUTODETECT"', "automatic platform profile migration alias")
     require(automatic, "Common_HasSteamDeckHostSignal()", "automatic platform profile host signal")
     require(automatic, 'com_platformProfile.SetString( "steamdeck" );', "automatic platform profile assignment")
     require(profile_name, 'sanitized.Icmp( "steamdeck" )', "platform profile allow-list")
-    require(profile_name, '"openprey_profile_%s.cfg"', "platform profile config mapping")
+    require(profile_name, '"opend3_profile_%s.cfg"', "platform profile config mapping")
     require(init, "ApplyAutomaticPlatformProfile();", "Common init profile auto-detection")
     require_order(init, "StartupVariable( NULL, false );", "ApplyAutomaticPlatformProfile();", "Common init profile auto-detection")
 
@@ -151,10 +151,10 @@ def validate_filesystem_discovery() -> None:
     ):
         require(known, token, "known legacy Prey install discovery")
     for token in (
-        '"OPENPREY_PREY_PATH"',
-        '"OPENPREY_PREY_ROOT"',
-        '"OPENPREY_STEAM_ROOT"',
-        '"OPENPREY_STEAM_LIBRARY"',
+        '"OPEND3_PREY_PATH"',
+        '"OPEND3_PREY_ROOT"',
+        '"OPEND3_STEAM_ROOT"',
+        '"OPEND3_STEAM_LIBRARY"',
         '"Prey"',
     ):
         require(steam, token, "optional Prey Steam install discovery")
@@ -307,7 +307,7 @@ def validate_menu_and_docs() -> None:
     qa = read("docs/dev/steam-deck-qa.md")
 
     for token in (
-        "OPENPREY_FORCE_X11=1",
+        "OPEND3_FORCE_X11=1",
         "listControllers",
         "Touch API pass-through",
         "in_gyro",
@@ -319,12 +319,12 @@ def validate_menu_and_docs() -> None:
 
     package_docs = getting_started + package_readme
     for token in (
-        "openPREY-steamdeck",
-        "OPENPREY_STEAMDECK=1",
-        "OPENPREY_FORCE_X11=1",
+        "openD3-steamdeck",
+        "OPEND3_STEAMDECK=1",
+        "OPEND3_FORCE_X11=1",
     ):
         require(package_docs, token, "Steam Deck package-facing docs")
-    for token in ("openPREY-steamdeck", "OPENPREY_FORCE_X11=1", "OPENPREY_PREY_PATH", "Prey install candidates"):
+    for token in ("openD3-steamdeck", "OPEND3_FORCE_X11=1", "OPEND3_PREY_PATH", "Prey install candidates"):
         require(qa, token, "Steam Deck QA guidance")
 
 
@@ -341,8 +341,8 @@ def validate_packaging_metadata_checks() -> None:
         (packaged, "packaged Steam Deck launcher validation"),
     ):
         for token in (
-            "OPENPREY_STEAMDECK",
-            "OPENPREY_FORCE_X11",
+            "OPEND3_STEAMDECK",
+            "OPEND3_FORCE_X11",
             "SDL_VIDEO_DRIVER=x11",
             "SDL_VIDEODRIVER=x11",
             "+set com_platformProfile steamdeck",

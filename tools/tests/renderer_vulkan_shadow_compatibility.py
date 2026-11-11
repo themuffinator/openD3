@@ -1026,9 +1026,9 @@ def validate_runtime_failure_gates() -> None:
     with tempfile.TemporaryDirectory(prefix="vulkan-shadow-contract-", dir=tmp_root) as temp_name:
         temp = Path(temp_name)
         savepath = temp / "save"
-        log_path = savepath / "basepr" / "logs" / "contract.log"
+        log_path = savepath / "baseod3" / "logs" / "contract.log"
         screenshot_rel = "screenshots/contract.tga"
-        screenshot_path = savepath / "basepr" / screenshot_rel
+        screenshot_path = savepath / "baseod3" / screenshot_rel
         stdout_path = temp / "stdout.log"
         stderr_path = temp / "stderr.log"
         log_path.parent.mkdir(parents=True)

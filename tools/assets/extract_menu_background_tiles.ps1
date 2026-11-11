@@ -1,9 +1,9 @@
 param(
-    [string]$InputPath = ".install\basepr\guis\assets\menu\background_tiled.tga",
+    [string]$InputPath = ".install\baseod3\guis\assets\menu\background_tiled.tga",
     [string]$TileStem = "background",
     [string[]]$OutputDirs = @(
-        "basepr\guis\assets\menu",
-        ".install\basepr\guis\assets\menu"
+        "baseod3\guis\assets\menu",
+        ".install\baseod3\guis\assets\menu"
     )
 )
 

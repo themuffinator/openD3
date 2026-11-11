@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create curated release distributable archives for openPREY."""
+"""Create curated release distributable archives for openD3."""
 
 from __future__ import annotations
 
@@ -49,9 +49,9 @@ from openq4_pak import (
 )
 
 
-PRODUCT_NAME = "openPREY"
-PRODUCT_STEM = "openprey"
-GAME_DIR_NAME = "basepr"
+PRODUCT_NAME = "openD3"
+PRODUCT_STEM = "opend3"
+GAME_DIR_NAME = "baseod3"
 RELEASE_README_PATH = Path("assets") / "release" / "README.html"
 LICENSE_PATH = Path("LICENSE")
 MACOS_SUPPORT_INFO_SCRIPT_PATH = Path("tools") / "macos" / "collect_macos_support_info.sh"
@@ -88,14 +88,14 @@ ARCHIVE_SUFFIX = {
 # Shared macOS compatibility floor: written to Info.plist LSMinimumSystemVersion
 # and enforced against each packaged binary's Mach-O minimum-OS load command.
 MACOS_MIN_SYSTEM_VERSION = "11.0"
-MACOS_RUNTIME_LAYOUT_KEY = "OpenPREYRuntimeLayout"
+MACOS_RUNTIME_LAYOUT_KEY = "OpenQ4RuntimeLayout"
 MACOS_RUNTIME_LAYOUT_VALUE = "self-contained-v1"
 MACOS_EXPECTED_PLIST_VALUES = {
-    "CFBundleExecutable": "openPREY",
-    "CFBundleDisplayName": "openPREY",
-    "CFBundleIconFile": "openPREY.icns",
-    "CFBundleIdentifier": "com.darkmatter.openprey",
-    "CFBundleName": "openPREY",
+    "CFBundleExecutable": "openD3",
+    "CFBundleDisplayName": "openD3",
+    "CFBundleIconFile": "openD3.icns",
+    "CFBundleIdentifier": "com.darkmatter.opend3",
+    "CFBundleName": "openD3",
     "CFBundlePackageType": "APPL",
     "LSMinimumSystemVersion": "11.0",
     "LSApplicationCategoryType": "public.app-category.games",
@@ -129,26 +129,26 @@ MACOS_LOCALIZED_INFO_LOCALES = (
     "English",
     "French",
 )
-MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME = "OpenPREYPackageRoot.strings"
+MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME = "OpenQ4PackageRoot.strings"
 MACOS_PACKAGE_ROOT_ERROR_STRINGS = {
     "English": {
-        "OpenPREYPackageRootMissingTitle": "openPREY.app adjacent package root is incomplete",
-        "OpenPREYPackageRootMissingBody": "This legacy package layout needs openPREY.app, basepr/, openPREY-client_<arch>, and openPREY-ded_<arch> together in the same package folder. Current self-contained packages support moving only openPREY.app to /Applications; reinstall this package to use that layout.",
-        "OpenPREYBundleRuntimeMissingTitle": "openPREY.app is incomplete",
-        "OpenPREYBundleRuntimeMissingBody": "Reinstall the complete openPREY.app. Its game data and signed game module must remain inside the application bundle.",
+        "OpenQ4PackageRootMissingTitle": "openD3.app adjacent package root is incomplete",
+        "OpenQ4PackageRootMissingBody": "This legacy package layout needs openD3.app, baseod3/, openD3-client_<arch>, and openD3-ded_<arch> together in the same package folder. Current self-contained packages support moving only openD3.app to /Applications; reinstall this package to use that layout.",
+        "OpenQ4BundleRuntimeMissingTitle": "openD3.app is incomplete",
+        "OpenQ4BundleRuntimeMissingBody": "Reinstall the complete openD3.app. Its game data and signed game module must remain inside the application bundle.",
     },
     "French": {
-        "OpenPREYPackageRootMissingTitle": "La racine de paquet adjacente a openPREY.app est incomplete",
-        "OpenPREYPackageRootMissingBody": "Cette ancienne disposition de paquet necessite que openPREY.app, basepr/, openPREY-client_<arch> et openPREY-ded_<arch> restent ensemble dans le meme dossier. Les paquets autonomes actuels permettent de deplacer seulement openPREY.app vers /Applications ; reinstallez ce paquet pour utiliser cette disposition.",
-        "OpenPREYBundleRuntimeMissingTitle": "openPREY.app est incomplete",
-        "OpenPREYBundleRuntimeMissingBody": "Reinstallez l'application openPREY.app complete. Ses donnees de jeu et son module de jeu signe doivent rester dans l'application.",
+        "OpenQ4PackageRootMissingTitle": "La racine de paquet adjacente a openD3.app est incomplete",
+        "OpenQ4PackageRootMissingBody": "Cette ancienne disposition de paquet necessite que openD3.app, baseod3/, openD3-client_<arch> et openD3-ded_<arch> restent ensemble dans le meme dossier. Les paquets autonomes actuels permettent de deplacer seulement openD3.app vers /Applications ; reinstallez ce paquet pour utiliser cette disposition.",
+        "OpenQ4BundleRuntimeMissingTitle": "openD3.app est incomplete",
+        "OpenQ4BundleRuntimeMissingBody": "Reinstallez l'application openD3.app complete. Ses donnees de jeu et son module de jeu signe doivent rester dans l'application.",
     },
 }
 # macOS renderer payload. The Vulkan renderer module runs on macOS through
-# MoltenVK, a Vulkan-on-Metal translation layer that openPREY does not build and
+# MoltenVK, a Vulkan-on-Metal translation layer that openD3 does not build and
 # that meson therefore never installs. tools/build/prepare_macos_moltenvk.sh
 # stages the pinned universal libMoltenVK.dylib into the install tree; both files
-# are then relocated into openPREY.app/Contents/Frameworks beside the game modules.
+# are then relocated into openD3.app/Contents/Frameworks beside the game modules.
 MACOS_MOLTENVK_DYLIB_NAME = "libMoltenVK.dylib"
 MACOS_MOLTENVK_PREPARE_SCRIPT = "tools/build/prepare_macos_moltenvk.sh"
 MACOS_OPENAL_SOFT_DYLIB_NAME = "libopenal.1.dylib"
@@ -186,12 +186,12 @@ MACOS_OPTIONAL_APP_BUNDLE_SIGNATURE_DIRS = (
 MACOS_EXPECTED_APP_BUNDLE_FILES = (
     "Contents/Info.plist",
     "Contents/PkgInfo",
-    "Contents/MacOS/openPREY",
-    "Contents/Resources/openPREY.icns",
+    "Contents/MacOS/openD3",
+    "Contents/Resources/openD3.icns",
     "Contents/Resources/VERSION.txt",
     f"Contents/Resources/{GAME_DIR_NAME}/mod.json",
     *(f"Contents/Resources/{GAME_DIR_NAME}/{pak_name}" for pak_name in OPENQ4_PACK_NAMES),
-    "Contents/Resources/assets/splash/prey_rt_bitmap_4001.bmp",
+    "Contents/Resources/assets/splash/doom3_splash.bmp",
     "Contents/Resources/licenses/openal-soft/COPYING",
     "Contents/Resources/licenses/openal-soft/LICENSE-pffft",
     "Contents/Resources/licenses/openal-soft/LICENSE-fmt",
@@ -234,14 +234,14 @@ MACOS_SUPPORT_INFO_REQUIRED_TOKENS = (
     "contains_control_chars()",
     "Support package root must not contain control characters",
     "Support output directory must not contain control characters",
-    "HOME was not set; home-scoped openprey.log files were skipped.",
-    "HOME was not set; saved openPREYConfig.cfg paths were skipped.",
+    "HOME was not set; home-scoped opend3.log files were skipped.",
+    "HOME was not set; saved openD3Config.cfg paths were skipped.",
     "logs/renderer-config.txt",
     "Only renderer and performance settings are copied",
     "HOME was not set; the macOS DiagnosticReports directory could not be located.",
     ".XXXXXX.tar.gz.tmp",
     "does not dump the environment",
-    "does not launch openPREY",
+    "does not launch openD3",
     "does not copy retail Prey assets",
     "truncated copy failed; source was not copied",
     "COPYFILE_DISABLE=1 tar -czf",
@@ -255,18 +255,18 @@ MACOS_SUPPORT_INFO_FORBIDDEN_TOKENS = (
     "printenv",
     "env >",
     "set >",
-    "openPREY-client_arm64 >",
-    "openPREY-client_arm64 2>",
-    "openPREY-client_x64 >",
-    "openPREY-client_x64 2>",
-    "openPREY-client_x86 >",
-    "openPREY-client_x86 2>",
-    "openPREY-ded_arm64 >",
-    "openPREY-ded_arm64 2>",
-    "openPREY-ded_x64 >",
-    "openPREY-ded_x64 2>",
-    "openPREY-ded_x86 >",
-    "openPREY-ded_x86 2>",
+    "openD3-client_arm64 >",
+    "openD3-client_arm64 2>",
+    "openD3-client_x64 >",
+    "openD3-client_x64 2>",
+    "openD3-client_x86 >",
+    "openD3-client_x86 2>",
+    "openD3-ded_arm64 >",
+    "openD3-ded_arm64 2>",
+    "openD3-ded_x64 >",
+    "openD3-ded_x64 2>",
+    "openD3-ded_x86 >",
+    "openD3-ded_x86 2>",
     "xattr -l",
     "xattr -p",
     "xattr -w",
@@ -294,7 +294,7 @@ VERSION_REPOSITORY_METADATA_KEYS = (
 )
 MACOS_FORBIDDEN_ENTITLEMENTS = {
     "com.apple.security.app-sandbox": (
-        "openPREY direct-distribution packages are not App Sandbox-ready because "
+        "openD3 direct-distribution packages are not App Sandbox-ready because "
         "they need explicit access to user-selected Prey (2006) assets, saves, logs, "
         "and staged runtime overlays"
     ),
@@ -334,7 +334,7 @@ def env_flag(name: str) -> bool:
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Package openPREY release artifacts into a release archive."
+        description="Package openD3 release artifacts into a release archive."
     )
     parser.add_argument(
         "--platform",
@@ -361,7 +361,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--source-root",
         default=".",
-        help="openPREY repository root.",
+        help="openD3 repository root.",
     )
     parser.add_argument(
         "--build-dir",
@@ -926,9 +926,9 @@ def validate_macos_localized_info_bytes(data: bytes, label: str, version: str) -
     values = parse_macos_localized_info_strings(data, label)
 
     expected_values = {
-        "CFBundleName": "openPREY",
+        "CFBundleName": "openD3",
         "CFBundleShortVersionString": version,
-        "CFBundleGetInfoString": f"openPREY version {version}, Copyright 2026 DarkMatter Productions",
+        "CFBundleGetInfoString": f"openD3 version {version}, Copyright 2026 DarkMatter Productions",
         "NSHumanReadableCopyright": "Copyright 2026 DarkMatter Productions",
     }
     for key, expected in expected_values.items():
@@ -969,7 +969,7 @@ def macos_package_suffix_from_name(package_root: Path, arch: str) -> str:
 def validate_macos_version_manifests(package_root: Path, arch: str, version: str, version_tag: str) -> None:
     manifests = {
         "macOS package": package_root / "VERSION.txt",
-        "macOS app": package_root / "openPREY.app" / "Contents" / "Resources" / "VERSION.txt",
+        "macOS app": package_root / "openD3.app" / "Contents" / "Resources" / "VERSION.txt",
     }
     for label, manifest_path in manifests.items():
         try:
@@ -988,14 +988,14 @@ def validate_macos_version_manifests(package_root: Path, arch: str, version: str
 
 def validate_macos_localized_info_files(package_root: Path, version: str) -> None:
     for locale in MACOS_LOCALIZED_INFO_LOCALES:
-        path = package_root / "openPREY.app" / "Contents" / "Resources" / f"{locale}.lproj" / "InfoPlist.strings"
+        path = package_root / "openD3.app" / "Contents" / "Resources" / f"{locale}.lproj" / "InfoPlist.strings"
         try:
             data = path.read_bytes()
         except OSError as exc:
             raise RuntimeError(f"macOS localized InfoPlist.strings is unreadable: {path}") from exc
         validate_macos_localized_info_bytes(data, f"macOS {locale} InfoPlist.strings", version)
 
-        error_path = package_root / "openPREY.app" / "Contents" / "Resources" / f"{locale}.lproj" / MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME
+        error_path = package_root / "openD3.app" / "Contents" / "Resources" / f"{locale}.lproj" / MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME
         try:
             error_data = error_path.read_bytes()
         except OSError as exc:
@@ -1062,7 +1062,7 @@ def validate_macos_binary_architectures(binary_paths: list[Path], arch: str) -> 
 def validate_macos_prebuilt_binary_architectures(binary_paths: list[Path], arch: str) -> None:
     """Slice check for vendored third-party Mach-O payloads.
 
-    openPREY-built binaries must match the package architecture exactly. A
+    openD3-built binaries must match the package architecture exactly. A
     prebuilt universal dependency such as libMoltenVK.dylib is shipped as
     vendored (arm64 + x86_64) even inside a thin package, because re-slicing it
     would invalidate its upstream signature for no runtime benefit -- dyld picks
@@ -1184,30 +1184,30 @@ def resolve_macos_signing_config(args: argparse.Namespace) -> MacOSSigningConfig
 
 
 def macos_embedded_game_module_paths(package_root: Path, arch: str) -> tuple[Path, ...]:
-    framework_root = package_root / "openPREY.app" / MACOS_APP_FRAMEWORKS_DIR
+    framework_root = package_root / "openD3.app" / MACOS_APP_FRAMEWORKS_DIR
     return (framework_root / f"game_{arch}.dylib",)
 
 
 def macos_embedded_renderer_module_path(package_root: Path, arch: str) -> Path:
-    return package_root / "openPREY.app" / MACOS_APP_FRAMEWORKS_DIR / f"renderer-vk_{arch}.dylib"
+    return package_root / "openD3.app" / MACOS_APP_FRAMEWORKS_DIR / f"renderer-vk_{arch}.dylib"
 
 
 def macos_embedded_moltenvk_path(package_root: Path) -> Path:
-    return package_root / "openPREY.app" / MACOS_APP_FRAMEWORKS_DIR / MACOS_MOLTENVK_DYLIB_NAME
+    return package_root / "openD3.app" / MACOS_APP_FRAMEWORKS_DIR / MACOS_MOLTENVK_DYLIB_NAME
 
 
 def macos_embedded_openal_soft_path(package_root: Path) -> Path:
-    return package_root / "openPREY.app" / MACOS_APP_FRAMEWORKS_DIR / MACOS_OPENAL_SOFT_DYLIB_NAME
+    return package_root / "openD3.app" / MACOS_APP_FRAMEWORKS_DIR / MACOS_OPENAL_SOFT_DYLIB_NAME
 
 
 def macos_embedded_game_layers(package_root: Path) -> list[str]:
-    """The game-library layers (q4xbase) embedded in openPREY.app.
+    """The game-library layers (q4xbase) embedded in openD3.app.
 
     A layer's modules sit in Contents/Frameworks/<layer> and its mod.json in
     Contents/Resources/<layer>. Either directory marks the layer as embedded, so the
     bundle checks catch a layer that is only half there.
     """
-    app_root = package_root / "openPREY.app"
+    app_root = package_root / "openD3.app"
     return [
         name
         for name in PACKAGED_LAYER_GAME_DIRS
@@ -1219,7 +1219,7 @@ def macos_embedded_game_layers(package_root: Path) -> list[str]:
 
 
 def macos_embedded_game_layer_module_paths(package_root: Path, arch: str) -> list[Path]:
-    framework_root = package_root / "openPREY.app" / MACOS_APP_FRAMEWORKS_DIR
+    framework_root = package_root / "openD3.app" / MACOS_APP_FRAMEWORKS_DIR
     return [
         framework_root / name / f"game-{kind}_{arch}.dylib"
         for name in macos_embedded_game_layers(package_root)
@@ -1228,7 +1228,7 @@ def macos_embedded_game_layer_module_paths(package_root: Path, arch: str) -> lis
 
 
 def macos_embedded_library_paths(package_root: Path, arch: str) -> list[Path]:
-    """Every Mach-O library nested inside openPREY.app/Contents/Frameworks.
+    """Every Mach-O library nested inside openD3.app/Contents/Frameworks.
 
     These are signed inside-out and never receive the app entitlements, which
     belong to the main executable alone.
@@ -1256,13 +1256,13 @@ def macos_loadable_module_install_names(package_root: Path, arch: str) -> dict[P
     renderer_module = macos_embedded_renderer_module_path(package_root, arch)
     # Meson's Darwin install depfixer may replace linker-authored IDs with the
     # absolute staging destination for every installed dylib. Normalize every
-    # openPREY loadable module after it enters the app bundle. libMoltenVK's
+    # openD3 loadable module after it enters the app bundle. libMoltenVK's
     # package-relative ID is set and asserted by its pinned provider script.
     # OpenAL Soft is likewise prepared outside Meson, but it is included here
     # because its @rpath identity is part of the package contract.
     return {
         game_module: f"@loader_path/game_{arch}.dylib",
-        # a layer's modules take the same self-relative identity as basepr's
+        # a layer's modules take the same self-relative identity as baseod3's
         **{
             module: f"@loader_path/{module.name}"
             for module in macos_embedded_game_layer_module_paths(package_root, arch)
@@ -1336,9 +1336,9 @@ def sign_macos_payload(package_root: Path, arch: str, config: MacOSSigningConfig
     if codesign_path is None:
         raise RuntimeError("macOS code-sign validation requires codesign")
 
-    app_root = package_root / "openPREY.app"
+    app_root = package_root / "openD3.app"
     client_binary = package_root / f"{PRODUCT_NAME}-client_{arch}"
-    app_executable = app_root / "Contents" / "MacOS" / "openPREY"
+    app_executable = app_root / "Contents" / "MacOS" / "openD3"
 
     embedded_modules = set(macos_embedded_library_paths(package_root, arch))
     for target in macos_signable_targets(package_root, arch):
@@ -1386,8 +1386,8 @@ def verify_macos_codesignature(package_root: Path, arch: str) -> None:
 
     verify_targets = [
         *macos_signable_targets(package_root, arch),
-        package_root / "openPREY.app" / "Contents" / "MacOS" / "openPREY",
-        package_root / "openPREY.app",
+        package_root / "openD3.app" / "Contents" / "MacOS" / "openD3",
+        package_root / "openD3.app",
     ]
     for target in verify_targets:
         run_macos_codesign(
@@ -1417,8 +1417,8 @@ def verify_macos_developer_id_signature(package_root: Path, arch: str, config: M
 
     verify_targets = [
         *macos_signable_targets(package_root, arch),
-        package_root / "openPREY.app" / "Contents" / "MacOS" / "openPREY",
-        package_root / "openPREY.app",
+        package_root / "openD3.app" / "Contents" / "MacOS" / "openD3",
+        package_root / "openD3.app",
     ]
     for target in verify_targets:
         details = macos_codesign_details(target)
@@ -1439,7 +1439,7 @@ def notarize_macos_app_bundle(package_root: Path, config: MacOSSigningConfig) ->
             raise RuntimeError(f"macOS notarization requires {tool_name}")
 
     validate_macos_dmg_source_tree(package_root)
-    app_root = package_root / "openPREY.app"
+    app_root = package_root / "openD3.app"
     notary_archive = package_root.parent / f"{package_root.name}-notary.zip"
     prepare_archive_output_path(notary_archive, "macOS notarization archive output")
 
@@ -1642,9 +1642,9 @@ def macos_symbol_targets(package_root: Path, arch: str) -> list[tuple[Path, Path
     game_module = macos_embedded_game_module_paths(package_root, arch)[0]
     return [
         (
-            Path("openPREY.app") / "Contents" / "MacOS" / "openPREY",
-            package_root / "openPREY.app" / "Contents" / "MacOS" / "openPREY",
-            Path("dSYMs") / "openPREY.app.dSYM",
+            Path("openD3.app") / "Contents" / "MacOS" / "openD3",
+            package_root / "openD3.app" / "Contents" / "MacOS" / "openD3",
+            Path("dSYMs") / "openD3.app.dSYM",
         ),
         (
             Path(f"{PRODUCT_NAME}-client_{arch}"),
@@ -1657,27 +1657,27 @@ def macos_symbol_targets(package_root: Path, arch: str) -> list[tuple[Path, Path
             Path("dSYMs") / f"{PRODUCT_NAME}-ded_{arch}.dSYM",
         ),
         (
-            Path("openPREY.app") / MACOS_APP_FRAMEWORKS_DIR / f"game_{arch}.dylib",
+            Path("openD3.app") / MACOS_APP_FRAMEWORKS_DIR / f"game_{arch}.dylib",
             game_module,
             Path("dSYMs") / f"game_{arch}.dylib.dSYM",
         ),
         # a layer's modules keep their game directory, so the dSYMs cannot collide
         *(
             (
-                Path("openPREY.app") / MACOS_APP_FRAMEWORKS_DIR / module.parent.name / module.name,
+                Path("openD3.app") / MACOS_APP_FRAMEWORKS_DIR / module.parent.name / module.name,
                 module,
                 Path("dSYMs") / module.parent.name / f"{module.name}.dSYM",
             )
             for module in macos_embedded_game_layer_module_paths(package_root, arch)
         ),
         (
-            Path("openPREY.app") / MACOS_APP_FRAMEWORKS_DIR / f"renderer-vk_{arch}.dylib",
+            Path("openD3.app") / MACOS_APP_FRAMEWORKS_DIR / f"renderer-vk_{arch}.dylib",
             macos_embedded_renderer_module_path(package_root, arch),
             Path("dSYMs") / f"renderer-vk_{arch}.dylib.dSYM",
         ),
-        # DELIBERATE EXCLUSION: openPREY.app/Contents/Frameworks/libMoltenVK.dylib
+        # DELIBERATE EXCLUSION: openD3.app/Contents/Frameworks/libMoltenVK.dylib
         # is NOT listed here and must not be added. MoltenVK is a third-party
-        # prebuilt binary that openPREY does not compile, so there is no DWARF for
+        # prebuilt binary that openD3 does not compile, so there is no DWARF for
         # dsymutil to harvest and no dSYM to pair against it. Adding it would
         # make create_macos_symbol_archive() fail on every macOS package. Crash
         # reports that land inside MoltenVK are symbolicated against the
@@ -1751,7 +1751,7 @@ def write_macos_symbol_manifest(
 ) -> Path:
     symbol_archive_name = f"{macos_symbol_archive_stem(version_tag, arch, package_suffix)}{MACOS_SYMBOL_ARCHIVE_SUFFIX}"
     lines = [
-        "openPREY macOS symbols",
+        "openD3 macOS symbols",
         "format=1",
         f"version={version}",
         f"version_tag={version_tag}",
@@ -1800,7 +1800,7 @@ def validate_macos_symbol_manifest_bytes(
         raise RuntimeError(f"{label} is not UTF-8") from exc
 
     lines = text.splitlines()
-    if not lines or lines[0].strip() != "openPREY macOS symbols":
+    if not lines or lines[0].strip() != "openD3 macOS symbols":
         raise RuntimeError(f"{label} has invalid header")
 
     header_values: dict[str, str] = {}
@@ -1856,18 +1856,18 @@ def validate_macos_symbol_manifest_bytes(
         raise RuntimeError(f"{label} runtime_archive is {runtime_archive!r}; expected {runtime_archive_name!r}")
 
     expected_binaries = {
-        "openPREY.app/Contents/MacOS/openPREY": "dSYMs/openPREY.app.dSYM",
+        "openD3.app/Contents/MacOS/openD3": "dSYMs/openD3.app.dSYM",
         f"{PRODUCT_NAME}-client_{arch}": f"dSYMs/{PRODUCT_NAME}-client_{arch}.dSYM",
         f"{PRODUCT_NAME}-ded_{arch}": f"dSYMs/{PRODUCT_NAME}-ded_{arch}.dSYM",
-        f"openPREY.app/Contents/Frameworks/game_{arch}.dylib": f"dSYMs/game_{arch}.dylib.dSYM",
+        f"openD3.app/Contents/Frameworks/game_{arch}.dylib": f"dSYMs/game_{arch}.dylib.dSYM",
         # Mirrors macos_symbol_targets(); libMoltenVK.dylib is intentionally
         # absent because it is third-party and has no dSYM.
-        f"openPREY.app/Contents/Frameworks/renderer-vk_{arch}.dylib": f"dSYMs/renderer-vk_{arch}.dylib.dSYM",
+        f"openD3.app/Contents/Frameworks/renderer-vk_{arch}.dylib": f"dSYMs/renderer-vk_{arch}.dylib.dSYM",
     }
     for layer in game_layers:
         for kind in ("sp", "mp"):
             module = f"{layer}/game-{kind}_{arch}.dylib"
-            expected_binaries[f"openPREY.app/Contents/Frameworks/{module}"] = f"dSYMs/{module}.dSYM"
+            expected_binaries[f"openD3.app/Contents/Frameworks/{module}"] = f"dSYMs/{module}.dSYM"
     if "binaries:" not in [line.strip() for line in lines]:
         raise RuntimeError(f"{label} is missing required token: binaries:")
 
@@ -2020,29 +2020,29 @@ def validate_macos_symbol_archive_contents(
     expected_symbol_archive_name = f"{macos_symbol_archive_stem(version_tag, arch, package_suffix)}{MACOS_SYMBOL_ARCHIVE_SUFFIX}"
     expected_entries = {
         f"{package_prefix}{MACOS_SYMBOL_MANIFEST_NAME}",
-        f"{package_prefix}dSYMs/openPREY.app.dSYM/Contents/Resources/DWARF/openPREY",
+        f"{package_prefix}dSYMs/openD3.app.dSYM/Contents/Resources/DWARF/openD3",
         f"{package_prefix}dSYMs/{PRODUCT_NAME}-client_{arch}.dSYM/Contents/Resources/DWARF/{PRODUCT_NAME}-client_{arch}",
         f"{package_prefix}dSYMs/{PRODUCT_NAME}-ded_{arch}.dSYM/Contents/Resources/DWARF/{PRODUCT_NAME}-ded_{arch}",
         f"{package_prefix}dSYMs/game_{arch}.dylib.dSYM/Contents/Resources/DWARF/game_{arch}.dylib",
         f"{package_prefix}dSYMs/renderer-vk_{arch}.dylib.dSYM/Contents/Resources/DWARF/renderer-vk_{arch}.dylib",
     }
     forbidden_runtime_entries = {
-        f"{package_prefix}openPREY.app/Contents/MacOS/openPREY",
+        f"{package_prefix}openD3.app/Contents/MacOS/openD3",
         f"{package_prefix}{PRODUCT_NAME}-client_{arch}",
         f"{package_prefix}{PRODUCT_NAME}-ded_{arch}",
-        f"{package_prefix}openPREY.app/Contents/Frameworks/game_{arch}.dylib",
-        f"{package_prefix}openPREY.app/Contents/Frameworks/renderer-vk_{arch}.dylib",
+        f"{package_prefix}openD3.app/Contents/Frameworks/game_{arch}.dylib",
+        f"{package_prefix}openD3.app/Contents/Frameworks/renderer-vk_{arch}.dylib",
         # libMoltenVK has no dSYM, so it must never appear in the symbol archive
         # at all -- if it does, someone copied runtime payload in by mistake.
-        f"{package_prefix}openPREY.app/Contents/Frameworks/{MACOS_MOLTENVK_DYLIB_NAME}",
-        # OpenAL Soft is third-party runtime code and likewise has no openPREY dSYM.
-        f"{package_prefix}openPREY.app/Contents/Frameworks/{MACOS_OPENAL_SOFT_DYLIB_NAME}",
+        f"{package_prefix}openD3.app/Contents/Frameworks/{MACOS_MOLTENVK_DYLIB_NAME}",
+        # OpenAL Soft is third-party runtime code and likewise has no openD3 dSYM.
+        f"{package_prefix}openD3.app/Contents/Frameworks/{MACOS_OPENAL_SOFT_DYLIB_NAME}",
     }
     for layer in game_layers:
         for kind in ("sp", "mp"):
             module = f"game-{kind}_{arch}.dylib"
             expected_entries.add(f"{package_prefix}dSYMs/{layer}/{module}.dSYM/Contents/Resources/DWARF/{module}")
-            forbidden_runtime_entries.add(f"{package_prefix}openPREY.app/Contents/Frameworks/{layer}/{module}")
+            forbidden_runtime_entries.add(f"{package_prefix}openD3.app/Contents/Frameworks/{layer}/{module}")
 
     entry_names: set[str] = set()
     casefold_entry_names: dict[str, str] = {}
@@ -2185,17 +2185,17 @@ def validate_packaged_mod_manifest(package_game_dir: Path, version: str) -> None
     if manifest.get("version") != version:
         mismatches.append(f"version={manifest.get('version')!r}")
 
-    required_version_text = manifest.get("requiredopenPREYVersion")
+    required_version_text = manifest.get("requiredopenD3Version")
     required_version = (
         parse_stable_base_version(required_version_text)
         if isinstance(required_version_text, str)
         else None
     )
     if required_version is None:
-        mismatches.append(f"requiredopenPREYVersion={required_version_text!r}")
+        mismatches.append(f"requiredopenD3Version={required_version_text!r}")
     elif required_version > release_version:
         mismatches.append(
-            f"requiredopenPREYVersion={required_version_text!r} "
+            f"requiredopenD3Version={required_version_text!r} "
             f"(requires newer than package {version})"
         )
 
@@ -2210,9 +2210,9 @@ def write_macos_localized_info_strings(app_contents: Path, version: str) -> None
     localized_info_lines = [
         "/* Localized versions of Info.plist keys */",
         "",
-        'CFBundleName = "openPREY";',
+        'CFBundleName = "openD3";',
         f'CFBundleShortVersionString = "{version}";',
-        f'CFBundleGetInfoString = "openPREY version {version}, Copyright 2026 DarkMatter Productions";',
+        f'CFBundleGetInfoString = "openD3 version {version}, Copyright 2026 DarkMatter Productions";',
         'NSHumanReadableCopyright = "Copyright 2026 DarkMatter Productions";',
     ]
 
@@ -2334,7 +2334,7 @@ def copy_required_windows_runtime(
     if runtime_flavor != RuntimeFlavor.NONE:
         raise RuntimeError(
             "Windows package staging detected MSVC/UCRT runtime imports. "
-            "Public openPREY packages must be built with the static CRT policy."
+            "Public openD3 packages must be built with the static CRT policy."
         )
 
     for source in runtime_files:
@@ -2438,7 +2438,7 @@ def validate_packaged_layer_mod_manifest(package_layer_dir: Path, version: str) 
     required = manifest["requiredopenQ4Version"]
     if is_stable_base_version(version) and required != version:
         raise RuntimeError(
-            f"packaged {package_layer_dir.name}/mod.json requires openPREY {required}, "
+            f"packaged {package_layer_dir.name}/mod.json requires openD3 {required}, "
             f"which is not release {version}"
         )
 
@@ -2491,7 +2491,7 @@ def copy_game_layer_dirs(
     version: str,
     required_layers: set[str],
 ) -> list[str]:
-    """Copy each staged game-library layer beside basepr (Windows and Linux; macOS embeds
+    """Copy each staged game-library layer beside baseod3 (Windows and Linux; macOS embeds
     its layers in the app bundle). Returns the packaged game directory names."""
     packaged: list[str] = []
     for source in staged_game_layer_dirs(platform, arch, install_dir, required_layers):
@@ -2551,7 +2551,7 @@ def create_release_archive(
     """Archive package_root under its own folder name, or at the archive root when rootless.
 
     An update archive is rootless so it extracts straight into an existing
-    openPREY folder, replacing files, and leaves out the bulk content packs.
+    openD3 folder, replacing files, and leaves out the bulk content packs.
     """
     validate_archive_output_outside_input_tree(package_root, archive_path, "release archive output")
     prepare_archive_output_path(archive_path, "release archive output")
@@ -2647,7 +2647,7 @@ def create_windows_symbol_archive(
     """Zip the moved PDBs with a manifest pairing each with its binary's SHA-256."""
     prepare_archive_output_path(archive_path, "Windows symbol archive output")
     lines = [
-        "openPREY Windows symbols",
+        "openD3 Windows symbols",
         f"version={version}",
         f"arch={arch}",
         f"runtime_archive={package_root.name}.zip",
@@ -2688,18 +2688,18 @@ def get_package_executable_archive_paths(
     if platform == "linux":
         executable_paths.update(Path(filename) for filename in copied_linux_launchers)
     elif platform == "macos":
-        executable_paths.add(Path("openPREY.app") / "Contents" / "MacOS" / "openPREY")
+        executable_paths.add(Path("openD3.app") / "Contents" / "MacOS" / "openD3")
         executable_paths.add(Path(MACOS_SUPPORT_INFO_SCRIPT_NAME))
         executable_paths.update(
             {
-                Path("openPREY.app") / MACOS_APP_FRAMEWORKS_DIR / f"game_{arch}.dylib",
-                Path("openPREY.app") / MACOS_APP_FRAMEWORKS_DIR / f"renderer-vk_{arch}.dylib",
-                Path("openPREY.app") / MACOS_APP_FRAMEWORKS_DIR / MACOS_MOLTENVK_DYLIB_NAME,
-                Path("openPREY.app") / MACOS_APP_FRAMEWORKS_DIR / MACOS_OPENAL_SOFT_DYLIB_NAME,
+                Path("openD3.app") / MACOS_APP_FRAMEWORKS_DIR / f"game_{arch}.dylib",
+                Path("openD3.app") / MACOS_APP_FRAMEWORKS_DIR / f"renderer-vk_{arch}.dylib",
+                Path("openD3.app") / MACOS_APP_FRAMEWORKS_DIR / MACOS_MOLTENVK_DYLIB_NAME,
+                Path("openD3.app") / MACOS_APP_FRAMEWORKS_DIR / MACOS_OPENAL_SOFT_DYLIB_NAME,
             }
         )
         executable_paths.update(
-            Path("openPREY.app") / MACOS_APP_FRAMEWORKS_DIR / layer / f"game-{kind}_{arch}.dylib"
+            Path("openD3.app") / MACOS_APP_FRAMEWORKS_DIR / layer / f"game-{kind}_{arch}.dylib"
             for layer in game_layers
             for kind in ("sp", "mp")
         )
@@ -2832,7 +2832,7 @@ def validate_macos_archive_contents(
         raise RuntimeError(f"Unsupported macOS archive format for validation: {archive_format}")
 
     package_prefix = package_root.name + "/"
-    app_bundle_prefix = f"{package_prefix}openPREY.app/"
+    app_bundle_prefix = f"{package_prefix}openD3.app/"
     expected_app_bundle_entries = {
         f"{app_bundle_prefix}{relative_path}"
         for relative_path in MACOS_EXPECTED_APP_BUNDLE_FILES
@@ -2863,9 +2863,9 @@ def validate_macos_archive_contents(
         f"{app_bundle_prefix}{relative_path}"
         for relative_path in MACOS_OPTIONAL_APP_BUNDLE_SIGNATURE_FILES
     }
-    client_entry = f"{package_prefix}openPREY-client_{arch}"
-    dedicated_entry = f"{package_prefix}openPREY-ded_{arch}"
-    app_executable_entry = f"{package_prefix}openPREY.app/Contents/MacOS/openPREY"
+    client_entry = f"{package_prefix}openD3-client_{arch}"
+    dedicated_entry = f"{package_prefix}openD3-ded_{arch}"
+    app_executable_entry = f"{package_prefix}openD3.app/Contents/MacOS/openD3"
     support_info_entry = f"{package_prefix}{MACOS_SUPPORT_INFO_SCRIPT_NAME}"
     expected_entries = {
         client_entry,
@@ -2879,15 +2879,15 @@ def validate_macos_archive_contents(
         support_info_entry,
         f"{package_prefix}{MACOS_SYMBOL_MANIFEST_NAME}",
         f"{package_prefix}VERSION.txt",
-        f"{package_prefix}openPREY.app/Contents/Info.plist",
-        f"{package_prefix}openPREY.app/Contents/PkgInfo",
+        f"{package_prefix}openD3.app/Contents/Info.plist",
+        f"{package_prefix}openD3.app/Contents/PkgInfo",
         app_executable_entry,
-        f"{package_prefix}openPREY.app/Contents/Resources/openPREY.icns",
-        f"{package_prefix}openPREY.app/Contents/Resources/VERSION.txt",
-        f"{package_prefix}openPREY.app/Contents/Resources/English.lproj/InfoPlist.strings",
-        f"{package_prefix}openPREY.app/Contents/Resources/French.lproj/InfoPlist.strings",
-        f"{package_prefix}openPREY.app/Contents/Resources/English.lproj/{MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME}",
-        f"{package_prefix}openPREY.app/Contents/Resources/French.lproj/{MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME}",
+        f"{package_prefix}openD3.app/Contents/Resources/openD3.icns",
+        f"{package_prefix}openD3.app/Contents/Resources/VERSION.txt",
+        f"{package_prefix}openD3.app/Contents/Resources/English.lproj/InfoPlist.strings",
+        f"{package_prefix}openD3.app/Contents/Resources/French.lproj/InfoPlist.strings",
+        f"{package_prefix}openD3.app/Contents/Resources/English.lproj/{MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME}",
+        f"{package_prefix}openD3.app/Contents/Resources/French.lproj/{MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME}",
         *embedded_layer_module_entries,
         *embedded_layer_manifest_entries,
     }
@@ -2902,7 +2902,7 @@ def validate_macos_archive_contents(
         embedded_openal_soft_entry,
         *embedded_layer_module_entries,
     }
-    plist_entry = f"{package_prefix}openPREY.app/Contents/Info.plist"
+    plist_entry = f"{package_prefix}openD3.app/Contents/Info.plist"
 
     modes: dict[str, int] = {}
     entry_names: set[str] = set()
@@ -2917,7 +2917,7 @@ def validate_macos_archive_contents(
     localized_package_root_error_bytes: dict[str, bytes] = {}
     code_resources_bytes: bytes | None = None
     package_version_tag = macos_package_version_tag_from_name(package_root, arch)
-    code_resources_entry = f"{package_prefix}openPREY.app/Contents/_CodeSignature/CodeResources"
+    code_resources_entry = f"{package_prefix}openD3.app/Contents/_CodeSignature/CodeResources"
 
     if archive_format == "zip":
         try:
@@ -2955,11 +2955,11 @@ def validate_macos_archive_contents(
                 validate_macos_archive_mode(name, modes[name])
             if plist_entry in entry_names:
                 plist_bytes = read_macos_zip_member(archive, plist_entry, archive_path)
-            pkginfo_entry = f"{package_prefix}openPREY.app/Contents/PkgInfo"
+            pkginfo_entry = f"{package_prefix}openD3.app/Contents/PkgInfo"
             if pkginfo_entry in entry_names:
                 pkginfo_bytes = read_macos_zip_member(archive, pkginfo_entry, archive_path)
             root_version_entry = f"{package_prefix}VERSION.txt"
-            app_version_entry = f"{package_prefix}openPREY.app/Contents/Resources/VERSION.txt"
+            app_version_entry = f"{package_prefix}openD3.app/Contents/Resources/VERSION.txt"
             symbol_manifest_entry = f"{package_prefix}{MACOS_SYMBOL_MANIFEST_NAME}"
             if root_version_entry in entry_names:
                 root_version_bytes = read_macos_zip_member(archive, root_version_entry, archive_path)
@@ -2970,10 +2970,10 @@ def validate_macos_archive_contents(
             if support_info_entry in entry_names:
                 support_info_bytes = read_macos_zip_member(archive, support_info_entry, archive_path)
             for locale in MACOS_LOCALIZED_INFO_LOCALES:
-                entry = f"{package_prefix}openPREY.app/Contents/Resources/{locale}.lproj/InfoPlist.strings"
+                entry = f"{package_prefix}openD3.app/Contents/Resources/{locale}.lproj/InfoPlist.strings"
                 if entry in entry_names:
                     localized_info_bytes[locale] = read_macos_zip_member(archive, entry, archive_path)
-                error_entry = f"{package_prefix}openPREY.app/Contents/Resources/{locale}.lproj/{MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME}"
+                error_entry = f"{package_prefix}openD3.app/Contents/Resources/{locale}.lproj/{MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME}"
                 if error_entry in entry_names:
                     localized_package_root_error_bytes[locale] = read_macos_zip_member(archive, error_entry, archive_path)
             if code_resources_entry in entry_names:
@@ -3017,7 +3017,7 @@ def validate_macos_archive_contents(
                     extracted = archive.extractfile(member)
                     if extracted is not None:
                         plist_bytes = extracted.read()
-                elif name == f"{package_prefix}openPREY.app/Contents/PkgInfo":
+                elif name == f"{package_prefix}openD3.app/Contents/PkgInfo":
                     extracted = archive.extractfile(member)
                     if extracted is not None:
                         pkginfo_bytes = extracted.read()
@@ -3025,7 +3025,7 @@ def validate_macos_archive_contents(
                     extracted = archive.extractfile(member)
                     if extracted is not None:
                         root_version_bytes = extracted.read()
-                elif name == f"{package_prefix}openPREY.app/Contents/Resources/VERSION.txt":
+                elif name == f"{package_prefix}openD3.app/Contents/Resources/VERSION.txt":
                     extracted = archive.extractfile(member)
                     if extracted is not None:
                         app_version_bytes = extracted.read()
@@ -3037,12 +3037,12 @@ def validate_macos_archive_contents(
                     extracted = archive.extractfile(member)
                     if extracted is not None:
                         support_info_bytes = extracted.read()
-                elif name.startswith(f"{package_prefix}openPREY.app/Contents/Resources/") and name.endswith(".lproj/InfoPlist.strings"):
+                elif name.startswith(f"{package_prefix}openD3.app/Contents/Resources/") and name.endswith(".lproj/InfoPlist.strings"):
                     locale = Path(name).parts[-2].replace(".lproj", "")
                     extracted = archive.extractfile(member)
                     if extracted is not None:
                         localized_info_bytes[locale] = extracted.read()
-                elif name.startswith(f"{package_prefix}openPREY.app/Contents/Resources/") and name.endswith(f".lproj/{MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME}"):
+                elif name.startswith(f"{package_prefix}openD3.app/Contents/Resources/") and name.endswith(f".lproj/{MACOS_PACKAGE_ROOT_ERROR_STRINGS_NAME}"):
                     locale = Path(name).parts[-2].replace(".lproj", "")
                     extracted = archive.extractfile(member)
                     if extracted is not None:
@@ -3122,7 +3122,7 @@ def validate_macos_archive_contents(
     )
     if loose_layer_entries:
         joined = ", ".join(loose_layer_entries[:5])
-        raise RuntimeError(f"macOS archive carries a game layer outside openPREY.app: {joined}")
+        raise RuntimeError(f"macOS archive carries a game layer outside openD3.app: {joined}")
 
     # Same sweep for renderer modules: a leftover renderer-vk_x64.dylib inside an
     # arm64 package, or a renderer-gl module that darwin never builds, must not
@@ -3310,7 +3310,7 @@ def macos_dependency_validation_binaries(package_root: Path, arch: str) -> list[
     return [
         package_root / f"{PRODUCT_NAME}-client_{arch}",
         package_root / f"{PRODUCT_NAME}-ded_{arch}",
-        package_root / "openPREY.app" / "Contents" / "MacOS" / "openPREY",
+        package_root / "openD3.app" / "Contents" / "MacOS" / "openD3",
         *macos_embedded_library_paths(package_root, arch),
     ]
 
@@ -3399,7 +3399,7 @@ def validate_macos_binary_dependencies(package_root: Path, arch: str) -> None:
     for binary_path in binary_paths:
         require_packaged_executable(binary_path, "macOS dependency validation binary")
 
-    # Everything openPREY compiles must be sliced exactly like the package. The
+    # Everything openD3 compiles must be sliced exactly like the package. The
     # vendored libMoltenVK.dylib is a prebuilt universal binary, so it legitimately
     # carries both slices even in a thin package; it only has to contain the ones
     # this package needs.
@@ -3431,7 +3431,7 @@ def validate_macos_binary_dependencies(package_root: Path, arch: str) -> None:
     # the exhausted implementation this package is intended to replace.
     for binary_path in (
         package_root / f"{PRODUCT_NAME}-client_{arch}",
-        package_root / "openPREY.app" / "Contents" / "MacOS" / "openPREY",
+        package_root / "openD3.app" / "Contents" / "MacOS" / "openD3",
     ):
         for macho_arch in sorted(macos_expected_lipo_arches(arch)):
             dependencies = macos_otool_dependencies(binary_path, macho_arch=macho_arch)
@@ -3483,7 +3483,7 @@ def copy_required_linux_splash(
     directory, SDL's base path and the executable, so the package root is where it
     has to land.
     """
-    relative = Path("assets") / "splash" / "prey_rt_bitmap_4001.bmp"
+    relative = Path("assets") / "splash" / "doom3_splash.bmp"
     source = install_dir / relative
     if not source.is_file():
         if allow_missing_binaries:
@@ -3496,7 +3496,7 @@ def copy_required_linux_splash(
 def copy_optional_linux_launchers(install_dir: Path, package_root: Path) -> list[str]:
     copied: list[str] = []
 
-    for filename in ("openPREY-steamdeck",):
+    for filename in ("openD3-steamdeck",):
         source = install_dir / filename
         if not source.is_file():
             continue
@@ -3539,8 +3539,8 @@ def validate_linux_steamdeck_launcher(path: Path, expected_client: str) -> None:
         raise RuntimeError(f"Linux Steam Deck launcher is unreadable: {path}") from exc
 
     required_tokens = (
-        "OPENPREY_STEAMDECK",
-        "OPENPREY_FORCE_X11",
+        "OPEND3_STEAMDECK",
+        "OPEND3_FORCE_X11",
         "SDL_VIDEO_DRIVER=x11",
         "SDL_VIDEODRIVER=x11",
         "+set com_platformProfile steamdeck",
@@ -3570,14 +3570,14 @@ def validate_linux_package_metadata(package_root: Path, arch: str, *, allow_miss
         "Linux dedicated-server binary",
         allow_missing=allow_missing_binaries,
     )
-    steamdeck_launcher = package_root / "openPREY-steamdeck"
+    steamdeck_launcher = package_root / "openD3-steamdeck"
     require_packaged_executable(steamdeck_launcher, "Linux Steam Deck launcher")
     validate_linux_steamdeck_launcher(steamdeck_launcher, client_binary)
 
     desktop_dir = package_root / "share" / "applications"
     expected_exec = {
-        "openprey.desktop": client_binary,
-        "openprey-steamdeck.desktop": "openPREY-steamdeck",
+        "opend3.desktop": client_binary,
+        "opend3-steamdeck.desktop": "openD3-steamdeck",
     }
     for filename, expected_command in expected_exec.items():
         desktop_path = desktop_dir / filename
@@ -3674,19 +3674,19 @@ def validate_macos_app_bundle(package_root: Path, app_root: Path, arch: str, ver
     package_game_dir = package_root / GAME_DIR_NAME
     if package_game_dir.exists():
         raise RuntimeError(
-            f"macOS package retained adjacent {GAME_DIR_NAME}/ instead of embedding it in openPREY.app: {package_game_dir}"
+            f"macOS package retained adjacent {GAME_DIR_NAME}/ instead of embedding it in openD3.app: {package_game_dir}"
         )
     for name in PACKAGED_LAYER_GAME_DIRS:
         package_layer_dir = package_root / name
         if package_layer_dir.exists() or package_layer_dir.is_symlink():
             raise RuntimeError(
-                f"macOS package retained adjacent {name}/ instead of embedding it in openPREY.app: {package_layer_dir}"
+                f"macOS package retained adjacent {name}/ instead of embedding it in openD3.app: {package_layer_dir}"
             )
 
     app_contents = app_root / "Contents"
     app_plist = app_contents / "Info.plist"
-    app_executable = app_contents / "MacOS" / "openPREY"
-    app_icon = app_contents / "Resources" / "openPREY.icns"
+    app_executable = app_contents / "MacOS" / "openD3"
+    app_icon = app_contents / "Resources" / "openD3.icns"
     app_version = app_contents / "Resources" / "VERSION.txt"
     app_pkginfo = app_contents / "PkgInfo"
 
@@ -3698,7 +3698,7 @@ def validate_macos_app_bundle(package_root: Path, app_root: Path, arch: str, ver
     for relative_path in (
         MACOS_APP_GAME_DATA_DIR / "mod.json",
         *(MACOS_APP_GAME_DATA_DIR / pak_name for pak_name in OPENQ4_PACK_NAMES),
-        MACOS_APP_SPLASH_DIR / "prey_rt_bitmap_4001.bmp",
+        MACOS_APP_SPLASH_DIR / "doom3_splash.bmp",
     ):
         require_non_empty_package_file(app_root / relative_path, f"macOS embedded runtime file {relative_path}")
     require_packaged_executable(embedded_game_module, "macOS embedded unified game module")
@@ -3754,7 +3754,7 @@ def resolve_macos_moltenvk_source(install_dir: Path) -> Path:
     raise RuntimeError(
         f"macOS package is missing the bundled MoltenVK runtime ({MACOS_MOLTENVK_DYLIB_NAME}). "
         "The Vulkan renderer module reaches the GPU on macOS through MoltenVK, a "
-        "Vulkan-on-Metal translation layer that openPREY does not build, so meson never "
+        "Vulkan-on-Metal translation layer that openD3 does not build, so meson never "
         "installs it. Stage the pinned universal libMoltenVK.dylib before packaging: "
         f"{MACOS_MOLTENVK_PREPARE_SCRIPT} --output-dir {install_dir}. "
         f"Searched: {searched}"
@@ -3797,7 +3797,7 @@ def create_macos_app_bundle(
     *,
     required_layers: set[str] | frozenset[str] = frozenset(),
 ) -> Path:
-    app_root = package_root / "openPREY.app"
+    app_root = package_root / "openD3.app"
     app_contents = app_root / "Contents"
     app_frameworks = app_root / MACOS_APP_FRAMEWORKS_DIR
     app_macos = app_contents / "MacOS"
@@ -3811,7 +3811,7 @@ def create_macos_app_bundle(
     if not client_binary.is_file():
         raise RuntimeError(f"macOS client binary is missing before app bundle creation: {client_binary}")
 
-    app_executable = app_macos / "openPREY"
+    app_executable = app_macos / "openD3"
     copy_regular_file(client_binary, app_executable)
     os.chmod(app_executable, 0o755)
 
@@ -3884,9 +3884,9 @@ def create_macos_app_bundle(
     copy_macos_openal_soft_licenses(install_dir, app_root)
 
     staged_splash_dir = package_root / "assets" / "splash"
-    staged_splash = staged_splash_dir / "prey_rt_bitmap_4001.bmp"
+    staged_splash = staged_splash_dir / "doom3_splash.bmp"
     if not staged_splash.is_file():
-        installed_splash = install_dir / "assets" / "splash" / "prey_rt_bitmap_4001.bmp"
+        installed_splash = install_dir / "assets" / "splash" / "doom3_splash.bmp"
         require_non_empty_package_file(installed_splash, "macOS staged splash image")
         staged_splash_dir.mkdir(parents=True, exist_ok=True)
         copy_regular_file(installed_splash, staged_splash)
@@ -3899,14 +3899,14 @@ def create_macos_app_bundle(
         staged_assets_dir.rmdir()
 
     icns_candidates = [
-        install_dir / "openPREY.icns",
-        install_dir / "prey.icns",
+        install_dir / "openD3.icns",
+        install_dir / "doom3.icns",
     ]
     for icns_source in icns_candidates:
         if icns_source.is_file():
-            copy_regular_file(icns_source, app_resources / "openPREY.icns")
+            copy_regular_file(icns_source, app_resources / "openD3.icns")
             break
-    if not (app_resources / "openPREY.icns").is_file():
+    if not (app_resources / "openD3.icns").is_file():
         expected = ", ".join(str(path) for path in icns_candidates)
         raise RuntimeError(f"macOS app icon source was not found in staged install. Expected one of: {expected}")
 
@@ -3921,17 +3921,17 @@ def create_macos_app_bundle(
             "<key>CFBundleDevelopmentRegion</key>",
             "<string>English</string>",
             "<key>CFBundleDisplayName</key>",
-            "<string>openPREY</string>",
+            "<string>openD3</string>",
             "<key>CFBundleExecutable</key>",
-            "<string>openPREY</string>",
+            "<string>openD3</string>",
             "<key>CFBundleIconFile</key>",
-            "<string>openPREY.icns</string>",
+            "<string>openD3.icns</string>",
             "<key>CFBundleIdentifier</key>",
-            "<string>com.darkmatter.openprey</string>",
+            "<string>com.darkmatter.opend3</string>",
             "<key>CFBundleInfoDictionaryVersion</key>",
             "<string>6.0</string>",
             "<key>CFBundleName</key>",
-            "<string>openPREY</string>",
+            "<string>openD3</string>",
             "<key>CFBundlePackageType</key>",
             "<string>APPL</string>",
             "<key>CFBundleShortVersionString</key>",
@@ -4093,7 +4093,7 @@ def main(argv: list[str]) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 
-    # Game-library layers (q4xbase) ship beside basepr; create_macos_app_bundle embeds macOS's.
+    # Game-library layers (q4xbase) ship beside baseod3; create_macos_app_bundle embeds macOS's.
     required_layers = set(args.require_game_layer)
     packaged_layers: list[str] = []
     try:
@@ -4281,7 +4281,7 @@ def main(argv: list[str]) -> int:
             print(f"error: {exc}", file=sys.stderr)
             return 1
 
-    print(f"Packaged openPREY release {version} for {args.platform}")
+    print(f"Packaged openD3 release {version} for {args.platform}")
     print(f"Package directory: {package_root}")
     print(f"Release archive: {archive_path}")
     if update_archive_path is not None:
@@ -4291,7 +4291,7 @@ def main(argv: list[str]) -> int:
     print(f"Archive format: {archive_format}")
     print(f"Version manifest: {package_root / 'VERSION.txt'}")
     print(f"Documentation portal: {generated_docs.index_path} ({generated_docs.page_count} pages)")
-    print("openPREY pk4s:")
+    print("openD3 pk4s:")
     for pak_name, pk4_result in pk4_results:
         print(
             f"  - {package_game_dir / pak_name} "

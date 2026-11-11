@@ -16,7 +16,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-READY_MARKER = "OPENPREY_DEDICATED_SMOKE_READY"
+READY_MARKER = "OPEND3_DEDICATED_SMOKE_READY"
 IPV4_SELF_TEST_MARKER = "IPv4 network self-test: passed"
 CANONICAL_GAMETYPE_MARKER = '"si_gameType" is:"deathmatch"'
 REQUIRED_MARKERS = (
@@ -55,7 +55,7 @@ def create_minimal_base(base_path: Path) -> Path:
     pak_path = prey_base / "pak000.pk4"
     with zipfile.ZipFile(pak_path, "w", compression=zipfile.ZIP_STORED) as archive:
         archive.writestr(
-            "openprey-dedicated-smoke.txt",
+            "opend3-dedicated-smoke.txt",
             "Generated test-only media marker; contains no proprietary Prey data.\n",
         )
     return pak_path
@@ -77,7 +77,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         "--install-root",
         type=Path,
         default=ROOT / ".install",
-        help="Staged package root containing the Linux dedicated server and basepr module.",
+        help="Staged package root containing the Linux dedicated server and baseod3 module.",
     )
     parser.add_argument(
         "--output-root",
@@ -100,8 +100,8 @@ def main(argv: list[str]) -> int:
 
     arch = args.arch or host_arch_tag()
     install_root = args.install_root.resolve()
-    executable = (args.executable or install_root / f"openPREY-ded_{arch}").resolve()
-    game_module = install_root / "basepr" / f"game_{arch}.so"
+    executable = (args.executable or install_root / f"openD3-ded_{arch}").resolve()
+    game_module = install_root / "baseod3" / f"game_{arch}.so"
 
     if not executable.is_file():
         raise RuntimeError(f"dedicated-server executable not found: {executable}")
@@ -132,7 +132,7 @@ def main(argv: list[str]) -> int:
         "+set", "fs_homepath", str(home_path),
         "+set", "fs_savepath", str(home_path),
         "+set", "fs_devpath", str(install_root),
-        "+set", "fs_game", "basepr",
+        "+set", "fs_game", "baseod3",
         "+set", "fs_validateOfficialPaks", "0",
         "+set", "g_allowAssetlessStartup", "1",
         "+set", "si_gameType", "deathmatch",

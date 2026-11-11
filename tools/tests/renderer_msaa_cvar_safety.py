@@ -193,7 +193,7 @@ def test_gles_view_path_records_main_scene_target():
 def test_postaa_settings_surface_exposes_all_modes():
     repo_root = Path(__file__).resolve().parents[2]
     init_cpp = read_repo_file(Path("src") / "renderer" / "RenderSystem_init.cpp")
-    system_gui = read_repo_file(Path("content") / "basepr" / "pak0" / "guis" / "mainmenu" / "mainmenu_options.guifragment")
+    system_gui = read_repo_file(Path("content") / "baseod3" / "pak0" / "guis" / "mainmenu" / "mainmenu_options.guifragment")
     structure_md = read_repo_file(Path("docs/dev") / "settings-menu-structure.md")
     display_settings_md = read_repo_file(Path("docs/user") / "display-settings.md")
     registry = json.loads((repo_root / "docs/dev" / "settings-menu-registry.json").read_text(encoding="utf-8"))["settings"]
@@ -204,7 +204,7 @@ def test_postaa_settings_surface_exposes_all_modes():
     )
     assert_true('values\t\t"0;1;2;3;4"' in system_gui, "Prey System menu Post AA choice should expose all modes")
     for language in ("english", "french", "italian", "spanish"):
-        lang_file = read_repo_file(Path("content") / "basepr" / "pak0" / "strings" / f"{language}_openprey.lang")
+        lang_file = read_repo_file(Path("content") / "baseod3" / "pak0" / "strings" / f"{language}_opend3.lang")
         line = next((candidate for candidate in lang_file.splitlines() if '"#str_122024"' in candidate), "")
         assert_true(line.count(";") == 4, f"{language} Post AA choices should list five labels")
 
@@ -217,8 +217,8 @@ def test_postaa_settings_surface_exposes_all_modes():
 
 
 def test_postaa_smaa_quality_presets_are_explicit_and_logged():
-    edge_shader = read_repo_file(Path("content") / "basepr" / "pak0" / "glprogs" / "smaa_edge.fs")
-    weights_shader = read_repo_file(Path("content") / "basepr" / "pak0" / "glprogs" / "smaa_weights.fs")
+    edge_shader = read_repo_file(Path("content") / "baseod3" / "pak0" / "glprogs" / "smaa_edge.fs")
+    weights_shader = read_repo_file(Path("content") / "baseod3" / "pak0" / "glprogs" / "smaa_weights.fs")
     render_system = read_repo_file(Path("src") / "renderer" / "RenderSystem.cpp")
 
     assert_true("postProcessSMAAQuality.Set( 0.0f, 0.10f, 8.0f, 2.0f );" in render_system, "SMAA should retain a safe medium-quality default")

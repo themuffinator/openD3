@@ -9,9 +9,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 GAME_LIBS_ROOT = Path(
-    os.environ.get("OPENPREY_GAMELIBS_REPO")
+    os.environ.get("OPEND3_GAMELIBS_REPO")
     or os.environ.get("OPENQ4_GAMELIBS_REPO")
-    or ROOT.parent / "OpenPrey-game"
+    or ROOT.parent / "OpenD3-GameLibs"
 ).resolve()
 
 

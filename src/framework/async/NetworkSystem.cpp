@@ -81,8 +81,8 @@ void idNetworkSystem::ServerSendReliableMessageExcluding( int clientNum, const i
 	}
 }
 
-#if OPENPREY_ENABLE_MVD
-// OPENPREY-GATED(D9): MVD-only reliable-message routing is not part of the
+#if OPEND3_ENABLE_MVD
+// OPEND3-GATED(D9): MVD-only reliable-message routing is not part of the
 // Prey v7 idNetworkSystem interface.
 /*
 ==================
@@ -365,8 +365,8 @@ float idNetworkSystem::ClientGetIncomingPacketLoss( void ) {
 	return 0.0f;
 }
 
-#if OPENPREY_ENABLE_BOTS
-// OPENPREY-GATED(D9): bot allocation is outside the Prey v7 game contract.
+#if OPEND3_ENABLE_BOTS
+// OPEND3-GATED(D9): bot allocation is outside the Prey v7 game contract.
 /*
 ==================
 idNetworkSystem::AllocateClientSlotForBot

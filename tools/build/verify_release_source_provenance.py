@@ -131,14 +131,14 @@ def verify_layer_provenance(
         commit_key="projectGitCommit",
         dirty_key="projectGitDirty",
         expected_commit=expected_project_commit,
-        label="openPREY (layer stage)",
+        label="openD3 (layer stage)",
     )
     verify_manifest_commit(
         manifest,
         commit_key="gameLibsGitCommit",
         dirty_key="gameLibsGitDirty",
         expected_commit=expected_gamelibs_commit,
-        label="OpenPrey-game (layer stage)",
+        label="OpenD3-GameLibs (layer stage)",
     )
     layer = manifest.get("layer")
     if not isinstance(layer, dict):
@@ -166,11 +166,11 @@ def verify_release_source_provenance(
 ) -> None:
     # Canonical releases have one source commit and compile the Prey game
     # library (src/game, src/Prey, src/preyengine) in place. Keep the historical
-    # staged OpenPrey-game verifier for old evidence fixtures.
+    # staged OpenD3-GameLibs verifier for old evidence fixtures.
     if gamelibs_root is None and stage_manifest is None and expected_gamelibs_commit is None:
-        commit = require_full_git_sha(expected_project_commit or "", "expected openPREY commit")
-        project_root = require_repository(project_root, "openPREY repository")
-        verify_repository_commit(project_root, commit, "openPREY")
+        commit = require_full_git_sha(expected_project_commit or "", "expected openD3 commit")
+        project_root = require_repository(project_root, "openD3 repository")
+        verify_repository_commit(project_root, commit, "openD3")
         for relative in (
             "src/game/LICENSE",
             "src/Prey/LICENSE",
@@ -191,16 +191,16 @@ def verify_release_source_provenance(
     if any(arg is not None for arg in layer_args) and not all(arg is not None for arg in layer_args):
         raise RuntimeError("layer provenance needs the layer root, its stage manifest and the expected layer commit")
     expected_project_commit = require_full_git_sha(
-        expected_project_commit, "expected openPREY commit"
+        expected_project_commit, "expected openD3 commit"
     )
     expected_gamelibs_commit = require_full_git_sha(
-        expected_gamelibs_commit, "expected OpenPrey-game commit"
+        expected_gamelibs_commit, "expected OpenD3-GameLibs commit"
     )
-    project_root = require_repository(project_root, "openPREY repository")
-    gamelibs_root = require_repository(gamelibs_root, "OpenPrey-game repository")
+    project_root = require_repository(project_root, "openD3 repository")
+    gamelibs_root = require_repository(gamelibs_root, "OpenD3-GameLibs repository")
 
-    verify_repository_commit(project_root, expected_project_commit, "openPREY")
-    verify_repository_commit(gamelibs_root, expected_gamelibs_commit, "OpenPrey-game")
+    verify_repository_commit(project_root, expected_project_commit, "openD3")
+    verify_repository_commit(gamelibs_root, expected_gamelibs_commit, "OpenD3-GameLibs")
 
     # The companion staging tool (stage_gamelibs.py) was removed with the
     # in-tree import, so historical manifests are checked for their recorded
@@ -211,14 +211,14 @@ def verify_release_source_provenance(
         commit_key="projectGitCommit",
         dirty_key="projectGitDirty",
         expected_commit=expected_project_commit,
-        label="openPREY",
+        label="openD3",
     )
     verify_manifest_commit(
         manifest,
         commit_key="gameLibsGitCommit",
         dirty_key="gameLibsGitDirty",
         expected_commit=expected_gamelibs_commit,
-        label="OpenPrey-game",
+        label="OpenD3-GameLibs",
     )
 
     if layer_root is not None:
@@ -265,7 +265,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(
         "release source provenance verified: "
-        f"openPREY={args.expected_project_commit.lower()} "
+        f"openD3={args.expected_project_commit.lower()} "
         f"game sources={(args.expected_gamelibs_commit or args.expected_project_commit).lower()}"
         + (f" layer={args.expected_layer_commit.lower()}" if args.expected_layer_commit else "")
     )

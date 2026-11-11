@@ -653,7 +653,7 @@ void idSoundSystemLocal::Init()
 	cmdSystem->AddCommand( "listSounds", ListSounds_f, CMD_FL_SOUND, "lists all sounds" );
 	cmdSystem->AddCommand( "listPlayingSounds", ListPlayingSounds_f, CMD_FL_SOUND, "lists currently playing sounds" );
 	cmdSystem->AddCommand( "s_dialogueVoices", SoundDialogueVoices_f, CMD_FL_SOUND, "reports current game-channel dialogue routing and OpenAL gain without printing transcripts" );
-	// listSubtitles is openPREY's Prey subtitle table listing (registered below).
+	// listSubtitles is openD3's Prey subtitle table listing (registered below).
 	cmdSystem->AddCommand( "listActiveSubtitles", ListActiveSubtitles_f, CMD_FL_SOUND, "lists active subtitle identifiers and sample times without printing transcripts" );
 	cmdSystem->AddCommand( "s_soundDistances", SoundDistances_f, CMD_FL_SOUND,
 		"reports authored ranges, mixed distances and OpenAL spatial state", idCmdSystem::ArgCompletion_SoundName );

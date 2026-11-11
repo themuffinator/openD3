@@ -1,7 +1,7 @@
-// Copyright (C) 2026 openPREY contributors
+// Copyright (C) 2026 openD3 contributors
 // SPDX-License-Identifier: GPL-3.0-or-later
-#ifndef OPENPREY_AL_LOADING_MUSIC_H
-#define OPENPREY_AL_LOADING_MUSIC_H
+#ifndef OPEND3_AL_LOADING_MUSIC_H
+#define OPEND3_AL_LOADING_MUSIC_H
 
 // Map-load music (a mapDef's snd_loadmusic) plays while ExecuteMapChange blocks
 // the main thread. A world voice refills its queue once per main-thread frame,

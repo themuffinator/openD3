@@ -122,7 +122,7 @@ def validate_game_relative_include_paths() -> None:
     require(os_to_relative, "base == OSPath || c1 == '/' || c1 == '\\\\'", "qpath-at-byte-zero recognition")
     require(os_to_relative, "c2 == '\\0' || c2 == '/' || c2 == '\\\\'", "complete game-directory segment recognition")
 
-    # OpenPrey-game stages gameplay sources only; engine/idlib copies are
+    # OpenD3-GameLibs stages gameplay sources only; engine/idlib copies are
     # deliberately excluded, so include normalization has one canonical owner.
     context = "engine parser include normalization"
     normalize = function_body(engine_parser, "static void Parser_NormalizeIncludeBase(")
@@ -144,26 +144,26 @@ def validate_linux_build_path_casing() -> None:
     commit = read(".github/workflows/commit-validation.yml")
 
     require(root_meson, 'game_libs_repo_root = meson.project_source_root()', "canonical game source path")
-    reject(root_meson, "../OpenPrey-game", "retired companion source input")
-    reject(root_meson, 'root / ".." / "OpenPrey-game"', "retired companion source input")
+    reject(root_meson, "../OpenD3-GameLibs", "retired companion source input")
+    reject(root_meson, 'root / ".." / "OpenD3-GameLibs"', "retired companion source input")
     reject(root_meson, "../openQ4-game", "retired companion source input")
     reject(root_meson, 'root / ".." / "OpenQ4-game"', "default GameLibs repository path")
     reject(root_meson, "../OpenQ4-game", "GameLibs repository diagnostics")
 
-    require(root_meson, "assets/linux/openPREY-steamdeck.in", "Steam Deck launcher template input")
-    require(root_meson, "assets/linux/openprey-steamdeck.desktop.in", "Steam Deck desktop template input")
+    require(root_meson, "assets/linux/openD3-steamdeck.in", "Steam Deck launcher template input")
+    require(root_meson, "assets/linux/opend3-steamdeck.desktop.in", "Steam Deck desktop template input")
     reject(root_meson, "assets/linux/openQ4-steamdeck.in", "Steam Deck launcher template input")
     reject(root_meson, "assets/linux/openq4-steamdeck.desktop.in", "Steam Deck desktop template input")
-    require_exact_child("assets/linux", "openPREY-steamdeck.in", "Steam Deck launcher template")
-    require_exact_child("assets/linux", "openprey-steamdeck.desktop.in", "Steam Deck desktop template")
+    require_exact_child("assets/linux", "openD3-steamdeck.in", "Steam Deck launcher template")
+    require_exact_child("assets/linux", "opend3-steamdeck.desktop.in", "Steam Deck desktop template")
 
     for workflow, context in (
         (push, "push verification workflow"),
         (commit, "commit validation workflow"),
     ):
-        reject(workflow, "OPENPREY_GAMELIBS_REPO", context)
-        reject(workflow, "../OpenPrey-game", context)
-        reject(workflow, "OpenPrey-game.git", context)
+        reject(workflow, "OPEND3_GAMELIBS_REPO", context)
+        reject(workflow, "../OpenD3-GameLibs", context)
+        reject(workflow, "OpenD3-GameLibs.git", context)
         reject(workflow, "../openQ4-game", context)
         reject(workflow, "openQ4-game.git", context)
         reject(workflow, "../OpenQ4-game", context)
@@ -172,8 +172,8 @@ def validate_linux_build_path_casing() -> None:
 def validate_release_note() -> None:
     source = read("docs/dev/release-completion.md")
 
-    require(source, "Canonical companion game sources now stage directly from `OpenPrey-game`", "release completion notes")
-    require(source, "`basepr/game_<arch>`", "release completion notes")
+    require(source, "Canonical companion game sources now stage directly from `OpenD3-GameLibs`", "release completion notes")
+    require(source, "`baseod3/game_<arch>`", "release completion notes")
 
 
 def validate_validation_coverage() -> None:

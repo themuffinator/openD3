@@ -29,16 +29,16 @@ If you have questions concerning this license or the applicable additional terms
 #ifndef __NETWORKSYSTEM_H__
 #define __NETWORKSYSTEM_H__
 
-#ifndef OPENPREY_ENABLE_BOTS
-#define OPENPREY_ENABLE_BOTS 0
+#ifndef OPEND3_ENABLE_BOTS
+#define OPEND3_ENABLE_BOTS 0
 #endif
 
-#ifndef OPENPREY_ENABLE_MVD
-#define OPENPREY_ENABLE_MVD 0
+#ifndef OPEND3_ENABLE_MVD
+#define OPEND3_ENABLE_MVD 0
 #endif
 
-#ifndef OPENPREY_ENABLE_REPEATER
-#define OPENPREY_ENABLE_REPEATER 0
+#ifndef OPEND3_ENABLE_REPEATER
+#define OPEND3_ENABLE_REPEATER 0
 #endif
 
 
@@ -192,15 +192,15 @@ public:
 	void					SetLoadingText( const char *loadingText );
 	void					AddLoadingIcon( const char *icon );
 
-#if OPENPREY_ENABLE_MVD
-	// OPENPREY-GATED(D9): upstream MVD routing is outside game API v7.
+#if OPEND3_ENABLE_MVD
+	// OPEND3-GATED(D9): upstream MVD routing is outside game API v7.
 	void					ServerSendReliableMessageNoDemo( int clientNum, const idBitMsg &msg );
 	void					ServerSendReliableMessageExcludingNoDemo( int clientNum, const idBitMsg &msg );
 	void					ServerRecordInstanceReliableMessage( int instance, int excludeClient, const idBitMsg &msg );
 #endif
 
-#if OPENPREY_ENABLE_BOTS
-	// OPENPREY-GATED(D9): upstream bot entry points are outside game API v7.
+#if OPEND3_ENABLE_BOTS
+	// OPEND3-GATED(D9): upstream bot entry points are outside game API v7.
 	int					AllocateClientSlotForBot( const char *botName, int maxPlayersOnServer );
 	int					ServerSetBotUserCommand( int clientNum, int frameNum, const usercmd_t &cmd );
 	int					ServerSetBotUserName( int clientNum, const char *playerName );
@@ -233,8 +233,8 @@ public:
 
 	void			ClientSetServerInfo(const idDict& serverSI) { }
 
-#if OPENPREY_ENABLE_REPEATER
-	// OPENPREY-GATED(D9): repeater support is not exposed through game API v7.
+#if OPEND3_ENABLE_REPEATER
+	// OPEND3-GATED(D9): repeater support is not exposed through game API v7.
 	void			RepeaterSetInfo(const idDict& info) { }
 	const char* GetViewerGUID(int clientNum) { return 0; }
 	int				RepeaterGetClientNum(int clientId) { return -1; }

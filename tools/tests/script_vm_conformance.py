@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Check the 64-bit script VM against the 32-bit behaviour retail Prey scripts rely on.
 
-Retail Prey ran its script VM on 32-bit x86; openPREY widens the VM's scalar
+Retail Prey ran its script VM on 32-bit x86; openD3 widens the VM's scalar
 slots to pointer size. This runner loads a retail map with the development
-fixture content/basepr/dev/script/openprey_vm_conformance.script staged as that
+fixture content/baseod3/dev/script/opend3_vm_conformance.script staged as that
 map's loose map script inside an isolated fs_savepath, so the fixture compiles
 on top of the full retail program (prey_main.script and every map script). The
 fixture prints one VMTEST line per check; the runner fails on any FAIL line,
@@ -11,7 +11,7 @@ a script compile or runtime error, or a missing DONE line.
 
 Example:
   python tools/tests/script_vm_conformance.py
-  python tools/tests/script_vm_conformance.py --map game/feedingtowera --fs-game basepr
+  python tools/tests/script_vm_conformance.py --map game/feedingtowera --fs-game baseod3
 
 The engine always runs windowed (r_fullscreen 0). Writable data stays under
 .tmp/script-vm-conformance/<timestamp>/.
@@ -33,11 +33,11 @@ sys.path.insert(0, str(ROOT / "tools" / "validation"))
 
 from prey_map_load_condump_audit import default_executable, detect_basepath  # noqa: E402
 
-FIXTURE = ROOT / "content" / "basepr" / "dev" / "script" / "openprey_vm_conformance.script"
+FIXTURE = ROOT / "content" / "baseod3" / "dev" / "script" / "opend3_vm_conformance.script"
 RESULT_RE = re.compile(r"VMTEST (PASS|FAIL|DONE)\b(.*)")
 ERROR_RE = re.compile(
     r"(?i)(script error|error:.*\.script|compile error|exceeded|stack overflow|"
-    r"Entity not found for event|not supported on entity.*openprey|unknown event|ERROR:)"
+    r"Entity not found for event|not supported on entity.*opend3|unknown event|ERROR:)"
 )
 CONSOLE_CODE_RE = re.compile(r"\^[0-9A-Za-z]")
 
@@ -82,9 +82,9 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--basepath", default=None, help="retail Prey root (default: auto-detect)")
     parser.add_argument(
         "--fs-game",
-        default="basepr",
+        default="baseod3",
         help="game directory whose module runs the test; a mod directory next to the executable "
-        "can carry a freshly built game module while .install/basepr is in use",
+        "can carry a freshly built game module while .install/baseod3 is in use",
     )
     parser.add_argument("--timeout", type=float, default=240.0, help="seconds to wait for the DONE line")
     parser.add_argument("--run-root", type=Path, default=None)

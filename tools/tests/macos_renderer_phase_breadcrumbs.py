@@ -124,7 +124,7 @@ def validate_posix_signal_bridge() -> None:
         '#include "../../renderer/RendererStartupDiagnostics.h"',
         "static const char *Posix_RendererStartupPhaseName( void ) {",
         "return R_RendererStartupPhaseSignalName();",
-        'Posix_WriteSignalText( "openPREY: last renderer startup phase: " );',
+        'Posix_WriteSignalText( "openD3: last renderer startup phase: " );',
         "Posix_WriteSignalText( Posix_RendererStartupPhaseName() );",
     ):
         require(source, token, "POSIX fatal signal renderer startup phase bridge")
@@ -132,11 +132,11 @@ def validate_posix_signal_bridge() -> None:
     require_ordered(
         fatal_body,
         (
-            'Posix_WriteSignalText( "openPREY: fatal signal " );',
+            'Posix_WriteSignalText( "openD3: fatal signal " );',
             'Posix_WriteSignalText( "), exiting without unsafe engine shutdown\\n" );',
-            'Posix_WriteSignalText( "openPREY: last renderer startup phase: " );',
+            'Posix_WriteSignalText( "openD3: last renderer startup phase: " );',
             "Posix_RendererStartupPhaseName()",
-            'Posix_WriteSignalText( "openPREY: last game module phase: " );',
+            'Posix_WriteSignalText( "openD3: last game module phase: " );',
             "Com_GameModuleLoadPhaseSignalName()",
             "_exit( 128 + signum );",
         ),

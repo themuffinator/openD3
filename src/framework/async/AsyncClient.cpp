@@ -955,8 +955,8 @@ void idAsyncClient::AnswerRconVerify( bool success ) {
 	rconVerifyRefused = false;
 	memset( &rconVerifyAddress, 0, sizeof( rconVerifyAddress ) );
 	rconVerifyTime = 0;
-#if !defined( HUMANHEAD )
-	// OPENPREY-GATED(D9): Prey's v7 idGame has no rcon admin page callback.
+#if !defined( OPEND3 )
+	// OPEND3-GATED(D9): Prey's v7 idGame has no rcon admin page callback.
 	if ( game != NULL ) {
 		game->ProcessRconReturn( success );
 	}
@@ -1373,8 +1373,8 @@ void idAsyncClient::ProcessUnreliableServerMessage( const idBitMsg &msg ) {
 					frame.Init( batch + offset, length );
 					frame.SetSize( length );
 					frame.BeginReading();
-#if !defined( HUMANHEAD )
-					// OPENPREY-GATED(D9): Prey's v7 idGame has no voice recipients.
+#if !defined( OPEND3 )
+					// OPEND3-GATED(D9): Prey's v7 idGame has no voice recipients.
 					game->ClientReceiveVoice( frame );
 #endif
 					offset += length;
@@ -2133,8 +2133,8 @@ void idAsyncClient::ProcessPrintMessage( const netadr_t from, const idBitMsg &ms
 	// look up localized string. if the message is not an #str_ format, we'll just get it back unchanged
 	idStr::Copynz( string, common->GetLanguageDict()->GetString( raw ), sizeof( string ) );
 	common->Printf( "%s\n", string );
-#if !defined( HUMANHEAD )
-	// OPENPREY-GATED(D9): Prey's v7 idGame has no rcon admin page callback.
+#if !defined( OPEND3 )
+	// OPEND3-GATED(D9): Prey's v7 idGame has no rcon admin page callback.
 	if ( opcode == SERVER_PRINT_RCON && game != NULL ) {
 		game->ReceiveRemoteConsoleOutput( string );
 	}
@@ -2896,7 +2896,7 @@ void idAsyncClient::RunFrame( bool allowBlocking ) {
 		cvarSystem->ClearModifiedFlags( CVAR_USERINFO );
 	}
 
-#if !defined( HUMANHEAD )
+#if !defined( OPEND3 )
 	// Quake 4 services client work once per presentation frame, including
 	// reliable referee challenges and UI updates, even without a prediction tic.
 	// Prey's v7 idGame does its client work inside ClientPrediction.
@@ -2930,8 +2930,11 @@ void idAsyncClient::RunFrame( bool allowBlocking ) {
 			// duplicate usercmds for clients if no new ones are available
 			DuplicateUsercmds( snapshotGameFrame, snapshotGameTime );
 
+			// indicate the last prediction frame before a render
+			bool lastPredictFrame = ( snapshotGameFrame + 1 >= gameFrame && gameTimeResidual + clientPredictTime < AsyncClient_NextGameFrameMsec( gameFrame ) );
+
 			// run client prediction
-			gameReturn_t ret = game->ClientPrediction( clientNum, userCmds[ snapshotGameFrame & ( MAX_USERCMD_BACKUP - 1 ) ] );
+			gameReturn_t ret = game->ClientPrediction( clientNum, userCmds[ snapshotGameFrame & ( MAX_USERCMD_BACKUP - 1 ) ], lastPredictFrame );
 
 			idAsyncNetwork::ExecuteSessionCommand( ret.sessionCommand );
 
@@ -2939,7 +2942,7 @@ void idAsyncClient::RunFrame( bool allowBlocking ) {
 			snapshotGameTime = snapshotGameFrame * common->GetUserCmdMSec();
 		}
 	}
-#if !defined( HUMANHEAD )
+#if !defined( OPEND3 )
 	game->ClientEndFrame();
 #endif
 }

@@ -37,7 +37,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "../SoundVorbisStream.h"
 #include "../SoundMemoryBudget.h"
 #include "../SoundQueue.h"
-// openPREY: libvorbisfile recovers retail Prey Oggs that stb_vorbis stops on.
+// openD3: libvorbisfile recovers retail Prey Oggs that stb_vorbis stops on.
 #include <vorbis/vorbisfile.h>
 static_assert( SoundVorbisStream::ChunkFrames == SOUND_QUEUE_DECODE_FRAMES,
 	"voice queues fill a buffer in decoder-sized reads" );
@@ -71,7 +71,7 @@ static std::atomic<bool> openQ4_openALBufferAllocationWarningIssued( false );
 
 extern idCVar sys_lang;
 
-// openPREY: bounded resynchronisation past damaged Ogg pages, as libvorbisfile
+// openD3: bounded resynchronisation past damaged Ogg pages, as libvorbisfile
 // reports them (OV_HOLE). Retail Prey ships a few such files.
 static const int OGG_MAX_HOLE_RETRIES = 16;
 
@@ -2311,7 +2311,7 @@ bool idSoundSample_OpenAL::FinishOggDecode( const idStr& filename, const unsigne
 	unsigned int decodedFrames = decodedFramesIn;
 	if( decodedFrames < static_cast<unsigned int>( playLength ) && buffers.Num() > 0 && buffers[0].buffer != NULL )
 	{
-		// openPREY: give a damaged file to libvorbisfile before accepting it short.
+		// openD3: give a damaged file to libvorbisfile before accepting it short.
 		const unsigned int recovered = SoundSample_RecoverOggWithVorbisFile( filename.c_str(),
 			static_cast<short*>( buffers[0].buffer ), NumChannels(), SampleRate(), static_cast<unsigned int>( playLength ) );
 		if( recovered > decodedFrames )

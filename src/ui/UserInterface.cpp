@@ -1871,11 +1871,11 @@ void idUserInterfaceLocal::WriteToDemoFile( class idDemoFile *f ) {
 	f->WriteFloat( cursorY );
 }
 
-// openPREY: a stream marker and version lead the GUI state, so a stream from
+// openD3: a stream marker and version lead the GUI state, so a stream from
 // another build fails closed instead of misreading the window tree. Version 2
 // follows upstream's checked encoding (one-byte bools, bounded strings).
-static const int OPENPREY_GUI_SAVE_MAGIC = 'P' | ( 'G' << 8 ) | ( 'U' << 16 ) | ( 'I' << 24 );
-static const int OPENPREY_GUI_SAVE_VERSION = 2;
+static const int OPEND3_GUI_SAVE_MAGIC = 'P' | ( 'G' << 8 ) | ( 'U' << 16 ) | ( 'I' << 24 );
+static const int OPEND3_GUI_SAVE_VERSION = 2;
 
 static const int UI_MAX_SAVEGAME_STATE_ENTRIES = 16384;
 static const int UI_MAX_SAVEGAME_STRING_LENGTH = 64 * 1024;
@@ -1943,8 +1943,8 @@ bool idUserInterfaceLocal::WriteToSaveGame( idFile *savefile ) const {
 		return false;
 	}
 
-	if ( !UI_WriteSaveGameInt( savefile, OPENPREY_GUI_SAVE_MAGIC, "GUI save magic" ) ||
-		 !UI_WriteSaveGameInt( savefile, OPENPREY_GUI_SAVE_VERSION, "GUI save version" ) ) {
+	if ( !UI_WriteSaveGameInt( savefile, OPEND3_GUI_SAVE_MAGIC, "GUI save magic" ) ||
+		 !UI_WriteSaveGameInt( savefile, OPEND3_GUI_SAVE_VERSION, "GUI save version" ) ) {
 		return false;
 	}
 
@@ -2090,7 +2090,7 @@ bool idUserInterfaceLocal::ReadFromSaveGame( idFile *savefile ) {
 		!UI_ReadSaveGameInt( savefile, version, "GUI save version" ) ) {
 		return false;
 	}
-	if ( magic != OPENPREY_GUI_SAVE_MAGIC || version != OPENPREY_GUI_SAVE_VERSION ) {
+	if ( magic != OPEND3_GUI_SAVE_MAGIC || version != OPEND3_GUI_SAVE_VERSION ) {
 		common->Warning( "idUserInterfaceLocal::ReadFromSaveGame: unsupported GUI stream marker 0x%08x version %d",
 			magic, version );
 		return false;

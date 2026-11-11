@@ -246,7 +246,7 @@ usually the executable. It defaults to the current directory, but can be overrid
 with "+set fs_basepath c:\doom" on the command line. The base path cannot be modified
 at all after startup.
 
-The "home path" is the user-writable root path for openPREY data. It can be overridden
+The "home path" is the user-writable root path for openD3 data. It can be overridden
 with "+set fs_homepath c:\users\you\saved games\openq4" on the command line.
 
 The "save path" is the path to the directory where game files will be saved. It defaults
@@ -1389,16 +1389,16 @@ static void FS_BuildSteamInstallCandidates( idStrList &candidates ) {
 
 	candidates.Clear();
 
-	FS_AppendEnvPathList( candidates, "OPENPREY_PREY_PATH" );
-	FS_AppendEnvPathList( candidates, "OPENPREY_PREY_ROOT" );
-	FS_AppendEnvPathList( steamRoots, "OPENPREY_STEAM_ROOT" );
-	FS_AppendEnvPathList( steamRoots, "OPENPREY_STEAM_ROOTS" );
+	FS_AppendEnvPathList( candidates, "OPEND3_PREY_PATH" );
+	FS_AppendEnvPathList( candidates, "OPEND3_PREY_ROOT" );
+	FS_AppendEnvPathList( steamRoots, "OPEND3_STEAM_ROOT" );
+	FS_AppendEnvPathList( steamRoots, "OPEND3_STEAM_ROOTS" );
 	FS_AppendEnvPathList( steamRoots, "STEAM_COMPAT_CLIENT_INSTALL_PATH" );
-	FS_AppendEnvPathList( explicitLibraryRoots, "OPENPREY_STEAM_LIBRARY" );
-	FS_AppendEnvPathList( explicitLibraryRoots, "OPENPREY_STEAM_LIBRARIES" );
+	FS_AppendEnvPathList( explicitLibraryRoots, "OPEND3_STEAM_LIBRARY" );
+	FS_AppendEnvPathList( explicitLibraryRoots, "OPEND3_STEAM_LIBRARIES" );
 
 	// Temporary migration aliases. New documentation and diagnostics use only
-	// OPENPREY_* names.
+	// OPEND3_* names.
 	FS_AppendEnvPathList( candidates, "OPENQ4_PREY_PATH" );
 	FS_AppendEnvPathList( candidates, "OPENQ4_PREY_ROOT" );
 	FS_AppendEnvPathList( steamRoots, "OPENQ4_STEAM_ROOT" );
@@ -1517,8 +1517,8 @@ static void FS_BuildGogInstallCandidates( idStrList &candidates ) {
 #ifdef WIN32
 	FS_AppendGogInstallCandidatesFromRegistry( candidates );
 
-	FS_AppendEnvPathList( candidates, "OPENPREY_GOG_PATH" );
-	FS_AppendEnvPathList( candidates, "OPENPREY_GOG_ROOT" );
+	FS_AppendEnvPathList( candidates, "OPEND3_GOG_PATH" );
+	FS_AppendEnvPathList( candidates, "OPEND3_GOG_ROOT" );
 	FS_AppendEnvPathList( candidates, "OPENQ4_GOG_PATH" );
 	FS_AppendEnvPathList( candidates, "OPENQ4_GOG_ROOT" );
 
@@ -2050,7 +2050,7 @@ idCVar	idFileSystemLocal::fs_caseSensitiveOS( "fs_caseSensitiveOS", "1", CVAR_SY
 #endif
 idCVar	idFileSystemLocal::fs_searchAddons( "fs_searchAddons", "0", CVAR_SYSTEM | CVAR_BOOL, "search all addon pk4s ( disables addon functionality )" );
 idCVar	idFileSystemLocal::fs_validateOfficialPaks( "fs_validateOfficialPaks", "1", CVAR_SYSTEM | CVAR_INIT | CVAR_BOOL, "verify required official Prey media pk4 files on startup" );
-idCVar	idFileSystemLocal::fs_cacheVerifiedPaks( "fs_cacheVerifiedPaks", "1", CVAR_SYSTEM | CVAR_INIT | CVAR_BOOL, "skip re-hashing an openPREY runtime pack whose size, times, file id and zip directory are unchanged since it passed its checksum check; 0 hashes every pack at every startup" );
+idCVar	idFileSystemLocal::fs_cacheVerifiedPaks( "fs_cacheVerifiedPaks", "1", CVAR_SYSTEM | CVAR_INIT | CVAR_BOOL, "skip re-hashing an openD3 runtime pack whose size, times, file id and zip directory are unchanged since it passed its checksum check; 0 hashes every pack at every startup" );
 idCVar	idFileSystemLocal::fs_cacheLooseDirectories( "fs_cacheLooseDirectories", "1", CVAR_SYSTEM | CVAR_BOOL, "during a level load, remember which loose search-path directories do not exist, so a lookup skips them instead of failing an open in each (case-insensitive filesystems only)" );
 
 idFileSystemLocal	fileSystemLocal;
@@ -4706,7 +4706,7 @@ static bool FS_ModManifestKeyIsKnown( const idStr &key ) {
 		   !key.Icmp( "releaseDate" ) ||
 		   !key.Icmp( "website" ) ||
 		   !key.Icmp( "author" ) ||
-		   !key.Icmp( "requiredopenPREYVersion" ) ||
+		   !key.Icmp( "requiredopenD3Version" ) ||
 		   !key.Icmp( "requiredopenQ4Version" );
 }
 
@@ -4820,7 +4820,7 @@ FS_ParseModManifest
 */
 static bool FS_ParseModManifest( const char *jsonText, idModInfo &modInfo, idStr &errorOut ) {
 	idStr legacyRequiredVersion;
-	bool sawRequiredopenPREYVersion = false;
+	bool sawRequiredopenD3Version = false;
 
 	errorOut.Clear();
 	modInfo.displayName.Clear();
@@ -4889,9 +4889,9 @@ static bool FS_ParseModManifest( const char *jsonText, idModInfo &modInfo, idStr
 				modInfo.website = value;
 			} else if ( !key.Icmp( "author" ) ) {
 				modInfo.author = value;
-			} else if ( !key.Icmp( "requiredopenPREYVersion" ) ) {
+			} else if ( !key.Icmp( "requiredopenD3Version" ) ) {
 				modInfo.requiredopenQ4Version = value;
-				sawRequiredopenPREYVersion = true;
+				sawRequiredopenD3Version = true;
 			} else if ( !key.Icmp( "requiredopenQ4Version" ) ) {
 				legacyRequiredVersion = value;
 			}
@@ -4953,13 +4953,13 @@ static bool FS_ParseModManifest( const char *jsonText, idModInfo &modInfo, idStr
 		errorOut = "missing required field 'author'";
 		return false;
 	}
-	// openPREY is authoritative when both keys are present. The inherited key
+	// openD3 is authoritative when both keys are present. The inherited key
 	// remains readable for migration of existing third-party manifests.
-	if ( !sawRequiredopenPREYVersion && !legacyRequiredVersion.IsEmpty() ) {
+	if ( !sawRequiredopenD3Version && !legacyRequiredVersion.IsEmpty() ) {
 		modInfo.requiredopenQ4Version = legacyRequiredVersion;
 	}
 	if ( modInfo.requiredopenQ4Version.IsEmpty() ) {
-		errorOut = "missing required field 'requiredopenPREYVersion'";
+		errorOut = "missing required field 'requiredopenD3Version'";
 		return false;
 	}
 
@@ -5085,7 +5085,7 @@ modManifestStatus_t idFileSystemLocal::ReadModManifestFile( const char *manifest
 	if ( !FS_ParseopenQ4BaseVersion( modInfo.requiredopenQ4Version.c_str(), requiredVersion ) ) {
 		if ( reason != NULL ) {
 			*reason = va(
-				"%s has invalid required openPREY version '%s' (expected major.minor.patch)",
+				"%s has invalid required openD3 version '%s' (expected major.minor.patch)",
 				modInfo.displayName.c_str(),
 				modInfo.requiredopenQ4Version.c_str() );
 		}
@@ -5095,7 +5095,7 @@ modManifestStatus_t idFileSystemLocal::ReadModManifestFile( const char *manifest
 	openQ4BaseVersion_t engineVersion;
 	if ( !FS_ParseopenQ4BaseVersion( OPENQ4_VERSION_BASE, engineVersion ) ) {
 		if ( reason != NULL ) {
-			*reason = va( "this build has invalid openPREY version '%s'", OPENQ4_VERSION_BASE );
+			*reason = va( "this build has invalid openD3 version '%s'", OPENQ4_VERSION_BASE );
 		}
 		return MOD_MANIFEST_INVALID;
 	}
@@ -5103,7 +5103,7 @@ modManifestStatus_t idFileSystemLocal::ReadModManifestFile( const char *manifest
 	if ( FS_CompareopenQ4BaseVersions( engineVersion, requiredVersion ) < 0 ) {
 		if ( reason != NULL ) {
 			*reason = va(
-				"%s requires openPREY %s or newer but this build is %s",
+				"%s requires openD3 %s or newer but this build is %s",
 				modInfo.displayName.c_str(),
 				modInfo.requiredopenQ4Version.c_str(),
 				OPENQ4_VERSION_BASE );
@@ -6848,8 +6848,8 @@ void idFileSystemLocal::Startup( void ) {
 		if ( !idStr::Icmp( fs_game.GetString(), OPENQ4_GAMEDIR ) ) {
 			PrintContentSearchDiagnostics();
 			common->FatalError(
-				"openPREY runtime directory '%s' is missing a compatible mod.json.\n\n%s\n"
-				"Rebuild or reinstall openPREY so '<openPREY package root>/%s/mod.json' is present and matches this engine version. Do not replace '%s' with retail Prey assets.",
+				"openD3 runtime directory '%s' is missing a compatible mod.json.\n\n%s\n"
+				"Rebuild or reinstall openD3 so '<openD3 package root>/%s/mod.json' is present and matches this engine version. Do not replace '%s' with retail Prey assets.",
 				fs_game.GetString(), invalidReason.c_str(), OPENQ4_GAMEDIR, OPENQ4_GAMEDIR );
 		}
 
@@ -6903,14 +6903,14 @@ void idFileSystemLocal::Startup( void ) {
 		if ( !onlyClientPacks ) {
 			idStr expectedPacks;
 			for ( int i = 0; i < openQ4PackTableCount; i++ ) {
-				expectedPacks += va( "%s'<openPREY package root>/%s/%s'", i ? ", " : "", OPENQ4_GAMEDIR, openQ4PackTable[ i ].name );
+				expectedPacks += va( "%s'<openD3 package root>/%s/%s'", i ? ", " : "", OPENQ4_GAMEDIR, openQ4PackTable[ i ].name );
 			}
 			common->FatalError(
-				"openPREY runtime content packs in '%s' are missing or modified.\n\n%s\n"
-				"Rebuild or reinstall openPREY %s so %s match this engine; packages are at %s. Retail Prey PK4s belong in '%s', not '%s'.",
+				"openD3 runtime content packs in '%s' are missing or modified.\n\n%s\n"
+				"Rebuild or reinstall openD3 %s so %s match this engine; packages are at %s. Retail Prey PK4s belong in '%s', not '%s'.",
 				OPENQ4_GAMEDIR, openQ4PakErrors.c_str(), PROJECT_VERSION, expectedPacks.c_str(), PROJECT_RELEASES_URL, BASE_GAMEDIR, OPENQ4_GAMEDIR );
 		}
-		common->Printf( "openPREY client content packs are missing or modified:\n%s", openQ4PakErrors.c_str() );
+		common->Printf( "openD3 client content packs are missing or modified:\n%s", openQ4PakErrors.c_str() );
 		if ( fs_openQ4PackProblemsMayRaise ) {
 			FS_RaiseDeferredContentPackFailure();
 		}
@@ -6923,7 +6923,7 @@ void idFileSystemLocal::Startup( void ) {
 			common->FatalError(
 				"Retail Prey media pk4 files must be installed in '%s', not '%s'.\n\n%s\n"
 				"Move the listed files into '<Prey install root>/%s', or remove them from '%s' and launch with +set fs_basepath pointing at a Prey install root that contains '%s'. "
-				"The '%s' directory is reserved for openPREY runtime files such as pak0.pk4, pak1.pk4, mod.json, and game modules.",
+				"The '%s' directory is reserved for openD3 runtime files such as pak0.pk4, pak1.pk4, mod.json, and game modules.",
 				BASE_GAMEDIR, OPENQ4_GAMEDIR, misplacedErrors.c_str(), BASE_GAMEDIR, OPENQ4_GAMEDIR, BASE_GAMEDIR, OPENQ4_GAMEDIR );
 		}
 
@@ -6932,8 +6932,8 @@ void idFileSystemLocal::Startup( void ) {
 			PrintContentSearchDiagnostics();
 			common->FatalError(
 				"Required official Prey media pk4 files are missing from '%s' or modified.\n\n%s\n"
-				"openPREY reads retail Prey assets from '<Prey install root>/%s'. Keep either pak000.pk4 through pak004.pk4, or pak_data.pk4, pak_sound.pk4, pak_en_v.pk4, and pak_en_t.pk4 in that folder; alternatively launch with +set fs_basepath pointing at the install root that contains it. "
-				"Do not put retail pk4 files in '%s'; that directory is reserved for openPREY runtime files.",
+				"openD3 reads retail Prey assets from '<Prey install root>/%s'. Keep either pak000.pk4 through pak004.pk4, or pak_data.pk4, pak_sound.pk4, pak_en_v.pk4, and pak_en_t.pk4 in that folder; alternatively launch with +set fs_basepath pointing at the install root that contains it. "
+				"Do not put retail pk4 files in '%s'; that directory is reserved for openD3 runtime files.",
 				BASE_GAMEDIR, validationErrors.c_str(), BASE_GAMEDIR, OPENQ4_GAMEDIR );
 		}
 
@@ -7536,7 +7536,7 @@ void idFileSystemLocal::Init( void ) {
 	// 2) current working directory
 	// 3) Windows registry/App Paths/uninstall entries for CD-era installs
 	// 4) known legacy install directories
-	// 5) Steam install paths, including explicit OPENPREY_* overrides
+	// 5) Steam install paths, including explicit OPEND3_* overrides
 	// 6) GOG install paths
 	if ( fs_basepath.GetString()[0] ) {
 		if ( !FS_HasGameFilesAtBasePath( fs_basepath.GetString() ) ) {
@@ -7615,8 +7615,8 @@ void idFileSystemLocal::Init( void ) {
 	// Dedicated servers can run with no outside files at all
 	if ( ReadFile( "default.cfg", NULL, NULL ) <= 0 ) {
 		common->FatalError(
-			"openPREY startup config 'default.cfg' could not be loaded.\n\n"
-			"Rebuild or reinstall openPREY so '%s/pak0.pk4' contains the runtime config files, and keep retail Prey media PK4s in '%s'.",
+			"openD3 startup config 'default.cfg' could not be loaded.\n\n"
+			"Rebuild or reinstall openD3 so '%s/pak0.pk4' contains the runtime config files, and keep retail Prey media PK4s in '%s'.",
 			OPENQ4_GAMEDIR, BASE_GAMEDIR );
 	}
 }
@@ -7647,8 +7647,8 @@ void idFileSystemLocal::Restart( void ) {
 	// graphics screen when the font fails to load
 	if ( ReadFile( "default.cfg", NULL, NULL ) <= 0 ) {
 		common->FatalError(
-			"openPREY startup config 'default.cfg' could not be loaded after filesystem restart.\n\n"
-			"Rebuild or reinstall openPREY so '%s/pak0.pk4' contains the runtime config files, and keep retail Prey media PK4s in '%s'.",
+			"openD3 startup config 'default.cfg' could not be loaded after filesystem restart.\n\n"
+			"Rebuild or reinstall openD3 so '%s/pak0.pk4' contains the runtime config files, and keep retail Prey media PK4s in '%s'.",
 			OPENQ4_GAMEDIR, BASE_GAMEDIR );
 	}
 }
@@ -9162,11 +9162,11 @@ void idFileSystemLocal::FindDLL( const char *name, char _dllPath[ MAX_OSPATH ], 
 	idStr exeDir = Sys_EXEPath();
 	exeDir.StripFilename();
 
-	// Only load openPREY game modules staged next to the executable or from the
+	// Only load openD3 game modules staged next to the executable or from the
 	// platform's trusted module root (self-contained macOS apps use the flat
 	// Contents/Frameworks code directory; legacy packages use their adjacent
 	// package root). Mods may provide their own module, but content-only mods
-	// inherit basepr modules. Do not load executable code from PK4s,
+	// inherit baseod3 modules. Do not load executable code from PK4s,
 	// fs_savepath, pure-server code paks, or loose files outside the
 	// executable/package root.
 	idStr moduleSearchRoots[3];

@@ -34,7 +34,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "NativeInputDispatch.h"
 #include "Session_local.h"
-#include "PreyGameCompat.h"
+#include "Doom3GameCompat.h"
 #include "NativeInputPublications.h"
 #include "../ui/Rectangle.h"
 #include "ArenaCampaign.h"
@@ -99,7 +99,7 @@ idCVar ui_retainedMultiplayer( "ui_retainedMultiplayer", "0", CVAR_GUI | CVAR_BO
 // to (see idSessionLocal::FindRetainedGui). While it is 0 no session route
 // creates a retained view and the stock GUIs present every screen. Archived,
 // so an explicit player preference persists across launches.
-// openPREY: the retained screens are authored for Quake 4 (content/baseoq4 in openQ4);
+// openD3: the retained screens are authored for Quake 4 (content/baseoq4 in openQ4);
 // Prey presents its retail GUIs, so the stock interface is the default.
 idCVar ui_retained( "ui_retained", "0", CVAR_GUI | CVAR_BOOL | CVAR_ARCHIVE, "use the retained interface by default; 0 selects the stock interface" );
 idCVar ui_hudScale( "ui_hudScale", "1", CVAR_GUI | CVAR_FLOAT | CVAR_ARCHIVE, "retained status bar scale, independent of menus", .5f, 2.0f );
@@ -3408,7 +3408,7 @@ static void Session_MenuBuildSaveGameSearchDirs( idStrList &gameDirs, const char
 	gameDirs.Clear();
 	Session_MenuAddUniqueSaveGameSearchDir( gameDirs, preferredGameDir );
 	Session_MenuAddUniqueSaveGameSearchDir( gameDirs, cvarSystem->GetCVarString( "fs_game" ) );
-	Session_MenuAddUniqueSaveGameSearchDir( gameDirs, OPENPREY_GAMEDIR );
+	Session_MenuAddUniqueSaveGameSearchDir( gameDirs, OPEND3_GAMEDIR );
 	Session_MenuAddUniqueSaveGameSearchDir( gameDirs, BASE_GAMEDIR );
 }
 
@@ -3650,13 +3650,13 @@ static bool Session_MenuSkipSaveGameDict( idFile *file, const char *fieldName, c
 }
 
 static bool Session_MenuIsSupportedSaveGameName( const idStr &gameName ) {
-	return gameName.Icmp( SAVEGAME_GAME_NAME_PREY ) == 0 ||
+	return gameName.Icmp( SAVEGAME_GAME_NAME_DOOM3 ) == 0 ||
 		gameName.Icmp( SAVEGAME_GAME_NAME_RETAIL ) == 0 ||
 		gameName.Icmp( SAVEGAME_GAME_NAME_LEGACY_OPENQ4 ) == 0;
 }
 
 static bool Session_MenuSaveGameHeaderUsesEntityFilter( const idStr &gameName ) {
-	return gameName.Icmp( SAVEGAME_GAME_NAME_PREY ) == 0 ||
+	return gameName.Icmp( SAVEGAME_GAME_NAME_DOOM3 ) == 0 ||
 		gameName.Icmp( SAVEGAME_GAME_NAME_RETAIL ) == 0;
 }
 
@@ -3677,7 +3677,7 @@ static bool Session_MenuReadSaveGameHeader( const idStr &slotName, idDict *playe
 	}
 
 	idStr savePath = va( "savegames/%s.save", slotName.c_str() );
-	// openPREY lists saves from several game directories; read each from its own.
+	// openD3 lists saves from several game directories; read each from its own.
 	idStr game = ( gameDir != NULL && gameDir[0] != '\0' ) ? idStr( gameDir ) : idStr( cvarSystem->GetCVarString( "fs_game" ) );
 	idFile *file = fileSystem->OpenFileRead( savePath.c_str(), true, game.Length() ? game.c_str() : NULL );
 	if ( file == NULL ) {
@@ -5012,7 +5012,7 @@ void idSessionLocal::HandleMainMenuCommands( const char *menuCommand ) {
 		}
 		if ( !idStr::Icmp( cmd, "populateBanList" ) ) {
 			if ( game != NULL && guiActive != NULL ) {
-				PreyGame_PopulateBanList( guiActive );
+				Doom3Game_PopulateBanList( guiActive );
 			}
 			continue;
 		}
@@ -5021,9 +5021,9 @@ void idSessionLocal::HandleMainMenuCommands( const char *menuCommand ) {
 			if ( selected >= 0 && game != NULL ) {
 				idStr name, guid;
 				if ( Session_BanListRow( guiActive->State().GetString( va( "sa_banList_item_%d", selected ) ), name, guid ) ) {
-					PreyGame_RemoveGuidFromBanList( guid.c_str() );
+					Doom3Game_RemoveGuidFromBanList( guid.c_str() );
 				}
-				PreyGame_PopulateBanList( guiActive );
+				Doom3Game_PopulateBanList( guiActive );
 			}
 			continue;
 		}
@@ -7586,7 +7586,7 @@ idUserInterface *idSessionLocal::RetainedHomeDocument( idUserInterface *&home, c
 bool idSessionLocal::RetainedPauseIsStrogg() {
 	if ( retainedPauseStrogg < 0 && game != NULL && mapSpawned && guiMainMenu != NULL ) {
 		guiMainMenu->SetStateBool( "pause_strogg", false );
-		PreyGame_HandleMainMenuCommands( "retainedPauseFamily", guiMainMenu );
+		Doom3Game_HandleMainMenuCommands( "retainedPauseFamily", guiMainMenu );
 		retainedPauseStrogg = guiMainMenu->State().GetBool( "pause_strogg" ) ? 1 : 0;
 #ifndef ID_DEDICATED
 		if ( retainedPauseStrogg > 0 ) {
@@ -8687,7 +8687,7 @@ saved game takes the list's top row, selected.
 bool idSessionLocal::RetainedSaveGame( idUserInterface *gui, const char *name ) {
 #ifndef ID_DEDICATED
 	const char *refusal = NULL;
-	if ( !mapSpawned || IsMultiplayer() || PreyGame_InCinematic() ) {
+	if ( !mapSpawned || IsMultiplayer() || Doom3Game_InCinematic() ) {
 		refusal = "#str_231110";
 	} else if ( game->GetPersistentPlayerInfo( 0 ).GetInt( "health" ) <= 0 ) {
 		refusal = "#str_231111";
@@ -9525,7 +9525,7 @@ void idSessionLocal::PublishRetainedCreateBans( idUserInterface *gui ) {
 	retainedCreateBanGuids.Clear();
 	retainedCreateBanSelected = -1;
 	if ( game != NULL && guiMainMenu != NULL ) {
-		PreyGame_PopulateBanList( guiMainMenu );
+		Doom3Game_PopulateBanList( guiMainMenu );
 		for ( int row = 0; row < RETAINED_CREATE_BAN_ROWS; ++row ) {
 			const idKeyValue *item = guiMainMenu->State().FindKey( va( "sa_banList_item_%d", row ) );
 			idStr name, guid;
@@ -9614,7 +9614,7 @@ void idSessionLocal::HandleRetainedCreateServerRequest( idUserInterface *gui, co
 		// The chosen row's GUID as the session published it, never the page's.
 		if ( retainedCreateBanSelected >= 0 && retainedCreateBanSelected < retainedCreateBanGuids.Num() && game != NULL ) {
 			HandleMainMenuCommands( "play main_menu_selection" );
-			PreyGame_RemoveGuidFromBanList( retainedCreateBanGuids[ retainedCreateBanSelected ].c_str() );
+			Doom3Game_RemoveGuidFromBanList( retainedCreateBanGuids[ retainedCreateBanSelected ].c_str() );
 			PublishRetainedCreateBans( gui );
 		}
 		return;
@@ -11230,7 +11230,7 @@ void idSessionLocal::UpdateRetainedMultiplayer() {
 		bool welcome = false;
 		if ( !summary && !arena ) {
 			guiActive->SetStateBool( "mp.welcome", false );
-			PreyGame_HandleMainMenuCommands( "retainedMultiplayerVariant", guiActive );
+			Doom3Game_HandleMainMenuCommands( "retainedMultiplayerVariant", guiActive );
 			welcome = guiActive->State().GetBool( "mp.welcome" );
 		}
 		const char *path = arena ? RETAINED_ARENA_PAUSE_GUI : summary ? RETAINED_MP_SUMMARY_GUI :
@@ -11265,7 +11265,7 @@ void idSessionLocal::UpdateRetainedMultiplayer() {
 		}
 		card->SetStateInt( "mp.protocol", 0 );
 		card->SetStateBool( "mp.cover_allowed", false );
-		PreyGame_HandleMainMenuCommands( "retainedMultiplayerCover", card );
+		Doom3Game_HandleMainMenuCommands( "retainedMultiplayerCover", card );
 		if ( card->State().GetInt( "mp.protocol" ) != RETAINED_MP_PROTOCOL ) {
 			common->DPrintf( "retained UI: the game module does not answer the multiplayer card's protocol %d; the stock menu presents\n",
 				RETAINED_MP_PROTOCOL );
@@ -11308,7 +11308,7 @@ void idSessionLocal::UpdateRetainedMultiplayer() {
 		return;
 	}
 	// The game writes only what changed, under a new revision.
-	PreyGame_HandleMainMenuCommands( "retainedMultiplayerState", guiRetainedMultiplayer );
+	Doom3Game_HandleMainMenuCommands( "retainedMultiplayerState", guiRetainedMultiplayer );
 	const int revision = guiRetainedMultiplayer->State().GetInt( "mp.revision" );
 	if ( revision != retainedMultiplayerRevision ) {
 		retainedMultiplayerRevision = revision;
@@ -11339,7 +11339,7 @@ void idSessionLocal::RetireRetainedMultiplayer( bool release ) {
 	retainedSummaryTyping = false;
 	retainedMultiplayerSummary = false;
 	if ( game != NULL ) {
-		PreyGame_HandleMainMenuCommands( "retainedMultiplayerUncover", card );
+		Doom3Game_HandleMainMenuCommands( "retainedMultiplayerUncover", card );
 	}
 	card->Activate( false, now );
 	if ( release && mapSpawned && guiActive == NULL ) {

@@ -2291,7 +2291,7 @@ bool idRenderWorldLocal::InitFromMap( const char *name ) {
 		name, md5rProcFilename, &md5rProcTimeStamp, &md5rProcSourceFilename );
 	if ( hasMD5RProcCompanion ) {
 		common->DPrintf(
-			"Found MD5RProc companion '%s' for map '%s'; openPREY will prefer it before the classic proc world '%s'.\n",
+			"Found MD5RProc companion '%s' for map '%s'; openD3 will prefer it before the classic proc world '%s'.\n",
 			md5rProcFilename.c_str(),
 			name,
 			filename.c_str() );

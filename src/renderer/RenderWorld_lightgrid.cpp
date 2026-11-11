@@ -3683,7 +3683,7 @@ bool R_BakeCurrentLightGrids( const lightGridBakeOptions_t &options, const char 
 		options.bounces,
 		static_cast<unsigned int>( fileStats.settingsHash ) );
 	if ( options.bounces > 1 ) {
-		common->Printf( "bakeLightGrids: bounce 2+ reuse the previous openPREY bake through the runtime light-grid pass.\n" );
+		common->Printf( "bakeLightGrids: bounce 2+ reuse the previous openD3 bake through the runtime light-grid pass.\n" );
 	}
 
 	const bool oldUseLightGrid = r_useLightGrid.GetBool();

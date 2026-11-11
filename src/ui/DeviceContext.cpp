@@ -117,19 +117,19 @@ static int openQ4_TextEscapeRepeatCount( const char *escape ) {
 	return repeats;
 }
 
-static float openPREY_RetailSmoothStep( float t ) {
+static float openD3_RetailSmoothStep( float t ) {
 	t = idMath::ClampFloat( 0.0f, 1.0f, t );
 	return t * t * ( 3.0f - 2.0f * t );
 }
 
-static float openPREY_RetailBezier1D( float a, float b, float c, float d, float t ) {
+static float openD3_RetailBezier1D( float a, float b, float c, float d, float t ) {
 	const float invT = 1.0f - t;
 	const float invT2 = invT * invT;
 	const float t2 = t * t;
 	return invT2 * invT * a + 3.0f * invT2 * t * b + 3.0f * invT * t2 * c + t2 * t * d;
 }
 
-static unsigned int openPREY_RetailHash( unsigned int value ) {
+static unsigned int openD3_RetailHash( unsigned int value ) {
 	value ^= value >> 16;
 	value *= 0x7feb352du;
 	value ^= value >> 15;
@@ -138,19 +138,19 @@ static unsigned int openPREY_RetailHash( unsigned int value ) {
 	return value;
 }
 
-static float openPREY_RetailHashFloat( unsigned int seed ) {
-	return static_cast<float>( openPREY_RetailHash( seed ) & 0x00ffffffu ) * ( 1.0f / 16777215.0f );
+static float openD3_RetailHashFloat( unsigned int seed ) {
+	return static_cast<float>( openD3_RetailHash( seed ) & 0x00ffffffu ) * ( 1.0f / 16777215.0f );
 }
 
-static float openPREY_RetailHashSigned( unsigned int seed ) {
-	return openPREY_RetailHashFloat( seed ) * 2.0f - 1.0f;
+static float openD3_RetailHashSigned( unsigned int seed ) {
+	return openD3_RetailHashFloat( seed ) * 2.0f - 1.0f;
 }
 
 // Count the things that actually occupy a glyph slot in the current text
 // dialect. Colour/brightness escapes do not count; embedded icons and their
 // repeat escapes do. This keeps the scatter distribution stable when retail
 // strings mix ordinary glyphs with variable-length escape sequences.
-static int openPREY_CountRetailGlyphs( const unsigned char *text, int len ) {
+static int openD3_CountRetailGlyphs( const unsigned char *text, int len ) {
 	int glyphs = 0;
 	int consumed = 0;
 	while ( text != NULL && *text != '\0' && consumed < len ) {
@@ -194,43 +194,43 @@ struct openPreyRetailSplineGlyph_t {
 	bool drawGhost;
 };
 
-static openPreyRetailSplineGlyph_t openPREY_RetailSplineGlyph( float targetX, float targetY,
+static openPreyRetailSplineGlyph_t openD3_RetailSplineGlyph( float targetX, float targetY,
 		float lineStartX, float lineWidth, float lineHeight, int glyphIndex, int glyphCount,
 		unsigned int glyphCode, float effectProgress, int splinePoints ) {
 	openPreyRetailSplineGlyph_t result = {};
 	const float normalizedIndex = glyphCount > 1 ? static_cast<float>( glyphIndex ) / static_cast<float>( glyphCount - 1 ) : 0.5f;
 	const unsigned int seedBase = static_cast<unsigned int>( glyphIndex * 131 ) + glyphCode * 911u + static_cast<unsigned int>( splinePoints ) * 37u;
-	const float startDelay = 0.03f + 0.09f * openPREY_RetailHashFloat( seedBase + 0x11u );
+	const float startDelay = 0.03f + 0.09f * openD3_RetailHashFloat( seedBase + 0x11u );
 	const float progressDenom = Max( 0.001f, 1.0f - startDelay );
-	const float localProgress = openPREY_RetailSmoothStep( idMath::ClampFloat( 0.0f, 1.0f, ( effectProgress - startDelay ) / progressDenom ) );
+	const float localProgress = openD3_RetailSmoothStep( idMath::ClampFloat( 0.0f, 1.0f, ( effectProgress - startDelay ) / progressDenom ) );
 	const float scatter = 1.0f - localProgress;
 	const float pointScale = 1.0f + 0.08f * static_cast<float>( splinePoints - 3 );
-	const float cloudCenterX = lineStartX + lineWidth * ( 0.66f + 0.08f * openPREY_RetailHashFloat( seedBase + 0x23u ) );
-	const float cloudCenterY = targetY - lineHeight * ( 0.20f - 0.55f * openPREY_RetailHashSigned( seedBase + 0x29u ) );
+	const float cloudCenterX = lineStartX + lineWidth * ( 0.66f + 0.08f * openD3_RetailHashFloat( seedBase + 0x23u ) );
+	const float cloudCenterY = targetY - lineHeight * ( 0.20f - 0.55f * openD3_RetailHashSigned( seedBase + 0x29u ) );
 	const float spreadX = idMath::ClampFloat( lineHeight * 1.6f, lineWidth + lineHeight * 4.0f,
 		lineWidth * ( 0.30f + 0.02f * static_cast<float>( splinePoints ) ) + lineHeight * 2.25f );
 	const float spreadY = idMath::ClampFloat( lineHeight * 0.85f, lineHeight * 5.0f,
 		lineHeight * ( 1.45f + 0.10f * static_cast<float>( splinePoints ) ) );
 	const float lateralBias = ( 0.5f - normalizedIndex ) * lineWidth * 0.28f;
-	const float startX = cloudCenterX + lateralBias + openPREY_RetailHashSigned( seedBase + 0x31u ) * spreadX;
-	const float startY = cloudCenterY + openPREY_RetailHashSigned( seedBase + 0x37u ) * spreadY;
-	const float control1X = cloudCenterX + openPREY_RetailHashSigned( seedBase + 0x41u ) * spreadX * ( 0.55f + 0.08f * pointScale );
-	const float control1Y = cloudCenterY + openPREY_RetailHashSigned( seedBase + 0x47u ) * spreadY * ( 0.55f + 0.05f * pointScale );
-	const float control2X = targetX + lateralBias * scatter * 0.35f + openPREY_RetailHashSigned( seedBase + 0x53u ) * spreadX * scatter * 0.18f;
-	const float control2Y = targetY + openPREY_RetailHashSigned( seedBase + 0x59u ) * spreadY * scatter * 0.16f;
+	const float startX = cloudCenterX + lateralBias + openD3_RetailHashSigned( seedBase + 0x31u ) * spreadX;
+	const float startY = cloudCenterY + openD3_RetailHashSigned( seedBase + 0x37u ) * spreadY;
+	const float control1X = cloudCenterX + openD3_RetailHashSigned( seedBase + 0x41u ) * spreadX * ( 0.55f + 0.08f * pointScale );
+	const float control1Y = cloudCenterY + openD3_RetailHashSigned( seedBase + 0x47u ) * spreadY * ( 0.55f + 0.05f * pointScale );
+	const float control2X = targetX + lateralBias * scatter * 0.35f + openD3_RetailHashSigned( seedBase + 0x53u ) * spreadX * scatter * 0.18f;
+	const float control2Y = targetY + openD3_RetailHashSigned( seedBase + 0x59u ) * spreadY * scatter * 0.16f;
 
-	result.drawX = openPREY_RetailBezier1D( startX, control1X, control2X, targetX, localProgress );
-	result.drawY = openPREY_RetailBezier1D( startY, control1Y, control2Y, targetY, localProgress );
+	result.drawX = openD3_RetailBezier1D( startX, control1X, control2X, targetX, localProgress );
+	result.drawY = openD3_RetailBezier1D( startY, control1Y, control2Y, targetY, localProgress );
 	result.glyphAlpha = idMath::ClampFloat( 0.0f, 1.0f, 0.18f + 0.82f * idMath::Sqrt( localProgress ) );
 	result.drawGhost = scatter > 0.12f;
 	result.ghostAlpha = 0.32f * scatter;
 	if ( result.drawGhost ) {
 		const float ghostProgress = localProgress * 0.55f;
-		result.ghostX = openPREY_RetailBezier1D( startX,
-			cloudCenterX + openPREY_RetailHashSigned( seedBase + 0x5fu ) * spreadX * 0.8f,
+		result.ghostX = openD3_RetailBezier1D( startX,
+			cloudCenterX + openD3_RetailHashSigned( seedBase + 0x5fu ) * spreadX * 0.8f,
 			control2X, result.drawX, ghostProgress );
-		result.ghostY = openPREY_RetailBezier1D( startY,
-			cloudCenterY + openPREY_RetailHashSigned( seedBase + 0x61u ) * spreadY * 0.8f,
+		result.ghostY = openD3_RetailBezier1D( startY,
+			cloudCenterY + openD3_RetailHashSigned( seedBase + 0x61u ) * spreadY * 0.8f,
 			control2Y, result.drawY, ghostProgress );
 	}
 	return result;
@@ -770,7 +770,7 @@ static bool openQ4_HasRenderableFont( const q4ScaledFont_t &scaledFont ) {
 	return scaledFont.font != NULL && scaledFont.renderScale != 0.0f;
 }
 
-static const idMaterial *openPREY_ResolveGlyphMaterial( const fontInfo_t *font, const glyphInfo_t *glyph ) {
+static const idMaterial *openD3_ResolveGlyphMaterial( const fontInfo_t *font, const glyphInfo_t *glyph ) {
 	if ( glyph != NULL && glyph->material != NULL ) {
 		return glyph->material;
 	}
@@ -1115,7 +1115,7 @@ struct openPreyRetailFontPageAudit_t {
 	bool imagesPresent;
 };
 
-static openPreyRetailFontPageAudit_t openPREY_AuditRetailFontPages( const fontInfo_t &fontSlot,
+static openPreyRetailFontPageAudit_t openD3_AuditRetailFontPages( const fontInfo_t &fontSlot,
 		const char *expectedMaterialPrefix ) {
 	openPreyRetailFontPageAudit_t result = {};
 	result.namesMatch = true;
@@ -2620,7 +2620,7 @@ void idDeviceContext::PaintGlyph( float x, float y, float scale, const fontInfo_
 	if ( glyph->material != NULL ) {
 		hShader = glyph->material;
 	} else if ( hShader == NULL ) {
-		hShader = openPREY_ResolveGlyphMaterial( font, glyph );
+		hShader = openD3_ResolveGlyphMaterial( font, glyph );
 	}
 	if ( hShader == NULL ) {
 		return;
@@ -2768,7 +2768,7 @@ int idDeviceContext::DrawText(float x, float y, float scale, idVec4 color, const
 	const float retailLineStartX = x;
 	const float retailLineWidth = retailSpline ? static_cast<float>( TextWidth( text, scale, len, static_cast<int>( adjust ) ) ) : 0.0f;
 	const float retailLineHeight = retailSpline ? static_cast<float>( MaxCharHeight( scale ) ) : 0.0f;
-	const int retailGlyphCount = retailSpline ? openPREY_CountRetailGlyphs( s, len ) : 0;
+	const int retailGlyphCount = retailSpline ? openD3_CountRetailGlyphs( s, len ) : 0;
 	int retailGlyphIndex = 0;
 
 	int count = 0;
@@ -2822,7 +2822,7 @@ int idDeviceContext::DrawText(float x, float y, float scale, idVec4 color, const
 									const unsigned int iconHash = static_cast<unsigned int>( iconCode[0] ) |
 										( static_cast<unsigned int>( iconCode[1] ) << 8 ) |
 										( static_cast<unsigned int>( iconCode[2] ) << 16 );
-									const openPreyRetailSplineGlyph_t splineGlyph = openPREY_RetailSplineGlyph(
+									const openPreyRetailSplineGlyph_t splineGlyph = openD3_RetailSplineGlyph(
 										iconX, iconY, retailLineStartX, retailLineWidth, retailLineHeight,
 										retailGlyphIndex, retailGlyphCount, iconHash,
 										retailSplineEffectProgress, retailSplineEffectPoints );
@@ -2915,7 +2915,7 @@ int idDeviceContext::DrawText(float x, float y, float scale, idVec4 color, const
 		float drawY = openQ4_GlyphDrawY( y, scaledFont.renderScale, glyph );
 		openPreyRetailSplineGlyph_t splineGlyph = {};
 		if ( retailSpline && retailGlyphCount > 0 ) {
-			splineGlyph = openPREY_RetailSplineGlyph( drawX, drawY, retailLineStartX, retailLineWidth,
+			splineGlyph = openD3_RetailSplineGlyph( drawX, drawY, retailLineStartX, retailLineWidth,
 				retailLineHeight, retailGlyphIndex, retailGlyphCount, next.codePoint,
 				retailSplineEffectProgress, retailSplineEffectPoints );
 			if ( splineGlyph.drawGhost ) {
@@ -3356,7 +3356,7 @@ void idDeviceContext::DrawEditCursor( float x, float y, float scale ) {
 		return;
 	}
 	const glyphInfo_t *glyph = &useFont->glyphs[overStrikeMode ? Q4_OVERSTRIKE_CURSOR_GLYPH : Q4_INSERT_CURSOR_GLYPH];
-	const idMaterial *glyphMaterial = openPREY_ResolveGlyphMaterial( useFont, glyph );
+	const idMaterial *glyphMaterial = openD3_ResolveGlyphMaterial( useFont, glyph );
 	if ( glyphMaterial == NULL ) {
 		return;
 	}
@@ -3635,10 +3635,10 @@ bool UI_FontParity_RunSelfTest( void ) {
 	font.material = fontMaterialToken;
 	glyph.material = NULL;
 	ok &= openQ4_CheckBool( "font-wide glyph material fallback",
-		openPREY_ResolveGlyphMaterial( &font, &glyph ) == fontMaterialToken, true );
+		openD3_ResolveGlyphMaterial( &font, &glyph ) == fontMaterialToken, true );
 	glyph.material = glyphMaterialToken;
 	ok &= openQ4_CheckBool( "retail per-glyph material override",
-		openPREY_ResolveGlyphMaterial( &font, &glyph ) == glyphMaterialToken, true );
+		openD3_ResolveGlyphMaterial( &font, &glyph ) == glyphMaterialToken, true );
 
 	glyphInfo_t guardedGlyph = {};
 	guardedGlyph.width = 8.5625f;
@@ -3827,7 +3827,7 @@ bool UI_FontParity_RunSelfTest( void ) {
 				label = va( "Prey %s %d point size", retailFontCases[fontCaseIndex].label, pointSizes[slotIndex] );
 				ok &= openQ4_CheckNear( label.c_str(), fontSlot.pointSize, static_cast<float>( pointSizes[slotIndex] ) );
 
-				const openPreyRetailFontPageAudit_t pageAudit = openPREY_AuditRetailFontPages( fontSlot, materialPrefix.c_str() );
+				const openPreyRetailFontPageAudit_t pageAudit = openD3_AuditRetailFontPages( fontSlot, materialPrefix.c_str() );
 				label = va( "Prey %s %d point material page count", retailFontCases[fontCaseIndex].label, pointSizes[slotIndex] );
 				ok &= openQ4_CheckInt( label.c_str(), pageAudit.pageCount, retailFontCases[fontCaseIndex].expectedPages[slotIndex] );
 				label = va( "Prey %s %d point material page names", retailFontCases[fontCaseIndex].label, pointSizes[slotIndex] );

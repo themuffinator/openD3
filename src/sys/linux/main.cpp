@@ -44,7 +44,7 @@ If you have questions concerning this license or the applicable additional terms
 #endif
 
 #ifndef LINUX_DEFAULT_PATH
-#define LINUX_DEFAULT_PATH "/usr/local/games/openprey"
+#define LINUX_DEFAULT_PATH "/usr/local/games/opend3"
 #endif
 
 static idStr	basepath;
@@ -200,7 +200,7 @@ static bool Sys_ExecProcessArgs( char *const argv[], bool dofork ) {
 			return true;
 		}
 		execvp( argv[0], argv );
-		Sys_WriteProcessChildText( "openPREY child exec failed: " );
+		Sys_WriteProcessChildText( "openD3 child exec failed: " );
 		Sys_WriteProcessChildText( argv[0] );
 		Sys_WriteProcessChildText( "\n" );
 		_exit( 127 );
@@ -445,10 +445,10 @@ static void Sys_ReportWaylandRuntime( void ) {
 	const char *x11Display = getenv( "DISPLAY" );
 	const char *sdlVideoDriver = getenv( "SDL_VIDEO_DRIVER" );
 	const char *legacySdlVideoDriver = getenv( "SDL_VIDEODRIVER" );
-	const char *openPreyForceX11 = getenv( "OPENPREY_FORCE_X11" );
-	const char *openPreyDisableLibdecor = getenv( "OPENPREY_WAYLAND_DISABLE_LIBDECOR" );
-	const char *openPreyPreferLibdecor = getenv( "OPENPREY_WAYLAND_PREFER_LIBDECOR" );
-	const char *openPreySyncWindowOps = getenv( "OPENPREY_WAYLAND_SYNC_WINDOW_OPS" );
+	const char *openPreyForceX11 = getenv( "OPEND3_FORCE_X11" );
+	const char *openPreyDisableLibdecor = getenv( "OPEND3_WAYLAND_DISABLE_LIBDECOR" );
+	const char *openPreyPreferLibdecor = getenv( "OPEND3_WAYLAND_PREFER_LIBDECOR" );
+	const char *openPreySyncWindowOps = getenv( "OPEND3_WAYLAND_SYNC_WINDOW_OPS" );
 	// Temporary migration aliases for environments configured before the rebase.
 	if ( openPreyForceX11 == NULL || openPreyForceX11[0] == '\0' ) {
 		openPreyForceX11 = getenv( "OPENQ4_FORCE_X11" );
@@ -465,16 +465,16 @@ static void Sys_ReportWaylandRuntime( void ) {
 	const char *effectiveSdlVideoDriver = ( sdlVideoDriver != NULL && sdlVideoDriver[0] != '\0' )
 		? sdlVideoDriver
 		: legacySdlVideoDriver;
-	const char *effectiveOpenPreyForceX11 = ( openPreyForceX11 != NULL && openPreyForceX11[0] != '\0' )
+	const char *effectiveOpenQ4ForceX11 = ( openPreyForceX11 != NULL && openPreyForceX11[0] != '\0' )
 		? openPreyForceX11
 		: "<unset>";
-	const char *effectiveOpenPreyDisableLibdecor = ( openPreyDisableLibdecor != NULL && openPreyDisableLibdecor[0] != '\0' )
+	const char *effectiveOpenQ4DisableLibdecor = ( openPreyDisableLibdecor != NULL && openPreyDisableLibdecor[0] != '\0' )
 		? openPreyDisableLibdecor
 		: "<unset>";
-	const char *effectiveOpenPreyPreferLibdecor = ( openPreyPreferLibdecor != NULL && openPreyPreferLibdecor[0] != '\0' )
+	const char *effectiveOpenQ4PreferLibdecor = ( openPreyPreferLibdecor != NULL && openPreyPreferLibdecor[0] != '\0' )
 		? openPreyPreferLibdecor
 		: "<unset>";
-	const char *effectiveOpenPreySyncWindowOps = ( openPreySyncWindowOps != NULL && openPreySyncWindowOps[0] != '\0' )
+	const char *effectiveOpenQ4SyncWindowOps = ( openPreySyncWindowOps != NULL && openPreySyncWindowOps[0] != '\0' )
 		? openPreySyncWindowOps
 		: "<unset>";
 
@@ -486,17 +486,17 @@ static void Sys_ReportWaylandRuntime( void ) {
 #if defined( USE_SDL3 )
 		Sys_Printf(
 			"Wayland session detected (%s) without X11 DISPLAY. "
-			"openPREY will use SDL3's native Wayland path when selected; "
-			"use OPENPREY_FORCE_X11=1 from an XWayland-enabled session for fallback, "
-			"OPENPREY_WAYLAND_DISABLE_LIBDECOR=1 to bypass libdecor issues, "
-			"OPENPREY_WAYLAND_PREFER_LIBDECOR=1 for decoration issues, or "
-			"OPENPREY_WAYLAND_SYNC_WINDOW_OPS=1 for window-operation diagnostics.\n",
+			"openD3 will use SDL3's native Wayland path when selected; "
+			"use OPEND3_FORCE_X11=1 from an XWayland-enabled session for fallback, "
+			"OPEND3_WAYLAND_DISABLE_LIBDECOR=1 to bypass libdecor issues, "
+			"OPEND3_WAYLAND_PREFER_LIBDECOR=1 for decoration issues, or "
+			"OPEND3_WAYLAND_SYNC_WINDOW_OPS=1 for window-operation diagnostics.\n",
 			waylandDisplay
 		);
 #else
 		Sys_Printf(
 			"Wayland session detected (%s) without X11 DISPLAY. "
-			"openPREY currently requires X11/GLX on Linux; launch from an XWayland-enabled session.\n",
+			"openD3 currently requires X11/GLX on Linux; launch from an XWayland-enabled session.\n",
 			waylandDisplay
 		);
 #endif
@@ -506,18 +506,18 @@ static void Sys_ReportWaylandRuntime( void ) {
 #if defined( USE_SDL3 )
 	Sys_Printf(
 		"Wayland session detected (%s) with X11 DISPLAY=%s available. SDL3 video override: %s; "
-		"OPENPREY_FORCE_X11=%s OPENPREY_WAYLAND_DISABLE_LIBDECOR=%s OPENPREY_WAYLAND_PREFER_LIBDECOR=%s OPENPREY_WAYLAND_SYNC_WINDOW_OPS=%s.\n",
+		"OPEND3_FORCE_X11=%s OPEND3_WAYLAND_DISABLE_LIBDECOR=%s OPEND3_WAYLAND_PREFER_LIBDECOR=%s OPEND3_WAYLAND_SYNC_WINDOW_OPS=%s.\n",
 		waylandDisplay,
 		x11Display,
 		( effectiveSdlVideoDriver != NULL && effectiveSdlVideoDriver[0] != '\0' ) ? effectiveSdlVideoDriver : "<unset>",
-		effectiveOpenPreyForceX11,
-		effectiveOpenPreyDisableLibdecor,
-		effectiveOpenPreyPreferLibdecor,
-		effectiveOpenPreySyncWindowOps
+		effectiveOpenQ4ForceX11,
+		effectiveOpenQ4DisableLibdecor,
+		effectiveOpenQ4PreferLibdecor,
+		effectiveOpenQ4SyncWindowOps
 	);
 #else
 	Sys_Printf(
-		"Wayland session detected (%s). openPREY is using X11 via XWayland (DISPLAY=%s).\n",
+		"Wayland session detected (%s). openD3 is using X11 via XWayland (DISPLAY=%s).\n",
 		waylandDisplay,
 		x11Display
 	);
@@ -567,9 +567,9 @@ const char *Sys_DefaultSavePath(void) {
 		savepath = xdgDataHome;
 		savepath.StripTrailing( '/' );
 #if defined( ID_DEMO_BUILD )
-		savepath += "/openprey-demo";
+		savepath += "/opend3-demo";
 #else
-		savepath += "/openprey";
+		savepath += "/opend3";
 #endif
 		return savepath.c_str();
 	}
@@ -579,9 +579,9 @@ const char *Sys_DefaultSavePath(void) {
 		savepath = home;
 		savepath.StripTrailing( '/' );
 #if defined( ID_DEMO_BUILD )
-		savepath += "/.local/share/openprey-demo";
+		savepath += "/.local/share/opend3-demo";
 #else
-		savepath += "/.local/share/openprey";
+		savepath += "/.local/share/opend3";
 #endif
 	} else {
 		savepath = Posix_Cwd();

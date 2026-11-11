@@ -31,7 +31,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "NativeInputDispatch.h"
 #include "Session_local.h"
-#include "PreyGameCompat.h"
+#include "Doom3GameCompat.h"
 #include "NativeInputPublications.h"
 #include "ArenaCampaign.h"
 #include "BuildVersion.h"
@@ -445,8 +445,8 @@ static bool Session_IsRetailSaveGameName( const idStr &gameName ) {
 	return gameName.Icmp( SAVEGAME_GAME_NAME_RETAIL ) == 0;
 }
 
-static bool Session_IsPreySaveGameName( const idStr &gameName ) {
-	return gameName.Icmp( SAVEGAME_GAME_NAME_PREY ) == 0;
+static bool Session_IsDoom3SaveGameName( const idStr &gameName ) {
+	return gameName.Icmp( SAVEGAME_GAME_NAME_DOOM3 ) == 0;
 }
 
 static bool Session_IsLegacyopenQ4SaveGameName( const idStr &gameName ) {
@@ -454,13 +454,13 @@ static bool Session_IsLegacyopenQ4SaveGameName( const idStr &gameName ) {
 }
 
 static bool Session_IsSupportedSaveGameName( const idStr &gameName ) {
-	return Session_IsPreySaveGameName( gameName ) ||
+	return Session_IsDoom3SaveGameName( gameName ) ||
 		Session_IsRetailSaveGameName( gameName ) ||
 		Session_IsLegacyopenQ4SaveGameName( gameName );
 }
 
 static bool Session_SaveGameHeaderUsesEntityFilter( const idStr &gameName ) {
-	return Session_IsPreySaveGameName( gameName ) || Session_IsRetailSaveGameName( gameName );
+	return Session_IsDoom3SaveGameName( gameName ) || Session_IsRetailSaveGameName( gameName );
 }
 
 static void Session_AddUniqueSaveGameSearchDir( idStrList &gameDirs, const char *gameDir ) {
@@ -473,7 +473,7 @@ static void Session_BuildSaveGameSearchDirs( idStrList &gameDirs, const char *pr
 	gameDirs.Clear();
 	Session_AddUniqueSaveGameSearchDir( gameDirs, preferredGameDir );
 	Session_AddUniqueSaveGameSearchDir( gameDirs, cvarSystem->GetCVarString( "fs_game" ) );
-	Session_AddUniqueSaveGameSearchDir( gameDirs, OPENPREY_GAMEDIR );
+	Session_AddUniqueSaveGameSearchDir( gameDirs, OPEND3_GAMEDIR );
 	Session_AddUniqueSaveGameSearchDir( gameDirs, BASE_GAMEDIR );
 }
 
@@ -3517,7 +3517,7 @@ static void Session_PrintLightGridBakeUsage() {
 	common->Printf( "usage: bakeLightGrids [all | all-mp | <map> ...] [force] [-quit] [limit<num>] [bounce<num>] [size<num>] [blends<num>] [samples<num>] [separateAreas] [grid ( x y z )]\n" );
 	common->Printf( "If no map names are given, the currently loaded map is baked.\n" );
 	common->Printf( "Without 'force', maps whose .lightgridpack output or required .lightgrid metadata plus area atlas files already exist are skipped.\n" );
-	common->Printf( "When map names, 'all', or 'all-mp' are given, openPREY loads each map automatically, prints live progress to the console/log, and writes .lightgridpack plus loose .lightgrid/TGA fallback outputs to fs_savepath.\n" );
+	common->Printf( "When map names, 'all', or 'all-mp' are given, openD3 loads each map automatically, prints live progress to the console/log, and writes .lightgridpack plus loose .lightgrid/TGA fallback outputs to fs_savepath.\n" );
 	common->Printf( "'separateAreas' rebuilds one portal-area probe layout at a time and streams .lightgrid metadata during the bake to reduce peak CPU memory usage.\n" );
 	common->Printf( "Multiplayer targets are cheat-protected; enable cheats first with 'sv_cheats 1' or 'net_allowCheats 1'.\n" );
 	common->Printf( "This bake is diffuse-only and LDR. It does not output the BFG EXR/PBR light-grid data path.\n" );
@@ -4187,7 +4187,7 @@ static void Session_openQ4AssertMapState_f( const idCmdArgs &args ) {
 	idStr expectedEntityFilter;
 	Session_NormalizeMapPathAndEntityFilter( args.Argv( 1 ), Session_GetEntityFilterArg( args ), expectedMap, expectedEntityFilter );
 	if ( expectedMap.Length() == 0 ) {
-		common->Error( "openPREY map state assertion needs a non-empty expected map" );
+		common->Error( "openD3 map state assertion needs a non-empty expected map" );
 		return;
 	}
 
@@ -4196,7 +4196,7 @@ static void Session_openQ4AssertMapState_f( const idCmdArgs &args ) {
 	Session_NormalizeMapDeclPath( sessLocal.mapSpawnData.serverInfo.GetString( "si_map", "" ), actualMap );
 	Session_NormalizeEntityFilterToken( sessLocal.mapSpawnData.serverInfo.GetString( "si_entityFilter", "" ), actualEntityFilter );
 
-	common->Printf( "openPREY map state: map=%s entityFilter=%s expectedMap=%s expectedEntityFilter=%s\n",
+	common->Printf( "openD3 map state: map=%s entityFilter=%s expectedMap=%s expectedEntityFilter=%s\n",
 		actualMap.c_str(),
 		actualEntityFilter.c_str(),
 		expectedMap.c_str(),
@@ -4205,7 +4205,7 @@ static void Session_openQ4AssertMapState_f( const idCmdArgs &args ) {
 	const bool mapMatches = fileSystem->FilenameCompare( actualMap.c_str(), expectedMap.c_str() ) == 0;
 	const bool filterMatches = idStr::Icmp( actualEntityFilter.c_str(), expectedEntityFilter.c_str() ) == 0;
 	if ( !mapMatches || !filterMatches ) {
-		common->Error( "openPREY map state mismatch: expected map=%s entityFilter=%s, got map=%s entityFilter=%s",
+		common->Error( "openD3 map state mismatch: expected map=%s entityFilter=%s, got map=%s entityFilter=%s",
 			expectedMap.c_str(),
 			expectedEntityFilter.c_str(),
 			actualMap.c_str(),
@@ -7117,7 +7117,7 @@ void idSessionLocal::PublishRetainedLoadingServer( const idDict &serverInfo ) {
 	guiLoading->SetStateBool( "server_answered", false );
 	guiLoading->SetStateBool( "server_team_mode", false );
 	if ( game != NULL ) {
-		PreyGame_HandleMainMenuCommands( "retainedLoadingServer", guiLoading );
+		Doom3Game_HandleMainMenuCommands( "retainedLoadingServer", guiLoading );
 	}
 	const bool answered = guiLoading->State().GetBool( "server_answered" );
 	const bool teams = answered && guiLoading->State().GetBool( "server_team_mode" );
@@ -7404,7 +7404,7 @@ void idSessionLocal::PrecacheRetainedLevelImages() {
 		return;
 	}
 	guiMainMenu->SetStateInt( "level_image_count", 0 );
-	PreyGame_HandleMainMenuCommands( "retainedLevelImages", guiMainMenu );
+	Doom3Game_HandleMainMenuCommands( "retainedLevelImages", guiMainMenu );
 	const int count = guiMainMenu->State().GetInt( "level_image_count", "0" );
 	for ( int i = 0; i < count; i++ ) {
 		const idStr image = guiMainMenu->State().GetString( va( "level_image_%d", i ), "" );
@@ -7462,7 +7462,7 @@ void idSessionLocal::PublishRetainedPauseState( idUserInterface *gui ) {
 	gui->SetStateInt( "pause_mission_seconds", -1 );
 	gui->SetStateInt( "pause_total_seconds", -1 );
 	if ( game != NULL && mapSpawned ) {
-		PreyGame_HandleMainMenuCommands( "retainedPauseState", gui );
+		Doom3Game_HandleMainMenuCommands( "retainedPauseState", gui );
 	}
 	// An objective's screenshot shows only when it is a plain image name that
 	// is installed; any other leaves its frame empty. The Objectives page
@@ -8966,7 +8966,7 @@ bool idSessionLocal::SaveForSuspension( void ) {
 			|| IsDemoPlaybackActive() || com_editorActive || game == NULL || idAsyncNetwork::IsActive() ) {
 		return false;
 	}
-	if ( PreyGame_InCinematic() || objectiveFailed || game->GetPersistentPlayerInfo( 0 ).GetInt( "health" ) <= 0
+	if ( Doom3Game_InCinematic() || objectiveFailed || game->GetPersistentPlayerInfo( 0 ).GetInt( "health" ) <= 0
 			|| Sys_GetDriveFreeSpace( cvarSystem->GetCVarString( "fs_savepath" ) ) < 25 ) {
 		common->Printf( "Not saving for the background: the game cannot be saved now\n" );
 		return false;
@@ -9198,7 +9198,7 @@ bool idSessionLocal::SaveGame( const char *saveName, saveType_t saveType ) {
 	// Write SaveGame Header:
 	// Game Name / Version / Map Name / Entity Filter / Persistent Player Info
 	bool headerWritten = true;
-	headerWritten = headerWritten && Session_WriteSaveGameString( fileOut, SAVEGAME_GAME_NAME_PREY, MAX_STRING_CHARS, "game name", tempGameFile.c_str() );
+	headerWritten = headerWritten && Session_WriteSaveGameString( fileOut, SAVEGAME_GAME_NAME_DOOM3, MAX_STRING_CHARS, "game name", tempGameFile.c_str() );
 	headerWritten = headerWritten && Session_WriteSaveGameInt( fileOut, SAVEGAME_VERSION, "version", tempGameFile.c_str() );
 	headerWritten = headerWritten && Session_WriteSaveGameString( fileOut, mapName.c_str(), MAX_STRING_CHARS, "map name", tempGameFile.c_str() );
 	headerWritten = headerWritten && Session_WriteSaveGameString( fileOut, mapSpawnData.serverInfo.GetString( "si_entityFilter" ), MAX_STRING_CHARS, "entity filter", tempGameFile.c_str() );
@@ -9594,7 +9594,7 @@ bool idSessionLocal::LoadGame( const char *saveName, const char *preferredGameDi
 		return false;
 	}
 
-	// Search the active mod first, then openPREY's basepr and the retail base directory.
+	// Search the active mod first, then openD3's baseod3 and the retail base directory.
 	idFile *loadGameFile = Session_OpenSaveGameReadHandle( in.c_str(), preferredGameDir );
 
 	if ( loadGameFile == NULL ) {
@@ -11190,7 +11190,7 @@ void idSessionLocal::Init() {
 	cmdSystem->AddCommand( "openq4_assertMenuActivation", Session_openQ4AssertMenuActivation_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "opens the in-game menu and asserts a bounded activation time for validation harnesses" );
 	cmdSystem->AddCommand( "openq4_resumeBakeLightGrids", Session_openQ4ResumeBakeLightGrids_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "internal helper to continue light-grid baking after game-module switches" );
 	cmdSystem->AddCommand( "iamtheduke", Session_IAmTheDuke_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "toggles the SP-only iamtheduke cheat text overlay" );
-	cmdSystem->AddCommand( "bakeLightGrids", Session_BakeLightGrids_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "bakes openPREY-compatible lightgrid metadata and irradiance atlases for the current map or a batch of maps" );
+	cmdSystem->AddCommand( "bakeLightGrids", Session_BakeLightGrids_f, CMD_FL_SYSTEM|CMD_FL_CHEAT, "bakes openD3-compatible lightgrid metadata and irradiance atlases for the current map or a batch of maps" );
     cmdSystem->AddCommand( "campaignSelect", Session_CampaignSelect_f, CMD_FL_SYSTEM, "selects a built-in single-player campaign" );
     cmdSystem->AddCommand( "campaignList", Session_CampaignList_f, CMD_FL_SYSTEM, "reports built-in campaign content readiness without mounting it" );
     cmdSystem->AddCommand( "campaignMenu", Session_CampaignMenu_f, CMD_FL_SYSTEM, "opens the single-player or campaign selector" );

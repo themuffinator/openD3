@@ -50,21 +50,21 @@ def validate_tasks() -> None:
     if len(default_tasks) != 1:
         raise AssertionError(f"Expected exactly one default build task, found {len(default_tasks)}")
 
-    fast_build = find_task(tasks, "Build openPREY (Meson Debug)")
+    fast_build = find_task(tasks, "Build openD3 (Meson Debug)")
     if fast_build is not default_tasks[0]:
-        raise AssertionError("Build openPREY (Meson Debug) must be the default VS Code build task")
+        raise AssertionError("Build openD3 (Meson Debug) must be the default VS Code build task")
     if fast_build.get("dependsOn"):
         raise AssertionError("Fast default build must not depend on configure or full install tasks")
     if "fastbuild" not in fast_build.get("args", []):
         raise AssertionError("Fast default build must invoke meson-task.ps1 fastbuild")
 
-    full_build = find_task(tasks, "Full Build and Stage openPREY (Meson Debug)")
+    full_build = find_task(tasks, "Full Build and Stage openD3 (Meson Debug)")
     if full_build.get("dependsOrder") != "sequence":
         raise AssertionError("Full build task must keep ordered configure, compile, install steps")
     for label in (
-        "Configure openPREY (Meson Debug)",
-        "Compile openPREY (Meson Debug)",
-        "Stage openPREY Install Tree (Meson Debug)",
+        "Configure openD3 (Meson Debug)",
+        "Compile openD3 (Meson Debug)",
+        "Stage openD3 Install Tree (Meson Debug)",
     ):
         if label not in full_build.get("dependsOn", []):
             raise AssertionError(f"Full build task is missing dependency {label!r}")
@@ -78,7 +78,7 @@ def validate_wrapper() -> None:
     wrapper = read(".vscode/meson-task.ps1")
     require(wrapper, "[ValidateSet('setup', 'compile', 'install', 'fastbuild')]", "VS Code Meson wrapper actions")
     require(wrapper, "stage_fast_install.py", "VS Code fast build staging script")
-    # openPREY's standard local tree is builddir configured as a debug build;
+    # openD3's standard local tree is builddir configured as a debug build;
     # compile reconfigures an existing build directory that drifted from it.
     require(wrapper, "$buildDir = Join-Path $workspaceRoot 'builddir'", "VS Code build uses the standard builddir")
     require(wrapper, "'buildtype' = 'debug'", "VS Code build must configure the debug buildtype")
@@ -113,7 +113,7 @@ def validate_wrapper() -> None:
     )
     require(
         windows_runtime,
-        '"basepr/skins"',
+        '"baseod3/skins"',
         "known empty Windows stage directory manifest",
     )
     require(
@@ -144,8 +144,8 @@ def validate_launch_configs() -> None:
             for index in range(max(0, len(args) - 2))
         ):
             raise AssertionError(f"Launch config {name!r} must force windowed mode")
-        if "basepr" not in args:
-            raise AssertionError(f"Launch config {name!r} must select basepr")
+        if "baseod3" not in args:
+            raise AssertionError(f"Launch config {name!r} must select baseod3")
         if set_values(args, "fs_basepath"):
             raise AssertionError(f"Launch config {name!r} must leave fs_basepath to the engine's install discovery")
         if "(MP)" in name:

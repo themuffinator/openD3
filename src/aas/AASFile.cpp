@@ -781,7 +781,7 @@ bool idAASFileLocal::Write( const idStr &fileName, unsigned int mapFileCRC ) {
 		// Retail Prey uses the Doom 3-era 1.07 area record.  Quake 4's 1.08
 		// extension adds numFeatures/firstFeature, so emitting those fields while
 		// labelling a file 1.07 would produce an unreadable AAS.
-#ifdef HUMANHEAD
+#ifdef OPEND3
 		aasFile->WriteFloatString( "\t%d ( %d %d %d %d %d %d ) %d {\n", i, areas[i].flags, areas[i].contents,
 						areas[i].firstFace, areas[i].numFaces, areas[i].cluster, areas[i].clusterAreaNum, num );
 #else

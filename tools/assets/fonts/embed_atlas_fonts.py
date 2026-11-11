@@ -1,13 +1,13 @@
-"""Embed openPREY's traced Prey faces into the Interface Atlas.
+"""Embed openD3's traced Prey faces into the Interface Atlas.
 
 Usage:
     python tools/assets/fonts/embed_atlas_fonts.py
 
-Subsets ``content/basepr/pak0/fonts/{menu,english,alien}.ttf`` to the Latin
+Subsets ``content/baseod3/pak0/fonts/{menu,english,alien}.ttf`` to the Latin
 range the atlas draws, packs each as WOFF and rewrites the ``@font-face`` block
-between the ``openprey-atlas-fonts`` markers in
+between the ``opend3-atlas-fonts`` markers in
 ``docs/dev/prey-ui/atlas/prey-interface-atlas.html``. Run it after rebuilding
-the faces with ``build_openprey_fonts.py`` so the atlas never drifts from what
+the faces with ``build_opend3_fonts.py`` so the atlas never drifts from what
 the engine ships. The retail atlases are not read here.
 """
 from __future__ import annotations
@@ -22,16 +22,16 @@ from fontTools import subset
 from fontTools.ttLib import TTFont
 
 ROOT = Path(__file__).resolve().parents[3]
-FONTS = ROOT / "content" / "basepr" / "pak0" / "fonts"
+FONTS = ROOT / "content" / "baseod3" / "pak0" / "fonts"
 ATLAS = ROOT / "docs" / "dev" / "prey-ui" / "atlas" / "prey-interface-atlas.html"
-START = "/* openprey-atlas-fonts-start */"
-END = "/* openprey-atlas-fonts-end */"
+START = "/* opend3-atlas-fonts-start */"
+END = "/* opend3-atlas-fonts-end */"
 
 # CSS family name -> shipped face
 FACES = {
-    "openPREY Menu": "menu.ttf",
-    "openPREY Default": "english.ttf",
-    "openPREY Alien": "alien.ttf",
+    "openD3 Menu": "menu.ttf",
+    "openD3 Default": "english.ttf",
+    "openD3 Alien": "alien.ttf",
 }
 
 # Basic Latin, Latin-1, general punctuation, arrows, multiplication and minus.

@@ -170,7 +170,7 @@ bool rvBSEManagerLocal::Init(void) {
 
 	declManager->FindEffect("_default");
 	declManager->FindMaterial("_default");
-#if !defined(HUMANHEAD)
+#if !defined(OPEND3)
 	declManager->FindMaterial("gfx/effects/particles_shapes/motionblur");
 #endif
 	declManager->FindType(DECL_TABLE, "halfsintable", true);

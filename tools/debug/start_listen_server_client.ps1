@@ -27,7 +27,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-function New-openPREYCommonArgs {
+function New-openD3CommonArgs {
     param(
         [Parameter(Mandatory = $true)]
         [string]$SavePath,
@@ -64,7 +64,7 @@ function New-openPREYCommonArgs {
         "+set", "g_autoScreenshot", "0",
         "+set", "fs_savepath", $SavePath,
         "+set", "fs_devpath", $InstallDir,
-        "+set", "fs_game", "basepr"
+        "+set", "fs_game", "baseod3"
     )
 
     if (-not [string]::IsNullOrWhiteSpace($BasePath)) {
@@ -85,7 +85,7 @@ function New-openPREYCommonArgs {
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $workspaceRoot = [System.IO.Path]::GetFullPath((Join-Path $scriptDir "..\.."))
 $installDir = Join-Path $workspaceRoot ".install"
-$exePath = Join-Path $installDir "openPREY-client_x64.exe"
+$exePath = Join-Path $installDir "openD3-client_x64.exe"
 
 if ([string]::IsNullOrWhiteSpace($SaveRoot)) {
     $SaveRoot = Join-Path $workspaceRoot ".tmp"
@@ -94,11 +94,11 @@ if ([string]::IsNullOrWhiteSpace($SaveRoot)) {
 }
 
 if (-not (Test-Path -LiteralPath $exePath)) {
-    throw "openPREY client executable not found: $exePath"
+    throw "openD3 client executable not found: $exePath"
 }
 
 if (-not (Test-Path -LiteralPath $installDir)) {
-    throw "openPREY install directory not found: $installDir"
+    throw "openD3 install directory not found: $installDir"
 }
 
 if (-not [string]::IsNullOrWhiteSpace($BasePath) -and -not (Test-Path -LiteralPath (Join-Path $BasePath "base"))) {
@@ -117,7 +117,7 @@ New-Item -ItemType Directory -Force -Path $serverSavePath, $clientSavePath | Out
 $maxFPSValue = $MaxFPS.ToString()
 $swapIntervalValue = $SwapInterval.ToString()
 
-$serverArgs = New-openPREYCommonArgs `
+$serverArgs = New-openD3CommonArgs `
     -SavePath $serverSavePath `
     -LogFileName "logs/listen-server.log" `
     -InstallDir $installDir `
@@ -138,7 +138,7 @@ $serverArgs += @(
     "+spawnServer", $Map
 )
 
-$clientArgs = New-openPREYCommonArgs `
+$clientArgs = New-openD3CommonArgs `
     -SavePath $clientSavePath `
     -LogFileName "logs/listen-client.log" `
     -InstallDir $installDir `
@@ -188,8 +188,8 @@ $result = [pscustomobject]@{
     ClientRunning   = -not $clientProcess.HasExited
     ServerSavePath  = $serverSavePath
     ClientSavePath  = $clientSavePath
-    ServerLog       = (Join-Path $serverSavePath "basepr\logs\listen-server.log")
-    ClientLog       = (Join-Path $clientSavePath "basepr\logs\listen-client.log")
+    ServerLog       = (Join-Path $serverSavePath "baseod3\logs\listen-server.log")
+    ClientLog       = (Join-Path $clientSavePath "baseod3\logs\listen-client.log")
 }
 
 $result

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shared helpers for building and validating openPREY PK4 payloads."""
+"""Shared helpers for building and validating openD3 PK4 payloads."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from typing import Mapping, Sequence
 from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 
-GAME_DIR_NAME = "basepr"
+GAME_DIR_NAME = "baseod3"
 CONTENT_PACKS_TABLE_PATH = Path(__file__).resolve().with_name("content_packs.json")
 CONTENT_PACK_NAME_PATTERN = re.compile(r"^pak[0-9]\.pk4$")
 CONTENT_PACK_STRING_PATTERN = re.compile(r"^#str_[0-9]{6}$")
@@ -29,7 +29,7 @@ DETERMINISTIC_ZIP_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
 
 @dataclass(frozen=True)
 class ContentPackSpec:
-    """One openPREY runtime content pack, as declared in content_packs.json."""
+    """One openD3 runtime content pack, as declared in content_packs.json."""
 
     name: str
     source: str
@@ -111,7 +111,7 @@ def _parse_overlay_spec(raw: dict, label: str, by_name: Mapping[str, ContentPack
 def load_content_pack_specs(path: Path = CONTENT_PACKS_TABLE_PATH) -> tuple[ContentPackSpec, ...]:
     """Read and validate the content pack table.
 
-    The table is the single list of openPREY runtime packs. Every consumer, from
+    The table is the single list of openD3 runtime packs. Every consumer, from
     the Meson targets to the engine's generated validation table and the
     packagers, reads it, so a pack added or retired here reaches all of them.
     """
@@ -215,8 +215,8 @@ PAK0_NAME = "pak0.pk4"
 PAK1_NAME = "pak1.pk4"
 PAK2_NAME = "pak2.pk4"
 OPENQ4_PACK_NAMES = tuple(spec.name for spec in OPENQ4_CONTENT_PACKS)
-# openPREY name for the same table; upstream helpers import the openQ4 name.
-OPENPREY_PACK_NAMES = OPENQ4_PACK_NAMES
+# openD3 name for the same table; upstream helpers import the openQ4 name.
+OPEND3_PACK_NAMES = OPENQ4_PACK_NAMES
 OPENQ4_CORE_PACK_NAMES = tuple(spec.name for spec in OPENQ4_CONTENT_PACKS if not spec.bulk)
 OPENQ4_BULK_PACK_NAMES = tuple(spec.name for spec in OPENQ4_CONTENT_PACKS if spec.bulk)
 OPENQ4_CLIENT_ONLY_PACK_NAMES = tuple(spec.name for spec in OPENQ4_CONTENT_PACKS if spec.client_only)
@@ -249,7 +249,7 @@ OPENQ4_PK4_FORBIDDEN_FILES = {
     "addon.conf",
     "binary.conf",
     "script/map_roadhouse_quick.script",
-    "script/openprey_vm_conformance.script",
+    "script/opend3_vm_conformance.script",
 }
 OPENQ4_PK4_EXCLUDED_FILES = {
     "meson.build",
@@ -614,7 +614,7 @@ def format_pk4_source_manifest(source_root: Path, source_dir: Path, pak_name: st
     source_dir = require_directory_inside(source_dir, source_root, "pack source")
     entries, _skipped_samples = _iter_pk4_entries(source_dir, pak_name)
     lines = [
-        "# openPREY PK4 source manifest",
+        "# openD3 PK4 source manifest",
         f"pak={pak_name}",
         f"source={source_dir.relative_to(source_root).as_posix()}",
     ]

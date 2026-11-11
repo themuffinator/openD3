@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 WORK_BASE = ROOT / ".tmp" / "linux-metadata-fuzz"
 WORK = WORK_BASE / f"{os.getpid()}-{uuid.uuid4().hex}"
 STAGE_SCRIPT = ROOT / "tools" / "build" / "stage_gamelibs.py"
-MANIFEST_NAME = "openprey_gamelibs_stage_manifest.json"
+MANIFEST_NAME = "opend3_gamelibs_stage_manifest.json"
 
 
 def load_module(module_name: str, path: Path):
@@ -72,11 +72,11 @@ def assert_raises(callback, label: str) -> None:
 
 def validate_desktop_parser_cases() -> None:
     valid = (
-        "\ufeff[Desktop Entry]\nName=openPREY\nExec=openPREY-client_x64 %f\n",
-        "[Other]\nExec=wrong\n[Desktop Entry]\nExec=\"openPREY-client_x64\" --safe\n",
-        "# comment\n[Desktop Entry]\n  Exec= openPREY-steamdeck  \n",
+        "\ufeff[Desktop Entry]\nName=openD3\nExec=openD3-client_x64 %f\n",
+        "[Other]\nExec=wrong\n[Desktop Entry]\nExec=\"openD3-client_x64\" --safe\n",
+        "# comment\n[Desktop Entry]\n  Exec= openD3-steamdeck  \n",
     )
-    expected = ("openPREY-client_x64", "openPREY-client_x64", "openPREY-steamdeck")
+    expected = ("openD3-client_x64", "openD3-client_x64", "openD3-steamdeck")
 
     for content, expected_command in zip(valid, expected):
         staged_line = staged_exec_line(content)
@@ -87,19 +87,19 @@ def validate_desktop_parser_cases() -> None:
             raise AssertionError(f"packaged parser returned wrong command for {content!r}")
 
     invalid_entries = (
-        "[Desktop Entry]\nExec=openPREY-client_x64\nExec=openPREY-ded_x64\n",
-        "[Desktop Entry]\nExec=\nExec=openPREY-client_x64\n",
-        "[Desktop Entry]\nExec=openPREY-client_x64\x00--bad\n",
+        "[Desktop Entry]\nExec=openD3-client_x64\nExec=openD3-ded_x64\n",
+        "[Desktop Entry]\nExec=\nExec=openD3-client_x64\n",
+        "[Desktop Entry]\nExec=openD3-client_x64\x00--bad\n",
     )
     for content in invalid_entries:
         assert_raises(lambda content=content: staged_exec_line(content), f"staged desktop entry {content!r}")
         assert_raises(lambda content=content: packaged_exec_line(content), f"packaged desktop entry {content!r}")
 
     invalid_exec_lines = (
-        '"openPREY-client_x64',
-        "%f openPREY-client_x64",
-        "openPREY-client_x64\x00--bad",
-        "openPREY-client_x64\n--bad",
+        '"openD3-client_x64',
+        "%f openD3-client_x64",
+        "openD3-client_x64\x00--bad",
+        "openD3-client_x64\n--bad",
     )
     for exec_line in invalid_exec_lines:
         assert_raises(lambda exec_line=exec_line: VALIDATOR.desktop_exec_command(exec_line), "staged Exec parser")
@@ -119,7 +119,7 @@ def validate_desktop_parser_fuzz() -> None:
         if index % 29 == 0:
             payload += "\x00"
 
-        content = f"[Desktop Entry]\nName=openPREY\nExec={payload}\n"
+        content = f"[Desktop Entry]\nName=openD3\nExec={payload}\n"
         results: list[tuple[str, str]] = []
         for label, entry_parser, command_parser in (
             ("staged", staged_exec_line, VALIDATOR.desktop_exec_command),
@@ -150,9 +150,9 @@ def random_component(rng: random.Random) -> str:
 
 def validate_stage_manifest_fuzz() -> None:
     rng = random.Random(0x514A6E)
-    project_root = WORK / "stage" / "openPREY"
-    gamelibs_root = WORK / "stage" / "OpenPrey-game"
-    stage_root = project_root / "builddir" / ".tmp" / "openprey_gamelibs_stage"
+    project_root = WORK / "stage" / "openD3"
+    gamelibs_root = WORK / "stage" / "OpenD3-GameLibs"
+    stage_root = project_root / "builddir" / ".tmp" / "opend3_gamelibs_stage"
 
     write_text(gamelibs_root / "src" / "game" / "Game_local.cpp", "// canonical game\n")
     write_text(gamelibs_root / "src" / "Prey" / "prey_game.cpp", "// canonical Prey game\n")
@@ -237,7 +237,7 @@ def validate_source_contracts() -> None:
             raise AssertionError(f"missing fuzz wiring token: {token}")
 
     for token in (
-        "Canonical companion game sources now stage directly from `OpenPrey-game`",
+        "Canonical companion game sources now stage directly from `OpenD3-GameLibs`",
         "`src/game`, `src/Prey`, and `src/preyengine`",
     ):
         if token not in release_notes:

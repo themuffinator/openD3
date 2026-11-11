@@ -51,7 +51,7 @@ function Quote-CmdArg([string]$Value) {
     return $Value
 }
 
-function Get-openPREYVsProcessArch {
+function Get-openD3VsProcessArch {
     $arch = [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString().ToLowerInvariant()
     switch ($arch) {
         "x64" { return "x64" }
@@ -61,26 +61,26 @@ function Get-openPREYVsProcessArch {
     }
 }
 
-function Get-openPREYVsTargetArch {
-    if (-not [string]::IsNullOrWhiteSpace($env:OPENPREY_VS_TARGET_ARCH)) {
-        return $env:OPENPREY_VS_TARGET_ARCH.Trim().ToLowerInvariant()
+function Get-openD3VsTargetArch {
+    if (-not [string]::IsNullOrWhiteSpace($env:OPEND3_VS_TARGET_ARCH)) {
+        return $env:OPEND3_VS_TARGET_ARCH.Trim().ToLowerInvariant()
     }
     if (-not [string]::IsNullOrWhiteSpace($env:OPENQ4_VS_TARGET_ARCH)) {
         return $env:OPENQ4_VS_TARGET_ARCH.Trim().ToLowerInvariant()
     }
 
-    return Get-openPREYVsProcessArch
+    return Get-openD3VsProcessArch
 }
 
-function Get-openPREYVsHostArch {
-    if (-not [string]::IsNullOrWhiteSpace($env:OPENPREY_VS_HOST_ARCH)) {
-        return $env:OPENPREY_VS_HOST_ARCH.Trim().ToLowerInvariant()
+function Get-openD3VsHostArch {
+    if (-not [string]::IsNullOrWhiteSpace($env:OPEND3_VS_HOST_ARCH)) {
+        return $env:OPEND3_VS_HOST_ARCH.Trim().ToLowerInvariant()
     }
     if (-not [string]::IsNullOrWhiteSpace($env:OPENQ4_VS_HOST_ARCH)) {
         return $env:OPENQ4_VS_HOST_ARCH.Trim().ToLowerInvariant()
     }
 
-    return Get-openPREYVsProcessArch
+    return Get-openD3VsProcessArch
 }
 
 function Get-MesonCommand {
@@ -256,7 +256,7 @@ function Ensure-WindowsStaticCRTSetupArgs {
         if ($arg -like "-Db_vscrt=*") {
             $found = $true
             if ($arg -ne $requiredArg) {
-                Write-Host "Overriding Meson b_vscrt option to '$requiredValue' to satisfy openPREY Windows static CRT policy."
+                Write-Host "Overriding Meson b_vscrt option to '$requiredValue' to satisfy openD3 Windows static CRT policy."
             }
             $updatedArgs += $requiredArg
             continue
@@ -332,10 +332,10 @@ function Remove-NonRuntimeInstallArtifacts {
         "game_x86.dll"
     )
 
-    # basepr and every staged mod game directory that
+    # baseod3 and every staged mod game directory that
     # carries game modules
     $installGameDirs = @(Get-ChildItem -Path $InstallRoot -Directory -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -eq "basepr" -or (Test-Path -LiteralPath (Join-Path $_.FullName "mod.json") -PathType Leaf) })
+        Where-Object { $_.Name -eq "baseod3" -or (Test-Path -LiteralPath (Join-Path $_.FullName "mod.json") -PathType Leaf) })
     foreach ($installGameDir in $installGameDirs) {
         foreach ($pattern in $gameDirPatterns) {
             $matches = @(Get-ChildItem -Path $installGameDir.FullName -Filter $pattern -File -ErrorAction SilentlyContinue)
@@ -366,8 +366,8 @@ function Copy-WindowsDiagnosticSymbols {
     }
 
     $rootPatterns = @(
-        "openPREY-client_*.pdb",
-        "openPREY-ded_*.pdb"
+        "openD3-client_*.pdb",
+        "openD3-ded_*.pdb"
     )
 
     foreach ($pattern in $rootPatterns) {
@@ -379,13 +379,13 @@ function Copy-WindowsDiagnosticSymbols {
         }
     }
 
-    $installGameDir = Join-Path $InstallRoot "basepr"
+    $installGameDir = Join-Path $InstallRoot "baseod3"
     New-Item -Path $installGameDir -ItemType Directory -Force | Out-Null
     $stagedGameSymbols = @{}
 
     $gameBuildDirs = @(
-        (Join-Path $BuildDir "content\basepr"),
-        (Join-Path $BuildDir "basepr")
+        (Join-Path $BuildDir "content\baseod3"),
+        (Join-Path $BuildDir "baseod3")
     )
     $gamePatterns = @(
         "game_*.pdb"
@@ -411,19 +411,19 @@ function Copy-WindowsDiagnosticSymbols {
     }
 }
 
-function Stop-openPREYRuntimeProcesses {
+function Stop-openD3RuntimeProcesses {
     [OutputType([bool])]
     param([Parameter(Mandatory = $true)][string]$InstallRoot)
 
     $targetDirectory = [System.IO.Path]::GetFullPath($InstallRoot).TrimEnd('\', '/')
 
     $processNames = @(
-        "openPREY-client_x64",
-        "openPREY-client_x86",
-        "openPREY-client_arm64",
-        "openPREY-ded_x64",
-        "openPREY-ded_x86",
-        "openPREY-ded_arm64"
+        "openD3-client_x64",
+        "openD3-client_x86",
+        "openD3-client_arm64",
+        "openD3-ded_x64",
+        "openD3-ded_x86",
+        "openD3-ded_arm64"
     )
 
     $running = @(Get-Process -Name $processNames -ErrorAction SilentlyContinue | Where-Object {
@@ -443,7 +443,7 @@ function Stop-openPREYRuntimeProcesses {
         return $false
     }
 
-    Write-Host "Stopping openPREY processes in '$targetDirectory' before install: $($running.ProcessName -join ', ')"
+    Write-Host "Stopping openD3 processes in '$targetDirectory' before install: $($running.ProcessName -join ', ')"
 
     foreach ($proc in $running) {
         try {
@@ -471,7 +471,7 @@ function Stop-openPREYRuntimeProcesses {
         } catch {
             # A process can finish between Refresh and Kill.
             if (-not $proc.HasExited) {
-                throw "Failed to stop openPREY in '$targetDirectory'. Close it manually and retry install. Details: $($_.Exception.Message)"
+                throw "Failed to stop openD3 in '$targetDirectory'. Close it manually and retry install. Details: $($_.Exception.Message)"
             }
         }
     }
@@ -540,8 +540,8 @@ if (-not (Test-Path $rcWrapper)) {
 
 $env:WINDRES = $rcWrapper
 
-$vsTargetArch = Get-openPREYVsTargetArch
-$vsHostArch = Get-openPREYVsHostArch
+$vsTargetArch = Get-openD3VsTargetArch
+$vsHostArch = Get-openD3VsHostArch
 $vsDevCmd = $null
 if (Test-WindowsHost) {
     $vsDevCmd = Get-VsDevCmdPath -TargetArch $vsTargetArch
@@ -597,7 +597,7 @@ if ($effectiveArgs.Length -gt 0 -and ($effectiveArgs[0] -eq "compile" -or $effec
         if ([string]::IsNullOrWhiteSpace([string]$configuredCRT)) {
             $configuredCRT = "unset"
         }
-        Write-Host "Meson build directory '$($buildInfo.BuildDir)' uses b_vscrt='$configuredCRT'. Reconfiguring for openPREY's required Windows static CRT policy..."
+        Write-Host "Meson build directory '$($buildInfo.BuildDir)' uses b_vscrt='$configuredCRT'. Reconfiguring for openD3's required Windows static CRT policy..."
         $reconfigureReasons += "Windows static CRT policy"
     }
 
@@ -636,7 +636,7 @@ if ($effectiveArgs.Length -gt 0 -and ($effectiveArgs[0] -eq "compile" -or $effec
 }
 
 if ($commandName -eq "install" -and $env:OPENQ4_INSTALL_CLOSE_RUNNING -ne "0") {
-    Stop-openPREYRuntimeProcesses -InstallRoot (Join-Path $repoRoot ".install") | Out-Null
+    Stop-openD3RuntimeProcesses -InstallRoot (Join-Path $repoRoot ".install") | Out-Null
 }
 
 if (@("setup", "compile", "install").Contains($commandName) -and $env:OPENQ4_SKIP_ICON_SYNC -ne "1") {
@@ -669,7 +669,7 @@ $exitCode = [int]$LASTEXITCODE
 if ($commandName -eq "install" -and $exitCode -ne 0 -and $env:OPENQ4_INSTALL_RETRY_ON_FAILURE -ne "0") {
     Write-Host "Meson install failed; retrying once..."
     if ($env:OPENQ4_INSTALL_CLOSE_RUNNING -ne "0") {
-        Stop-openPREYRuntimeProcesses -InstallRoot (Join-Path $repoRoot ".install") | Out-Null
+        Stop-openD3RuntimeProcesses -InstallRoot (Join-Path $repoRoot ".install") | Out-Null
     }
     Start-Sleep -Milliseconds 500
     Invoke-Meson -MesonArgs $effectiveArgs -VsDevCmdPath $vsDevCmd -MesonCommand $mesonCommand -VsTargetArch $vsTargetArch -VsHostArch $vsHostArch

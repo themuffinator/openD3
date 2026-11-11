@@ -1,13 +1,13 @@
-#define MyAppName "openPREY"
+#define MyAppName "openD3"
 #define MyAppVersion "@@APP_VERSION@@"
 #define MyAppPublisher "DarkMatter Productions"
 #define MyAppURL "https://www.darkmatter-quake.com"
-#define MyAppExeName "openPREY-client_@@APP_ARCH@@.exe"
-#define MyAppServerExeName "openPREY-ded_@@APP_ARCH@@.exe"
+#define MyAppExeName "openD3-client_@@APP_ARCH@@.exe"
+#define MyAppServerExeName "openD3-ded_@@APP_ARCH@@.exe"
 #define MyAppDocsFile "docs\\index.html"
-#define MyAppInstallRegKey "Software\\DarkMatter Productions\\openPREY"
-#define MyAppProtocolName "openprey"
-#define MyAppProtocolRegKey "Software\\Classes\\openprey"
+#define MyAppInstallRegKey "Software\\DarkMatter Productions\\openD3"
+#define MyAppProtocolName "opend3"
+#define MyAppProtocolRegKey "Software\\Classes\\opend3"
 #define MyAppClientAppPathsKey "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\" + MyAppExeName
 #define PackageSource "@@PACKAGE_SOURCE@@"
 
@@ -20,11 +20,11 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
-AppMutex=openPREY
+AppMutex=openD3
 AppReadmeFile={app}\README.html
 ChangesAssociations=yes
 DefaultDirName={code:GetDefaultInstallDir}
-DefaultGroupName=openPREY
+DefaultGroupName=openD3
 DisableProgramGroupPage=yes
 UsePreviousAppDir=yes
 LicenseFile=@@LICENSE_FILE@@
@@ -42,7 +42,7 @@ PrivilegesRequired=lowest
 @@ARCH_INSTALL_MODE_DIRECTIVE@@
 VersionInfoVersion=@@APP_VERSION@@
 VersionInfoCompany={#MyAppPublisher}
-VersionInfoDescription=openPREY Windows Installer
+VersionInfoDescription=openD3 Windows Installer
 VersionInfoProductName={#MyAppName}
 VersionInfoCopyright=Copyright 2026 DarkMatter Productions
 
@@ -51,7 +51,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Additional options:"; Flags: unchecked
-Name: "protocol"; Description: "Register openprey:// browser links"; GroupDescription: "Browser integration:"; Flags: unchecked
+Name: "protocol"; Description: "Register opend3:// browser links"; GroupDescription: "Browser integration:"; Flags: unchecked
 
 [InstallDelete]
 ; PDBs older packages installed (symbols are now a separate download), and any
@@ -74,31 +74,31 @@ Root: HKA; Subkey: "{#MyAppInstallRegKey}"; ValueType: dword; ValueName: "Protoc
 Root: HKA; Subkey: "{#MyAppInstallRegKey}"; ValueType: dword; ValueName: "ProtocolEnabled"; ValueData: "1"; Tasks: protocol; Flags: uninsdeletekeyifempty
 Root: HKA; Subkey: "{#MyAppClientAppPathsKey}"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName}"; Flags: uninsdeletekey
 Root: HKA; Subkey: "{#MyAppClientAppPathsKey}"; ValueType: string; ValueName: "Path"; ValueData: "{app}"; Flags: uninsdeletekey
-Root: HKA; Subkey: "{#MyAppProtocolRegKey}"; ValueType: string; ValueName: ""; ValueData: "URL:openPREY Protocol"; Tasks: protocol; Flags: uninsdeletekeyifempty
+Root: HKA; Subkey: "{#MyAppProtocolRegKey}"; ValueType: string; ValueName: ""; ValueData: "URL:openD3 Protocol"; Tasks: protocol; Flags: uninsdeletekeyifempty
 Root: HKA; Subkey: "{#MyAppProtocolRegKey}"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""; Tasks: protocol; Flags: uninsdeletekeyifempty
-Root: HKA; Subkey: "{#MyAppProtocolRegKey}"; ValueType: string; ValueName: "FriendlyTypeName"; ValueData: "openPREY Link"; Tasks: protocol; Flags: uninsdeletekeyifempty
+Root: HKA; Subkey: "{#MyAppProtocolRegKey}"; ValueType: string; ValueName: "FriendlyTypeName"; ValueData: "openD3 Link"; Tasks: protocol; Flags: uninsdeletekeyifempty
 Root: HKA; Subkey: "{#MyAppProtocolRegKey}\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"; Tasks: protocol; Flags: uninsdeletekey
 Root: HKA; Subkey: "{#MyAppProtocolRegKey}\shell"; ValueType: string; ValueName: ""; ValueData: "open"; Tasks: protocol; Flags: uninsdeletekeyifempty
-Root: HKA; Subkey: "{#MyAppProtocolRegKey}\shell\open"; ValueType: string; ValueName: ""; ValueData: "Open in openPREY"; Tasks: protocol; Flags: uninsdeletekeyifempty
+Root: HKA; Subkey: "{#MyAppProtocolRegKey}\shell\open"; ValueType: string; ValueName: ""; ValueData: "Open in openD3"; Tasks: protocol; Flags: uninsdeletekeyifempty
 Root: HKA; Subkey: "{#MyAppProtocolRegKey}\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Tasks: protocol; Flags: uninsdeletekey
 
 [Icons]
-Name: "{group}\openPREY"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
+Name: "{group}\openD3"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
 Name: "{group}\Dedicated Server"; Filename: "{app}\{#MyAppServerExeName}"; WorkingDir: "{app}"
 Name: "{group}\Documentation Portal"; Filename: "{app}\{#MyAppDocsFile}"
 Name: "{group}\Package Overview"; Filename: "{app}\README.html"
-Name: "{group}\Uninstall openPREY"; Filename: "{uninstallexe}"
-Name: "{autodesktop}\openPREY"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{group}\Uninstall openD3"; Filename: "{uninstallexe}"
+Name: "{autodesktop}\openD3"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\docs\index.html"; Description: "Open the release documentation"; Flags: postinstall shellexec skipifsilent
-Filename: "{app}\{#MyAppExeName}"; Description: "Launch openPREY"; WorkingDir: "{app}"; Flags: postinstall nowait skipifsilent unchecked
+Filename: "{app}\{#MyAppExeName}"; Description: "Launch openD3"; WorkingDir: "{app}"; Flags: postinstall nowait skipifsilent unchecked
 
 [Code]
 const
   openQ4InstallRegKey = '{#MyAppInstallRegKey}';
   openQ4ProtocolRegKey = '{#MyAppProtocolRegKey}';
-  openQ4DefaultInstallDir = '{localappdata}\Programs\openPREY';
+  openQ4DefaultInstallDir = '{localappdata}\Programs\openD3';
 
 function GetDefaultInstallDir(Param: String): String;
 var
@@ -125,7 +125,7 @@ begin
   RegQueryStringValue(HKEY_AUTO, openQ4InstallRegKey, 'InstallVersion', InstallVersion);
   RegQueryStringValue(HKEY_AUTO, openQ4InstallRegKey, 'InstallArch', InstallArch);
 
-  Result := 'Existing openPREY installation detected';
+  Result := 'Existing openD3 installation detected';
   if InstallVersion <> '' then
     Result := Result + ': version ' + InstallVersion;
   if InstallArch <> '' then

@@ -100,8 +100,8 @@ void BSESpawnTrace(const char* fmt, ...) {
 }
 
 void rvSegment::PlayEffect(rvBSE* effect, rvSegmentTemplate* st, float depthOffset) {
-#if defined(HUMANHEAD)
-	// OPENPREY-GATED(D3): nested BSE effects require Quake 4 idGame callbacks.
+#if defined(OPEND3)
+	// OPEND3-GATED(D3): nested BSE effects require Quake 4 idGame callbacks.
 	return;
 #else
 	// A child effect only starts while its owner is in an area connected to the

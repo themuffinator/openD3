@@ -25,14 +25,14 @@ def validate_building_packager_notes() -> None:
     require(source, "1.2.0 or newer", "BUILDING Meson floor")
     require(source, "libglew-dev", "BUILDING OpenGL development dependency")
     require(source, "libopenal-dev", "BUILDING OpenAL development dependency")
-    require(source, "OPENPREY_FORCE_X11=1", "BUILDING project XWayland fallback")
+    require(source, "OPEND3_FORCE_X11=1", "BUILDING project XWayland fallback")
     require(source, "`src/game/`, `src/Prey/` and `src/preyengine/`", "BUILDING canonical game source paths")
     require(source, "openq4_game_sources.json", "BUILDING canonical source inventory")
     require(source, "tools/build/meson_setup.sh", "BUILDING canonical Linux wrapper")
     require(source, "install -C builddir --no-rebuild --skip-subprojects", "BUILDING package staging command")
-    require(source, "openprey-<version-tag>-linux.tar.xz", "BUILDING Linux archive identity")
-    require(source, "openprey-<version-tag>-x86_64.AppImage", "BUILDING Linux AppImage identity")
-    require(source, "basepr/game_<arch>.(dll|so|dylib)", "BUILDING unified game module layout")
+    require(source, "opend3-<version-tag>-linux.tar.xz", "BUILDING Linux archive identity")
+    require(source, "opend3-<version-tag>-x86_64.AppImage", "BUILDING Linux AppImage identity")
+    require(source, "baseod3/game_<arch>.(dll|so|dylib)", "BUILDING unified game module layout")
 
 
 def validate_platform_support() -> None:
@@ -41,8 +41,8 @@ def validate_platform_support() -> None:
     require(source, "Linux x64", "platform support Linux lane")
     require(source, "Retail gameplay validation pending", "platform support runtime boundary")
     require(source, "SDL3 may use Wayland or X11", "platform support display stack")
-    require(source, "OPENPREY_FORCE_X11=1", "platform support XWayland fallback")
-    require(source, "OPENPREY_WAYLAND_DISABLE_LIBDECOR=1", "platform support libdecor fallback")
+    require(source, "OPEND3_FORCE_X11=1", "platform support XWayland fallback")
+    require(source, "OPEND3_WAYLAND_DISABLE_LIBDECOR=1", "platform support libdecor fallback")
     require(source, "Legacy `OPENQ4_*` names remain temporary migration aliases only", "platform support migration boundary")
 
 
@@ -51,8 +51,8 @@ def validate_plan_status() -> None:
 
     require(source, "## Explicit deferral register", "rebase status ledger")
     require(source, "TODO-RELEASE-LANES", "rebase release-lane deferral")
-    require(source, "OpenPrey-game", "rebase release-lane companion contract")
-    require(source, "basepr", "rebase release-lane runtime layout")
+    require(source, "OpenD3-GameLibs", "rebase release-lane companion contract")
+    require(source, "baseod3", "rebase release-lane runtime layout")
     require(source, "one `game_<arch>` module", "rebase release-lane module contract")
 
 
@@ -71,7 +71,7 @@ def validate_ci_wiring() -> None:
 def validate_release_note() -> None:
     source = read("docs/dev/release-completion.md")
 
-    require(source, "Archive/AppImage tooling is rebranded for openPREY", "release completion notes")
+    require(source, "Archive/AppImage tooling is rebranded for openD3", "release completion notes")
     require(source, "Wayland/X11 runtime boundaries", "release completion notes")
     require(source, "publication lanes", "release completion notes")
 

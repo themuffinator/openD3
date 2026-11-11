@@ -32,7 +32,7 @@ static const char *r_renderApiArgs[] = { "best", "gl", "vulkan", "gl-module", "g
 #define OPENQ4_DEFAULT_RENDER_API	"gles"
 static const rendererModuleApi_t rm_platformDefaultApi = RENDER_MODULE_API_GLES;
 #else
-// openPREY: retail Prey interaction stages are ARB programs that only the
+// openD3: retail Prey interaction stages are ARB programs that only the
 // OpenGL ARB2 path executes; Vulkan fails them closed. "best" therefore means
 // OpenGL on desktop until Vulkan parity lands (docs/dev/prey-rebase/plan.md, D2).
 #define OPENQ4_DEFAULT_RENDER_API	"best"

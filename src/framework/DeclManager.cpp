@@ -79,7 +79,7 @@ static idDecl *openQ4_AllocEffectDecl( void ) {
 		common->FatalError( "DECL_EFFECT allocator returned NULL." );
 	}
 
-	if ( !openPREY_IsIntegratedBSEDeclEffect( decl ) ) {
+	if ( !openD3_IsIntegratedBSEDeclEffect( decl ) ) {
 		delete decl;
 		common->FatalError( "DECL_EFFECT allocator returned a non-BSE decl instance." );
 	}
@@ -1459,7 +1459,6 @@ void idDeclManagerLocal::Init( void ) {
 // jmarshall: Raven Decl Support
 	RegisterDeclType( "fx",					DECL_FX,			idDeclAllocator<idDeclFX> );
 	RegisterDeclType( "particle",			DECL_PARTICLE,		idDeclAllocator<idDeclParticle> );
-	RegisterDeclType( "beam",				DECL_BEAM,			idDeclAllocator<hhDeclBeam> );
 // jmarshall end
 	RegisterDeclType( "articulatedFigure",	DECL_AF,			idDeclAllocator<idDeclAF> );
 	RegisterDeclType( "pda",				DECL_PDA,			idDeclAllocator<idDeclPDA> );
@@ -1486,7 +1485,6 @@ void idDeclManagerLocal::Init( void ) {
 		RegisterDeclFolderWrapper( "effects",			".fx",			DECL_EFFECT, true );
 		RegisterDeclFolderWrapper( "fx",					".fx",			DECL_FX );
 		RegisterDeclFolderWrapper( "particles",			".prt",			DECL_PARTICLE );
-		RegisterDeclFolderWrapper( "beams",				".beam",		DECL_BEAM );
 // jmarshall end
 	}
 
@@ -1510,7 +1508,6 @@ void idDeclManagerLocal::Init( void ) {
 	cmdSystem->AddCommand( "listEntityDefs", idListDecls_f<DECL_ENTITYDEF>, CMD_FL_SYSTEM, "lists entity defs", idCmdSystem::ArgCompletion_String<listDeclStrings> );
 	cmdSystem->AddCommand( "listFX", idListDecls_f<DECL_FX>, CMD_FL_SYSTEM, "lists FX systems", idCmdSystem::ArgCompletion_String<listDeclStrings> );
 	cmdSystem->AddCommand( "listParticles", idListDecls_f<DECL_PARTICLE>, CMD_FL_SYSTEM, "lists particle systems", idCmdSystem::ArgCompletion_String<listDeclStrings> );
-	cmdSystem->AddCommand( "listBeams", idListDecls_f<DECL_BEAM>, CMD_FL_SYSTEM, "lists beam systems", idCmdSystem::ArgCompletion_String<listDeclStrings> );
 	cmdSystem->AddCommand( "listAF", idListDecls_f<DECL_AF>, CMD_FL_SYSTEM, "lists articulated figures", idCmdSystem::ArgCompletion_String<listDeclStrings>);
 	cmdSystem->AddCommand( "listPDAs", idListDecls_f<DECL_PDA>, CMD_FL_SYSTEM, "lists PDAs", idCmdSystem::ArgCompletion_String<listDeclStrings> );
 	cmdSystem->AddCommand( "listEmails", idListDecls_f<DECL_EMAIL>, CMD_FL_SYSTEM, "lists Emails", idCmdSystem::ArgCompletion_String<listDeclStrings> );
@@ -1529,7 +1526,6 @@ void idDeclManagerLocal::Init( void ) {
 	cmdSystem->AddCommand( "printEntityDef", idPrintDecls_f<DECL_ENTITYDEF>, CMD_FL_SYSTEM, "prints an entity def", idCmdSystem::ArgCompletion_Decl<DECL_ENTITYDEF> );
 	cmdSystem->AddCommand( "printFX", idPrintDecls_f<DECL_FX>, CMD_FL_SYSTEM, "prints an FX system", idCmdSystem::ArgCompletion_Decl<DECL_FX> );
 	cmdSystem->AddCommand( "printParticle", idPrintDecls_f<DECL_PARTICLE>, CMD_FL_SYSTEM, "prints a particle system", idCmdSystem::ArgCompletion_Decl<DECL_PARTICLE> );
-	cmdSystem->AddCommand( "printBeam", idPrintDecls_f<DECL_BEAM>, CMD_FL_SYSTEM, "prints a beam", idCmdSystem::ArgCompletion_Decl<DECL_BEAM> );
 	cmdSystem->AddCommand( "printAF", idPrintDecls_f<DECL_AF>, CMD_FL_SYSTEM, "prints an articulated figure", idCmdSystem::ArgCompletion_Decl<DECL_AF> );
 	cmdSystem->AddCommand( "printPDA", idPrintDecls_f<DECL_PDA>, CMD_FL_SYSTEM, "prints an PDA", idCmdSystem::ArgCompletion_Decl<DECL_PDA> );
 	cmdSystem->AddCommand( "printEmail", idPrintDecls_f<DECL_EMAIL>, CMD_FL_SYSTEM, "prints an Email", idCmdSystem::ArgCompletion_Decl<DECL_EMAIL> );

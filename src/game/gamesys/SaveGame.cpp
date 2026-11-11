@@ -539,7 +539,7 @@ void idSaveGame::WriteRenderEntity( const renderEntity_t &renderEntity ) {
 	WriteBool( renderEntity.noDynamicInteractions );
 	WriteBool( renderEntity.weaponDepthHack );
 
-	WriteInt( renderEntity.forceUpdate );
+	WriteBool( renderEntity.forceUpdate );
 }
 
 /*
@@ -649,7 +649,7 @@ void idSaveGame::WriteUsercmd( const usercmd_t &usercmd ) {
 	WriteInt( usercmd.gameFrame );
 	WriteInt( usercmd.gameTime );
 	WriteInt( usercmd.duplicateCount );
-	WriteByte( usercmd.buttons );
+	WriteShort( usercmd.buttons );
 	WriteSignedChar( usercmd.forwardmove );
 	WriteSignedChar( usercmd.rightmove );
 	WriteSignedChar( usercmd.upmove );
@@ -1312,7 +1312,7 @@ void idRestoreGame::ReadRenderEntity( renderEntity_t &renderEntity ) {
 	ReadBool( renderEntity.noDynamicInteractions );
 	ReadBool( renderEntity.weaponDepthHack );
 
-	ReadInt( renderEntity.forceUpdate );
+	ReadBool( renderEntity.forceUpdate );
 }
 
 /*
@@ -1420,7 +1420,7 @@ void idRestoreGame::ReadUsercmd( usercmd_t &usercmd ) {
 	ReadInt( usercmd.gameFrame );
 	ReadInt( usercmd.gameTime );
 	ReadInt( usercmd.duplicateCount );
-	ReadByte( usercmd.buttons );
+	ReadShort( usercmd.buttons );
 	ReadSignedChar( usercmd.forwardmove );
 	ReadSignedChar( usercmd.rightmove );
 	ReadSignedChar( usercmd.upmove );

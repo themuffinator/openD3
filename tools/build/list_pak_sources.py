@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""List openPREY PK4 source files for diagnostics and legacy Meson dependency checks."""
+"""List openD3 PK4 source files for diagnostics and legacy Meson dependency checks."""
 
 from __future__ import annotations
 

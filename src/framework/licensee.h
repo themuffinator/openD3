@@ -11,20 +11,20 @@
 
 // RAVEN BEGIN
 // rjohnson: this is the name of the game we are making
-#define PROJECT_NAME					"openPREY"
+#define PROJECT_NAME					"openD3"
 #define PROJECT_AUTHOR					"themuffinator"
 #define PROJECT_COMPANY				"DarkMatter Productions"
 #define PROJECT_VERSION				OPENQ4_VERSION_SHORT
 #define PROJECT_VERSION_FULL			OPENQ4_VERSION
 #define PROJECT_VERSION_DATE			OPENQ4_VERSION_DATE
 #define PROJECT_WEBSITE				"www.darkmatter-quake.com"
-#define PROJECT_REPO					"https://github.com/themuffinator/openPREY"
+#define PROJECT_REPO					"https://github.com/themuffinator/openD3"
 #define PROJECT_RELEASES_URL			PROJECT_REPO "/releases"
 
 #define GAME_NAME						PROJECT_NAME			// appears on errors and secondary windows
-#define GAME_ICON						"assets/icons/prey.ico"
+#define GAME_ICON						"assets/icons/doom3.ico"
 
-// caption of the main game window: "openPREY - Version: 0.0.1-dev (2026-11-10)"
+// caption of the main game window: "openD3 - Version: 0.0.1-dev (2026-11-10)"
 #define GAME_WINDOW_TITLE				PROJECT_NAME " - Version: " PROJECT_VERSION " (" PROJECT_VERSION_DATE ")"
 
 #define ENGINE_VERSION					PROJECT_NAME " " PROJECT_VERSION
@@ -46,15 +46,17 @@
 #endif
 
 // paths
-#define	CD_BASEDIR						"openPREY"
+#define	CD_BASEDIR						"openD3"
 #define	BASE_GAMEDIR					"base"
 #define	BASE_MPGAMEDIR					"base"
-#define OPENPREY_GAMEDIR				"basepr"
-// Compatibility macro retained while inherited engine call sites are renamed.
-#define OPENQ4_GAMEDIR					OPENPREY_GAMEDIR
+// BASE_GAMEDIR holds the retail Doom 3 paks; OPEND3_GAMEDIR holds openD3's
+// own game module and runtime content.
+#define OPEND3_GAMEDIR					"baseod3"
+// Name used by engine call sites shared with upstream openQ4.
+#define OPENQ4_GAMEDIR					OPEND3_GAMEDIR
 #define	DEMO_GAMEDIR					"demo"
-#define	GAME_PLAYERDEFNAME				"player_tommy"
-#define GAME_PLAYERDEFNAME_MP			"player_tommy_mp"
+#define	GAME_PLAYERDEFNAME				"player_doommarine"
+#define GAME_PLAYERDEFNAME_MP			"player_doommarine_mp"
 
 // filenames
 #if defined( _M_X64 ) || defined( __x86_64__ )
@@ -68,15 +70,14 @@
 #endif
 #define	CD_EXE							PROJECT_NAME "-client_" OPENQ4_BINARY_ARCH ".exe"
 
-// Read-only compatibility names for settings written before the openPREY casing settled.
+// LEGACY_CONFIG_FILE is the name builds wrote before the openD3 casing settled.
+// It is only ever read, to carry settings forward on case-sensitive filesystems.
 #ifdef _XENON
-#define CONFIG_FILE						"save:/openPREYConfig.cfg"
-#define INTERIM_CONFIG_FILE				"save:/OpenPREYConfig.cfg"
-#define LEGACY_CONFIG_FILE				"save:/OpenPreyConfig.cfg"
+#define CONFIG_FILE						"save:/openD3Config.cfg"
+#define LEGACY_CONFIG_FILE				"save:/OpenD3Config.cfg"
 #else
-#define CONFIG_FILE						"openPREYConfig.cfg"
-#define INTERIM_CONFIG_FILE				"OpenPREYConfig.cfg"
-#define LEGACY_CONFIG_FILE				"OpenPreyConfig.cfg"
+#define CONFIG_FILE						"openD3Config.cfg"
+#define LEGACY_CONFIG_FILE				"OpenD3Config.cfg"
 #endif
 
 // base folder where the source code lives
@@ -133,9 +134,9 @@
 #define ASYNC_PROTOCOL_MAJOR			2
 // RAVEN END
 
-// Savegame header compatibility. New openPREY saves use the Prey name while the
-// inherited Quake 4 and legacy openQ4 names remain readable during migration.
-#define SAVEGAME_GAME_NAME_PREY				"Prey"
+// Savegame header compatibility. New openD3 saves carry the Doom 3 name; the
+// names inherited from the openQ4 engine stay recognised by the shared reader.
+#define SAVEGAME_GAME_NAME_DOOM3				"Doom3"
 #define SAVEGAME_GAME_NAME_RETAIL				"Quake4"
 #define SAVEGAME_GAME_NAME_LEGACY_OPENQ4		"openQ4"
 #define SAVEGAME_VERSION						1834
@@ -146,21 +147,21 @@
 #define EDITOR_WINDOWTEXT				"QuakeEdit"
 
 // win32 info
-#define WIN32_CONSOLE_CLASS				"openPREY WinConsole"
-#define WIN32_SPLASH_CLASS				"openPREY Splash"
-#define	WIN32_WINDOW_CLASS_NAME			"openPREY"
-#define	WIN32_FAKE_WINDOW_CLASS_NAME	"OPENPREY_WGL_FAKE"
+#define WIN32_CONSOLE_CLASS				"openD3 WinConsole"
+#define WIN32_SPLASH_CLASS				"openD3 Splash"
+#define	WIN32_WINDOW_CLASS_NAME			"openD3"
+#define	WIN32_FAKE_WINDOW_CLASS_NAME	"OPEND3_WGL_FAKE"
 
 #ifdef __linux__
-	#define DEFAULT_BASE_PATH				"/usr/local/games/basepr"
+	#define DEFAULT_BASE_PATH				"/usr/local/games/opend3"
 #elif defined( MACOS_X )
-	#define DEFAULT_BASE_PATH				"/Applications/openPREY"
+	#define DEFAULT_BASE_PATH				"/Applications/openD3"
 #endif
 
 // CD Key file info
-#define CDKEY_FILE						"preykey"
+#define CDKEY_FILE						"doomkey"
 #define CDKEY_TEXT						"\n// Do not give this file to ANYONE.\n" \
-										"// Human Head Studios and 2K Games will NOT ask you to send this file to them.\n"
+										"// id Software and Activision will NOT ask you to send this file to them.\n"
 
 // FIXME: Update to Doom
 // Product ID. Stored in "productid.txt".
@@ -171,44 +172,3 @@
 #define PRODUCT_ID_LENGTH				152
 
 #define CONFIG_SPEC						"config.spec"
-
-// Prey compatibility feature toggles.
-#define SINGLE_MAP_BUILD				1
-#define PARTICLE_BOUNDS					1
-#define SOUND_TOOLS_BUILD				1
-#define GUIS_IN_DEMOS					1
-#define MUSICAL_LEVELLOADS				1
-#define GAMEPORTAL_PVS					1
-#define GAMEPORTAL_SOUND				1
-#define DEATHWALK_AUTOLOAD				1
-#define AUTOMAP							0
-#define _HH_RENDERDEMO_HACKS			1
-#define _HH_CLIP_FASTSECTORS			1
-#define NEW_MESH_TRANSFORM				1
-#define SIMD_SHADOW						0
-#define MULTICORE						0
-#define DEBUG_SOUND_LOG					0
-#define _HH_SECUROM						0
-#define _HH_INLINED_PROC_CLIPMODELS		0
-
-#ifdef ID_DEDICATED
-#define _HH_MYGAMES_SAVES				0
-#else
-#define _HH_MYGAMES_SAVES				1
-#endif
-
-#if 1
-#define GOLD								1
-#define CONSOLE_IDENTITY				0
-#define REMOTE_DMAP						0
-#else
-#define GOLD								0
-#define CONSOLE_IDENTITY				1
-#define REMOTE_DMAP						1
-#endif
-
-#ifdef _GERMAN_BUILD_
-	#define GERMAN_VERSION				1
-#else
-	#define GERMAN_VERSION				0
-#endif

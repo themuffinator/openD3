@@ -53,7 +53,7 @@ If you have questions concerning this license or the applicable additional terms
 
 	The base path for file saving can be set to "fs_savepath", "fs_cdpath", or
 	"fs_devpath". When set, fs_devpath is the highest-priority loose-file search
-	root and must contain the selected game directory (for example basepr/).
+	root and must contain the selected game directory (for example baseod3/).
 
 ===============================================================================
 */
@@ -249,9 +249,9 @@ public:
 	const char *			GetReleaseDate( int index ) const { return mods[index].releaseDate.c_str(); }
 	const char *			GetWebsite( int index ) const { return mods[index].website.c_str(); }
 	const char *			GetAuthor( int index ) const { return mods[index].author.c_str(); }
-	const char *			GetRequiredopenPREYVersion( int index ) const { return mods[index].requiredopenQ4Version.c_str(); }
+	const char *			GetRequiredopenD3Version( int index ) const { return mods[index].requiredopenQ4Version.c_str(); }
 	// Temporary source-compatibility alias for callers using the inherited API.
-	const char *			GetRequiredopenQ4Version( int index ) const { return GetRequiredopenPREYVersion( index ); }
+	const char *			GetRequiredopenQ4Version( int index ) const { return GetRequiredopenD3Version( index ); }
 	const idModInfo &		GetInfo( int index ) const { return mods[index]; }
 
 private:

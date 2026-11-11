@@ -366,7 +366,7 @@ public:
 
 	// get clip handle for model
 	virtual idCollisionModel *LoadModel(const char* mapName, const char *modelName, const bool precache = false );
-	virtual idCollisionModel *LoadModel( const char *modelName, const bool precache = false ) {
+	virtual idCollisionModel *LoadModelForCurrentMap( const char *modelName, const bool precache = false ) {
 		return LoadModel( mapName.c_str(), modelName, precache );
 	}
 	virtual idCollisionModel *ExtractCollisionModel( idRenderModel *renderModel, const char *modelName );

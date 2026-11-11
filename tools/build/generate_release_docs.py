@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate packaged HTML documentation for openPREY releases."""
+"""Generate packaged HTML documentation for openD3 releases."""
 
 from __future__ import annotations
 
@@ -614,9 +614,9 @@ class GeneratedDocSite:
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Generate packaged HTML documentation for an openPREY release."
+        description="Generate packaged HTML documentation for an openD3 release."
     )
-    parser.add_argument("--source-root", default=".", help="openPREY repository root.")
+    parser.add_argument("--source-root", default=".", help="openD3 repository root.")
     parser.add_argument("--output-dir", required=True, help="Directory to populate with HTML docs.")
     parser.add_argument("--version", required=True, help="Release version string.")
     parser.add_argument("--platform", required=True, help="Target package platform.")
@@ -995,7 +995,7 @@ def build_doc_specs(source_root: Path) -> list[DocSpec]:
         if not summary and relative == Path("README.md"):
             summary = (
                 "Project overview, runtime scope, compatibility goals, and the main "
-                "documentation map for openPREY."
+                "documentation map for openD3."
             )
         specs.append(
             DocSpec(
@@ -1114,7 +1114,7 @@ def render_doc_page(
     summary_html = (
         f'<p class="lead">{html.escape(spec.summary)}</p>'
         if spec.summary
-        else '<p class="lead">Included in the packaged openPREY offline documentation set.</p>'
+        else '<p class="lead">Included in the packaged openD3 offline documentation set.</p>'
     )
 
     return "\n".join(
@@ -1125,7 +1125,7 @@ def render_doc_page(
             '  <meta charset="UTF-8">',
             '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
             '  <meta name="color-scheme" content="dark">',
-            f"  <title>{html.escape(spec.title)} | openPREY Documentation</title>",
+            f"  <title>{html.escape(spec.title)} | openD3 Documentation</title>",
             f'  <link rel="stylesheet" href="{html.escape(css_href)}">',
             "</head>",
             "<body>",
@@ -1133,14 +1133,14 @@ def render_doc_page(
             '    <header class="topbar">',
             '      <div class="brand">',
             '        <span class="eyebrow">Packaged HTML documentation</span>',
-            f'        <a class="brand-title" href="{html.escape(docs_home_href)}">openPREY Documentation</a>',
+            f'        <a class="brand-title" href="{html.escape(docs_home_href)}">openD3 Documentation</a>',
             f'        <div class="brand-subtitle">Release {html.escape(version)} · {html.escape(platform)} · {html.escape(arch)}</div>',
             "      </div>",
             '      <div class="action-row">',
             f'        <a class="button primary" href="{html.escape(docs_home_href)}">Docs Home</a>',
             f'        <a class="button" href="{html.escape(overview_href)}">Project Overview</a>',
             f'        <a class="button" href="{html.escape(package_home_href)}">Package Home</a>',
-            '        <a class="button" href="https://github.com/themuffinator/OpenPrey">GitHub</a>',
+            '        <a class="button" href="https://github.com/themuffinator/openD3">GitHub</a>',
             "      </div>",
             "    </header>",
             '    <div class="layout">',
@@ -1166,7 +1166,7 @@ def render_doc_page(
             "      </aside>",
             "    </div>",
             '    <footer class="footer">',
-            f'      <p>Offline release documentation generated from the openPREY repository sources for version <strong>{html.escape(version)}</strong>.</p>',
+            f'      <p>Offline release documentation generated from the openD3 repository sources for version <strong>{html.escape(version)}</strong>.</p>',
             f'      <p><a href="{html.escape(docs_home_href)}">Documentation home</a> | <a href="{html.escape(package_home_href)}">Package home</a> | <a href="https://www.darkmatter-quake.com">Website</a></p>',
             "    </footer>",
             "  </div>",
@@ -1225,7 +1225,7 @@ def render_index_page(
             '  <meta charset="UTF-8">',
             '  <meta name="viewport" content="width=device-width, initial-scale=1.0">',
             '  <meta name="color-scheme" content="dark">',
-            "  <title>openPREY Documentation Portal</title>",
+            "  <title>openD3 Documentation Portal</title>",
             '  <link rel="stylesheet" href="_static/site.css">',
             "</head>",
             "<body>",
@@ -1233,7 +1233,7 @@ def render_index_page(
             '    <header class="topbar">',
             '      <div class="brand">',
             '        <span class="eyebrow">Offline HTML documentation</span>',
-            '        <a class="brand-title" href="index.html">openPREY Documentation Portal</a>',
+            '        <a class="brand-title" href="index.html">openD3 Documentation Portal</a>',
             f'        <div class="brand-subtitle">Release {html.escape(version)} · {html.escape(platform)} · {html.escape(arch)} · {len(specs)} documents</div>',
             "      </div>",
             '      <div class="action-row">',
@@ -1244,8 +1244,8 @@ def render_index_page(
             "      </div>",
             "    </header>",
             '    <section class="hero">',
-            '      <img class="hero-banner" src="assets/docs/img/banner.png" alt="openPREY banner">',
-            '      <span class="eyebrow">openPREY Release Documentation</span>',
+            '      <img class="hero-banner" src="assets/docs/img/banner.png" alt="openD3 banner">',
+            '      <span class="eyebrow">openD3 Release Documentation</span>',
             '      <h1>Full offline HTML docs, shipped with the release package.</h1>',
             '      <p class="lead">This package includes the project overview, build and technical references, user guides, developer notes, and proposal research converted into a browsable HTML site with internal links preserved.</p>',
             '      <div class="hero-actions">',
@@ -1268,7 +1268,7 @@ def render_index_page(
             "    </section>",
             '    <footer class="footer">',
             '      <p>These pages are bundled directly into the release archive so the package remains self-documenting even when viewed offline.</p>',
-            '      <p><a href="../README.html">Package home</a> | <a href="https://github.com/themuffinator/OpenPrey">Repository</a> | <a href="https://www.darkmatter-quake.com">Website</a></p>',
+            '      <p><a href="../README.html">Package home</a> | <a href="https://github.com/themuffinator/openD3">Repository</a> | <a href="https://www.darkmatter-quake.com">Website</a></p>',
             "    </footer>",
             "  </div>",
             "</body>",
@@ -1426,7 +1426,7 @@ def main(argv: list[str]) -> int:
         platform=args.platform,
         arch=args.arch,
     )
-    print(f"Generated openPREY HTML docs: {result.index_path} ({result.page_count} pages)")
+    print(f"Generated openD3 HTML docs: {result.index_path} ({result.page_count} pages)")
     return 0
 
 

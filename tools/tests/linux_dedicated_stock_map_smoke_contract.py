@@ -50,12 +50,12 @@ def main() -> None:
         "host_evidence = collect_linux_host_evidence()",
         "reject_virtualized_physical_attestation(host_evidence)",
         '"packaged runtime architecture mismatch:',
-        '("packaged openPREY mod manifest", mod_manifest)',
-        '("packaged openPREY pak0.pk4", openprey_pak0)',
-        '("packaged openPREY pak1.pk4", openprey_pak1)',
+        '("packaged openD3 mod manifest", mod_manifest)',
+        '("packaged openD3 pak0.pk4", opend3_pak0)',
+        '("packaged openD3 pak1.pk4", opend3_pak1)',
         'install_root / "base"',
         '"refusing stock-map evidence because the staged package contains retail base overrides:',
-        'home / ".local" / "share" / "openprey"',
+        'home / ".local" / "share" / "opend3"',
         "server_command = [str(dedicated)]",
         "client_command = [str(client)]",
         '("sys_consoleWindow", "0")',
@@ -69,11 +69,11 @@ def main() -> None:
         "stat.S_ISSOCK(socket_mode)",
         '"Wayland display path is not a live Unix socket:',
         'client_environment.pop("DISPLAY", None)',
-        'client_environment.pop("OPENPREY_FORCE_X11", None)',
+        'client_environment.pop("OPEND3_FORCE_X11", None)',
         'server_environment.pop(name, None)',
-        'tempfile.TemporaryDirectory(prefix=f"openprey-ded-xdg-{arch}-")',
+        'tempfile.TemporaryDirectory(prefix=f"opend3-ded-xdg-{arch}-")',
         '"XDG_RUNTIME_DIR": str(server_runtime)',
-        'SERVER_VIDEO_DRIVER_CANARY = "openprey-dedicated-must-not-init-video"',
+        'SERVER_VIDEO_DRIVER_CANARY = "opend3-dedicated-must-not-init-video"',
         'server_environment["SDL_VIDEO_DRIVER"] = SERVER_VIDEO_DRIVER_CANARY',
         'server_environment["SDL_VIDEODRIVER"] = SERVER_VIDEO_DRIVER_CANARY',
         'private dedicated XDG runtime socket path would exceed the Linux limit',
@@ -148,7 +148,7 @@ def main() -> None:
         "shared validation host-evidence behavior coverage",
     )
     require(status_ledger, "TODO-RELEASE-LANES", "release-lane deferral policy")
-    # openPREY-ded is always a dedicated server; the client is one with
+    # openD3-ded is always a dedicated server; the client is one with
     # net_serverDedicated 1 and no device, and skips the same presentation.
     require(
         session,

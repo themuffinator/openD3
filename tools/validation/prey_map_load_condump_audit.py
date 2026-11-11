@@ -242,12 +242,12 @@ def load_manifest(path: Path) -> list[MapEntry]:
 def default_executable(install_root: Path) -> Path:
     system = platform.system().lower()
     if system == "windows":
-        return install_root / "openPREY-client_x64.exe"
-    return install_root / "openPREY-client_x64"
+        return install_root / "openD3-client_x64.exe"
+    return install_root / "openD3-client_x64"
 
 
 def detect_basepath() -> str:
-    env = os.environ.get("OPENPREY_PREY_BASEPATH") or os.environ.get("PREY_BASEPATH")
+    env = os.environ.get("OPEND3_PREY_BASEPATH") or os.environ.get("PREY_BASEPATH")
     if env and Path(env).exists():
         return str(Path(env).resolve())
 
@@ -287,9 +287,9 @@ def detect_basepath() -> str:
 def write_post_load_cfg(savepath: Path, safe_id: str, settle_ms: int) -> str:
     cfg_rel = f"map-load-audit/{safe_id}.cfg"
     condump_rel = f"logs/condumps/{safe_id}.txt"
-    cfg_path = savepath / "basepr" / Path(cfg_rel.replace("/", os.sep))
+    cfg_path = savepath / "baseod3" / Path(cfg_rel.replace("/", os.sep))
     cfg_path.parent.mkdir(parents=True, exist_ok=True)
-    (savepath / "basepr" / "logs" / "condumps").mkdir(parents=True, exist_ok=True)
+    (savepath / "baseod3" / "logs" / "condumps").mkdir(parents=True, exist_ok=True)
     cfg_path.write_text(
         "\n".join(
             (
@@ -328,7 +328,7 @@ def build_args(
     append_set(args, "g_autoScreenshot", "0")
     append_set(args, "fs_savepath", str(savepath))
     append_set(args, "fs_devpath", str(install_root))
-    append_set(args, "fs_game", "basepr")
+    append_set(args, "fs_game", "baseod3")
     append_set(args, "r_renderApi", renderer_api)
     if basepath:
         append_set(args, "fs_basepath", basepath)
@@ -407,7 +407,7 @@ def normalize_issue(line: str, *, run_root: Path, basepath: str) -> str:
         normalized = normalized.replace(source.replace("\\", "/"), target)
     normalized = normalized.replace("\\", "/")
     normalized = re.sub(
-        r"(?i)(non-portable: path contains uppercase characters: )(?:basepr|base)/",
+        r"(?i)(non-portable: path contains uppercase characters: )(?:baseod3|base)/",
         r"\1<game-root>/",
         normalized,
     )
@@ -779,7 +779,7 @@ def write_audit_markdown(
     lines.append(f"- Map manifest: {code(rel(args.manifest))}")
     lines.append(f"- Renderer API: {code(args.renderer_api)}")
     lines.append(f"- Retail asset root: {code(args.basepath or '(engine auto-discovery)')}")
-    lines.append(f"- openPREY install root: {code(rel(args.install_root))}")
+    lines.append(f"- openD3 install root: {code(rel(args.install_root))}")
     lines.append(f"- Raw audit output: {code(rel(run_root))}")
     lines.append(f"- Per-map timeout: {args.timeout:.0f}s")
     lines.append(f"- Post-load settle time before conDump: {args.settle_ms}ms")
@@ -990,14 +990,14 @@ def launch_map(
     elapsed = time.monotonic() - started
     log_path = find_first_existing(
         (
-            savepath / "basepr" / "logs" / log_name,
+            savepath / "baseod3" / "logs" / log_name,
             savepath / "base" / "logs" / log_name,
             savepath / "logs" / log_name,
         )
     )
     condump_path = find_first_existing(
         (
-            savepath / "basepr" / "logs" / "condumps" / f"{safe_id}.txt",
+            savepath / "baseod3" / "logs" / "condumps" / f"{safe_id}.txt",
             savepath / "base" / "logs" / "condumps" / f"{safe_id}.txt",
             savepath / "logs" / "condumps" / f"{safe_id}.txt",
         )
@@ -1074,14 +1074,14 @@ def reuse_map_result(
     stderr_path = resolve_report_path(previous.get("stderr")) or (run_root / "stderr" / f"{safe_id}.err.txt")
     log_path = resolve_report_path(previous.get("log")) or find_first_existing(
         (
-            savepath / "basepr" / "logs" / f"{safe_id}.log",
+            savepath / "baseod3" / "logs" / f"{safe_id}.log",
             savepath / "base" / "logs" / f"{safe_id}.log",
             savepath / "logs" / f"{safe_id}.log",
         )
     )
     condump_path = resolve_report_path(previous.get("conDump")) or find_first_existing(
         (
-            savepath / "basepr" / "logs" / "condumps" / f"{safe_id}.txt",
+            savepath / "baseod3" / "logs" / "condumps" / f"{safe_id}.txt",
             savepath / "base" / "logs" / "condumps" / f"{safe_id}.txt",
             savepath / "logs" / "condumps" / f"{safe_id}.txt",
         )

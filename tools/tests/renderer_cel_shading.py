@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Contract checks for openPREY cel shading.
+"""Contract checks for openD3 cel shading.
 
 Two things are pinned here. First, the band ladder: the CPU helper, the three
 interaction shaders and this file all have to agree on where a band boundary
@@ -17,7 +17,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 RENDERER = ROOT / "src" / "renderer"
-GLPROGS = ROOT / "content" / "basepr" / "pak0" / "glprogs"
+GLPROGS = ROOT / "content" / "baseod3" / "pak0" / "glprogs"
 
 CEL_MIN_BANDS = 2
 CEL_MAX_BANDS = 8

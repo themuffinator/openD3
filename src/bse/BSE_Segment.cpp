@@ -592,7 +592,7 @@ bool rvSegment::Check(rvBSE* effect, float time, float offset) {
 	case SEG_TUNNEL:
 	case SEG_DOUBLEVISION:
 		if (game) {
-#if !defined(HUMANHEAD)
+#if !defined(OPEND3)
 			int viewEffect = VIEWEFFECT_SHAKE;
 			if (st->mSegType == SEG_TUNNEL) {
 				viewEffect = VIEWEFFECT_TUNNEL;

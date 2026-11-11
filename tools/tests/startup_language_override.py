@@ -129,39 +129,39 @@ def validate_config_filename_migration_contract() -> None:
     licensee = read("src/framework/licensee.h")
     exact_name = function_body(
         source,
-        "static bool openPREY_SavePathHasExactFilename( const char *relativeFilename ) {",
+        "static bool openD3_SavePathHasExactFilename( const char *relativeFilename ) {",
     )
     exec_config = function_body(
         source,
-        "static bool openPREY_ExecConfigFromSavePath( const char *relativeFilename ) {",
+        "static bool openD3_ExecConfigFromSavePath( const char *relativeFilename ) {",
     )
     normalize_case = function_body(
         source,
-        "static bool openPREY_NormalizeConfigFilenameCase( const char *loadedFilename ) {",
+        "static bool openD3_NormalizeConfigFilenameCase( const char *loadedFilename ) {",
     )
     init_game = function_body(source, "void idCommonLocal::InitGame( void ) {")
 
-    require(licensee, '"openPREYConfig.cfg"', "canonical config filename")
+    require(licensee, '"openD3Config.cfg"', "canonical config filename")
     require(licensee, '"OpenPREYConfig.cfg"', "interim config filename")
     require(licensee, '"OpenPreyConfig.cfg"', "legacy config filename")
     require(exact_name, "Sys_ListFiles( directory.c_str(), \"\", entries )", "case-exact savepath probe")
     require(exact_name, "idStr::Cmp( entries[i].c_str(), filename.c_str() ) == 0", "case-sensitive filename match")
-    require(exec_config, "openPREY_SavePathHasExactFilename( relativeFilename )", "config execution case guard")
+    require(exec_config, "openD3_SavePathHasExactFilename( relativeFilename )", "config execution case guard")
     require(normalize_case, "rename( loadedOSPath.c_str(), temporaryOSPath.c_str() )", "case-only migration first rename")
     require(normalize_case, "rename( temporaryOSPath.c_str(), canonicalOSPath.c_str() )", "case-only migration canonical rename")
     require(normalize_case, "rename( temporaryOSPath.c_str(), loadedOSPath.c_str() )", "failed migration rollback")
     require(init_game, "legacyConfigNameToMigrate = INTERIM_CONFIG_FILE;", "interim config migration selection")
     require(init_game, "legacyConfigNameToMigrate = LEGACY_CONFIG_FILE;", "legacy config migration selection")
-    require(init_game, "openPREY_NormalizeConfigFilenameCase( legacyConfigNameToMigrate );", "runtime filename normalization")
+    require(init_game, "openD3_NormalizeConfigFilenameCase( legacyConfigNameToMigrate );", "runtime filename normalization")
     require_order(
         init_game,
         "cmdSystem->ExecuteCommandBuffer();",
-        "openPREY_NormalizeConfigFilenameCase( legacyConfigNameToMigrate );",
+        "openD3_NormalizeConfigFilenameCase( legacyConfigNameToMigrate );",
         "legacy config executes before its filename is normalized",
     )
     require_order(
         init_game,
-        "openPREY_NormalizeConfigFilenameCase( legacyConfigNameToMigrate );",
+        "openD3_NormalizeConfigFilenameCase( legacyConfigNameToMigrate );",
         "WriteConfigToFile( CONFIG_FILE );",
         "filename normalization precedes canonical config rewrite",
     )

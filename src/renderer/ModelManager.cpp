@@ -482,9 +482,6 @@ idRenderModel *idRenderModelManagerLocal::GetModel( const char *modelName, bool 
 	} else if ( extension.Icmp( "prt" ) == 0  ) {
 		model = new idRenderModelPrt;
 		model->InitFromFile( modelName );
-	} else if ( extension.Icmp( "beam" ) == 0 ) {
-		model = new hhRenderModelBeam;
-		model->InitFromFile( modelName );
 	} else if ( extension.Icmp( "liquid" ) == 0  ) {
 		model = new idRenderModelLiquid;
 		model->InitFromFile( modelName );

@@ -372,7 +372,7 @@ def make_macos_archive_entries(
             f"{prefix}openQ4.app/Contents/Resources/{package.GAME_DIR_NAME}/{pak_name}": (b"pk4\n", 0o644)
             for pak_name in package.OPENQ4_PACK_NAMES
         },
-        f"{prefix}openQ4.app/Contents/Resources/assets/splash/quake4_rt_bitmap_4001.bmp": (b"bmp\n", 0o644),
+        f"{prefix}openQ4.app/Contents/Resources/assets/splash/doom3_splash.bmp": (b"bmp\n", 0o644),
         f"{prefix}openQ4.app/Contents/Info.plist": (plist_bytes, 0o644),
         f"{prefix}openQ4.app/Contents/PkgInfo": (package.MACOS_PKGINFO_BYTES, 0o644),
         f"{prefix}openQ4.app/Contents/MacOS/openQ4": (client_bytes, app_exec_mode),
@@ -636,7 +636,7 @@ def validate_macos_app_bundle_validator_runtime() -> None:
         for pak_name in package.OPENQ4_PACK_NAMES:
             write_test_file(app_contents / "Resources" / package.GAME_DIR_NAME / pak_name, b"pk4\n")
         write_test_file(
-            app_contents / "Resources" / "assets" / "splash" / "quake4_rt_bitmap_4001.bmp",
+            app_contents / "Resources" / "assets" / "splash" / "doom3_splash.bmp",
             b"bmp\n",
         )
         localized_info = make_macos_localized_info_bytes(version)
@@ -765,7 +765,7 @@ def validate_macos_app_bundle_validator_runtime() -> None:
             0o755,
         )
         write_test_file(
-            missing_icon_package / "assets" / "splash" / "quake4_rt_bitmap_4001.bmp",
+            missing_icon_package / "assets" / "splash" / "doom3_splash.bmp",
             b"bmp\n",
         )
         missing_icon_install.mkdir(parents=True, exist_ok=True)
@@ -838,7 +838,7 @@ def validate_macos_self_contained_app_creation_runtime() -> None:
                 f"openal-soft-{filename}\n".encode(),
             )
         write_test_file(
-            install_dir / "assets" / "splash" / "quake4_rt_bitmap_4001.bmp",
+            install_dir / "assets" / "splash" / "doom3_splash.bmp",
             b"bmp\n",
         )
         write_test_file(install_dir / "openQ4.icns", b"icns\n")
@@ -861,7 +861,7 @@ def validate_macos_self_contained_app_creation_runtime() -> None:
         for relative_path in (
             package.MACOS_APP_GAME_DATA_DIR / "mod.json",
             *(package.MACOS_APP_GAME_DATA_DIR / pak_name for pak_name in package.OPENQ4_PACK_NAMES),
-            package.MACOS_APP_SPLASH_DIR / "quake4_rt_bitmap_4001.bmp",
+            package.MACOS_APP_SPLASH_DIR / "doom3_splash.bmp",
             package.MACOS_APP_FRAMEWORKS_DIR / f"game-sp_{arch}.dylib",
             package.MACOS_APP_FRAMEWORKS_DIR / f"game-mp_{arch}.dylib",
             package.MACOS_APP_FRAMEWORKS_DIR / f"renderer-vk_{arch}.dylib",
@@ -2533,7 +2533,7 @@ def validate_macos_staged_payload_validator_runtime() -> None:
         dedicated = install_root / f"openQ4-ded_{arch}"
         support_script = install_root / validator.MACOS_SUPPORT_INFO_SCRIPT_NAME
         write_test_file(install_root / "openQ4.icns", b"icns\n")
-        write_test_file(install_root / "assets" / "splash" / "quake4_rt_bitmap_4001.bmp", b"bmp\n")
+        write_test_file(install_root / "assets" / "splash" / "doom3_splash.bmp", b"bmp\n")
         write_test_file(support_script, make_validation_support_info_script_bytes(validator), 0o755)
         write_test_file(client, b"client\n", 0o755)
         write_test_file(dedicated, b"ded\n", 0o755)
@@ -4075,7 +4075,7 @@ def validate_macos_game_layer_bundle_runtime() -> None:
                 install_dir / "licenses" / "openal-soft" / filename,
                 f"openal-soft-{filename}\n".encode(),
             )
-        write_test_file(install_dir / "assets" / "splash" / "quake4_rt_bitmap_4001.bmp", b"bmp\n")
+        write_test_file(install_dir / "assets" / "splash" / "doom3_splash.bmp", b"bmp\n")
         write_test_file(install_dir / "openQ4.icns", b"icns\n")
 
         # Historical q4xbase outputs may still exist beside an upgraded stage.

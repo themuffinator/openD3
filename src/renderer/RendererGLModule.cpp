@@ -25,7 +25,7 @@
 #define OPENQ4_RENDERER_BACKEND_NAME		"gl"
 #endif
 #ifndef OPENQ4_RENDERER_BACKEND_DESC
-#define OPENQ4_RENDERER_BACKEND_DESC		"openPREY OpenGL renderer module"
+#define OPENQ4_RENDERER_BACKEND_DESC		"openD3 OpenGL renderer module"
 #endif
 
 #include "tr_local.h"

@@ -1468,7 +1468,7 @@ void idRenderSystemLocal::SetBackEndRenderer() {
 		if ( R_IsLegacyBackEndRequest( requestedRendererName ) ) {
 			selection.fallback = RENDER_SELECTION_LEGACY;
 			common->Warning(
-				"r_renderer \"%s\" requested, but openPREY only ships the ARB2 backend; using %s instead",
+				"r_renderer \"%s\" requested, but openD3 only ships the ARB2 backend; using %s instead",
 				requestedRendererName,
 				r_actualRenderer.GetString() );
 		} else if ( idStr::Icmp( requestedRendererName, "best" ) != 0 && idStr::Icmp( requestedRendererName, r_actualRenderer.GetString() ) != 0 ) {

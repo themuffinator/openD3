@@ -161,7 +161,7 @@ static void R_ErrorForMissingRequiredOpenGLFeatures( void ) {
 	if ( RenderDoc_IsInjected() ) {
 		common->Printf(
 			"RenderDoc detected during OpenGL initialization.\n"
-			"openPREY currently requires OpenGL compatibility / ARB2-era features "
+			"openD3 currently requires OpenGL compatibility / ARB2-era features "
 			"that are unavailable in the injected context.\n" );
 		R_ErrorForUnsupportedCompatibilityOpenGL();
 	}
@@ -6013,7 +6013,7 @@ void R_InitMaterials( void ) {
 	declManager->FindMaterial( "lights/defaultPointLight" );
 	declManager->FindMaterial( "lights/defaultProjectedLight" );
 
-#if !defined(HUMANHEAD)
+#if !defined(OPEND3)
 	declManager->FindMaterial( "gfx/lights/flashlight" );
 
 	// Session wipes are used during map transitions after the level-load

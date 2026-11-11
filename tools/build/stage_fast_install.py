@@ -14,10 +14,10 @@ from windows_runtime import cleanup_windows_stage_target, is_windows_host
 
 
 ROOT_RUNTIME_PATTERNS = (
-    "openPREY-client_*.exe",
-    "openPREY-client_*.pdb",
-    "openPREY-ded_*.exe",
-    "openPREY-ded_*.pdb",
+    "openD3-client_*.exe",
+    "openD3-client_*.pdb",
+    "openD3-ded_*.exe",
+    "openD3-ded_*.pdb",
     "renderer-gl_*.dll",
     "renderer-gl_*.pdb",
     "renderer-vk_*.dll",
@@ -25,8 +25,8 @@ ROOT_RUNTIME_PATTERNS = (
     "OpenAL32.dll",
 )
 POSIX_ENGINE_RUNTIME_PATTERNS = (
-    "openPREY-client_*",
-    "openPREY-ded_*",
+    "openD3-client_*",
+    "openD3-ded_*",
 )
 LINUX_ROOT_RUNTIME_PATTERNS = (
     *POSIX_ENGINE_RUNTIME_PATTERNS,
@@ -66,16 +66,16 @@ WINDOWS_FOREIGN_RUNTIME_PATTERNS = (
     "*.dylib",
 )
 POSIX_ENGINE_FOREIGN_RUNTIME_PATTERNS = (
-    "openPREY-client_*.exe",
-    "openPREY-client_*.pdb",
-    "openPREY-client_*.dll",
-    "openPREY-client_*.so",
-    "openPREY-client_*.dylib",
-    "openPREY-ded_*.exe",
-    "openPREY-ded_*.pdb",
-    "openPREY-ded_*.dll",
-    "openPREY-ded_*.so",
-    "openPREY-ded_*.dylib",
+    "openD3-client_*.exe",
+    "openD3-client_*.pdb",
+    "openD3-client_*.dll",
+    "openD3-client_*.so",
+    "openD3-client_*.dylib",
+    "openD3-ded_*.exe",
+    "openD3-ded_*.pdb",
+    "openD3-ded_*.dll",
+    "openD3-ded_*.so",
+    "openD3-ded_*.dylib",
 )
 
 
@@ -125,7 +125,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--source-root",
         default=str(Path(__file__).resolve().parents[2]),
-        help="openPREY source root used to validate the fast staging target.",
+        help="openD3 source root used to validate the fast staging target.",
     )
     parser.add_argument(
         "--temporary-runtime",
@@ -255,8 +255,8 @@ def main(argv: list[str]) -> int:
         source_root = source_root.resolve()
         build_dir = build_dir.resolve()
         install_dir = install_dir.resolve()
-        build_game_dir = build_dir / "basepr"
-        install_game_dir = install_dir / "basepr"
+        build_game_dir = build_dir / "baseod3"
+        install_game_dir = install_dir / "baseod3"
         install_dir.mkdir(parents=True, exist_ok=True)
         install_game_dir.mkdir(parents=True, exist_ok=True)
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compatibility entry point for openPREY release packaging."""
+"""Compatibility entry point for openD3 release packaging."""
 
 from __future__ import annotations
 

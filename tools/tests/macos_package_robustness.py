@@ -51,7 +51,7 @@ def validate_runtime_startup_error() -> None:
         "Sys_GetSiblingSelfContainedAppRuntimeRoots",
         "OpenPREYBundleRuntimeMissingTitle",
         "OpenPREYBundleRuntimeMissingBody",
-        "Expected self-contained app contract: data in Contents/Resources/basepr and a signed game module in Contents/Frameworks",
+        "Expected self-contained app contract: data in Contents/Resources/baseod3 and a signed game module in Contents/Frameworks",
         'resourceDirectory.AppendPath( "Resources" )',
         'frameworkDirectory.AppendPath( "Frameworks" )',
         "Sys_GetAppBundlePackageRootFromExecutableDirectory",
@@ -63,20 +63,20 @@ def validate_runtime_startup_error() -> None:
         'table:@"OpenPREYPackageRoot"',
         "OpenPREYPackageRootMissingTitle",
         "OpenPREYPackageRootMissingBody",
-        "openPREY.app adjacent package root is incomplete",
-        "This legacy package layout needs openPREY.app, basepr/, openPREY-client_<arch>, and openPREY-ded_<arch> together",
-        "Current self-contained packages support moving only openPREY.app to /Applications",
-        "Expected adjacent package-root contract: openPREY.app, loose binaries, and basepr/ together",
+        "openD3.app adjacent package root is incomplete",
+        "This legacy package layout needs openD3.app, baseod3/, openD3-client_<arch>, and openD3-ded_<arch> together",
+        "Current self-contained packages support moving only openD3.app to /Applications",
+        "Expected adjacent package-root contract: openD3.app, loose binaries, and baseod3/ together",
         "Package root: %s",
         "App path: %s",
         "Missing or unusable entries: %s",
         "Expected runtime architecture: %s",
         "Existing mismatched runtime entries: %s",
         "none detected",
-        "openPREY.app",
+        "openD3.app",
         "BASE_GAMEDIR",
-        "openPREY-client_%s",
-        "openPREY-ded_%s",
+        "openD3-client_%s",
+        "openD3-ded_%s",
         "%s/game_%s.dylib",
         "%s/game_%s.dll",
         "%s/game_%s.so",
@@ -91,7 +91,7 @@ def validate_runtime_startup_error() -> None:
     ):
         require(compat, token, "macOS adjacent package-root startup diagnostic")
     for token in (
-        'appName.Icmp( "openPREY.app" )',
+        'appName.Icmp( "openD3.app" )',
         "openQ4.app",
         "baseoq4",
         "game-sp_",
@@ -222,11 +222,11 @@ def validate_package_metadata_and_archive_guards() -> None:
         "Support output directory must not contain control characters",
         ".XXXXXX.tar.gz.tmp",
         "except (FileNotFoundError, RuntimeError) as exc",
-        "does not launch openPREY",
+        "does not launch openD3",
         "does not copy retail Prey assets",
         "truncated copy failed; source was not copied",
-        "openPREY-client_x64 >",
-        "openPREY-ded_x64 >",
+        "openD3-client_x64 >",
+        "openD3-ded_x64 >",
         "|| cat",
         'tail -c "${max_bytes}" < "${source_path}" 2>/dev/null || cat',
         "validate_macos_package_root_engine_binaries",
@@ -237,9 +237,9 @@ def validate_package_metadata_and_archive_guards() -> None:
         "MAX_MACOS_SYMBOL_ARCHIVE_TOTAL_BYTES",
         "macOS symbol archive total expanded size is too large",
         "macOS symbol archive is not a valid xz-compressed tar archive",
-        'PRODUCT_NAME = "openPREY"',
-        'GAME_DIR_NAME = "basepr"',
-        'package_root / "openPREY.app"',
+        'PRODUCT_NAME = "openD3"',
+        'GAME_DIR_NAME = "baseod3"',
+        'package_root / "openD3.app"',
         'f"game_{arch}.dylib"',
         "macOS embedded unified game module",
     ):
@@ -257,7 +257,7 @@ def validate_release_path_policy() -> None:
 
     for token in (
         "name: DISABLED - inherited OpenQ4 reference (Manual Releases)",
-        "if: ${{ false }} # OPENPREY-GATED: split-module/OpenQ4 source contract",
+        "if: ${{ false }} # OPEND3-GATED: split-module/OpenQ4 source contract",
         "macos_support_tier",
     ):
         require(manual_release, token, "disabled inherited manual-release reference")
@@ -267,8 +267,8 @@ def validate_release_path_policy() -> None:
 
     for token in (
         "inherited nightly/manual publishing workflows are disabled",
-        "`OpenPrey-game`, `basepr`, and the unified module",
-        "macOS packages include an `openPREY.app` launcher bundle",
+        "`OpenD3-GameLibs`, `baseod3`, and the unified module",
+        "macOS packages include an `openD3.app` launcher bundle",
     ):
         require(building, token, "build documentation macOS boundary")
 
@@ -288,7 +288,7 @@ def validate_support_info_path_resolution() -> None:
     for token in (
         'case "$0" in',
         'SCRIPT_DIR=$(CDPATH= cd "${script_dir}" && pwd -P)',
-        "OPENPREY_PACKAGE_ROOT",
+        "OPEND3_PACKAGE_ROOT",
         "OPENQ4_PACKAGE_ROOT",
         "runtime_arch_token()",
         "Detected runtime architecture token: %s",
@@ -311,8 +311,8 @@ def validate_support_info_path_resolution() -> None:
         "write_bounded_report()",
         "Source file was larger than",
         "write_openq4_log_candidate_paths()",
-        "HOME was not set; home-scoped openprey.log paths were skipped.",
-        "HOME was not set; home-scoped openprey.log files were skipped.",
+        "HOME was not set; home-scoped opend3.log paths were skipped.",
+        "HOME was not set; home-scoped opend3.log files were skipped.",
         "HOME was not set; the macOS DiagnosticReports directory could not be located.",
         "path_exists_for_inspection()",
         "Skipped symlinked source:",
@@ -334,13 +334,13 @@ def validate_support_info_path_resolution() -> None:
         "Expected loose dedicated-server path: %s",
         "Expected embedded game-data path: %s",
         "Expected embedded game-module path: %s",
-        "openPREY.app",
-        "basepr",
+        "openD3.app",
+        "baseod3",
         "game_${RUNTIME_ARCH}.dylib",
         "Expected log keys: fs_basepath, fs_cdpath, fs_savepath",
         "grep -E 'fs_(basepath|cdpath|savepath)",
-        "No openprey.log files were found. fs_basepath, fs_cdpath, and fs_savepath values could not be copied without launching openPREY.",
-        "does not launch openPREY",
+        "No opend3.log files were found. fs_basepath, fs_cdpath, and fs_savepath values could not be copied without launching openD3.",
+        "does not launch openD3",
     ):
         require(collector, token, "macOS support collector path-resolution report")
     reject(collector, "dirname --", "macOS support collector portable script directory resolution")
@@ -349,14 +349,14 @@ def validate_support_info_path_resolution() -> None:
     for token in (
         "`package/path-resolution.txt`",
         "package root, app path",
-        "expected loose openPREY runtime paths",
+        "expected loose openD3 runtime paths",
         "`fs_basepath`, `fs_cdpath`, and `fs_savepath`",
-        "without launching openPREY",
+        "without launching openD3",
     ):
         require(support_doc, token, "macOS support data path-resolution documentation")
 
     for token in ("openQ4.app", "baseoq4", "game-sp_", "game-mp_"):
-        reject(collector, token, "macOS support collector must use the unified openPREY package contract")
+        reject(collector, token, "macOS support collector must use the unified openD3 package contract")
 
 
 def validate_docs_plan_and_release_status() -> None:
@@ -380,10 +380,10 @@ def validate_docs_plan_and_release_status() -> None:
         require(plan, token, "Phase 5 macOS no-platform-test implementation plan")
 
     for token in (
-        "openPREY.app adjacent package root is incomplete",
-        "Expected adjacent package-root contract: `openPREY.app`, loose binaries, and `basepr/` together",
+        "openD3.app adjacent package root is incomplete",
+        "Expected adjacent package-root contract: `openD3.app`, loose binaries, and `baseod3/` together",
         "Legacy adjacent packages need the app, loose binaries, and data together",
-        "Current self-contained packages support moving only `openPREY.app` to `/Applications`",
+        "Current self-contained packages support moving only `openD3.app` to `/Applications`",
         "`game_<arch>.dylib` module used by both single-player and multiplayer",
         "`package/path-resolution.txt`",
     ):
@@ -391,22 +391,22 @@ def validate_docs_plan_and_release_status() -> None:
 
     for token in (
         "unified Prey module (`game_<arch>`)",
-        "basepr/game_<arch>",
+        "baseod3/game_<arch>",
         "inherited split-module workflow fixtures are manual-only and unconditionally disabled",
     ):
         require(release_completion, token, "release completion notes")
 
     for token in (
-        "one `basepr/game_<arch>` module",
+        "one `baseod3/game_<arch>` module",
         "Split `game-sp` and `game-mp` build artifacts have been replaced",
         "macOS and additional architecture release workflows remain gated",
     ):
-        require(release_notes, token, "openPREY 0.0.1 release notes")
+        require(release_notes, token, "openD3 0.0.1 release notes")
 
 
 def validate_ci_wiring() -> None:
     local_runner = read("tools/validation/openq4_validate.py")
-    active = read(".github/workflows/openprey-validation.yml")
+    active = read(".github/workflows/opend3-validation.yml")
     commit = read(".github/workflows/commit-validation.yml")
     push = read(".github/workflows/push-verification.yml")
     macos_debug = read(".github/workflows/macos-debug.yml")
@@ -414,11 +414,11 @@ def validate_ci_wiring() -> None:
     require(local_runner, "macos_package_robustness.py", "local validation runner")
 
     for token in (
-        "name: openPREY Validation",
-        'test -f ".install/basepr/${{ matrix.module }}"',
-        "Split GameLib artifacts must not be staged; openPREY ships one game_<arch> module.",
+        "name: openD3 Validation",
+        'test -f ".install/baseod3/${{ matrix.module }}"',
+        "Split GameLib artifacts must not be staged; openD3 ships one game_<arch> module.",
     ):
-        require(active, token, "active openPREY validation workflow")
+        require(active, token, "active openD3 validation workflow")
 
     for source, context in (
         (commit, "commit validation workflow"),

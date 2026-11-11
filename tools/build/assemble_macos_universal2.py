@@ -27,7 +27,7 @@ if str(SCRIPT_DIR) not in sys.path:
 from game_layer import PACKAGED_LAYER_GAME_DIRS, RETIRED_LAYER_GAME_DIRS  # noqa: E402
 
 
-THIN_MANIFEST_NAME = "OPENPREY-MACOS-THIN.json"
+THIN_MANIFEST_NAME = "OPEND3-MACOS-THIN.json"
 THIN_MANIFEST_FORMAT = 1
 ASSEMBLY_MANIFEST_FORMAT = 1
 UNIVERSAL_ARCH = "universal2"
@@ -54,10 +54,10 @@ COMMON_BUILD_FIELDS = (
     "buildType",
 )
 # libMoltenVK.dylib is a third-party Vulkan-on-Metal translation layer that
-# openPREY does not build. It ships as a genuinely universal (arm64 + x86_64)
+# openD3 does not build. It ships as a genuinely universal (arm64 + x86_64)
 # binary and flows through as shared payload. It is deliberately NOT a
 # CODE_KEY: lipo must not touch it, its install name must not be rewritten, and
-# it has no openPREY entry point to check. Apple's ad-hoc signer can emit different
+# it has no openD3 entry point to check. Apple's ad-hoc signer can emit different
 # signature envelopes on Intel and Apple Silicon hosts, so assembly validates
 # both signed inputs and compares temporary signature-stripped copies. All
 # unsigned MoltenVK bytes must still match exactly, and copy_shared_payload()
@@ -67,11 +67,11 @@ OPENAL_SOFT_DYLIB_NAME = "libopenal.1.dylib"
 OPENAL_SOFT_INSTALL_NAME = f"@rpath/{OPENAL_SOFT_DYLIB_NAME}"
 OPENAL_SOFT_RELATIVE_PATH = Path("Frameworks") / OPENAL_SOFT_DYLIB_NAME
 REQUIRED_SHARED_PATHS = (
-    "openPREY.icns",
+    "openD3.icns",
     "collect_macos_support_info.sh",
-    "assets/splash/prey_rt_bitmap_4001.bmp",
-    "basepr/mod.json",
-    *(f"basepr/{name}" for name in CONTENT_PACK_NAMES),
+    "assets/splash/doom3_splash.bmp",
+    "baseod3/mod.json",
+    *(f"baseod3/{name}" for name in CONTENT_PACK_NAMES),
     MOLTENVK_DYLIB_NAME,
     "licenses/openal-soft/COPYING",
     "licenses/openal-soft/LICENSE-pffft",
@@ -90,9 +90,9 @@ MODULE_ENTRY_POINT_EXPORTS = {
     "renderer-vk": "GetRenderAPI",
 }
 # A game-library layer (game_layer.PACKAGED_LAYER_GAME_DIRS, q4xbase) stages its own game
-# modules beside basepr's. They are optional code keys, "q4xbase/game-sp" and
+# modules beside baseod3's. They are optional code keys, "q4xbase/game-sp" and
 # "q4xbase/game-mp": a layer is staged whole (both modules and its mod.json, which is shared
-# payload like basepr's) in both thin slices, or in neither.
+# payload like baseod3's) in both thin slices, or in neither.
 LAYER_MODULE_STEMS = ("game-sp", "game-mp")
 
 
@@ -129,12 +129,12 @@ def thin_code_paths(arch: str) -> dict[str, Path]:
     if arch not in THIN_MACHO_ARCHES:
         raise Universal2Error(f"unsupported thin macOS architecture: {arch}")
     return {
-        "client": Path(f"openPREY-client_{arch}"),
-        "dedicated": Path(f"openPREY-ded_{arch}"),
-        "game": Path("basepr") / f"game_{arch}.dylib",
+        "client": Path(f"openD3-client_{arch}"),
+        "dedicated": Path(f"openD3-ded_{arch}"),
+        "game": Path("baseod3") / f"game_{arch}.dylib",
         # meson installs the renderer module beside the engine binaries in the
         # install root; package_nightly.py is what relocates it into
-        # openPREY.app/Contents/Frameworks.
+        # openD3.app/Contents/Frameworks.
         "renderer-vk": Path(f"renderer-vk_{arch}.dylib"),
         "openal-soft": OPENAL_SOFT_RELATIVE_PATH,
     }
@@ -143,11 +143,11 @@ def thin_code_paths(arch: str) -> dict[str, Path]:
 def universal_code_paths() -> dict[str, Path]:
     # A fused package carries ONE file per code key, so every per-arch name
     # collapses onto the same "universal2" arch token the game modules already
-    # use (openPREY-client_universal2, game_universal2.dylib, ...).
+    # use (openD3-client_universal2, game_universal2.dylib, ...).
     return {
-        "client": Path("openPREY-client_universal2"),
-        "dedicated": Path("openPREY-ded_universal2"),
-        "game": Path("basepr") / "game_universal2.dylib",
+        "client": Path("openD3-client_universal2"),
+        "dedicated": Path("openD3-ded_universal2"),
+        "game": Path("baseod3") / "game_universal2.dylib",
         "renderer-vk": Path("renderer-vk_universal2.dylib"),
         "openal-soft": OPENAL_SOFT_RELATIVE_PATH,
     }
@@ -449,8 +449,8 @@ def classify_staged_tree(root: Path, arch: str) -> tuple[dict[str, dict[str, obj
         # renderer arm covers gl as well as vk so a future renderer-gl build on
         # darwin cannot slip through unnoticed.
         if (
-            (path.parent == root and re.fullmatch(r"openPREY-(?:client|ded)_[A-Za-z0-9]+", path.name))
-            or (path.parent == root / "basepr" and re.fullmatch(r"game_[A-Za-z0-9]+\.dylib", path.name))
+            (path.parent == root and re.fullmatch(r"openD3-(?:client|ded)_[A-Za-z0-9]+", path.name))
+            or (path.parent == root / "baseod3" and re.fullmatch(r"game_[A-Za-z0-9]+\.dylib", path.name))
             or (
                 path.parent.parent == root
                 and path.parent.name in (*PACKAGED_LAYER_GAME_DIRS, *RETIRED_LAYER_GAME_DIRS)

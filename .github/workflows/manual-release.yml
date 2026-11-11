@@ -987,7 +987,7 @@ jobs:
               ".install/baseoq4/game-mp_${{ matrix.binary_arch }}.dylib"
               ".install/collect_macos_support_info.sh"
               ".install/openQ4.icns"
-              ".install/assets/splash/quake4_rt_bitmap_4001.bmp"
+              ".install/assets/splash/doom3_splash.bmp"
             )
 
             for payload in "${required_macos_payload[@]}"; do

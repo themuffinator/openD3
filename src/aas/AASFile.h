@@ -11,7 +11,7 @@
 */
 
 #define AAS_FILEID					"DewmAAS"
-#ifdef HUMANHEAD
+#ifdef OPEND3
 #define AAS_FILEVERSION				"1.07"
 #else
 #define AAS_FILEVERSION				"1.08"

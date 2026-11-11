@@ -605,7 +605,7 @@ static bool SDL3_EnvFlagEnabled(const char *name) {
 }
 #endif
 
-// The openPREY/openQ4 environment aliases are only read by the Linux host.
+// The openD3/openQ4 environment aliases are only read by the Linux host.
 [[maybe_unused]] static const char *SDL3_EnvValueWithLegacyAlias(const char *primaryName, const char *legacyName) {
 	const char *value = getenv(primaryName);
 	if (value == NULL || value[0] == '\0') {
@@ -818,24 +818,24 @@ static void SDL3_SetANGLEHintDefaults(void) {
 #endif
 
 static void SDL3_SetVideoHintDefaults(void) {
-	// openPREY consumes committed UTF-8 text but does not render composition or
+	// openD3 consumes committed UTF-8 text but does not render composition or
 	// candidate lists itself. Ask SDL to keep the platform-native IME UI so
 	// IBus/Fcitx (and the native services on other SDL hosts) remain usable.
 	(void)SDL_SetHintWithPriority(SDL_HINT_IME_IMPLEMENTED_UI, "none", SDL_HINT_DEFAULT);
 #if defined(OPENQ4_SDL3_LINUX_HOST)
 	const bool disableWaylandLibdecor = SDL3_EnvFlagEnabledWithLegacyAlias(
-		"OPENPREY_WAYLAND_DISABLE_LIBDECOR", "OPENQ4_WAYLAND_DISABLE_LIBDECOR");
-	if (SDL3_EnvFlagEnabledWithLegacyAlias("OPENPREY_FORCE_X11", "OPENQ4_FORCE_X11") &&
+		"OPEND3_WAYLAND_DISABLE_LIBDECOR", "OPENQ4_WAYLAND_DISABLE_LIBDECOR");
+	if (SDL3_EnvFlagEnabledWithLegacyAlias("OPEND3_FORCE_X11", "OPENQ4_FORCE_X11") &&
 			!SDL3_EnvHasValue("SDL_VIDEO_DRIVER") &&
 			!SDL3_EnvHasValue("SDL_VIDEODRIVER")) {
 		(void)SDL_SetHintWithPriority(SDL_HINT_VIDEO_DRIVER, "x11", SDL_HINT_DEFAULT);
 	}
 	if (!disableWaylandLibdecor && SDL3_EnvFlagEnabledWithLegacyAlias(
-			"OPENPREY_WAYLAND_PREFER_LIBDECOR", "OPENQ4_WAYLAND_PREFER_LIBDECOR")) {
+			"OPEND3_WAYLAND_PREFER_LIBDECOR", "OPENQ4_WAYLAND_PREFER_LIBDECOR")) {
 		(void)SDL_SetHintWithPriority(SDL_HINT_VIDEO_WAYLAND_PREFER_LIBDECOR, "1", SDL_HINT_DEFAULT);
 	}
 	if (SDL3_EnvFlagEnabledWithLegacyAlias(
-			"OPENPREY_WAYLAND_SYNC_WINDOW_OPS", "OPENQ4_WAYLAND_SYNC_WINDOW_OPS")) {
+			"OPEND3_WAYLAND_SYNC_WINDOW_OPS", "OPENQ4_WAYLAND_SYNC_WINDOW_OPS")) {
 		(void)SDL_SetHintWithPriority(SDL_HINT_VIDEO_SYNC_WINDOW_OPERATIONS, "1", SDL_HINT_DEFAULT);
 	}
 	(void)SDL_SetHintWithPriority(SDL_HINT_VIDEO_WAYLAND_ALLOW_LIBDECOR, disableWaylandLibdecor ? "0" : "1", SDL_HINT_DEFAULT);
@@ -862,9 +862,9 @@ static void SDL3_SetAppMetadataDefaults(void) {
 	}
 	s_sdlAppMetadataAttempted = true;
 
-	// Keep the Wayland app_id aligned with the installed openprey.desktop file so
+	// Keep the Wayland app_id aligned with the installed opend3.desktop file so
 	// compositors can group the window and select the packaged icon correctly.
-	if (!SDL_SetAppMetadata(GAME_NAME, PROJECT_VERSION, "openprey")) {
+	if (!SDL_SetAppMetadata(GAME_NAME, PROJECT_VERSION, "opend3")) {
 		Sys_Printf("SDL3: failed to set application metadata: %s\n", SDL_GetError());
 	}
 }
@@ -975,11 +975,11 @@ static void SDL3_PrintVideoDriverSummary(void) {
 
 #if defined(OPENQ4_SDL3_LINUX_HOST)
 	common->Printf(
-		"SDL3: Linux video environment: OPENPREY_FORCE_X11=%s OPENPREY_WAYLAND_DISABLE_LIBDECOR=%s OPENPREY_WAYLAND_PREFER_LIBDECOR=%s OPENPREY_WAYLAND_SYNC_WINDOW_OPS=%s SDL_VIDEO_DRIVER=%s SDL_VIDEODRIVER=%s WAYLAND_DISPLAY=%s DISPLAY=%s\n",
-		SDL3_EnvStringWithLegacyAlias("OPENPREY_FORCE_X11", "OPENQ4_FORCE_X11"),
-		SDL3_EnvStringWithLegacyAlias("OPENPREY_WAYLAND_DISABLE_LIBDECOR", "OPENQ4_WAYLAND_DISABLE_LIBDECOR"),
-		SDL3_EnvStringWithLegacyAlias("OPENPREY_WAYLAND_PREFER_LIBDECOR", "OPENQ4_WAYLAND_PREFER_LIBDECOR"),
-		SDL3_EnvStringWithLegacyAlias("OPENPREY_WAYLAND_SYNC_WINDOW_OPS", "OPENQ4_WAYLAND_SYNC_WINDOW_OPS"),
+		"SDL3: Linux video environment: OPEND3_FORCE_X11=%s OPEND3_WAYLAND_DISABLE_LIBDECOR=%s OPEND3_WAYLAND_PREFER_LIBDECOR=%s OPEND3_WAYLAND_SYNC_WINDOW_OPS=%s SDL_VIDEO_DRIVER=%s SDL_VIDEODRIVER=%s WAYLAND_DISPLAY=%s DISPLAY=%s\n",
+		SDL3_EnvStringWithLegacyAlias("OPEND3_FORCE_X11", "OPENQ4_FORCE_X11"),
+		SDL3_EnvStringWithLegacyAlias("OPEND3_WAYLAND_DISABLE_LIBDECOR", "OPENQ4_WAYLAND_DISABLE_LIBDECOR"),
+		SDL3_EnvStringWithLegacyAlias("OPEND3_WAYLAND_PREFER_LIBDECOR", "OPENQ4_WAYLAND_PREFER_LIBDECOR"),
+		SDL3_EnvStringWithLegacyAlias("OPEND3_WAYLAND_SYNC_WINDOW_OPS", "OPENQ4_WAYLAND_SYNC_WINDOW_OPS"),
 		SDL3_EnvString("SDL_VIDEO_DRIVER"),
 		SDL3_EnvString("SDL_VIDEODRIVER"),
 		SDL3_EnvString("WAYLAND_DISPLAY"),

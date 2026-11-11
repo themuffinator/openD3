@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Atomically stage a generated runtime file into builddir/basepr."""
+"""Atomically stage a generated runtime file into builddir/baseod3."""
 
 from __future__ import annotations
 

@@ -39,12 +39,12 @@ def write_file(path: Path, data: bytes, mode: int = 0o644) -> None:
 
 def populate_staging(root: Path, arch: str, *, shared_value: bytes = b"same\n") -> None:
     shared = {
-        "openPREY.icns": shared_value,
+        "openD3.icns": shared_value,
         "collect_macos_support_info.sh": b"#!/bin/sh\n",
-        "assets/splash/prey_rt_bitmap_4001.bmp": b"bmp\n",
-        "basepr/mod.json": b"{}\n",
-        "basepr/pak0.pk4": b"pak0\n",
-        "basepr/pak1.pk4": b"pak1\n",
+        "assets/splash/doom3_splash.bmp": b"bmp\n",
+        "baseod3/mod.json": b"{}\n",
+        "baseod3/pak0.pk4": b"pak0\n",
+        "baseod3/pak1.pk4": b"pak1\n",
         "licenses/openal-soft/COPYING": b"lgpl\n",
         "licenses/openal-soft/LICENSE-pffft": b"pffft-license\n",
         "licenses/openal-soft/LICENSE-fmt": b"fmt-license\n",
@@ -136,7 +136,7 @@ def test_tree_classification_and_shared_matching() -> None:
         )
         x64_manifest["graphicsBridge"] = "metal"
 
-        write_file(x64_root / "openPREY.icns", b"different\n")
+        write_file(x64_root / "openD3.icns", b"different\n")
         _, changed_shared = ASSEMBLER.classify_staged_tree(x64_root, "x64")
         expect_error(
             "shared payloads are not identical",
@@ -144,7 +144,7 @@ def test_tree_classification_and_shared_matching() -> None:
             "mismatched shared payloads",
         )
 
-        write_file(arm_root / "openPREY-client_x64", b"stale\n", 0o755)
+        write_file(arm_root / "openD3-client_x64", b"stale\n", 0o755)
         expect_error(
             "stale or mismatched code file",
             lambda: ASSEMBLER.classify_staged_tree(arm_root, "arm64"),
@@ -177,7 +177,7 @@ def with_layer_binaries(manifest: dict[str, object], arch: str, code_records: di
 def test_game_layer_slices() -> None:
     """Current packages reject retired modules; historical fixtures stay readable."""
     if ASSEMBLER.optional_thin_code_paths("arm64") or ASSEMBLER.optional_universal_code_paths():
-        raise AssertionError("current packages must use only the unified basepr module")
+        raise AssertionError("current packages must use only the unified baseod3 module")
     work = ROOT / ".tmp" / "macos-universal2-retired-layer-contract"
     shutil.rmtree(work, ignore_errors=True)
     try:
@@ -503,7 +503,7 @@ def test_merge_binary_normalizes_and_signs_fused_output() -> None:
         arm_path = work / "game-arm64"
         x64_path = work / "game-x64"
         module_output = work / "game-universal2.dylib"
-        dedicated_output = work / "openPREY-ded-universal2"
+        dedicated_output = work / "openD3-ded-universal2"
         write_file(arm_path, b"immutable-arm\n", 0o755)
         write_file(x64_path, b"immutable-x64\n", 0o755)
         source_bytes = (arm_path.read_bytes(), x64_path.read_bytes())
@@ -660,21 +660,21 @@ def make_universal_symbol_manifest() -> bytes:
     version_tag = "universal2-ci"
     arch = "universal2"
     suffix = "-opengl"
-    runtime_archive = "openprey-universal2-ci-macos-universal2-opengl.tar.xz"
-    symbol_archive = "openprey-universal2-ci-macos-universal2-opengl-symbols.tar.xz"
+    runtime_archive = "opend3-universal2-ci-macos-universal2-opengl.tar.xz"
+    symbol_archive = "opend3-universal2-ci-macos-universal2-opengl-symbols.tar.xz"
     records = (
-        ("openPREY.app/Contents/MacOS/openPREY", "openPREY.app.dSYM"),
-        ("openPREY-client_universal2", "openPREY-client_universal2.dSYM"),
-        ("openPREY-ded_universal2", "openPREY-ded_universal2.dSYM"),
-        ("openPREY.app/Contents/Frameworks/game_universal2.dylib", "game_universal2.dylib.dSYM"),
-        # The fused renderer module gets a dSYM like any other openPREY-built code.
+        ("openD3.app/Contents/MacOS/openD3", "openD3.app.dSYM"),
+        ("openD3-client_universal2", "openD3-client_universal2.dSYM"),
+        ("openD3-ded_universal2", "openD3-ded_universal2.dSYM"),
+        ("openD3.app/Contents/Frameworks/game_universal2.dylib", "game_universal2.dylib.dSYM"),
+        # The fused renderer module gets a dSYM like any other openD3-built code.
         # libMoltenVK.dylib rides in the same Frameworks directory but has no
         # record here: it is third-party, ships no DWARF, and the packager's
         # expected-binary set excludes it.
-        ("openPREY.app/Contents/Frameworks/renderer-vk_universal2.dylib", "renderer-vk_universal2.dylib.dSYM"),
+        ("openD3.app/Contents/Frameworks/renderer-vk_universal2.dylib", "renderer-vk_universal2.dylib.dSYM"),
     )
     lines = [
-        "openPREY macOS symbols",
+        "openD3 macOS symbols",
         "format=1",
         f"version={version}",
         f"version_tag={version_tag}",
@@ -708,8 +708,8 @@ def test_universal_symbol_manifest_contract() -> None:
         "version_tag": "universal2-ci",
         "arch": "universal2",
         "package_suffix": "-opengl",
-        "runtime_archive_name": "openprey-universal2-ci-macos-universal2-opengl.tar.xz",
-        "symbol_archive_name": "openprey-universal2-ci-macos-universal2-opengl-symbols.tar.xz",
+        "runtime_archive_name": "opend3-universal2-ci-macos-universal2-opengl.tar.xz",
+        "symbol_archive_name": "opend3-universal2-ci-macos-universal2-opengl-symbols.tar.xz",
     }
     PACKAGER.validate_macos_symbol_manifest_bytes(data, "universal2 symbol manifest", **kwargs)
     bad_data = data.replace(b"(x86_64)", b"(arm64)")
@@ -730,11 +730,11 @@ def test_universal_dsym_uuid_pair_contract() -> None:
     original_platform = PACKAGER.sys.platform
     original_which = PACKAGER.shutil.which
     original_command = PACKAGER.run_macos_command
-    binary = Path("/tmp/openPREY-client_universal2")
-    dsym = Path("/tmp/openPREY-client_universal2.dSYM")
+    binary = Path("/tmp/openD3-client_universal2")
+    dsym = Path("/tmp/openD3-client_universal2.dSYM")
     binary_output = (
-        "UUID: 00000000-0000-0000-0000-000000000001 (arm64) /tmp/openPREY-client_universal2\n"
-        "UUID: 00000000-0000-0000-0000-000000000002 (x86_64) /tmp/openPREY-client_universal2\n"
+        "UUID: 00000000-0000-0000-0000-000000000001 (arm64) /tmp/openD3-client_universal2\n"
+        "UUID: 00000000-0000-0000-0000-000000000002 (x86_64) /tmp/openD3-client_universal2\n"
     )
     try:
         PACKAGER.sys.platform = "darwin"

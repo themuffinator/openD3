@@ -263,9 +263,9 @@ float rvParticleTemplate::GetFurthestDistance(void) {
 	// Gravity enters as in Quake 4: the lower acceleration bound takes the
 	// smallest gravity scale and the upper bound the largest, both with a sign
 	// that pulls the bounds together rather than apart.
-	// OPENPREY-GATED(D3): Prey's v7 game API intentionally does not expose the
+	// OPEND3-GATED(D3): Prey's v7 game API intentionally does not expose the
 	// Quake 4 BSE service surface. BSE stays compiled but dormant.
-#if defined(HUMANHEAD)
+#if defined(OPEND3)
 	const bool multiplayer = false;
 #else
 	const bool multiplayer = (game != NULL) ? game->IsMultiplayer() : false;

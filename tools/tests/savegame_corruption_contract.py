@@ -703,7 +703,7 @@ def validate_gamelibs_save_payload_contract() -> None:
             "OPENQ4_SAVEGAME_SYNC_MAGIC = 'O' | ( 'Q' << 8 ) | ( '4' << 16 ) | ( 'Y' << 24 )",
             "OPENQ4_SAVEGAME_FOOTER_MAGIC = 'O' | ( 'Q' << 8 ) | ( '4' << 16 ) | ( 'F' << 24 )",
             '__has_include( "openq4_savegame_compat_generated.h" )',
-            '#define OPENQ4_SAVEGAME_COMPAT_SOURCE_HASH "standalone-openprey-game"',
+            '#define OPENQ4_SAVEGAME_COMPAT_SOURCE_HASH "standalone-opend3-game"',
             "void\t\t\t\t\tWriteChecked( int bytesWritten, int expected, const char *detail, int offset );",
             "void\t\t\t\t\tWriteSaveGameFooter( int numObjects );",
             "void\t\t\t\t\tReadSyncId( const char *detail = \"unspecified\", const char *classname = NULL );",
@@ -938,7 +938,7 @@ def validate_savegame_compat_stamp_model() -> None:
     temp_root.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="savegame-compat-stamp-", dir=temp_root) as raw_temp:
         work = Path(raw_temp)
-        project_root = work / "openPREY"
+        project_root = work / "openD3"
         game_root = work / "stage"
         project_file = project_root / "src" / "framework" / "Session.cpp"
         game_file = game_root / "src" / "game" / "Game_local.cpp"

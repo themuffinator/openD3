@@ -20,7 +20,7 @@ their layout, and corrupt/truncated streams fail at a bounded record.
 
 #include <time.h>
 
-#if OPENPREY_ENABLE_MVD
+#if OPEND3_ENABLE_MVD
 
 namespace {
 
@@ -4444,7 +4444,7 @@ void idMultiViewDemo::AutoTrack_f( const idCmdArgs &args ) {
 
 #else
 
-// OPENPREY-GATED(D9): these inert entry points keep the upstream session and
+// OPEND3-GATED(D9): these inert entry points keep the upstream session and
 // async architecture intact without compiling v40-only game callbacks.
 
 namespace {
@@ -4478,7 +4478,7 @@ idMultiViewDemo::idMultiViewDemo() {
 }
 
 void idMultiViewDemo::Init() {
-	common->DPrintf( "Multi-view demos disabled (OPENPREY-GATED(D9))\n" );
+	common->DPrintf( "Multi-view demos disabled (OPEND3-GATED(D9))\n" );
 }
 
 void idMultiViewDemo::Shutdown() {}

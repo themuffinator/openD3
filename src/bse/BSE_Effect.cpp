@@ -276,8 +276,8 @@ void rvBSE::UpdateAttenuation()
 
 	idVec3 viewOrigin;
 	idMat3 viewAxis;
-#if defined(HUMANHEAD)
-	// OPENPREY-GATED(D3): no BSE callbacks are present in Prey's v7 idGame ABI.
+#if defined(OPEND3)
+	// OPEND3-GATED(D3): no BSE callbacks are present in Prey's v7 idGame ABI.
 	viewOrigin = mCurrentOrigin;
 	viewAxis = mCurrentAxis;
 #else

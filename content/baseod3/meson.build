@@ -53,22 +53,22 @@ if build_games
   endif
 endif
 
-basepr_manifest_conf = configuration_data()
-basepr_manifest_conf.set('OPENPREY_VERSION_BASE', openq4_version_base)
-basepr_manifest = configure_file(
+baseod3_manifest_conf = configuration_data()
+baseod3_manifest_conf.set('OPEND3_VERSION_BASE', openq4_version_base)
+baseod3_manifest = configure_file(
   input: 'mod.json.in',
   output: 'mod.json',
-  configuration: basepr_manifest_conf,
+  configuration: baseod3_manifest_conf,
 )
 
 install_data(
-  basepr_manifest,
+  baseod3_manifest,
   install_dir: install_game_dir,
 )
 
 custom_target(
-  'openprey_stage_mod_manifest_direct_run',
-  input: basepr_manifest,
+  'opend3_stage_mod_manifest_direct_run',
+  input: baseod3_manifest,
   output: 'stage-mod-manifest.stamp',
   command: [
     py,
@@ -76,7 +76,7 @@ custom_target(
     '--source',
     '@INPUT@',
     '--destination',
-    meson.project_build_root() / 'basepr' / 'mod.json',
+    meson.project_build_root() / 'baseod3' / 'mod.json',
     '--stamp',
     '@OUTPUT@',
   ],

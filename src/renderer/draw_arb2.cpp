@@ -18351,7 +18351,7 @@ void R_ARB2_Init( void ) {
 			common->Printf( "%s: prefers NV20 compatibility path\n", renderer.c_str() );
 		} else {
 			common->Printf(
-				"%s: retail would prefer the NV20 compatibility path, but openPREY keeps ARB2 because the legacy NV20 backend is not shipped\n",
+				"%s: retail would prefer the NV20 compatibility path, but openD3 keeps ARB2 because the legacy NV20 backend is not shipped\n",
 				renderer.c_str() );
 		}
 	}

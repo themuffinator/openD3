@@ -39,7 +39,7 @@ def load_module(name: str, path: Path) -> ModuleType:
     return module
 
 
-VALIDATOR = load_module("openprey_validation_hardening_test", ROOT / "tools" / "validation" / "openq4_validate.py")
+VALIDATOR = load_module("opend3_validation_hardening_test", ROOT / "tools" / "validation" / "openq4_validate.py")
 
 
 def write_file(path: Path, data: bytes = b"x\n") -> None:
@@ -124,11 +124,11 @@ def validate_source_and_build_dir_guards() -> None:
             "symlink source root",
         )
 
-    fake_root = WORK / "not-openprey"
+    fake_root = WORK / "not-opend3"
     fake_root.mkdir(parents=True, exist_ok=True)
     expect_validation_error(
         lambda: VALIDATOR.validate_source_root(fake_root),
-        "missing required openPREY files",
+        "missing required openD3 files",
         "invalid source root",
     )
 
@@ -171,43 +171,43 @@ def validate_source_and_build_dir_guards() -> None:
 
 
 def validate_game_libs_repo_guards() -> None:
-    game_libs_target = WORK / "OpenPrey-game-real"
-    game_libs_link = WORK / "OpenPrey-game-link"
+    game_libs_target = WORK / "OpenD3-GameLibs-real"
+    game_libs_link = WORK / "OpenD3-GameLibs-link"
     write_file(game_libs_target / "src" / "game" / "Game_local.cpp")
 
     expect_validation_error(
-        lambda: VALIDATOR.ensure_game_libs_repo({"OPENPREY_GAMELIBS_REPO": str(game_libs_target)}),
+        lambda: VALIDATOR.ensure_game_libs_repo({"OPEND3_GAMELIBS_REPO": str(game_libs_target)}),
         "Prey gameplay",
         "missing Prey GameLibs source tree",
     )
     write_file(game_libs_target / "src" / "Prey" / "game_local.cpp")
     expect_validation_error(
-        lambda: VALIDATOR.ensure_game_libs_repo({"OPENPREY_GAMELIBS_REPO": str(game_libs_target)}),
+        lambda: VALIDATOR.ensure_game_libs_repo({"OPEND3_GAMELIBS_REPO": str(game_libs_target)}),
         "Prey engine-support",
         "missing preyengine GameLibs source tree",
     )
     write_file(game_libs_target / "src" / "preyengine" / "prey_public.h")
-    VALIDATOR.ensure_game_libs_repo({"OPENPREY_GAMELIBS_REPO": str(game_libs_target)})
+    VALIDATOR.ensure_game_libs_repo({"OPEND3_GAMELIBS_REPO": str(game_libs_target)})
 
     alias_args = argparse.Namespace(game_libs_repo="", build_gamelibs=True, skip_icon_sync=True)
-    original_primary = os.environ.get("OPENPREY_GAMELIBS_REPO")
+    original_primary = os.environ.get("OPEND3_GAMELIBS_REPO")
     original_legacy = os.environ.get("OPENQ4_GAMELIBS_REPO")
     try:
-        os.environ.pop("OPENPREY_GAMELIBS_REPO", None)
+        os.environ.pop("OPEND3_GAMELIBS_REPO", None)
         os.environ["OPENQ4_GAMELIBS_REPO"] = str(game_libs_target)
         alias_env = VALIDATOR.validation_env(alias_args, ROOT)
         expected_repo = str(game_libs_target.resolve())
-        if alias_env.get("OPENPREY_GAMELIBS_REPO") != expected_repo:
+        if alias_env.get("OPEND3_GAMELIBS_REPO") != expected_repo:
             raise AssertionError("legacy GameLibs override was not canonicalized")
         if alias_env.get("OPENQ4_GAMELIBS_REPO") != expected_repo:
             raise AssertionError("legacy GameLibs compatibility alias did not mirror the canonical path")
-        if alias_env.get("OPENPREY_SKIP_ICON_SYNC") != "1":
+        if alias_env.get("OPEND3_SKIP_ICON_SYNC") != "1":
             raise AssertionError("canonical icon-sync switch was not set")
     finally:
         if original_primary is None:
-            os.environ.pop("OPENPREY_GAMELIBS_REPO", None)
+            os.environ.pop("OPEND3_GAMELIBS_REPO", None)
         else:
-            os.environ["OPENPREY_GAMELIBS_REPO"] = original_primary
+            os.environ["OPEND3_GAMELIBS_REPO"] = original_primary
         if original_legacy is None:
             os.environ.pop("OPENQ4_GAMELIBS_REPO", None)
         else:
@@ -219,7 +219,7 @@ def validate_game_libs_repo_guards() -> None:
         return
 
     expect_validation_error(
-        lambda: VALIDATOR.ensure_game_libs_repo({"OPENPREY_GAMELIBS_REPO": str(game_libs_link)}),
+        lambda: VALIDATOR.ensure_game_libs_repo({"OPEND3_GAMELIBS_REPO": str(game_libs_link)}),
         "must not be a symlink",
         "symlink GameLibs repository",
     )
@@ -231,9 +231,9 @@ def validate_game_libs_repo_guards() -> None:
         "symlink GameLibs CLI argument",
     )
 
-    default_root = WORK / "default-gamelibs" / "openPREY"
-    default_target = WORK / "default-gamelibs" / "OpenPrey-game-real"
-    default_link = WORK / "default-gamelibs" / "OpenPrey-game"
+    default_root = WORK / "default-gamelibs" / "openD3"
+    default_target = WORK / "default-gamelibs" / "OpenD3-GameLibs-real"
+    default_link = WORK / "default-gamelibs" / "OpenD3-GameLibs"
     write_file(default_root / "meson.build")
     write_file(default_target / "src" / "game" / "Game_local.cpp")
     try:
@@ -242,19 +242,19 @@ def validate_game_libs_repo_guards() -> None:
         return
 
     default_args = argparse.Namespace(game_libs_repo="", build_gamelibs=False, skip_icon_sync=False)
-    original_primary = os.environ.get("OPENPREY_GAMELIBS_REPO")
+    original_primary = os.environ.get("OPEND3_GAMELIBS_REPO")
     original_legacy = os.environ.get("OPENQ4_GAMELIBS_REPO")
     try:
-        os.environ.pop("OPENPREY_GAMELIBS_REPO", None)
+        os.environ.pop("OPEND3_GAMELIBS_REPO", None)
         os.environ.pop("OPENQ4_GAMELIBS_REPO", None)
         env = VALIDATOR.validation_env(default_args, default_root)
         if Path(env["OPENQ4_GAMELIBS_REPO"]) != default_root.resolve():
             raise AssertionError("the canonical default must ignore a linked companion checkout")
     finally:
         if original_primary is None:
-            os.environ.pop("OPENPREY_GAMELIBS_REPO", None)
+            os.environ.pop("OPEND3_GAMELIBS_REPO", None)
         else:
-            os.environ["OPENPREY_GAMELIBS_REPO"] = original_primary
+            os.environ["OPEND3_GAMELIBS_REPO"] = original_primary
         if original_legacy is None:
             os.environ.pop("OPENQ4_GAMELIBS_REPO", None)
         else:
@@ -282,7 +282,7 @@ def validate_staged_symlink_guard() -> None:
     (game_dir_link_root / ".install").mkdir(parents=True, exist_ok=True)
     game_dir_target.mkdir(parents=True, exist_ok=True)
     try:
-        os.symlink(game_dir_target, game_dir_link_root / ".install" / "basepr", target_is_directory=True)
+        os.symlink(game_dir_target, game_dir_link_root / ".install" / "baseod3", target_is_directory=True)
     except (OSError, NotImplementedError):
         pass
     else:
@@ -295,7 +295,7 @@ def validate_staged_symlink_guard() -> None:
     root = WORK / "symlink-payload"
     install_root = root / ".install"
     target = root / "outside.txt"
-    link = install_root / "basepr" / "linked.txt"
+    link = install_root / "baseod3" / "linked.txt"
     write_file(target)
     link.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -313,7 +313,7 @@ def validate_staged_symlink_guard() -> None:
 def validate_recursive_non_runtime_scan() -> None:
     root = WORK / "non-runtime"
     install_root = root / ".install"
-    game_dir = install_root / "basepr"
+    game_dir = install_root / "baseod3"
     write_file(game_dir / "nested" / "debug.lib")
     expect_validation_error(
         lambda: VALIDATOR.validate_no_non_runtime_artifacts(
@@ -349,9 +349,9 @@ def validate_staged_casefold_collision_guard() -> None:
 def validate_engine_architecture_mismatch() -> None:
     root = WORK / "engine-arch"
     install_root = root / ".install"
-    game_dir = install_root / "basepr"
-    client = install_root / "openPREY-client_x64.exe"
-    dedicated = install_root / "openPREY-ded_arm64.exe"
+    game_dir = install_root / "baseod3"
+    client = install_root / "openD3-client_x64.exe"
+    dedicated = install_root / "openD3-ded_arm64.exe"
     write_file(client)
     write_file(dedicated)
 
@@ -370,9 +370,9 @@ def validate_engine_architecture_mismatch() -> None:
 def validate_game_module_suffix_guard() -> None:
     root = WORK / "module-suffix"
     install_root = root / ".install"
-    game_dir = install_root / "basepr"
-    client = install_root / "openPREY-client_x64.exe"
-    dedicated = install_root / "openPREY-ded_x64.exe"
+    game_dir = install_root / "baseod3"
+    client = install_root / "openD3-client_x64.exe"
+    dedicated = install_root / "openD3-ded_x64.exe"
     write_file(client)
     write_file(dedicated)
     write_file(game_dir / "game_x64.so")
@@ -392,9 +392,9 @@ def validate_game_module_suffix_guard() -> None:
 def validate_game_module_architecture_match() -> None:
     root = WORK / "module-arch"
     install_root = root / ".install"
-    game_dir = install_root / "basepr"
-    client = install_root / "openPREY-client_x64.exe"
-    dedicated = install_root / "openPREY-ded_x64.exe"
+    game_dir = install_root / "baseod3"
+    client = install_root / "openD3-client_x64.exe"
+    dedicated = install_root / "openD3-ded_x64.exe"
     write_file(client)
     write_file(dedicated)
     write_file(game_dir / "game_arm64.dll")
@@ -422,7 +422,7 @@ def validate_game_module_architecture_match() -> None:
 
 
 def validate_split_game_module_guard() -> None:
-    game_dir = WORK / "module-split" / ".install" / "basepr"
+    game_dir = WORK / "module-split" / ".install" / "baseod3"
     split_module = game_dir / "game_sp_x64.dll"
     write_file(split_module)
     if VALIDATOR.find_legacy_split_game_modules(game_dir) != [split_module]:
@@ -431,12 +431,12 @@ def validate_split_game_module_guard() -> None:
 
 def validate_linux_runtime_dependency_guards() -> None:
     root = WORK / "linux-dedicated-dependencies"
-    client_x64 = root / ".install" / "openPREY-client_x64"
-    client_arm64 = root / ".install" / "openPREY-client_arm64"
-    dedicated_x64 = root / ".install" / "openPREY-ded_x64"
-    dedicated_arm64 = root / ".install" / "openPREY-ded_arm64"
-    game_x64 = root / ".install" / "basepr" / "game_x64.so"
-    game_arm64 = root / ".install" / "basepr" / "game_arm64.so"
+    client_x64 = root / ".install" / "openD3-client_x64"
+    client_arm64 = root / ".install" / "openD3-client_arm64"
+    dedicated_x64 = root / ".install" / "openD3-ded_x64"
+    dedicated_arm64 = root / ".install" / "openD3-ded_arm64"
+    game_x64 = root / ".install" / "baseod3" / "game_x64.so"
+    game_arm64 = root / ".install" / "baseod3" / "game_arm64.so"
     original_readelf_output = VALIDATOR.readelf_output
     dynamic_section = ""
 
@@ -567,9 +567,9 @@ def validate_linux_runtime_dependency_guards() -> None:
 def validate_windows_pdb_architecture_match() -> None:
     root = WORK / "windows-pdb"
     install_root = root / ".install"
-    game_dir = install_root / "basepr"
+    game_dir = install_root / "baseod3"
     write_file(install_root / "OpenAL32.dll")
-    write_file(install_root / "openPREY-client_arm64.pdb")
+    write_file(install_root / "openD3-client_arm64.pdb")
 
     with_host_flags(
         True,
@@ -583,8 +583,8 @@ def validate_windows_pdb_architecture_match() -> None:
     )
 
     for path in (
-        install_root / "openPREY-client_x64.pdb",
-        install_root / "openPREY-ded_x64.pdb",
+        install_root / "openD3-client_x64.pdb",
+        install_root / "openD3-ded_x64.pdb",
         game_dir / "game_x64.pdb",
     ):
         write_file(path)
@@ -600,20 +600,20 @@ def validate_windows_pdb_architecture_match() -> None:
         ),
     )
 
-    (install_root / "openPREY-client_arm64.pdb").unlink()
+    (install_root / "openD3-client_arm64.pdb").unlink()
     with_host_flags(True, False, False, lambda: VALIDATOR.validate_windows_symbols(root, install_root, game_dir, {"x64"}))
 
 
 def validate_windows_unified_staged_payload() -> None:
     root = WORK / "windows-unified-payload"
     install_root = root / ".install"
-    game_dir = install_root / "basepr"
+    game_dir = install_root / "baseod3"
     for path in (
         install_root / "OpenAL32.dll",
-        install_root / "openPREY-client_x64.exe",
-        install_root / "openPREY-client_x64.pdb",
-        install_root / "openPREY-ded_x64.exe",
-        install_root / "openPREY-ded_x64.pdb",
+        install_root / "openD3-client_x64.exe",
+        install_root / "openD3-client_x64.pdb",
+        install_root / "openD3-ded_x64.exe",
+        install_root / "openD3-ded_x64.pdb",
         game_dir / "game_x64.dll",
         game_dir / "game_x64.pdb",
         game_dir / "mod.json",
@@ -1159,7 +1159,7 @@ def validate_validation_wiring() -> None:
         if build_script not in push or build_script not in commit:
             raise AssertionError(f"{build_script} is not covered by workflow py_compile smoke checks")
 
-    for token in ("TODO-RELEASE-LANES", "basepr", "one `game_<arch>` module"):
+    for token in ("TODO-RELEASE-LANES", "baseod3", "one `game_<arch>` module"):
         if token not in status_ledger:
             raise AssertionError(f"rebase status ledger is missing validation deferral contract: {token}")
 
@@ -1172,7 +1172,7 @@ def validate_validation_wiring() -> None:
     openal_start = windows_job.index(openal_step_name)
     openal_end = windows_job.index("\n      - name:", openal_start + len(openal_step_name))
     openal_step = windows_job[openal_start:openal_end]
-    # The project prefix is OPENPREY_ with legacy OPENQ4_ aliases, so match the suffixes.
+    # The project prefix is OPEND3_ with legacy OPENQ4_ aliases, so match the suffixes.
     for token in (
         "tools/build/prepare_windows_openal.ps1",
         '_VS_TARGET_ARCH = "x64"',

@@ -191,7 +191,7 @@ idCVar com_activeGameModule( "com_activeGameModule", "", CVAR_SYSTEM | CVAR_NOCH
 idCVar com_nextGameModule( "com_nextGameModule", "", CVAR_SYSTEM | CVAR_NOCHEAT, "internal one-shot game module override for reloadEngine" );
 idCVar com_platformProfile( "com_platformProfile", "default", CVAR_SYSTEM | CVAR_INIT, "startup platform profile (default, steamdeck or couch)" );
 
-static bool openPREY_IsValidGameModuleName( const char *moduleName );
+static bool openD3_IsValidGameModuleName( const char *moduleName );
 
 idCVar com_product_lang_ext( "com_product_lang_ext", "1", CVAR_INTEGER | CVAR_SYSTEM | CVAR_ARCHIVE, "Extension to use when creating language files." );
 idCVar r_skipGlowOverlay( "r_skipGlowOverlay", "0", CVAR_ARCHIVE | CVAR_RENDERER, "skip glow overlays when non-zero" );
@@ -948,8 +948,8 @@ static bool Common_FileContainsAnyToken( const char *path, const char **tokens, 
 
 static bool Common_HasSteamDeckHostSignal( void ) {
 	const char *explicitSignals[] = {
-		"OPENPREY_STEAMDECK",
-		"OPENPREY_AUTODETECT_STEAMDECK",
+		"OPEND3_STEAMDECK",
+		"OPEND3_AUTODETECT_STEAMDECK",
 		"OPENQ4_STEAMDECK",
 		"OPENQ4_AUTODETECT_STEAMDECK",
 		"SteamDeck",
@@ -1001,7 +1001,7 @@ static bool Common_HasSteamDeckHostSignal( void ) {
 // OPENQ4_COUCH forces the answer either way.
 static bool Common_HasCouchHostSignal( void ) {
 	const char *explicitSignals[] = {
-		"OPENPREY_COUCH",
+		"OPEND3_COUCH",
 		"OPENQ4_COUCH",
 		"OPENQ4_AUTODETECT_COUCH",
 		"SteamTenfoot"
@@ -1020,7 +1020,7 @@ static bool Common_HasCouchHostSignal( void ) {
 
 static bool Common_HasRaspberryPiHostSignal( void ) {
 	const char *explicitSignals[] = {
-		"OPENPREY_RASPBERRYPI",
+		"OPEND3_RASPBERRYPI",
 		"OPENQ4_RASPBERRYPI",
 		"OPENQ4_RPI",
 		"OPENQ4_AUTODETECT_RASPBERRYPI",
@@ -1054,7 +1054,7 @@ static bool Common_HasRaspberryPiHostSignal( void ) {
 
 static bool Common_HasExplicitLowPowerHostSignal( void ) {
 	const char *explicitSignals[] = {
-		"OPENPREY_LOWPOWER",
+		"OPEND3_LOWPOWER",
 		"OPENQ4_LOWPOWER",
 		"OPENQ4_LOW_POWER",
 		"OPENQ4_AUTODETECT_LOWPOWER"
@@ -1185,7 +1185,7 @@ static idStr Common_BuildPlatformProfileConfigName( const char *profileName ) {
 		return "";
 	}
 
-	return va( "openprey_profile_%s.cfg", sanitized.c_str() );
+	return va( "opend3_profile_%s.cfg", sanitized.c_str() );
 }
 	void						CheckToolMode( void );
 	void						CloseLogFile( void );
@@ -1501,7 +1501,7 @@ void idCommonLocal::VPrintf( const char *fmt, va_list args ) {
 			ID_TIME_T aclock;
 			idStr fileName = com_logFileName.GetString()[0] ? com_logFileName.GetString() : "qconsole.log";
 			if ( fileName.Icmp( "auto" ) == 0 ) {
-				fileName = "logs/openprey_%Y%m%d_%H%M%S.log";
+				fileName = "logs/opend3_%Y%m%d_%H%M%S.log";
 			}
 
 			char resolvedFileName[MAX_OSPATH];
@@ -2666,7 +2666,7 @@ static bool Common_SettingsSaveDirectory( std::string& directory, std::string& e
 	return true;
 }
 
-static bool openPREY_SavePathHasExactFilename( const char *relativeFilename ) {
+static bool openD3_SavePathHasExactFilename( const char *relativeFilename ) {
 	if ( relativeFilename == NULL || relativeFilename[0] == '\0' ) {
 		return false;
 	}
@@ -2688,8 +2688,8 @@ static bool openPREY_SavePathHasExactFilename( const char *relativeFilename ) {
 	return false;
 }
 
-static bool openPREY_ExecConfigFromSavePath( const char *relativeFilename ) {
-	if ( !openPREY_SavePathHasExactFilename( relativeFilename ) ) {
+static bool openD3_ExecConfigFromSavePath( const char *relativeFilename ) {
+	if ( !openD3_SavePathHasExactFilename( relativeFilename ) ) {
 		return false;
 	}
 
@@ -2703,7 +2703,7 @@ static bool openPREY_ExecConfigFromSavePath( const char *relativeFilename ) {
 	return true;
 }
 
-static bool openPREY_NormalizeConfigFilenameCase( const char *loadedFilename ) {
+static bool openD3_NormalizeConfigFilenameCase( const char *loadedFilename ) {
 	if ( loadedFilename == NULL || idStr::Cmp( loadedFilename, CONFIG_FILE ) == 0 ) {
 		return true;
 	}
@@ -5015,7 +5015,7 @@ void Com_ReloadGameModule_f( const idCmdArgs &args ) {
 	// Copy CVar-backed strings before teardown. Config replay and module unload
 	// can replace their backing storage while this command is still running.
 	const idStr requestedModule = cvarSystem->GetCVarString( "com_nextGameModule" );
-	if ( !openPREY_IsValidGameModuleName( requestedModule.c_str() ) ) {
+	if ( !openD3_IsValidGameModuleName( requestedModule.c_str() ) ) {
 		common->Printf( "reloadGameModule requested without a valid com_nextGameModule; falling back to reloadEngine\n" );
 		Com_ReloadEngine_f( args );
 		return;
@@ -5079,7 +5079,7 @@ void Com_ReloadGameModule_f( const idCmdArgs &args ) {
 			swapError.c_str() );
 
 		bool rollbackSucceeded = false;
-		if ( oldShutdownComplete && cleanupError.IsEmpty() && openPREY_IsValidGameModuleName( previousModule.c_str() ) ) {
+		if ( oldShutdownComplete && cleanupError.IsEmpty() && openD3_IsValidGameModuleName( previousModule.c_str() ) ) {
 			// The requested si_gameType already names the new module by this point.
 			// Restore a safe canonical mode for the old module before declarations
 			// are rebuilt; the user's archived settings replay normally afterwards.
@@ -6269,9 +6269,9 @@ void idCommonLocal::InitCommands( void ) {
 	cmdSystem->AddCommand( "reloadGameModule", Com_ReloadGameModule_f, CMD_FL_SYSTEM, "reloads the active game module while preserving the render window" );
 	cmdSystem->AddCommand( "setMachineSpec", Com_SetMachineSpec_f, CMD_FL_SYSTEM, "detects system capabilities and sets com_machineSpec to appropriate value" );
 	cmdSystem->AddCommand( "execMachineSpec", Com_ExecMachineSpec_f, CMD_FL_SYSTEM, "execs the appropriate config files and sets cvars based on com_machineSpec" );
-	cmdSystem->AddCommand( "applyPerformancePreset", Com_ApplyPerformancePreset_f, CMD_FL_SYSTEM, "applies the selected openPREY performance preset", idCmdSystem::ArgCompletion_String<com_performancePresetArgs> );
-	cmdSystem->AddCommand( "autoDetectPerformancePreset", Com_AutoDetectPerformancePreset_f, CMD_FL_SYSTEM, "detects and applies a conservative openPREY performance preset" );
-	cmdSystem->AddCommand( "performancePresetSelfTest", Com_PerformancePresetSelfTest_f, CMD_FL_SYSTEM, "validates openPREY performance preset commands and cvar mappings" );
+	cmdSystem->AddCommand( "applyPerformancePreset", Com_ApplyPerformancePreset_f, CMD_FL_SYSTEM, "applies the selected openD3 performance preset", idCmdSystem::ArgCompletion_String<com_performancePresetArgs> );
+	cmdSystem->AddCommand( "autoDetectPerformancePreset", Com_AutoDetectPerformancePreset_f, CMD_FL_SYSTEM, "detects and applies a conservative openD3 performance preset" );
+	cmdSystem->AddCommand( "performancePresetSelfTest", Com_PerformancePresetSelfTest_f, CMD_FL_SYSTEM, "validates openD3 performance preset commands and cvar mappings" );
 	cmdSystem->AddCommand( "jobsStats", Com_JobsStats_f, CMD_FL_SYSTEM, "prints bounded job-service scheduling and timing counters" );
 	cmdSystem->AddCommand( "jobsSelfTest", Com_JobsSelfTest_f, CMD_FL_SYSTEM, "validates job execution, dependencies, deterministic fallback, and metrics" );
 	cmdSystem->AddCommand( "netIPv4SelfTest", Com_NetIPv4SelfTest_f, CMD_FL_SYSTEM, "validates IPv4 parsing and UDP loopback transport" );
@@ -7150,7 +7150,7 @@ void idCommonLocal::Async( void ) {
 	}
 }
 
-static bool openPREY_IsValidGameModuleName( const char *moduleName ) {
+static bool openD3_IsValidGameModuleName( const char *moduleName ) {
 	if ( moduleName == NULL || moduleName[0] == '\0' ) {
 		return false;
 	}
@@ -7169,7 +7169,7 @@ static bool openPREY_IsValidGameModuleName( const char *moduleName ) {
 	return false;
 }
 
-// Upstream's split-module routing table. openPREY loads one unified 'game'
+// Upstream's split-module routing table. openD3 loads one unified 'game'
 // module, so openQ4_NormalizeGameTypeForModule only acts on legacy game_mp
 // requests; the table stays so upstream's call sites keep their meaning.
 // Mirror of the multiplayer rows in the GameLibs descriptor table
@@ -7247,48 +7247,48 @@ static void openQ4_NormalizeGameTypeForModule( const char *moduleName ) {
 	cvarSystem->SetCVarString( "si_gameType", "DM" );
 }
 
-static const char *openPREY_SelectGameModuleBaseName( void ) {
+static const char *openD3_SelectGameModuleBaseName( void ) {
 	const char *nextModule = cvarSystem->GetCVarString( "com_nextGameModule" );
-	if ( nextModule != NULL && nextModule[0] != '\0' && !openPREY_IsValidGameModuleName( nextModule ) ) {
-		common->DWarning( "Ignoring unknown game-module request '%s'; openPREY uses the unified 'game' module", nextModule );
+	if ( nextModule != NULL && nextModule[0] != '\0' && !openD3_IsValidGameModuleName( nextModule ) ) {
+		common->DWarning( "Ignoring unknown game-module request '%s'; openD3 uses the unified 'game' module", nextModule );
 	}
 	return "game";
 }
 
 #if defined( _M_X64 ) || defined( __x86_64__ )
-	#define OPENPREY_MODULE_ARCH_TAG "x64"
+	#define OPEND3_MODULE_ARCH_TAG "x64"
 #elif defined( _M_IX86 ) || defined( __i386__ )
-	#define OPENPREY_MODULE_ARCH_TAG "x86"
+	#define OPEND3_MODULE_ARCH_TAG "x86"
 #elif defined( _M_ARM64 ) || defined( __aarch64__ )
-	#define OPENPREY_MODULE_ARCH_TAG "arm64"
+	#define OPEND3_MODULE_ARCH_TAG "arm64"
 #else
-	#define OPENPREY_MODULE_ARCH_TAG "unknown"
+	#define OPEND3_MODULE_ARCH_TAG "unknown"
 #endif
 
-static void openPREY_AddUniqueGameModuleCandidate( idStrList &candidates, const char *moduleName ) {
+static void openD3_AddUniqueGameModuleCandidate( idStrList &candidates, const char *moduleName ) {
 	if ( moduleName == NULL || moduleName[0] == '\0' || candidates.FindIndex( moduleName ) != -1 ) {
 		return;
 	}
 	candidates.Append( moduleName );
 }
 
-static void openPREY_BuildGameModuleCandidateList( idStrList &candidates ) {
+static void openD3_BuildGameModuleCandidateList( idStrList &candidates ) {
 	candidates.Clear();
-	openPREY_AddUniqueGameModuleCandidate( candidates, va( "game_%s", OPENPREY_MODULE_ARCH_TAG ) );
+	openD3_AddUniqueGameModuleCandidate( candidates, va( "game_%s", OPEND3_MODULE_ARCH_TAG ) );
 #if defined( _M_X64 ) || defined( __x86_64__ )
-	openPREY_AddUniqueGameModuleCandidate( candidates, "gamex64" );
+	openD3_AddUniqueGameModuleCandidate( candidates, "gamex64" );
 #elif defined( _M_IX86 ) || defined( __i386__ )
-	openPREY_AddUniqueGameModuleCandidate( candidates, "gamex86" );
+	openD3_AddUniqueGameModuleCandidate( candidates, "gamex86" );
 #endif
 #if defined( MACOS_X ) || defined( __APPLE__ )
 	// Thin packages use the architecture-tagged name; universal2 packages use
 	// one two-slice module shared by both executable slices.
-	openPREY_AddUniqueGameModuleCandidate( candidates, "game_universal2" );
+	openD3_AddUniqueGameModuleCandidate( candidates, "game_universal2" );
 #endif
-	openPREY_AddUniqueGameModuleCandidate( candidates, "game" );
+	openD3_AddUniqueGameModuleCandidate( candidates, "game" );
 }
 
-static void openPREY_DisableBSEWithWarning( const char *reason, bool showDialog = true ) {
+static void openD3_DisableBSEWithWarning( const char *reason, bool showDialog = true ) {
 	static bool warnedConsole = false;
 	if ( !warnedConsole ) {
 		warnedConsole = true;
@@ -7307,12 +7307,12 @@ static void openPREY_DisableBSEWithWarning( const char *reason, bool showDialog 
 			"BSE initialization failed.\n\nReason: %s\n\nEffects will be disabled.",
 			reason ? reason : "unknown reason"
 		);
-		::MessageBoxA( NULL, message, "openPREY Warning", MB_OK | MB_ICONWARNING | MB_SYSTEMMODAL );
+		::MessageBoxA( NULL, message, "openD3 Warning", MB_OK | MB_ICONWARNING | MB_SYSTEMMODAL );
 	}
 #endif
 
 	::declEffectEdit = NULL;
-	::bseAllocDeclEffect = openPREY_AllocIntegratedBSEDeclEffect;
+	::bseAllocDeclEffect = openD3_AllocIntegratedBSEDeclEffect;
 	::bse = &bseDisabledLocal;
 }
 
@@ -7325,12 +7325,12 @@ void idCommonLocal::AttachBSE( void ) {
 #ifdef __DOOM_DLL__
 	::bse = &bseDisabledLocal;
 	::declEffectEdit = NULL;
-	::bseAllocDeclEffect = openPREY_AllocIntegratedBSEDeclEffect;
+	::bseAllocDeclEffect = openD3_AllocIntegratedBSEDeclEffect;
 
 #if !defined( ID_DEDICATED )
 	common->DPrintf( "Attaching integrated BSE.\n" );
-	::bse = openPREY_GetIntegratedBSEManager();
-	::declEffectEdit = openPREY_GetIntegratedBSEDeclEffectEdit();
+	::bse = openD3_GetIntegratedBSEManager();
+	::declEffectEdit = openD3_GetIntegratedBSEDeclEffectEdit();
 #else
 	common->DPrintf( "Attaching integrated BSE decl allocator with disabled runtime manager.\n" );
 #endif
@@ -7435,7 +7435,7 @@ void idCommonLocal::LoadGameDLL( void ) {
 	SetGameTimeScale( 1.0f );
 	gameShutdownCalled = false;
 	gameShutdownAfterDeclsCalled = false;
-	const char *gameModuleBaseName = openPREY_SelectGameModuleBaseName();
+	const char *gameModuleBaseName = openD3_SelectGameModuleBaseName();
 	openQ4_NormalizeGameTypeForModule( gameModuleBaseName );
 
 #ifdef __DOOM_DLL__
@@ -7451,7 +7451,7 @@ void idCommonLocal::LoadGameDLL( void ) {
 	Com_SetGameModuleLoadPhase( GAME_MODULE_PHASE_LOCATE );
 
 	dllPath[0] = '\0';
-	openPREY_BuildGameModuleCandidateList( gameModuleCandidates );
+	openD3_BuildGameModuleCandidateList( gameModuleCandidates );
 	for ( int i = 0; i < gameModuleCandidates.Num(); i++ ) {
 		if ( attemptedCandidates.Length() > 0 ) {
 			attemptedCandidates += ", ";
@@ -7568,7 +7568,7 @@ void idCommonLocal::LoadGameDLL( void ) {
 		game->Init();
 	}
 	openQ4_singleplayerGameModuleReady.store(
-		// openPREY's unified "game" module serves single player too; the async
+		// openD3's unified "game" module serves single player too; the async
 		// timer still rules out network sessions itself.
 		game != NULL && ( idStr::Icmp( gameModuleBaseName, "game" ) == 0 || idStr::Icmp( gameModuleBaseName, "game_sp" ) == 0 ),
 		std::memory_order_release );
@@ -7611,11 +7611,11 @@ void idCommonLocal::ApplyAutomaticPlatformProfile( void ) {
 		return;
 	}
 
-	const char *disableAutoDetect = Common_GetNonEmptyEnv( "OPENPREY_DISABLE_STEAMDECK_AUTODETECT" );
+	const char *disableAutoDetect = Common_GetNonEmptyEnv( "OPEND3_DISABLE_STEAMDECK_AUTODETECT" );
 	if ( disableAutoDetect == NULL ) {
 		disableAutoDetect = Common_GetNonEmptyEnv( "OPENQ4_DISABLE_STEAMDECK_AUTODETECT" );
 	}
-	const char *noAutoDetect = Common_GetNonEmptyEnv( "OPENPREY_NO_STEAMDECK_AUTODETECT" );
+	const char *noAutoDetect = Common_GetNonEmptyEnv( "OPEND3_NO_STEAMDECK_AUTODETECT" );
 	if ( noAutoDetect == NULL ) {
 		noAutoDetect = Common_GetNonEmptyEnv( "OPENQ4_NO_STEAMDECK_AUTODETECT" );
 	}
@@ -7905,8 +7905,8 @@ void idCommonLocal::InitGame( void ) {
 	// A game-module reload rebuilds declarations before it replays archived cfgs.
 	// Canonicalize the pending multiplayer mode at the start of that rebuild;
 	// doing this only in LoadGameDLL is too late for the decl checksum.
-	const idStr pendingGameModule = openPREY_SelectGameModuleBaseName();
-	const bool preservePendingGameType = openPREY_IsValidGameModuleName(
+	const idStr pendingGameModule = openD3_SelectGameModuleBaseName();
+	const bool preservePendingGameType = openD3_IsValidGameModuleName(
 		cvarSystem->GetCVarString( "com_nextGameModule" ) );
 	openQ4_NormalizeGameTypeForModule( pendingGameModule.c_str() );
 	const idStr pendingGameType = cvarSystem->GetCVarString( "si_gameType" );
@@ -7995,8 +7995,8 @@ void idCommonLocal::InitGame( void ) {
 		cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "exec editor.cfg\n" );
 	}
 	cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "exec default.cfg\n" );
-	if ( fileSystem->ReadFile( "openprey_defaults.cfg", NULL ) >= 0 ) {
-		cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "exec openprey_defaults.cfg\n" );
+	if ( fileSystem->ReadFile( "opend3_defaults.cfg", NULL ) >= 0 ) {
+		cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "exec opend3_defaults.cfg\n" );
 	} else if ( fileSystem->ReadFile( "openq4_defaults.cfg", NULL ) >= 0 ) {
 		// Temporary config migration alias for existing development installs.
 		cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "exec openq4_defaults.cfg\n" );
@@ -8019,10 +8019,8 @@ void idCommonLocal::InitGame( void ) {
 
 	// skip the config file if "safe" is on the command line
 	if ( !SafeMode() ) {
-		if ( !openPREY_ExecConfigFromSavePath( CONFIG_FILE ) ) {
-			if ( openPREY_ExecConfigFromSavePath( INTERIM_CONFIG_FILE ) ) {
-				legacyConfigNameToMigrate = INTERIM_CONFIG_FILE;
-			} else if ( openPREY_ExecConfigFromSavePath( LEGACY_CONFIG_FILE ) ) {
+		if ( !openD3_ExecConfigFromSavePath( CONFIG_FILE ) ) {
+			if ( openD3_ExecConfigFromSavePath( LEGACY_CONFIG_FILE ) ) {
 				legacyConfigNameToMigrate = LEGACY_CONFIG_FILE;
 			}
 		}
@@ -8045,7 +8043,7 @@ void idCommonLocal::InitGame( void ) {
 	cmdSystem->ExecuteCommandBuffer();
 	if ( legacyConfigNameToMigrate != NULL ) {
 		Printf( "Migrating settings to %s\n", CONFIG_FILE );
-		openPREY_NormalizeConfigFilenameCase( legacyConfigNameToMigrate );
+		openD3_NormalizeConfigFilenameCase( legacyConfigNameToMigrate );
 		WriteConfigToFile( CONFIG_FILE );
 	}
 	if ( keepSavedLanguage && savedLanguage.Icmp( cvarSystem->GetCVarString( "sys_lang" ) ) != 0 ) {
@@ -8163,7 +8161,7 @@ void idCommonLocal::InitGame( void ) {
 
 	// initialize the BSE system before the game DLL starts creating effects
 	if ( bse && !bse->Init() ) {
-		openPREY_DisableBSEWithWarning( "BSE initialization failed" );
+		openD3_DisableBSEWithWarning( "BSE initialization failed" );
 	}
 
 	// startup the script debugger
@@ -8281,7 +8279,7 @@ void idCommonLocal::ShutdownGame( bool reloading ) {
 	if ( game != NULL && !gameShutdownAfterDeclsCalled ) {
 		// As above, publish the one-shot state before crossing the module boundary.
 		gameShutdownAfterDeclsCalled = true;
-#if !defined( HUMANHEAD )
+#if !defined( OPEND3 )
 		// Prey's v7 idGame has one shutdown phase; its decls are released by Shutdown.
 		game->ShutdownAfterDecls();
 #endif

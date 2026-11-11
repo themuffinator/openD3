@@ -9,28 +9,28 @@ option(
   'build_engine',
   type: 'boolean',
   value: true,
-  description: 'Build engine executables (openPREY-client_<arch>/openPREY-ded_<arch>).',
+  description: 'Build engine executables (openD3-client_<arch>/openD3-ded_<arch>).',
 )
 
 option(
   'build_games',
   type: 'boolean',
   value: true,
-  description: 'Build the unified game_<arch> module from the in-tree src/game, src/Prey and src/preyengine sources.',
+  description: 'Build the Doom 3 game module (game_<arch>) from the in-tree src/game sources.',
 )
 
 option(
   'build_game_sp',
   type: 'boolean',
   value: true,
-  description: 'Legacy compatibility option; accepted but the unified Prey game module always provides SP and MP.',
+  description: 'Legacy compatibility option; accepted but the Doom 3 game module always provides SP and MP.',
 )
 
 option(
   'build_game_mp',
   type: 'boolean',
   value: true,
-  description: 'Legacy compatibility option; accepted but the unified Prey game module always provides SP and MP.',
+  description: 'Legacy compatibility option; accepted but the Doom 3 game module always provides SP and MP.',
 )
 
 option(
@@ -166,7 +166,7 @@ option(
   'idlib_asserts',
   type: 'boolean',
   value: false,
-  description: 'Compile idlib assert()/verify() into live checks on GCC/Clang. src/idlib/Lib.h keys them off _DEBUG, which no GCC/Clang openPREY build defines, so every ownership and alignment assert is otherwise a no-op there. Enabled by the sanitizer lanes; note that AssertFailed raises SIGTRAP/SIGINT, so a firing assert stops the process.',
+  description: 'Compile idlib assert()/verify() into live checks on GCC/Clang. src/idlib/Lib.h keys them off _DEBUG, which no GCC/Clang openD3 build defines, so every ownership and alignment assert is otherwise a no-op there. Enabled by the sanitizer lanes; note that AssertFailed raises SIGTRAP/SIGINT, so a firing assert stops the process.',
 )
 
 option(
@@ -180,5 +180,5 @@ option(
   'prebuilt_content_packs',
   type: 'string',
   value: '',
-  description: 'Directory holding prebuilt openPREY content packs and their content-packs.json (tools/build/content_pack_release.py build). Each pack target copies the prebuilt file after checking that its recorded source digest matches the checked-out sources, so every platform build of a release carries the same pack bytes. Empty packs from source.',
+  description: 'Directory holding prebuilt openD3 content packs and their content-packs.json (tools/build/content_pack_release.py build). Each pack target copies the prebuilt file after checking that its recorded source digest matches the checked-out sources, so every platform build of a release carries the same pack bytes. Empty packs from source.',
 )

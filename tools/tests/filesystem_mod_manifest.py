@@ -125,10 +125,10 @@ def validate_json_parser_contract() -> None:
     require(manifest_parser, "unexpected data after manifest object", "mod.json trailing data rejection")
 
 
-def validate_openprey_version_key_contract() -> None:
+def validate_opend3_version_key_contract() -> None:
     source = read("src/framework/FileSystem.cpp")
     header = read("src/framework/FileSystem.h")
-    manifest_template = read("content/basepr/mod.json.in")
+    manifest_template = read("content/baseod3/mod.json.in")
     package_tool = read("tools/build/package_nightly.py")
     known_keys = cpp_function_body(source, "static bool FS_ModManifestKeyIsKnown(")
     manifest_parser = cpp_function_body(source, "static bool FS_ParseModManifest(")
@@ -137,32 +137,32 @@ def validate_openprey_version_key_contract() -> None:
         "modManifestStatus_t idFileSystemLocal::ReadModManifestFile(",
     )
 
-    require(known_keys, '"requiredopenPREYVersion"', "primary openPREY manifest key")
+    require(known_keys, '"requiredopenD3Version"', "primary openD3 manifest key")
     require(known_keys, '"requiredopenQ4Version"', "legacy manifest key migration alias")
     require_before(
         manifest_parser,
-        '!key.Icmp( "requiredopenPREYVersion" )',
+        '!key.Icmp( "requiredopenD3Version" )',
         '!key.Icmp( "requiredopenQ4Version" )',
         "primary manifest key before migration alias",
     )
     require(
         manifest_parser,
-        "!sawRequiredopenPREYVersion && !legacyRequiredVersion.IsEmpty()",
+        "!sawRequiredopenD3Version && !legacyRequiredVersion.IsEmpty()",
         "legacy key fallback only when the primary key is absent",
     )
     require(
         manifest_parser,
-        "missing required field 'requiredopenPREYVersion'",
+        "missing required field 'requiredopenD3Version'",
         "primary manifest-key diagnostic",
     )
-    require(manifest_reader, "invalid required openPREY version", "openPREY version parse diagnostic")
-    require(manifest_reader, "requires openPREY %s or newer", "openPREY compatibility diagnostic")
-    require(header, "GetRequiredopenPREYVersion", "primary openPREY manifest accessor")
-    require(manifest_template, '"requiredopenPREYVersion"', "staged basepr manifest template")
+    require(manifest_reader, "invalid required openD3 version", "openD3 version parse diagnostic")
+    require(manifest_reader, "requires openD3 %s or newer", "openD3 compatibility diagnostic")
+    require(header, "GetRequiredopenD3Version", "primary openD3 manifest accessor")
+    require(manifest_template, '"requiredopenD3Version"', "staged baseod3 manifest template")
     reject(manifest_template, '"requiredopenQ4Version"', "staged manifest legacy key")
     require(
         package_tool,
-        'manifest.get("requiredopenPREYVersion")',
+        'manifest.get("requiredopenD3Version")',
         "release package manifest validation",
     )
 
@@ -241,7 +241,7 @@ def validate_validation_coverage() -> None:
 def main() -> None:
     validate_manifest_status_contract()
     validate_json_parser_contract()
-    validate_openprey_version_key_contract()
+    validate_opend3_version_key_contract()
     validate_manifest_only_contract()
     validate_game_module_fallback_contract()
     validate_invalid_mod_fallback_contract()

@@ -222,7 +222,7 @@ static bool ASE_HasGameDirAssetPath( const idStr &path )
 
 	// Keep this admission check aligned with OSPathToRelativePath: ASE files
 	// authored for the active mod or its base mod are just as convertible as
-	// retail base/basepr paths. Invalid workstation/bare-name metadata still
+	// retail base/baseod3 paths. Invalid workstation/bare-name metadata still
 	// bypasses the converter so it does not generate warning noise.
 	const char *gameDirs[] = {
 		BASE_GAMEDIR,

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the source snapshot stamp used by openPREY savegames."""
+"""Generate the source snapshot stamp used by openD3 savegames."""
 
 from __future__ import annotations
 
@@ -25,8 +25,7 @@ PROJECT_ALWAYS_FILES = (
 
 GAME_SCAN_DIRS = (
     "src/game",
-    "src/Prey",
-    "src/preyengine",
+    "src/d3xp",
 )
 
 RELEVANCE_TOKENS = (
