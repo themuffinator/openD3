@@ -7,16 +7,16 @@ fidelity, fused accents, specimen sheets) needs those proprietary atlases and
 lives in tools/assets/fonts/audit_fonts.py. This test checks what the shipped
 files alone can prove, with no third-party modules so it runs wherever CI does:
 
-* every extended face draws ASCII, Latin-1, the Windows-1252 extras, Latin
-  Extended-A and Cyrillic (the Strogg rune face is Latin-only by design);
+* every face draws ASCII, Latin-1, the Windows-1252 extras, Latin Extended-A
+  and Cyrillic;
 * a visible character never maps to an empty outline;
 * no C1 control code is mapped - the console relies on an unassigned codepage
   byte drawing as an empty cell, and the console sheet's missing-glyph block
   used to leak in at 0x81;
-* the accented Latin-1 letters of one case all have distinct drawings - the
-  console sheet slips at 0xDD, which once drew sharp s as a-acute in every
-  German word (Roman Strogg draws its lowercase as the capitals, so the cases
-  are compared apart);
+* the accented Latin-1 letters of one case all have distinct drawings, so a
+  slipped cell in a retail sheet cannot put one letter in another's place
+  (Bank draws its lowercase as small capitals, so the cases are compared
+  apart);
 * the console face keeps all ink inside its 16x16 cell, which the console
   clips to.
 """
@@ -30,8 +30,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 FONTS_DIR = ROOT / "content" / "baseod3" / "pak0" / "fonts"
 
-FACES = ("bigchars", "chain", "lowpixel", "marine", "profont", "r_strogg", "strogg")
-LATIN_ONLY_FACES = {"strogg"}
+# The default face is english.ttf: the renderer resolves "fonts" to
+# "fonts/english" and looks for the .ttf beside that folder.
+FACES = ("english", "an", "bank", "micro", "bigchars")
+LATIN_ONLY_FACES: set[str] = set()
 CELL_FACES = {"bigchars"}
 # Filled-coverage overlap above which two letters count as one drawing.
 SAME_DRAWING = 0.985

@@ -1940,6 +1940,7 @@ bool R_RegisterTrueTypeFont( const char *fontName, fontInfoEx_t &font );
 struct legacyFontSlotMetrics_t {
 	float				top[GLYPHS_PER_FONT];		// image rect top, units above the baseline
 	float				height[GLYPHS_PER_FONT];	// image rect height; 0 for an empty slot
+	float				advance[GLYPHS_PER_FONT];	// pen advance, in slot units
 	float				maxHeight;					// line height the bitmap path uses
 };
 bool R_ReadLegacyFontSlotMetrics( const char *fontName, int pointSize, legacyFontSlotMetrics_t &out );

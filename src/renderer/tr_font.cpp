@@ -434,6 +434,7 @@ bool R_ReadLegacyFontSlotMetrics( const char *fontName, int pointSize, legacyFon
 		}
 		out.top[glyphIndex] = glyph.horiBearingY;
 		out.height[glyphIndex] = glyph.height;
+		out.advance[glyphIndex] = glyph.horiAdvance;
 		out.maxHeight = Max( out.maxHeight, glyph.height );
 	}
 	fileSystem->CloseFile( fontFile );

@@ -1,56 +1,42 @@
-"""Extract every retail Prey bitmap font needed by the TTF generator.
+"""Extract every retail Doom 3 bitmap font needed by the TTF generator.
 
-Prey's ``fonts/english`` data uses the original Doom 3 record format: each
-``fontImage_<size>.dat`` points at one or more atlas pages.  ``bigchars`` is a
-separate 16x16 console sheet under ``textures/gfx``.  The source files live in
-the game's pk4 files, so no game code needs to run to rebuild the derived TTFs.
+Doom 3 keeps four GUI faces under ``fonts/english``: the default face directly
+in that folder and ``an``, ``bank`` and ``micro`` beside it.  Each
+``fontImage_<size>.dat`` is a Quake 3-style ``fontInfo_t`` whose glyphs point at
+one or more ``fontImage_<page>_<size>.tga`` atlas pages.  ``bigchars`` is a
+separate 16x16 console sheet under ``textures``.  The source files live in the
+game's pk4 files, so no game code needs to run to rebuild the derived TTFs.
 
 Usage:
-    python extract_source_fonts.py --install "C:/.../Prey" --output .tmp/prey-fontsrc
+    python extract_source_fonts.py --install "C:/.../Doom 3" --output .tmp/fontsrc
 """
 from __future__ import annotations
 
 import argparse
-from zipfile import BadZipFile, ZipFile, ZipInfo
 from pathlib import Path
+from zipfile import BadZipFile, ZipFile
 
 FONT_PREFIX = "fonts/english/"
-BIGCHARS_PATH = "textures/gfx/bigchars.tga"
+BIGCHARS_PATH = "textures/bigchars.tga"
 
-
-def _read_entry(bundle: ZipFile, entry: ZipInfo) -> bytes:
-    """Read an entry from retail archives that disagree on slash direction.
-
-    Some Prey pk4 central directories use ``/`` while their local headers use
-    ``\\``.  Python correctly rejects that malformed pairing by default; the
-    compression stream remains valid, so temporarily matching the local header
-    lets us extract it without loosening validation for any other error.
-    """
-    try:
-        with bundle.open(entry) as source:
-            return source.read()
-    except BadZipFile as error:
-        if "differ" not in str(error):
-            raise
-        original_name = entry.orig_filename
-        entry.orig_filename = original_name.replace("/", "\\")
-        try:
-            with bundle.open(entry) as source:
-                return source.read()
-        finally:
-            entry.orig_filename = original_name
+# The 48 point sources the builder traces, and the console sheet.
+REQUIRED = (
+	"fonts/english/fontimage_48.dat",
+	"fonts/english/an/fontimage_48.dat",
+	"fonts/english/bank/fontimage_48.dat",
+	"fonts/english/micro/fontimage_48.dat",
+	BIGCHARS_PATH,
+)
 
 
 def _is_wanted(path: str) -> bool:
-    return (
-        path.startswith(FONT_PREFIX) and path.endswith((".dat", ".tga"))
-    ) or path == BIGCHARS_PATH
+	return (path.startswith(FONT_PREFIX) and path.endswith((".dat", ".tga"))) or path == BIGCHARS_PATH
 
 
 def _base_directory(install: Path) -> Path:
-    """Accept either the Prey install root or its ``base`` directory."""
-    nested = install / "base"
-    return nested if nested.is_dir() else install
+	"""Accept either the Doom 3 install root or its ``base`` directory."""
+	nested = install / "base"
+	return nested if nested.is_dir() else install
 
 
 def extract(install: Path, output: Path) -> int:
@@ -59,9 +45,11 @@ def extract(install: Path, output: Path) -> int:
 	found = 0
 
 	# Later archives override earlier ones, matching the engine's virtual file
-	# system.  Keep the original relative paths: default, menu and alien share
-	# the same fontImage_*.dat names, so flattening would corrupt the source.
-	for archive in sorted(base.glob("*.pk4")):
+	# system: the 1.3 patch replaces the default face's 12 and 24 point pages
+	# and the console sheet.  Keep the original relative paths, lower-cased: the
+	# four faces share the same fontImage_*.dat names, so flattening would
+	# corrupt the source, and the archives disagree on the case of "fontImage".
+	for archive in sorted(base.glob("pak*.pk4")):
 		try:
 			bundle = ZipFile(archive)
 		except BadZipFile:
@@ -71,35 +59,27 @@ def extract(install: Path, output: Path) -> int:
 		with bundle:
 			for entry in bundle.infolist():
 				normalized = entry.filename.replace("\\", "/").lower()
-				if not _is_wanted(normalized):
+				if entry.is_dir() or not _is_wanted(normalized):
 					continue
 				destination = output / normalized
 				destination.parent.mkdir(parents=True, exist_ok=True)
-				with open(destination, "wb") as target:
-					target.write(_read_entry(bundle, entry))
+				destination.write_bytes(bundle.read(entry))
 				found += 1
 
 	if found == 0:
 		return 0
 
-	# The TTF builder consumes the four authoritative 48px sources below.  Do
-	# not silently produce a partial set: a missing page would otherwise appear
-	# much later as a blank glyph range.
-	required = (
-		"fonts/english/fontImage_48.dat",
-		"fonts/english/menu/fontImage_48.dat",
-		"fonts/english/alien/fontImage_48.dat",
-		BIGCHARS_PATH,
-	)
-	missing = [path for path in required if not (output / path).is_file()]
+	# Do not silently produce a partial set: a missing page would otherwise
+	# appear much later as a blank glyph range.
+	missing = [path for path in REQUIRED if not (output / path).is_file()]
 	if missing:
-		raise RuntimeError("retail Prey font extraction is incomplete: " + ", ".join(missing))
+		raise RuntimeError("retail Doom 3 font extraction is incomplete: " + ", ".join(missing))
 	return found
 
 
 def main() -> int:
 	parser = argparse.ArgumentParser(description=__doc__)
-	parser.add_argument("--install", required=True, type=Path, help="path to the Prey install root or base directory")
+	parser.add_argument("--install", required=True, type=Path, help="path to the Doom 3 install root or its base directory")
 	parser.add_argument("--output", required=True, type=Path)
 	arguments = parser.parse_args()
 
@@ -108,7 +88,7 @@ def main() -> int:
 
 	found = extract(arguments.install, arguments.output)
 	if found == 0:
-		print(f"No retail Prey font entries found under {_base_directory(arguments.install)}")
+		print(f"No retail Doom 3 font entries found under {_base_directory(arguments.install)}")
 		return 1
 
 	print(f"extracted {found} files to {arguments.output}")

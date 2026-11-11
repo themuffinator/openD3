@@ -265,21 +265,21 @@ bool LangDict_ByteForCodePoint( unsigned int codePoint, unsigned char &out );
 ================
 R_CanonicalFontName
 
-Prey (2006) ships three GUI faces - the default face, 'menu' and 'alien' - and
-the .ttf replacements cover exactly those. Engine code inherited from Quake 4
-still names Quake 4's faces: the multiplayer chat window, the HUD text capture,
-the level editor labels and the retained interface ask for 'lowpixel', 'chain',
-'marine' or 'strogg'. Prey has no such files, so every one of those requests
-failed: the GUI layer fell back to font 0 without the scalable face ever being
-asked for, logged a warning, and - because a failed lookup is not cached -
-repeated the whole registration attempt on the next call, which for the editor
-labels is every frame.
+Doom 3 ships four GUI faces - the default face, 'an', 'bank' and 'micro' - and
+the .ttf replacements cover exactly those. Engine code inherited from upstream
+still names another game's faces: the multiplayer chat window, the HUD text
+capture, the level editor labels and the retained interface ask for 'lowpixel',
+'chain', 'marine' or 'strogg'. Doom 3 has no such files, so every one of those
+requests would fail: the GUI layer falls back to font 0 without the scalable
+face ever being asked for, logs a warning, and - because a failed lookup is not
+cached - repeats the whole registration attempt on the next call, which for the
+editor labels is every frame.
 
-Fold those names onto the Prey face that plays the same role. The Latin text
-faces become the default face, and the Strogg rune faces become 'alien', Prey's
-own unreadable-script face. Prey content never names a Quake 4 face, so this
-cannot shadow a real font. Both "fonts/<face>" and the language-resolved
-"fonts/<lang>/<face>" spellings are handled; any other name passes through.
+Fold those names onto the default face. Doom 3 has no rune face, so the names
+of upstream's unreadable-script faces fold there too. Doom 3 content never
+names one of these, so this cannot shadow a real font. Both "fonts/<face>" and
+the language-resolved "fonts/<lang>/<face>" spellings are handled; any other
+name passes through.
 
 Inline because the GUI layer and the renderer module both need it and the
 renderer is a separate module.
@@ -293,13 +293,15 @@ ID_INLINE void R_CanonicalFontName( const char *fontName, idStr &canonical ) {
 	}
 
 	static const char * const aliases[][2] = {
-		// Quake 4 face, Prey face ("" is the default face)
+		// upstream face, Doom 3 face ("" is the default face)
 		{ "chain", "" },
 		{ "lowpixel", "" },
 		{ "marine", "" },
 		{ "profont", "" },
-		{ "strogg", "alien" },
-		{ "r_strogg", "alien" },
+		{ "strogg", "" },
+		{ "r_strogg", "" },
+		{ "menu", "" },
+		{ "alien", "" },
 	};
 
 	const int lastSlash = canonical.Last( '/' );

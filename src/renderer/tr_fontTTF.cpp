@@ -156,6 +156,7 @@ struct q4TTFSlotFit_t {
 	float		verticalScale;		// outline stretch about the baseline
 	float		lineHeight;			// retail line height, in slot units
 	float		resolutionScale;	// extra rasterisation scale for the slot
+	float		advanceOffset;		// what the retail slot adds to every pen advance, in slot units
 };
 
 /*
@@ -729,7 +730,8 @@ struct q4TTFAtlasResult_t {
 };
 
 static bool R_TTFPackAtlas( idTrueTypeFont &face, const char *fontName, int pointSize, float requestedUpscale,
-							float verticalScale, const unsigned int *codePoints, int count, bool measureLayout,
+							float verticalScale, float advanceOffset,
+							const unsigned int *codePoints, int count, bool measureLayout,
 							const char *imageName, const char *materialName,
 							glyphInfo_t *outGlyphs, bool *outCovered, q4TTFAtlasResult_t &result ) {
 	result.material = NULL;
@@ -903,7 +905,12 @@ static bool R_TTFPackAtlas( idTrueTypeFont &face, const char *fontName, int poin
 		if ( !rasters[i].valid ) {
 			continue;
 		}
+		// A fitted slot stands its letters as far apart as the retail slot does
+		// (see R_TTFFitSlotsToRetail). A zero-width mark stays zero-width.
 		glyph.horiAdvance = rasters[i].advance * unitsToPoint;
+		if ( rasters[i].advance > 0 ) {
+			glyph.horiAdvance += advanceOffset;
+		}
 		if ( outCovered != NULL ) {
 			outCovered[i] = rasters[i].covered;
 		}
@@ -1025,7 +1032,7 @@ extended pages at all rather than a page full of blanks.
 ================
 */
 static void R_TTFBuildExtendedPages( idTrueTypeFont &face, const char *fontName, const idStr &safeName,
-									 int pointSize, float upscale, float verticalScale,
+									 int pointSize, float upscale, float verticalScale, float advanceOffset,
 									 const idList<unsigned int> &requested, fontInfo_t &out ) {
 	if ( requested.Num() == 0 ) {
 		return;
@@ -1049,7 +1056,8 @@ static void R_TTFBuildExtendedPages( idTrueTypeFont &face, const char *fontName,
 	bool *isCovered = (bool *)Mem_ClearedAlloc( covered.Num() * sizeof( bool ) );
 
 	q4TTFAtlasResult_t result;
-	const bool packed = R_TTFPackAtlas( face, fontName, pointSize, upscale, verticalScale, covered.Ptr(), covered.Num(),
+	const bool packed = R_TTFPackAtlas( face, fontName, pointSize, upscale, verticalScale, advanceOffset,
+										covered.Ptr(), covered.Num(),
 										false, imageName.c_str(), materialName.c_str(),
 										glyphs, isCovered, result );
 	if ( !packed || result.material == NULL ) {
@@ -1116,7 +1124,8 @@ static bool R_TTFBuildSlot( idTrueTypeFont &face, const char *fontName, const q4
 	const idStr materialName = imageName;
 
 	q4TTFAtlasResult_t result;
-	const bool packed = R_TTFPackAtlas( face, fontName, slot.pointSize, upscale * fit.resolutionScale, fit.verticalScale, codePoints, count, true,
+	const bool packed = R_TTFPackAtlas( face, fontName, slot.pointSize, upscale * fit.resolutionScale, fit.verticalScale,
+										fit.advanceOffset, codePoints, count, true,
 										imageName.c_str(), materialName.c_str(),
 										&out.glyphs[Q4_TTF_FIRST_CODE], NULL, result );
 	Mem_Free( codePoints );
@@ -1145,7 +1154,7 @@ static bool R_TTFBuildSlot( idTrueTypeFont &face, const char *fontName, const q4
 	// Built at the scale the base atlas settled on, so both halves of one point
 	// size are rasterised alike even when the area cap pulled the base back.
 	R_TTFBuildExtendedPages( face, fontName, safeName, slot.pointSize, result.usedUpscale, fit.verticalScale,
-							 extendedCodePoints, out );
+							 fit.advanceOffset, extendedCodePoints, out );
 
 	return true;
 }
@@ -1249,31 +1258,34 @@ static bool R_UseScalableFonts( void ) {
 ============
 R_TTFFitSlotsToRetail
 
-The bitmap path draws each size from its own hand-made atlas, and Prey's are not
-rescales of one another: the menu face's 24 point capitals are 86% as tall as
-its 48 point ones and its 12 point capitals 67%, and every slot reserves its own
-line height (the menu face's 48 point cell is 50 units, far taller than its
-letters). The GUI picks the slot from the authored text scale. One outline
-rasterised uniformly at 12/24/48 point therefore sat on a different baseline
-and drew taller than the bitmap text.
+The bitmap path draws each size from its own atlas, and Doom 3's are not
+rescales of one another: each was rendered separately, hinted to its own pixel
+grid. The default face's 12 point capitals are 12% taller in proportion than its
+48 point ones, the 12 point slots of all four faces space their letters 7-20%
+wider, and every slot reserves its own line height. The GUI picks the slot from
+the authored text scale. One outline rasterised uniformly at 12/24/48 point
+would therefore sit on a different baseline and run narrower than the bitmap
+text.
 
-When the retail .dat files are present - always, for a Prey install - each slot
-is fitted to its retail counterpart instead:
+When the retail .dat files are present - always, for a Doom 3 install - each
+slot is fitted to its retail counterpart instead:
 
 - its line height becomes the retail one, from which DrawText positions the
   first baseline of a text rect;
 - its outline is stretched about the baseline so glyph tops land on the retail
   tops: the median, over letters and digits, of the retail top over the face's
-  own top at that size. Retail tops include the atlas border where the face has
-  one (english does, menu and alien do not); the border is measured at 48
-  point, where the face was traced, and taken off;
+  own top at that size. Retail tops include the texel of border every Doom 3
+  glyph rect carries; the border is measured at 48 point, where the face was
+  traced, and taken off;
 - a fitted slot is no longer a rescale of the others, so the GUI selects it by
   authored scale exactly as it selects a retail atlas. The medium slot serves
   scales up to gui_mediumFontLimit (0.6: a 28.8 unit em against its 24), so it
   is rasterised that much finer to stay sharp. The small slot only serves
   scales below its own size, and the large slot is the last resort either way.
 
-Widths and advances are untouched; the face already matches them.
+Glyph widths are untouched. Every pen advance grows by what the retail slot
+adds to its own, so a line is as wide as the bitmap path draws it (see the note
+where the offset is measured).
 ============
 */
 static float R_TTFMedian( float *values, int count ) {
@@ -1298,6 +1310,7 @@ static void R_TTFFitSlotsToRetail( const idTrueTypeFont &face, const char *fontN
 		fits[i].verticalScale = 1.0f;
 		fits[i].lineHeight = 0.0f;
 		fits[i].resolutionScale = 1.0f;
+		fits[i].advanceOffset = 0.0f;
 	}
 
 	legacyFontSlotMetrics_t *retail = new legacyFontSlotMetrics_t[3];
@@ -1368,15 +1381,47 @@ static void R_TTFFitSlotsToRetail( const idTrueTypeFont &face, const char *fontN
 			verticalScale = 1.0f;
 		}
 
+		// Pen advances. Doom 3's atlases were rendered one size at a time, each
+		// glyph hinted to that size's pixel grid and stored with a texel of space
+		// after it, so the smaller the slot the looser its text: the 12 point
+		// slot advances 7-20% further per letter than the 48 point one the face
+		// was traced from. The GUIs were laid out against those widths - buttons
+		// are centred with leading spaces, rows are sized to their longest
+		// string - so a fitted slot has to be as wide.
+		//
+		// Taking each retail advance as it stands would do that exactly, but the
+		// retail advances are whole texels chosen for hinted bitmaps: under
+		// unhinted outlines they leave "LO AD" where the stock reads "LOAD". What
+		// the retail slot adds is, in effect, a constant - its extra texel plus
+		// the average of its rounding - so the slot adds that constant, the
+		// median of retail minus face over the letters and digits, to every
+		// advance. Lines come out as wide as the stock's to within the rounding
+		// noise, with the face's own rhythm. Extended pages get the same
+		// offset, so a Cyrillic word is spaced like the Latin one beside it.
+		sampleCount = 0;
+		for ( int r = 0; r < referenceCount; r++ ) {
+			ttGlyphMetrics_t metrics;
+			const int glyphIndex = face.GlyphForCodepoint( codes[r] );
+			if ( glyphIndex == 0 || !face.GetGlyphMetrics( glyphIndex, metrics ) || metrics.advance <= 0 ) {
+				continue;
+			}
+			if ( retail[i].advance[codes[r]] > 0.0f ) {
+				samples[sampleCount++] = retail[i].advance[codes[r]] - metrics.advance * pointSize / (float)face.UnitsPerEm();
+			}
+		}
+		float advanceOffset = ( sampleCount >= 8 ) ? R_TTFMedian( samples, sampleCount ) : 0.0f;
+		advanceOffset = idMath::ClampFloat( -0.1f * pointSize, 0.2f * pointSize, advanceOffset );
+
 		fits[i].fitted = true;
 		fits[i].verticalScale = verticalScale;
+		fits[i].advanceOffset = advanceOffset;
 		fits[i].lineHeight = retail[i].maxHeight;
 		// GUI scale 1 is a 48 point em.
 		fits[i].resolutionScale = Max( 1.0f, slotLimits[i] * largePoint / pointSize );
 
 		if ( r_ttfFontDebug.GetBool() ) {
-			common->Printf( "TTF font: '%s' %ipt fitted to retail: vertical %.3f, line height %.0f, border %.0f, resolution x%.2f\n",
-							fontName, Q4_TTF_SLOTS[i].pointSize, verticalScale, fits[i].lineHeight, border,
+			common->Printf( "TTF font: '%s' %ipt fitted to retail: vertical %.3f, advance %+.2f, line height %.0f, border %.0f, resolution x%.2f\n",
+							fontName, Q4_TTF_SLOTS[i].pointSize, verticalScale, advanceOffset, fits[i].lineHeight, border,
 							fits[i].resolutionScale );
 		}
 	}

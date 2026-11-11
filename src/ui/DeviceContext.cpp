@@ -44,7 +44,11 @@ idVec4 idDeviceContext::colorWhite;
 idVec4 idDeviceContext::colorNone;
 
 
-idCVar gui_smallFontLimit( "gui_smallFontLimit", "0.10", CVAR_GUI | CVAR_ARCHIVE, "" );
+// Doom 3 draws text up to scale 0.30 from its 12 point atlas. Nearly all of its
+// menu, HUD and PDA text sits at 0.20-0.26, and the 12 point slot spaces its
+// letters 7-20% wider than the 24 point one, so this threshold decides how wide
+// almost every line in the game is laid out.
+idCVar gui_smallFontLimit( "gui_smallFontLimit", "0.30", CVAR_GUI | CVAR_ARCHIVE, "" );
 idCVar gui_mediumFontLimit( "gui_mediumFontLimit", "0.60", CVAR_GUI | CVAR_ARCHIVE, "" );
 
 // Accessibility: Quake 4 draws most of its text straight over the world and over

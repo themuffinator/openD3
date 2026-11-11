@@ -1,4 +1,4 @@
-"""Audit the shipped openQ4 TrueType faces against the retail bitmap atlases.
+"""Audit the shipped openD3 TrueType faces against the retail bitmap atlases.
 
 Every glyph a face traced from a retail atlas is rasterised back into that
 atlas's own pixel space - same scale, same bearings - with the generator's own
@@ -21,8 +21,8 @@ uses, all of Latin-1 and Windows-1252, Latin Extended-A and the Cyrillic block -
 is checked against every face's cmap.
 
 Usage:
-    python audit_fonts.py --source <dir with *_48.fontdat/*.tga and bigchars.tga>
-                          --fonts content/baseoq4/pak0/fonts --output .tmp/fontaudit
+    python audit_fonts.py --source <dir with fonts/english/** and textures/bigchars.tga>
+                          --fonts content/baseod3/pak0/fonts --output .tmp/fontaudit
 
 The source directory is what ``extract_source_fonts.py`` produces.
 """
@@ -42,31 +42,23 @@ from fontTools.ttLib import TTFont
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from q4font.charset import byte_to_unicode  # noqa: E402
-from q4font.donor import _record_to_path  # noqa: E402
-from q4font.fontdat import SourceFont, load_source_font, slot_stretch  # noqa: E402
-from q4font.grid import load_grid_font  # noqa: E402
-from q4font.path import Path2D  # noqa: E402
-from q4font.raster import rasterize  # noqa: E402
-from build_openq4_fonts import FACES as SPECS  # noqa: E402
+from d3font.charset import byte_to_unicode  # noqa: E402
+from d3font.donor import _record_to_path  # noqa: E402
+from d3font.fontdat import SourceFont, load_dat_source_font, slot_stretch  # noqa: E402
+from d3font.grid import load_grid_font  # noqa: E402
+from d3font.path import Path2D  # noqa: E402
+from d3font.raster import rasterize  # noqa: E402
+from build_opend3_fonts import FACES as SPECS  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
-STRINGS = ROOT / "content" / "baseoq4" / "pak0" / "strings"
+STRINGS = ROOT / "content" / "baseod3" / "pak0" / "strings"
 
-# Faces and the atlas each one was traced from.
-FACES = {
-	"chain": "chain",
-	"lowpixel": "lowpixel",
-	"marine": "marine",
-	"profont": "profont",
-	"r_strogg": "r_strogg",
-	"strogg": "strogg",
-	"bigchars": "bigchars.tga",
-}
+# Faces and the atlas each one was traced from: a folder of Doom 3 .dat records
+# and their pages, or the console's fixed-cell sheet.
+FACES = {key: (spec.grid_atlas or spec.source) for key, spec in SPECS.items()}
 
-# 'strogg' is a decorative rune face, Latin-only by design: the retained Strogg
-# pause folds everything else onto it, so it is exempt from script coverage.
-LATIN_ONLY = {"strogg"}
+# Faces that are Latin-only by design and so exempt from script coverage.
+LATIN_ONLY: set[str] = set()
 
 # Score thresholds that flag a traced glyph for a closer look.
 IOU_FLAG = 0.90
@@ -170,6 +162,25 @@ def topology(coverage: np.ndarray) -> tuple[int, int]:
 	return components(ink), max(0, components(padded) - 1)
 
 
+def placeholder_slots(source: SourceFont, minimum: int) -> set[int]:
+	"""Slots that share one drawing: the missing-glyph box, which is not traced."""
+	if minimum <= 0:
+		return set()
+	groups: dict[tuple, list[int]] = {}
+	for slot in source.glyphs:
+		if slot.code <= 32 or not slot.has_outline:
+			continue
+		coverage = source.coverage(slot)
+		if coverage.size == 0 or float(coverage.max()) < 0.25:
+			continue
+		groups.setdefault((coverage.shape, float(slot.advance), coverage.tobytes()), []).append(slot.code)
+	found: set[int] = set()
+	for codes in groups.values():
+		if len(codes) >= minimum:
+			found.update(codes)
+	return found
+
+
 def compare_traced(face_key: str, face: Face, source: SourceFont) -> list[dict]:
 	results = []
 	scale = face.upem / source.point_size
@@ -178,8 +189,9 @@ def compare_traced(face_key: str, face: Face, source: SourceFont) -> list[dict]:
 	# and console cells that draw another character - have no retail reference.
 	rebuilt = set(spec.rebuild) if spec else set()
 	remap = dict(spec.cell_remap) if spec else {}
+	placeholders = placeholder_slots(source, spec.placeholder_slots if spec else 0)
 	for slot in source.glyphs:
-		if slot.code < 33 or not slot.has_outline:
+		if slot.code < 33 or not slot.has_outline or slot.code in placeholders:
 			continue
 		codepoint = byte_to_unicode(slot.code)
 		if slot.code in remap:
@@ -192,12 +204,10 @@ def compare_traced(face_key: str, face: Face, source: SourceFont) -> list[dict]:
 		if atlas.size == 0 or atlas.max() < 0.25:
 			continue
 		entry: dict = {"code": slot.code, "codepoint": codepoint, "char": chr(codepoint)}
-		# Retail .fontdat rects start at the ink on the left but keep a texel of
-		# space on the other three sides, so ink lying on the right, top or
-		# bottom edge means the artwork was cut off when the atlas was made - a
-		# defect a faithful trace reproduces. (Grid cells are measured tight on
-		# every side, so the test means nothing there.) Left-side clipping cannot
-		# be told from the normal case this way and needs the specimen sheets.
+		# Doom 3's glyph rects keep a texel of space around the ink, so ink lying
+		# on the right, top or bottom edge means the artwork was cut off when the
+		# atlas was made - a defect a faithful trace reproduces. (Grid cells are
+		# measured tight on every side, so the test means nothing there.)
 		if not FACES.get(face_key, "").endswith(".tga"):
 			clipped = [side for side, edge in (("right", atlas[:, -1]), ("top", atlas[0, :]),
 			                                   ("bottom", atlas[-1, :]))
@@ -285,7 +295,7 @@ def fused_accent(face: Face, codepoint: int) -> bool:
 	if not marks or not all(mark in ABOVE_COMBINING for mark in marks):
 		return False
 	base = DOTLESS.get(base, base) if DOTLESS.get(base) in face.cmap else base
-	# A face that folds accents away (the Strogg runes) draws the bare letter.
+	# A face that folds accents away (a rune face) draws the bare letter.
 	if base not in face.cmap or face.cmap[base] == face.cmap.get(codepoint):
 		return False
 	base_islands = ink_islands(face, base)
@@ -422,7 +432,7 @@ BLOCKS = {
 def main() -> int:
 	parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
 	parser.add_argument("--source", type=Path, required=True)
-	parser.add_argument("--fonts", type=Path, default=ROOT / "content/baseoq4/pak0/fonts")
+	parser.add_argument("--fonts", type=Path, default=ROOT / "content/baseod3/pak0/fonts")
 	parser.add_argument("--output", type=Path, required=True)
 	parser.add_argument("--faces", default="")
 	parser.add_argument("--sheets", action="store_true", help="also write specimen sheets per block")
@@ -440,7 +450,7 @@ def main() -> int:
 		face = Face(args.fonts / f"{key}.ttf")
 		atlas_name = FACES[key]
 		source = (load_grid_font(args.source / atlas_name, key) if atlas_name.endswith(".tga")
-		          else load_source_font(args.source, atlas_name, 48))
+		          else load_dat_source_font(args.source / atlas_name, 48, key))
 		out = args.output / key
 		out.mkdir(parents=True, exist_ok=True)
 
