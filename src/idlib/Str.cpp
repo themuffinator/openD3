@@ -50,7 +50,11 @@ idVec4	g_color_table[COLOR_INDEX_COUNT] =
 	idVec4(0.0f, 0.0f, 0.0f, 1.0f), // S_COLOR_BLACK
 // RAVEN BEGIN
 // bdube: console color
+#if defined( OPEND3 )
+	idVec4(0.0f, 1.0f, 1.0f, 1.0f),	// S_COLOR_CONSOLE: Doom 3's console text is cyan
+#else
 	idVec4(0.94f, 0.62f, 0.05f, 1.0f),	// S_COLOR_CONSOLE
+#endif
 // RAVEN END	
 	// CPMA/CNQ3 alphabet rainbow colors, adapted via the FnQ3 implementation.
 	idVec4(1.00000f, 0.00000f, 0.00000f, 1.00000f), // a

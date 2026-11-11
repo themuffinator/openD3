@@ -39,72 +39,79 @@ This file is part of the openD3 Source Code. See docs/legal for details.
 ===============================================================================
 */
 
-// Window chrome behind the panels.
-#define SYSCON_WINDOW_R				0x0c
-#define SYSCON_WINDOW_G				0x0f
-#define SYSCON_WINDOW_B				0x07
+// The palette is Doom 3's. The surfaces are darker shades of the slate its
+// menus use for dialog plates (matcolor 0.18 0.25 0.3, #2e404c), so the window
+// is dark without being black; the in-game console keeps the opaque black
+// field for itself. Text is the in-game console's cyan, and the borders are
+// the menus' steel blue (0.45 0.55 0.7) and line colour (0.55 0.65 0.75) laid
+// over the panel.
 
-// Log and status surface. This is the historical Quake 4 console green-black
-// and is deliberately unchanged; it carries the product identity.
-#define SYSCON_PANEL_R				0x1b
+// Window chrome behind the panels: the slate at 30%.
+#define SYSCON_WINDOW_R				0x0e
+#define SYSCON_WINDOW_G				0x13
+#define SYSCON_WINDOW_B				0x17
+
+// Log and status surface: the slate at 50%.
+#define SYSCON_PANEL_R				0x17
 #define SYSCON_PANEL_G				0x20
-#define SYSCON_PANEL_B				0x0a
+#define SYSCON_PANEL_B				0x26
 
 // Command input surface, sunk one step below the log so the caret line reads
 // as an editable field rather than as more log.
 #define SYSCON_INPUT_R				0x11
-#define SYSCON_INPUT_G				0x15
-#define SYSCON_INPUT_B				0x0a
+#define SYSCON_INPUT_G				0x18
+#define SYSCON_INPUT_B				0x1d
 
-// Button face, hover, and pressed states.
-#define SYSCON_BUTTON_R				0x24
-#define SYSCON_BUTTON_G				0x2b
-#define SYSCON_BUTTON_B				0x12
+// Button face, hover, and pressed states. Hover is the slate itself.
+#define SYSCON_BUTTON_R				0x20
+#define SYSCON_BUTTON_G				0x2d
+#define SYSCON_BUTTON_B				0x35
 
-#define SYSCON_BUTTON_HOT_R			0x32
-#define SYSCON_BUTTON_HOT_G			0x3b
-#define SYSCON_BUTTON_HOT_B			0x18
+#define SYSCON_BUTTON_HOT_R			0x2e
+#define SYSCON_BUTTON_HOT_G			0x40
+#define SYSCON_BUTTON_HOT_B			0x4c
 
-#define SYSCON_BUTTON_DOWN_R		0x15
-#define SYSCON_BUTTON_DOWN_G		0x1a
-#define SYSCON_BUTTON_DOWN_B		0x0a
+#define SYSCON_BUTTON_DOWN_R		0x13
+#define SYSCON_BUTTON_DOWN_G		0x1b
+#define SYSCON_BUTTON_DOWN_B		0x20
 
 // Resting and emphasised borders.
-#define SYSCON_BORDER_R				0x3a
-#define SYSCON_BORDER_G				0x44
-#define SYSCON_BORDER_B				0x23
+#define SYSCON_BORDER_R				0x33
+#define SYSCON_BORDER_G				0x40
+#define SYSCON_BORDER_B				0x50
 
-#define SYSCON_BORDER_LIT_R			0x5b
-#define SYSCON_BORDER_LIT_G			0x66
-#define SYSCON_BORDER_LIT_B			0x36
+#define SYSCON_BORDER_LIT_R			0x52
+#define SYSCON_BORDER_LIT_G			0x63
+#define SYSCON_BORDER_LIT_B			0x73
 
-// Primary text and focus accent: the historical Quake 4 amber.
-#define SYSCON_TEXT_R				0xf0
-#define SYSCON_TEXT_G				0x9e
-#define SYSCON_TEXT_B				0x0d
+// Primary text and focus accent: Doom 3's console cyan.
+#define SYSCON_TEXT_R				0x00
+#define SYSCON_TEXT_G				0xff
+#define SYSCON_TEXT_B				0xff
 
-// Secondary text: prompts, placeholder status, scroll position readout.
-#define SYSCON_TEXT_DIM_R			0x9a
-#define SYSCON_TEXT_DIM_G			0x83
-#define SYSCON_TEXT_DIM_B			0x30
+// Secondary text: prompts, placeholder status, scroll position readout. The
+// menus' dim cyan (forecolor 0.2 0.6 0.6).
+#define SYSCON_TEXT_DIM_R			0x33
+#define SYSCON_TEXT_DIM_G			0x99
+#define SYSCON_TEXT_DIM_B			0x99
 
 // Fatal-error status strip.
 #define SYSCON_ALERT_R				0xff
-#define SYSCON_ALERT_G				0x53
-#define SYSCON_ALERT_B				0x24
+#define SYSCON_ALERT_G				0x33
+#define SYSCON_ALERT_B				0x00
 
 #define SYSCON_ALERT_PANEL_R		0x2b
-#define SYSCON_ALERT_PANEL_G		0x0f
+#define SYSCON_ALERT_PANEL_G		0x0c
 #define SYSCON_ALERT_PANEL_B		0x06
 
 // Scrollbar track and thumb.
-#define SYSCON_SCROLL_TRACK_R		0x14
-#define SYSCON_SCROLL_TRACK_G		0x18
-#define SYSCON_SCROLL_TRACK_B		0x09
+#define SYSCON_SCROLL_TRACK_R		0x12
+#define SYSCON_SCROLL_TRACK_G		0x19
+#define SYSCON_SCROLL_TRACK_B		0x1e
 
-#define SYSCON_SCROLL_THUMB_R		0x4e
-#define SYSCON_SCROLL_THUMB_G		0x5a
-#define SYSCON_SCROLL_THUMB_B		0x2c
+#define SYSCON_SCROLL_THUMB_R		0x41
+#define SYSCON_SCROLL_THUMB_G		0x51
+#define SYSCON_SCROLL_THUMB_B		0x65
 
 // Expands a palette name to the byte triplet both platforms consume, e.g.
 // SDL_SetRenderDrawColor( renderer, SYSCON_RGB( PANEL ), 0xff ).

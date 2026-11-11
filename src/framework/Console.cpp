@@ -64,12 +64,27 @@ void SCR_DrawTextRightAlign( float &y, const char *text, ... ) id_attribute((for
 #define	COMMAND_HISTORY			64
 static const char *kConsoleHistoryFileName = "consolehistory.dat";
 
+#if defined( OPEND3 )
+// Doom 3's console: cyan text, prompt, version and rule on opaque black, with
+// the typed line in white. The completion popup's default values take the
+// menus' value colour (forecolor 0.6 0.8 0.8). Its selected row is kept dark,
+// because cyan near full strength leaves the white names on it unreadable.
+static const idVec4 kConsoleBorderColor( 0.0f, 1.0f, 1.0f, 1.0f ); // #00ffff
+static const idVec4 kConsoleVersionColor( 0.0f, 1.0f, 1.0f, 1.0f ); // #00ffff
+static const idVec4 kConsoleBackgroundColor( 0.0f, 0.0f, 0.0f, 1.0f );
+static const idVec4 kConsolePopupTextColor( 1.0f, 1.0f, 1.0f, 0.95f );
+static const idVec4 kConsolePopupValueColor( 0.6f, 0.8f, 0.8f, 0.8f ); // #99cccc
+static const idVec4 kConsoleSelectionColor( 0.0f, 1.0f, 1.0f, CON_SELECTION_ALPHA );
+static const float kConsolePopupSelectionAlpha = 0.4f;
+#else
 static const idVec4 kConsoleBorderColor( 0.9411765f, 0.6196079f, 0.0509804f, 1.0f ); // #f09e0d
 static const idVec4 kConsoleVersionColor( 0.4509804f, 0.4509804f, 0.4509804f, 1.0f ); // #737373
 static const idVec4 kConsoleBackgroundColor( 0.0f, 0.0f, 0.0f, 1.0f );
 static const idVec4 kConsolePopupTextColor( 1.0f, 1.0f, 1.0f, 0.95f );
 static const idVec4 kConsolePopupValueColor( 0.96862745f, 0.85882353f, 0.6117647f, 0.8f );
 static const idVec4 kConsoleSelectionColor( 0.9411765f, 0.6196079f, 0.0509804f, CON_SELECTION_ALPHA );
+static const float kConsolePopupSelectionAlpha = 0.85f;
+#endif
 
 // the console will query the cvar and command systems for
 // command completion information
@@ -4855,7 +4870,7 @@ void idConsoleLocal::DrawCompletionPopup( void ) {
 	Con_LightenColor( kConsoleBorderColor, 0.25f, popupBorder );
 	popupBorder[3] = 0.7f;
 	popupBackground[3] = 0.92f;
-	selectionColor[3] = 0.85f;
+	selectionColor[3] = kConsolePopupSelectionAlpha;
 
 	DrawSolidRect( popupX, popupY, popupW, popupH, popupBackground );
 	DrawSolidRect( popupX, popupY, popupW, 1.0f, popupBorder );

@@ -110,6 +110,11 @@ release of Doom 3 (1.3.1 packs):
   autosave and exits cleanly, on OpenGL. The same map loads and renders on the
   native Vulkan renderer (`r_renderApi vulkan`).
 - The stock main menu path starts and plays the intro video.
+- Both consoles carry Doom 3's colours, seen over the main menu: the in-game
+  console draws cyan text, prompt, version and rule on opaque black, and the
+  Win32 system console draws the same cyan on a dark slate taken from the
+  menus' dialog plate. The completion popup, text selection and the SDL system
+  console on Linux and macOS take the same palette but were not looked at.
 - The dedicated server spawns `game/mp/d3dm1` (887 entities).
 - `+set fs_game d3xp` mounts the expansion directory, loads `game-d3xp_x64`
   and initialises the game. On the test machine, which has only the

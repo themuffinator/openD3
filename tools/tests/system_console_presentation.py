@@ -248,7 +248,7 @@ def validate_posix_console_presentation() -> None:
 
     # Every colour must come from the shared palette. Bare SDL colour literals
     # are how the two consoles drifted apart in the first place.
-    for literal in ("0x1b, 0x20, 0x0a", "0xf0, 0x9e, 0x0d", "0x3a, 0x3f, 0x27", "0x79, 0x82, 0x50"):
+    for literal in ("0x17, 0x20, 0x26", "0x00, 0xff, 0xff", "0x33, 0x40, 0x50", "0x52, 0x63, 0x73"):
         reject(source, literal, "POSIX console hard-coded palette literal")
 
     require(source, "SYSCON_METRIC_WINDOW_W", "POSIX console shared window width")
@@ -319,7 +319,7 @@ def validate_windows_console_presentation() -> None:
     require(source, '#include "../sys_console_theme.h"', "Windows console shared theme include")
     require(source, "#define SYSCON_WIN_RGB( name )\tSysCon_Color( SYSCON_RGB( name ) )", "Windows console shared palette accessor")
 
-    for literal in ("RGB(0x1b, 0x20, 0x0a)", "RGB(0xf0, 0x9e, 0x0d)"):
+    for literal in ("RGB(0x17, 0x20, 0x26)", "RGB(0x00, 0xff, 0xff)"):
         reject(source, literal, "Windows console hard-coded palette literal")
 
     # Fixed pixel geometry against a per-monitor DPI aware process gives a
