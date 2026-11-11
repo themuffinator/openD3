@@ -953,6 +953,8 @@ void idWindow::CommonInit() {
 	screenStretchY = SCREEN_STRETCH_NONE;
 	stretchShiftX = stretchShiftY = 0.0f;
 	canvasClip = 0;
+	screenRepeatX = screenRepeatY = 0.0f;
+	repeatColorsTaken = false;
 	softFocus = 0.0f;
 	softFocusSaturation = 1.0f;
 	softFocusDim = 0.0f;
@@ -2457,6 +2459,70 @@ float idWindow::EvalRegs(int test, bool force) {
 
 /*
 ================
+idWindow::DrawScreenRepeats
+
+openD3: screenrepeatx/y. Copies of the background at whole periods from the
+window, on each axis that has an expansion, as far as the expansion reaches. A
+copy that would land inside the canvas is left out.
+Only where the window's own alignment rules apply (CalcClientRect).
+================
+*/
+void idWindow::DrawScreenRepeats( const idRectangle &drawRect ) {
+	if ( ( screenRepeatX <= 0.0f && screenRepeatY <= 0.0f ) || dc == NULL || ( gui != NULL && gui->ClassicCanvas() ) ) {
+		return;
+	}
+	if ( parent != NULL && !( parent->GetFlags() & WIN_DESKTOP ) &&
+			( parent->GetScreenAlignX() != SCREEN_ALIGN_X_MIDDLE || parent->GetScreenAlignY() != SCREEN_ALIGN_Y_MIDDLE ) ) {
+		return;
+	}
+	float xExpand = 0.0f;
+	float yExpand = 0.0f;
+	dc->GetVirtualScreenExpansion( forceAspectWidth, forceAspectHeight, xExpand, yExpand );
+	const float periodX = xExpand > 0.0f ? screenRepeatX : 0.0f;
+	const float periodY = yExpand > 0.0f ? screenRepeatY : 0.0f;
+	if ( periodX <= 0.0f && periodY <= 0.0f ) {
+		return;
+	}
+	if ( !repeatColorsTaken ) {
+		repeatColorsTaken = true;
+		repeatBackColor = backColor;
+		repeatMatColor = matColor;
+	}
+	const idVec4 liveBackColor = backColor;
+	const idVec4 liveMatColor = matColor;
+	backColor = repeatBackColor;
+	matColor = repeatMatColor;
+	const float left = -xExpand, right = forceAspectWidth + xExpand;
+	const float top = -yExpand, bottom = forceAspectHeight + yExpand;
+	const float w = idMath::Fabs( drawRect.w ), h = idMath::Fabs( drawRect.h );
+	const int countX = periodX > 0.0f ? static_cast<int>( idMath::Ceil( ( forceAspectWidth + 2.0f * xExpand + w ) / periodX ) ) : 0;
+	const int countY = periodY > 0.0f ? static_cast<int>( idMath::Ceil( ( forceAspectHeight + 2.0f * yExpand + h ) / periodY ) ) : 0;
+	for ( int i = -countX; i <= countX; i++ ) {
+		for ( int j = -countY; j <= countY; j++ ) {
+			if ( i == 0 && j == 0 ) {
+				continue;
+			}
+			idRectangle copy = drawRect;
+			copy.x += i * periodX;
+			copy.y += j * periodY;
+			if ( copy.x + w <= left || copy.x >= right || copy.y + h <= top || copy.y >= bottom ) {
+				continue;
+			}
+			// Copies only continue the pattern past the canvas: inside it, the
+			// GUI's own windows already draw it.
+			if ( ( i != 0 && copy.x > 0.0f && copy.x + w < forceAspectWidth ) ||
+					( j != 0 && copy.y > 0.0f && copy.y + h < forceAspectHeight ) ) {
+				continue;
+			}
+			DrawBackground( copy );
+		}
+	}
+	backColor = liveBackColor;
+	matColor = liveMatColor;
+}
+
+/*
+================
 idWindow::DrawBackground
 ================
 */
@@ -2751,7 +2817,10 @@ void idWindow::CalcRects(float x, float y) {
 	int c = drawWindows.Num();
 	for (int i = 0; i < c; i++) {
 		if (drawWindows[i].win) {
-			drawWindows[i].win->CalcRects(clientRect.x + xOffset, clientRect.y + yOffset);
+			// openD3: children of a stretched window keep their authored place
+			// (screenstretchx/y), as Redraw places them; without this their
+			// hit areas lay a whole expansion away from what was drawn.
+			drawWindows[i].win->CalcRects(clientRect.x + xOffset - stretchShiftX, clientRect.y + yOffset - stretchShiftY);
 		}
 	}
 	drawRect.Offset(-x, -y);
@@ -2848,6 +2917,7 @@ void idWindow::Redraw(float x, float y) {
 	dc->GetTransformInfo( oldOrg, oldTrans );
 
 	SetupTransforms(x, y);
+	DrawScreenRepeats(drawRect);
 	DrawBackground(drawRect);
 	DrawBorderAndCaption(drawRect);
 
@@ -4132,6 +4202,14 @@ bool idWindow::ParseInternalVar(const char *_name, idParser *src) {
 		} else {
 			src->Warning( "Unknown canvasclip value '%s' in window '%s' (expected: none|x|y|both)", token.c_str(), GetName() );
 		}
+		return true;
+	}
+	if ( idStr::Icmp( _name, "screenrepeatx" ) == 0 ) {
+		screenRepeatX = Max( src->ParseFloat(), 0.0f );
+		return true;
+	}
+	if ( idStr::Icmp( _name, "screenrepeaty" ) == 0 ) {
+		screenRepeatY = Max( src->ParseFloat(), 0.0f );
 		return true;
 	}
 	if ( idStr::Icmp( _name, "softfocus" ) == 0 ) {
@@ -7706,6 +7784,8 @@ void idWindow::SetDefaults ( void ) {
 	screenStretchY = SCREEN_STRETCH_NONE;
 	stretchShiftX = stretchShiftY = 0.0f;
 	canvasClip = 0;
+	screenRepeatX = screenRepeatY = 0.0f;
+	repeatColorsTaken = false;
 	softFocus = 0.0f;
 	softFocusSaturation = 1.0f;
 	softFocusDim = 0.0f;

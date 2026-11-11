@@ -2965,6 +2965,13 @@ void idDeviceContext::GetVirtualScreenExpansion( float width, float height, floa
 	openD3_CalcVirtualScreenExpansion( width, height, windowWidth, windowHeight, aspectCorrect, xExpand, yExpand );
 }
 
+void idDeviceContext::GetVirtualScreenExpansion( float width, float height, bool aspectCorrection, float &xExpand, float &yExpand ) const {
+	float windowWidth = 0.0f;
+	float windowHeight = 0.0f;
+	openD3_GetCurrentViewportSize( windowWidth, windowHeight );
+	openD3_CalcVirtualScreenExpansion( width, height, windowWidth, windowHeight, aspectCorrection, xExpand, yExpand );
+}
+
 void idDeviceContext::GetCinematic16x9Bars( float width, float height, idRectangle &topBar, idRectangle &bottomBar, idRectangle &leftBar, idRectangle &rightBar, idRectangle &visibleArea ) const {
 	float windowWidth = 0.0f;
 	float windowHeight = 0.0f;

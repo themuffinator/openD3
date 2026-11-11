@@ -96,6 +96,8 @@ public:
 	void				SetKeyBindingWideLabels( bool wide ) { keyBindingWideLabels = wide; }
 	float				GetCanvasAspect() const;
 	void				GetVirtualScreenExpansion( float width, float height, float &xExpand, float &yExpand ) const;
+	// The same with aspect correction given rather than as the last GUI drawn left it.
+	void				GetVirtualScreenExpansion( float width, float height, bool aspectCorrection, float &xExpand, float &yExpand ) const;
 	void				GetCinematic16x9Bars( float width, float height, idRectangle &topBar, idRectangle &bottomBar, idRectangle &leftBar, idRectangle &rightBar, idRectangle &visibleArea ) const;
 
 	const idMaterial	*GetScrollBarImage(int index);

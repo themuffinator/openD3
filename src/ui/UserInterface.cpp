@@ -1638,6 +1638,10 @@ void idUserInterfaceLocal::Redraw( int _time, bool useAspectCorrection ) {
 	}
 }
 
+#if defined(USE_SDL3) && !defined(ID_DEDICATED)
+bool Sys_SDL_IsGameWindowFocused( void );
+#endif
+
 /*
 ================
 idUserInterfaceLocal::DrawSoftFocusBackdrop
@@ -1673,8 +1677,19 @@ void idUserInterfaceLocal::DrawCursor() {
 	if ( idKeyInput::LastPointerWasTouch() ) {
 		return;
 	}
+	// Doom 3's arrow and hand are authored for 32 units, as upstream draws them
+	// (openPREY's 15 suited Prey's art).
 	if ( !desktop || desktop->GetFlags() & WIN_MENUGUI ) {
-		uiManagerLocal.dc.DrawCursor(&cursorX, &cursorY, 15.0f );
+#if defined(USE_SDL3) && !defined(ID_DEDICATED)
+		// openD3: without input focus the platform drops the window's input and
+		// shows the system pointer, so this cursor would stand still beside it
+		// (a game launched from a debugger often starts unfocused). One cursor:
+		// the system's until the window takes focus.
+		if ( !Sys_SDL_IsGameWindowFocused() ) {
+			return;
+		}
+#endif
+		uiManagerLocal.dc.DrawCursor(&cursorX, &cursorY, 32.0f );
 	} else {
 		uiManagerLocal.dc.DrawCursor(&cursorX, &cursorY, 64.0f );
 	}
@@ -2458,7 +2473,11 @@ void idUserInterfaceLocal::ClampCursor( void ) {
 	// Retail clamps the cursor to the virtual screen, and the game's in-world
 	// GUI interaction depends on it: idPlayer::UpdateFocus parks the cursor at
 	// the corner before every absolute reposition. Menu GUIs may extend past
-	// the 4:3 canvas, so retain their aspect-corrected bounds.
+	// the 4:3 canvas, so retain their aspect-corrected bounds. openD3: the
+	// bounds follow ui_aspectCorrection itself. The device context carries the
+	// aspect correction of whichever GUI drew last (an in-world screen draws
+	// without it), so between frames it held a menu's cursor inside the 4:3
+	// canvas while the pointer moved on into the expansion.
 	float minX = 0.0f;
 	float minY = 0.0f;
 	float maxX = static_cast<float>( VIRTUAL_WIDTH );
@@ -2473,7 +2492,7 @@ void idUserInterfaceLocal::ClampCursor( void ) {
 		if ( ( desktop->GetFlags() & WIN_MENUGUI ) && ui_aspectCorrection.GetBool() ) {
 			float xExpand = 0.0f;
 			float yExpand = 0.0f;
-			uiManagerLocal.dc.GetVirtualScreenExpansion( maxX, maxY, xExpand, yExpand );
+			uiManagerLocal.dc.GetVirtualScreenExpansion( maxX, maxY, true, xExpand, yExpand );
 			if ( std::isfinite( xExpand ) && xExpand >= 0.0f ) {
 				minX -= xExpand;
 				maxX += xExpand;

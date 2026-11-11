@@ -135,7 +135,17 @@ release of Doom 3 (1.3.1 packs):
   softened view, also on Vulkan at 1920x1080. The loading screens
   (`alphalabs1`, `generic`), the death screen, the multiplayer HUD, the
   scoreboard and the game-over screen were shown with `testGUI` at 21:9 and,
-  for the loading screen and multiplayer HUD, at 4:5.
+  for the loading screen and multiplayer HUD, at 4:5. The main menu's grid
+  continues across the canvas edge at 16:9 with every fifth line brighter, in
+  step on both sides, and above and below it at 4:5. With the profile in
+  `.home` (a borderless 2560x1440 window, 150% display scaling) on OpenGL and
+  Vulkan, the menu's arrow is drawn at 32 units with its tip within 2 px of the
+  real pointer at the centre, the corners and the left expansion; with the
+  window unfocused, only the system pointer shows. On OpenGL with the real
+  pointer moved over each in turn, MULTIPLAYER, LOAD GAME (straight after
+  MULTIPLAYER), NEW GAME, OPTIONS, MODS and EXIT each light up under the arrow
+  with their own tooltip, and so do CONTROLS and GAME OPTIONS in the opened
+  Options list.
 - Shadow maps (`r_useShadowMap 1`, with `r_shadowMapPointLights 1`) on
   OpenGL and Vulkan, after the `7c74cd712` sync. Captured from the starting
   view of `mc_underground`, `alphalabs1`, `delta2a`, `hell1`, `recycling1` and

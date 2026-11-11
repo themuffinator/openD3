@@ -22,6 +22,21 @@ gui "guis/mainmenu.gui" {
 	window GradientStarHighlight1, GradientStarHighlight2 {
 		screenstretchx fill
 	}
+	// The grid (guis/test/grid2b.pd): one-unit lines every 15 units, LineH1-42
+	// down the canvas at x 15-630 and LineV1-31 across it at y 15-465, every
+	// fifth one brighter (x 15, 90, ...; y 30, 105, ...), so the pattern repeats
+	// every 75 units. Copies of each line a multiple of that away (600 across,
+	// 450 down) continue it past the canvas edges, bright lines included. The
+	// hover catchers beside them (grid3b.pd, LineH#o and LineV#o) draw nothing,
+	// and the stretched ones light the horizontal lines across the screen.
+	window LineH* {
+		screenrepeatx 600
+		screenstretchy fill
+	}
+	window LineV* {
+		screenstretchx fill
+		screenrepeaty 450
+	}
 	// The glowing rails just outside the 4:3 frame run down the screen edges.
 	window OuterGlowBar {
 		screenstretchx fill

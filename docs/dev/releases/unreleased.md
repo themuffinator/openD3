@@ -66,6 +66,15 @@ is limited to what the [rebase record](../doom3-rebase.md#verified) covers. See
   `canvasclip` and `softfocus` window properties, and wide and tall layouts for
   the main menu, HUDs, PDA, loading screens and full-screen GUIs. Remove the
   hard-coded Quake 4 message dimmer and Tourney bar stretching.
+- Continue the main menu's grid across wide and tall screens
+  (`screenrepeatx`/`y`), its brighter fifth lines in step, let the menu cursor
+  reach the whole screen whatever GUI drew last, draw it at Doom 3's 32 units,
+  and leave it out while the window lacks focus, when the system pointer
+  shows instead. Buttons inside a stretched menu container now take the
+  pointer where they are drawn; they had answered a whole expansion to the
+  left.
+- The VS Code compile task reconfigures `builddir` when source files are
+  added or removed.
 - Merge openQ4 through `7c74cd712`, with its shadow-mapping fixes.
 - Default `g_showPlayerShadow` to 1 in both game modules.
 - Shade stock specular as Doom 3 does: `r_correctspecular` and

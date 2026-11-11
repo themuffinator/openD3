@@ -353,6 +353,8 @@ public:
 	void ClearMouseHover();
 	virtual void MouseEnter();
 	virtual void DrawBackground(const idRectangle &drawRect);
+	// openD3: screenrepeatx/y, the background again across the expansion.
+	void DrawScreenRepeats(const idRectangle &drawRect);
 	virtual const char *RouteMouseCoords(float xd, float yd);
 	virtual void SetBuddy(idWindow *buddy) {};
 	virtual void HandleBuddyUpdate(idWindow *buddy) {};
@@ -530,6 +532,16 @@ protected:
 	// children draw inside the authored canvas on that axis, so a panel parked
 	// beyond the canvas edge stays hidden in the wide or tall expansion.
 	unsigned char canvasClip = 0;		// bit 0 x, bit 1 y
+	// openD3: "screenrepeatx" and "screenrepeaty" draw the window's own
+	// background (fill and material, not its text or children) again every
+	// period units along that axis wherever the expansion shows, in the colours
+	// it had when first drawn: a pattern authored for the canvas, such as the
+	// main menu's grid, continues to the screen edges.
+	float screenRepeatX = 0.0f;
+	float screenRepeatY = 0.0f;
+	bool repeatColorsTaken = false;
+	idVec4 repeatBackColor;
+	idVec4 repeatMatColor;
 	float softFocus = 0.0f;
 	float softFocusSaturation = 1.0f;
 	float softFocusDim = 0.0f;
