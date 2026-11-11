@@ -88,6 +88,9 @@ public:
 	// if canModify is true, the game can modify the user info in the returned dictionary pointer, server will forward the change back
 	// canModify is never true on network client
 	virtual const idDict *		SetUserInfo( int clientNum, const idDict &userInfo, bool isClient, bool canModify ) = 0;
+	const idDict *				SetUserInfo( int clientNum, const idDict &userInfo, bool isClient ) {
+		return SetUserInfo( clientNum, userInfo, isClient, false );
+	}
 
 	// Retrieve the game's userInfo dict for a client.
 	virtual const idDict *		GetUserInfo( int clientNum ) = 0;
@@ -106,9 +109,15 @@ public:
 
 	// Loads a map and spawns all the entities.
 	virtual void				InitFromNewMap( const char *mapName, idRenderWorld *renderWorld, idSoundWorld *soundWorld, bool isServer, bool isClient, int randseed ) = 0;
+	void						InitFromNewMap( const char *mapName, idRenderWorld *renderWorld, bool isServer, bool isClient, int randseed ) {
+		InitFromNewMap( mapName, renderWorld, soundSystem ? soundSystem->GetPlayingSoundWorld() : NULL, isServer, isClient, randseed );
+	}
 
 	// Loads a map from a savegame file.
 	virtual bool				InitFromSaveGame( const char *mapName, idRenderWorld *renderWorld, idSoundWorld *soundWorld, idFile *saveGameFile ) = 0;
+	bool						InitFromSaveGame( const char *mapName, idRenderWorld *renderWorld, idFile *saveGameFile ) {
+		return InitFromSaveGame( mapName, renderWorld, soundSystem ? soundSystem->GetPlayingSoundWorld() : NULL, saveGameFile );
+	}
 
 	// Saves the current game state, the session may have written some data to the file already.
 	virtual void				SaveGame( idFile *saveGameFile ) = 0;
@@ -121,9 +130,15 @@ public:
 
 	// Spawns the player entity to be used by the client.
 	virtual void				SpawnPlayer( int clientNum ) = 0;
+	void						SpawnPlayer( int clientNum, bool /*isClient*/, const char * /*spawnArg*/ ) {
+		SpawnPlayer( clientNum );
+	}
 
 	// Runs a game frame, may return a session command for level changing, etc
 	virtual gameReturn_t		RunFrame( const usercmd_t *clientCmds ) = 0;
+	gameReturn_t				RunFrame( const usercmd_t *clientCmds, int /*time*/, bool /*isClient*/, int /*frameNumber*/ ) {
+		return RunFrame( clientCmds );
+	}
 
 	// Makes rendering and sound system calls to display for a given clientNum.
 	virtual bool				Draw( int clientNum ) = 0;
@@ -143,12 +158,18 @@ public:
 
 	// Early check to deny connect.
 	virtual allowReply_t		ServerAllowClient( int numClients, const char *IP, const char *guid, const char *password, char reason[MAX_STRING_CHARS] ) = 0;
+	allowReply_t				ServerAllowClient( int /*clientId*/, int numClients, const char *IP, const char *guid, const char *password, const char * /*unused*/, char reason[MAX_STRING_CHARS] ) {
+		return ServerAllowClient( numClients, IP, guid, password, reason );
+	}
 
 	// Connects a client.
 	virtual void				ServerClientConnect( int clientNum, const char *guid ) = 0;
 
 	// Spawns the player entity to be used by the client.
 	virtual void				ServerClientBegin( int clientNum ) = 0;
+	void						ServerClientBegin( int clientNum, bool /*isBot*/, const char * /*botName*/ ) {
+		ServerClientBegin( clientNum );
+	}
 
 	// Disconnects a client and removes the player entity from the game.
 	virtual void				ServerClientDisconnect( int clientNum ) = 0;
@@ -158,6 +179,9 @@ public:
 
 	// Writes a snapshot of the server game state for the given client.
 	virtual void				ServerWriteSnapshot( int clientNum, int sequence, idBitMsg &msg, byte *clientInPVS, int numPVSClients ) = 0;
+	void						ServerWriteSnapshot( int clientNum, int sequence, idBitMsg &msg, dword *clientInPVS, int numPVSClients, int /*unused*/ ) {
+		ServerWriteSnapshot( clientNum, sequence, msg, reinterpret_cast<byte *>( clientInPVS ), numPVSClients );
+	}
 
 	// Patches the network entity states at the server with a snapshot for the given client.
 	virtual bool				ServerApplySnapshot( int clientNum, int sequence ) = 0;

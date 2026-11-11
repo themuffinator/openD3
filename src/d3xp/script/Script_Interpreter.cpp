@@ -686,7 +686,7 @@ void idInterpreter::CallEvent( const function_t *func, int argsize ) {
 	varEval_t			var;
 	int 				pos;
 	int 				start;
-	int					data[ D_EVENT_MAXARGS ];
+	intptr_t			data[ D_EVENT_MAXARGS ];
 	const idEventDef	*evdef;
 	const char			*format;
 
@@ -857,7 +857,7 @@ void idInterpreter::CallSysEvent( const function_t *func, int argsize ) {
 	varEval_t			source;
 	int 				pos;
 	int 				start;
-	int					data[ D_EVENT_MAXARGS ];
+	intptr_t			data[ D_EVENT_MAXARGS ];
 	const idEventDef	*evdef;
 	const char			*format;
 
@@ -875,7 +875,7 @@ void idInterpreter::CallSysEvent( const function_t *func, int argsize ) {
 		switch( format[ i ] ) {
 		case D_EVENT_INTEGER :
 			source.intPtr = ( int * )&localstack[ start + pos ];
-			*( int * )&data[ i ] = int( *source.floatPtr );
+			data[ i ] = int( *source.floatPtr );
 			break;
 
 		case D_EVENT_FLOAT :
@@ -1684,10 +1684,12 @@ bool idInterpreter::Execute( void ) {
 			var_a = GetVariable( st->a );
 			var_c = GetVariable( st->c );
 			obj = GetScriptObject( *var_a.entityNumberPtr );
-			if ( obj ) {
-				var_c.evalPtr->bytePtr = &obj->data[ st->b->value.ptrOffset ];
-			} else {
-				var_c.evalPtr->bytePtr = NULL;
+			if ( var_c.evalPtr ) {
+				if ( obj ) {
+					var_c.evalPtr->bytePtr = &obj->data[ st->b->value.ptrOffset ];
+				} else {
+					var_c.evalPtr->bytePtr = NULL;
+				}
 			}
 			break;
 

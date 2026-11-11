@@ -247,11 +247,8 @@ bool idModelExport::ConvertMayaToMD5( void ) {
 		fileSystem->CreateOSPath( path );
 	}
 
-	// get the os path in case it needs to create one
-	path = fileSystem->RelativePathToOSPath( "", "fs_cdpath" /* _D3XP */ );
-
 	common->SetRefreshOnPrint( true );
-	Maya_Error = Maya_ConvertModel( path, commandLine );
+	Maya_Error = Maya_ConvertModel( src, dest, commandLine );
 	common->SetRefreshOnPrint( false );
 	if ( Maya_Error != "Ok" ) {
 		return false;

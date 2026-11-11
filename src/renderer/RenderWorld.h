@@ -282,6 +282,8 @@ typedef struct renderEntity_s {
 	int						weaponDepthHackInViewID;// squash depth range so view weapons don't poke into walls
 	float					eyeDistance;			// stereo/parallax eye-distance override
 	int						timeGroup;				// grouped game-time selection
+	int						xrayIndex;				// Resurrection of Evil: 1 = hidden in the x-ray view, 2 = only drawn in it.
+													// Carried for the game library; no renderer path reads it yet.
 // RAVEN END	
 													// this automatically implies noShadow
 												

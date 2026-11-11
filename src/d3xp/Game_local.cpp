@@ -937,7 +937,9 @@ void idGameLocal::LoadMap( const char *mapName, int randseed ) {
 	bool sameMap = (mapFile && idStr::Icmp(mapFileName, mapName) == 0);
 
 	// clear the sound system
-	gameSoundWorld->ClearAllSoundEmitters();
+	if ( gameSoundWorld ) {
+		gameSoundWorld->ClearAllSoundEmitters();
+	}
 
 #ifdef _D3XP
 	// clear envirosuit sound fx
@@ -1395,7 +1397,7 @@ bool idGameLocal::InitFromSaveGame( const char *mapName, idRenderWorld *renderWo
 		if ( !InhibitEntitySpawn( mapEnt->epairs ) ) {
 			CacheDictionaryMedia( &mapEnt->epairs );
 			const char *classname = mapEnt->epairs.GetString( "classname" );
-			if ( classname != '\0' ) {
+			if ( classname[0] != '\0' ) {
 				FindEntityDef( classname, false );
 			}
 		}
@@ -1811,7 +1813,7 @@ void idGameLocal::GetShakeSounds( const idDict *dict ) {
 	idStr soundName;
 
 	soundShaderName = dict->GetString( "s_shader" );
-	if ( soundShaderName != '\0' && dict->GetFloat( "s_shakes" ) != 0.0f ) {
+	if ( soundShaderName[0] != '\0' && dict->GetFloat( "s_shakes" ) != 0.0f ) {
 		soundShader = declManager->FindSound( soundShaderName );
 
 		for ( int i = 0; i < soundShader->GetNumSounds(); i++ ) {
@@ -2646,7 +2648,8 @@ gameReturn_t idGameLocal::RunFrame( const usercmd_t *clientCmds ) {
 ====================
 idGameLocal::CalcFov
 
-Calculates the horizontal and vertical field of view based on a horizontal field of view and custom aspect ratio
+Calculates the horizontal and vertical field of view based on a horizontal
+field of view and the active render viewport aspect ratio.
 ====================
 */
 void idGameLocal::CalcFov( float base_fov, float &fov_x, float &fov_y ) const {
@@ -2672,25 +2675,11 @@ void idGameLocal::CalcFov( float base_fov, float &fov_x, float &fov_y ) const {
 		Error( "idGameLocal::CalcFov: bad result" );
 	}
 
-	switch( r_aspectRatio.GetInteger() ) {
-	default :
-	case 0 :
-		// 4:3
+	ratio_x = static_cast<float>( renderSystem->GetScreenWidth() );
+	ratio_y = static_cast<float>( renderSystem->GetScreenHeight() );
+	if ( ratio_x <= 0.0f || ratio_y <= 0.0f ) {
 		fov_x = base_fov;
 		return;
-		break;
-
-	case 1 :
-		// 16:9
-		ratio_x = 16.0f;
-		ratio_y = 9.0f;
-		break;
-
-	case 2 :
-		// 16:10
-		ratio_x = 16.0f;
-		ratio_y = 10.0f;
-		break;
 	}
 
 	y = ratio_y / tan( fov_y / 360.0f * idMath::PI );
@@ -3792,11 +3781,11 @@ void idGameLocal::KillBox( idEntity *ent, bool catch_teleport ) {
 idGameLocal::RequirementMet
 ================
 */
-bool idGameLocal::RequirementMet( idEntity *activator, const idStr &requires, int removeItem ) {
-	if ( requires.Length() ) {
+bool idGameLocal::RequirementMet( idEntity *activator, const idStr &requiredItem, int removeItem ) {
+	if ( requiredItem.Length() ) {
 		if ( activator->IsType( idPlayer::Type ) ) {
 			idPlayer *player = static_cast<idPlayer *>(activator);
-			idDict *item = player->FindInventoryItem( requires );
+			idDict *item = player->FindInventoryItem( requiredItem );
 			if ( item ) {
 				if ( removeItem ) {
 					player->RemoveInventoryItem( item );
@@ -4995,4 +4984,3 @@ idGameLocal::GetMapLoadingGUI
 ===============
 */
 void idGameLocal::GetMapLoadingGUI( char gui[ MAX_STRING_CHARS ] ) { }
-

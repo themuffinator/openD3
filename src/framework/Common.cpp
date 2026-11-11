@@ -7272,20 +7272,27 @@ static void openD3_AddUniqueGameModuleCandidate( idStrList &candidates, const ch
 	candidates.Append( moduleName );
 }
 
+// Resurrection of Evil is its own game module. It is selected when d3xp is the
+// game directory, either directly or as the base of a mod built on it.
+#define OPEND3_EXPANSION_GAMEDIR "d3xp"
+
+static bool openD3_IsExpansionGameDirActive( void ) {
+	return idStr::Icmp( cvarSystem->GetCVarString( "fs_game" ), OPEND3_EXPANSION_GAMEDIR ) == 0 ||
+		idStr::Icmp( cvarSystem->GetCVarString( "fs_game_base" ), OPEND3_EXPANSION_GAMEDIR ) == 0;
+}
+
 static void openD3_BuildGameModuleCandidateList( idStrList &candidates ) {
 	candidates.Clear();
-	openD3_AddUniqueGameModuleCandidate( candidates, va( "game_%s", OPEND3_MODULE_ARCH_TAG ) );
-#if defined( _M_X64 ) || defined( __x86_64__ )
-	openD3_AddUniqueGameModuleCandidate( candidates, "gamex64" );
-#elif defined( _M_IX86 ) || defined( __i386__ )
-	openD3_AddUniqueGameModuleCandidate( candidates, "gamex86" );
-#endif
+	// Only openD3's own module names are candidates. The retail gamex86 binaries
+	// that sit in a Doom 3 install speak a different game API and are never loaded.
+	const char *family = openD3_IsExpansionGameDirActive() ? "game-d3xp" : "game";
+	openD3_AddUniqueGameModuleCandidate( candidates, va( "%s_%s", family, OPEND3_MODULE_ARCH_TAG ) );
 #if defined( MACOS_X ) || defined( __APPLE__ )
 	// Thin packages use the architecture-tagged name; universal2 packages use
 	// one two-slice module shared by both executable slices.
-	openD3_AddUniqueGameModuleCandidate( candidates, "game_universal2" );
+	openD3_AddUniqueGameModuleCandidate( candidates, va( "%s_universal2", family ) );
 #endif
-	openD3_AddUniqueGameModuleCandidate( candidates, "game" );
+	openD3_AddUniqueGameModuleCandidate( candidates, family );
 }
 
 static void openD3_DisableBSEWithWarning( const char *reason, bool showDialog = true ) {

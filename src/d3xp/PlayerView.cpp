@@ -682,7 +682,27 @@ idPlayerView::RenderPlayerView
 ===================
 */
 void idPlayerView::RenderPlayerView( idUserInterface *hud ) {
-	const renderView_t *view = player->GetRenderView();
+	if ( !player ) {
+		return;
+	}
+
+	renderView_t *mutableView = player->GetRenderView();
+	if ( !mutableView ) {
+		return;
+	}
+
+	idCamera *camera = player->GetPrivateCameraView();
+	if ( !camera ) {
+		camera = gameLocal.GetCamera();
+	}
+
+	if ( camera ) {
+		camera->GetViewParms( mutableView );
+	} else {
+		gameLocal.CalcFov( player->CalcFov( true ), mutableView->fov_x, mutableView->fov_y );
+	}
+
+	const renderView_t *view = mutableView;
 
 	SingleView( hud, view );
 	ScreenFade();
@@ -1177,8 +1197,8 @@ void FullscreenFX_Warp::DrawWarp( WarpPolygon_t wp, float interp ) {
 	// compute mid points
 	mid1 = trans.outer1 * ( interp ) + trans.center * ( 1 - interp );
 	mid2 = trans.outer2 * ( interp ) + trans.center * ( 1 - interp );
-	mid1_uv = trans.outer1 * ( 0.5 ) + trans.center * ( 1 - 0.5 );
-	mid2_uv = trans.outer2 * ( 0.5 ) + trans.center * ( 1 - 0.5 );
+	mid1_uv = trans.outer1 * ( 0.5f ) + trans.center * ( 1 - 0.5f );
+	mid2_uv = trans.outer2 * ( 0.5f ) + trans.center * ( 1 - 0.5f );
 
 	// draw [outer1, mid2, mid1]
 	drawPts[0].Set( trans.outer1.x, trans.outer1.y );

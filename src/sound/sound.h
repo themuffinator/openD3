@@ -431,6 +431,9 @@ public:
 
 	virtual void			SetSlowmoSpeed( float speed ) = 0;
 	virtual void			SetEnviroSuit( bool active ) = 0;
+	// Resurrection of Evil's slow-motion switch. The speed itself arrives through
+	// SetSlowmoSpeed; this on/off notification has no separate effect yet.
+	virtual void			SetSlowmo( bool active ) { (void)active; }
 	virtual void			SetSpiritWalkEffect( bool active ) { (void)active; /* TODO: retail Prey DSP parity */ }
 	virtual void			SetVoiceDucker( bool active ) { (void)active; /* TODO: retail Prey DSP parity */ }
 

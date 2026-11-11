@@ -21,6 +21,7 @@ elif host_cpu_family == 'aarch64'
   binary_arch = 'arm64'
 endif
 game_binary_name = 'game_' + binary_arch
+game_d3xp_binary_name = 'game-d3xp_' + binary_arch
 game_module_filename_suffix = '.so'
 if host_system == 'windows'
   game_module_filename_suffix = '.dll'
@@ -220,6 +221,7 @@ endforeach
 
 build_engine = get_option('build_engine')
 build_games = get_option('build_games')
+build_game_d3xp = build_games and get_option('build_game_d3xp')
 build_game_sp = get_option('build_game_sp')
 build_game_mp = get_option('build_game_mp')
 needs_game_headers = build_engine or build_games
@@ -256,6 +258,7 @@ game_stage_src_include_rel = 'src'
 game_stage_game_include_rel = 'src/game'
 bse_source_root = meson.project_source_root() / 'src' / 'bse'
 game_module_defs_file = ''
+game_d3xp_module_defs_file = ''
 
 if not build_engine and not build_games
   error('At least one build target must be enabled. Use -Dbuild_engine=true and/or -Dbuild_games=true.')
@@ -2005,6 +2008,10 @@ if needs_game_headers
   if host_system == 'windows' and not fs_mod.is_file(game_module_defs_file)
     error('Game.def not found: ' + game_module_defs_file)
   endif
+  game_d3xp_module_defs_file = game_stage_root / 'src' / 'd3xp' / 'Game.def'
+  if host_system == 'windows' and build_game_d3xp and not fs_mod.is_file(game_d3xp_module_defs_file)
+    error('Game.def not found: ' + game_d3xp_module_defs_file)
+  endif
   game_source_inventory = configure_file(
     output: 'openq4_game_sources.json',
     command: [py, files('tools/build/game_source_inventory.py'), meson.project_source_root()],
@@ -2175,6 +2182,7 @@ if build_engine
 endif
 
 game_sources = []
+game_d3xp_sources = []
 bse_sources = []
 game_idlib_sources = []
 if build_games
@@ -2219,6 +2227,28 @@ if build_games
     install: false,
   )
   game_sources += [savegame_compat_header, generated_version_header]
+
+  if build_game_d3xp
+    game_d3xp_source_discovery = run_command(
+      py,
+      meson.project_source_root() / 'tools' / 'build' / 'list_sources.py',
+      game_stage_root,
+      'src/d3xp',
+      'src/d3xp/Callbacks.cpp',
+      'src/d3xp/gamesys/Callbacks.cpp',
+      'src/d3xp/EndLevel.cpp',
+      check: true,
+    )
+    game_d3xp_source_paths = game_d3xp_source_discovery.stdout().strip().split('\n')
+    if game_d3xp_source_paths.length() == 0
+      error('tools/build/list_sources.py returned no Resurrection of Evil game source files.')
+    endif
+    game_d3xp_absolute_paths = []
+    foreach rel_path : game_d3xp_source_paths
+      game_d3xp_absolute_paths += [game_stage_root / rel_path]
+    endforeach
+    game_d3xp_sources = files(game_d3xp_absolute_paths) + [savegame_compat_header, generated_version_header]
+  endif
   if build_engine
     # Session records the canonical game source stamp before tearing down
     # the active map, so the engine target must see the same generated header.
@@ -3385,10 +3415,31 @@ elif host_system == 'linux' or host_system == 'android'
   game_module_link_depends += linux_game_module_export_map
 endif
 
+# Resurrection of Evil is the same game code compiled with these two defines.
+game_d3xp_cpp_args = ['-D_D3XP', '-DCTF']
 game_idlib_library = disabler()
+game_idlib_library_d3xp = disabler()
+if build_game_d3xp
+  # One idlib archive per game module. Every idlib translation unit includes
+  # precompiled.h, which pulls in that module's Game_local.h, so sharing the
+  # base game's archive would put two definitions of the same game types into
+  # the expansion module.
+  game_idlib_library_d3xp = static_library(
+    'opend3_game_idlib_d3xp',
+    game_idlib_sources,
+    include_directories: game_idlib_include_dirs,
+    cpp_args: game_common_cpp_args + game_d3xp_cpp_args,
+    c_args: game_common_c_args,
+    cpp_pch: game_idlib_pch_headers,
+    override_options: game_target_override_options,
+    pic: host_system == 'linux' or host_system == 'android',
+    gnu_symbol_visibility: host_system == 'windows' ? 'default' : 'hidden',
+    install: false,
+  )
+endif
 if build_engine or build_games
   # Doom 3 uses one game module for both single-player and multiplayer,
-  # so a single idlib archive serves it.
+  # so a single idlib archive serves the base game.
   game_idlib_library = static_library(
     'opend3_game_idlib',
     game_idlib_sources,
@@ -3813,6 +3864,27 @@ if build_games
   )
 endif
 
+if build_game_d3xp
+  custom_target(
+    'opend3_stage_game_d3xp_direct_run',
+    input: game_d3xp_module_target,
+    output: 'stage-game-d3xp-' + binary_arch + '.stamp',
+    command: [
+      py,
+      meson.project_source_root() / 'tools' / 'build' / 'stage_direct_run_game_module.py',
+      '--source',
+      '@INPUT@',
+      '--destination',
+      meson.current_build_dir() / 'baseod3' / (module_filename_prefix + game_d3xp_binary_name + game_module_filename_suffix),
+      '--stamp',
+      '@OUTPUT@',
+    ],
+    depend_files: files('tools/build/stage_direct_run_game_module.py'),
+    build_always_stale: true,
+    build_by_default: true,
+  )
+endif
+
 if host_system == 'windows' and host_cpu_family == 'x86_64'
   openal_runtime_dll = 'src/external/openal-soft/bin/win64/OpenAL32.dll'
   if fs_mod.is_file(openal_runtime_dll)
@@ -4004,6 +4076,7 @@ summary(
     'Game library sources': game_libs_repo_summary,
     'Build unified game': build_games,
     'Unified game binary': build_games ? game_binary_name : '',
+    'Resurrection of Evil game binary': build_game_d3xp ? game_d3xp_binary_name : '',
     'Legacy build_game_sp option': build_game_sp,
     'Legacy build_game_mp option': build_game_mp,
     'Build Vulkan renderer module': build_renderer_vk and build_engine,

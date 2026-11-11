@@ -421,8 +421,10 @@ const float MAX_BOUND_SIZE = 65536.0f;
 //-----------------------------------------------------
 
 #ifdef GAME_DLL
-#ifdef GAME_MPAPI
-#include "../mpgame/Game_local.h"
+#ifdef _D3XP
+// Resurrection of Evil. Its Game.h is the same interface as the base game's,
+// which is already included above and shares its include guard.
+#include "../d3xp/Game_local.h"
 #else
 #include "../game/Game_local.h"
 #endif

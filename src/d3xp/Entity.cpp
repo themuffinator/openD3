@@ -328,7 +328,11 @@ void idGameEdit::ParseSpawnArgsToRefSound( const idDict *args, refSound_t *refSo
 
 	refSound->parms.minDistance = args->GetFloat( "s_mindistance" );
 	refSound->parms.maxDistance = args->GetFloat( "s_maxdistance" );
-	refSound->parms.volume = args->GetFloat( "s_volume" );
+	if( args->FindKey( "s_volume" ) != NULL )
+	{
+		// Doom 3 spawnarg volume values are authored in dB.
+		refSound->parms.volume = idMath::dBToScale( args->GetFloat( "s_volume" ) );
+	}
 	refSound->parms.shakes = args->GetFloat( "s_shakes" );
 
 	args->GetVector( "origin", "0 0 0", refSound->origin );
@@ -1687,9 +1691,18 @@ bool idEntity::StartSoundShader( const idSoundShader *shader, const s_channelTyp
 		diversity = refSound.diversity;
 	}
 
+	if ( !gameSoundWorld ) {
+		gameLocal.Warning( "idEntity::StartSoundShader: no active game sound world for entity '%s' (%d)", name.c_str(), entityNumber );
+		return false;
+	}
+
 	// if we don't have a soundEmitter allocated yet, get one now
 	if ( !refSound.referenceSound ) {
 		refSound.referenceSound = gameSoundWorld->AllocSoundEmitter();
+		if ( !refSound.referenceSound ) {
+			gameLocal.Warning( "idEntity::StartSoundShader: failed to allocate sound emitter for entity '%s' (%d)", name.c_str(), entityNumber );
+			return false;
+		}
 	}
 
 	UpdateSound();
@@ -3721,7 +3734,13 @@ bool idEntity::TouchTriggers( void ) const {
 			continue;
 		}
 
-		if ( !GetPhysics()->ClipContents( cm ) ) {
+		bool triggerHit = ( GetPhysics()->ClipContents( cm ) != 0 );
+		if ( !triggerHit && IsType( idPlayer::Type ) ) {
+			// Some x64 builds miss exact trigger contact for player hulls.
+			// Fall back to bounds overlap so scripted trigger chains still fire.
+			triggerHit = GetPhysics()->GetAbsBounds().IntersectsBounds( cm->GetAbsBounds() );
+		}
+		if ( !triggerHit ) {
 			continue;
 		}
 

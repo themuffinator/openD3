@@ -20,6 +20,13 @@ option(
 )
 
 option(
+  'build_game_d3xp',
+  type: 'boolean',
+  value: true,
+  description: 'Build the Resurrection of Evil game module (game-d3xp_<arch>) from the in-tree src/d3xp sources.',
+)
+
+option(
   'build_game_sp',
   type: 'boolean',
   value: true,
