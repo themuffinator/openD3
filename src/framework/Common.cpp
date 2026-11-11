@@ -8026,11 +8026,7 @@ void idCommonLocal::InitGame( void ) {
 
 	// skip the config file if "safe" is on the command line
 	if ( !SafeMode() ) {
-		if ( !openD3_ExecConfigFromSavePath( CONFIG_FILE ) ) {
-			if ( openD3_ExecConfigFromSavePath( LEGACY_CONFIG_FILE ) ) {
-				legacyConfigNameToMigrate = LEGACY_CONFIG_FILE;
-			}
-		}
+		openD3_ExecConfigFromSavePath( CONFIG_FILE );
 	}
 
 	// An installer's q4base/autoexec.cfg supplies the first launch's language.

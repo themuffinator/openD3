@@ -15,10 +15,10 @@ $fastStageScript = Join-Path $workspaceRoot 'tools\build\stage_fast_install.py'
 $checkStagedContentScript = Join-Path $workspaceRoot 'tools\build\check_staged_content_edits.py'
 
 if (-not (Test-Path $mesonWrapper)) {
-    throw "openQ4 Meson wrapper not found at '$mesonWrapper'."
+    throw "openD3 Meson wrapper not found at '$mesonWrapper'."
 }
 
-function Invoke-openQ4Meson([string[]]$MesonArgs) {
+function Invoke-openD3Meson([string[]]$MesonArgs) {
     & powershell -NoProfile -ExecutionPolicy Bypass -File $mesonWrapper @MesonArgs
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
@@ -57,28 +57,28 @@ function Get-StaleBuildOptions([string]$Path) {
     return @($expectedBuildOptions.Keys | Where-Object { $configured[$_] -ne $expectedBuildOptions[$_] })
 }
 
-function Invoke-openQ4Setup {
+function Invoke-openD3Setup {
     $optionArgs = @('--backend', 'ninja', '--wrap-mode=forcefallback')
     foreach ($name in $expectedBuildOptions.Keys) {
         $optionArgs += "-D$name=$($expectedBuildOptions[$name])"
     }
     if (Test-MesonBuildDirectory $buildDir) {
-        Invoke-openQ4Meson (@('setup', $buildDir, $workspaceRoot, '--reconfigure') + $optionArgs)
+        Invoke-openD3Meson (@('setup', $buildDir, $workspaceRoot, '--reconfigure') + $optionArgs)
     } else {
-        Invoke-openQ4Meson (@('setup', '--wipe', $buildDir, $workspaceRoot) + $optionArgs)
+        Invoke-openD3Meson (@('setup', '--wipe', $buildDir, $workspaceRoot) + $optionArgs)
     }
 }
 
 # An existing build directory keeps whatever it was configured with, and the
 # compile tasks never reconfigure on their own, so bring it up to the expected
 # options before compiling.
-function Invoke-openQ4Compile {
+function Invoke-openD3Compile {
     $stale = @(Get-StaleBuildOptions $buildDir)
     if ($stale.Count -gt 0) {
         Write-Host "builddir-perf options out of date ($($stale -join ', ')); reconfiguring."
-        Invoke-openQ4Setup
+        Invoke-openD3Setup
     }
-    Invoke-openQ4Meson @(
+    Invoke-openD3Meson @(
         'compile',
         '-C',
         $buildDir
@@ -87,20 +87,20 @@ function Invoke-openQ4Compile {
 
 switch ($Action) {
     'setup' {
-        Invoke-openQ4Setup
+        Invoke-openD3Setup
     }
     'compile' {
-        Invoke-openQ4Compile
+        Invoke-openD3Compile
     }
     'fastbuild' {
         if (-not (Test-Path $fastStageScript)) {
-            throw "openQ4 fast staging script not found at '$fastStageScript'."
+            throw "openD3 fast staging script not found at '$fastStageScript'."
         }
         if (-not (Test-Path $checkStagedContentScript)) {
-            throw "openQ4 staged content edit check script not found at '$checkStagedContentScript'."
+            throw "openD3 staged content edit check script not found at '$checkStagedContentScript'."
         }
 
-        Invoke-openQ4Compile
+        Invoke-openD3Compile
         Invoke-PythonTool @(
             $checkStagedContentScript,
             '--source-root',
@@ -117,7 +117,7 @@ switch ($Action) {
         )
     }
     'install' {
-        Invoke-openQ4Meson @(
+        Invoke-openD3Meson @(
             'install',
             '-C',
             $buildDir,

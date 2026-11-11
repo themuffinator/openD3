@@ -7,14 +7,13 @@ tools/tests/vscode_fast_build.py fails while launch.json holds anything else
 
 Every configuration runs the client that the VS Code build task stages into
 .install, with .home as the savepath, and pins the archived CVars that decide
-what a launch exercises, so a value left in .home/<game>/openQ4Config.cfg
+what a launch exercises, so a value left in .home/<game>/openD3Config.cfg
 cannot change it: r_renderApi (each launch is a GL and Vulkan pair),
-ui_retained 1 for the retained RmlUi interface (only the "Stock UI" entries
-turn it off), r_fullscreen, g_autoSkipCinematics in single player and
-ui_autoJoin 0 in multiplayer, which opens at the join screen.
+ui_retained 0 because Doom 3 runs its stock GUIs (the retained RmlUi
+interface inherited from openQ4 has no Doom 3 documents) and r_fullscreen 0.
 
-fs_basepath is left unset: the engine finds the installed Quake 4 through
-Steam or GOG, or OPENQ4_QUAKE4_PATH, so no machine's path is baked in.
+fs_basepath is left unset: the engine finds the installed Doom 3 through
+Steam or GOG, or OPEND3_DOOM3_PATH, so no machine's path is baked in.
 
 Each group gets a separator in the Run and Debug list. VS Code orders the
 groups by name, so every name starts with its position.
@@ -39,7 +38,7 @@ RENDERERS = (GL, VULKAN)
 # Set first on every launch. A launch's own value replaces one in place.
 COMMON_CVARS = (
     ("logFile", "2"),
-    ("logFileName", "logs/openq4.log"),
+    ("logFileName", "logs/opend3.log"),
     ("developer", "1"),
     ("r_fullscreen", "0"),
     ("fs_savepath", "${workspaceFolder}\\.home"),
@@ -48,15 +47,13 @@ COMMON_CVARS = (
 SINGLE_PLAYER_CVARS = (
     ("si_gameType", "singleplayer"),
     ("com_skipLoadingContinue", "1"),
-    ("g_autoSkipCinematics", "0"),
 )
-# A listen server; si_gameType comes from the launch.
+# A listen server; si_gameType and si_map come from the launch.
 MULTIPLAYER_CVARS = (
     ("net_serverDedicated", "0"),
     ("net_serverAllowServerMod", "1"),
     ("si_pure", "0"),
-    ("sv_cheats", "1"),
-    ("ui_autoJoin", "0"),
+    ("net_allowCheats", "1"),
 )
 
 
@@ -66,10 +63,10 @@ class Launch:
 
     name: str
     game_type: str = "singleplayer"
-    game: str = "baseoq4"
+    game: str = "baseod3"
     command: tuple[str, ...] = ()
     cvars: tuple[tuple[str, str], ...] = ()
-    retained: bool = True
+    retained: bool = False
     renderers: tuple[tuple[str, str], ...] = RENDERERS
 
     @property
@@ -77,7 +74,7 @@ class Launch:
         return self.game_type != "singleplayer"
 
 
-def campaign(maps: tuple[tuple[str, str], ...], game: str = "baseoq4", prefix: str = "") -> tuple[Launch, ...]:
+def campaign(maps: tuple[tuple[str, str], ...], game: str = "baseod3", prefix: str = "") -> tuple[Launch, ...]:
     # A second word in the label is the visit for maps played twice.
     launches = []
     for label, title in maps:
@@ -87,215 +84,76 @@ def campaign(maps: tuple[tuple[str, str], ...], game: str = "baseoq4", prefix: s
 
 
 def servers(
-    maps: tuple[tuple[str, str], ...], game_type: str, game: str = "baseoq4", prefix: str = ""
+    maps: tuple[tuple[str, str], ...], game_type: str, game: str = "baseod3", prefix: str = ""
 ) -> tuple[Launch, ...]:
     return tuple(
-        Launch(f"{prefix}{map_name} '{title}'", game_type, game, ("+spawnServer", f"mp/{map_name}"))
+        Launch(
+            f"{prefix}{map_name} '{title}' ({game_type})",
+            game_type,
+            game,
+            ("+spawnServer",),
+            cvars=(("si_map", f"game/mp/{map_name}"),),
+        )
         for map_name, title in maps
     )
 
 
-QUAKE4_CAMPAIGN = (
-    ("airdefense1", "AIR DEFENSE BUNKER"),
-    ("airdefense2", "AIR DEFENSE TRENCHES"),
-    ("hangar1", "HANGAR PERIMETER"),
-    ("hangar2", "INTERIOR HANGAR"),
-    ("mcc_landing", "MCC LANDING SITE"),
-    ("mcc_1", "OPERATION: ADVANTAGE"),
-    ("convoy1", "CANYON"),
-    ("building_b", "PERIMETER DEFENSE STATION"),
-    ("convoy2", "AQUEDUCTS"),
-    ("convoy2b", "AQUEDUCTS ANNEX"),
-    ("hub1", "NEXUS HUB TUNNELS"),
-    ("hub2", "NEXUS HUB"),
-    ("medlabs", "STROGG MEDICAL FACILITIES"),
-    ("walker", "CONSTRUCTION ZONE"),
-    ("dispersal", "DISPERSAL FACILITY"),
-    ("recomp", "RECOMPOSITION CENTER"),
-    ("putra", "PUTRIFICATION CENTER"),
-    ("waste", "WASTE PROCESSING FACILITY"),
-    ("mcc_2", "OPERATION: LAST HOPE"),
-    ("storage1 first", "DATA STORAGE TERMINAL"),
-    ("storage2", "DATA STORAGE SECURITY"),
-    ("storage1 second", "DATA STORAGE TERMINAL"),
-    ("tram1", "TRAM HUB STATION"),
-    ("tram1b", "TRAM RAIL"),
-    ("process1 first", "DATA PROCESSING TERMINAL"),
-    ("process2", "DATA PROCESSING SECURITY"),
-    ("process1 second", "DATA PROCESSING TERMINAL"),
-    ("network1", "DATA NETWORKING TERMINAL"),
-    ("network2", "DATA NETWORKING SECURITY"),
-    ("core1", "NEXUS CORE"),
-    ("core2", "THE NEXUS"),
+DOOM3_CAMPAIGN = (
+    ("mars_city1", "MARS CITY"),
+    ("mc_underground", "MARS CITY UNDERGROUND"),
+    ("mars_city2", "MARS CITY (RETURN)"),
+    ("admin", "ADMINISTRATION"),
+    ("alphalabs1", "ALPHA LABS SECTOR 1"),
+    ("alphalabs2", "ALPHA LABS SECTOR 2"),
+    ("alphalabs3", "ALPHA LABS SECTOR 3"),
+    ("alphalabs4", "ALPHA LABS SECTOR 4"),
+    ("enpro", "ENPRO PLANT"),
+    ("commoutside", "COMMUNICATIONS TRANSFER"),
+    ("communications", "COMMUNICATIONS"),
+    ("recycling1", "MONORAIL SKYBRIDGE"),
+    ("recycling2", "RECYCLING SECTOR 2"),
+    ("monorail", "MONORAIL"),
+    ("delta1", "DELTA LABS LEVEL 1"),
+    ("delta2a", "DELTA LABS LEVEL 2A"),
+    ("delta2b", "DELTA LABS LEVEL 2B"),
+    ("delta3", "DELTA LABS LEVEL 3"),
+    ("delta4", "DELTA LABS LEVEL 4"),
+    ("hell1", "HELL"),
+    ("delta5", "DELTA COMPLEX"),
+    ("cpu", "CPU COMPLEX"),
+    ("cpuboss", "CENTRAL PROCESSING"),
+    ("site3", "SITE 3"),
+    ("caverns1", "CAVERNS AREA 1"),
+    ("caverns2", "CAVERNS AREA 2"),
+    ("hellhole", "PRIMARY EXCAVATION"),
 )
 
-QUAKE4_CAMPAIGN_TESTS = (
+DOOM3_CAMPAIGN_TESTS = (
     Launch(
-        "airdefense1 'AIR DEFENSE BUNKER' - Loading Continue Gate",
-        cvars=(
-            ("logFileName", "logs/phase02_loading_continue_clean.log"),
-            ("com_skipLoadingContinue", "0"),
-            ("com_loadingContinueAutoAdvance", "1000"),
-            ("com_showFramePacing", "2"),
-            ("r_swapInterval", "0"),
-            ("com_maxfps", "240"),
-        ),
-        command=("+map", "game/airdefense1", "+wait", "240", "+quit"),
-    ),
-    Launch(
-        "airdefense2 'AIR DEFENSE TRENCHES' - Door Test",
-        command=("+map", "game/airdefense2", "+wait", "120", "+setviewpos", "-352", "1776", "256", "0"),
-    ),
-    Launch(
-        "mcc_landing 'MCC LANDING SITE' - Borked Lift Test",
-        cvars=(("logFileName", "logs/openq4_borkedlift.log"), ("sv_cheats", "1")),
-        command=("+map", "game/mcc_landing", "+wait", "240", "+god", "+notarget", "+mccLandingBorkedLiftTest"),
-    ),
-    Launch(
-        "convoy2b 'AQUEDUCTS ANNEX' - Unlocked Hovertank",
-        cvars=(("g_openQ4Convoy2bUnlockedHovertank", "1"), ("g_openQ4Convoy2bNoActors", "1")),
-        command=("+map", "game/convoy2b"),
-    ),
-    Launch(
-        "storage1 first 'DATA STORAGE TERMINAL' - No Drop Pod",
-        cvars=(("g_openQ4Storage1NoDropPodState", "1"),),
-        command=("+map", "game/storage1", "first"),
+        "mars_city1 'MARS CITY' - Load and Quit",
+        command=("+map", "game/mars_city1", "+wait", "240", "+quit"),
     ),
 )
 
-# Titles are the expansion's mapDef names.
-AWAKENING_CAMPAIGN = (
-    ("m01_stranarus_trench1", "STRANARUS TRENCH"),
-    ("m01_stranarus_trench2", "STRANARUS TRENCH"),
-    ("m02_trianfac", "TRIANTHINIDE FACILITY"),
-    ("m03_airassault", "AIRBORNE ASSAULT"),
-    ("m04_prison", "PRISON"),
-    ("m05_bio", "BIO PROCESSING"),
-    ("m06_mcc", "MOBILE COMMAND CENTER"),
-    ("m06_mcc_invasion", "MOBILE COMMAND CENTER"),
-    ("m07_race", "RACE 1: MCC DEPARTURE"),
-    ("m07_race1", "RACE 2: AQUEDUCTS"),
-    ("m07_race2", "RACE 3: CRYOGENICS APPROACH"),
-    ("m08_cryofac", "CRYOGENIC FACILITY"),
-    ("m09_valkaryne", "VALKARYNE"),
-)
-
-# The q4x maps here are the retail patch's (pak019), not the expansion's.
 DEATHMATCH = (
-    ("q4dm1", "THE FRAGGING YARD"),
-    ("q4dm2", "SANDSTORM"),
-    ("q4dm3", "THE LOST FLEET"),
-    ("q4dm4", "BLOODWORK"),
-    ("q4dm5", "THE ROSE"),
-    ("q4dm6", "NO DOCTORS"),
-    ("q4dm7", "OVER THE EDGE"),
-    ("q4dm8", "THE LONGEST DAY"),
-    ("q4dm9", "CAMPGROUNDS REDUX"),
-    ("q4dm10", "OUTPATIENT"),
-    ("q4dm11", "SKELETON CREW"),
-    ("q4xdm10", "CENTRAL INDUSTRIAL"),
-    ("q4xdm11", "WARFORGED"),
-    ("q4xdm13", "STROYENT RED"),
-    ("q4xdm14", "RETROPHOBOPOLIS"),
-    ("q4xdm15", "FIREWALL"),
-)
-TOURNEY = (
-    ("q4dm11v1", "THE FRAGGING YARD 1v1"),
-    ("q4tourney1", "RAILED"),
-    ("q4xtourney1", "STROGGENOMENON"),
-    ("q4xtourney2", "VERTICON"),
-)
-CAPTURE_THE_FLAG = (
-    ("q4ctf1", "HEARTLESS"),
-    ("q4ctf2", "DEATH BEFORE DISHONOR"),
-    ("q4ctf3", "SPEED TRAP"),
-    ("q4ctf4", "RELATIVITY"),
-    ("q4ctf5", "XAERO GRAVITY"),
-    ("q4ctf6", "MIND THE GAP"),
-    ("q4ctf7", "TREMORS"),
-    ("q4ctf8", "DOUBLE EDGED"),
-    ("q4xctf6", "CAVERNOUS CRYONICS"),
-)
-DEADZONE = (
-    ("q4dz1", "HEARTLESS"),
-    ("q4dz2", "DEATH BEFORE DISHONOR"),
-    ("q4dz3", "SPEED TRAP"),
-    ("q4dz4", "THE ROSE"),
-)
-# q4cmp_pak001.pk4
-COMMUNITY_DEATHMATCH = (
-    ("q4cmp1", "SPIRAL"),
-    ("q4cmp2", "GRINDER"),
-    ("q4cmp3", "PHRANTIC"),
-    ("q4cmp4", "CITY HEAT"),
-    ("q4cmp5", "RAVAGE"),
-    ("q4cmp6", "PENETRATION"),
-    ("q4cmp7", "CAUSTIC BURN"),
-    ("q4cmp8", "BETTER THAN NOTHING"),
-    ("q4cmp9", "WALLS OF HATE"),
-    ("q4cmp10", "ARID WASTES"),
-    ("q4cmp11", "SYSTEMATIC LOCKDOWN"),
-    ("q4cmp12", "KAT FIGHT!"),
-    ("q4cmp13", "LEARNING CURVE"),
-)
-COMMUNITY_CAPTURE_THE_FLAG = (
-    ("q4cmp14", "ATOMS FOR PEACE"),
-    ("q4cmp15", "CLINT EASTWOOD"),
-)
-# The expansion's multiplayer mapDefs reuse retail string ids, so these titles
-# repeat stock ones, as they do in the game.
-AWAKENING_CAPTURE_THE_FLAG = (
-    ("q4xctf1", "HEARTLESS"),
-    ("q4xctf2", "DEATH BEFORE DISHONOR"),
-    ("q4xctf3", "SPEED TRAP"),
-    ("q4xctf4", "RELATIVITY"),
-    ("q4xctf5", "XAERO GRAVITY"),
-    ("q4xctf6", "CAVERNOUS CRYONICS"),
-)
-AWAKENING_DEATHMATCH = (
-    ("q4xdm1", "THE FRAGGING YARD"),
-    ("q4xdm2", "SANDSTORM"),
-    ("q4xdm3", "THE LOST FLEET"),
-    ("q4xdm4", "BLOODWORK"),
-    ("q4xdm5", "THE ROSE"),
-    ("q4xdm6", "NO DOCTORS"),
-    ("q4xdm10", "CENTRAL INDUSTRIAL"),
-    ("q4xdm11", "WARFORGED"),
-    ("q4xdm12", "METAL FIST MEAT"),
-    ("q4xdm13", "STROYENT RED"),
-    ("q4xdm14", "CLAUSTRO"),
-    ("q4xdm15", "CAMPGROUNDS"),
-)
-AWAKENING_TOURNEY = (
-    ("q4xtourney1", "STROGGENOMENON"),
+    ("d3dm1", "TOMIKO REACTOR"),
+    ("d3dm2", "DELTA LAB"),
+    ("d3dm3", "FRAG CHAMBER"),
+    ("d3dm4", "THE EDGE"),
+    ("d3dm5", "LIGHTS OUT"),
 )
 
-# The Awakening's launches expect its content in .home/q4xbase/.
 GROUPS = (
-    ("01 Main menus", (
+    ("01 Main menu", (
         Launch("Main menu"),
-        Launch("Main menu", "DM"),
-        Launch("Awakening main menu", game="q4xbase"),
-        Launch("Awakening main menu", "DM", "q4xbase"),
-    )),
-    ("02 Main menu variants", (
-        Launch("Main menu - Stock UI", retained=False),
-        Launch("Main menu - Stock UI", "DM", retained=False),
         Launch("Main menu - Validation Layers", cvars=(("r_vkValidation", "1"),), renderers=(VULKAN,)),
     )),
-    ("03 Quake 4 campaign", campaign(QUAKE4_CAMPAIGN)),
-    ("04 Quake 4 campaign tests", QUAKE4_CAMPAIGN_TESTS),
-    ("05 Awakening campaign", campaign(AWAKENING_CAMPAIGN, "q4xbase", "Awakening ")),
-    ("06 Multiplayer: Deathmatch", servers(DEATHMATCH, "DM")),
-    ("07 Multiplayer: Tourney", servers(TOURNEY, "Tourney")),
-    ("08 Multiplayer: Capture the Flag", servers(CAPTURE_THE_FLAG, "CTF")),
-    ("09 Multiplayer: DeadZone", servers(DEADZONE, "DeadZone")),
-    ("10 Multiplayer: Community Map Pack",
-     servers(COMMUNITY_DEATHMATCH, "DM") + servers(COMMUNITY_CAPTURE_THE_FLAG, "CTF")),
-    ("11 Awakening multiplayer",
-     servers(AWAKENING_CAPTURE_THE_FLAG, "CTF", "q4xbase", "Awakening ")
-     + servers(AWAKENING_DEATHMATCH, "DM", "q4xbase", "Awakening ")
-     + servers(AWAKENING_TOURNEY, "Tourney", "q4xbase", "Awakening ")),
+    ("02 Doom 3 campaign", campaign(DOOM3_CAMPAIGN)),
+    ("03 Doom 3 campaign tests", DOOM3_CAMPAIGN_TESTS),
+    ("04 Multiplayer: Deathmatch", servers(DEATHMATCH, "deathmatch")),
+    ("05 Multiplayer: Team Deathmatch", servers(DEATHMATCH, "Team DM")),
+    ("06 Multiplayer: Tourney", servers(DEATHMATCH, "Tourney")),
+    ("07 Multiplayer: Last Man Standing", servers(DEATHMATCH, "Last Man")),
 )
 
 
@@ -319,7 +177,7 @@ def configuration(launch: Launch, renderer: tuple[str, str], group: str, order: 
         "type": "cppvsdbg",
         "request": "launch",
         "presentation": {"group": group, "order": order},
-        "program": "${workspaceFolder}\\.install\\openQ4-client_x64.exe",
+        "program": "${workspaceFolder}\\.install\\openD3-client_x64.exe",
         "args": args + list(launch.command),
         "cwd": "${workspaceFolder}\\.install",
         "console": "integratedTerminal",

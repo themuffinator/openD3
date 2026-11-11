@@ -70,14 +70,10 @@
 #endif
 #define	CD_EXE							PROJECT_NAME "-client_" OPENQ4_BINARY_ARCH ".exe"
 
-// LEGACY_CONFIG_FILE is the name builds wrote before the openD3 casing settled.
-// It is only ever read, to carry settings forward on case-sensitive filesystems.
 #ifdef _XENON
 #define CONFIG_FILE						"save:/openD3Config.cfg"
-#define LEGACY_CONFIG_FILE				"save:/OpenD3Config.cfg"
 #else
 #define CONFIG_FILE						"openD3Config.cfg"
-#define LEGACY_CONFIG_FILE				"OpenD3Config.cfg"
 #endif
 
 // base folder where the source code lives

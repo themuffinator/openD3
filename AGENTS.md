@@ -1,124 +1,79 @@
-# openQ4 Agent Guide
+# openD3 Agent Guide
 
-This file describes project goals, rules, and upstream credits for anyone working on openQ4.
+This file describes project goals, rules and workflow expectations for anyone working on openD3.
 
 **Project Metadata**
-- Name: openQ4
+- Name: openD3 (always written this way: lower-case "open", upper-case "D3")
 - Author: themuffinator
 - Company: DarkMatter Productions
-- Latest available release: 0.13.2
-- Withdrawn release: 0.14.0 (tag `v0.14.000`); retain historical evidence, but do not present it as an available release. Current source changes are unreleased; see `docs/user/release-status.md`.
+- Version: 0.0.1, no release yet
 - Website: `www.darkmatter-quake.com`
-- Repository: `https://github.com/themuffinator/openQ4`
-- Game Sources: `src/game/` and `src/mpgame/` (SDK EULA); Awakening SP additions in `src/game/awakening/`
+- Repository: `https://github.com/themuffinator/openD3`
+- Game library: in-tree `src/game/` (Doom 3) and `src/d3xp/` (Resurrection of Evil), GPLv3 like the engine
+- Upstream engine: openQ4, merged from the `openq4-upstream` remote (`E:\Repositories\openQ4`)
 
 **Goals**
-- Deliver a complete code replacement for Quake 4: a GPL-covered engine and SDK-EULA game code.
-- Preserve behavior required by the shipped Quake 4 assets (base PK4s) where practical.
-- Maintain full single-player and multiplayer parity with in-tree game code.
-- Modernize the engine and game code while keeping stock-asset compatibility as a guiding constraint.
-- Package both SP/MP under one unified game directory (`baseoq4/`) with `game_sp` + `game_mp`.
-- Establish a cross-platform foundation targeting modern systems (Windows, Linux, macOS; x64 first) through SDL3 and Meson.
-- Keep canonical Quake4SDK-derived game-library sources in-tree under `src/game/` and `src/mpgame/`, with their SDK EULA and provenance preserved.
-- Keep BSE source integrated in-tree under `src/bse/` and treat it as first-party openQ4 code.
+- Run Doom 3 and Resurrection of Evil from the original retail assets on the current openQ4 engine.
+- Keep the project open-source end to end: GPLv3 engine and GPLv3 game code, with no closed-source runtime dependencies.
+- Stay close to upstream openQ4 so engine work arrives by merge. openD3's permanent delta should be only what Doom 3 needs.
+- Prefer Doom 3 behaviour over Quake 4 behaviour wherever the two differ and Doom 3 content depends on it.
+- Keep one runtime game directory, `baseod3/`, for openD3's own modules and content.
 
 **Rules**
-- Do not target compatibility with the proprietary Quake 4 game DLLs; openQ4 ships its own game modules and keeps full freedom to evolve the project.
-- Treat `openQ4-game` and `openQ4-game-awakening` as archived historical references; apply all new game-library edits in this repository.
-- For SDK/game-library work, edit canonical `src/game/` and `src/mpgame/` directly. Keep Awakening SP additive and scope campaign content/substitutions to active `q4xbase`; do not add an expansion multiplayer module.
-- Treat `src/bse/` as the canonical BSE source location.
-- Build BSE into the client executable; do not reintroduce an external `openQ4-BSE_<arch>` runtime module without an explicit project decision.
-- Dedicated server builds keep the disabled BSE manager path unless a change proves they genuinely need the full effect runtime.
-- Keep `baseoq4/` as the single unified game directory; do not split SP/MP into separate mod folders.
-- Keep repo-authored runtime overrides under `content/baseoq4/`; treat `.install/baseoq4/` as staged output rather than an editing target.
-- Follow `docs/dev/source-layout.md` for directory placement and file naming: vendored code under `src/external/` or `subprojects/`, licence notices under `LICENSES/`, single lowercase words for first-level `src/` directories, and the naming family of the surrounding code. Do not rename inherited id/Raven files to a new style. `tools/tests/repository_path_portability.py` enforces the path rules.
-- Prefer changes that match Quake 4 SDK expectations and shipped content behavior.
-- Document significant changes in the documentation and keep `README.md` accurate.
-- Use `docs/dev/roadmap.md` as the single active development plan. Extend its stable work items and acceptance gates instead of creating parallel plans or TODO backlogs. Archived plans preserve historical scope/evidence; technical contracts and acceptance registers remain supporting references, not independent scheduling authority.
-- `README.md` is the players' front door. Add to it only a short, benefit-first feature bullet or player-guide link once players can use the feature. Keep implementation progress, developer contracts, validation evidence, investigation notes and per-release detail in `docs/dev/`, `docs/user/` and the release notes, never as README prose.
-- Treat release changelog maintenance as part of feature completion. User-facing curated release notes belong in `docs/dev/releases/vX.Y.Z.md`, and the manual release workflow will publish that file when it exists.
-- Write release notes for end users first: lead with the visible benefit, call out any action or compatibility note the reader needs, and avoid dumping internal implementation trivia unless it materially helps the audience.
-- Use `builddir/` as the standard Meson build output directory for local builds and validation. The VS Code build tasks use `builddir-perf/` (`debugoptimized`) and stage it into `.install/`, which the launch configurations run.
-- Never add VS Code `preLaunchTask` entries to launch configurations; launch tasks must remain direct game launches.
-- `.vscode/launch.json` is generated by `tools/debug/generate_vscode_launch.py`: edit its tables and rerun it instead of editing the JSON. Every launch pins `r_renderApi` and `ui_retained 1` (the retained RmlUi interface; only the Stock UI entries set 0) and leaves `fs_basepath` to the engine's install discovery.
-- Treat `.install/` as the release-style package root; stage built binaries into `.install/` and `.install/baseoq4/`.
-- Keep game-module outputs available under both `builddir/baseoq4/` (direct run) and `.install/baseoq4/` (staged package).
-- Keep `.install/` focused on runtime/staged content: engine executables in `.install/`, game DLLs and staged overrides/assets in `.install/baseoq4/`.
-- Do not rely on `.install/` as a linker artifact store; keep compiler/linker intermediates and development-only outputs in `builddir/`.
-- MSVC import libraries (`*.lib`) are not runtime requirements for openQ4 execution; prefer keeping them in `builddir/` (or other developer artifact output), not in release-style `.install/` packages.
-- Use `meson install -C builddir --no-rebuild --skip-subprojects` (via `tools/build/meson_setup.ps1`) when staging `.install/` to avoid third-party subproject installs outside the package tree.
-- The multiplayer smokes qualify the staged `.install/` tree, not `builddir/`. Re-stage after every build or they measure the previous one and report the difference as a product failure; they now refuse to run against a stage older than the build, and `OPENQ4_ALLOW_STALE_RUNTIME=1` overrides that check.
-- `tools/build/meson_setup.ps1` compiles the in-tree game sources directly; compiler inputs must not be staged from a companion checkout.
-- On Windows, do not invoke raw `meson ...` from an arbitrary shell; use `tools/build/meson_setup.ps1 ...` (or run `tools/build/openq4_devcmd.cmd` first) so `cl.exe`/MSVC tools are always available.
-- Prefer platform abstractions through SDL3 and avoid introducing new platform-specific dependencies in shared engine code when an SDL3 path exists.
-- Keep Meson as the primary build entry point and keep dependency management through Meson subprojects.
-- Treat x64 as the baseline architecture for active support while staging additional modern architectures incrementally.
-- Keep credits accurate and add new attributions when incorporating upstream work.
-- Localize all user-facing UI text: never introduce hardcoded display strings in GUIs/UI code when a `#str_*` lookup is possible; add/update language-table entries whenever new text is needed.
-- Follow `docs/dev/ui-visual-design.md` for all UI work. The user-authorized `idtech5-ui` replacement reconstructs Quake 4 framing, controls and symbols as editable vector art, preserves the 45-degree motif, and permits bitmaps only for complex imagery. Retain stock references for fidelity; do not add extracted proprietary art to Git. Track full runtime/editor/migration completion under UI-01 through UI-11 in `docs/dev/roadmap.md`, with detailed acceptance in `docs/dev/ui/product-requirements.json` and `docs/dev/ui/migration-manifest.json`.
-- Avoid adding engine-side content files (e.g., custom material scripts) unless absolutely required for compatibility; the goal is to run with the original game assets and only openQ4 binaries (engine + game modules, plus minimal external libs).
-- Any existing custom `q4base/` content is treated as an expedient bootstrap, not a long-term solution. The goal is to remove this reliance by fixing engine compatibility issues rather than shipping replacement assets.
-- For investigations, reference the log file written by `logFileName` (VS Code launch uses `logs/openq4.log`), located under `fs_savepath\<gameDir>\` (e.g. `${workspaceFolder}\\.home\\baseoq4\\logs\\openq4.log`).
-- For runtime validation, use mode-specific launch tasks: use the SP launch task for single-player testing and the MP launch task for multiplayer testing.
-- Automated multiplayer profiles (`renderer_gameplay_benchmark.py`, `stock_asset_baseline.py`, the dedicated smokes) keep an explicit `+set ui_autoJoin 1` so clients enter gameplay without menu input. The interactive VS Code MP launch configurations instead pass `+set ui_autoJoin 0`, which is the shipped default and starts at the join screen. Always set the value explicitly; never rely on omission, because the CVar is archived.
-- Do not treat main-menu startup as sufficient validation; enter in-game/map gameplay relevant to the change before concluding tests.
-- For macOS testing/debugging, use the compliant Apple-hardware VM/host workflow in `docs/dev/macos-vm-testing-workflow.md` and `tools/macos/Invoke-openQ4MacOSWorkflow.ps1`. Keep macOS installer/restore-image inventory under `E:\ISO\macos\`. Do not use Windows VMware macOS unlocker/Hackintosh-style setup guides for openQ4 automation.
-- Use `.tmp/` directory in repository for any temporary files required for tasks.
-- Always consider cross-platform compatibility for any changes.
+- The game library is canonical in this repository. `OpenD3-GameLibs` is historical; its history is a merge parent of the import commit (see `docs/dev/game-source-provenance.md`). Do not edit it and do not stage sources from it.
+- `src/game/` and `src/d3xp/` are the same game with and without `_D3XP`/`CTF`. A fix that applies to both goes into both trees.
+- Engine and game are both GPLv3. Never copy code from openQ4's or openPREY's game trees (`src/game`, `src/mpgame`, `src/Prey`, `src/preyengine` there): those are under SDK licences. Their engine code is GPL and may be ported.
+- Sync engine work by merging `openq4-upstream/main`. Keep openD3's side for the game trees, `content/baseod3/`, the openD3 identity and the `OPEND3` sites. Never import `src/mpgame`, upstream's `src/game` or `content/baseoq4/`.
+- The game API is Doom 3's (`GAME_API_VERSION` 8, `src/game/Game.h`). Where new upstream engine code calls a Quake 4-only `idGame` method, adapt it to Doom 3's API or gate it with an `OPEND3-GATED(D9)` marker as `docs/dev/doom3-rebase.md` describes.
+- Mark engine sites that differ from upstream for Doom 3's sake with the `OPEND3` define, and keep such sites few and small.
+- Engine identifiers shared with upstream keep upstream's names (`OPENQ4_*`, `openQ4_*`, `openq4_*`). Everything a user or packager sees says openD3. New environment variables are `OPEND3_*`.
+- Use `docs/dev/doom3-rebase.md` as the record of what works, how it was verified and what is open. Update it with any change to those facts. Do not present anything as working that the "Verified" section does not cover.
+- Most of `docs/` and `tools/tests`, `tools/validation` and the packaging tools are inherited from openQ4 and describe or test Quake 4. Treat them as upstream reference until they are adapted, and say so when relying on them.
+- Never launch openD3 in fullscreen from agent workflows; force windowed mode with `+set r_fullscreen 0`.
+- Launch with `ui_retained 0`. The retained RmlUi interface inherited from openQ4 has no Doom 3 documents.
+- Develop against the installed Doom 3 assets. Fix compatibility in the engine, game, parser or loader rather than shipping replacement content.
+- Keep Meson as the build entry point and `builddir/` as the standard build output. On Windows, invoke Meson through `tools/build/meson_setup.ps1` (or `tools/build/opend3_devcmd.cmd`) so the MSVC environment is set up.
+- Treat `.install/` as the staged package root: executables and renderer modules in `.install/`, game modules and `pak0.pk4` in `.install/baseod3/`. Keep linker and build intermediates in `builddir/`. Stage with `meson install -C builddir --no-rebuild --skip-subprojects`.
+- Keep repo-authored runtime content under `content/baseod3/pak0/`. `.install/baseod3/` is output, not an editing target.
+- Do not put retail `.pk4` files in `baseod3/`.
+- `.vscode/launch.json` is generated by `tools/debug/generate_vscode_launch.py`. Edit its tables and rerun it.
+- Use `.tmp/` in the repository for temporary task files, and isolate each test's saves, config and logs under `.tmp/<task>/` with `fs_savepath`.
+- Keep documentation in step with behaviour, and keep credits accurate.
 
-**.install/ Folder Layout (Staging Target)**
-- `.install/` is the runtime package root used by local staging and `fs_cdpath` overlays.
-- Keep executable/runtime artifacts here (for example `.install/openQ4-client_x64.exe`, `.install/openQ4-ded_x64.exe`, `.install/baseoq4/game-sp_x64.dll`, `.install/baseoq4/game-mp_x64.dll`).
-- Stage editable override content under `.install/baseoq4/` (for example GUI scripts in `.install/baseoq4/guis/`).
-- Avoid shipping build-only linker artifacts in `.install/`; keep `*.lib` in `builddir/` unless intentionally producing a developer SDK artifact set.
+**Build**
+- Configure: `powershell -ExecutionPolicy Bypass -File tools/build/meson_setup.ps1 setup builddir . --backend ninja --buildtype=debugoptimized --wrap-mode=forcefallback`
+- Compile: `powershell -ExecutionPolicy Bypass -File tools/build/meson_setup.ps1 compile -C builddir`
+- Stage: `powershell -ExecutionPolicy Bypass -File tools/build/meson_setup.ps1 install -C builddir --no-rebuild --skip-subprojects`
+- Windows staging needs an OpenAL Soft runtime at `src/external/openal-soft/bin/win64/OpenAL32.dll` or through `OPEND3_OPENAL_ROOT`. The DLL is not tracked.
+- The generated version header changes with every commit, so the first build after a commit recompiles most of the tree.
+
+**Runtime Modules**
+- `game_<arch>`: Doom 3, built from `src/game/`.
+- `game-d3xp_<arch>`: Resurrection of Evil, built from `src/d3xp/`; selected when `d3xp` is `fs_game` or `fs_game_base`. It builds but is not playable yet (see the rebase record).
+- `renderer-gl_<arch>` and `renderer-vk_<arch>`: the renderer modules, chosen with `r_renderApi`.
+- The retail `gamex86` binaries in a Doom 3 install are never loaded.
 
 **Stable Test Executable Paths**
-- Reuse executable paths across runtime tests so Windows Firewall permissions remain useful. Rebuild and stage in place; do not create a new executable name or launch directory for each task, timestamp, or run.
-- Use `.install/openQ4-client_x64.exe` and `.install/openQ4-ded_x64.exe` for ordinary Windows testing, with the existing mode-specific launch options. Re-stage the current build and matching runtime modules before testing.
-- Isolate each test's writable configuration, saves, logs, and captures under `.tmp/<task>/` using supported filesystem options; test-data isolation must not require copying the executable.
-- When a comparison, stock-only probe, architecture, or build configuration genuinely requires a separate runtime, reuse a small set of fixed project-local locations, such as `.tmp/runtime/baseline/` and `.tmp/runtime/candidate/`. Keep each executable with its matching modules, record the tested build identity, and coordinate use so another task cannot replace a runtime during a test. Retain these reusable locations across tasks; clean disposable test data separately.
-- Apply the same convention when adding or updating test harnesses. Resolve recurring firewall prompts through stable launch paths; do not disable the firewall or its notifications, add broad exceptions, or modify firewall rules without the user's explicit instruction.
-
-**Development Procedure (Correct Direction)**
-1. Develop against the installed Quake 4 assets only (base PK4s), not repo `q4base/` content.
-2. Prefer launching from the repo `.install/` directory so locked `fs_cdpath` targets staged openQ4 overlays; use a different working directory only when intentionally testing stock-only behavior.
-3. If something is missing or broken, fix the engine/game/loader/parser rather than shipping new material/decl/shader assets.
-4. If engine-side shaders are needed, prefer internal defaults or generated resources that ship with the executable.
-5. Re-run Procedure 1 after each fix to verify clean initialization without custom content.
-
-**Release Changelog Workflow**
-1. Treat release-note maintenance as part of the definition of done for any shipped user-facing, packaging, compatibility, input, rendering, or platform change.
-2. Keep candidate release material current in `docs/dev/release-completion.md` while work is in progress.
-3. Before cutting or re-cutting a release, create or update `docs/dev/releases/vX.Y.Z.md` with polished release notes intended to be read directly by players and package users.
-4. Prefer a clean Markdown structure with short sections such as `Highlights`, `Upgrade Notes`, and `Change Log`, using concise bullets that scan well on GitHub releases.
-5. Write in benefit-first language: explain what changed, why it matters, and whether the reader needs to reinstall, replace files, or rebind anything.
-6. Keep curated notes free of internal-only clutter such as source paths, temporary investigation details, or commit-by-commit noise unless that detail is genuinely useful to the release audience.
-7. If no curated file exists, the manual release workflow falls back to the generated commit-history notes; treat that fallback as a safety net, not the preferred release presentation.
+- Reuse `.install/openD3-client_x64.exe` and `.install/openD3-ded_x64.exe` across runtime tests so Windows Firewall permissions stay useful; re-stage in place rather than creating new executable names per task.
 
 **Procedure 1 (Debug Loop)**
-1. Launch using the correct mode-specific task (`SP` launch task for single-player, `MP` launch task for multiplayer).
-2. Close the game after 3 seconds.
-3. Read `fs_savepath\<gameDir>\logs\openq4.log` (commonly `${workspaceFolder}\\.home\\baseoq4\\logs\\openq4.log`).
-4. Identify errors and warnings to resolve.
-5. Resolve the errors and warnings.
+1. Launch windowed with the mode-appropriate launch configuration (`SP` for single-player, `MP` for multiplayer), or the staged client with `+set r_fullscreen 0 +set ui_retained 0 +set logFile 2 +set logFileName logs/opend3.log`.
+2. Let the engine initialise and enter the gameplay state the change affects; main-menu startup alone is not validation.
+3. Close the game and read `fs_savepath\<gameDir>\logs\opend3.log` (commonly `${workspaceFolder}\.home\baseod3\logs\opend3.log`).
+4. Identify errors and warnings.
+5. Fix them in code or configuration.
 6. Repeat until clean.
 
-**Planned Review**
-- Strong preference to review and reduce `q4base/` usage, file-by-file, until the engine runs cleanly without any repo content overrides.
-
 **References (Local, Not Included In Repo)**
-- Quake 4 SDK: `E:\_SOURCE\_CODE\Quake4-1.4.2-SDK`
-- Quake 4 asset source: `E:\_SOURCE\_ASSETS\Q4`
-- Upstream engine base (local folder name retained): `E:\_SOURCE\_CODE\Quake4Doom-master`
-- Quake 4 BSE (Basic Set of Effects): `E:\_SOURCE\_CODE\Quake4BSE-master`
-- Quake 4 engine decompiled (Hex-Rays): `E:\Repositories\Quake4Decompiled-main`
-- Quake 4 installation (Steam, 1.4.2, includes `Quake4Ded.exe`): `E:\SteamLibrary\steamapps\common\Quake 4`
+- Upstream engine: `E:\Repositories\openQ4`
+- Sibling port with the same engine layer, for Prey: `E:\Repositories\openPREY`
+- id Software's GPL Doom 3 release, unmodified: `E:\_SOURCE\_CODE\DOOM-3-master`
+- dhewm3, behaviour reference: `E:\_SOURCE\_CODE\dhewm3-master`
+- Historical game-library repository (read-only): `E:\Repositories\OpenD3-GameLibs`
+- Doom 3 installation (Steam): `E:\SteamLibrary\steamapps\common\Doom 3`
 
 **Upstream Credits**
-- [Emile Belanger (emileb)](https://github.com/emileb): original Android, SigmaTouch and GLES support; see `docs/dev/android-gles-integration.md`.
-- Justin Marshall, including recovering and publishing Quake 4: The Awakening.
-- Robert Beckebans.
-- id Software.
-- Raven Software.
-- Ritual Entertainment, with Raven Software, for Quake 4: The Awakening.
-
+- id Software: Doom 3 and its GPL source release.
+- openQ4 and everyone credited there, including [Emile Belanger (emileb)](https://github.com/emileb) for the original Android, SigmaTouch and GLES support.
+- Raven Software, Justin Marshall and Robert Beckebans, through the openQ4 engine lineage.
+- Daniel Gibson and the dhewm3 contributors, as a behaviour reference.

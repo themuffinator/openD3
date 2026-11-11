@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Configure openQ4 (Meson Optimized)",
+      "label": "Configure openD3 (Meson Optimized)",
       "detail": "Configure builddir-perf as debugoptimized with b_ndebug=true (the release options), reconfiguring it in place when it exists.",
       "type": "shell",
       "command": "powershell",
@@ -17,7 +17,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Compile openQ4 (Meson Optimized)",
+      "label": "Compile openD3 (Meson Optimized)",
       "detail": "Compile builddir-perf without staging anything.",
       "type": "shell",
       "command": "powershell",
@@ -34,7 +34,7 @@
       ]
     },
     {
-      "label": "Stage openQ4 Install Tree (Meson Optimized)",
+      "label": "Stage openD3 Install Tree (Meson Optimized)",
       "detail": "Install builddir-perf into .install with meson install (no rebuild, no subprojects).",
       "type": "shell",
       "command": "powershell",
@@ -49,7 +49,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Build openQ4 (Meson Optimized)",
+      "label": "Build openD3 (Meson Optimized)",
       "detail": "Compile builddir-perf, then copy changed runtime files into .install for the launch configurations.",
       "type": "shell",
       "command": "powershell",
@@ -70,13 +70,13 @@
       ]
     },
     {
-      "label": "Full Build and Stage openQ4 (Meson Optimized)",
+      "label": "Full Build and Stage openD3 (Meson Optimized)",
       "detail": "Configure, compile and fully install builddir-perf into .install.",
       "dependsOrder": "sequence",
       "dependsOn": [
-        "Configure openQ4 (Meson Optimized)",
-        "Compile openQ4 (Meson Optimized)",
-        "Stage openQ4 Install Tree (Meson Optimized)"
+        "Configure openD3 (Meson Optimized)",
+        "Compile openD3 (Meson Optimized)",
+        "Stage openD3 Install Tree (Meson Optimized)"
       ],
       "problemMatcher": []
     },
@@ -84,14 +84,14 @@
       "label": "Bake Light Grids (All MP)",
       "detail": "Full build and stage, then bake the light grids of every stock multiplayer map in a hidden client.",
       "type": "shell",
-      "command": "${workspaceFolder}\\.install\\openQ4-client_x64.exe",
+      "command": "${workspaceFolder}\\.install\\openD3-client_x64.exe",
       "args": [
         "+set",
         "logFile",
         "2",
         "+set",
         "logFileName",
-        "logs/openq4_lightgrids.log",
+        "logs/opend3_lightgrids.log",
         "+set",
         "developer",
         "1",
@@ -112,10 +112,10 @@
         "${workspaceFolder}\\.install",
         "+set",
         "fs_game",
-        "baseoq4",
+        "baseod3",
         "+set",
         "si_gameType",
-        "dm",
+        "deathmatch",
         "+set",
         "net_serverDedicated",
         "0",
@@ -131,7 +131,7 @@
       ],
       "dependsOrder": "sequence",
       "dependsOn": [
-        "Full Build and Stage openQ4 (Meson Optimized)"
+        "Full Build and Stage openD3 (Meson Optimized)"
       ],
       "options": {
         "cwd": "${workspaceFolder}\\.install"
