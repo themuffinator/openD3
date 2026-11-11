@@ -939,8 +939,8 @@ static bool VK_Post_MaterialIsSky( const idMaterial *material ) {
 	if ( material->IsPortalSky() || material->GetSort() == SS_PORTAL_SKY ) {
 		return true;
 	}
-	const texgen_t texgen = material->Texgen();
-	return texgen == TG_SKYBOX_CUBE || texgen == TG_WOBBLESKY_CUBE;
+	// Prey skies can carry the cube texgen on any stage, not just the first.
+	return material->HasTexgen( TG_SKYBOX_CUBE ) || material->HasTexgen( TG_WOBBLESKY_CUBE );
 }
 
 // RB_SSAOWorldDepthSurfFilter

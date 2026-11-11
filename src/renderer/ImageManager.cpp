@@ -183,6 +183,15 @@ idCVar image_picmipFilter(
 	"image paths image_picmip may reduce:\n 0: every diffuse texture\n 1: textures/* (world surfaces)\n 2: models/* (characters, weapons, props)\n 4: any other namespace\nAdd values to combine categories.",
 	0,
 	PICMIP_FILTER_MASK );
+// Retail Prey's "use high resolution version": materials mark double-size
+// sources with the stage option "highres", and retail loaded them one level
+// smaller unless this was set. Retail only set it for its top machine spec;
+// openPREY keeps the full-size default.
+idCVar image_useHighRes(
+	"image_useHighRes",
+	"1",
+	CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL,
+	"load full-size versions of images that materials mark highres; 0 halves them as retail's lower machine specs did" );
 idCVar image_picmipMinSize(
 	"image_picmipMinSize",
 	"32",
@@ -263,7 +272,8 @@ imageDownsizeInputs_t R_ReadImageDownsizeInputs() {
     return {image_downSize.GetInteger(), image_downSizeLimit.GetInteger(),
         image_downSizeSpecular.GetInteger(), image_downSizeSpecularLimit.GetInteger(),
         image_downSizeBump.GetInteger(), image_downSizeBumpLimit.GetInteger(),
-        image_picmip.GetInteger(), image_picmipFilter.GetInteger(), image_picmipMinSize.GetInteger()};
+        image_picmip.GetInteger(), image_picmipFilter.GetInteger(), image_picmipMinSize.GetInteger(),
+        image_useHighRes.GetBool() ? 1 : 0};
 }
 void R_GetImageDownsizePolicy( const char* name, textureUsage_t usage, bool allowDownSize, imageDownsizePolicy_t& policy ) {
     const imageDownsizeInputs_t inputs = R_ReadImageDownsizeInputs();
@@ -307,7 +317,7 @@ two can never drift apart.
 */
 static bool R_ImageReductionCvarsChanged( bool clear ) {
 	idCVar *const reductionCvars[] = {
-		&image_picmip, &image_picmipFilter, &image_picmipMinSize,
+		&image_picmip, &image_picmipFilter, &image_picmipMinSize, &image_useHighRes,
 		&image_downSize, &image_downSizeLimit,
 		&image_downSizeSpecular, &image_downSizeSpecularLimit,
 		&image_downSizeBump, &image_downSizeBumpLimit
@@ -409,6 +419,54 @@ static void R_NormalizeInternalImageName( idStr& name ) {
 	if ( optionsPos >= 0 ) {
 		name.CapLength( optionsPos );
 	}
+}
+
+static void openPREY_RemapLegacyImageName( idStr &name ) {
+	struct legacyImageRemap_t {
+		const char *legacyName;
+		const char *replacementName;
+	};
+	static const legacyImageRemap_t remaps[] = {
+		{ "_menushot", "_currentRender" },
+		{ "gfx/guis/loadscreens/generic", "guis/assets/loading/loading" },
+		{ "gfx/splashscreen", "guis/assets/loading/loading" },
+		{ "gfx/guis/white", "guis/assets/white" },
+		{ "gfx/guis/guicursor_arrow", "guis/assets/guicursor_arrow" },
+		{ "gfx/guis/guicursor_hand", "guis/assets/guicursor_hand" },
+		{ "gfx/guis/guicursor_menu", "guis/assets/guicursor_menu" },
+		{ "gfx/guis/scrollbarh", "guis/assets/scrollbarv" },
+		{ "gfx/guis/scrollbarv", "guis/assets/scrollbarv" },
+		{ "gfx/guis/scrollbar_thumb", "guis/assets/scrollbar_thumb" },
+		{ "gfx/guis/scrollbar_right", "guis/assets/scrollbarv_cap" },
+		{ "gfx/guis/scrollbar_left", "guis/assets/scrollbarv_cap" },
+		{ "gfx/guis/scrollbar_up", "guis/assets/scrollbarv_cap" },
+		{ "gfx/guis/scrollbar_down", "guis/assets/scrollbarv_cap" }
+	};
+
+	for ( int i = 0; i < (int)( sizeof( remaps ) / sizeof( remaps[0] ) ); i++ ) {
+		if ( idStr::Icmp( name.c_str(), remaps[i].legacyName ) == 0 ) {
+			name = remaps[i].replacementName;
+			return;
+		}
+	}
+
+	static const char legacyLoadscreenPrefix[] = "gfx/guis/loadscreens/";
+	const int prefixLength = (int)strlen( legacyLoadscreenPrefix );
+	if ( idStr::Icmpn( name.c_str(), legacyLoadscreenPrefix, prefixLength ) == 0 ) {
+		idStr mapName = name.c_str() + prefixLength;
+		if ( mapName.Icmp( "generic" ) == 0 ) {
+			name = "guis/assets/loading/loading";
+		} else if ( mapName.Icmp( "roadhouse" ) == 0 || mapName.Icmp( "game/roadhouse" ) == 0 ) {
+			name = "guis/assets/loading/roadhouse";
+		}
+	}
+}
+
+static void openPREY_NormalizeAndRemapImageName( idStr &name ) {
+	name.Replace( ".tga", "" );
+	name.BackSlashesToSlashes();
+	R_NormalizeInternalImageName( name );
+	openPREY_RemapLegacyImageName( name );
 }
 
 static bool R_IsQ4LightImageNamespace( const char *name ) {
@@ -970,9 +1028,7 @@ idImage *idImageManager::ImageFromFunction( const char *_name, void (*generatorF
 
 	// strip any .tga file extensions from anywhere in the _name
 	idStr name = _name;
-	name.Replace( ".tga", "" );
-	name.BackSlashesToSlashes();
-	R_NormalizeInternalImageName( name );
+	openPREY_NormalizeAndRemapImageName( name );
 
 	// see if the image already exists
 	int hash = name.FileNameHash();
@@ -1013,9 +1069,7 @@ idImage	*idImageManager::GetImageWithParameters( const char *_name, textureFilte
 	usage = R_ImageUsageForName( _name, usage );
 	// strip any .tga file extensions from anywhere in the _name, including image program parameters
 	idStr name = _name;
-	name.Replace( ".tga", "" );
-	name.BackSlashesToSlashes();
-	R_NormalizeInternalImageName( name );
+	openPREY_NormalizeAndRemapImageName( name );
 	allowDownSize = R_AllowImageDownSizeForName( name.c_str(), allowDownSize );
 	int hash = name.FileNameHash();
 	for ( int i = imageHash.First( hash ); i != -1; i = imageHash.Next( i ) ) {
@@ -1033,7 +1087,7 @@ idImage	*idImageManager::GetImageWithParameters( const char *_name, textureFilte
 				// share the image data
 				continue;
 			}
-			if ( image->usage != usage || image->allowDownSize != allowDownSize || image->flags != flags ) {
+			if ( image->usage != usage || image->allowDownSize != allowDownSize || ( image->flags & ~IMAGEFLAG_HIGHRES ) != ( flags & ~IMAGEFLAG_HIGHRES ) ) {
 				// If an image is used differently then we need 2 copies of it because usage affects the way it's compressed and swizzled
 				continue;
 			}
@@ -1067,9 +1121,7 @@ idImage	*idImageManager::ImageFromFile( const char *_name, textureFilter_t filte
 
 	// strip any .tga file extensions from anywhere in the _name, including image program parameters
 	idStr name = _name;
-	name.Replace( ".tga", "" );
-	name.BackSlashesToSlashes();
-	R_NormalizeInternalImageName( name );
+	openPREY_NormalizeAndRemapImageName( name );
 	allowDownSize = R_AllowImageDownSizeForName( name.c_str(), allowDownSize );
 
 	//
@@ -1093,7 +1145,7 @@ idImage	*idImageManager::ImageFromFile( const char *_name, textureFilter_t filte
 				// share the image data
 				continue;
 			}
-			if ( image->usage != usage || image->flags != flags ) {
+			if ( image->usage != usage || ( image->flags & ~IMAGEFLAG_HIGHRES ) != ( flags & ~IMAGEFLAG_HIGHRES ) ) {
 				// If an image is used differently then we need 2 copies of it because usage affects the way it's compressed and swizzled
 				continue;
 			}
@@ -1158,9 +1210,7 @@ idImage *idImageManager::ImageHandleDeferred( const char *_name, textureFilter_t
 	usage = R_ImageUsageForName( _name, usage );
 
 	idStr name = _name;
-	name.Replace( ".tga", "" );
-	name.BackSlashesToSlashes();
-	R_NormalizeInternalImageName( name );
+	openPREY_NormalizeAndRemapImageName( name );
 	allowDownSize = R_AllowImageDownSizeForName( name.c_str(), allowDownSize );
 
 	int hash = name.FileNameHash();
@@ -1176,7 +1226,7 @@ idImage *idImageManager::ImageHandleDeferred( const char *_name, textureFilter_t
 			if ( image->filter != filter || image->repeat != repeat ) {
 				continue;
 			}
-			if ( image->usage != usage || image->flags != flags ) {
+			if ( image->usage != usage || ( image->flags & ~IMAGEFLAG_HIGHRES ) != ( flags & ~IMAGEFLAG_HIGHRES ) ) {
 				continue;
 			}
 			const bool mergedAllowDownSize = image->allowDownSize && allowDownSize;
@@ -1212,8 +1262,7 @@ idImage * idImageManager::ScratchImage( const char *_name, idImageOpts *imgOpts,
 	}
 
 	idStr name = _name;
-	name.BackSlashesToSlashes();
-	R_NormalizeInternalImageName( name );
+	openPREY_NormalizeAndRemapImageName( name );
 
 	//
 	// see if the image is already loaded, unless we
@@ -1271,9 +1320,7 @@ idImage *idImageManager::GetImage( const char *_name ) const {
 
 	// strip any .tga file extensions from anywhere in the _name, including image program parameters
 	idStr name = _name;
-	name.Replace( ".tga", "" );
-	name.BackSlashesToSlashes();
-	R_NormalizeInternalImageName( name );
+	openPREY_NormalizeAndRemapImageName( name );
 
 	//
 	// look in loaded images

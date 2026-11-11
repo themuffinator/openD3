@@ -1342,7 +1342,7 @@ exitPortal_t idRenderWorldLocal::GetPortal( int areaNum, int portalNum ) {
 	portalArea_t	*area;
 	int				count;
 	portal_t		*portal;
-	exitPortal_t	ret;
+	exitPortal_t	ret = {};
 
 	if ( areaNum < 0 || areaNum >= numPortalAreas ) {
 		common->Error( "idRenderWorld::GetPortal: areaNum out of range" );
@@ -1465,15 +1465,26 @@ BoundsInAreas
 */
 int idRenderWorldLocal::BoundsInAreas( const idBounds &bounds, int *areas, int maxAreas ) const {
 	int numAreas = 0;
+	idBounds queryBounds = bounds;
 
 	assert( areas );
-	assert( bounds[0][0] <= bounds[1][0] && bounds[0][1] <= bounds[1][1] && bounds[0][2] <= bounds[1][2] );
-	assert( bounds[1][0] - bounds[0][0] < 1e4f && bounds[1][1] - bounds[0][1] < 1e4f && bounds[1][2] - bounds[0][2] < 1e4f );
+	const float spanX = bounds[1][0] - bounds[0][0];
+	const float spanY = bounds[1][1] - bounds[0][1];
+	const float spanZ = bounds[1][2] - bounds[0][2];
+	if ( spanX != spanX || spanY != spanY || spanZ != spanZ ||
+			spanX < 0.0f || spanY < 0.0f || spanZ < 0.0f ||
+			spanX >= 1e4f || spanY >= 1e4f || spanZ >= 1e4f ) {
+		const idVec3 center = bounds.GetCenter();
+		if ( center[0] != center[0] || center[1] != center[1] || center[2] != center[2] ) {
+			return numAreas;
+		}
+		queryBounds = idBounds( center ).Expand( 4096.0f );
+	}
 
 	if ( !areaNodes ) {
 		return numAreas;
 	}
-	BoundsInAreas_r( 0, bounds, areas, &numAreas, maxAreas );
+	BoundsInAreas_r( 0, queryBounds, areas, &numAreas, maxAreas );
 	return numAreas;
 }
 
@@ -1501,6 +1512,10 @@ static idRenderModel *R_GuiTraceModelForEntity( idRenderEntityLocal *def ) {
 }
 
 guiPoint_t	idRenderWorldLocal::GuiTrace( qhandle_t entityHandle, const idVec3 start, const idVec3 end ) const {
+	return GuiTrace( entityHandle, start, end, 0 );
+}
+
+guiPoint_t	idRenderWorldLocal::GuiTrace( qhandle_t entityHandle, const idVec3 start, const idVec3 end, int interactiveMask ) const {
 	if ( FindPendingDefOp( entityHandle, false ) != NULL ) {
 		R_RenderThread_SyncFrontEnd( "trace" );
 	}
@@ -1560,6 +1575,13 @@ guiPoint_t	idRenderWorldLocal::GuiTrace( qhandle_t entityHandle, const idVec3 st
 		// only trace against gui surfaces
 		if (!shader->HasGui()) {
 			continue;
+		}
+
+		if ( interactiveMask != 0 ) {
+			const int guiId = shader->GetEntityGui();
+			if ( guiId < 1 || guiId > MAX_RENDERENTITY_GUI || ( interactiveMask & ( 1 << ( guiId - 1 ) ) ) == 0 ) {
+				continue;
+			}
 		}
 
 		local = R_LocalTrace( localStart, localEnd, 0.0f, tri );
@@ -1875,6 +1897,27 @@ const char* playerMaterialExcludeList[] = {
 	NULL
 };
 
+static bool ShouldSkipPlayerTraceEntity( const idRenderEntityLocal *def, const idRenderModel *model ) {
+	if ( def != NULL && ( def->parms.suppressSurfaceInViewID != 0 || def->parms.allowSurfaceInViewID != 0 ) ) {
+		return true;
+	}
+	if ( model == NULL ) {
+		return false;
+	}
+
+	// Compare in place: this runs for every candidate entity of every trace.
+	const char *modelName = model->Name();
+	if ( idStr::Icmpn( modelName, "models/player/", 14 ) == 0 || idStr::Icmpn( modelName, "models/md5/characters/player/", 29 ) == 0 ) {
+		return true;
+	}
+	for ( int i = 0; playerModelExcludeList[i] != NULL; ++i ) {
+		if ( idStr::Cmp( modelName, playerModelExcludeList[i] ) == 0 ) {
+			return true;
+		}
+	}
+	return false;
+}
+
 bool idRenderWorldLocal::Trace( modelTrace_t &trace, const idVec3 &start, const idVec3 &end, const float radius, bool skipDynamic, bool skipPlayer /*_D3XP*/ ) const {
 	if ( pendingDefOps.Num() > 0 ) {
 		R_RenderThread_SyncFrontEnd( "trace" );
@@ -1924,22 +1967,9 @@ bool idRenderWorldLocal::Trace( modelTrace_t &trace, const idVec3 &start, const 
 					continue;
 				}
 
-#if 1	/* _D3XP addition. could use a cleaner approach */
-				if ( skipPlayer ) {
-					const char *name = model->Name();
-					int k;
-
-					for ( k = 0; playerModelExcludeList[k]; k++ ) {
-						if ( idStr::Cmp( name, playerModelExcludeList[k] ) == 0 ) {
-							break;
-						}
-					}
-
-					if ( playerModelExcludeList[k] ) {
-						continue;
-					}
+				if ( skipPlayer && ShouldSkipPlayerTraceEntity( def, model ) ) {
+					continue;
 				}
-#endif
 
 				model = R_EntityDefDynamicModel( def );
 				if ( !model ) {

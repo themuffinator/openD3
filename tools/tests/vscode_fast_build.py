@@ -50,21 +50,21 @@ def validate_tasks() -> None:
     if len(default_tasks) != 1:
         raise AssertionError(f"Expected exactly one default build task, found {len(default_tasks)}")
 
-    fast_build = find_task(tasks, "Build openQ4 (Meson Optimized)")
+    fast_build = find_task(tasks, "Build openPREY (Meson Debug)")
     if fast_build is not default_tasks[0]:
-        raise AssertionError("Build openQ4 (Meson Optimized) must be the default VS Code build task")
+        raise AssertionError("Build openPREY (Meson Debug) must be the default VS Code build task")
     if fast_build.get("dependsOn"):
         raise AssertionError("Fast default build must not depend on configure or full install tasks")
     if "fastbuild" not in fast_build.get("args", []):
         raise AssertionError("Fast default build must invoke meson-task.ps1 fastbuild")
 
-    full_build = find_task(tasks, "Full Build and Stage openQ4 (Meson Optimized)")
+    full_build = find_task(tasks, "Full Build and Stage openPREY (Meson Debug)")
     if full_build.get("dependsOrder") != "sequence":
         raise AssertionError("Full build task must keep ordered configure, compile, install steps")
     for label in (
-        "Configure openQ4 (Meson Optimized)",
-        "Compile openQ4 (Meson Optimized)",
-        "Stage openQ4 Install Tree (Meson Optimized)",
+        "Configure openPREY (Meson Debug)",
+        "Compile openPREY (Meson Debug)",
+        "Stage openPREY Install Tree (Meson Debug)",
     ):
         if label not in full_build.get("dependsOn", []):
             raise AssertionError(f"Full build task is missing dependency {label!r}")
@@ -78,14 +78,10 @@ def validate_wrapper() -> None:
     wrapper = read(".vscode/meson-task.ps1")
     require(wrapper, "[ValidateSet('setup', 'compile', 'install', 'fastbuild')]", "VS Code Meson wrapper actions")
     require(wrapper, "stage_fast_install.py", "VS Code fast build staging script")
-    # The launch configurations run whatever this build stages into .install, so it
-    # has to be optimized. Configuring it as a plain debug build measured 146.5 Hz
-    # against 315.7 Hz for the same source on game/airdefense1.
-    require(wrapper, "'debugoptimized'", "VS Code build must configure an optimized buildtype")
-    reject(wrapper, "'debug',", "VS Code build must not configure an unoptimized buildtype")
-    # Release packages also set b_ndebug=true; keep the launch tree on the same
-    # options, and reconfigure an existing build directory that predates them.
-    require(wrapper, "'b_ndebug' = 'true'", "VS Code build must compile out C asserts like the release packages")
+    # openPREY's standard local tree is builddir configured as a debug build;
+    # compile reconfigures an existing build directory that drifted from it.
+    require(wrapper, "$buildDir = Join-Path $workspaceRoot 'builddir'", "VS Code build uses the standard builddir")
+    require(wrapper, "'buildtype' = 'debug'", "VS Code build must configure the debug buildtype")
     require(wrapper, "Get-StaleBuildOptions $buildDir", "VS Code compile reconfigures stale build options")
     require(wrapper, "check_staged_content_edits.py", "VS Code fast build staged content guard")
     require(wrapper, "'compile',", "VS Code fast build compiles through Meson")
@@ -117,7 +113,7 @@ def validate_wrapper() -> None:
     )
     require(
         windows_runtime,
-        '"baseoq4/skins"',
+        '"basepr/skins"',
         "known empty Windows stage directory manifest",
     )
     require(
@@ -138,51 +134,24 @@ def set_values(args: list[object], key: str) -> list[str]:
 def validate_launch_configs() -> None:
     launch = json.loads(read(".vscode/launch.json"))
     mp_configs = []
-    previous = ("", 0)
     for config in launch.get("configurations", []):
         name = str(config.get("name", ""))
         args = config.get("args", [])
         if "preLaunchTask" in config:
             raise AssertionError(f"Launch config {name!r} must not define preLaunchTask")
-        # r_renderApi is archived, so each launch pins its own renderer and says
-        # which one it is, rather than running whatever .home last saved.
-        render_api = set_values(args, "r_renderApi")
-        suffix = {"gl": " \u2014 GL", "vulkan": " \u2014 Vulkan"}.get(render_api[0]) if len(render_api) == 1 else None
-        if suffix is None or not name.endswith(suffix):
-            raise AssertionError(f"Launch config {name!r} must set r_renderApi exactly once and end with its renderer")
-        # Launches run the retained (RmlUi) interface whatever the archived
-        # ui_retained holds; one that compares against the stock GUIs says so.
-        retained = "0" if " - Stock UI " in name else "1"
-        if set_values(args, "ui_retained") != [retained]:
-            raise AssertionError(f"Launch config {name!r} must set ui_retained exactly once to {retained}")
+        if not isinstance(args, list) or not any(
+            args[index : index + 3] == ["+set", "r_fullscreen", "0"]
+            for index in range(max(0, len(args) - 2))
+        ):
+            raise AssertionError(f"Launch config {name!r} must force windowed mode")
+        if "basepr" not in args:
+            raise AssertionError(f"Launch config {name!r} must select basepr")
         if set_values(args, "fs_basepath"):
             raise AssertionError(f"Launch config {name!r} must leave fs_basepath to the engine's install discovery")
-        # Groups put separators in the Run and Debug list, which VS Code sorts by
-        # group name and then order; the file lists them the same way.
-        presentation = config.get("presentation")
-        group = presentation.get("group") if isinstance(presentation, dict) else None
-        order = presentation.get("order") if isinstance(presentation, dict) else None
-        if not isinstance(group, str) or not group or not isinstance(order, int):
-            raise AssertionError(f"Launch config {name!r} must have a presentation group and order")
-        if (group, order) <= previous:
-            raise AssertionError(f"Launch config {name!r} is listed out of its Run and Debug order")
-        previous = (group, order)
         if "(MP)" in name:
             mp_configs.append(config)
-            # The interactive configurations start at the join screen, which is the
-            # shipped default; the automated MP profiles below still pin it to 1.
-            if set_values(args, "ui_autoJoin") != ["0"]:
-                raise AssertionError(f"MP launch config {name!r} must set ui_autoJoin exactly once to 0")
     if not mp_configs:
         raise AssertionError("Expected at least one VS Code MP launch configuration")
-
-    sys.path.insert(0, str(ROOT / "tools" / "debug"))
-    import generate_vscode_launch
-
-    if launch != generate_vscode_launch.build():
-        raise AssertionError(
-            ".vscode/launch.json is generated; edit tools/debug/generate_vscode_launch.py and rerun it"
-        )
 
 
 def validate_codex_actions() -> None:

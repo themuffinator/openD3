@@ -1703,6 +1703,22 @@ static void RB_StripARBProgramCommentsAndWhitespace( const char *source, idStr &
 	}
 }
 
+static bool R_ARBProgramSourceUsesInteractionInputs( GLenum target, const char *source ) {
+	if ( target != GL_FRAGMENT_PROGRAM_ARB || source == NULL ) {
+		return false;
+	}
+
+	idStr normalizedProgram;
+	RB_StripARBProgramCommentsAndWhitespace( source, normalizedProgram );
+	const char *normalized = normalizedProgram.c_str();
+
+	// Retail Prey interaction programs sample both the per-light falloff and
+	// projection textures. Checking the texture units avoids misclassifying
+	// tangent-space warp programs that happen to use the same varyings.
+	return strstr( normalized, "texture[2]" ) != NULL
+		&& strstr( normalized, "texture[3]" ) != NULL;
+}
+
 static bool RB_DetectInteractionColorMode( const char *programSource, interactionColorMode_t &modeOut ) {
 	idStr normalizedProgram;
 	RB_StripARBProgramCommentsAndWhitespace( programSource, normalizedProgram );
@@ -1823,6 +1839,7 @@ typedef struct {
 	GLint			materialEnhanced;
 	GLint			materialNormalScale;
 	GLint			materialSpecularBoost;
+	GLint			stockSpecularParams;
 	GLint			materialFresnel;
 	GLint			shadowTexelSize;
 	GLint			shadowBias;
@@ -1945,6 +1962,7 @@ typedef struct {
 	GLint			materialEnhanced;
 	GLint			materialNormalScale;
 	GLint			materialSpecularBoost;
+	GLint			stockSpecularParams;
 	GLint			materialFresnel;
 	GLint			shadowBias;
 	GLint			shadowNormalBias;
@@ -1999,6 +2017,7 @@ typedef struct {
 	GLint			flatDiffuseParams;
 	GLint			materialNormalScale;
 	GLint			materialSpecularBoost;
+	GLint			stockSpecularParams;
 	GLint			materialFresnel;
 	GLint			stockInteraction;
 	GLint			ambientLight;
@@ -5415,6 +5434,7 @@ static bool RB_MaterialInteractionLoadProgram( void ) {
 	g_materialInteractionProgram.flatDiffuseParams = glGetUniformLocationARB( programObject, "uFlatDiffuseParams" );
 	g_materialInteractionProgram.materialNormalScale = glGetUniformLocationARB( programObject, "uMaterialNormalScale" );
 	g_materialInteractionProgram.materialSpecularBoost = glGetUniformLocationARB( programObject, "uMaterialSpecularBoost" );
+	g_materialInteractionProgram.stockSpecularParams = glGetUniformLocationARB( programObject, "uStockSpecularParams" );
 	g_materialInteractionProgram.materialFresnel = glGetUniformLocationARB( programObject, "uMaterialFresnel" );
 	g_materialInteractionProgram.celParams = glGetUniformLocationARB( programObject, "uCelParams" );
 	g_materialInteractionProgram.stockInteraction = glGetUniformLocationARB( programObject, "uStockInteraction" );
@@ -5548,6 +5568,7 @@ static const char *programBaseName = "glprogs/shadow_interaction";
 	g_shadowMapProgram.materialEnhanced = glGetUniformLocationARB( programObject, "uMaterialEnhanced" );
 	g_shadowMapProgram.materialNormalScale = glGetUniformLocationARB( programObject, "uMaterialNormalScale" );
 	g_shadowMapProgram.materialSpecularBoost = glGetUniformLocationARB( programObject, "uMaterialSpecularBoost" );
+	g_shadowMapProgram.stockSpecularParams = glGetUniformLocationARB( programObject, "uStockSpecularParams" );
 	g_shadowMapProgram.materialFresnel = glGetUniformLocationARB( programObject, "uMaterialFresnel" );
 	g_shadowMapProgram.celParams = glGetUniformLocationARB( programObject, "uCelParams" );
 	g_shadowMapProgram.shadowTexelSize = glGetUniformLocationARB( programObject, "uShadowTexelSize" );
@@ -5944,6 +5965,7 @@ static const char *programBaseName = "glprogs/shadow_point_interaction";
 	g_pointShadowMapProgram.materialEnhanced = glGetUniformLocationARB( programObject, "uMaterialEnhanced" );
 	g_pointShadowMapProgram.materialNormalScale = glGetUniformLocationARB( programObject, "uMaterialNormalScale" );
 	g_pointShadowMapProgram.materialSpecularBoost = glGetUniformLocationARB( programObject, "uMaterialSpecularBoost" );
+	g_pointShadowMapProgram.stockSpecularParams = glGetUniformLocationARB( programObject, "uStockSpecularParams" );
 	g_pointShadowMapProgram.materialFresnel = glGetUniformLocationARB( programObject, "uMaterialFresnel" );
 	g_pointShadowMapProgram.celParams = glGetUniformLocationARB( programObject, "uCelParams" );
 	g_pointShadowMapProgram.shadowBias = glGetUniformLocationARB( programObject, "uShadowBias" );
@@ -9491,6 +9513,7 @@ enum {
 	GLSL_INTERACTION_CACHE_MODEL_MATRIX_ROW_2,
 	GLSL_INTERACTION_CACHE_GLOBAL_LIGHT_ORIGIN,
 	GLSL_INTERACTION_CACHE_VERTEX_COLOR_PARAMS,
+	GLSL_INTERACTION_CACHE_STOCK_SPECULAR_PARAMS,
 	GLSL_INTERACTION_CACHE_SLOTS
 };
 typedef struct {
@@ -9601,6 +9624,14 @@ static void RB_MaterialInteractionSetEnhancementUniforms( const GLint normalScal
 	}
 }
 
+// uStockSpecularParams: retail Prey's stock specular model for this
+// interaction (R_InteractionSpecularParms); the enhanced branches ignore it
+static void RB_GLSLSetStockSpecularParams( const GLint location, const drawInteraction_t *din ) {
+	float parms[4];
+	R_InteractionSpecularParms( din->specularExponent, din->specularBrightness, parms );
+	RB_GLSLInteractionUniform4fv( location, GLSL_INTERACTION_CACHE_STOCK_SPECULAR_PARAMS, parms );
+}
+
 static void RB_GLSLMaterial_DrawInteraction( const drawInteraction_t *din ) {
 	RB_GLSLInteractionUniform4fv( g_materialInteractionProgram.localLightOrigin, GLSL_INTERACTION_CACHE_LOCAL_LIGHT_ORIGIN, din->localLightOrigin.ToFloatPtr() );
 	RB_GLSLInteractionUniform4fv( g_materialInteractionProgram.localViewOrigin, GLSL_INTERACTION_CACHE_LOCAL_VIEW_ORIGIN, din->localViewOrigin.ToFloatPtr() );
@@ -9616,6 +9647,7 @@ static void RB_GLSLMaterial_DrawInteraction( const drawInteraction_t *din ) {
 	RB_GLSLInteractionUniform4fv( g_materialInteractionProgram.specularMatrixT, GLSL_INTERACTION_CACHE_SPECULAR_MATRIX_T, din->specularMatrix[1].ToFloatPtr() );
 	RB_GLSLInteractionUniform4fv( g_materialInteractionProgram.diffuseColor, GLSL_INTERACTION_CACHE_DIFFUSE_COLOR, din->diffuseColor.ToFloatPtr() );
 	RB_GLSLInteractionUniform4fv( g_materialInteractionProgram.specularColor, GLSL_INTERACTION_CACHE_SPECULAR_COLOR, din->specularColor.ToFloatPtr() );
+	RB_GLSLSetStockSpecularParams( g_materialInteractionProgram.stockSpecularParams, din );
 	if ( g_materialInteractionProgram.flatDiffuseParams >= 0 ) {
 		glUniform4fvARB( g_materialInteractionProgram.flatDiffuseParams, 1, din->flatDiffuseParams.ToFloatPtr() );
 	}
@@ -9740,6 +9772,7 @@ static void RB_GLSLShadowMap_DrawInteraction( const drawInteraction_t *din ) {
 	RB_GLSLInteractionUniform4fv( g_shadowMapProgram.specularMatrixT, GLSL_INTERACTION_CACHE_SPECULAR_MATRIX_T, din->specularMatrix[1].ToFloatPtr() );
 	RB_GLSLInteractionUniform4fv( g_shadowMapProgram.diffuseColor, GLSL_INTERACTION_CACHE_DIFFUSE_COLOR, din->diffuseColor.ToFloatPtr() );
 	RB_GLSLInteractionUniform4fv( g_shadowMapProgram.specularColor, GLSL_INTERACTION_CACHE_SPECULAR_COLOR, din->specularColor.ToFloatPtr() );
+	RB_GLSLSetStockSpecularParams( g_shadowMapProgram.stockSpecularParams, din );
 	if ( g_shadowMapProgram.flatDiffuseParams >= 0 ) {
 		glUniform4fvARB( g_shadowMapProgram.flatDiffuseParams, 1, din->flatDiffuseParams.ToFloatPtr() );
 	}
@@ -9831,6 +9864,7 @@ static void RB_GLSLPointShadowMap_DrawInteraction( const drawInteraction_t *din 
 	// re-upload here (and its sqrt in R_ShadowMapPointFarDistance) was redundant.
 	RB_GLSLInteractionUniform4fv( g_pointShadowMapProgram.diffuseColor, GLSL_INTERACTION_CACHE_DIFFUSE_COLOR, din->diffuseColor.ToFloatPtr() );
 	RB_GLSLInteractionUniform4fv( g_pointShadowMapProgram.specularColor, GLSL_INTERACTION_CACHE_SPECULAR_COLOR, din->specularColor.ToFloatPtr() );
+	RB_GLSLSetStockSpecularParams( g_pointShadowMapProgram.stockSpecularParams, din );
 	if ( g_pointShadowMapProgram.flatDiffuseParams >= 0 ) {
 		glUniform4fvARB( g_pointShadowMapProgram.flatDiffuseParams, 1, din->flatDiffuseParams.ToFloatPtr() );
 	}
@@ -9997,6 +10031,16 @@ static bool RB_SurfaceEligibleForStockGLSLInteraction( const drawSurf_t *surf ) 
 	if ( RB_SurfaceUsesGPUPosedGeometry( surf ) ) {
 		return false;
 	}
+	const int stageCount = surf->material->GetNumStages();
+	for ( int stageIndex = 0; stageIndex < stageCount; stageIndex++ ) {
+		const shaderStage_t *stage = surf->material->GetStage( stageIndex );
+		if ( stage != NULL && stage->lighting == SL_INTERACTION
+			&& surf->shaderRegisters[stage->conditionRegister] != 0.0f ) {
+			// A legacy ARB interaction cannot execute while the stock GLSL
+			// interaction executor owns the program state. Route it to ARB2.
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -10100,6 +10144,11 @@ static bool RB_SurfaceUsesWrappedCustomGLSLShadowReceiver( const drawSurf_t *sur
 static bool RB_ShadowMapReceiverStageFilter( const shaderStage_t *surfaceStage, const float *surfaceRegs ) {
 	(void)surfaceRegs;
 	if ( surfaceStage == NULL ) {
+		return false;
+	}
+	if ( surfaceStage->lighting == SL_INTERACTION ) {
+		// There is no equivalent shadow-map receiver program for a custom Prey
+		// ARB stage. Keep any stock interaction stages on the material instead.
 		return false;
 	}
 
@@ -11107,6 +11156,7 @@ static void RB_ARB2_CreateCustomGLSLDrawInteractionsForSurface( const drawSurf_t
 			RB_ApplyFlatDiffuseStage( surf, &flatDiffuseImage,
 				inter.diffuseColor.ToFloatPtr(), inter.flatDiffuseParams );
 			inter.vertexColor = surfaceStage->vertexColor;
+			R_SetInteractionSpecularStage( &inter, surfaceStage );
 
 			RB_ARB2_DrawCustomGLSLInteractionStage( surfaceStage, surfaceRegs, &inter );
 		}
@@ -12969,6 +13019,11 @@ void	RB_ARB2_DrawInteraction( const drawInteraction_t *din ) {
 	RB_ARB2_SetVertexEnvParm( interactionParamBase + PP_SPECULAR_MATRIX_S, din->specularMatrix[0].ToFloatPtr() );
 	RB_ARB2_SetVertexEnvParm( interactionParamBase + PP_SPECULAR_MATRIX_T, din->specularMatrix[1].ToFloatPtr() );
 
+	// retail Prey's specular model selection, see R_InteractionSpecularParms
+	float specularParms[4];
+	R_InteractionSpecularParms( din->specularExponent, din->specularBrightness, specularParms );
+	RB_ARB2_SetFragmentEnvParm( 2, specularParms );
+
 	// testing fragment based normal mapping
 	if ( r_testARBProgram.GetBool() ) {
 		RB_ARB2_SetFragmentEnvParm( 2, din->localLightOrigin.ToFloatPtr() );
@@ -13028,6 +13083,13 @@ void	RB_ARB2_DrawInteraction( const drawInteraction_t *din ) {
 	};
 	RB_ARB2_SetFragmentEnvParm( 0, din->diffuseColor.ToFloatPtr() );
 	RB_ARB2_SetFragmentEnvParm( 1, specularColorX2 );
+	const float alphaThreshold[4] = {
+		din->alphaTestThreshold,
+		din->alphaTestThreshold,
+		din->alphaTestThreshold,
+		din->alphaTestThreshold
+	};
+	RB_ARB2_SetFragmentEnvParm( 7, alphaThreshold );
 
 	// set the textures
 
@@ -13051,21 +13113,152 @@ void	RB_ARB2_DrawInteraction( const drawInteraction_t *din ) {
 	GL_SelectTextureNoClient( 5 );
 	din->specularImage->Bind();
 
-	// Quake 4 applies decal polygon offset in interaction passes as well.
-	const idMaterial *surfaceMaterial = din->surf->material;
-	if ( surfaceMaterial && surfaceMaterial->TestMaterialFlag( MF_POLYGONOFFSET ) ) {
-		glEnable( GL_POLYGON_OFFSET_FILL );
-		glPolygonOffset( r_offsetFactor.GetFloat(), r_offsetUnits.GetFloat() * surfaceMaterial->GetPolygonOffset() );
-	}
-
 	// draw it
 	if ( !packedInteractionSurface || !RB_ARB2_DrawPackedMD5RInteractionBatches( din, g_packedInteractionVertexFormatIndex ) ) {
 		RB_DrawElementsWithCounters( din->surf->geo );
 	}
 
-	if ( surfaceMaterial && surfaceMaterial->TestMaterialFlag( MF_POLYGONOFFSET ) ) {
-		glDisable( GL_POLYGON_OFFSET_FILL );
+}
+
+/*
+==================
+RB_ARB2_DrawShaderInteraction
+
+Executes a retail Prey material stage whose fragment program consumes the
+light falloff and projection inputs. These stages deliberately stay on the
+legacy ARB2 path; the stock GLSL interaction executor is gated off above.
+==================
+*/
+void RB_ARB2_DrawShaderInteraction( const drawInteraction_t *din, const shaderStage_t *surfaceStage,
+		const float *surfaceRegs, const float lightColor[4] ) {
+	static bool simplePathWarningPrinted = false;
+	static bool packedPathWarningPrinted = false;
+	const newShaderStage_t *newStage = surfaceStage != NULL ? surfaceStage->newStage : NULL;
+	if ( din == NULL || din->surf == NULL || newStage == NULL || !newStage->interactionProgram || !newStage->fragmentProgram ) {
+		return;
 	}
+
+	// Apple's conservative SimpleInteraction corridor is intentionally unable
+	// to run arbitrary retail programs. Ignore them instead of changing the
+	// validated program pair under that driver workaround.
+	if ( glConfig.disableARB2Interactions || RB_UseSimpleInteractionShader() ) {
+		if ( !simplePathWarningPrinted ) {
+			common->Warning( "Ignoring custom Prey ARB interaction stages on the SimpleInteraction compatibility path" );
+			simplePathWarningPrinted = true;
+		}
+		return;
+	}
+	if ( din->surf == g_packedInteractionSurf ) {
+		if ( !packedPathWarningPrinted ) {
+			common->Warning( "Ignoring custom Prey ARB interaction stage on packed MD5R geometry" );
+			packedPathWarningPrinted = true;
+		}
+		return;
+	}
+
+	const GLuint vertexProgram = newStage->vertexProgram ? newStage->vertexProgram : VPROG_INTERACTION;
+	if ( !R_BindARBProgram( GL_VERTEX_PROGRAM_ARB, vertexProgram, "Prey material interaction vertex program", false )
+		|| !R_BindARBProgram( GL_FRAGMENT_PROGRAM_ARB, newStage->fragmentProgram, "Prey material interaction fragment program", false ) ) {
+		R_BindARBProgram( GL_VERTEX_PROGRAM_ARB, RB_CurrentInteractionProgramIdent( GL_VERTEX_PROGRAM_ARB ), "interaction vertex restore", true );
+		R_BindARBProgram( GL_FRAGMENT_PROGRAM_ARB, RB_CurrentInteractionProgramIdent( GL_FRAGMENT_PROGRAM_ARB ), "interaction fragment restore", true );
+		return;
+	}
+
+	float stageColor[4];
+	float interactionColor[4];
+	for ( int component = 0; component < 4; component++ ) {
+		stageColor[component] = idMath::ClampFloat( 0.0f, 1.0f, surfaceRegs[surfaceStage->color.registers[component]] );
+		interactionColor[component] = stageColor[component] * lightColor[component];
+	}
+
+	GL_State( surfaceStage->drawStateBits | GLS_DEPTHMASK | backEnd.depthFunc );
+	RB_ARB2_SetVertexEnvParm( PP_LIGHT_ORIGIN, din->localLightOrigin.ToFloatPtr() );
+	RB_ARB2_SetVertexEnvParm( PP_VIEW_ORIGIN, din->localViewOrigin.ToFloatPtr() );
+	RB_ARB2_SetVertexEnvParm( PP_LIGHT_PROJECT_S, din->lightProjection[0].ToFloatPtr() );
+	RB_ARB2_SetVertexEnvParm( PP_LIGHT_PROJECT_T, din->lightProjection[1].ToFloatPtr() );
+	RB_ARB2_SetVertexEnvParm( PP_LIGHT_PROJECT_Q, din->lightProjection[2].ToFloatPtr() );
+	RB_ARB2_SetVertexEnvParm( PP_LIGHT_FALLOFF_S, din->lightProjection[3].ToFloatPtr() );
+	RB_ARB2_SetVertexEnvParm( PP_BUMP_MATRIX_S, din->bumpMatrix[0].ToFloatPtr() );
+	RB_ARB2_SetVertexEnvParm( PP_BUMP_MATRIX_T, din->bumpMatrix[1].ToFloatPtr() );
+	RB_ARB2_SetVertexEnvParm( PP_DIFFUSE_MATRIX_S, din->diffuseMatrix[0].ToFloatPtr() );
+	RB_ARB2_SetVertexEnvParm( PP_DIFFUSE_MATRIX_T, din->diffuseMatrix[1].ToFloatPtr() );
+	RB_ARB2_SetVertexEnvParm( PP_SPECULAR_MATRIX_S, din->specularMatrix[0].ToFloatPtr() );
+	RB_ARB2_SetVertexEnvParm( PP_SPECULAR_MATRIX_T, din->specularMatrix[1].ToFloatPtr() );
+
+	static const float zero[4] = { 0, 0, 0, 0 };
+	float modulate = 0.0f;
+	float add = 1.0f;
+	if ( surfaceStage->vertexColor == SVC_MODULATE ) {
+		modulate = 1.0f;
+		add = 0.0f;
+	} else if ( surfaceStage->vertexColor == SVC_INVERSE_MODULATE ) {
+		modulate = -1.0f;
+	}
+	if ( g_interactionVertexProgramColorMode == ICM_PACKED ) {
+		const float packed[4] = { modulate, add, 0.0f, 0.0f };
+		RB_ARB2_SetVertexEnvParm( PP_COLOR_MODULATE, packed );
+		RB_ARB2_SetVertexEnvParm( PP_COLOR_ADD, zero );
+	} else {
+		const float modulateVec[4] = { modulate, modulate, modulate, modulate };
+		const float addVec[4] = { add, add, add, add };
+		RB_ARB2_SetVertexEnvParm( PP_COLOR_MODULATE, modulateVec );
+		RB_ARB2_SetVertexEnvParm( PP_COLOR_ADD, addVec );
+	}
+	RB_ARB2_SetFragmentEnvParm( 0, interactionColor );
+	RB_ARB2_SetFragmentEnvParm( 1, interactionColor );
+
+	for ( int parmIndex = 0; parmIndex < newStage->numVertexParms; parmIndex++ ) {
+		float parm[4];
+		for ( int component = 0; component < 4; component++ ) {
+			parm[component] = surfaceRegs[newStage->vertexParms[parmIndex][component]];
+		}
+		glProgramLocalParameter4fvARB( GL_VERTEX_PROGRAM_ARB, parmIndex, parm );
+	}
+	for ( int parmIndex = 0; parmIndex < newStage->numFragmentParms; parmIndex++ ) {
+		float parm[4];
+		for ( int component = 0; component < 4; component++ ) {
+			parm[component] = surfaceRegs[newStage->fragmentParms[parmIndex][component]];
+		}
+		glProgramLocalParameter4fvARB( GL_FRAGMENT_PROGRAM_ARB, parmIndex, parm );
+	}
+
+	GL_SelectTextureNoClient( 0 );
+	( din->ambientLight ? globalImages->ambientNormalMap : globalImages->normalCubeMapImage )->Bind();
+	GL_SelectTextureNoClient( 1 );
+	if ( newStage->numFragmentProgramImages > 1 && newStage->fragmentProgramImages[1] != NULL ) {
+		newStage->fragmentProgramImages[1]->Bind();
+	} else {
+		globalImages->flatNormalMap->Bind();
+	}
+	GL_SelectTextureNoClient( 2 );
+	din->lightFalloffImage->Bind();
+	GL_SelectTextureNoClient( 3 );
+	din->lightImage->Bind();
+	GL_SelectTextureNoClient( 4 );
+	globalImages->blackImage->Bind();
+	GL_SelectTextureNoClient( 5 );
+	globalImages->blackImage->Bind();
+	GL_SelectTextureNoClient( 6 );
+	globalImages->specularTableImage->Bind();
+	GL_SelectTextureNoClient( 7 );
+	globalImages->blackImage->Bind();
+	for ( int imageIndex = 4; imageIndex < newStage->numFragmentProgramImages; imageIndex++ ) {
+		if ( newStage->fragmentProgramImages[imageIndex] != NULL ) {
+			GL_SelectTextureNoClient( imageIndex );
+			newStage->fragmentProgramImages[imageIndex]->Bind();
+		}
+	}
+
+	RB_DrawElementsWithCounters( din->surf->geo );
+
+	GL_SelectTextureNoClient( 7 );
+	globalImages->BindNull();
+	GL_SelectTextureNoClient( 6 );
+	globalImages->specularTableImage->Bind();
+	GL_SelectTextureNoClient( 0 );
+	( din->ambientLight ? globalImages->ambientNormalMap : globalImages->normalCubeMapImage )->Bind();
+	R_BindARBProgram( GL_VERTEX_PROGRAM_ARB, RB_CurrentInteractionProgramIdent( GL_VERTEX_PROGRAM_ARB ), "interaction vertex restore", true );
+	R_BindARBProgram( GL_FRAGMENT_PROGRAM_ARB, RB_CurrentInteractionProgramIdent( GL_FRAGMENT_PROGRAM_ARB ), "interaction fragment restore", true );
 }
 
 /*
@@ -16125,6 +16318,7 @@ static void RB_SharedWorldInteractionGLLoadPrimitiveParameters(
 	};
 	RB_ARB2_SetFragmentEnvParm( 0, primitive.diffuseColor );
 	RB_ARB2_SetFragmentEnvParm( 1, specularColorX2 );
+	RB_ARB2_SetFragmentEnvParm( 2, primitive.specularParms );
 }
 
 static void RB_SharedWorldInteractionGLBeginInteractionState( void ) {
@@ -17302,7 +17496,11 @@ typedef struct {
 	GLenum			target;
 	GLuint			ident;
 	char			name[64];
+	// builtinText follows name so the table below can initialize it positionally.
 	const char *	builtinText;	// compiled into the renderer; NULL reads glprogs/<name>
+	bool			interactionProgram;
+	bool			sourceScanned;
+	bool			loadAttempted;
 	bool			valid;
 	bool			warnedOnUse;
 	bool			requiredForLighting;
@@ -17413,6 +17611,9 @@ static void RB_SetARBProgramPath( progDef_t &prog ) {
 }
 
 static void RB_ResetARBProgramStatus( progDef_t &prog ) {
+	prog.interactionProgram = false;
+	prog.sourceScanned = false;
+	prog.loadAttempted = false;
 	prog.valid = false;
 	prog.warnedOnUse = false;
 	prog.requiredForLighting = RB_IsRequiredLightingARBProgram( prog );
@@ -17439,6 +17640,26 @@ static progDef_t *RB_FindARBProgramRecord( GLenum target, GLuint ident ) {
 	}
 
 	return NULL;
+}
+
+static int RB_FindARBProgramIndexByName( GLenum target, const char *program ) {
+	if ( program == NULL || program[0] == '\0' ) {
+		return -1;
+	}
+
+	idStr stripped = program;
+	stripped.StripFileExtension();
+	for ( int i = 0; i < MAX_GLPROGS && progs[i].name[0]; i++ ) {
+		if ( progs[i].target != target ) {
+			continue;
+		}
+		idStr compare = progs[i].name;
+		compare.StripFileExtension();
+		if ( idStr::Icmp( stripped.c_str(), compare.c_str() ) == 0 ) {
+			return i;
+		}
+	}
+	return -1;
 }
 
 static bool RB_DriverPrefersSimpleInteraction( void ) {
@@ -17486,6 +17707,31 @@ static bool RB_IsSimpleInteractionProgram( const progDef_t &prog ) {
 	return prog.ident == VPROG_SIMPLE_INTERACTION ||
 		prog.ident == FPROG_SIMPLE_INTERACTION ||
 		idStr::Icmp( prog.name, "SimpleInteraction.vfp" ) == 0;
+}
+
+static bool RB_IsDormantMD5RProgram( const progDef_t &prog ) {
+	return prog.target == GL_VERTEX_PROGRAM_ARB &&
+		prog.ident >= ARB2_MD5R_INTERACTION_VPROG_BASE &&
+		prog.ident <= ARB2_MD5R_BASIC_FOG_VPROG_BASE + 2;
+}
+
+static bool RB_ShouldEagerLoadARBProgram( const progDef_t &prog ) {
+	// SimpleInteraction is a platform-specific fallback. Loading it on every
+	// renderer startup turns an unused compatibility path into a false missing-
+	// asset diagnostic for the retail Prey data set.
+	if ( RB_IsSimpleInteractionProgram( prog ) ) {
+		return RB_UseSimpleInteractionShader();
+	}
+
+	// Glass-warp and packed MD5R programs retain their fixed ids for
+	// compatibility, but Prey does not ship the Quake 4 sources. Load them on
+	// first actual use so an exercised missing path remains actionable.
+	if ( prog.ident == VPROG_GLASSWARP || prog.ident == FPROG_GLASSWARP ||
+		RB_IsDormantMD5RProgram( prog ) ) {
+		return false;
+	}
+
+	return true;
 }
 
 /*
@@ -17585,8 +17831,11 @@ static void RB_WarnInvalidARBProgramUse( progDef_t *prog, GLenum target, GLuint 
 static bool RB_CurrentInteractionProgramsValid( void ) {
 	const GLuint vertexProgram = RB_CurrentInteractionProgramIdent( GL_VERTEX_PROGRAM_ARB );
 	const GLuint fragmentProgram = RB_CurrentInteractionProgramIdent( GL_FRAGMENT_PROGRAM_ARB );
-	return R_IsARBProgramValid( GL_VERTEX_PROGRAM_ARB, vertexProgram ) &&
-		R_IsARBProgramValid( GL_FRAGMENT_PROGRAM_ARB, fragmentProgram );
+	// Evaluate both records even if the vertex program fails so diagnostics and
+	// report accounting describe the complete selected pair.
+	const bool vertexValid = R_IsARBProgramValid( GL_VERTEX_PROGRAM_ARB, vertexProgram );
+	const bool fragmentValid = R_IsARBProgramValid( GL_FRAGMENT_PROGRAM_ARB, fragmentProgram );
+	return vertexValid && fragmentValid;
 }
 
 static void RB_ErrorIfDriverRequiredSimpleInteractionFailed( void ) {
@@ -17652,13 +17901,21 @@ static void RB_WarnInteractionShaderRescueMode( void ) {
 R_LoadARBProgram
 =================
 */
+void R_LoadARBProgram( int progIndex );
+
 bool R_IsARBProgramValid( GLenum target, GLuint ident ) {
-	const progDef_t *prog = RB_FindARBProgramRecord( target, ident );
+	progDef_t *prog = RB_FindARBProgramRecord( target, ident );
+	if ( prog != NULL && !prog->loadAttempted ) {
+		R_LoadARBProgram( static_cast<int>( prog - progs ) );
+	}
 	return prog != NULL && prog->valid;
 }
 
 bool R_BindARBProgram( GLenum target, GLuint ident, const char *usage, bool required ) {
 	progDef_t *prog = RB_FindARBProgramRecord( target, ident );
+	if ( prog != NULL && !prog->loadAttempted ) {
+		R_LoadARBProgram( static_cast<int>( prog - progs ) );
+	}
 	if ( prog == NULL || !prog->valid ) {
 		RB_WarnInvalidARBProgramUse( prog, target, ident, usage, required );
 		return false;
@@ -17698,6 +17955,7 @@ void R_LoadARBProgram( int progIndex ) {
 	char	*start = NULL, *end;
 
 	RB_ResetARBProgramStatus( prog );
+	prog.loadAttempted = true;
 
 	if ( RB_IsFullInteractionProgram( prog ) ) {
 		R_RecordRendererStartupPhase( RENDERER_STARTUP_PHASE_ARB2_INTERACTION_FULL_UPLOAD );
@@ -17706,13 +17964,6 @@ void R_LoadARBProgram( int progIndex ) {
 	}
 
 	common->Printf( "%s", fullPath.c_str() );
-
-	if ( RB_ShouldSkipFullInteractionUpload( prog ) ) {
-		R_RecordRendererStartupPhase( RENDERER_STARTUP_PHASE_ARB2_INTERACTION_SKIP_FULL_UPLOAD );
-		common->Printf( ": skipped by renderer driver quirk; using SimpleInteraction.vfp\n" );
-		RB_SetARBProgramFailure( prog, "skipped by renderer driver quirk; using SimpleInteraction.vfp" );
-		return;
-	}
 
 	const char *programSource = prog.builtinText;
 	if ( programSource == NULL ) {
@@ -17736,40 +17987,13 @@ void R_LoadARBProgram( int progIndex ) {
 		fileSystem->FreeFile( fileBuffer );
 	}
 
-	if ( !glConfig.isInitialized ) {
-		// end the line the path started; dedicated servers parse materials
-		// without ever initializing GL
-		common->Printf( ": pending GL initialization\n" );
-		RB_SetARBProgramFailure( prog, "pending GL initialization" );
-		return;
-	}
-
-	//
-	// submit the program string at start to GL
-	//
-	if ( prog.ident == 0 ) {
-		// allocate a new identifier for this program
-		prog.ident = PROG_USER + progIndex;
-		prog.requiredForLighting = RB_IsRequiredLightingARBProgram( prog );
-	}
-
 	// vertex and fragment programs can both be present in a single file, so
 	// scan for the proper header to be the start point, and stamp a 0 in after the end
 
 	if ( prog.target == GL_VERTEX_PROGRAM_ARB ) {
-		if ( !glConfig.ARBVertexProgramAvailable ) {
-			common->Printf( ": GL_VERTEX_PROGRAM_ARB not available\n" );
-			RB_SetARBProgramFailure( prog, "GL_VERTEX_PROGRAM_ARB not available" );
-			return;
-		}
 		start = strstr( (char *)buffer, "!!ARBvp" );
 	}
 	if ( prog.target == GL_FRAGMENT_PROGRAM_ARB ) {
-		if ( !glConfig.ARBFragmentProgramAvailable ) {
-			common->Printf( ": GL_FRAGMENT_PROGRAM_ARB not available\n" );
-			RB_SetARBProgramFailure( prog, "GL_FRAGMENT_PROGRAM_ARB not available" );
-			return;
-		}
 		start = strstr( (char *)buffer, "!!ARBfp" );
 	}
 	if ( !start ) {
@@ -17785,6 +18009,42 @@ void R_LoadARBProgram( int progIndex ) {
 		return;
 	}
 	end[3] = 0;
+	prog.interactionProgram = R_ARBProgramSourceUsesInteractionInputs( prog.target, start );
+	prog.sourceScanned = true;
+
+	if ( RB_ShouldSkipFullInteractionUpload( prog ) ) {
+		R_RecordRendererStartupPhase( RENDERER_STARTUP_PHASE_ARB2_INTERACTION_SKIP_FULL_UPLOAD );
+		common->Printf( ": skipped by renderer driver quirk; using SimpleInteraction.vfp\n" );
+		RB_SetARBProgramFailure( prog, "skipped by renderer driver quirk; using SimpleInteraction.vfp" );
+		return;
+	}
+
+	if ( !glConfig.isInitialized ) {
+		// end the line the path started; dedicated servers parse materials
+		// without ever initializing GL
+		common->Printf( ": pending GL initialization\n" );
+		RB_SetARBProgramFailure( prog, "pending GL initialization" );
+		return;
+	}
+	if ( prog.target == GL_VERTEX_PROGRAM_ARB && !glConfig.ARBVertexProgramAvailable ) {
+		common->Printf( ": GL_VERTEX_PROGRAM_ARB not available\n" );
+		RB_SetARBProgramFailure( prog, "GL_VERTEX_PROGRAM_ARB not available" );
+		return;
+	}
+	if ( prog.target == GL_FRAGMENT_PROGRAM_ARB && !glConfig.ARBFragmentProgramAvailable ) {
+		common->Printf( ": GL_FRAGMENT_PROGRAM_ARB not available\n" );
+		RB_SetARBProgramFailure( prog, "GL_FRAGMENT_PROGRAM_ARB not available" );
+		return;
+	}
+
+	//
+	// submit the program string at start to GL
+	//
+	if ( prog.ident == 0 ) {
+		// allocate a new identifier for this program
+		prog.ident = PROG_USER + progIndex;
+		prog.requiredForLighting = RB_IsRequiredLightingARBProgram( prog );
+	}
 
 	if ( prog.ident == VPROG_INTERACTION ) {
 		interactionColorMode_t detectedMode = ICM_PACKED;
@@ -17860,6 +18120,21 @@ void R_LoadARBProgram( int progIndex ) {
 	common->Printf( programText != start ? ": colour floored at zero\n" : "\n" );
 }
 
+bool R_ARBProgramUsesInteractionInputs( unsigned int target, const char *program ) {
+	int progIndex = RB_FindARBProgramIndexByName( (GLenum)target, program );
+	if ( progIndex < 0 ) {
+		R_FindARBProgram( target, program );
+		progIndex = RB_FindARBProgramIndexByName( (GLenum)target, program );
+	}
+	if ( progIndex < 0 ) {
+		return false;
+	}
+	if ( !progs[progIndex].sourceScanned && !progs[progIndex].loadAttempted ) {
+		R_LoadARBProgram( progIndex );
+	}
+	return progs[progIndex].interactionProgram;
+}
+
 /*
 ==================
 R_FindARBProgram
@@ -17905,20 +18180,54 @@ int R_FindARBProgram( GLenum target, const char *program ) {
 	return progs[i].ident;
 }
 
+static void RB_LoadARBProgramSet( bool startupEagerOnly ) {
+	int i;
+	for ( i = 0; progs[i].name[0]; i++ ) {
+		RB_ResetARBProgramStatus( progs[i] );
+	}
+	for ( i = 0; progs[i].name[0]; i++ ) {
+		if ( !startupEagerOnly || RB_ShouldEagerLoadARBProgram( progs[i] ) ) {
+			R_LoadARBProgram( i );
+		}
+	}
+}
+
+/*
+==================
+R_LoadARBProgramsForStartup
+
+Preload only programs needed by the selected renderer path. Dormant fixed-id
+compatibility records remain available for lazy first use without diagnosing
+unshipped Quake 4 sources during ordinary Prey startup.
+==================
+*/
+void R_LoadARBProgramsForStartup( void ) {
+	g_interactionShaderRescueWarned = false;
+	R_RecordRendererStartupPhase( RENDERER_STARTUP_PHASE_R_RELOAD_ARB_PROGRAMS );
+	common->Printf( "----- R_LoadARBProgramsForStartup -----\n" );
+	RB_LoadARBProgramSet( true );
+	RB_RecordCurrentInteractionSelectionBreadcrumb();
+	RB_ErrorIfDriverRequiredSimpleInteractionFailed();
+	common->Printf( "---------------------------------------\n" );
+	if ( r_shaderReport.GetInteger() >= 1 ) {
+		R_ReportShaderPrograms_f( idCmdArgs() );
+	}
+}
+
 /*
 ==================
 R_ReloadARBPrograms_f
+
+An explicit reload is also a validation command: attempt every registered
+record, including programs deliberately left dormant during startup.
 ==================
 */
 void R_ReloadARBPrograms_f( const idCmdArgs &args ) {
-	int		i;
-
+	(void)args;
 	g_interactionShaderRescueWarned = false;
 	R_RecordRendererStartupPhase( RENDERER_STARTUP_PHASE_R_RELOAD_ARB_PROGRAMS );
 	common->Printf( "----- R_ReloadARBPrograms -----\n" );
-	for ( i = 0 ; progs[i].name[0] ; i++ ) {
-		R_LoadARBProgram( i );
-	}
+	RB_LoadARBProgramSet( false );
 	RB_RecordCurrentInteractionSelectionBreadcrumb();
 	RB_ErrorIfDriverRequiredSimpleInteractionFailed();
 	R_ReloadGLSLPrograms_f( args );
@@ -17939,23 +18248,31 @@ static const char *RB_ShadowProgramStatusName( GLhandleARB programObject, bool p
 void R_ReportShaderPrograms_f( const idCmdArgs &args ) {
 	int validCount = 0;
 	int invalidCount = 0;
+	int unloadedCount = 0;
 
 	common->Printf( "----- R_ReportShaderPrograms -----\n" );
+	// Validation may lazy-load a newly selected interaction family. Perform it
+	// before tallying records so the detail rows and summary describe one stable
+	// post-validation state.
+	const bool currentInteractionProgramsValid = RB_CurrentInteractionProgramsValid();
 	for ( int i = 0; i < MAX_GLPROGS && progs[i].name[0]; i++ ) {
 		const progDef_t &prog = progs[i];
-		if ( prog.valid ) {
+		if ( !prog.loadAttempted ) {
+			unloadedCount++;
+		} else if ( prog.valid ) {
 			validCount++;
 		} else {
 			invalidCount++;
 		}
+		const char *status = !prog.loadAttempted ? "unloaded" : ( prog.valid ? "valid" : "invalid" );
 
 		common->Printf( "ARB %-8s id=%3u required=%s status=%s path=%s",
 			RB_ARBProgramTargetName( prog.target ),
 			prog.ident,
 			prog.requiredForLighting ? "yes" : "no",
-			prog.valid ? "valid" : "invalid",
+			status,
 			prog.normalizedPath[0] ? prog.normalizedPath : prog.name );
-		if ( !prog.valid ) {
+		if ( prog.loadAttempted && !prog.valid ) {
 			common->Printf( " reason=%s", prog.failureReason[0] ? prog.failureReason : "unknown failure" );
 			if ( prog.errorPosition >= 0 ) {
 				common->Printf( " errorPosition=%d", prog.errorPosition );
@@ -17964,10 +18281,11 @@ void R_ReportShaderPrograms_f( const idCmdArgs &args ) {
 		common->Printf( "\n" );
 	}
 
-	common->Printf( "ARB summary: valid=%d invalid=%d rescueMode=%s\n",
+	common->Printf( "ARB summary: valid=%d invalid=%d unloaded=%d rescueMode=%s\n",
 		validCount,
 		invalidCount,
-		RB_CurrentInteractionProgramsValid() ? "off" : "on" );
+		unloadedCount,
+		currentInteractionProgramsValid ? "off" : "on" );
 	common->Printf( "ARB interaction family: %s\n", RB_CurrentInteractionProgramFamilyName() );
 	common->Printf( "GLSL shadow projected: %s\n",
 		RB_ShadowProgramStatusName( g_shadowMapProgram.programObject, g_shadowMapProgram.programValid, g_shadowMapProgram.programGeneration ) );
@@ -18033,7 +18351,7 @@ void R_ARB2_Init( void ) {
 			common->Printf( "%s: prefers NV20 compatibility path\n", renderer.c_str() );
 		} else {
 			common->Printf(
-				"%s: retail would prefer the NV20 compatibility path, but openQ4 keeps ARB2 because the legacy NV20 backend is not shipped\n",
+				"%s: retail would prefer the NV20 compatibility path, but openPREY keeps ARB2 because the legacy NV20 backend is not shipped\n",
 				renderer.c_str() );
 		}
 	}

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Run opt-in openQ4 renderer gameplay benchmark and capture cases.
+"""Run opt-in openPREY renderer gameplay benchmark and capture cases.
 
 Unlike renderer_validation_matrix.py, this runner enters maps. It is intended
-for local, target-hardware validation where stock Quake 4 assets are available.
+for local, target-hardware validation where stock Prey (2006) assets are available.
 It launches from .install, writes isolated save/log roots under .tmp, captures
 screenshots, dumps renderer benchmark metrics, and records a Markdown/JSON
 report for performance triage. Every role fails closed on renderer, Vulkan
@@ -60,12 +60,12 @@ GL_TIER_RUNTIME_NAMES = {
 }
 PRESENTATION_MAXFPS = ("0", "120", "240")
 PRESENTATION_SWAP_INTERVALS = ("0", "1")
-DISPLAY_MODES = ("windowed", "fullscreen")
+DISPLAY_MODES = ("windowed",)
 POSTINIT_CONNECT_WAIT_FRAMES = 30
 POSTINIT_RECONNECT_WAIT_FRAMES = 30
 MP_SERVER_CLIENT_GRACE_MSEC = 90000
 REPORT_SCHEMA_VERSION = 5
-GIT_PROVENANCE_POLICY = "current-openq4-head-and-dirty-state-v1"
+GIT_PROVENANCE_POLICY = "current-openprey-head-and-dirty-state-v1"
 BUDGET_DISPLAY_CONTRACT_ID = "bordered-window-1280x720-v1"
 BUDGET_WIDTH = 1280
 BUDGET_HEIGHT = 720
@@ -133,7 +133,7 @@ BENCHMARK_EVIDENCE_MARKERS = (
     "MODE:",
     "Map:",
     "OPENQ4_BENCHMARK_VIEW_",
-    "openQ4 map state:",
+    "openPREY map state:",
     "origin:",
 )
 VIEW_BEGIN = "OPENQ4_BENCHMARK_VIEW_BEGIN"
@@ -143,9 +143,9 @@ POST_MAP_CVARS_END = "// OPENQ4_BENCHMARK_POST_MAP_CVARS_V1_END"
 EXEC_COMMANDS_BEGIN = "// OPENQ4_BENCHMARK_EXEC_COMMANDS_V1_BEGIN"
 EXEC_COMMANDS_END = "// OPENQ4_BENCHMARK_EXEC_COMMANDS_V1_END"
 # Each role already owns an isolated save path. Keep the engine-side log name
-# deliberately short so the complete fs_savepath/baseoq4/logs path remains
+# deliberately short so the complete fs_savepath/basepr/logs path remains
 # below the legacy Windows MAX_PATH boundary even for descriptive MP case IDs.
-ROLE_LOG_NAME = "openq4_gameplay.log"
+ROLE_LOG_NAME = "openprey_gameplay.log"
 RUNTIME_DISPLAY_MODE_PATTERN = re.compile(
     r"^MODE:\s*([^,\r\n]+),\s*(\d+)\s+x\s+(\d+)\s+"
     r"(windowed|borderless|fullscreen)\b",
@@ -155,249 +155,154 @@ ENGINE_MAP_PATTERN = re.compile(
     r"^Map:\s*([A-Za-z0-9_./\\-]+)\s*$", re.IGNORECASE | re.MULTILINE
 )
 
+PREY_MAP_MANIFEST = Path(__file__).resolve().parents[2] / ".vscode" / "prey-maps.json"
+
+
+def load_prey_map_manifest() -> dict[str, dict[str, str]]:
+    if not PREY_MAP_MANIFEST.is_file():
+        raise RuntimeError(f"canonical Prey map manifest is missing: {PREY_MAP_MANIFEST}")
+    payload = json.loads(PREY_MAP_MANIFEST.read_text(encoding="utf-8"))
+    entries = payload.get("maps")
+    if not isinstance(entries, list):
+        raise RuntimeError(f"canonical Prey map manifest has no maps list: {PREY_MAP_MANIFEST}")
+
+    maps: dict[str, dict[str, str]] = {}
+    for entry in entries:
+        if not isinstance(entry, dict):
+            raise RuntimeError(f"canonical Prey map manifest contains a non-object entry: {entry!r}")
+        map_name = entry.get("map")
+        kind = entry.get("kind")
+        title = entry.get("name")
+        if not isinstance(map_name, str) or not map_name:
+            raise RuntimeError(f"canonical Prey map manifest contains an invalid map path: {entry!r}")
+        if kind not in ("sp", "mp") or not isinstance(title, str) or not title:
+            raise RuntimeError(f"canonical Prey map manifest contains invalid metadata: {entry!r}")
+        if map_name in maps:
+            raise RuntimeError(f"canonical Prey map manifest repeats {map_name!r}")
+        maps[map_name] = {"kind": kind, "name": title}
+    return maps
+
+
+CANONICAL_PREY_MAPS = load_prey_map_manifest()
+
+
+def prey_scene(
+    map_name: str,
+    kind: str,
+    purpose: str,
+    *,
+    path: str = "spawn-static",
+    exec_commands: tuple[str, ...] = (),
+) -> dict[str, Any]:
+    entry = CANONICAL_PREY_MAPS.get(map_name)
+    if entry is None:
+        raise RuntimeError(f"renderer scene uses a map absent from {PREY_MAP_MANIFEST}: {map_name}")
+    if entry["kind"] != kind:
+        raise RuntimeError(
+            f"renderer scene classifies {map_name} as {kind}, "
+            f"but {PREY_MAP_MANIFEST} classifies it as {entry['kind']}"
+        )
+    scene: dict[str, Any] = {
+        "mode": kind.upper(),
+        "map": map_name,
+        "title": entry["name"],
+        "purpose": purpose,
+        "path": path,
+    }
+    if exec_commands:
+        scene["execCommands"] = exec_commands
+    return scene
+
 REQUIRED_SCENES: dict[str, dict[str, Any]] = {
-    "sp-storage1": {
-        "mode": "SP",
-        "map": "game/storage1",
-        "purpose": "stock first-entry drop-pod sequence; scripted camera, not a static indoor gameplay reference",
-        "path": "scripted-intro",
-        "entityFilter": "first",
-        "viewPolicy": "record-endpoints",
-    },
-    "sp-storage1-second": {
-        "mode": "SP",
-        "map": "game/storage1",
-        "purpose": "stock second-entry gameplay after the starting lift settles; separate from first-entry timing",
-        "path": "spawn-static",
-        "entityFilter": "second",
-        "viewPolicy": "static-endpoints",
-        "minimumSettleFrames": 720,
-        # Frames alone under-settle a fast build: the lift rises in game time,
-        # and 720 frames at a 240 fps cap is only 3 s. Real time follows the
-        # frame wait so the camera has docked before sampling on any build.
-        "minimumSettleMsec": 6000,
-    },
-    "sp-airdefense1": {
-        "mode": "SP",
-        "map": "game/airdefense1",
-        "purpose": "stock SP baseline, outdoor lighting, terrain decals, and BSE smoke",
-        "path": "spawn-static",
-    },
-    "sp-airdefense2": {
-        "mode": "SP",
-        "map": "game/airdefense2",
-        "purpose": "flashlight, projected shadows, animated characters, and dynamic shadow receivers",
-        "path": "spawn-static",
-    },
-    "sp-storage2": {
-        "mode": "SP",
-        "map": "game/storage2",
-        "purpose": "indoor materials, post-process coverage, and dense local lights",
-        "path": "spawn-static",
-    },
-    "sp-medlabs": {
-        "mode": "SP",
-        "map": "game/medlabs",
-        "purpose": "BSE-heavy SP scene and stock scripted effects coverage",
-        "path": "spawn-static",
-    },
-    "sp-mcc-landing": {
-        "mode": "SP",
-        "map": "game/mcc_landing",
-        "purpose": "subviews, remote cameras, cinematic handoff, and GUI interaction",
-        "path": "spawn-static",
-    },
-    "mp-q4dm1-listen": {
-        "mode": "MP",
-        "map": "mp/q4dm1",
-        "purpose": "listen server plus local loopback client renderer parity",
-        "path": "spawn-static",
-    },
-    "mp-q4dm1-postinit-connect": {
-        "mode": "MP",
-        "map": "mp/q4dm1",
-        "purpose": "delayed IPv4 loopback connect after initial SP module startup, reconnect, and second-map gameplay capture",
-        "path": "postinit-connect",
-    },
+    "sp-roadhouse": prey_scene(
+        "game/roadhouse",
+        "sp",
+        "opening-campaign baseline for characters, indoor materials, scripted sequences, mirror/glass, and GUI presentation",
+    ),
+    "sp-feedingtowera": prey_scene(
+        "game/feedingtowera",
+        "sp",
+        "gravity, wall-walk, portal traversal, sky, energy, glass, and industrial-lighting coverage",
+    ),
+    "sp-biolabsa": prey_scene(
+        "game/biolabsa",
+        "sp",
+        "dense interior materials, scan/energy effects, local lights, animated characters, and combat effects",
+    ),
+    "sp-superportal": prey_scene(
+        "game/superportal",
+        "sp",
+        "large-scale portal, translucent energy, glass, post-process, and long-view coverage",
+    ),
+    "sp-shuttlea": prey_scene(
+        "game/shuttlea",
+        "sp",
+        "shuttle view, cockpit GUI, beam/particle effects, portal views, and HUD composition",
+    ),
+    "sp-lotaa": prey_scene(
+        "game/lotaa",
+        "sp",
+        "outdoor/dreamworld sky, spirit-era gameplay, portal geometry, and Prey effect coverage",
+    ),
+    "mp-dmroadhouse-listen": prey_scene(
+        "game/dmroadhouse",
+        "mp",
+        "unified-module listen server plus local loopback client renderer parity on the stock MP smoke map",
+    ),
 }
 
 SHADOW_SCENES: dict[str, dict[str, Any]] = {
-    "shadow-projected-airdefense2": {
-        "mode": "SP",
-        "map": "game/airdefense2",
-        "purpose": "angled projected-light caster/receiver validation",
-        "path": "spawn-static",
-    },
-    "shadow-point-storage2": {
-        "mode": "SP",
-        "map": "game/storage2",
-        "purpose": "point-light face coverage and local-light receiver validation",
-        "path": "spawn-static",
-    },
-    "shadow-csm-airdefense1": {
-        "mode": "SP",
-        "map": "game/airdefense1",
-        "purpose": "CSM camera sweep readiness and outdoor directional coverage",
-        "path": "spawn-static",
-    },
-    "shadow-cutout-storage2": {
-        "mode": "SP",
-        "map": "game/storage2",
-        "purpose": "hashed-alpha cutout fence/grate caster validation at distance",
-        "path": "spawn-static",
-    },
-    "shadow-character-airdefense2": {
-        "mode": "SP",
-        "map": "game/airdefense2",
-        "purpose": "dynamic character shadow caster and receiver validation",
-        "path": "spawn-static",
-    },
-    "shadow-translucent-medlabs": {
-        "mode": "SP",
-        "map": "game/medlabs",
-        "purpose": "optional translucent moment caster coverage where the selected tier supports it",
-        "path": "spawn-static",
-    },
+    "shadow-projected-feedingtowera": prey_scene(
+        "game/feedingtowera",
+        "sp",
+        "projected-light caster/receiver validation against energy, sky, and industrial geometry",
+    ),
+    "shadow-point-biolabsa": prey_scene(
+        "game/biolabsa",
+        "sp",
+        "dense point-light face coverage and local-light receiver validation",
+    ),
+    "shadow-csm-lotaa": prey_scene(
+        "game/lotaa",
+        "sp",
+        "CSM camera-sweep readiness across outdoor/dreamworld sky geometry",
+    ),
+    "shadow-cutout-roadhouse": prey_scene(
+        "game/roadhouse",
+        "sp",
+        "hashed-alpha chain-link/cutout caster validation at distance",
+    ),
+    "shadow-character-feedingtowera": prey_scene(
+        "game/feedingtowera",
+        "sp",
+        "dynamic character/skinned shadow caster and receiver validation",
+    ),
+    "shadow-translucent-superportal": prey_scene(
+        "game/superportal",
+        "sp",
+        "optional translucent portal/energy moment-caster coverage where supported",
+    ),
 }
 
-CAMPAIGN_TRANSITION_SCENES: dict[str, dict[str, Any]] = {
-    "sp-campaign-mcc2-to-tram1": {
-        "mode": "SP",
-        "map": "game/mcc_2",
-        "purpose": "scripted campaign transition chain from MCC 2 through Storage 1 first/second state handling into Tram 1",
-        "path": "triggered-campaign-transition",
-        "budgetMap": "game/tram1",
-    },
-}
-
-LOAD_REGRESSION_SCENES: dict[str, dict[str, Any]] = {
-    "mp-q4dm9-listen": {
-        "mode": "MP",
-        "map": "mp/q4dm9",
-        "purpose": "listen-server load-time and Vulkan shadow-fallback regression coverage",
-        "path": "spawn-static",
-    },
-}
-
-WORLD_AMBIENT_SCENES: dict[str, dict[str, Any]] = {
-    "sp-mv2-ambient": {
-        "mode": "SP",
-        "map": "maps/tools/mv2",
-        "purpose": "controlled stock fixed-function world-ambient ownership and whole-view rollback evidence",
-        "path": "spawn-static",
-    },
-}
-
-INTERACTION_SCENES: dict[str, dict[str, Any]] = {
-    "sp-mv2-interaction": {
-        "mode": "SP",
-        "map": "maps/tools/mv2",
-        "purpose": "controlled stock caster/receiver crates, projected light, and side point light for fixed-classic interaction/shadow ownership evidence",
-        "path": "spawn-static",
-    },
-}
-
-FOG_BLEND_SCENES: dict[str, dict[str, Any]] = {
-    "sp-mv2-fog-blend": {
-        "mode": "SP",
-        "map": "maps/tools/mv2",
-        "purpose": "controlled stock fog and blend lights for atomic fixed-classic ownership evidence",
-        "path": "spawn-static",
-    },
-}
-
-DEFORM_SCENES: dict[str, dict[str, Any]] = {
-    "sp-mv2-deform": {
-        "mode": "SP",
-        "map": "maps/tools/mv2",
-        "purpose": "controlled stock material-move deformation ownership and published-geometry parity evidence",
-        "path": "spawn-static",
-    },
-}
-
-MILESTONE_D_SCENES: dict[str, dict[str, Any]] = {
-    "sp-milestone-d-nested-dynamic": {
-        "mode": "SP",
-        "map": "maps/tools/milestone_d_nested_dynamic",
-        "purpose": "temporary stock-derived mirror fixture with an authored post/video tail visible only in the captured child view",
-        "path": "spawn-static",
-    },
-}
-
-# Stock-map qualification candidates complement the tightly controlled
-# tools-map case.  The ordinary shadow-regression scenes do not by themselves
-# establish a fixed camera or feature-bearing interaction view, so every target
-# remains fail-closed until its exact map records prove the advertised class or
-# caster feature.  Release evidence must retain the final camera pose together
-# with matching classic/shadows-off references.
-INTERACTION_SHADOW_SCENES: dict[str, dict[str, Any]] = {
-    "shadow-projected-airdefense2": {
-        **SHADOW_SCENES["shadow-projected-airdefense2"],
-        "purpose": "projected-map qualification candidate requiring a retained authored-projector camera",
-        "interactionShadowTarget": "projected",
-    },
-    "shadow-point-airdefense2": {
-        **SHADOW_SCENES["shadow-projected-airdefense2"],
-        "purpose": "ordinary stock spawn candidate for point-cube interaction ownership",
-        "interactionShadowTarget": "point",
-    },
-    "shadow-csm-airdefense1": {
-        **SHADOW_SCENES["shadow-csm-airdefense1"],
-        "purpose": "multi-cascade projected/parallel qualification candidate requiring a retained camera",
-        "interactionShadowTarget": "csm",
-    },
-    "shadow-character-airdefense2": {
-        **SHADOW_SCENES["shadow-character-airdefense2"],
-        "purpose": "dynamic mapped-caster qualification candidate; the gate does not assume character eligibility",
-        "interactionShadowTarget": "dynamic",
-    },
-    "shadow-cutout-storage2": {
-        **SHADOW_SCENES["shadow-cutout-storage2"],
-        "purpose": "perforated mapped-caster qualification candidate requiring a retained cutout view",
-        "interactionShadowTarget": "perforated",
-    },
-    "shadow-hybrid-storage2": {
-        **SHADOW_SCENES["shadow-point-storage2"],
-        "purpose": "same-light mapped/stencil-supplement qualification candidate requiring a retained hybrid view",
-        "interactionShadowTarget": "hybrid",
-    },
-    "shadow-translucent-medlabs": {
-        **SHADOW_SCENES["shadow-translucent-medlabs"],
-        "purpose": "translucent-moment atomic-fallback qualification candidate",
-        "interactionShadowTarget": "fallback",
-    },
-}
-
-CAMPAIGN_MCC2_TO_TRAM1_COMMANDS = (
-    "openq4_assertMapState game/mcc_2",
-    "trigger mcc2_endlevel",
-    "wait 180",
-    "openq4_assertMapState game/storage1 first",
-    "trigger endLevel",
-    "wait 180",
-    "openq4_assertMapState game/storage2",
-    "trigger target_endlevel_1",
-    "wait 180",
-    "openq4_assertMapState game/storage1 second",
-    "trigger target_endlevel_2",
-    "wait 180",
-    "openq4_assertMapState game/tram1",
-)
+# Upstream's campaign-transition, tools-map (mv2, Milestone D), load-regression
+# and stock interaction-shadow fixtures are Quake 4 maps with no Prey (2006)
+# counterpart.  The machinery that consumes them stays; the sets stay empty
+# until Prey scenes with the same evidence value exist.
+CAMPAIGN_TRANSITION_SCENES: dict[str, dict[str, Any]] = {}
+LOAD_REGRESSION_SCENES: dict[str, dict[str, Any]] = {}
+WORLD_AMBIENT_SCENES: dict[str, dict[str, Any]] = {}
+INTERACTION_SCENES: dict[str, dict[str, Any]] = {}
+FOG_BLEND_SCENES: dict[str, dict[str, Any]] = {}
+DEFORM_SCENES: dict[str, dict[str, Any]] = {}
+MILESTONE_D_SCENES: dict[str, dict[str, Any]] = {}
+INTERACTION_SHADOW_SCENES: dict[str, dict[str, Any]] = {}
 
 FULL_BUDGET_SCENES = {
     **REQUIRED_SCENES,
     **SHADOW_SCENES,
-    **CAMPAIGN_TRANSITION_SCENES,
 }
 ALL_SCENES = {
     **FULL_BUDGET_SCENES,
-    **WORLD_AMBIENT_SCENES,
-    **INTERACTION_SCENES,
-    **FOG_BLEND_SCENES,
-    **DEFORM_SCENES,
-    **MILESTONE_D_SCENES,
-    **INTERACTION_SHADOW_SCENES,
-    **LOAD_REGRESSION_SCENES,
 }
 
 SHADOW_PRESETS: dict[str, dict[str, str]] = {
@@ -468,7 +373,7 @@ for debug_mode in SHADOW_DEBUG_PRESET_MODES:
 
 PROFILE_DEFAULTS = {
     "smoke": {
-        "cases": ("sp-storage1",),
+        "cases": ("sp-roadhouse",),
         "tiers": ("auto",),
         "maxfps": ("240",),
         "swap": ("0",),
@@ -483,332 +388,8 @@ PROFILE_DEFAULTS = {
         "display": ("windowed",),
         "shadows": ("default",),
     },
-    "mp-postinit-connect": {
-        "cases": ("mp-q4dm1-postinit-connect",),
-        "tiers": ("auto",),
-        "maxfps": ("240",),
-        "swap": ("0",),
-        "display": ("windowed",),
-        "shadows": ("default",),
-    },
-    "campaign-split-state-transition": {
-        "cases": tuple(CAMPAIGN_TRANSITION_SCENES.keys()),
-        "tiers": ("auto",),
-        "maxfps": ("240",),
-        "swap": ("0",),
-        "display": ("windowed",),
-        "shadows": ("default",),
-        "execCommands": CAMPAIGN_MCC2_TO_TRAM1_COMMANDS,
-    },
-    "world-ambient": {
-        "cases": tuple(WORLD_AMBIENT_SCENES.keys()),
-        "tiers": ("auto",),
-        "maxfps": ("240",),
-        "swap": ("0",),
-        "display": ("windowed",),
-        "shadows": ("default",),
-        "launchCvars": (
-            ("ui_showGun", "0"),
-            ("g_showHud", "0"),
-            ("r_multiSamples", "0"),
-        ),
-        # The tools-map spawn looks into an all-caulk horizon.  After normal
-        # spawn settles, lock the player in noclip and place the engine view
-        # over the static stock floor for a repeatable authored-surface capture.
-        "execCommands": (
-            "noclip",
-            "setviewpos 0 0 256 80 0 0",
-        ),
-        "cvars": (
-            ("g_renderFastNoPost", "1"),
-            ("g_renderFastNoPostDirect", "1"),
-            ("r_postAA", "0"),
-            ("r_singleLight", "2147483647"),
-            ("r_skipSubviews", "1"),
-            ("r_useLightGrid", "0"),
-            ("r_skipPlayerVisibilityEffects", "1"),
-            ("r_portalsDistanceCull", "0"),
-            ("r_forceAmbient", "0"),
-            ("r_celShading", "0"),
-            ("r_celShadingWorld", "0"),
-            ("r_showOverDraw", "0"),
-            ("r_singleTriangle", "0"),
-            ("r_skipAmbient", "0"),
-            ("r_skipNewAmbient", "0"),
-            ("r_skipDeforms", "0"),
-            ("r_skipRender", "0"),
-        ),
-    },
-    "deform": {
-        "cases": tuple(DEFORM_SCENES.keys()),
-        "tiers": ("auto",),
-        "maxfps": ("240",),
-        "swap": ("0",),
-        "display": ("windowed",),
-        "shadows": ("default",),
-        "launchCvars": (
-            # shaderDemos/move evaluates a time-based deform expression.  Run
-            # exactly one game tic per rendered frame so separate classic and
-            # shared captures reach the same deform value on every backend.
-            ("com_fixedTic", "1"),
-            ("g_stopTime", "1"),
-            ("in_mouse", "0"),
-            ("ui_showGun", "0"),
-            ("g_showHud", "0"),
-            ("r_multiSamples", "0"),
-        ),
-        "execCommands": (
-            "g_stopTime 1",
-            "noclip",
-            "setviewpos 0 0 256 80 0 0",
-        ),
-        # Keep the stock material override in the ordinary profile-cvar stream.
-        # User --set-cvar entries are appended afterwards and can still replace
-        # it for targeted deform-kind or atomic-fallback captures.
-        "cvars": (
-            # Advance only the common post-map settle interval, then the first
-            # exec command freezes that exact tic for sampling and screenshot.
-            ("g_stopTime", "0"),
-            ("r_rendererSharedWorldAmbient", "1"),
-            ("r_rendererSharedDeform", "1"),
-            ("r_materialOverride", "shaderDemos/move"),
-            ("g_renderFastNoPost", "1"),
-            ("g_renderFastNoPostDirect", "1"),
-            ("r_postAA", "0"),
-            ("r_singleLight", "2147483647"),
-            ("r_skipSubviews", "1"),
-            ("r_useLightGrid", "0"),
-            ("r_skipPlayerVisibilityEffects", "1"),
-            ("r_portalsDistanceCull", "0"),
-            ("r_forceAmbient", "0"),
-            ("r_celShading", "0"),
-            ("r_celShadingWorld", "0"),
-            ("r_showOverDraw", "0"),
-            ("r_singleTriangle", "0"),
-            ("r_skipAmbient", "0"),
-            ("r_skipNewAmbient", "0"),
-            ("r_skipDeforms", "0"),
-            ("r_skipRender", "0"),
-        ),
-    },
-    "milestone-d-nested-dynamic": {
-        "cases": tuple(MILESTONE_D_SCENES.keys()),
-        "tiers": ("auto",),
-        "maxfps": ("240",),
-        "swap": ("0",),
-        "display": ("windowed",),
-        "shadows": ("default",),
-        "launchCvars": (
-            ("com_fixedTic", "1"),
-            ("g_stopTime", "1"),
-            ("in_mouse", "0"),
-            ("ui_showGun", "0"),
-            ("g_showHud", "0"),
-            ("r_multiSamples", "0"),
-        ),
-        "execCommands": (
-            "g_stopTime 1",
-            "noclip",
-            "setviewpos 0 -384 96 0 90 0",
-        ),
-        "cvars": (
-            # Let map startup advance through the ordinary settle interval,
-            # then freeze the exact child-view video clock before sampling.
-            ("g_stopTime", "0"),
-            ("r_rendererSharedSubview", "1"),
-            ("r_rendererSharedCinematicPost", "1"),
-            ("g_renderFastNoPost", "1"),
-            ("g_renderFastNoPostDirect", "1"),
-            ("g_renderCasUpscale", "0"),
-            ("r_postAA", "0"),
-            ("r_screenFraction", "100"),
-            ("r_bloom", "0"),
-            ("r_motionBlur", "0"),
-            ("r_ssao", "0"),
-            ("r_hdrToneMap", "0"),
-            ("r_hdrDebugView", "0"),
-            ("r_skipSubviews", "0"),
-            ("r_useLightGrid", "0"),
-            ("r_skipPlayerVisibilityEffects", "1"),
-            ("r_portalsDistanceCull", "0"),
-            ("r_forceAmbient", "0"),
-            ("r_celShading", "0"),
-            ("r_celShadingWorld", "0"),
-            ("r_showOverDraw", "0"),
-            ("r_singleTriangle", "0"),
-            ("r_skipAmbient", "0"),
-            ("r_skipNewAmbient", "0"),
-            ("r_skipDeforms", "0"),
-            ("r_skipRender", "0"),
-            ("r_skipRenderContext", "0"),
-            ("r_skipDynamicTextures", "0"),
-            ("r_skipCopyTexture", "0"),
-            ("r_skipPostProcess", "0"),
-        ),
-    },
-    "interaction": {
-        "cases": tuple(INTERACTION_SCENES.keys()),
-        "tiers": ("auto",),
-        "maxfps": ("240",),
-        "swap": ("0",),
-        "display": ("windowed",),
-        "shadows": (
-            "unshadowed",
-            "stencil",
-            "mapped",
-            "mixed",
-            "map-budget-fallback",
-        ),
-        "launchCvars": (
-            ("ui_showGun", "0"),
-            ("g_showHud", "0"),
-            ("r_multiSamples", "0"),
-        ),
-        "execCommands": (
-            "noclip",
-            "setviewpos 0 -192 96 20 90 0",
-            "testModel models/mapobjects/strogg/crates/crate1_small.lwo",
-            'spawn func_static model models/mapobjects/strogg/crates/crate1_medium.lwo origin "-90 -70 -5.7"',
-            'testPointLight 300 origin "96 -128 0"',
-            "testLight",
-        ),
-        "cvars": (
-            ("r_rendererSharedWorldInteraction", "1"),
-            ("g_renderFastNoPost", "1"),
-            ("g_renderFastNoPostDirect", "1"),
-            ("g_renderCasUpscale", "0"),
-            ("r_postAA", "0"),
-            ("r_screenFraction", "100"),
-            ("r_bloom", "0"),
-            ("r_motionBlur", "0"),
-            ("r_ssao", "0"),
-            ("r_hdrToneMap", "0"),
-            ("r_hdrDebugView", "0"),
-            ("r_skipSubviews", "1"),
-            ("r_useLightGrid", "0"),
-            ("r_skipPlayerVisibilityEffects", "1"),
-            ("r_portalsDistanceCull", "0"),
-            ("r_forceAmbient", "0"),
-            ("r_celShading", "0"),
-            ("r_celShadingWorld", "0"),
-            ("r_showOverDraw", "0"),
-            ("r_singleTriangle", "0"),
-            ("r_skipAmbient", "1"),
-            ("r_skipNewAmbient", "1"),
-            ("r_skipDeforms", "0"),
-            ("r_skipRender", "0"),
-        ),
-    },
-    "fog-blend": {
-        "cases": tuple(FOG_BLEND_SCENES.keys()),
-        "tiers": ("auto",),
-        "maxfps": ("240",),
-        "swap": ("0",),
-        "display": ("windowed",),
-        "shadows": ("default",),
-        "launchCvars": (
-            ("ui_showGun", "0"),
-            ("g_showHud", "0"),
-            ("r_multiSamples", "0"),
-        ),
-        # Use only stock map/model/light declarations.  The two test lights
-        # deliberately exercise both halves of the atomic fog/blend domain;
-        # lights/fog_generic is a fogLight and lights/fog_ambient is a
-        # deterministic blendLight in the shipped Quake 4 declarations.
-        # Do not use lights/stream_fog here: its time-driven flicker tables
-        # make independent shared-off/shared-on image captures non-comparable.
-        "execCommands": (
-            "noclip",
-            "setviewpos 0 -192 96 20 90 0",
-            "testModel models/mapobjects/strogg/crates/crate1_small.lwo",
-            'testPointLight 256 texture lights/fog_generic origin "0 96 48" _color "0.18 0.26 0.34" shaderParm3 "384" noShadows "1"',
-            'testPointLight 256 texture lights/fog_ambient origin "96 -96 48" _color "0.28 0.10 0.05" shaderParm3 "0.65" noShadows "1"',
-        ),
-        "cvars": (
-            ("r_rendererSharedWorldFogBlend", "1"),
-            ("g_renderFastNoPost", "1"),
-            ("g_renderFastNoPostDirect", "1"),
-            ("g_renderCasUpscale", "0"),
-            ("r_postAA", "0"),
-            ("r_screenFraction", "100"),
-            ("r_bloom", "0"),
-            ("r_motionBlur", "0"),
-            ("r_ssao", "0"),
-            ("r_hdrToneMap", "0"),
-            ("r_hdrDebugView", "0"),
-            ("r_skipSubviews", "1"),
-            ("r_useLightGrid", "0"),
-            ("r_skipPlayerVisibilityEffects", "1"),
-            ("r_portalsDistanceCull", "0"),
-            ("r_forceAmbient", "0"),
-            ("r_celShading", "0"),
-            ("r_celShadingWorld", "0"),
-            ("r_showOverDraw", "0"),
-            ("r_singleTriangle", "0"),
-            ("r_skipAmbient", "1"),
-            ("r_skipNewAmbient", "1"),
-            ("r_skipFogLights", "0"),
-            ("r_skipBlendLights", "0"),
-            ("r_skipDeforms", "0"),
-            ("r_skipRender", "0"),
-        ),
-    },
-    "interaction-shadow-stock": {
-        "cases": tuple(INTERACTION_SHADOW_SCENES.keys()),
-        "tiers": ("auto",),
-        "maxfps": ("240",),
-        "swap": ("0",),
-        "display": ("windowed",),
-        "shadows": ("unshadowed", "mapped", "csm", "translucent"),
-        "caseShadows": {
-            "shadow-projected-airdefense2": ("unshadowed", "mapped"),
-            "shadow-point-airdefense2": ("unshadowed", "mapped"),
-            "shadow-csm-airdefense1": ("unshadowed", "csm"),
-            "shadow-character-airdefense2": ("unshadowed", "csm"),
-            "shadow-cutout-storage2": ("unshadowed", "csm"),
-            "shadow-hybrid-storage2": ("unshadowed", "mapped"),
-            "shadow-translucent-medlabs": ("translucent",),
-        },
-        "launchCvars": (
-            ("g_stopTime", "1"),
-            ("ui_showGun", "0"),
-            ("r_multiSamples", "0"),
-        ),
-        # Start deterministic at tic zero, then advance the real SP scene
-        # through the normal settle interval before freezing it again for
-        # sampling.  Keeping tic zero frozen only captures dark/empty spawn
-        # state; leaving the viewmodel visible turns the aggregate interaction
-        # packet into an unsupported weapon-depth-hack pass.
-        "execCommands": (
-            "g_stopTime 1",
-        ),
-        "cvars": (
-            ("r_rendererSharedWorldInteraction", "1"),
-            ("g_stopTime", "0"),
-            ("g_renderFastNoPost", "1"),
-            ("g_renderFastNoPostDirect", "1"),
-            ("g_renderCasUpscale", "0"),
-            ("r_postAA", "0"),
-            ("r_screenFraction", "100"),
-            ("r_bloom", "0"),
-            ("r_motionBlur", "0"),
-            ("r_ssao", "0"),
-            ("r_hdrToneMap", "0"),
-            ("r_hdrDebugView", "0"),
-            ("r_skipSubviews", "1"),
-            ("r_useLightGrid", "0"),
-            ("r_skipPlayerVisibilityEffects", "1"),
-            ("r_portalsDistanceCull", "0"),
-            ("r_celShading", "0"),
-            ("r_celShadingWorld", "0"),
-            ("r_showOverDraw", "0"),
-            ("r_singleTriangle", "0"),
-            ("r_skipDeforms", "0"),
-            ("r_skipRender", "0"),
-        ),
-    },
     "tiers": {
-        "cases": ("sp-airdefense1",),
+        "cases": ("sp-roadhouse",),
         "tiers": SAFE_TIERS,
         "maxfps": ("240",),
         "swap": ("0",),
@@ -816,7 +397,7 @@ PROFILE_DEFAULTS = {
         "shadows": ("default",),
     },
     "presentation": {
-        "cases": ("sp-airdefense1",),
+        "cases": ("sp-roadhouse",),
         "tiers": ("auto",),
         "maxfps": PRESENTATION_MAXFPS,
         "swap": PRESENTATION_SWAP_INTERVALS,
@@ -833,11 +414,11 @@ PROFILE_DEFAULTS = {
     },
     "shadow-regression": {
         "cases": (
-            "shadow-projected-airdefense2",
-            "shadow-point-storage2",
-            "shadow-csm-airdefense1",
-            "shadow-character-airdefense2",
-            "shadow-cutout-storage2",
+            "shadow-projected-feedingtowera",
+            "shadow-point-biolabsa",
+            "shadow-csm-lotaa",
+            "shadow-character-feedingtowera",
+            "shadow-cutout-roadhouse",
         ),
         "tiers": ("auto",),
         "maxfps": ("240",),
@@ -858,7 +439,7 @@ PROFILE_DEFAULTS = {
         ),
     },
     "postaa-state-poison": {
-        "cases": ("sp-airdefense1",),
+        "cases": ("sp-roadhouse",),
         "tiers": ("auto",),
         "maxfps": ("240",),
         "swap": ("0",),
@@ -870,7 +451,7 @@ PROFILE_DEFAULTS = {
         ),
     },
     "postaa-high": {
-        "cases": ("sp-airdefense1",),
+        "cases": ("sp-roadhouse",),
         "tiers": ("auto",),
         "maxfps": ("240",),
         "swap": ("0",),
@@ -881,7 +462,7 @@ PROFILE_DEFAULTS = {
         ),
     },
     "postaa-ultra": {
-        "cases": ("sp-airdefense1",),
+        "cases": ("sp-roadhouse",),
         "tiers": ("auto",),
         "maxfps": ("240",),
         "swap": ("0",),
@@ -892,7 +473,7 @@ PROFILE_DEFAULTS = {
         ),
     },
     "postaa-color-prototype": {
-        "cases": ("sp-airdefense1",),
+        "cases": ("sp-roadhouse",),
         "tiers": ("auto",),
         "maxfps": ("240",),
         "swap": ("0",),
@@ -961,7 +542,6 @@ WARNING_PATTERNS = {
         re.IGNORECASE | re.MULTILINE,
     ),
     "errorLine": re.compile(r"^[ \t]*(?:\*+[ \t]*)?ERROR(?:[ \t]*:|[ \t]*$)", re.MULTILINE),
-    "mapStateMismatch": re.compile(r"ERROR:\s+openQ4 map state mismatch|openQ4 map state assertion", re.IGNORECASE),
 }
 
 MAX_FAILURE_DIAGNOSTICS = 32
@@ -986,6 +566,7 @@ class RunSpec:
     interaction_expectation: str = "none"
     interaction_shadow_expectation: str = "none"
     fog_blend_expectation: str = "none"
+    exec_commands: tuple[str, ...] = ()
 
     @property
     def scene_contract(self) -> dict[str, Any] | None:
@@ -1063,7 +644,7 @@ def host_arch() -> str:
 
 def find_client_executable(runtime_dir: Path) -> Path:
     suffix = ".exe" if os.name == "nt" else ""
-    candidate_prefixes = ("openQ4-client", "openQ4-client")
+    candidate_prefixes = ("openPREY-client",)
     for prefix in candidate_prefixes:
         preferred = runtime_dir / f"{prefix}_{host_arch()}{suffix}"
         if preferred.exists():
@@ -1083,7 +664,7 @@ def find_client_executable(runtime_dir: Path) -> Path:
     for candidate in candidates:
         if candidate.is_file():
             return candidate
-    raise FileNotFoundError(f"openQ4 client executable not found under {runtime_dir}")
+    raise FileNotFoundError(f"openPREY client executable not found under {runtime_dir}")
 
 
 def is_link_or_junction(path: Path) -> bool:
@@ -1233,8 +814,10 @@ def compare_file_records(
 
 
 def default_basepath() -> str:
-    if os.name == "nt":
-        return r"C:\Program Files (x86)\Steam\steamapps\common\Quake 4"
+    for name in ("OPENPREY_PREY_PATH", "OPENPREY_PREY_ROOT"):
+        configured = os.environ.get(name, "").strip()
+        if configured:
+            return configured
     return ""
 
 
@@ -1614,6 +1197,14 @@ def append_command(args: list[str], name: str, *values: Any) -> None:
     args.extend(str(value) for value in values)
 
 
+def append_post_map_autoexec(args: list[str], autoexec_cfg: str | None, autoexec_delay_ms: int) -> None:
+    if not autoexec_cfg:
+        return
+    if autoexec_delay_ms > 0:
+        append_command(args, "waitMsec", max(0, autoexec_delay_ms))
+    append_command(args, "exec_savepath", autoexec_cfg)
+
+
 def display_launch_contract(spec: RunSpec, width: int, height: int) -> dict[str, Any]:
     """Return the exact, reportable display contract applied before startup."""
     promotable = (
@@ -1645,8 +1236,8 @@ def budget_display_contract() -> dict[str, Any]:
     spec = RunSpec(
         case_id="budget-display-contract",
         mode="SP",
-        map_name="game/storage1",
-        budget_map_name="game/storage1",
+        map_name="game/roadhouse",
+        budget_map_name="game/roadhouse",
         purpose="budget display contract",
         path_name="spawn-static",
         tier="auto",
@@ -1673,8 +1264,6 @@ def common_args(
     modern_executor: bool,
     show_fps_overlay: bool,
     launch_cvars: tuple[tuple[str, str], ...] = (),
-    autoexec_cfg: str | None = None,
-    autoexec_delay_ms: int = 1000,
 ) -> list[str]:
     args: list[str] = []
     multiple_instance_cvar = "win_allowMultipleInstances" if os.name == "nt" else "sys_allowMultipleInstances"
@@ -1683,6 +1272,7 @@ def common_args(
     append_set(args, "logFileName", f"logs/{log_name}")
     append_set(args, "developer", "1")
     append_set(args, "r_ignoreGLErrors", "0")
+    append_set(args, "r_fullscreen", "0")
     append_set(args, "r_swapInterval", spec.swap_interval)
     append_set(args, "com_maxfps", spec.maxfps)
     append_set(args, "com_showFPS", "1" if show_fps_overlay else "0")
@@ -1691,9 +1281,6 @@ def common_args(
     append_set(args, "com_levelLoadModernization", "0")
     append_set(args, "g_autoSkipCinematics", "1")
     append_set(args, "g_autoScreenshot", "0")
-    if autoexec_cfg:
-        append_set(args, "g_autoExecAfterMapLoad", autoexec_cfg)
-        append_set(args, "g_autoExecAfterMapLoadDelayMs", max(0, autoexec_delay_ms))
     append_set(args, "r_glTier", spec.tier)
     append_set(args, "r_renderer", spec.renderer)
     append_set(args, "r_rendererMetrics", "0")
@@ -1714,7 +1301,7 @@ def common_args(
     # Keep generated cache/config output in the isolated evidence root.  The
     # package itself is mounted by the locked fs_cdpath derived from cwd.
     append_set(args, "fs_devpath", str(savepath))
-    append_set(args, "fs_game", "baseoq4")
+    append_set(args, "fs_game", "basepr")
     if basepath:
         append_set(args, "fs_basepath", basepath)
 
@@ -1783,14 +1370,17 @@ def build_scripted_capture_lines(
         "notarget",
         EXEC_COMMANDS_BEGIN,
     ]
-    lines.extend(exec_commands)
-    lines.append(EXEC_COMMANDS_END)
+    # The end marker closes the profile commands so the replay parser can bound them.
+    exec_commands = (*exec_commands, EXEC_COMMANDS_END)
     # Record the pose that is actually sampled.  In particular, profile scene
     # commands may move the player after the initial map settle; getviewpos
     # before those commands described the wrong camera and omitted pitch/roll.
-    lines.extend(
-        scene_snapshot_commands(VIEW_BEGIN, scene_contract["map"], scene_contract["entityFilter"])
-        if scene_contract else ["getviewpos" if spec.mode == "MP" else "viewpos"]
+    # Prey's unified game module registers getviewpos for SP and MP alike.
+    lines.extend(exec_commands)
+    lines += [
+        "getviewpos",
+    ] if not scene_contract else scene_snapshot_commands(
+        VIEW_BEGIN, scene_contract["map"], scene_contract["entityFilter"]
     )
     if renderer_metrics:
         # A client can reload the game module while connecting and re-exec an
@@ -1860,7 +1450,7 @@ def write_autoexec_cfg(
     cfg_rel = f"renderer-bench/{role}_{capture_index}.cfg"
     payload = "\n".join(lines) + "\n"
     screenshot_rel = Path(shot_name.replace("/", os.sep))
-    for game_dir in ("baseoq4", "q4base"):
+    for game_dir in ("basepr",):
         cfg_path = savepath / game_dir / Path(cfg_rel)
         cfg_path.parent.mkdir(parents=True, exist_ok=True)
         cfg_path.write_text(payload, encoding="utf-8")
@@ -1873,7 +1463,7 @@ def write_postinit_connect_cfg(savepath: Path, port: int) -> str:
     """Queue loopback connect after the client has finished its initial SP startup."""
     cfg_rel = "renderer-bench/postinit_connect.cfg"
     payload = f"wait {POSTINIT_CONNECT_WAIT_FRAMES}\nconnect 127.0.0.1:{port}\n"
-    for game_dir in ("baseoq4", "q4base"):
+    for game_dir in ("basepr",):
         cfg_path = savepath / game_dir / Path(cfg_rel)
         cfg_path.parent.mkdir(parents=True, exist_ok=True)
         cfg_path.write_text(payload, encoding="utf-8")
@@ -1885,15 +1475,17 @@ def write_postinit_reconnect_cfg(
     capture_cfg: str,
     autoexec_delay_ms: int,
 ) -> str:
-    """Reconnect from active MP play, then arm capture for the second map."""
+    """Reconnect from active MP play, then queue capture for the second map.
+
+    openPREY has no post-map-load autoexec cvar, so the capture is queued the same
+    way append_post_map_autoexec() does it: an optional waitMsec, then exec_savepath.
+    """
     cfg_rel = "renderer-bench/postinit_reconnect.cfg"
-    payload = (
-        f"wait {POSTINIT_RECONNECT_WAIT_FRAMES}\n"
-        f'set g_autoExecAfterMapLoad "{capture_cfg}"\n'
-        f"set g_autoExecAfterMapLoadDelayMs {max(0, autoexec_delay_ms)}\n"
-        "reconnect\n"
-    )
-    for game_dir in ("baseoq4", "q4base"):
+    payload = f"wait {POSTINIT_RECONNECT_WAIT_FRAMES}\nreconnect\n"
+    if autoexec_delay_ms > 0:
+        payload += f"waitMsec {autoexec_delay_ms}\n"
+    payload += f'exec_savepath "{capture_cfg}"\n'
+    for game_dir in ("basepr",):
         cfg_path = savepath / game_dir / Path(cfg_rel)
         cfg_path.parent.mkdir(parents=True, exist_ok=True)
         cfg_path.write_text(payload, encoding="utf-8")
@@ -1902,8 +1494,7 @@ def write_postinit_reconnect_cfg(
 
 def find_log(savepath: Path, log_name: str) -> Path | None:
     candidates = [
-        savepath / "baseoq4" / "logs" / log_name,
-        savepath / "q4base" / "logs" / log_name,
+        savepath / "basepr" / "logs" / log_name,
         savepath / "logs" / log_name,
     ]
     for candidate in candidates:
@@ -1914,7 +1505,7 @@ def find_log(savepath: Path, log_name: str) -> Path | None:
 
 def find_screenshot(savepath: Path, relative_name: str) -> Path | None:
     rel = Path(relative_name.replace("/", os.sep))
-    for game_dir in ("baseoq4", "q4base"):
+    for game_dir in ("basepr",):
         candidate = savepath / game_dir / rel
         if candidate.exists():
             return candidate
@@ -3800,7 +3391,7 @@ def screenshot_reference_candidates(
     candidates = [reference_dir / screenshot.name]
     if case_id:
         candidates.insert(0, reference_dir / case_id / screenshot.name)
-    for game_dir in ("baseoq4", "q4base"):
+    for game_dir in ("basepr",):
         root = savepath / game_dir
         try:
             rel = screenshot.relative_to(root)
@@ -3809,7 +3400,7 @@ def screenshot_reference_candidates(
                 candidates.insert(0, reference_dir / case_id / rel)
                 # A reference tree produced by this runner retains both the
                 # case savepath and game-directory components:
-                # savepaths/<case>/baseoq4/screenshots/...
+                # savepaths/<case>/basepr/screenshots/...
                 candidates.insert(0, reference_dir / case_id / game_dir / rel)
         except ValueError:
             pass
@@ -3903,7 +3494,7 @@ def evaluate_scene_view_evidence(
     failures: list[str] = []
     observations: list[dict[str, Any]] = []
     state_pattern = re.compile(
-        r"openQ4 map state: map=(\S*) entityFilter=(\S*) "
+        r"openPREY map state: map=(\S*) entityFilter=(\S*) "
         r"expectedMap=(\S*) expectedEntityFilter=(\S*)"
     )
     pose_pattern = re.compile(r"origin: \(([^()]+)\) angles: \(([^()]+)\)")
@@ -4020,7 +3611,7 @@ def evaluate_role_result(
         rms_threshold,
         max_threshold,
         require_reference,
-        spec.id,
+        spec.case_id,
     )
     is_deform_scene = spec.case_id in DEFORM_SCENES
     difference_feature_case = (
@@ -4237,7 +3828,8 @@ def run_sp_spec(
     )
     savepath = output_dir / "savepaths" / spec.id
     savepath.mkdir(parents=True, exist_ok=True)
-    log_name = ROLE_LOG_NAME
+    exec_commands = spec.exec_commands + args.exec_commands
+    log_name = "openprey_gameplay_sp.log"
     log_path = find_log(savepath, log_name)
     if log_path is not None:
         log_path.unlink()
@@ -4252,7 +3844,7 @@ def run_sp_spec(
         args.sample_frames,
         args.sample_msec,
         args.extra_cvars,
-        args.exec_commands,
+        exec_commands,
         args.gpu_timers,
         not args.pacing_only,
     )
@@ -4269,20 +3861,20 @@ def run_sp_spec(
         args.modern_executor,
         args.show_fps_overlay,
         args.launch_cvars,
-        autoexec_cfg,
-        args.autoexec_delay_ms,
     )
     append_set(game_args, "si_gameType", "singleplayer")
     append_command(game_args, "map", spec.map_name)
     if spec.scene_contract:
         game_args.append(spec.scene_contract["entityFilter"])
+    append_post_map_autoexec(game_args, autoexec_cfg, args.autoexec_delay_ms)
 
     if args.dry_run:
         return {
             "id": spec.id,
+            "caseId": spec.case_id,
             "mode": spec.mode,
             "map": spec.map_name,
-            "caseId": spec.case_id,
+            "path": spec.path_name,
             "sceneContract": spec.scene_contract,
             "budgetMap": spec.budget_map_name,
             "expectedBackend": spec.expected_backend,
@@ -4295,6 +3887,7 @@ def run_sp_spec(
             "status": "planned",
             "args": game_args,
             "autoexecCfg": autoexec_cfg,
+            "execCommands": list(exec_commands),
             "screenshotRequest": screenshot_rel,
             "roles": [],
         }
@@ -4332,12 +3925,13 @@ def run_sp_spec(
         difference_min_rms=args.image_difference_min_rms,
         difference_min_channels=args.image_difference_min_channels,
         pbr_fixture_acceptance_required=pbr_fixture_acceptance_required,
-        autoexec_path=savepath / "baseoq4" / Path(autoexec_cfg),
+        autoexec_path=savepath / "basepr" / Path(autoexec_cfg),
         display_width=args.width, display_height=args.height,
         max_frame_ms=args.max_frame_ms,
     )
     return {
         "id": spec.id,
+        "caseId": spec.case_id,
         "mode": spec.mode,
         "map": spec.map_name,
         "caseId": spec.case_id,
@@ -4351,12 +3945,14 @@ def run_sp_spec(
         "pbrFixtureAcceptanceRequired": pbr_fixture_acceptance_required,
         "displayContract": display_launch_contract(spec, args.width, args.height),
         "purpose": spec.purpose,
+        "path": spec.path_name,
         "tier": spec.tier,
         "maxfps": spec.maxfps,
         "swapInterval": spec.swap_interval,
         "display": spec.display_mode,
         "shadowPreset": spec.shadow_preset,
         "renderer": spec.renderer,
+        "execCommands": list(exec_commands),
         "status": role_result["status"],
         "roles": [role_result],
     }
@@ -4376,6 +3972,7 @@ def run_mp_spec(
         args.extra_cvars, spec.render_api
     )
     port = args.mp_port + index
+    exec_commands = spec.exec_commands + args.exec_commands
     server_savepath = output_dir / "savepaths" / f"{spec.id}_server"
     client_savepath = output_dir / "savepaths" / f"{spec.id}_client"
     server_savepath.mkdir(parents=True, exist_ok=True)
@@ -4397,7 +3994,7 @@ def run_mp_spec(
     # Keep the listen server alive while a fresh client initializes and builds
     # its local caches. A frame-count grace collapses to only a few seconds at
     # the 240 FPS budget workload and can let the server quit mid-connect.
-    server_exec_commands = args.exec_commands + (
+    server_exec_commands = exec_commands + (
         f"waitMsec {MP_SERVER_CLIENT_GRACE_MSEC}",
     )
     server_autoexec_cfg, server_screenshot = write_autoexec_cfg(
@@ -4426,8 +4023,6 @@ def run_mp_spec(
         args.modern_executor,
         args.show_fps_overlay,
         args.launch_cvars,
-        server_autoexec_cfg,
-        args.autoexec_delay_ms,
     )
     append_set(server_args, "net_serverDedicated", "0")
     append_set(server_args, "net_port", str(port))
@@ -4437,6 +4032,7 @@ def run_mp_spec(
     append_set(server_args, "sv_cheats", "1")
     append_set(server_args, "si_gameType", "DM")
     append_command(server_args, "spawnServer", spec.map_name)
+    append_post_map_autoexec(server_args, server_autoexec_cfg, args.autoexec_delay_ms)
 
     client_capture_index = 1 if spec.path_name == "postinit-connect" else 0
     client_autoexec_cfg, client_screenshot = write_autoexec_cfg(
@@ -4448,7 +4044,7 @@ def run_mp_spec(
         args.sample_frames,
         args.sample_msec,
         args.extra_cvars,
-        args.exec_commands,
+        exec_commands,
         args.gpu_timers,
         not args.pacing_only,
         client_capture_index,
@@ -4475,8 +4071,6 @@ def run_mp_spec(
         args.modern_executor,
         args.show_fps_overlay,
         args.launch_cvars,
-        client_initial_autoexec_cfg,
-        args.autoexec_delay_ms,
     )
     append_set(client_args, "ui_autoJoin", "1")
     append_set(client_args, "ui_name", "RendererBenchClient")
@@ -4487,13 +4081,15 @@ def run_mp_spec(
         append_command(client_args, "exec", client_postinit_connect_cfg)
     else:
         append_command(client_args, "connect", f"127.0.0.1:{port}")
+    append_post_map_autoexec(client_args, client_initial_autoexec_cfg, args.autoexec_delay_ms)
 
     if args.dry_run:
         return {
             "id": spec.id,
+            "caseId": spec.case_id,
             "mode": spec.mode,
             "map": spec.map_name,
-            "caseId": spec.case_id,
+            "path": spec.path_name,
             "sceneContract": spec.scene_contract,
             "budgetMap": spec.budget_map_name,
             "expectedBackend": spec.expected_backend,
@@ -4508,6 +4104,7 @@ def run_mp_spec(
             "clientArgs": client_args,
             "serverAutoexecCfg": server_autoexec_cfg,
             "clientAutoexecCfg": client_autoexec_cfg,
+            "execCommands": list(exec_commands),
             "clientInitialAutoexecCfg": client_initial_autoexec_cfg,
             "clientReconnectCfg": client_reconnect_cfg,
             "clientPostInitConnectCfg": client_postinit_connect_cfg,
@@ -4576,7 +4173,7 @@ def run_mp_spec(
         difference_min_rms=args.image_difference_min_rms,
         difference_min_channels=args.image_difference_min_channels,
         pbr_fixture_acceptance_required=pbr_fixture_acceptance_required,
-        autoexec_path=server_savepath / "baseoq4" / Path(server_autoexec_cfg),
+        autoexec_path=server_savepath / "basepr" / Path(server_autoexec_cfg),
         display_width=args.width, display_height=args.height,
         max_frame_ms=args.max_frame_ms,
     )
@@ -4605,7 +4202,7 @@ def run_mp_spec(
         difference_min_rms=args.image_difference_min_rms,
         difference_min_channels=args.image_difference_min_channels,
         pbr_fixture_acceptance_required=pbr_fixture_acceptance_required,
-        autoexec_path=client_savepath / "baseoq4" / Path(client_autoexec_cfg),
+        autoexec_path=client_savepath / "basepr" / Path(client_autoexec_cfg),
         display_width=args.width, display_height=args.height,
         max_frame_ms=args.max_frame_ms,
     )
@@ -4644,6 +4241,7 @@ def run_mp_spec(
     ok = server_result["status"] == "pass" and client_result["status"] == "pass"
     return {
         "id": spec.id,
+        "caseId": spec.case_id,
         "mode": spec.mode,
         "map": spec.map_name,
         "caseId": spec.case_id,
@@ -4657,12 +4255,14 @@ def run_mp_spec(
         "pbrFixtureAcceptanceRequired": pbr_fixture_acceptance_required,
         "displayContract": display_launch_contract(spec, args.width, args.height),
         "purpose": spec.purpose,
+        "path": spec.path_name,
         "tier": spec.tier,
         "maxfps": spec.maxfps,
         "swapInterval": spec.swap_interval,
         "display": spec.display_mode,
         "shadowPreset": spec.shadow_preset,
         "renderer": spec.renderer,
+        "execCommands": list(exec_commands),
         "status": "pass" if ok else "fail",
         "port": port,
         "postInitConnectResponses": postinit_connect_responses,
@@ -4695,6 +4295,7 @@ def harness_failure_result(spec: RunSpec, exc: Exception) -> dict[str, Any]:
     }
     return {
         "id": spec.id,
+        "caseId": spec.case_id,
         "mode": spec.mode,
         "map": spec.map_name,
         "caseId": spec.case_id,
@@ -4706,12 +4307,14 @@ def harness_failure_result(spec: RunSpec, exc: Exception) -> dict[str, Any]:
         "interactionShadowExpectation": spec.interaction_shadow_expectation,
         "fogBlendExpectation": spec.fog_blend_expectation,
         "purpose": spec.purpose,
+        "path": spec.path_name,
         "tier": spec.tier,
         "maxfps": spec.maxfps,
         "swapInterval": spec.swap_interval,
         "display": spec.display_mode,
         "shadowPreset": spec.shadow_preset,
         "renderer": spec.renderer,
+        "execCommands": list(spec.exec_commands),
         "status": "fail",
         "roles": [role_result],
         "harnessError": message,
@@ -4915,6 +4518,7 @@ def build_specs(args: argparse.Namespace) -> list[RunSpec]:
                                     fog_blend_expectation=fog_blend_expectation(
                                         args, case_id
                                     ),
+                                    exec_commands=tuple(scene.get("execCommands", ())),
                                 )
                             )
     if args.limit > 0:
@@ -4956,13 +4560,13 @@ def write_reports(output_dir: Path, results: list[dict[str, Any]], metadata: dic
         "budgetContract": metadata["budgetContract"],
         "budgetEnforced": metadata["budgetEnforced"],
         "metadata": report_metadata,
+        "preyMapManifest": str(PREY_MAP_MANIFEST),
         "requiredScenes": REQUIRED_SCENES,
         "worldAmbientScenes": WORLD_AMBIENT_SCENES,
         "interactionScenes": INTERACTION_SCENES,
         "fogBlendScenes": FOG_BLEND_SCENES,
         "loadRegressionScenes": LOAD_REGRESSION_SCENES,
         "shadowScenes": SHADOW_SCENES,
-        "campaignTransitionScenes": CAMPAIGN_TRANSITION_SCENES,
         "shadowPresets": SHADOW_PRESETS,
         "results": results,
     }
@@ -4980,6 +4584,7 @@ def write_reports(output_dir: Path, results: list[dict[str, Any]], metadata: dic
         f"- Runtime: `{metadata['runtime']['path']}` ({len(metadata['runtime']['files'])} hashed files)",
         f"- Runtime remained immutable: `{str(not metadata.get('runtimeVerificationFailures', [])).lower()}`",
         f"- Base path: `{metadata['basepath'] or 'not set'}`",
+        f"- Canonical Prey map manifest: `{PREY_MAP_MANIFEST}`",
         f"- Profile: `{metadata['profile']}`",
         f"- Benchmark preset: `{metadata['benchmarkPreset']}`",
         f"- Per-map budget contract: `{metadata['budgetContract']['contractId']}` (`{metadata['budgetContract']['sha256']}`)",
@@ -4990,13 +4595,13 @@ def write_reports(output_dir: Path, results: list[dict[str, Any]], metadata: dic
         "",
         "## Results",
         "",
-        "| Status | Case | Mode | Map | Tier | FPS | VSync | Display | Shadow | Pacing | Benchmark | Image | Screenshot | Log |",
-        "|---|---|---|---|---|---:|---:|---|---|---|---|---|---|---|",
+        "| Status | Case | Mode | Map | Path | Tier | FPS | VSync | Display | Shadow | Pacing | Benchmark | Image | Screenshot | Log |",
+        "|---|---|---|---|---|---|---:|---:|---|---|---|---|---|---|---|",
     ]
     for result in results:
         if result["status"] == "planned":
             lines.append(
-                f"| planned | `{result['id']}` | {result['mode']} | `{result['map']}` |  |  |  |  |  |  | dry run |  |  |  |"
+                f"| planned | `{result['id']}` | {result['mode']} | `{result['map']}` | `{result.get('path', '')}` |  |  |  |  |  |  | dry run |  |  |  |"
             )
             continue
         role = next((item for item in result.get("roles", []) if item["role"] in ("client", "sp")), result.get("roles", [{}])[0])
@@ -5025,12 +4630,12 @@ def write_reports(output_dir: Path, results: list[dict[str, Any]], metadata: dic
         screenshot = role.get("screenshot", "")
         log = role.get("log", "")
         lines.append(
-            f"| {result['status']} | `{result['id']}` | {result['mode']} | `{result['map']}` | `{result['tier']}` | {result['maxfps']} | {result['swapInterval']} | {result['display']} | `{result['shadowPreset']}` | {pacing or 'missing'} | {benchmark or 'missing'} | {image_status} | `{screenshot}` | `{log}` |"
+            f"| {result['status']} | `{result['id']}` | {result['mode']} | `{result['map']}` | `{result.get('path', '')}` | `{result['tier']}` | {result['maxfps']} | {result['swapInterval']} | {result['display']} | `{result['shadowPreset']}` | {pacing or 'missing'} | {benchmark or 'missing'} | {image_status} | `{screenshot}` | `{log}` |"
         )
         for role_result in result.get("roles", []):
             if role_result.get("missing"):
                 lines.append(
-                    f"|  | `{role_result['role']}` missing |  |  |  |  |  |  |  | {'; '.join(role_result['missing'])} |  |  |  |  |"
+                    f"|  | `{role_result['role']}` missing |  |  |  |  |  |  |  |  | {'; '.join(role_result['missing'])} |  |  |  |  |"
                 )
 
     scene_roles = [
@@ -5717,7 +5322,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--tiers", default="", help="Comma-separated r_glTier values. Overrides profile tiers.")
     parser.add_argument("--maxfps", default="", help="Comma-separated com_maxfps values. Overrides profile values.")
     parser.add_argument("--swap-intervals", default="", help="Comma-separated r_swapInterval values. Overrides profile values.")
-    parser.add_argument("--display-modes", default="", help="Comma-separated display modes: windowed,fullscreen.")
+    parser.add_argument("--display-modes", default="", help="Display mode. openPREY agent validation is windowed-only.")
     parser.add_argument("--width", type=int, default=BUDGET_WIDTH, help=f"Drawable width. Budget evidence requires {BUDGET_WIDTH}.")
     parser.add_argument("--height", type=int, default=BUDGET_HEIGHT, help=f"Drawable height. Budget evidence requires {BUDGET_HEIGHT}.")
     parser.add_argument("--shadow-presets", default="", help="Comma-separated shadow presets. Use --list to inspect values.")
@@ -5733,17 +5338,17 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--max-p99-ms", type=float, default=0.0, help="Fail when the parsed frame-pacing P99 exceeds this millisecond budget. Use 0 to disable.")
     parser.add_argument("--max-frame-ms", type=float, default=0.0, help="Fail when any sampled frame exceeds this millisecond budget. Use 0 to disable; the engine reports maxima to 0.01 ms.")
     parser.add_argument("--set-cvar", action="append", default=[], metavar="NAME=VALUE", help="Extra post-map cvar written into the generated benchmark cfg. Repeat for A/B diagnostics without extending the launch command line.")
-    parser.add_argument("--set-launch-cvar", action="append", default=[], metavar="NAME=VALUE", help="Extra cvar applied on the openQ4 launch command line before the map loads. Use for load-time renderer knobs such as vertex/index buffer caching.")
+    parser.add_argument("--set-launch-cvar", action="append", default=[], metavar="NAME=VALUE", help="Extra cvar applied on the openPREY launch command line before the map loads. Use for load-time renderer knobs such as vertex/index buffer caching.")
     parser.add_argument("--exec-command", action="append", default=[], metavar="COMMAND", help="Extra post-map console command written into the generated benchmark cfg. Repeat for targeted diagnostics such as flashlight impulses.")
     parser.add_argument("--autoexec-delay-ms", type=int, default=1000, help="Delay after active map draw before executing the generated benchmark cfg.")
     parser.add_argument("--settle-frames", type=int, default=360, help="Frames to wait after map/connect before sampling.")
     parser.add_argument("--sample-frames", type=int, default=600, help="Frames to sample before dumping metrics and screenshots.")
     parser.add_argument("--sample-msec", type=int, default=0, help="Real milliseconds to sample before dumping metrics and screenshots. Overrides --sample-frames when positive.")
     parser.add_argument("--timeout", type=int, default=180, help="Per-case process timeout in seconds.")
-    parser.add_argument("--basepath", default=default_basepath(), help="Quake 4 install/base path. Omit or set empty to skip fs_basepath.")
+    parser.add_argument("--basepath", default=default_basepath(), help="Prey (2006) install/base path. Omit or set empty to use engine discovery.")
     parser.add_argument("--runtime-dir", default="", help="Staged runtime package. Defaults to .install; alternates must be named ordinary directories below .tmp/stock-runtime/.")
     parser.add_argument("--budget-contract", default=str(DEFAULT_CONTRACT_PATH), help="Versioned per-map CPU/GPU budget JSON. Its stable id and SHA-256 are bound into the report.")
-    parser.add_argument("--verify-report", default="", help="Replay-verify a prior real benchmark report, runtime, artifacts, timing marker, and budget contract without launching openQ4.")
+    parser.add_argument("--verify-report", default="", help="Replay-verify a prior real benchmark report, runtime, artifacts, timing marker, and budget contract without launching openPREY.")
     parser.add_argument("--output-dir", default="", help="Report/output directory. Defaults to <repo>/.tmp/renderer-gameplay/<timestamp>.")
     parser.add_argument("--reference-dir", default="", help="Optional TGA reference screenshot root for deterministic image comparison.")
     parser.add_argument("--require-references", action="store_true", help="Fail captures when --reference-dir has no matching reference image.")
@@ -5756,7 +5361,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--mp-client-delay", type=int, default=12, help="Seconds to wait before launching the MP loopback client.")
     parser.add_argument("--mp-client-delay-frames", type=int, default=480, help="Extra server frames before server-side capture in MP runs.")
     parser.add_argument("--limit", type=int, default=0, help="Limit generated specs, useful for bounded local smoke runs.")
-    parser.add_argument("--dry-run", action="store_true", help="Write the planned command lines without launching openQ4.")
+    parser.add_argument("--dry-run", action="store_true", help="Write the planned command lines without launching openPREY.")
     parser.add_argument("--list", action="store_true", help="List profiles, cases, and shadow presets without running.")
     parsed = parser.parse_args(argv)
     if not math.isfinite(parsed.max_frame_ms) or parsed.max_frame_ms < 0:
@@ -5841,10 +5446,13 @@ def print_list() -> None:
             * len(defaults["display"])
         )
         profile_cvars = defaults.get("cvars", ())
+        profile_launch_cvars = defaults.get("launchCvars", ())
         profile_exec_commands = defaults.get("execCommands", ())
         annotations: list[str] = []
         if profile_cvars:
             annotations.append("cvars " + ", ".join(f"{key}={value}" for key, value in profile_cvars))
+        if profile_launch_cvars:
+            annotations.append("launch cvars " + ", ".join(f"{key}={value}" for key, value in profile_launch_cvars))
         if profile_exec_commands:
             annotations.append(f"{len(profile_exec_commands)} scripted command(s)")
         annotation_text = " - " + "; ".join(annotations) if annotations else ""
@@ -5855,27 +5463,6 @@ def print_list() -> None:
     print("\nShadow correctness cases:")
     for case_id, scene in SHADOW_SCENES.items():
         print(f"  {case_id}: {scene['mode']} {scene['map']} - {scene['purpose']}")
-    print("\nCampaign transition cases:")
-    for case_id, scene in CAMPAIGN_TRANSITION_SCENES.items():
-        print(f"  {case_id}: {scene['mode']} {scene['map']} - {scene['purpose']}")
-    print("\nWorld ambient ownership cases (run with --pacing-only):")
-    for case_id, scene in WORLD_AMBIENT_SCENES.items():
-        print(f"  {case_id}: {scene['mode']} {scene['map']} - {scene['purpose']}")
-    print("\nInteraction ownership cases (run with --pacing-only):")
-    for case_id, scene in INTERACTION_SCENES.items():
-        print(f"  {case_id}: {scene['mode']} {scene['map']} - {scene['purpose']}")
-    print("\nFog/blend ownership cases (run with --pacing-only):")
-    for case_id, scene in FOG_BLEND_SCENES.items():
-        print(f"  {case_id}: {scene['mode']} {scene['map']} - {scene['purpose']}")
-    print("\nMaterial-deform ownership cases (run with --pacing-only):")
-    for case_id, scene in DEFORM_SCENES.items():
-        print(f"  {case_id}: {scene['mode']} {scene['map']} - {scene['purpose']}")
-    print("\nStock interaction-shadow cases (run with --pacing-only):")
-    for case_id, scene in INTERACTION_SHADOW_SCENES.items():
-        print(
-            f"  {case_id}: {scene['mode']} {scene['map']} "
-            f"[{scene['interactionShadowTarget']}] - {scene['purpose']}"
-        )
     print("\nShadow presets:")
     for preset, cvars in SHADOW_PRESETS.items():
         cvar_text = ", ".join(f"{key}={value}" for key, value in cvars.items()) or "stock defaults"
@@ -6001,6 +5588,7 @@ def main(argv: list[str]) -> int:
         "maxP99Ms": args.max_p99_ms,
         "maxFrameMs": args.max_frame_ms,
         "profileCvars": dict(PROFILE_DEFAULTS[args.profile].get("cvars", ())),
+        "profileLaunchCvars": dict(PROFILE_DEFAULTS[args.profile].get("launchCvars", ())),
         "effectivePostMapCvars": effective_post_map_cvars(args.extra_cvars),
         "pbrFixtureAcceptanceRequired": args.pbr_fixture_acceptance_required,
         "pbrFixtureBinding": args.pbr_fixture_binding,

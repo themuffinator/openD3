@@ -80,6 +80,12 @@ void openQ4_RecordMultiplayerFramePacing( void );
 void Session_FinishPendingSave();
 static void Com_ProfileFrameWork_f( const idCmdArgs &args );
 
+#ifdef OPENQ4_RENDERER_MODULE_ONLY
+// The executable and renderer module each link their own render-geometry
+// library. Track ownership of the executable copy used by offline tools.
+static bool commonOwnsRenderGeoTriSurfData;
+#endif
+
 static const int OPENQ4_ENTITYDEF_MEDIA_CACHE_TOOL_MASK =
 	EDITOR_RADIANT |
 	EDITOR_MODVIEW |
@@ -126,7 +132,7 @@ const char *com_performancePresetArgs[] = { "minimum", "lowpower", "low", "perfo
 static const char *com_performancePresetValueStrings[] = { "balanced", "minimum", "lowpower", "low", "performance", "enhanced", "quality", "ultra", "maximum", NULL };
 idCVar com_performancePreset( "com_performancePreset", "balanced", CVAR_ARCHIVE | CVAR_SYSTEM, "coherent system performance preset: minimum, lowpower (both without shadows), low, performance, balanced, enhanced, quality, ultra, maximum (everything on, no frame-rate target)", com_performancePresetValueStrings, idCmdSystem::ArgCompletion_String<com_performancePresetArgs> );
 idCVar com_purgeAll( "com_purgeAll", "0", CVAR_BOOL | CVAR_ARCHIVE | CVAR_SYSTEM, "purge everything between level loads" );
-idCVar com_WriteSingleDeclFile( "com_WriteSingleDeclFile", "0", CVAR_SYSTEM | CVAR_BOOL, "write a packed decl file after startup or map loads; use com_singleDeclFileWriteMode for openQ4 or exact-retail game-type coverage" );
+idCVar com_WriteSingleDeclFile( "com_WriteSingleDeclFile", "0", CVAR_SYSTEM | CVAR_BOOL, "write a packed decl file after startup or map loads; use com_singleDeclFileWriteMode for compatibility or exact-retail game-type coverage" );
 idCVar com_memoryMarker( "com_memoryMarker", "-1", CVAR_INTEGER | CVAR_SYSTEM | CVAR_INIT, "used as a marker for memory stats" );
 idCVar com_preciseTic( "com_preciseTic", "1", CVAR_BOOL|CVAR_SYSTEM, "run one game tick every async thread update" );
 idCVar com_asyncInput( "com_asyncInput", "0", CVAR_BOOL|CVAR_SYSTEM, "sample input from the async thread" );
@@ -148,6 +154,15 @@ idCVar com_asyncSound( "com_asyncSound", "3", CVAR_INTEGER|CVAR_SYSTEM|CVAR_ROM,
 idCVar com_asyncSound( "com_asyncSound", "1", CVAR_INTEGER|CVAR_SYSTEM, ASYNCSOUND_INFO, 0, 1 );
 #endif
 idCVar com_productionMode("com_productionMode", "0", CVAR_SYSTEM | CVAR_BOOL, "0 - no special behavior, 1 - building a production build, 2 - running a production build");
+idCVar gui_filter_pb( "gui_filter_pb", "0", CVAR_ARCHIVE | CVAR_SYSTEM | CVAR_BOOL, "filter PunkBuster-protected servers in browser" );
+idCVar g_subtitles( "g_subtitles", "1", CVAR_ARCHIVE | CVAR_GAME | CVAR_BOOL, "enable subtitle display" );
+idCVar com_profanity( "com_profanity", "0", CVAR_ARCHIVE | CVAR_SYSTEM | CVAR_BOOL, "0 censors profanity; 1 plays and displays uncensored dialogue" );
+// r_correctspecular and r_normalizebumpmap drive the renderer's stock
+// interaction and are registered there (ClassicInteractionDomain.cpp).
+idCVar r_lowParticleDetail( "r_lowParticleDetail", "0", CVAR_ARCHIVE | CVAR_RENDERER | CVAR_BOOL, "reduce particle quality when non-zero" );
+idCVar s_musicvolume_dB( "s_musicvolume_dB", "-6", CVAR_ARCHIVE | CVAR_SOUND | CVAR_FLOAT, "music volume in decibels", -60.0f, 0.0f );
+idCVar s_reverse( "s_reverse", "0", CVAR_ARCHIVE | CVAR_SOUND | CVAR_BOOL, "reverse stereo channels" );
+idCVar g_levelloadmusic( "g_levelloadmusic", "1", CVAR_ARCHIVE | CVAR_GAME | CVAR_BOOL, "play map-defined music while levels are loading" );
 
 idCVar com_forceGenericSIMD( "com_forceGenericSIMD", "0", CVAR_BOOL | CVAR_SYSTEM | CVAR_NOCHEAT, "force generic platform independent SIMD" );
 idCVar com_developer( "developer", "0", CVAR_BOOL|CVAR_SYSTEM|CVAR_NOCHEAT, "developer mode" );
@@ -172,11 +187,11 @@ idCVar com_autoScreenshot( "com_autoScreenshot", "0", CVAR_SYSTEM | CVAR_BOOL | 
 idCVar com_makingBuild( "com_makingBuild", "0", CVAR_BOOL | CVAR_SYSTEM, "1 when making a build" );
 idCVar com_updateLoadSize( "com_updateLoadSize", "0", CVAR_BOOL | CVAR_SYSTEM | CVAR_NOCHEAT, "update the load size after loading a map" );
 idCVar com_videoRam( "com_videoRam", "64", CVAR_INTEGER | CVAR_SYSTEM | CVAR_NOCHEAT | CVAR_ARCHIVE, "holds the last amount of detected video ram" );
-idCVar com_activeGameModule( "com_activeGameModule", "", CVAR_SYSTEM | CVAR_NOCHEAT, "active game module (game_sp/game_mp)" );
+idCVar com_activeGameModule( "com_activeGameModule", "", CVAR_SYSTEM | CVAR_NOCHEAT, "active unified game module (game)" );
 idCVar com_nextGameModule( "com_nextGameModule", "", CVAR_SYSTEM | CVAR_NOCHEAT, "internal one-shot game module override for reloadEngine" );
 idCVar com_platformProfile( "com_platformProfile", "default", CVAR_SYSTEM | CVAR_INIT, "startup platform profile (default, steamdeck or couch)" );
 
-static bool openQ4_IsValidGameModuleName( const char *moduleName );
+static bool openPREY_IsValidGameModuleName( const char *moduleName );
 
 idCVar com_product_lang_ext( "com_product_lang_ext", "1", CVAR_INTEGER | CVAR_SYSTEM | CVAR_ARCHIVE, "Extension to use when creating language files." );
 idCVar r_skipGlowOverlay( "r_skipGlowOverlay", "0", CVAR_ARCHIVE | CVAR_RENDERER, "skip glow overlays when non-zero" );
@@ -933,6 +948,8 @@ static bool Common_FileContainsAnyToken( const char *path, const char **tokens, 
 
 static bool Common_HasSteamDeckHostSignal( void ) {
 	const char *explicitSignals[] = {
+		"OPENPREY_STEAMDECK",
+		"OPENPREY_AUTODETECT_STEAMDECK",
 		"OPENQ4_STEAMDECK",
 		"OPENQ4_AUTODETECT_STEAMDECK",
 		"SteamDeck",
@@ -984,6 +1001,7 @@ static bool Common_HasSteamDeckHostSignal( void ) {
 // OPENQ4_COUCH forces the answer either way.
 static bool Common_HasCouchHostSignal( void ) {
 	const char *explicitSignals[] = {
+		"OPENPREY_COUCH",
 		"OPENQ4_COUCH",
 		"OPENQ4_AUTODETECT_COUCH",
 		"SteamTenfoot"
@@ -1002,6 +1020,7 @@ static bool Common_HasCouchHostSignal( void ) {
 
 static bool Common_HasRaspberryPiHostSignal( void ) {
 	const char *explicitSignals[] = {
+		"OPENPREY_RASPBERRYPI",
 		"OPENQ4_RASPBERRYPI",
 		"OPENQ4_RPI",
 		"OPENQ4_AUTODETECT_RASPBERRYPI",
@@ -1035,6 +1054,7 @@ static bool Common_HasRaspberryPiHostSignal( void ) {
 
 static bool Common_HasExplicitLowPowerHostSignal( void ) {
 	const char *explicitSignals[] = {
+		"OPENPREY_LOWPOWER",
 		"OPENQ4_LOWPOWER",
 		"OPENQ4_LOW_POWER",
 		"OPENQ4_AUTODETECT_LOWPOWER"
@@ -1113,6 +1133,10 @@ public:
 	virtual const char *		KeysFromBinding( const char *bind );
 	virtual const char *		KeysFromBindingForPrompt( const char *bind );
 	virtual const char *		BindingFromKey( const char *key );
+	virtual void				MaterialKeyForBinding( const char *binding, char *keyMaterial, char *key, bool &isWide );
+	virtual void				SetGameSensitivityFactor( float factor );
+	virtual void				SetGamePadRumble( int effect );
+	virtual void				FixupKeyTranslations( const char *src, char *dst, int dstSize );
 
 	virtual int					ButtonState( int key );
 	virtual int					KeyState( int key );
@@ -1161,7 +1185,7 @@ static idStr Common_BuildPlatformProfileConfigName( const char *profileName ) {
 		return "";
 	}
 
-	return va( "openq4_profile_%s.cfg", sanitized.c_str() );
+	return va( "openprey_profile_%s.cfg", sanitized.c_str() );
 }
 	void						CheckToolMode( void );
 	void						CloseLogFile( void );
@@ -1477,7 +1501,7 @@ void idCommonLocal::VPrintf( const char *fmt, va_list args ) {
 			ID_TIME_T aclock;
 			idStr fileName = com_logFileName.GetString()[0] ? com_logFileName.GetString() : "qconsole.log";
 			if ( fileName.Icmp( "auto" ) == 0 ) {
-				fileName = "logs/openq4_%Y%m%d_%H%M%S.log";
+				fileName = "logs/openprey_%Y%m%d_%H%M%S.log";
 			}
 
 			char resolvedFileName[MAX_OSPATH];
@@ -2642,6 +2666,68 @@ static bool Common_SettingsSaveDirectory( std::string& directory, std::string& e
 	return true;
 }
 
+static bool openPREY_SavePathHasExactFilename( const char *relativeFilename ) {
+	if ( relativeFilename == NULL || relativeFilename[0] == '\0' ) {
+		return false;
+	}
+
+	const idStr osPath = fileSystem->RelativePathToOSPath( relativeFilename, "fs_savepath" );
+	idStr directory = osPath;
+	directory.StripFilename();
+	idStr filename = osPath;
+	filename.StripPath();
+	idStrList entries;
+	if ( Sys_ListFiles( directory.c_str(), "", entries ) < 0 ) {
+		return false;
+	}
+	for ( int i = 0; i < entries.Num(); ++i ) {
+		if ( idStr::Cmp( entries[i].c_str(), filename.c_str() ) == 0 ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+static bool openPREY_ExecConfigFromSavePath( const char *relativeFilename ) {
+	if ( !openPREY_SavePathHasExactFilename( relativeFilename ) ) {
+		return false;
+	}
+
+	const idStr osPath = fileSystem->RelativePathToOSPath( relativeFilename, "fs_savepath" );
+	idFile *file = fileSystem->OpenExplicitFileRead( osPath.c_str() );
+	if ( file == NULL ) {
+		return false;
+	}
+	fileSystem->CloseFile( file );
+	cmdSystem->BufferCommandText( CMD_EXEC_APPEND, va( "exec_savepath %s\n", relativeFilename ) );
+	return true;
+}
+
+static bool openPREY_NormalizeConfigFilenameCase( const char *loadedFilename ) {
+	if ( loadedFilename == NULL || idStr::Cmp( loadedFilename, CONFIG_FILE ) == 0 ) {
+		return true;
+	}
+
+	const idStr loadedOSPath = fileSystem->RelativePathToOSPath( loadedFilename, "fs_savepath" );
+	const idStr canonicalOSPath = fileSystem->RelativePathToOSPath( CONFIG_FILE, "fs_savepath" );
+	idStr temporaryOSPath = canonicalOSPath;
+	temporaryOSPath += va( ".case-migration-%u.tmp", Sys_Milliseconds() );
+
+	// A two-step rename is required on case-insensitive filesystems: opening the
+	// canonical spelling would otherwise reuse the legacy directory entry and
+	// leave its old casing in place.  Each failure keeps a recoverable copy.
+	if ( rename( loadedOSPath.c_str(), temporaryOSPath.c_str() ) != 0 ) {
+		common->Warning( "Couldn't prepare legacy config filename '%s' for casing migration", loadedFilename );
+		return false;
+	}
+	if ( rename( temporaryOSPath.c_str(), canonicalOSPath.c_str() ) != 0 ) {
+		rename( temporaryOSPath.c_str(), loadedOSPath.c_str() );
+		common->Warning( "Couldn't rename legacy config '%s' to '%s'", loadedFilename, CONFIG_FILE );
+		return false;
+	}
+	return true;
+}
+
 static void Common_CreateSettingsParent( const std::string& path ) {
 	// CreateOSPath recognizes only the native separator. DurableFile accepts
 	// these exact slash paths without VFS case correction or search fallbacks.
@@ -2786,6 +2872,29 @@ void idCommonLocal::WriteConfiguration( void ) {
 	session->WriteCDKey();
 }
 
+namespace {
+static const int PREY_TIP_BIND_BUFFER_SIZE = 256;
+
+static const char *Common_GetFirstKeyForBinding( const char *binding, bool localized ) {
+	if ( binding == NULL || binding[0] == '\0' ) {
+		return "";
+	}
+
+	for ( int keyNum = 0; keyNum < 256; keyNum++ ) {
+		const char *boundCommand = idKeyInput::GetBinding( keyNum );
+		if ( boundCommand != NULL && idStr::Icmp( boundCommand, binding ) == 0 ) {
+			return idKeyInput::KeyNumToString( keyNum, localized );
+		}
+	}
+
+	return "";
+}
+
+static bool Common_KeyMatches( const char *keyName, const char *comparison ) {
+	return idStr::Icmp( keyName, comparison ) == 0;
+}
+}
+
 /*
 ===============
 KeysFromBinding()
@@ -2814,6 +2923,115 @@ Returns the binding bound to key
 */
 const char* idCommonLocal::BindingFromKey( const char *key ) {
 	return idKeyInput::BindingFromKey( key );
+}
+
+/*
+===============
+idCommonLocal::MaterialKeyForBinding
+===============
+*/
+void idCommonLocal::MaterialKeyForBinding( const char *binding, char *keyMaterial, char *key, bool &isWide ) {
+	if ( keyMaterial != NULL ) {
+		keyMaterial[0] = '\0';
+	}
+	if ( key != NULL ) {
+		key[0] = '\0';
+	}
+	isWide = false;
+
+	if ( keyMaterial == NULL || key == NULL ) {
+		return;
+	}
+
+	const char *keyName = Common_GetFirstKeyForBinding( binding, false );
+	const char *localizedKeyName = Common_GetFirstKeyForBinding( binding, true );
+	const int localizedKeyLen = idStr::Length( localizedKeyName );
+
+	if ( keyName[0] == '\0' ) {
+		idStr::Copynz( keyMaterial, "textures/interface/tips/keywide", PREY_TIP_BIND_BUFFER_SIZE );
+		idStr::Copynz( key, common->GetLanguageDict()->GetString( "#str_07133" ), PREY_TIP_BIND_BUFFER_SIZE );
+		idStr::ToLower( key );
+		isWide = true;
+		return;
+	}
+
+	struct keyMaterialMapping_t {
+		const char *keyName;
+		const char *material;
+		bool wide;
+	};
+	static const keyMaterialMapping_t mappings[] = {
+		{ "mouse1", "textures/interface/tips/mouse1", false },
+		{ "mouse2", "textures/interface/tips/mouse2", false },
+		{ "mouse3", "textures/interface/tips/mouse3", false },
+		{ "mwheelup", "textures/interface/tips/mouseup", false },
+		{ "mwheeldown", "textures/interface/tips/mousedn", false },
+		{ "uparrow", "textures/interface/tips/uparrow", false },
+		{ "downarrow", "textures/interface/tips/downarrow", false },
+		{ "leftarrow", "textures/interface/tips/leftarrow", false },
+		{ "rightarrow", "textures/interface/tips/rightarrow", false },
+		{ "enter", "textures/interface/tips/enter", true },
+		{ "backspace", "textures/interface/tips/backspace", true },
+		{ "tab", "textures/interface/tips/tab", true },
+		{ "menu", "textures/interface/tips/menu", false },
+		{ "shift", "textures/interface/tips/shift", true }
+	};
+	for ( int i = 0; i < static_cast<int>( sizeof( mappings ) / sizeof( mappings[0] ) ); i++ ) {
+		if ( Common_KeyMatches( keyName, mappings[i].keyName ) ) {
+			idStr::Copynz( keyMaterial, mappings[i].material, PREY_TIP_BIND_BUFFER_SIZE );
+			isWide = mappings[i].wide;
+			return;
+		}
+	}
+
+	const bool shouldUseWideKey =
+		Common_KeyMatches( keyName, "printscreen" ) ||
+		idStr::Icmpn( keyName, "kp_", 3 ) == 0 ||
+		Common_KeyMatches( keyName, "pause" ) ||
+		Common_KeyMatches( keyName, "capslock" ) ||
+		Common_KeyMatches( keyName, "lwin" ) ||
+		Common_KeyMatches( keyName, "rwin" ) ||
+		Common_KeyMatches( keyName, "ctrl" ) ||
+		Common_KeyMatches( keyName, "alt" ) ||
+		Common_KeyMatches( keyName, "space" ) ||
+		localizedKeyLen > 3;
+
+	idStr::Copynz(
+		keyMaterial,
+		shouldUseWideKey ? "textures/interface/tips/keywide" : "textures/interface/tips/key",
+		PREY_TIP_BIND_BUFFER_SIZE );
+	idStr::Copynz( key, localizedKeyName, PREY_TIP_BIND_BUFFER_SIZE );
+	isWide = shouldUseWideKey;
+}
+
+/*
+===============
+idCommonLocal::SetGameSensitivityFactor
+===============
+*/
+void idCommonLocal::SetGameSensitivityFactor( float factor ) {
+	usercmdGen->SetGameSensitivityFactor( factor );
+}
+
+void idCommonLocal::SetGamePadRumble( int effect ) {
+	if ( effect <= 0 ) {
+		Sys_SetJoystickRumble( 0.0f, 0.0f, 0 );
+		return;
+	}
+	const float strength = idMath::ClampFloat( 0.25f, 1.0f, effect * 0.25f );
+	Sys_SetJoystickRumble( strength, strength * 0.75f, 250 );
+}
+
+/*
+===============
+idCommonLocal::FixupKeyTranslations
+===============
+*/
+void idCommonLocal::FixupKeyTranslations( const char *src, char *dst, int dstSize ) {
+	if ( dst == NULL || dstSize <= 0 ) {
+		return;
+	}
+	idStr::Copynz( dst, src != NULL ? src : "", dstSize );
 }
 
 /*
@@ -4797,7 +5015,7 @@ void Com_ReloadGameModule_f( const idCmdArgs &args ) {
 	// Copy CVar-backed strings before teardown. Config replay and module unload
 	// can replace their backing storage while this command is still running.
 	const idStr requestedModule = cvarSystem->GetCVarString( "com_nextGameModule" );
-	if ( !openQ4_IsValidGameModuleName( requestedModule.c_str() ) ) {
+	if ( !openPREY_IsValidGameModuleName( requestedModule.c_str() ) ) {
 		common->Printf( "reloadGameModule requested without a valid com_nextGameModule; falling back to reloadEngine\n" );
 		Com_ReloadEngine_f( args );
 		return;
@@ -4809,7 +5027,7 @@ void Com_ReloadGameModule_f( const idCmdArgs &args ) {
 
 #ifndef ID_DEDICATED
 	if ( !com_skipRenderer.GetBool() && renderSystem->IsOpenGLRunning() ) {
-		commonLocal.PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_104350" ) );
+		commonLocal.PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_04350" ) );
 	}
 #endif
 
@@ -4861,7 +5079,7 @@ void Com_ReloadGameModule_f( const idCmdArgs &args ) {
 			swapError.c_str() );
 
 		bool rollbackSucceeded = false;
-		if ( oldShutdownComplete && cleanupError.IsEmpty() && openQ4_IsValidGameModuleName( previousModule.c_str() ) ) {
+		if ( oldShutdownComplete && cleanupError.IsEmpty() && openPREY_IsValidGameModuleName( previousModule.c_str() ) ) {
 			// The requested si_gameType already names the new module by this point.
 			// Restore a safe canonical mode for the old module before declarations
 			// are rebuilt; the user's archived settings replay normally afterwards.
@@ -6051,9 +6269,9 @@ void idCommonLocal::InitCommands( void ) {
 	cmdSystem->AddCommand( "reloadGameModule", Com_ReloadGameModule_f, CMD_FL_SYSTEM, "reloads the active game module while preserving the render window" );
 	cmdSystem->AddCommand( "setMachineSpec", Com_SetMachineSpec_f, CMD_FL_SYSTEM, "detects system capabilities and sets com_machineSpec to appropriate value" );
 	cmdSystem->AddCommand( "execMachineSpec", Com_ExecMachineSpec_f, CMD_FL_SYSTEM, "execs the appropriate config files and sets cvars based on com_machineSpec" );
-	cmdSystem->AddCommand( "applyPerformancePreset", Com_ApplyPerformancePreset_f, CMD_FL_SYSTEM, "applies the selected openQ4 performance preset", idCmdSystem::ArgCompletion_String<com_performancePresetArgs> );
-	cmdSystem->AddCommand( "autoDetectPerformancePreset", Com_AutoDetectPerformancePreset_f, CMD_FL_SYSTEM, "detects and applies a conservative openQ4 performance preset" );
-	cmdSystem->AddCommand( "performancePresetSelfTest", Com_PerformancePresetSelfTest_f, CMD_FL_SYSTEM, "validates openQ4 performance preset commands and cvar mappings" );
+	cmdSystem->AddCommand( "applyPerformancePreset", Com_ApplyPerformancePreset_f, CMD_FL_SYSTEM, "applies the selected openPREY performance preset", idCmdSystem::ArgCompletion_String<com_performancePresetArgs> );
+	cmdSystem->AddCommand( "autoDetectPerformancePreset", Com_AutoDetectPerformancePreset_f, CMD_FL_SYSTEM, "detects and applies a conservative openPREY performance preset" );
+	cmdSystem->AddCommand( "performancePresetSelfTest", Com_PerformancePresetSelfTest_f, CMD_FL_SYSTEM, "validates openPREY performance preset commands and cvar mappings" );
 	cmdSystem->AddCommand( "jobsStats", Com_JobsStats_f, CMD_FL_SYSTEM, "prints bounded job-service scheduling and timing counters" );
 	cmdSystem->AddCommand( "jobsSelfTest", Com_JobsSelfTest_f, CMD_FL_SYSTEM, "validates job execution, dependencies, deterministic fallback, and metrics" );
 	cmdSystem->AddCommand( "netIPv4SelfTest", Com_NetIPv4SelfTest_f, CMD_FL_SYSTEM, "validates IPv4 parsing and UDP loopback transport" );
@@ -6158,7 +6376,7 @@ void idCommonLocal::InitRenderSystem( void ) {
 		ImageTools_SetCompressionCaps( compressionCaps );
 	}
 
-	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_104343" ) );
+	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_04343" ) );
 }
 
 /*
@@ -6186,6 +6404,50 @@ static int Common_CountVisibleSmallChars( const char *string ) {
 		s += Max( 1, LangDict_NextCodePoint( reinterpret_cast<const char *>( s ), UTF8_MAX_BYTES, codePoint ) );
 	}
 	return count;
+}
+
+static const idMaterial *Common_FindFirstResolvedMaterial( const char * const *materialNames, int materialCount ) {
+	const idMaterial *fallback = NULL;
+	for ( int i = 0; i < materialCount; i++ ) {
+		const char *materialName = materialNames[i];
+		if ( materialName == NULL || materialName[0] == '\0' ) {
+			continue;
+		}
+
+		const idMaterial *material = declManager->FindMaterial( materialName, true );
+		if ( fallback == NULL ) {
+			fallback = material;
+		}
+		if ( material != NULL && material->GetState() != DS_DEFAULTED ) {
+			return material;
+		}
+	}
+	return fallback;
+}
+
+static void Common_DrawLoadingExpansionSlice( const idMaterial *material, const float splashX, const float splashY,
+	const float splashW, const float splashH, const float expansionSize, const float baseExtent,
+	const bool vertical, const bool trailingEdge ) {
+	if ( material == NULL || expansionSize <= 0.0f || baseExtent <= 0.0f ) {
+		return;
+	}
+
+	const float fraction = idMath::ClampFloat( 0.0f, 1.0f, expansionSize / baseExtent );
+	if ( fraction <= 0.0f ) {
+		return;
+	}
+
+	if ( vertical ) {
+		if ( trailingEdge ) {
+			renderSystem->DrawStretchPic( splashX, splashY + splashH, splashW, expansionSize, 0.0f, 0.0f, 1.0f, fraction, material );
+		} else {
+			renderSystem->DrawStretchPic( splashX, splashY - expansionSize, splashW, expansionSize, 0.0f, 1.0f - fraction, 1.0f, 1.0f, material );
+		}
+	} else if ( trailingEdge ) {
+		renderSystem->DrawStretchPic( splashX + splashW, splashY, expansionSize, splashH, 0.0f, 0.0f, fraction, 1.0f, material );
+	} else {
+		renderSystem->DrawStretchPic( splashX - expansionSize, splashY, expansionSize, splashH, 1.0f - fraction, 0.0f, 1.0f, 1.0f, material );
+	}
 }
 
 /*
@@ -6397,20 +6659,53 @@ void idCommonLocal::PrintLoadingMessage( const char *msg ) {
 		splashH = correctedH;
 	}
 
-	renderSystem->SetColor( idVec4( 24.0f / 255.0f, 26.0f / 255.0f, 8.0f / 255.0f, 1.0f ) );
+	renderSystem->SetColor( colorBlack );
 	renderSystem->DrawStretchPic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 1, 1, declManager->FindMaterial( "_white" ) );
-	renderSystem->FlushGui();
-	renderSystem->SetColor( idVec4( 1.0f, 1.0f, 1.0f, 1.0f ) );
-	renderSystem->DrawStretchPic( splashX, splashY, splashW, splashH, 0, 0, 1, 1, declManager->FindMaterial( "gfx/splashScreen" ) );
+	renderSystem->SetColor( colorWhite );
+	static const char *splashMaterialCandidates[] = {
+		"guis/assets/loading/loading",
+		"gfx/guis/loadscreens/generic",
+		"gfx/splashScreen",
+		"gfx/splashscreen"
+	};
+	const idMaterial *splashMaterial = Common_FindFirstResolvedMaterial(
+		splashMaterialCandidates,
+		static_cast<int>( sizeof( splashMaterialCandidates ) / sizeof( splashMaterialCandidates[0] ) ) );
+	if ( splashMaterial != NULL ) {
+		if ( idStr::IcmpPath( splashMaterial->GetName(), "guis/assets/loading/loading" ) == 0 ) {
+			static const char *edgeMaterialNames[] = {
+				"guis/assets/loading/loading_left",
+				"guis/assets/loading/loading_right",
+				"guis/assets/loading/loading_top",
+				"guis/assets/loading/loading_bottom"
+			};
+			const idMaterial *edgeMaterials[4];
+			for ( int i = 0; i < 4; i++ ) {
+				edgeMaterials[i] = Common_FindFirstResolvedMaterial( &edgeMaterialNames[i], 1 );
+			}
+
+			const float xExpand = splashX > 0.0f ? splashX : 0.0f;
+			const float yExpand = splashY > 0.0f ? splashY : 0.0f;
+			if ( xExpand > 0.0f ) {
+				Common_DrawLoadingExpansionSlice( edgeMaterials[0], splashX, splashY, splashW, splashH, xExpand, splashW, false, false );
+				Common_DrawLoadingExpansionSlice( edgeMaterials[1], splashX, splashY, splashW, splashH, xExpand, splashW, false, true );
+			} else if ( yExpand > 0.0f ) {
+				Common_DrawLoadingExpansionSlice( edgeMaterials[2], splashX, splashY, splashW, splashH, yExpand, splashH, true, false );
+				Common_DrawLoadingExpansionSlice( edgeMaterials[3], splashX, splashY, splashW, splashH, yExpand, splashH, true, true );
+			}
+		}
+		renderSystem->DrawStretchPic( splashX, splashY, splashW, splashH, 0, 0, 1, 1, splashMaterial );
+	}
 
 	const int charCount = Common_CountVisibleSmallChars( msg );
 	const float charWidth = SMALLCHAR_WIDTH * textScaleX;
 	const float charHeight = SMALLCHAR_HEIGHT * textScaleY;
 	const float textWidth = charCount * charWidth;
 	const float textX = correctedX + ( correctedW - textWidth ) * 0.5f;
-	const float textY = correctedY + 410.0f * textScaleY;
+	const float textY = correctedY + 410.0f * textScaleY +
+		( cvarSystem->GetCVarBool( "ui_aspectCorrection" ) ? splashY : 0.0f );
 	Common_DrawScaledSmallString( textX, textY, charWidth, charHeight, msg,
-		idVec4( 0.94f, 0.62f, 0.05f, 1.0f ), true, declManager->FindMaterial( "fonts/english/bigchars", false ) );
+		idVec4( 0.65f, 0.75f, 1.0f, 0.8f ), true, declManager->FindMaterial( "textures/bigchars", false ) );
 	renderSystem->SetColor( idVec4( 1.0f, 1.0f, 1.0f, 1.0f ) );
 	settingsFrame.Submitting();
 	renderSystem->EndFrame( NULL, NULL );
@@ -6855,6 +7150,28 @@ void idCommonLocal::Async( void ) {
 	}
 }
 
+static bool openPREY_IsValidGameModuleName( const char *moduleName ) {
+	if ( moduleName == NULL || moduleName[0] == '\0' ) {
+		return false;
+	}
+
+	static const char *acceptedNames[] = {
+		"game", "game_sp", "game_mp",
+		"game_x64", "game_x86", "game_arm64", "game_universal2",
+		"gamex64", "gamex86",
+		NULL
+	};
+	for ( int i = 0; acceptedNames[i] != NULL; i++ ) {
+		if ( idStr::Icmp( moduleName, acceptedNames[i] ) == 0 ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+// Upstream's split-module routing table. openPREY loads one unified 'game'
+// module, so openQ4_NormalizeGameTypeForModule only acts on legacy game_mp
+// requests; the table stays so upstream's call sites keep their meaning.
 // Mirror of the multiplayer rows in the GameLibs descriptor table
 // (src/mpgame/mp/GameTypes.cpp), including whether each row is selectable. The
 // engine has to choose a game module before any module is loaded, so it cannot
@@ -6906,12 +7223,6 @@ static const char *openQ4_CanonicalMultiplayerGameType( const char *gameType, co
 	return NULL;
 }
 
-#ifndef ID_DEDICATED
-static bool openQ4_IsMultiplayerGameType( const char *gameType ) {
-	return openQ4_CanonicalMultiplayerGameType( gameType, false ) != NULL;
-}
-#endif
-
 static void openQ4_NormalizeGameTypeForModule( const char *moduleName ) {
 	if ( idStr::Icmp( moduleName, "game_mp" ) != 0 ) {
 		return;
@@ -6936,47 +7247,48 @@ static void openQ4_NormalizeGameTypeForModule( const char *moduleName ) {
 	cvarSystem->SetCVarString( "si_gameType", "DM" );
 }
 
-static bool openQ4_IsValidGameModuleName( const char *moduleName ) {
-	return moduleName
-		&& ( idStr::Icmp( moduleName, "game_sp" ) == 0 || idStr::Icmp( moduleName, "game_mp" ) == 0 );
-}
-
-static const char *openQ4_SelectGameModuleBaseName( void ) {
+static const char *openPREY_SelectGameModuleBaseName( void ) {
 	const char *nextModule = cvarSystem->GetCVarString( "com_nextGameModule" );
-	if ( openQ4_IsValidGameModuleName( nextModule ) ) {
-		return idStr::Icmp( nextModule, "game_mp" ) == 0 ? "game_mp" : "game_sp";
+	if ( nextModule != NULL && nextModule[0] != '\0' && !openPREY_IsValidGameModuleName( nextModule ) ) {
+		common->DWarning( "Ignoring unknown game-module request '%s'; openPREY uses the unified 'game' module", nextModule );
 	}
-
-	const char *gameType = cvarSystem->GetCVarString( "si_gameType" );
-#ifdef ID_DEDICATED
-	// A dedicated server has no single-player mode at all (StartNewGame refuses
-	// there), so keep the historical "anything but singleplayer" reading rather
-	// than sending an unrecognised gametype to the single-player module.
-	return ( gameType != NULL && idStr::Icmp( gameType, "singleplayer" ) == 0 ) ? "game_sp" : "game_mp";
-#else
-	return openQ4_IsMultiplayerGameType( gameType ) ? "game_mp" : "game_sp";
-#endif
+	return "game";
 }
 
 #if defined( _M_X64 ) || defined( __x86_64__ )
-	#define OPENQ4_MODULE_ARCH_TAG "x64"
+	#define OPENPREY_MODULE_ARCH_TAG "x64"
 #elif defined( _M_IX86 ) || defined( __i386__ )
-	#define OPENQ4_MODULE_ARCH_TAG "x86"
+	#define OPENPREY_MODULE_ARCH_TAG "x86"
 #elif defined( _M_ARM64 ) || defined( __aarch64__ )
-	#define OPENQ4_MODULE_ARCH_TAG "arm64"
+	#define OPENPREY_MODULE_ARCH_TAG "arm64"
 #else
-	#define OPENQ4_MODULE_ARCH_TAG "unknown"
+	#define OPENPREY_MODULE_ARCH_TAG "unknown"
 #endif
-static void openQ4_BuildGameModuleBinaryNameForArch( const char *moduleName, const char *archTag, char outName[ MAX_OSPATH ] ) {
-	const char *variant = ( moduleName && idStr::Icmp( moduleName, "game_mp" ) == 0 ) ? "mp" : "sp";
-	idStr::snPrintf( outName, MAX_OSPATH, "game-%s_%s", variant, archTag );
+
+static void openPREY_AddUniqueGameModuleCandidate( idStrList &candidates, const char *moduleName ) {
+	if ( moduleName == NULL || moduleName[0] == '\0' || candidates.FindIndex( moduleName ) != -1 ) {
+		return;
+	}
+	candidates.Append( moduleName );
 }
 
-static void openQ4_BuildGameModuleBinaryName( const char *moduleName, char outName[ MAX_OSPATH ] ) {
-	openQ4_BuildGameModuleBinaryNameForArch( moduleName, OPENQ4_MODULE_ARCH_TAG, outName );
+static void openPREY_BuildGameModuleCandidateList( idStrList &candidates ) {
+	candidates.Clear();
+	openPREY_AddUniqueGameModuleCandidate( candidates, va( "game_%s", OPENPREY_MODULE_ARCH_TAG ) );
+#if defined( _M_X64 ) || defined( __x86_64__ )
+	openPREY_AddUniqueGameModuleCandidate( candidates, "gamex64" );
+#elif defined( _M_IX86 ) || defined( __i386__ )
+	openPREY_AddUniqueGameModuleCandidate( candidates, "gamex86" );
+#endif
+#if defined( MACOS_X ) || defined( __APPLE__ )
+	// Thin packages use the architecture-tagged name; universal2 packages use
+	// one two-slice module shared by both executable slices.
+	openPREY_AddUniqueGameModuleCandidate( candidates, "game_universal2" );
+#endif
+	openPREY_AddUniqueGameModuleCandidate( candidates, "game" );
 }
 
-static void openQ4_DisableBSEWithWarning( const char *reason, bool showDialog = true ) {
+static void openPREY_DisableBSEWithWarning( const char *reason, bool showDialog = true ) {
 	static bool warnedConsole = false;
 	if ( !warnedConsole ) {
 		warnedConsole = true;
@@ -6995,12 +7307,12 @@ static void openQ4_DisableBSEWithWarning( const char *reason, bool showDialog = 
 			"BSE initialization failed.\n\nReason: %s\n\nEffects will be disabled.",
 			reason ? reason : "unknown reason"
 		);
-		::MessageBoxA( NULL, message, "openQ4 Warning", MB_OK | MB_ICONWARNING | MB_SYSTEMMODAL );
+		::MessageBoxA( NULL, message, "openPREY Warning", MB_OK | MB_ICONWARNING | MB_SYSTEMMODAL );
 	}
 #endif
 
 	::declEffectEdit = NULL;
-	::bseAllocDeclEffect = openQ4_AllocIntegratedBSEDeclEffect;
+	::bseAllocDeclEffect = openPREY_AllocIntegratedBSEDeclEffect;
 	::bse = &bseDisabledLocal;
 }
 
@@ -7013,12 +7325,12 @@ void idCommonLocal::AttachBSE( void ) {
 #ifdef __DOOM_DLL__
 	::bse = &bseDisabledLocal;
 	::declEffectEdit = NULL;
-	::bseAllocDeclEffect = openQ4_AllocIntegratedBSEDeclEffect;
+	::bseAllocDeclEffect = openPREY_AllocIntegratedBSEDeclEffect;
 
 #if !defined( ID_DEDICATED )
 	common->DPrintf( "Attaching integrated BSE.\n" );
-	::bse = openQ4_GetIntegratedBSEManager();
-	::declEffectEdit = openQ4_GetIntegratedBSEDeclEffectEdit();
+	::bse = openPREY_GetIntegratedBSEManager();
+	::declEffectEdit = openPREY_GetIntegratedBSEDeclEffectEdit();
 #else
 	common->DPrintf( "Attaching integrated BSE decl allocator with disabled runtime manager.\n" );
 #endif
@@ -7123,51 +7435,47 @@ void idCommonLocal::LoadGameDLL( void ) {
 	SetGameTimeScale( 1.0f );
 	gameShutdownCalled = false;
 	gameShutdownAfterDeclsCalled = false;
-	const char *gameModuleBaseName = openQ4_SelectGameModuleBaseName();
+	const char *gameModuleBaseName = openPREY_SelectGameModuleBaseName();
 	openQ4_NormalizeGameTypeForModule( gameModuleBaseName );
 
 #ifdef __DOOM_DLL__
 	char			dllPath[ MAX_OSPATH ];
-	char			preferredGameModuleBinary[ MAX_OSPATH ];
-#if defined( MACOS_X ) || defined( __APPLE__ )
-	char			universalGameModuleBinary[ MAX_OSPATH ];
-#endif
-	const char *	selectedModuleBinary;
+	idStr			attemptedCandidates;
+	idStr			selectedModuleBinary;
+	idStrList		gameModuleCandidates;
 
-	gameImport_t	gameImport;
-	gameExport_t	gameExport;
+	gameImport_t	gameImport = {};
+	gameExport_t	gameExport = {};
 	GetGameAPI_t	GetGameAPI;
 
 	Com_SetGameModuleLoadPhase( GAME_MODULE_PHASE_LOCATE );
 
-	openQ4_BuildGameModuleBinaryName( gameModuleBaseName, preferredGameModuleBinary );
-	selectedModuleBinary = preferredGameModuleBinary;
-	fileSystem->FindDLL( selectedModuleBinary, dllPath, true );
-
-#if defined( MACOS_X ) || defined( __APPLE__ )
-	// Thin packages retain architecture-specific module names. A universal2
-	// package instead carries a single two-slice module per game variant, so
-	// both executable slices must converge on the same trusted module name.
-	if ( !dllPath[ 0 ] ) {
-		openQ4_BuildGameModuleBinaryNameForArch( gameModuleBaseName, "universal2", universalGameModuleBinary );
-		fileSystem->FindDLL( universalGameModuleBinary, dllPath, true );
-		if ( dllPath[ 0 ] ) {
-			selectedModuleBinary = universalGameModuleBinary;
+	dllPath[0] = '\0';
+	openPREY_BuildGameModuleCandidateList( gameModuleCandidates );
+	for ( int i = 0; i < gameModuleCandidates.Num(); i++ ) {
+		if ( attemptedCandidates.Length() > 0 ) {
+			attemptedCandidates += ", ";
+		}
+		attemptedCandidates += gameModuleCandidates[i];
+		dllPath[0] = '\0';
+		fileSystem->FindDLL( gameModuleCandidates[i].c_str(), dllPath, true );
+		if ( dllPath[0] != '\0' ) {
+			selectedModuleBinary = gameModuleCandidates[i];
+			break;
 		}
 	}
-#endif
 
-	if ( !dllPath[ 0 ] ) {
+	if ( dllPath[0] == '\0' ) {
 		common->FatalError(
-			"couldn't find game dynamic library '%s'",
-			preferredGameModuleBinary
+			"couldn't find unified game dynamic library (tried: %s)",
+			attemptedCandidates.c_str()
 		);
 		return;
 	}
 	common->Printf(
 		"Selected game module: logical='%s' binary='%s' path='%s'\n",
 		gameModuleBaseName,
-		selectedModuleBinary,
+		selectedModuleBinary.c_str(),
 		dllPath );
 	common->DPrintf( "Loading game DLL: '%s'\n", dllPath );
 	Com_SetGameModuleLoadPhase( GAME_MODULE_PHASE_BINARY_LOAD );
@@ -7176,9 +7484,9 @@ void idCommonLocal::LoadGameDLL( void ) {
 		common->Printf(
 			"Game module load failed: logical='%s' binary='%s' path='%s'; inspect the preceding platform loader error.\n",
 			gameModuleBaseName,
-			selectedModuleBinary,
+			selectedModuleBinary.c_str(),
 			dllPath );
-		common->FatalError( "couldn't load game dynamic library '%s'", selectedModuleBinary );
+		common->FatalError( "couldn't load game dynamic library '%s'", selectedModuleBinary.c_str() );
 		return;
 	}
 	// before GetGameAPI registers the module's cvars; spent by the unload
@@ -7207,9 +7515,9 @@ void idCommonLocal::LoadGameDLL( void ) {
 	gameImport.declManager				= ::declManager;
 	gameImport.AASFileManager			= ::AASFileManager;
 	gameImport.collisionModelManager	= ::collisionModelManager;
-	gameImport.bse						= ::bse;
-	gameImport.vrSystem					= ::vrSystem;
-	gameImport.usercmdGen				= ::usercmdGen;
+#if defined( INGAME_PROFILER_ENABLED ) && INGAME_PROFILER_ENABLED
+	gameImport.profiler					= NULL;
+#endif
 
 	Com_SetGameModuleLoadPhase( GAME_MODULE_PHASE_CALL_GET_GAME_API );
 	const gameExport_t *gameExportPtr = GetGameAPI( &gameImport );
@@ -7218,16 +7526,27 @@ void idCommonLocal::LoadGameDLL( void ) {
 		gameDLL = NULL;
 		common->FatalError(
 			"game module '%s' returned no export table from GetGameAPI",
-			selectedModuleBinary );
+			selectedModuleBinary.c_str() );
 		return;
 	}
 	gameExport							= *gameExportPtr;
 
 	Com_SetGameModuleLoadPhase( GAME_MODULE_PHASE_VERIFY_API_VERSION );
 	if ( gameExport.version != GAME_API_VERSION ) {
+		const int loadedVersion = gameExport.version;
 		Com_UnloadGameModuleBinary( gameDLL, gameModuleCompletions );
 		gameDLL = NULL;
-		common->FatalError( "wrong game DLL API version (expected %d, got %d)", GAME_API_VERSION, gameExport.version );
+		common->FatalError(
+			"wrong game DLL API version for '%s' (expected %d, got %d)",
+			selectedModuleBinary.c_str(), GAME_API_VERSION, loadedVersion );
+		return;
+	}
+	if ( gameExport.game == NULL || gameExport.gameEdit == NULL ) {
+		Com_UnloadGameModuleBinary( gameDLL, gameModuleCompletions );
+		gameDLL = NULL;
+		common->FatalError(
+			"game module '%s' returned an incomplete export table",
+			selectedModuleBinary.c_str() );
 		return;
 	}
 
@@ -7249,7 +7568,9 @@ void idCommonLocal::LoadGameDLL( void ) {
 		game->Init();
 	}
 	openQ4_singleplayerGameModuleReady.store(
-		game != NULL && idStr::Icmp( gameModuleBaseName, "game_sp" ) == 0,
+		// openPREY's unified "game" module serves single player too; the async
+		// timer still rules out network sessions itself.
+		game != NULL && ( idStr::Icmp( gameModuleBaseName, "game" ) == 0 || idStr::Icmp( gameModuleBaseName, "game_sp" ) == 0 ),
 		std::memory_order_release );
 	Com_SetGameModuleLoadPhase( GAME_MODULE_PHASE_READY );
 }
@@ -7290,8 +7611,15 @@ void idCommonLocal::ApplyAutomaticPlatformProfile( void ) {
 		return;
 	}
 
-	if ( Common_IsEnvFlagTrue( Common_GetNonEmptyEnv( "OPENQ4_DISABLE_STEAMDECK_AUTODETECT" ) ) ||
-		 Common_IsEnvFlagTrue( Common_GetNonEmptyEnv( "OPENQ4_NO_STEAMDECK_AUTODETECT" ) ) ) {
+	const char *disableAutoDetect = Common_GetNonEmptyEnv( "OPENPREY_DISABLE_STEAMDECK_AUTODETECT" );
+	if ( disableAutoDetect == NULL ) {
+		disableAutoDetect = Common_GetNonEmptyEnv( "OPENQ4_DISABLE_STEAMDECK_AUTODETECT" );
+	}
+	const char *noAutoDetect = Common_GetNonEmptyEnv( "OPENPREY_NO_STEAMDECK_AUTODETECT" );
+	if ( noAutoDetect == NULL ) {
+		noAutoDetect = Common_GetNonEmptyEnv( "OPENQ4_NO_STEAMDECK_AUTODETECT" );
+	}
+	if ( Common_IsEnvFlagTrue( disableAutoDetect ) || Common_IsEnvFlagTrue( noAutoDetect ) ) {
 		Printf( "Steam Deck platform profile auto-detection disabled by environment.\n" );
 	} else if ( Common_HasSteamDeckHostSignal() ) {
 		Printf( "Auto-selecting steamdeck platform profile from host environment.\n" );
@@ -7577,8 +7905,8 @@ void idCommonLocal::InitGame( void ) {
 	// A game-module reload rebuilds declarations before it replays archived cfgs.
 	// Canonicalize the pending multiplayer mode at the start of that rebuild;
 	// doing this only in LoadGameDLL is too late for the decl checksum.
-	const idStr pendingGameModule = openQ4_SelectGameModuleBaseName();
-	const bool preservePendingGameType = openQ4_IsValidGameModuleName(
+	const idStr pendingGameModule = openPREY_SelectGameModuleBaseName();
+	const bool preservePendingGameType = openPREY_IsValidGameModuleName(
 		cvarSystem->GetCVarString( "com_nextGameModule" ) );
 	openQ4_NormalizeGameTypeForModule( pendingGameModule.c_str() );
 	const idStr pendingGameType = cvarSystem->GetCVarString( "si_gameType" );
@@ -7589,6 +7917,13 @@ void idCommonLocal::InitGame( void ) {
     }
 	// initialize the file system
 	fileSystem->Init();
+
+#ifdef OPENQ4_RENDERER_MODULE_ONLY
+	if ( !commonOwnsRenderGeoTriSurfData ) {
+		R_InitTriSurfData();
+		commonOwnsRenderGeoTriSurfData = true;
+	}
+#endif
 
 	// attach the integrated BSE manager before decl initialization so DECL_EFFECT
 	// allocation is available when effect declarations are parsed.
@@ -7645,7 +7980,7 @@ void idCommonLocal::InitGame( void ) {
 		allowStartupLanguageAutoSelect &&
 		idStr::Icmp( startupLanguageBeforeAutoSelect.c_str(), cvarSystem->GetCVarString( "sys_lang" ) ) != 0;
 
-	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_104343" ) );
+	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_04343" ) );
 
 	// load the font, etc
 	console->LoadGraphics();
@@ -7653,14 +7988,17 @@ void idCommonLocal::InitGame( void ) {
 	// init journalling, etc
 	eventLoop->Init();
 
-	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_104343" ) );
+	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_04343" ) );
 
 	// exec the startup scripts
 	if ( fileSystem->ReadFile( "editor.cfg", NULL ) >= 0 ) {
 		cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "exec editor.cfg\n" );
 	}
 	cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "exec default.cfg\n" );
-	if ( fileSystem->ReadFile( "openq4_defaults.cfg", NULL ) >= 0 ) {
+	if ( fileSystem->ReadFile( "openprey_defaults.cfg", NULL ) >= 0 ) {
+		cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "exec openprey_defaults.cfg\n" );
+	} else if ( fileSystem->ReadFile( "openq4_defaults.cfg", NULL ) >= 0 ) {
+		// Temporary config migration alias for existing development installs.
 		cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "exec openq4_defaults.cfg\n" );
 	}
 	if ( detectStartupPreset ) {
@@ -7677,10 +8015,16 @@ void idCommonLocal::InitGame( void ) {
 		cmdSystem->BufferCommandText( CMD_EXEC_APPEND, va( "exec %s\n", platformProfileConfig.c_str() ) );
 	}
 
+	const char *legacyConfigNameToMigrate = NULL;
+
 	// skip the config file if "safe" is on the command line
 	if ( !SafeMode() ) {
-		if ( fileSystem->ReadFile( CONFIG_FILE, NULL ) >= 0 ) {
-			cmdSystem->BufferCommandText( CMD_EXEC_APPEND, "exec " CONFIG_FILE "\n" );
+		if ( !openPREY_ExecConfigFromSavePath( CONFIG_FILE ) ) {
+			if ( openPREY_ExecConfigFromSavePath( INTERIM_CONFIG_FILE ) ) {
+				legacyConfigNameToMigrate = INTERIM_CONFIG_FILE;
+			} else if ( openPREY_ExecConfigFromSavePath( LEGACY_CONFIG_FILE ) ) {
+				legacyConfigNameToMigrate = LEGACY_CONFIG_FILE;
+			}
 		}
 	}
 
@@ -7699,6 +8043,11 @@ void idCommonLocal::InitGame( void ) {
 
 	// run cfg execution
 	cmdSystem->ExecuteCommandBuffer();
+	if ( legacyConfigNameToMigrate != NULL ) {
+		Printf( "Migrating settings to %s\n", CONFIG_FILE );
+		openPREY_NormalizeConfigFilenameCase( legacyConfigNameToMigrate );
+		WriteConfigToFile( CONFIG_FILE );
+	}
 	if ( keepSavedLanguage && savedLanguage.Icmp( cvarSystem->GetCVarString( "sys_lang" ) ) != 0 ) {
 		Printf( "Keeping the saved language '%s' over sys_lang '%s' from " BASE_GAMEDIR "/autoexec.cfg.\n",
 			savedLanguage.c_str(), cvarSystem->GetCVarString( "sys_lang" ) );
@@ -7768,12 +8117,12 @@ void idCommonLocal::InitGame( void ) {
 	// init the user command input code
 	usercmdGen->Init();
 
-	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_104346" ) );
+	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_04346" ) );
 
 	// start the sound system, but don't do any hardware operations yet
 	soundSystem->Init();
 
-	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_104347" ) );
+	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_04347" ) );
 
 	// init async network
 	idAsyncNetwork::Init();
@@ -7787,7 +8136,7 @@ void idCommonLocal::InitGame( void ) {
 		cvarSystem->SetCVarBool( "s_noSound", true );
 	} else {
 		// init OpenGL, which will open a window and connect sound and input hardware
-		PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_104348" ) );
+		PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_04348" ) );
 		if ( !com_skipRenderer.GetBool() && !R_RendererModule_PrepareStartupDevice() ) {
 			// No UI, BSE runtime, game DLL or session has been initialized yet.
 			// The regular owner teardown releases renderer-allocated declarations
@@ -7807,25 +8156,25 @@ void idCommonLocal::InitGame( void ) {
 #endif
 
 	InitializationScope initializationScope;
-	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_104349" ) );
+	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_04349" ) );
 
 	// initialize the user interfaces
 	uiManager->Init();
 
 	// initialize the BSE system before the game DLL starts creating effects
 	if ( bse && !bse->Init() ) {
-		openQ4_DisableBSEWithWarning( "BSE initialization failed" );
+		openPREY_DisableBSEWithWarning( "BSE initialization failed" );
 	}
 
 	// startup the script debugger
 	// DebuggerServerInit();
 
-	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_104350" ) );
+	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_04350" ) );
 
 	// load the game dll
 	LoadGameDLL();
 	
-	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_104351" ) );
+	PrintLoadingMessage( common->GetLanguageDict()->GetString( "#str_04351" ) );
 
 	// init the session
 	session->Init();
@@ -7914,6 +8263,13 @@ void idCommonLocal::ShutdownGame( bool reloading ) {
 		renderSystem->Shutdown();
 	}
 
+#ifdef OPENQ4_RENDERER_MODULE_ONLY
+	if ( commonOwnsRenderGeoTriSurfData ) {
+		R_ShutdownTriSurfData();
+		commonOwnsRenderGeoTriSurfData = false;
+	}
+#endif
+
 	// shutdown the decl manager while the game DLL is still loaded, because
 	// game-owned decl types (e.g. entity/fx decls) can have module-local vtables.
 	declManager->Shutdown();
@@ -7925,7 +8281,10 @@ void idCommonLocal::ShutdownGame( bool reloading ) {
 	if ( game != NULL && !gameShutdownAfterDeclsCalled ) {
 		// As above, publish the one-shot state before crossing the module boundary.
 		gameShutdownAfterDeclsCalled = true;
+#if !defined( HUMANHEAD )
+		// Prey's v7 idGame has one shutdown phase; its decls are released by Shutdown.
 		game->ShutdownAfterDecls();
+#endif
 	}
 
 	// unload the game dll after game-owned decl instances are released

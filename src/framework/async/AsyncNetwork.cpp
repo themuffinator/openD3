@@ -93,6 +93,14 @@ int					idAsyncNetwork::realTime;
 master_t			idAsyncNetwork::masters[ MAX_MASTER_SERVERS ];
 bool				idAsyncNetwork::dedicatedSpawnDeferred = false;
 
+static bool AsyncNetwork_ModuleSupportsMultiplayer( const char *moduleName ) {
+	if ( moduleName == NULL || moduleName[0] == '\0' ) {
+		return false;
+	}
+	return idStr::Icmp( moduleName, "game" ) == 0 ||
+		idStr::Icmp( moduleName, "game_mp" ) == 0;
+}
+
 /*
 ==================
 idAsyncNetwork::idAsyncNetwork
@@ -541,8 +549,8 @@ void idAsyncNetwork::SpawnServer_f( const idCmdArgs &args ) {
 	}
 
 	const char *activeModule = cvarSystem->GetCVarString( "com_activeGameModule" );
-	if ( idStr::Icmp( activeModule, "game_mp" ) != 0 ) {
-		cvarSystem->SetCVarString( "com_nextGameModule", "game_mp" );
+	if ( !AsyncNetwork_ModuleSupportsMultiplayer( activeModule ) ) {
+		cvarSystem->SetCVarString( "com_nextGameModule", "game" );
 		idCmdArgs reloadArgs;
 		reloadArgs.AppendArg( "spawnServer" );
 		if ( args.Argc() > 1 ) {
@@ -677,8 +685,8 @@ void idAsyncNetwork::Connect_f( const idCmdArgs &args ) {
 	}
 
 	const char *activeModule = cvarSystem->GetCVarString( "com_activeGameModule" );
-	if ( idStr::Icmp( activeModule, "game_mp" ) != 0 ) {
-		cvarSystem->SetCVarString( "com_nextGameModule", "game_mp" );
+	if ( !AsyncNetwork_ModuleSupportsMultiplayer( activeModule ) ) {
+		cvarSystem->SetCVarString( "com_nextGameModule", "game" );
 		idCmdArgs reloadArgs;
 		reloadArgs.AppendArg( "connect" );
 		// One argument, so the replayed command survives re-tokenization.
@@ -701,8 +709,8 @@ void idAsyncNetwork::Reconnect_f( const idCmdArgs &args ) {
 		cvarSystem->SetCVarString( "si_gameType", "DM" );
 	}
 	const char *activeModule = cvarSystem->GetCVarString( "com_activeGameModule" );
-	if ( idStr::Icmp( activeModule, "game_mp" ) != 0 ) {
-		cvarSystem->SetCVarString( "com_nextGameModule", "game_mp" );
+	if ( !AsyncNetwork_ModuleSupportsMultiplayer( activeModule ) ) {
+		cvarSystem->SetCVarString( "com_nextGameModule", "game" );
 		idCmdArgs reloadArgs;
 		reloadArgs.AppendArg( "reconnect" );
 		cmdSystem->SetupReloadGameModule( reloadArgs );

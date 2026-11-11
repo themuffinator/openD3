@@ -107,8 +107,10 @@ def validate_companion_ci_revision() -> None:
 
 def validate_companion_boundary() -> None:
     meson=read('meson.build')
-    for tree in ('game','mpgame'):
-        assert (ROOT / 'src' / tree / 'Game_local.h').is_file()
+    assert (ROOT / 'src' / 'game' / 'Game_local.h').is_file()
+    for tree in ('Prey','preyengine'):
+        assert (ROOT / 'src' / tree).is_dir()
+    assert not (ROOT / 'src' / 'mpgame').exists()
     require(meson,'game_libs_repo_root = meson.project_source_root()','in-tree source ownership')
     reject(meson,'stage_gamelibs.py','direct compiler inputs')
     require(meson,"output: 'openq4_game_sources.json'",'canonical source inventory')

@@ -143,7 +143,10 @@ typedef enum {
 } textureRepeat_t;
 
 typedef struct {
-	int		stayTime;		// msec for full decal lifetime
+	int		stayTime;		// msec at full color
+	int		fadeTime;		// msec spent interpolating start to end
+	float	start[4];		// color multiplier before fading
+	float	end[4];			// color multiplier after fading
 	float	maxAngle;		// minimum face-normal dot against projection direction
 } decalInfo_t;
 
@@ -153,12 +156,15 @@ typedef enum {
 	DFRM_RECTSPRITE,
 	DFRM_TUBE,
 	DFRM_FLARE,
+	DFRM_CORONA,
 	DFRM_EXPAND,
 	DFRM_MOVE,
 	DFRM_EYEBALL,
 	DFRM_PARTICLE,
 	DFRM_PARTICLE2,
-	DFRM_TURB
+	DFRM_TURB,
+	DFRM_BEAM,		// Prey: re-orients a beam mesh about its axis to face the viewer
+	DFRM_JITTER		// Prey: offsets/scales the mesh by bits of an expression
 } deform_t;
 
 typedef enum {
@@ -169,8 +175,16 @@ typedef enum {
 	DI_REFLECTION_RENDER,
 	DI_REFRACTION_RENDER,
 	DI_XRAY_RENDER,
-	DI_REMOTE_RENDER
+	DI_REMOTE_RENDER,
+	DI_PORTAL_RENDER,
+	DI_SKYBOX_RENDER
 } dynamicidImage_t;
+
+typedef enum {
+	SC_MIRROR,
+	SC_PORTAL,
+	SC_PORTAL_SKYBOX
+} subviewClass_t;
 
 // note: keep opNames[] in sync with changes
 typedef enum {
@@ -207,6 +221,7 @@ typedef enum {
 	EXP_REG_PARM9,
 	EXP_REG_PARM10,
 	EXP_REG_PARM11,
+	EXP_REG_PARM12,
 
 	EXP_REG_GLOBAL0,
 	EXP_REG_GLOBAL1,
@@ -217,6 +232,10 @@ typedef enum {
 	EXP_REG_GLOBAL6,
 	EXP_REG_GLOBAL7,
 	EXP_REG_VERTEX_RANDOM,
+	EXP_REG_FRAGMENT_PROGRAMS,
+	EXP_REG_SCOPE_VIEW,
+	EXP_REG_SPIRIT_WALK,
+	EXP_REG_SHUTTLE_VIEW,
 
 	EXP_REG_NUM_PREDEFINED
 } expRegister_t;
@@ -260,7 +279,8 @@ typedef enum {
 	SL_AMBIENT,						// execute after lighting
 	SL_BUMP,
 	SL_DIFFUSE,
-	SL_SPECULAR
+	SL_SPECULAR,
+	SL_INTERACTION					// programmable interaction rendered per-light
 } stageLighting_t;
 
 // cross-blended terrain textures need to modulate the color by
@@ -351,6 +371,7 @@ typedef struct {
 	int					numFragmentProgramImages;
 	legacyFragmentProgramBinding_t fragmentProgramBindings[MAX_FRAGMENT_IMAGES];
 	idImage* fragmentProgramImages[MAX_FRAGMENT_IMAGES];
+	bool				interactionProgram;
 
 	bool				glslProgram;
 	char				glslProgramName[MAX_GLSL_SHADER_NAME];
@@ -389,6 +410,7 @@ typedef struct {
 	colorStage_t		color;
 	bool				hasAlphaTest;
 	bool				hasAlphaFunc;
+	bool				glowStage;			// participates in Prey's emissive glow-only view
 	int					alphaTestMode;
 	int					alphaTestRegister;
 	textureStage_t		texture;
@@ -398,7 +420,16 @@ typedef struct {
 	float				privatePolygonOffset;	// a per-stage polygon offset
 
 	newShaderStage_t* newStage;			// vertex / fragment program based stage
+
+	// Prey's per-stage specular power ("specularExp <exponent>, <brightness>").
+	// Retail's corrected-specular interactions shade specular as
+	// pow( N.H, exponent ) * brightness; every stage defaults to 22, 1.4.
+	float				specularExponent;
+	float				specularBrightness;
 } shaderStage_t;
+
+const float MATERIAL_DEFAULT_SPECULAR_EXPONENT = 22.0f;
+const float MATERIAL_DEFAULT_SPECULAR_BRIGHTNESS = 1.4f;
 
 typedef enum {
 	MC_BAD,
@@ -442,7 +473,7 @@ const int MAX_SHADER_STAGES = 256;
 
 const int MAX_TEXGEN_REGISTERS = 4;
 
-const int MAX_ENTITY_SHADER_PARMS = 12;
+const int MAX_ENTITY_SHADER_PARMS = 13;
 
 // material flags
 typedef enum {
@@ -476,6 +507,20 @@ typedef enum {
 	CONTENTS_AAS_SOLID = BIT(13),	// solid for AAS
 	CONTENTS_AAS_OBSTACLE = BIT(14),	// used to compile an obstacle into AAS that can be enabled/disabled
 	CONTENTS_FLASHLIGHT_TRIGGER = BIT(15),	// used for triggers that are activated by the flashlight
+#ifdef HUMANHEAD
+	CONTENTS_FORCEFIELD			= BIT(16),
+	CONTENTS_SPIRITBRIDGE		= BIT(17),
+	CONTENTS_AREAPORTAL			= BIT(18),
+	CONTENTS_NOCSG				= BIT(19),
+	CONTENTS_BLOCK_RADIUSDAMAGE = BIT(20),
+	CONTENTS_SHOOTABLE			= BIT(21),
+	CONTENTS_DEATHVOLUME		= BIT(22),
+	CONTENTS_VEHICLECLIP		= BIT(23),
+	CONTENTS_OWNER_TO_OWNER		= BIT(24),
+	CONTENTS_GAME_PORTAL		= BIT(25),
+	CONTENTS_SHOOTABLEBYARROW	= BIT(26),
+	CONTENTS_HUNTERCLIP			= BIT(27),
+#else
 // RAVEN BEGIN
 // bdube: new clip that blocks monster visibility
 	CONTENTS_SIGHTCLIP			= BIT(16),	// used for blocking sight for actors and cameras
@@ -499,6 +544,7 @@ typedef enum {
 	CONTENTS_LAVA				= BIT(26),
 	CONTENTS_SLIME				= BIT(27),
 // jmarshall end
+#endif
 
 	CONTENTS_REMOVE_UTIL = ~(CONTENTS_AREAPORTAL | CONTENTS_NOCSG)
 } contentsFlags_t;
@@ -507,6 +553,34 @@ typedef enum {
 const int NUM_SURFACE_BITS = 4;
 const int MAX_SURFACE_TYPES = 1 << NUM_SURFACE_BITS;
 
+#ifdef HUMANHEAD
+typedef enum {
+	SURFTYPE_NONE,
+	SURFTYPE_METAL,
+	SURFTYPE_STONE,
+	SURFTYPE_FLESH,
+	SURFTYPE_WOOD,
+	SURFTYPE_CARDBOARD,
+	SURFTYPE_LIQUID,
+	SURFTYPE_GLASS,
+	SURFTYPE_TILE,
+	SURFTYPE_WALLWALK,
+	SURFTYPE_ALTMETAL,
+	SURFTYPE_FORCEFIELD,
+	SURFTYPE_PIPE,
+	SURFTYPE_SPIRIT,
+	SURFTYPE_CHAFF,
+	NUM_SURFACE_TYPES,
+	SURFTYPE_PLASTIC = SURFTYPE_TILE,
+	SURFTYPE_RICOCHET = SURFTYPE_ALTMETAL,
+	SURFTYPE_10 = SURFTYPE_FORCEFIELD,
+	SURFTYPE_11 = SURFTYPE_PIPE,
+	SURFTYPE_12 = SURFTYPE_SPIRIT,
+	SURFTYPE_13 = SURFTYPE_CHAFF,
+	SURFTYPE_14 = SURFTYPE_CHAFF,
+	SURFTYPE_15 = SURFTYPE_CHAFF
+} surfTypes_t;
+#else
 typedef enum {
 	SURFTYPE_NONE,					// default type
 	SURFTYPE_METAL,
@@ -525,6 +599,7 @@ typedef enum {
 	SURFTYPE_14,
 	SURFTYPE_15
 } surfTypes_t;
+#endif
 
 // surface flags
 typedef enum {
@@ -807,8 +882,11 @@ public:
 	// particle system to emit from surface and table for turbulent
 	const idDecl* GetDeformDecl(void) const { return deformDecl; }
 
-	// currently a surface can only have one unique texgen for all the stages
+	// Legacy first non-explicit stage query.  Stage renderers should inspect the
+	// stage itself; surface setup uses GetSurfaceTexgen for generated vertices.
 	texgen_t			Texgen() const;
+	bool				HasTexgen( texgen_t texgen ) const;
+	texgen_t			GetSurfaceTexgen() const;
 
 	// wobble sky parms
 	const int* GetTexGenRegisters(void) const { return texGenRegisters; }
@@ -886,6 +964,8 @@ public:
 
 	bool				SuppressInSubview() const { return suppressInSubview; };
 	bool				IsPortalSky() const { return portalSky; };
+	subviewClass_t		GetSubviewClass() const { return subviewClass; }
+	int					GetDirectPortalDistance() const { return directPortalDistance; }
 	void				AddReference();
 	void				ClearUseCount() { useCount = 0; }
 	void				IncreaseUseCount() { useCount++; globalUseCount++; }
@@ -1020,6 +1100,8 @@ private:
 
 	bool				suppressInSubview;
 	bool				portalSky;
+	subviewClass_t		subviewClass;
+	int					directPortalDistance;
 	pbrMaterialInfo_t	pbrInfo;
 	specularProbeMaterialInfo_t specularProbeInfo;
 	// parse-time structural fact: some stage carries an active-able customLighting

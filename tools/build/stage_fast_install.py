@@ -14,10 +14,10 @@ from windows_runtime import cleanup_windows_stage_target, is_windows_host
 
 
 ROOT_RUNTIME_PATTERNS = (
-    "openQ4-client_*.exe",
-    "openQ4-client_*.pdb",
-    "openQ4-ded_*.exe",
-    "openQ4-ded_*.pdb",
+    "openPREY-client_*.exe",
+    "openPREY-client_*.pdb",
+    "openPREY-ded_*.exe",
+    "openPREY-ded_*.pdb",
     "renderer-gl_*.dll",
     "renderer-gl_*.pdb",
     "renderer-vk_*.dll",
@@ -25,8 +25,8 @@ ROOT_RUNTIME_PATTERNS = (
     "OpenAL32.dll",
 )
 POSIX_ENGINE_RUNTIME_PATTERNS = (
-    "openQ4-client_*",
-    "openQ4-ded_*",
+    "openPREY-client_*",
+    "openPREY-ded_*",
 )
 LINUX_ROOT_RUNTIME_PATTERNS = (
     *POSIX_ENGINE_RUNTIME_PATTERNS,
@@ -42,20 +42,16 @@ COMMON_GAME_RUNTIME_PATTERNS = (
     *OPENQ4_PACK_NAMES,
 )
 GAME_RUNTIME_PATTERNS = (
-    "game-sp_*.dll",
-    "game-sp_*.pdb",
-    "game-mp_*.dll",
-    "game-mp_*.pdb",
+    "game_*.dll",
+    "game_*.pdb",
     *COMMON_GAME_RUNTIME_PATTERNS,
 )
 LINUX_GAME_RUNTIME_PATTERNS = (
-    "game-sp_*.so",
-    "game-mp_*.so",
+    "game_*.so",
     *COMMON_GAME_RUNTIME_PATTERNS,
 )
 MACOS_GAME_RUNTIME_PATTERNS = (
-    "game-sp_*.dylib",
-    "game-mp_*.dylib",
+    "game_*.dylib",
     *COMMON_GAME_RUNTIME_PATTERNS,
 )
 NON_RUNTIME_PATTERNS = (
@@ -70,16 +66,16 @@ WINDOWS_FOREIGN_RUNTIME_PATTERNS = (
     "*.dylib",
 )
 POSIX_ENGINE_FOREIGN_RUNTIME_PATTERNS = (
-    "openQ4-client_*.exe",
-    "openQ4-client_*.pdb",
-    "openQ4-client_*.dll",
-    "openQ4-client_*.so",
-    "openQ4-client_*.dylib",
-    "openQ4-ded_*.exe",
-    "openQ4-ded_*.pdb",
-    "openQ4-ded_*.dll",
-    "openQ4-ded_*.so",
-    "openQ4-ded_*.dylib",
+    "openPREY-client_*.exe",
+    "openPREY-client_*.pdb",
+    "openPREY-client_*.dll",
+    "openPREY-client_*.so",
+    "openPREY-client_*.dylib",
+    "openPREY-ded_*.exe",
+    "openPREY-ded_*.pdb",
+    "openPREY-ded_*.dll",
+    "openPREY-ded_*.so",
+    "openPREY-ded_*.dylib",
 )
 
 
@@ -129,7 +125,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--source-root",
         default=str(Path(__file__).resolve().parents[2]),
-        help="openQ4 source root used to validate the fast staging target.",
+        help="openPREY source root used to validate the fast staging target.",
     )
     parser.add_argument(
         "--temporary-runtime",
@@ -259,8 +255,8 @@ def main(argv: list[str]) -> int:
         source_root = source_root.resolve()
         build_dir = build_dir.resolve()
         install_dir = install_dir.resolve()
-        build_game_dir = build_dir / "baseoq4"
-        install_game_dir = install_dir / "baseoq4"
+        build_game_dir = build_dir / "basepr"
+        install_game_dir = install_dir / "basepr"
         install_dir.mkdir(parents=True, exist_ok=True)
         install_game_dir.mkdir(parents=True, exist_ok=True)
 

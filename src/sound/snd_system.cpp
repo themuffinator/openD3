@@ -32,6 +32,13 @@ If you have questions concerning this license or the applicable additional terms
 #include "SoundRestart.h"
 #include "SoundMemoryTrim.h"
 #include "VoiceChat.h"
+#include "OpenAL/AL_LoadingMusic.h"
+#include "../framework/Session_local.h"
+
+extern idCVar g_subtitles;
+extern idCVar s_directStereo;
+extern idCVar s_volume_dB;
+extern idCVar s_musicvolume_dB;
 
 // NOCHEAT as in retail Quake4.exe 1.4.2: a multiplayer spawn or join without
 // cheats resets every other unarchived CVar, which switched a dedicated server's
@@ -44,6 +51,7 @@ idCVar ui_subtitles( "ui_subtitles", "0", CVAR_GUI | CVAR_ARCHIVE | CVAR_BOOL | 
 idCVar ui_subtitleScale( "ui_subtitleScale", "1", CVAR_GUI | CVAR_ARCHIVE | CVAR_FLOAT | CVAR_NOCHEAT, "subtitle text size", 1.0f, 2.0f );
 idCVar ui_subtitleBackground( "ui_subtitleBackground", "0.6", CVAR_GUI | CVAR_ARCHIVE | CVAR_FLOAT | CVAR_NOCHEAT, "subtitle backing opacity", 0.0f, 1.0f );
 idCVar ui_subtitleSpeakers( "ui_subtitleSpeakers", "1", CVAR_GUI | CVAR_ARCHIVE | CVAR_BOOL | CVAR_NOCHEAT, "show available subtitle speaker names" );
+idCVar s_logSubtitles( "s_logSubtitles", "0", CVAR_SOUND | CVAR_BOOL, "print SOUND_SUBTITLE whenever the Prey sound-shader subtitle queue changes: sound time, shader, cue, channel start and whether a hardware voice is playing it" );
 idCVar s_speakerFraction( "s_speakerFraction", "0.65", CVAR_ARCHIVE | CVAR_FLOAT, "speaker attenuation fraction" );
 idCVar s_radioChatterFraction( "s_radioChatterFraction", "0.9", CVAR_ARCHIVE | CVAR_FLOAT, "radio chatter attenuation fraction" );
 idCVar s_frequencyShift( "s_frequencyShift", "1", CVAR_BOOL, "enable sound shader frequency shift playback" );
@@ -97,6 +105,44 @@ void S_TrimMemory( const char* reason )
 static const int SOUND_RUMBLE_DURATION_MSEC = 120;
 static const float SOUND_RUMBLE_STOP_THRESHOLD = 0.01f;
 static const float SOUND_RUMBLE_HIGH_MOTOR_SCALE = 0.75f;
+static const float SOUND_SUBTITLE_AUDIBILITY_EPSILON = 1.0f / 1024.0f;
+static const int SOUND_SUBTITLE_DISPLAY_CHANNELS = 4;
+
+static float SoundAliasDBToLinear( float db )
+{
+	return idMath::ClampFloat( 0.0f, 1.0f, DBtoLinearClamped( db ) );
+}
+
+static void SyncVolumeAliasCVars( idCVar& linearCvar, idCVar& dbCvar )
+{
+	const bool linearModified = linearCvar.IsModified();
+	const bool dbModified = dbCvar.IsModified();
+	if( dbModified || !linearModified )
+	{
+		const float linear = SoundAliasDBToLinear( dbCvar.GetFloat() );
+		if( idMath::Fabs( linearCvar.GetFloat() - linear ) > 0.0001f )
+		{
+			linearCvar.SetFloat( linear );
+		}
+	}
+	else
+	{
+		const float linear = idMath::ClampFloat( 0.0f, 1.0f, linearCvar.GetFloat() );
+		const float db = linear <= 0.0f ? DB_SILENCE : idMath::ClampFloat( DB_SILENCE, 0.0f, LinearToDB( linear ) );
+		if( idMath::Fabs( dbCvar.GetFloat() - db ) > 0.01f )
+		{
+			dbCvar.SetFloat( db );
+		}
+	}
+	linearCvar.ClearModified();
+	dbCvar.ClearModified();
+}
+
+static void SyncVolumeCompatibilityCVars()
+{
+	SyncVolumeAliasCVars( s_volume, s_volume_dB );
+	SyncVolumeAliasCVars( s_musicVolume, s_musicvolume_dB );
+}
 
 static void Sound_UpdateControllerRumble( float amplitude )
 {
@@ -270,6 +316,28 @@ void ListSamples_f( const idCmdArgs& args )
 	ListSounds_f( args );
 }
 
+void ListSubtitles_f( const idCmdArgs& args )
+{
+	const char* filter = args.Argc() > 1 ? args.Argv( 1 ) : NULL;
+	int total = 0;
+	for( int i = 0; i < soundSystemLocal.soundSubtitleList.Num(); i++ )
+	{
+		const soundSubtitleList_t& list = soundSystemLocal.soundSubtitleList[i];
+		if( filter != NULL && filter[0] != '\0' && idStr::Icmp( filter, list.soundName ) != 0 )
+		{
+			continue;
+		}
+		idLib::Printf( "%5d: %s\n", i, list.soundName.c_str() );
+		for( int j = 0; j < list.subList.Num(); j++ )
+		{
+			const soundSub_t& subtitle = list.subList[j];
+			idLib::Printf( "\tsub %3d ch %2d %6.3f %s\n", subtitle.subNum, subtitle.subChannel + 1, subtitle.subTime, subtitle.subText.c_str() );
+			total++;
+		}
+	}
+	idLib::Printf( "%d subtitle entries\n", total );
+}
+
 /*
 ========================
 ListSoundDecoders_f
@@ -348,7 +416,7 @@ void ListPlayingSounds_f( const idCmdArgs& args )
 	soundSystemLocal.hardware.ListPlayingVoices();
 }
 
-static void ListSubtitles_f( const idCmdArgs& args ) {
+static void ListActiveSubtitles_f( const idCmdArgs& args ) {
 	(void)args;
 	idSoundWorld* world = soundSystemLocal.GetSoundWorldFromId(SOUNDWORLD_GAME);
 	soundSubtitle_t cues[2];
@@ -452,7 +520,9 @@ idSoundSystemLocal::Restart
 void idSoundSystemLocal::Restart()
 {
 	if (SoundSettings_BlockAutomaticRestart()) return;
-	const bool wasMuted = IsMuted();
+	// Restart needs a temporary hard mute, but must not turn a focus-only mute
+	// into the persistent/manual mute state when the device comes back.
+	const bool wasMuted = IsMutedExplicitly();
 	SetMute( true );
 
 	// Mute all channels in all worlds
@@ -566,6 +636,11 @@ void idSoundSystemLocal::Init()
 
 	soundTime = Sys_Milliseconds();
 	random.SetSeed( soundTime );
+	sb_subtitleQueue.Clear();
+	sf_subtitleQueue.Clear();
+	soundSubtitleList.Clear();
+	subtitleQueueChanged = false;
+	SyncVolumeCompatibilityCVars();
 
 	if( !s_noSound.GetBool() )
 	{
@@ -578,7 +653,8 @@ void idSoundSystemLocal::Init()
 	cmdSystem->AddCommand( "listSounds", ListSounds_f, CMD_FL_SOUND, "lists all sounds" );
 	cmdSystem->AddCommand( "listPlayingSounds", ListPlayingSounds_f, CMD_FL_SOUND, "lists currently playing sounds" );
 	cmdSystem->AddCommand( "s_dialogueVoices", SoundDialogueVoices_f, CMD_FL_SOUND, "reports current game-channel dialogue routing and OpenAL gain without printing transcripts" );
-	cmdSystem->AddCommand( "listSubtitles", ListSubtitles_f, CMD_FL_SOUND, "lists active subtitle identifiers and sample times without printing transcripts" );
+	// listSubtitles is openPREY's Prey subtitle table listing (registered below).
+	cmdSystem->AddCommand( "listActiveSubtitles", ListActiveSubtitles_f, CMD_FL_SOUND, "lists active subtitle identifiers and sample times without printing transcripts" );
 	cmdSystem->AddCommand( "s_soundDistances", SoundDistances_f, CMD_FL_SOUND,
 		"reports authored ranges, mixed distances and OpenAL spatial state", idCmdSystem::ArgCompletion_SoundName );
 	cmdSystem->AddCommand( "s_soundWorlds", SoundWorlds_f, CMD_FL_SOUND, "reports game/menu sound clocks and pause state" );
@@ -589,6 +665,7 @@ void idSoundSystemLocal::Init()
 	cmdSystem->AddCommand( "reloadSounds", ReloadSounds_f, CMD_FL_SOUND | CMD_FL_CHEAT, "reloads all sounds" );
 	cmdSystem->AddCommand( "s_restart", RestartSound_f, CMD_FL_SOUND, "restarts the sound system" );
 	cmdSystem->AddCommand( "listSamples", ListSamples_f, CMD_FL_SOUND, "lists all loaded sound samples" );
+	cmdSystem->AddCommand( "listSubtitles", ListSubtitles_f, CMD_FL_SOUND, "lists registered Prey subtitle entries" );
 	cmdSystem->AddCommand( "listReverbs", ListReverbs_f, CMD_FL_SOUND, "lists the reverb presets, the map's area reverbs and the active reverb slots" );
 
 	idLib::Printf( "sound system initialized.\n" );
@@ -647,6 +724,11 @@ idSoundSystemLocal::Shutdown
 */
 void idSoundSystemLocal::Shutdown()
 {
+	ClearSubtitleRuntimeQueue();
+	soundSubtitleList.Clear();
+	// Session teardown has already detached the playing sound world and hidden
+	// subtitles while the UI manager is still alive.  Sound shutdown runs after
+	// UI shutdown, so it must not call back into session-owned GUI objects here.
 	decodingSamples.Clear();
 	samples.DeleteContents( true );
 	sampleHash.Free();
@@ -791,6 +873,8 @@ void idSoundSystemLocal::SetPlayingSoundWorld( idSoundWorld* soundWorld )
 	idSoundWorldLocal* oldSoundWorld = currentSoundWorld;
 
 	currentSoundWorld = static_cast<idSoundWorldLocal*>( soundWorld );
+	ClearSubtitleRuntimeQueue();
+	sessLocal.HideSubtitle();
 
 	if( oldSoundWorld != NULL )
 	{
@@ -815,6 +899,7 @@ idSoundSystemLocal::Render
 */
 void idSoundSystemLocal::Render()
 {
+	SyncVolumeCompatibilityCVars();
 	SoundVoiceChat_Render();
 
 	if( s_noSound.GetBool() )
@@ -843,7 +928,21 @@ void idSoundSystemLocal::Render()
 	if( currentSoundWorld != NULL )
 	{
 		currentSoundWorld->Update();
+		if( g_subtitles.GetBool() )
+		{
+			CollectActiveSubtitles();
+			PruneExpiredSubtitles();
+		}
+		else
+		{
+			ClearSubtitleRuntimeQueue();
+		}
 	}
+	else
+	{
+		ClearSubtitleRuntimeQueue();
+	}
+	PresentSubtitles();
 
 	const float controllerRumble = ( currentSoundWorld != NULL && session != NULL && currentSoundWorld == session->sw ) ?
 		currentSoundWorld->CurrentRumbleAmplitude() : 0.0f;
@@ -854,6 +953,95 @@ void idSoundSystemLocal::Render()
 	// The sound system doesn't use game time or anything like that because the sounds are decoded in real time.
 	soundTime = Sys_Milliseconds();
 	settingsUpdate.completed = true;
+
+	if( SoundLoadingMusic_IsActive() )
+	{
+		SoundLoadingMusic_SetGain( LoadingMusicGain() );
+	}
+}
+
+/*
+========================
+idSoundSystemLocal::LoadingMusicGain
+
+The gain a global menu-world channel playing the shader would get (see
+idSoundChannel::UpdateVolume), so the load music keeps the level it had there.
+========================
+*/
+float idSoundSystemLocal::LoadingMusicGain() const
+{
+	const float masterVolume = idMath::ClampFloat( 0.0f, 16.0f, FLOAT_IS_NAN( s_volume.GetFloat() ) ? 0.0f : s_volume.GetFloat() );
+	float gain = loadingMusicParms.volume;
+	const bool music = ( loadingMusicParms.soundShaderFlags & SSF_MUSIC ) != 0 || loadingMusicParms.soundClass == SOUND_CLASS_MUSICAL;
+	if( music )
+	{
+		gain *= musicMuted ? 0.0f : idMath::ClampFloat( 0.0f, 1.0f, s_musicVolume.GetFloat() );
+	}
+	gain = FLOAT_IS_NAN( gain ) ? 0.0f : idMath::ClampFloat( 0.0f, 16.0f, gain );
+	return idMath::ClampFloat( 0.0f, 16.0f, gain * masterVolume );
+}
+
+/*
+========================
+idSoundSystemLocal::StartLoadingMusic
+========================
+*/
+bool idSoundSystemLocal::StartLoadingMusic( const char* shaderName )
+{
+	StopLoadingMusic();
+	if( shaderName == NULL || shaderName[0] == '\0' || s_noSound.GetBool() || hardware.GetOpenALContext() == NULL )
+	{
+		return false;
+	}
+	const idSoundShader* shader = declManager->FindSound( shaderName, false );
+	if( shader == NULL || shader->GetNumEntries() <= 0 )
+	{
+		return false;
+	}
+
+	// The same diversity StartSound draws: it picks the entry and, for a loop,
+	// the random start position retail gives every looping shader.
+	const float diversity = random.RandomFloat();
+	const int numEntries = shader->GetNumEntries();
+	const int choice = idMath::ClampInt( 0, numEntries - 1, static_cast<int>( diversity * numEntries ) );
+	if( shader->GetLeadin( choice ) != NULL )
+	{
+		// Leadin-then-loop pairs keep the world channel's sequencing.
+		return false;
+	}
+	idSoundSample* sample = shader->GetEntry( choice );
+	if( sample == NULL )
+	{
+		return false;
+	}
+	if( !sample->IsLoaded() )
+	{
+		sample->LoadResource();
+	}
+	if( !sample->IsLoaded() || sample->IsDefault() || !sample->IsStreamed() )
+	{
+		return false;
+	}
+
+	loadingMusicParms = *shader->GetParms();
+	const bool looping = ( loadingMusicParms.soundShaderFlags & SSF_LOOPING ) != 0;
+	const float startFraction = ( looping && ( loadingMusicParms.soundShaderFlags & SSF_NO_RANDOMSTART ) == 0 ) ? diversity : 0.0f;
+	ALint directChannelsMode = -1;
+	if( hardware.HasDirectChannels() )
+	{
+		directChannelsMode = s_directStereo.GetBool() ? hardware.GetDirectChannelsMode() : AL_FALSE;
+	}
+	return SoundLoadingMusic_Start( sample->GetStreamName(), LoadingMusicGain(), looping, startFraction, directChannelsMode );
+}
+
+/*
+========================
+idSoundSystemLocal::StopLoadingMusic
+========================
+*/
+void idSoundSystemLocal::StopLoadingMusic()
+{
+	SoundLoadingMusic_Stop();
 }
 
 /*
@@ -884,6 +1072,8 @@ void idSoundSystemLocal::StopAllSounds()
 			sw->StopAllSounds();
 		}
 	}
+	ClearSubtitleRuntimeQueue();
+	PresentSubtitles();
 	hardware.Update();
 }
 
@@ -1368,6 +1558,340 @@ idSoundSystemLocal::FreeVoice
 */
 void idSoundSystemLocal::PrintMemInfo( MemInfo_t* mi )
 {
+}
+
+// Subtitle table handles are 1-based, as in retail Prey.exe (the lookup returns
+// position + 1): 0 means "no subtitles". soundShaderParms_t::subIndex is part of
+// the game ABI and the game zero-fills its per-entity override parms, so a
+// zero handle must never name a table, or every entity sound would inherit the
+// first parsed shader's transcript.
+int idSoundSystemLocal::GetSubtitleIndex( const char* soundName )
+{
+	for( int i = 0; i < soundSubtitleList.Num(); i++ )
+	{
+		if( idStr::Icmp( soundName, soundSubtitleList[i].soundName ) == 0 )
+		{
+			return i + 1;
+		}
+	}
+	soundSubtitleList_t list;
+	list.soundName = soundName != NULL ? soundName : "";
+	return soundSubtitleList.Append( list ) + 1;
+}
+
+void idSoundSystemLocal::SetSubtitleData( int subIndex, int subNum, const char* subText, float subTime, int subChannel )
+{
+	soundSubtitleList_t* list = GetSubtitleList( subIndex );
+	if( list == NULL )
+	{
+		return;
+	}
+	for( int i = 0; i < list->subList.Num(); i++ )
+	{
+		if( list->subList[i].subNum == subNum )
+		{
+			list->subList[i].subText = subText != NULL ? subText : "";
+			list->subList[i].subTime = subTime;
+			list->subList[i].subChannel = subChannel;
+			return;
+		}
+	}
+	soundSub_t subtitle;
+	subtitle.subText = subText != NULL ? subText : "";
+	subtitle.subTime = subTime;
+	subtitle.subNum = subNum;
+	subtitle.subChannel = subChannel;
+	list->subList.Append( subtitle );
+}
+
+soundSub_t* idSoundSystemLocal::GetSubtitle( int subIndex, int subNum )
+{
+	soundSubtitleList_t* list = GetSubtitleList( subIndex );
+	if( list != NULL )
+	{
+		for( int i = 0; i < list->subList.Num(); i++ )
+		{
+			if( list->subList[i].subNum == subNum )
+			{
+				return &list->subList[i];
+			}
+		}
+	}
+	return NULL;
+}
+
+soundSubtitleList_t* idSoundSystemLocal::GetSubtitleList( int subIndex )
+{
+	return subIndex > 0 && subIndex <= soundSubtitleList.Num() ? &soundSubtitleList[subIndex - 1] : NULL;
+}
+
+bool idSoundSystemLocal::SubtitleQueueContains( const soundSub_t* subtitle ) const
+{
+	for( int i = 0; i < sb_subtitleQueue.Num(); i++ )
+	{
+		if( sb_subtitleQueue[i].subtitle == subtitle )
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+int idSoundSystemLocal::FindSubtitleQueueIndexForChannel( const idSoundChannel* channel ) const
+{
+	if( channel == NULL )
+	{
+		return -1;
+	}
+	for( int i = 0; i < sb_subtitleQueue.Num(); i++ )
+	{
+		if( sb_subtitleQueue[i].channel == channel &&
+			sb_subtitleQueue[i].channelStartTime == channel->startTime )
+		{
+			return i;
+		}
+	}
+	return -1;
+}
+
+void idSoundSystemLocal::RemoveSubtitlesForChannel( const idSoundChannel* channel )
+{
+	if( channel == NULL )
+	{
+		return;
+	}
+	for( int i = 0; i < sb_subtitleQueue.Num(); )
+	{
+		if( sb_subtitleQueue[i].channel == channel )
+		{
+			sb_subtitleQueue.RemoveIndex( i );
+			subtitleQueueChanged = true;
+		}
+		else
+		{
+			i++;
+		}
+	}
+}
+
+bool idSoundSystemLocal::AppendSubtitleForChannel( const idSoundChannel* channel, bool markQueueChanged )
+{
+	const bool voiceSubtitleChannel = channel != NULL &&
+		( channel->IsVoicePlayback() || channel->parms.soundClass == SOUNDCLASS_VOICE );
+	if( channel == NULL || channel->soundShader == NULL || channel->leadinSample == NULL ||
+		channel->parms.subIndex <= 0 || channel->IsLooping() ||
+		( !voiceSubtitleChannel && DBtoLinearClamped( channel->volumeDB ) <= SOUND_SUBTITLE_AUDIBILITY_EPSILON ) )
+	{
+		return false;
+	}
+	const soundSubtitleList_t* list = GetSubtitleList( channel->parms.subIndex );
+	if( list == NULL || list->subList.Num() == 0 )
+	{
+		return false;
+	}
+
+	const int currentTime = currentSoundWorld != NULL ? currentSoundWorld->GetSoundTime() : soundTime;
+	const float playedSeconds = Max( 0, currentTime - channel->startTime ) * 0.001f;
+	int activeIndex = -1;
+	for( int i = 0; i < list->subList.Num(); i++ )
+	{
+		if( list->subList[i].subTime > playedSeconds )
+		{
+			break;
+		}
+		activeIndex = i;
+	}
+	if( activeIndex < 0 )
+	{
+		return false;
+	}
+	const soundSub_t* active = &list->subList[activeIndex];
+	// A cue lasts until the next cue starts; the last one lasts as long as the
+	// channel. (This used to keep the previous cue's end for the last cue, so a
+	// shader's final line expired the moment it began.)
+	int endTime;
+	if( activeIndex + 1 < list->subList.Num() )
+	{
+		endTime = channel->startTime + idMath::FtoiFast( list->subList[activeIndex + 1].subTime * 1000.0f );
+	}
+	else
+	{
+		endTime = channel->endTime != 0 ? channel->endTime : channel->startTime + channel->leadinSample->LengthInMsec();
+	}
+	// A cue whose window has closed (a stopped channel marks endTime 1) must not
+	// be queued: the prune that follows would drop it and the next collection
+	// re-add it, flickering the caption every frame.
+	if( endTime <= currentTime )
+	{
+		return false;
+	}
+
+	const int existingIndex = FindSubtitleQueueIndexForChannel( channel );
+	if( existingIndex >= 0 )
+	{
+		queuedSubtitle_t& queued = sb_subtitleQueue[existingIndex];
+		if( queued.subtitle == active && queued.endTime == endTime )
+		{
+			return false;
+		}
+		queued.subIndex = channel->parms.subIndex;
+		queued.subNum = active->subNum;
+		queued.subtitle = active;
+		queued.endTime = endTime;
+		if( markQueueChanged )
+		{
+			subtitleQueueChanged = true;
+		}
+		return true;
+	}
+
+	if( SubtitleQueueContains( active ) )
+	{
+		return false;
+	}
+
+	queuedSubtitle_t queued;
+	queued.subIndex = channel->parms.subIndex;
+	queued.subNum = active->subNum;
+	queued.channel = channel;
+	queued.channelStartTime = channel->startTime;
+	queued.subtitle = active;
+	queued.endTime = endTime;
+	sb_subtitleQueue.Append( queued );
+	if( markQueueChanged )
+	{
+		subtitleQueueChanged = true;
+	}
+	return true;
+}
+
+void idSoundSystemLocal::CollectActiveSubtitles()
+{
+	if( currentSoundWorld == NULL )
+	{
+		return;
+	}
+
+	idList<const soundSub_t*> previousQueue;
+	for( int i = 0; i < sb_subtitleQueue.Num(); i++ )
+	{
+		previousQueue.Append( sb_subtitleQueue[i].subtitle );
+	}
+
+	sb_subtitleQueue.Clear();
+	for( int e = 1; e < currentSoundWorld->emitters.Num(); e++ )
+	{
+		idSoundEmitterLocal* emitter = currentSoundWorld->emitters[e];
+		if( emitter == NULL )
+		{
+			continue;
+		}
+		for( int c = 0; c < emitter->channels.Num(); c++ )
+		{
+			AppendSubtitleForChannel( emitter->channels[c], false );
+		}
+	}
+
+	bool changed = previousQueue.Num() != sb_subtitleQueue.Num();
+	if( !changed )
+	{
+		for( int i = 0; i < previousQueue.Num(); i++ )
+		{
+			if( previousQueue[i] != sb_subtitleQueue[i].subtitle )
+			{
+				changed = true;
+				break;
+			}
+		}
+	}
+	if( changed )
+	{
+		subtitleQueueChanged = true;
+	}
+}
+
+void idSoundSystemLocal::PruneExpiredSubtitles()
+{
+	const int currentTime = currentSoundWorld != NULL ? currentSoundWorld->GetSoundTime() : soundTime;
+	for( int i = 0; i < sb_subtitleQueue.Num(); )
+	{
+		if( currentTime >= sb_subtitleQueue[i].endTime )
+		{
+			sb_subtitleQueue.RemoveIndex( i );
+			subtitleQueueChanged = true;
+		}
+		else
+		{
+			i++;
+		}
+	}
+}
+
+bool idSoundSystemLocal::SyncSubtitleQueues()
+{
+	if( !subtitleQueueChanged )
+	{
+		return false;
+	}
+	sf_subtitleQueue.Clear();
+	const int logTime = currentSoundWorld != NULL ? currentSoundWorld->GetSoundTime() : soundTime;
+	if( s_logSubtitles.GetBool() && sb_subtitleQueue.Num() == 0 )
+	{
+		idLib::Printf( "SOUND_SUBTITLE time=%d clear\n", logTime );
+	}
+	for( int i = 0; i < sb_subtitleQueue.Num(); i++ )
+	{
+		const queuedSubtitle_t& queued = sb_subtitleQueue[i];
+		sf_subtitleQueue.Append( queued.subtitle );
+		if( s_logSubtitles.GetBool() && queued.channel != NULL && queued.subtitle != NULL )
+		{
+			const idSoundChannel* channel = queued.channel;
+			idLib::Printf( "SOUND_SUBTITLE time=%d shader=%s sub=%d at=%.2f key=%s start=%d end=%d voice=%d volumeDB=%.1f\n",
+				logTime, channel->soundShader != NULL ? channel->soundShader->GetName() : "<none>", queued.subNum,
+				queued.subtitle->subTime, queued.subtitle->subText.c_str(), channel->startTime, queued.endTime,
+				channel->hardwareVoice != NULL ? 1 : 0, channel->volumeDB );
+		}
+	}
+	subtitleQueueChanged = false;
+	return true;
+}
+
+void idSoundSystemLocal::PresentSubtitles()
+{
+	if( !SyncSubtitleQueues() )
+	{
+		return;
+	}
+	if( !g_subtitles.GetBool() || sf_subtitleQueue.Num() == 0 )
+	{
+		sessLocal.HideSubtitle();
+		return;
+	}
+	idStrList lines;
+	for( int i = 0; i < SOUND_SUBTITLE_DISPLAY_CHANNELS; i++ )
+	{
+		lines.Append( "" );
+	}
+	for( int i = 0; i < sf_subtitleQueue.Num(); i++ )
+	{
+		const soundSub_t* subtitle = sf_subtitleQueue[i];
+		if( subtitle != NULL && subtitle->subChannel >= 0 && subtitle->subChannel < SOUND_SUBTITLE_DISPLAY_CHANNELS )
+		{
+			lines[subtitle->subChannel] = subtitle->subText;
+		}
+	}
+	sessLocal.ShowSubtitle( lines );
+}
+
+void idSoundSystemLocal::ClearSubtitleRuntimeQueue()
+{
+	if( sb_subtitleQueue.Num() == 0 && sf_subtitleQueue.Num() == 0 )
+	{
+		return;
+	}
+	sb_subtitleQueue.Clear();
+	sf_subtitleQueue.Clear();
+	subtitleQueueChanged = true;
 }
 
 /*

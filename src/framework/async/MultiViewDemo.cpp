@@ -20,6 +20,8 @@ their layout, and corrupt/truncated streams fail at a bounded record.
 
 #include <time.h>
 
+#if OPENPREY_ENABLE_MVD
+
 namespace {
 
 static const byte MVD_MAGIC[8] = { 'O', 'Q', '4', 'M', 'V', 'D', 0x1a, '\n' };
@@ -4439,3 +4441,132 @@ void idMultiViewDemo::AutoTrack_f( const idCmdArgs &args ) {
 	const int mode = idMath::ClampInt( 0, 2, autoTrack->GetInteger() );
 	common->Printf( "MVD_AUTOTRACK mode=%s team=%s\n", modes[mode], autoTrackTeam->GetString() );
 }
+
+#else
+
+// OPENPREY-GATED(D9): these inert entry points keep the upstream session and
+// async architecture intact without compiling v40-only game callbacks.
+
+namespace {
+
+void MultiViewDemo_Disabled_f( const idCmdArgs &args ) {
+	(void)args;
+	common->Printf( "Multi-view demos are disabled for the Prey game API\n" );
+}
+
+}
+
+mvdFileInfo_t::mvdFileInfo_t() {
+	valid = false;
+	compatible = false;
+	cleanEnd = false;
+	hasTimelineIndex = false;
+	formatMajor = 0;
+	formatMinor = 0;
+	protocolMajor = 0;
+	protocolMinor = 0;
+	durationMS = 0;
+	snapshotCount = 0;
+	reliableCount = 0;
+	recordCount = 0;
+	fileSize = 0;
+}
+
+idMultiViewDemo::idMultiViewDemo() {
+	state = MVD_IDLE;
+	file = NULL;
+}
+
+void idMultiViewDemo::Init() {
+	common->DPrintf( "Multi-view demos disabled (OPENPREY-GATED(D9))\n" );
+}
+
+void idMultiViewDemo::Shutdown() {}
+void idMultiViewDemo::SessionStop() {}
+
+bool idMultiViewDemo::IsRecording() const { return false; }
+bool idMultiViewDemo::IsPlaying() const { return false; }
+bool idMultiViewDemo::IsPaused() const { return false; }
+bool idMultiViewDemo::IsSeeking() const { return false; }
+float idMultiViewDemo::GetPlaybackScale() const { return 1.0f; }
+int idMultiViewDemo::GetPlaybackTimeMS() const { return 0; }
+int idMultiViewDemo::GetPlaybackDurationMS() const { return 0; }
+float idMultiViewDemo::GetPlaybackFraction() const { return 0.0f; }
+const char *idMultiViewDemo::GetPlaybackName() const { return ""; }
+int idMultiViewDemo::GetFollowClient() const { return -1; }
+
+void idMultiViewDemo::SetPaused( bool paused ) { (void)paused; }
+void idMultiViewDemo::TogglePaused() {}
+void idMultiViewDemo::SetPlaybackScale( float scale ) { (void)scale; }
+bool idMultiViewDemo::SeekToMS( int relativeTimeMS ) { (void)relativeTimeMS; return false; }
+bool idMultiViewDemo::SeekByMS( int deltaMS ) { (void)deltaMS; return false; }
+void idMultiViewDemo::StepFrames( int frames ) { (void)frames; }
+void idMultiViewDemo::FollowNext() {}
+void idMultiViewDemo::FreeRoam() {}
+
+bool idMultiViewDemo::QueryFileInfo( const char *name, mvdFileInfo_t &info ) {
+	(void)name;
+	info = mvdFileInfo_t();
+	info.error = "multi-view demos disabled for Prey game API v7";
+	return false;
+}
+
+void idMultiViewDemo::CaptureServerFrame( int gameFrame, int gameTime ) {
+	(void)gameFrame;
+	(void)gameTime;
+}
+
+void idMultiViewDemo::CaptureReliableMessage( const idBitMsg &msg, int routeType, int routeClient, int routeInstance ) {
+	(void)msg;
+	(void)routeType;
+	(void)routeClient;
+	(void)routeInstance;
+}
+
+void idMultiViewDemo::RunPlaybackFrame() {}
+void idMultiViewDemo::OnServerMapChange() {}
+
+void idMultiViewDemo::Record_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::Stop_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::Play_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::Info_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::Pause_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::Seek_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::Skip_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::Speed_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::Step_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::FollowNext_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::FreeRoam_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+
+// Stubs for the upstream MVD surface added after the D9 gate was introduced.
+bool idMultiViewDemo::StartNamedRecording( const char *name ) { (void)name; return false; }
+bool idMultiViewDemo::StopRecordingCleanly( const char *reason ) { (void)reason; return false; }
+bool idMultiViewDemo::CopyRecordingQPath( char *buffer, int bufferSize ) const {
+	if ( buffer != NULL && bufferSize > 0 ) {
+		buffer[0] = '\0';
+	}
+	return false;
+}
+bool idMultiViewDemo::CopyRecordingResult( serverMVDRecordingResult_t &result ) const {
+	memset( &result, 0, sizeof( result ) );
+	return false;
+}
+void idMultiViewDemo::FollowPrev() {}
+bool idMultiViewDemo::FollowClient( int clientNum ) { (void)clientNum; return false; }
+int idMultiViewDemo::FindFollowClient( const char *text ) const { (void)text; return -1; }
+bool idMultiViewDemo::CopyFollowName( int clientNum, idStr &name ) const { (void)clientNum; name.Clear(); return false; }
+int idMultiViewDemo::GetMarkerCount() const { return 0; }
+bool idMultiViewDemo::SeekToMarker( int direction, int kindFilter ) { (void)direction; (void)kindFilter; return false; }
+void idMultiViewDemo::CaptureUserInfo( int clientNum, const idDict &info ) { (void)clientNum; (void)info; }
+bool idMultiViewDemo::RecordMarker( const serverMVDMarker_t &marker ) { (void)marker; return false; }
+void idMultiViewDemo::Status_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::Library_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::Recover_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::FollowPrev_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::Follow_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::Mark_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::Markers_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::Marker_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+void idMultiViewDemo::AutoTrack_f( const idCmdArgs &args ) { MultiViewDemo_Disabled_f( args ); }
+
+#endif

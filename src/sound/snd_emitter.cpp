@@ -49,6 +49,7 @@ extern idCVar s_speakerFraction;
 extern idCVar s_radioChatterFraction;
 extern idCVar s_quadraticFalloff;
 extern idCVar s_frequencyShift;
+extern idCVar com_profanity;
 extern idCVar s_useEAXOcclusion;
 
 static const int SOUND_SHADER_SHAKE_RATE_HZ = 30;
@@ -246,6 +247,39 @@ static float SoundChannelSampleAmplitude( idSoundChannel* chan, const int curren
 	return 0.0f;
 }
 
+/*
+========================
+SoundChannelLogicalAmplitude
+
+Amplitude of one logical channel for game-side queries (Prey jaw flap, the
+jukebox meter). Follows Doom 3's FindAmplitude with no listener: the raw wave
+at the playback cursor, unscaled by volume, peak-to-peak over 32767 through
+atan and normalised so 45 degrees reads 1. The cached envelope holds the
+absolute peak, so peak-to-peak is twice it. Authored shakeData is already on
+that curve. The OpenAL voice has no VU meter, so its GetAmplitude() is a
+constant 1 and must not be used here: it held every jaw wide open for the
+whole line instead of following the speech.
+========================
+*/
+static float SoundChannelLogicalAmplitude( idSoundChannel* chan, const int currentTime )
+{
+	if( chan == NULL || chan->leadinSample == NULL )
+	{
+		return 0.0f;
+	}
+	const char* shakeData = ( chan->soundShader != NULL ) ? chan->soundShader->GetShakeData( chan->choice ) : NULL;
+	const float sample = SoundChannelSampleAmplitude( chan, currentTime );
+	if( shakeData != NULL && shakeData[0] != '\0' )
+	{
+		return sample;
+	}
+	if( sample <= 0.0f )
+	{
+		return 0.0f;
+	}
+	return idMath::ATan( 2.0f * sample, 1.0f ) / DEG2RAD( 45.0f );
+}
+
 static bool SoundChannelHasCompleted( idSoundChannel* chan, const int currentTime )
 {
 	if( chan == NULL || chan->leadinSample == NULL )
@@ -345,6 +379,11 @@ static bool SoundUsesMusicVolume( const soundShaderParms_t& parms )
 	return ( parms.soundShaderFlags & SSF_MUSIC ) != 0 || parms.soundClass == SOUND_CLASS_MUSICAL;
 }
 
+static bool IsProfanityCensorEnabled()
+{
+	return !com_profanity.GetBool();
+}
+
 static int SoundSampleChoiceFromDiversity( const int numEntries, const float diversity )
 {
 	if( numEntries <= 0 || FLOAT_IS_NAN( diversity ) )
@@ -390,6 +429,7 @@ void idSoundFade::Clear()
 	fadeEndTime = 0;
 	fadeStartVolume = 1.0f;
 	fadeEndVolume = 1.0f;
+	fadeHold = false;
 }
 
 /*
@@ -404,6 +444,7 @@ void idSoundFade::SetVolume( float to )
 	fadeEndVolume = to;
 	fadeStartTime = 0;
 	fadeEndTime = 0;
+	fadeHold = false;
 }
 
 /*
@@ -417,7 +458,7 @@ void idSoundFade::Fade( float to, int length, int soundTime )
 	length = SoundSanitizeFadeMsec( length );
 	int startTime = soundTime;
 	// if it is already fading to this volume at this rate, don't change it
-	if( fadeEndTime == startTime + length && fadeEndVolume == to )
+	if( !fadeHold && fadeEndTime == startTime + length && fadeEndVolume == to )
 	{
 		return;
 	}
@@ -425,6 +466,32 @@ void idSoundFade::Fade( float to, int length, int soundTime )
 	fadeEndVolume = to;
 	fadeStartTime = startTime;
 	fadeEndTime = startTime + length;
+	fadeHold = false;
+}
+
+/*
+========================
+idSoundFade::FadeFrom
+
+Apply a temporary hold in the linear volume pipeline.
+========================
+*/
+void idSoundFade::FadeFrom( float to, int delay, int length, int soundTime )
+{
+	to = SoundSanitizeFadeScale( to, 0.0f );
+	delay = SoundSanitizeFadeMsec( delay );
+	length = SoundSanitizeFadeMsec( length );
+	const int startTime = soundTime + delay;
+	const int endTime = startTime + length;
+	if( fadeHold && fadeStartTime == startTime && fadeEndTime == endTime && fadeEndVolume == to )
+	{
+		return;
+	}
+	fadeStartVolume = GetVolume( soundTime );
+	fadeEndVolume = to;
+	fadeStartTime = startTime;
+	fadeEndTime = endTime;
+	fadeHold = true;
 }
 
 /*
@@ -459,6 +526,10 @@ idSoundFade::GetVolume
 */
 float idSoundFade::GetVolume( const int soundTime ) const
 {
+	if( fadeHold )
+	{
+		return ( soundTime >= fadeStartTime && soundTime <= fadeEndTime ) ? fadeEndVolume : fadeStartVolume;
+	}
 	const float fadeDuration = ( fadeEndTime - fadeStartTime );
 	const int currentTime = soundTime;
 	const float playTime = ( currentTime - fadeStartTime );
@@ -1175,6 +1246,40 @@ void idSoundEmitterLocal::OverrideParms( const soundShaderParms_t* base, const s
 	{
 		out->attenuatedVolume = base->attenuatedVolume;
 	}
+	// Like every other override, only a non-zero handle overrides: the game's
+	// override parms are zero-filled and never name a subtitle table.
+	if( over->subIndex > 0 )
+	{
+		out->subIndex = over->subIndex;
+	}
+	else
+	{
+		out->subIndex = base->subIndex;
+	}
+	if( over->profanityIndex )
+	{
+		out->profanityIndex = over->profanityIndex;
+	}
+	else
+	{
+		out->profanityIndex = base->profanityIndex;
+	}
+	if( over->profanityDelay )
+	{
+		out->profanityDelay = over->profanityDelay;
+	}
+	else
+	{
+		out->profanityDelay = base->profanityDelay;
+	}
+	if( over->profanityDuration )
+	{
+		out->profanityDuration = over->profanityDuration;
+	}
+	else
+	{
+		out->profanityDuration = base->profanityDuration;
+	}
 	if( over->soundClass )
 	{
 		out->soundClass = over->soundClass;
@@ -1270,7 +1375,7 @@ void idSoundEmitterLocal::Update( int currentTime )
 		// listener is outside the world
 		return;
 	}
-	if( soundSystemLocal.muted || soundWorld != soundSystemLocal.currentSoundWorld )
+	if( soundSystemLocal.IsMuted() || soundWorld != soundSystemLocal.currentSoundWorld )
 	{
 		return;
 	}
@@ -1322,6 +1427,13 @@ void idSoundEmitterLocal::Update( int currentTime )
 		// Retail Spatialize: every emitter in range keeps the area it is in, which
 		// the area reverb routing reads even when occlusion is off.
 		int soundInArea = soundWorld->renderWorld->PointInArea( origin );
+		if( lastValidPortalArea >= soundWorld->renderWorld->NumAreas() )
+		{
+			// The render world loaded a smaller map since this emitter was last placed
+			// (the menu sound world shares the game render world and is not reset on a
+			// level change), so the remembered area does not exist any more.
+			lastValidPortalArea = -1;
+		}
 		if( soundInArea == -1 )
 		{
 			soundInArea = lastValidPortalArea;
@@ -1634,7 +1746,7 @@ int idSoundEmitterLocal::StartSound( const idSoundShader* shader, const s_channe
 	// kill any sound that is currently playing on this channel after no_dups sees the outgoing sample
 	if( channel != SCHANNEL_ANY )
 	{
-		for( int i = 0; i < channels.Num(); i++ )
+		for( int i = channels.Num() - 1; i >= 0; i-- )
 		{
 			idSoundChannel* chan = channels[i];
 			if( chan->soundShader && chan->logicalChannel == channel )
@@ -1645,7 +1757,6 @@ int idSoundEmitterLocal::StartSound( const idSoundShader* shader, const s_channe
 				}
 				channels.RemoveIndex( i );
 				soundWorld->FreeSoundChannel( chan );
-				break;
 			}
 		}
 	}
@@ -1742,6 +1853,17 @@ int idSoundEmitterLocal::StartSound( const idSoundShader* shader, const s_channe
 	if( s_logSpeech.GetBool() )
 	{
 		SoundLogSpeechStart( chan );
+	}
+
+	// Prey's authored bleep window mutes only the selected sample and restores
+	// the pre-window scale afterwards. The modern mixer is linear, so the hold
+	// target is exactly zero rather than a dB offset.
+	if( IsProfanityCensorEnabled() && chanParms.profanityDuration > 0.0f && chanParms.profanityIndex == choice )
+	{
+		chan->volumeFade.FadeFrom( 0.0f,
+			Max( 0, SEC2MS( chanParms.profanityDelay ) ),
+			Max( 1, SEC2MS( chanParms.profanityDuration ) ),
+			currentTime );
 	}
 	if( showStartSound )
 	{
@@ -1851,6 +1973,53 @@ void idSoundEmitterLocal::ModifySound( const s_channelType channel, const soundS
 		}
 		OverrideParms( &chan->parms, parms, &chan->parms );
 	}
+}
+
+/*
+========================
+idSoundEmitterLocal::ModifySound
+========================
+*/
+void idSoundEmitterLocal::ModifySound( idSoundShader* shader, const s_channelType channel, const hhSoundShaderParmsModifier& modifier )
+{
+	for( int i = channels.Num() - 1; i >= 0; i-- )
+	{
+		idSoundChannel* chan = channels[i];
+		if( chan == NULL || ( channel != SCHANNEL_ANY && chan->logicalChannel != channel ) ||
+			( shader != NULL && chan->soundShader != shader ) )
+		{
+			continue;
+		}
+
+		soundShaderParms_t modified = chan->parms;
+		modifier.ModifyParms( modified );
+		ModifySound( chan->logicalChannel, &modified );
+		return;
+	}
+}
+
+/*
+========================
+idSoundEmitterLocal::GetSoundParms
+========================
+*/
+soundShaderParms_t* idSoundEmitterLocal::GetSoundParms( idSoundShader* shader, const s_channelType channel )
+{
+	static soundShaderParms_t convertedParms;
+	for( int i = channels.Num() - 1; i >= 0; i-- )
+	{
+		idSoundChannel* chan = channels[i];
+		if( chan == NULL || ( channel != SCHANNEL_ANY && chan->logicalChannel != channel ) ||
+			( shader != NULL && chan->soundShader != shader ) )
+		{
+			continue;
+		}
+
+		convertedParms = chan->parms;
+		convertedParms.volume = LinearToDB( chan->parms.volume );
+		return &convertedParms;
+	}
+	return NULL;
 }
 
 /*
@@ -1984,6 +2153,53 @@ float idSoundEmitterLocal::CurrentAmplitude()
 		return idMath::ATan( high * SOUND_SHADER_SHAKE_NORMALIZE, 1.0f ) / DEG2RAD( 45.0f );
 	}
 	return sampleAmplitude;
+}
+
+float idSoundEmitterLocal::CurrentAmplitude( const s_channelType channel )
+{
+	if( channel == SCHANNEL_ANY )
+	{
+		return CurrentAmplitude();
+	}
+
+	float amplitude = 0.0f;
+	const int currentTime = soundWorld->GetSoundTime();
+	for( int i = 0; i < channels.Num(); i++ )
+	{
+		idSoundChannel* chan = channels[i];
+		if( chan == NULL || chan->logicalChannel != channel || currentTime < chan->startTime || SoundChannelHasCompleted( chan, currentTime ) )
+		{
+			continue;
+		}
+		if( ( chan->parms.soundShaderFlags & SSF_NO_FLICKER ) != 0 )
+		{
+			return 1.0f;
+		}
+		amplitude = Max( amplitude, SoundChannelLogicalAmplitude( chan, currentTime ) );
+	}
+	return amplitude;
+}
+
+float idSoundEmitterLocal::CurrentVoiceAmplitude( const s_channelType channel )
+{
+	float amplitude = 0.0f;
+	const int currentTime = soundWorld->GetSoundTime();
+	for( int i = 0; i < channels.Num(); i++ )
+	{
+		idSoundChannel* chan = channels[i];
+		if( chan == NULL || ( channel != SCHANNEL_ANY && chan->logicalChannel != channel ) ||
+			( chan->parms.soundShaderFlags & SSF_VOICEAMPLITUDE ) == 0 ||
+			currentTime < chan->startTime || SoundChannelHasCompleted( chan, currentTime ) )
+		{
+			continue;
+		}
+		if( ( chan->parms.soundShaderFlags & SSF_NO_FLICKER ) != 0 )
+		{
+			return 1.0f;
+		}
+		amplitude = Max( amplitude, SoundChannelLogicalAmplitude( chan, currentTime ) );
+	}
+	return amplitude;
 }
 
 /*

@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
-"""Guards how the engine picks a game module from si_gameType.
+"""Guards openPREY's unified game-module selection contract.
 
-The engine has to choose between game_sp and game_mp before any game module is
-loaded, so it cannot ask the game for its own gametype table. It keeps a mirror
-of mpGameTypeInfoTable names and selectability instead. This test pins that
-mirror against the GameLibs table, and pins the shipped default.cfg value that
-decides which module a plain client boots (issue #73: booting game_mp meant
-every New Game tore the renderer down for a module swap).
+Prey uses one game module for both single-player and multiplayer.  The gameplay
+mode selected by ``si_gameType`` must therefore never choose a different binary.
+This test also pins the in-tree game library default to single-player, keeps the
+guarded reload path covered, and pins the engine-side game-module shutdown
+lifecycle and the font reload contracts that a module reload depends on.
 """
 
 from __future__ import annotations
@@ -53,12 +52,20 @@ def function_body(source: str, signature: str, context: str) -> str:
     raise AssertionError(f"Unbalanced body for {signature!r} in {context}")
 
 
-def expect_contract_rejection(validator, candidate: str, context: str) -> None:
-    try:
-        validator(candidate)
-    except AssertionError:
-        return
-    raise AssertionError(f"Validation contract accepted mutation: {context}")
+def cxx_function_body(source: str, signature: str) -> str:
+    start = source.find(signature)
+    if start == -1:
+        raise AssertionError(f"Missing function {signature!r}")
+    open_brace = source.index("{", start)
+    depth = 0
+    for index in range(open_brace, len(source)):
+        if source[index] == "{":
+            depth += 1
+        elif source[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[open_brace + 1 : index]
+    raise AssertionError(f"Unclosed function {signature!r}")
 
 
 def validate_shutdown_lifecycle_contract(common: str) -> None:
@@ -479,355 +486,85 @@ def validate_font_restart_documentation() -> None:
         require(documentation, token, "TrueType renderer-restart documentation")
 
 
-def validate_game_module_two_phase_lifecycle(source: str, header: str, label: str) -> None:
-    for token in (
-        "virtual void\t\t\tShutdown( void );",
-        "virtual void\t\t\tShutdownAfterDecls( void );",
-        "bool\t\t\t\t\tmoduleIdLibInitialized;",
-        "bool\t\t\t\t\tmoduleShutdownStarted;",
-        "bool\t\t\t\t\tmoduleShutdownFinalized;",
-        "bool\t\t\t\t\tmoduleEventInitStarted;",
-        "bool\t\t\t\t\tmoduleClassInitStarted;",
-        "bool\t\t\t\t\tmoduleProgramInitStarted;",
-    ):
-        require(header, token, f"{label} two-phase shutdown declaration")
-
-    constructor = function_body(source, "idGameLocal::idGameLocal()", f"{label} game constructor")
-    for token in (
-        "moduleIdLibInitialized( false )",
-        "moduleShutdownStarted( false )",
-        "moduleShutdownFinalized( false )",
-        "moduleEventInitStarted( false )",
-        "moduleClassInitStarted( false )",
-        "moduleProgramInitStarted( false )",
-    ):
-        require(constructor, token, f"{label} game lifecycle initialization")
-
-    init_start = source.index("void idGameLocal::Init(")
-    shutdown_start = source.index("void idGameLocal::Shutdown( void )", init_start)
-    init = source[init_start:shutdown_start]
-    for token in (
-        "moduleShutdownStarted = false;",
-        "moduleShutdownFinalized = false;",
-        "moduleEventInitStarted = false;",
-        "moduleClassInitStarted = false;",
-        "moduleProgramInitStarted = false;",
-        "assert( !moduleIdLibInitialized );",
-        "idLib::Init();",
-        "moduleIdLibInitialized = true;",
-    ):
-        require(init, token, f"{label} game lifecycle reset")
-    if not (
-        init.index("moduleShutdownStarted = false;")
-        < init.index("moduleShutdownFinalized = false;")
-        < init.index("moduleEventInitStarted = false;")
-        < init.index("moduleClassInitStarted = false;")
-        < init.index("moduleProgramInitStarted = false;")
-        < init.index("idLib::Init();")
-        < init.index("moduleIdLibInitialized = true;")
-    ):
-        raise AssertionError(f"{label} lifecycle guards are not reset before idLib initialization")
-
-    init_pairs = (
-        ("moduleEventInitStarted = true;", "idEvent::Init();", "event system"),
-        ("moduleClassInitStarted = true;", "idClass::Init();", "class system"),
-        ("moduleProgramInitStarted = true;", "program.Startup( SCRIPT_DEFAULT );", "script program"),
+def validate_unified_module_selection() -> None:
+    common = read(ROOT / "src" / "framework" / "Common.cpp")
+    selector = cxx_function_body(
+        common, "static const char *openPREY_SelectGameModuleBaseName( void )"
     )
-    for flag, call, subsystem in init_pairs:
-        require(init, f"\t{flag}\n\t{call}", f"{label} {subsystem} partial-init tracking")
-    if not (
-        init.index("moduleEventInitStarted = true;")
-        < init.index("idEvent::Init();")
-        < init.index("moduleClassInitStarted = true;")
-        < init.index("idClass::Init();")
-        < init.index("moduleProgramInitStarted = true;")
-        < init.index("program.Startup( SCRIPT_DEFAULT );")
-    ):
-        raise AssertionError(f"{label} subsystem init progress is not recorded in dependency order")
+    require(selector, 'return "game";', "unified game-module selector")
+    reject(selector, "si_gameType", "unified game-module selector")
 
-    early = function_body(source, "void idGameLocal::Shutdown( void )", f"{label} early game shutdown")
-    for token in (
-        "if ( moduleShutdownStarted )",
-        "moduleShutdownStarted = true;",
-        "if ( !common )",
-        "if ( gamestate == GAMESTATE_UNINITIALIZED )",
-    ):
-        require(early, token, f"{label} early game shutdown")
-    if not (
-        early.index("if ( moduleShutdownStarted )")
-        < early.index("moduleShutdownStarted = true;")
-        < early.index("if ( !common )")
-        < early.index("if ( gamestate == GAMESTATE_UNINITIALIZED )")
-    ):
-        raise AssertionError(f"{label} early shutdown does not fail safely before service-dependent cleanup")
-
-    uninitialized = function_body(
-        early,
-        "if ( gamestate == GAMESTATE_UNINITIALIZED )",
-        f"{label} partial-init shutdown",
+    candidates = cxx_function_body(
+        common, "static void openPREY_BuildGameModuleCandidateList( idStrList &candidates )"
     )
-    for token in ("aasList.DeleteContents( true );", "aasNames.Clear();"):
-        require(uninitialized, token, f"{label} partial AAS cleanup")
-
-    shutdown_pairs = (
-        ("moduleEventInitStarted", "idEvent::Shutdown();", "event system"),
-        ("moduleProgramInitStarted", "program.Shutdown();", "script program"),
-        ("moduleClassInitStarted", "idClass::Shutdown();", "class system"),
+    require(
+        candidates,
+        'va( "game_%s", OPENPREY_MODULE_ARCH_TAG )',
+        "unified game-module candidate list",
     )
-    for flag, call, subsystem in shutdown_pairs:
-        partial_guard = function_body(
-            uninitialized,
-            f"if ( {flag} )",
-            f"{label} partial {subsystem} shutdown",
-        )
-        require(partial_guard, call, f"{label} partial {subsystem} shutdown")
-        require(partial_guard, f"{flag} = false;", f"{label} partial {subsystem} reset")
-        if partial_guard.index(call) > partial_guard.index(f"{flag} = false;"):
-            raise AssertionError(f"{label} clears {subsystem} progress before shutting it down")
-    if not (
-        uninitialized.index("aasList.DeleteContents( true );")
-        < uninitialized.index("aasNames.Clear();")
-        < uninitialized.index("if ( moduleEventInitStarted )")
-        < uninitialized.index("if ( moduleProgramInitStarted )")
-        < uninitialized.index("if ( moduleClassInitStarted )")
-        < uninitialized.rindex("return;")
-    ):
-        raise AssertionError(f"{label} partial-init resources are not released in dependency order")
+    require(candidates, '"game_universal2"', "unified macOS module compatibility")
+    require(candidates, '"game"', "unified untagged module compatibility")
+    reject(candidates, '"game_sp', "unified game-module candidate list")
+    reject(candidates, '"game_mp', "unified game-module candidate list")
 
-    normal = early[early.index(uninitialized) + len(uninitialized) :]
-    for flag, call, subsystem in shutdown_pairs:
-        normal_guard = function_body(
-            normal,
-            f"if ( {flag} )",
-            f"{label} normal {subsystem} shutdown",
-        )
-        require(normal_guard, call, f"{label} normal {subsystem} shutdown")
-        require(normal_guard, f"{flag} = false;", f"{label} normal {subsystem} reset")
-    if not (
-        normal.index("if ( moduleEventInitStarted )")
-        < normal.index("if ( moduleProgramInitStarted )")
-        < normal.index("if ( moduleClassInitStarted )")
-    ):
-        raise AssertionError(f"{label} normal subsystem shutdown does not match partial-init ordering")
-    for token in (
-        "ShutdownConsoleCommands();",
-        "RemoveFlaggedAutoCompletion",
-        "animationLib->Shutdown();",
-        "delete animationLib;",
-        "delete visemeTable100;",
-        "delete visemeTable66;",
-        "delete visemeTable33;",
-        "idLib::ShutDown();",
-    ):
-        reject(early, token, f"{label} early game shutdown")
-
-    late = function_body(
-        source,
-        "void idGameLocal::ShutdownAfterDecls( void )",
-        f"{label} late game finalization",
+    loader = cxx_function_body(common, "void idCommonLocal::LoadGameDLL( void )")
+    require(
+        loader,
+        "openPREY_SelectGameModuleBaseName()",
+        "unified game-module loader",
     )
-    for token in (
-        "if ( moduleShutdownFinalized )",
-        "moduleShutdownFinalized = true;",
-        "ShutdownConsoleCommands();",
-        "cvarSystem->RemoveFlaggedAutoCompletion( CVAR_GAME );",
-        "animationLib->Shutdown();",
-        "delete animationLib;",
-        "animationLib = NULL;",
-        "delete visemeTable100;",
-        "visemeTable100 = NULL;",
-        "delete visemeTable66;",
-        "visemeTable66 = NULL;",
-        "delete visemeTable33;",
-        "visemeTable33 = NULL;",
-        "if ( moduleIdLibInitialized )",
-        "idLib::ShutDown();",
-        "moduleIdLibInitialized = false;",
-    ):
-        require(late, token, f"{label} late game finalization")
-    for token in ("idEvent::Shutdown();", "program.Shutdown();", "idClass::Shutdown();"):
-        reject(late, token, f"{label} late game finalization")
-    if not (
-        late.index("if ( moduleShutdownFinalized )")
-        < late.index("moduleShutdownFinalized = true;")
-        < late.index("ShutdownConsoleCommands();")
-        < late.index("animationLib->Shutdown();")
-        < late.index("idLib::ShutDown();")
-        < late.index("moduleIdLibInitialized = false;")
-    ):
-        raise AssertionError(f"{label} late finalization releases module resources in an unsafe order")
+    require(
+        loader,
+        "openPREY_BuildGameModuleCandidateList( gameModuleCandidates )",
+        "unified game-module loader",
+    )
+    require(
+        loader,
+        "couldn't find unified game dynamic library",
+        "unified game-module loader diagnostic",
+    )
 
 
-def validate_two_phase_game_api_contract() -> None:
-    game_api_path = GAME_LIBS_ROOT / "src" / "game" / "Game.h"
-    sp_source_path = GAME_LIBS_ROOT / "src" / "game" / "Game_local.cpp"
-    sp_header_path = GAME_LIBS_ROOT / "src" / "game" / "Game_local.h"
-    mp_source_path = GAME_LIBS_ROOT / "src" / "mpgame" / "Game_local.cpp"
-    mp_header_path = GAME_LIBS_ROOT / "src" / "mpgame" / "Game_local.h"
-    required = (game_api_path, sp_source_path, sp_header_path, mp_source_path, mp_header_path)
-    if not all(path.is_file() for path in required):
+def validate_game_type_default() -> None:
+    sys_cvar = GAME_LIBS_ROOT / "src" / "game" / "gamesys" / "SysCvar.cpp"
+    if not sys_cvar.is_file():
         print(
-            "game_type_module_selection: skipped two-phase lifecycle cross-check "
-            f"(incomplete GameLibs checkout at {GAME_LIBS_ROOT})"
+            "game_type_module_selection: skipped GameLibs default cross-check "
+            f"(no canonical source at {sys_cvar})"
         )
         return
 
-    game_api = read(game_api_path)
-    require(game_api, "const int GAME_API_VERSION\t\t= 58;", "current game API version")
-    require(
-        game_api,
-        "virtual void\t\t\t\tShutdownAfterDecls( void ) = 0;",
-        "two-phase game API",
+    source = read(sys_cvar)
+    match = re.search(
+        r"^const char \*si_gameTypeArgs\[\]\s*=\s*\{([^}]*)\};",
+        source,
+        re.MULTILINE,
     )
-    validate_game_module_two_phase_lifecycle(read(sp_source_path), read(sp_header_path), "SP")
-    validate_game_module_two_phase_lifecycle(read(mp_source_path), read(mp_header_path), "MP")
-
-
-def parse_string_array(source: str, declaration: str) -> list[str]:
-    start = source.find(declaration)
-    if start == -1:
-        raise AssertionError(f"Missing array declaration {declaration!r}")
-    open_brace = source.index("{", start)
-    close_brace = source.index("}", open_brace)
-    body = source[open_brace + 1 : close_brace]
-    return re.findall(r'"([^"]*)"', body)
-
-
-def parse_gametype_table(source: str) -> list[tuple[str, bool]]:
-    declaration = "static const mpGameTypeInfo_t mpGameTypeInfoTable[] = {"
-    start = source.find(declaration)
-    if start == -1:
-        raise AssertionError(f"Missing table declaration {declaration!r}")
-    body = source[start + len(declaration) :]
-    end = body.find("\n};")
-    if end == -1:
-        raise AssertionError("Unterminated mpGameTypeInfoTable")
-    body = body[:end]
-
-    rows = re.findall(
-        r"\{\s*GAME_[A-Z0-9_]+,\s*\"([^\"]*)\".*?MP_GAMESTATE_[A-Z0-9_]+,\s*(true|false)\s*\}",
-        body,
-        re.DOTALL,
-    )
-    if not rows:
-        raise AssertionError("Could not parse any mpGameTypeInfoTable rows")
-    return [(name, flag == "true") for name, flag in rows]
-
-
-def parse_engine_route_table(source: str) -> list[tuple[str, bool]]:
-    declaration = "static const openQ4GameTypeRoute_t openQ4_multiplayerGameTypes[] = {"
-    start = source.find(declaration)
-    if start == -1:
-        raise AssertionError(f"Missing route table declaration {declaration!r}")
-    body = source[start + len(declaration) :]
-    end = body.find("\n};")
-    if end == -1:
-        raise AssertionError("Unterminated engine multiplayer route table")
-    rows = re.findall(r'\{\s*"([^"]+)",\s*(true|false)\s*\}', body[:end])
-    if not rows:
-        raise AssertionError("Could not parse engine multiplayer route table")
-    return [(name, flag == "true") for name, flag in rows]
-
-
-def validate_engine_mirror() -> None:
-    common = read(ROOT / "src" / "framework" / "Common.cpp")
-    engine_routes = parse_engine_route_table(common)
-    if not engine_routes:
-        raise AssertionError("engine multiplayer gametype allowlist is empty")
-    engine_types = [name for name, _selectable in engine_routes]
-    reserved_routes = [name for name, selectable in engine_routes if not selectable]
-    if not reserved_routes:
-        raise AssertionError("engine route table no longer distinguishes reserved multiplayer wire tokens")
-
-    game_types_source = GAME_LIBS_ROOT / "src" / "mpgame" / "mp" / "GameTypes.cpp"
-    if not game_types_source.is_file():
-        print(
-            f"game_type_module_selection: skipped table cross-check "
-            f"(no GameLibs checkout at {GAME_LIBS_ROOT})"
+    if match is None:
+        raise AssertionError("active in-tree Prey game si_gameTypeArgs declaration is missing")
+    game_types = re.findall(r'"([^"]*)"', match.group(1))
+    if not game_types or game_types[0] != "singleplayer":
+        raise AssertionError(
+            f"in-tree Prey game si_gameTypeArgs starts with {game_types[:1]!r}, "
+            "expected 'singleplayer'"
         )
-    else:
-        game_types_text = read(game_types_source)
-        game_types = parse_string_array(game_types_text, "const char *si_gameTypeArgs[] = {")
-        if not game_types:
-            raise AssertionError("GameLibs si_gameTypeArgs is empty")
-        if game_types[0] != "singleplayer":
-            raise AssertionError(
-                f"si_gameTypeArgs[0] is {game_types[0]!r}, expected 'singleplayer'"
-            )
-
-        # All descriptor rows route to game_mp, including append-only reserved
-        # wire tokens, but only implemented/selectable rows may survive module
-        # normalization. Otherwise game_mp registration would silently coerce
-        # a reserved token to si_gameTypeArgs[0] (singleplayer).
-        table_types = parse_gametype_table(game_types_text)
-        expected_routes = [row for row in table_types if row[0] != "singleplayer"]
-        if engine_routes != expected_routes:
-            raise AssertionError(
-                "openQ4 multiplayer routes have drifted from mpGameTypeInfoTable:\n"
-                f"  engine:   {engine_routes}\n"
-                f"  gamelibs: {expected_routes}"
-            )
-
-        selectable = [
-            name for name, is_selectable in table_types
-            if is_selectable and name != "singleplayer"
-        ]
-        missing_selectable = [name for name in selectable if name not in engine_types]
-        if missing_selectable:
-            raise AssertionError(
-                "selectable multiplayer gametypes missing from the engine allowlist "
-                f"(they would boot game_sp): {missing_selectable}"
-            )
-        unlisted = [name for name in game_types[1:] if name not in engine_types]
-        if unlisted:
-            raise AssertionError(
-                f"si_gameTypeArgs entries missing from the engine allowlist: {unlisted}"
-            )
-
-        # The main menu runs under game_sp and carries its multiplayer mode to
-        # game_mp in si_gameType. A value outside game_sp's list falls back to
-        # its first, singleplayer, so game_sp lists every game_mp mode.
-        sp_types = parse_string_array(
-            read(GAME_LIBS_ROOT / "src" / "game" / "gamesys" / "SysCvar.cpp"), "const char *si_gameTypeArgs[]"
-        )
-        if sp_types != game_types:
-            raise AssertionError(
-                f"game_sp si_gameTypeArgs {sp_types} differs from game_mp's {game_types}; "
-                "a menu mode outside it would fall back to singleplayer"
-            )
-
-    # An allowlist, not "anything that is not singleplayer".
-    for token in (
-        "struct openQ4GameTypeRoute_t {",
-        "bool selectable;",
-        "static const openQ4GameTypeRoute_t openQ4_multiplayerGameTypes[] = {",
-        "static const char *openQ4_CanonicalMultiplayerGameType( const char *gameType, const bool selectableOnly ) {",
-        "static bool openQ4_IsMultiplayerGameType( const char *gameType ) {",
-        "for ( int i = 0; openQ4_multiplayerGameTypes[i].name != NULL; i++ ) {",
-        "( !selectableOnly || route.selectable )",
-        "openQ4_CanonicalMultiplayerGameType( gameType, false )",
-        "openQ4_CanonicalMultiplayerGameType( currentGameType, true )",
-        "static void openQ4_NormalizeGameTypeForModule( const char *moduleName ) {",
-        'cvarSystem->SetCVarString( "si_gameType", "singleplayer" );',
-        'cvarSystem->SetCVarString( "si_gameType", "DM" );',
-    ):
-        require(common, token, "engine multiplayer gametype allowlist")
-
-    # A dedicated server has no single-player mode; it must not be routed to
-    # game_sp by an unrecognised gametype.
-    require(common, "#ifdef ID_DEDICATED", "dedicated game module selection")
     require(
-        common,
-        'return ( gameType != NULL && idStr::Icmp( gameType, "singleplayer" ) == 0 ) ? "game_sp" : "game_mp";',
-        "dedicated game module selection",
+        source,
+        'idCVar si_gameType(\t\t\t\t\t"si_gameType",\t\t\t\tsi_gameTypeArgs[ 0 ]',
+        "in-tree Prey game default gametype",
     )
 
 
-def validate_default_cfg() -> None:
-    cfg = read(ROOT / "content" / "baseoq4" / "pak0" / "default.cfg")
-    require(cfg, "sets\tsi_gameType\t\tsingleplayer", "shipped default gametype")
-    if re.search(r"^sets\s+si_gameType\s+dm\s*$", cfg, re.MULTILINE | re.IGNORECASE):
-        raise AssertionError("default.cfg still selects a multiplayer gametype")
+def validate_unified_build_contract() -> None:
+    meson = read(ROOT / "meson.build")
+    basepr_meson = read(ROOT / "content" / "basepr" / "meson.build")
+    require(meson, "game_binary_name = 'game_' + binary_arch", "unified module name")
+    require(
+        meson,
+        "Prey uses one unified game module for both single-player and multiplayer.",
+        "unified module source contract",
+    )
+    require(basepr_meson, "game_module_target =", "unified basepr module target")
 
 
 def validate_swap_guard() -> None:
@@ -889,31 +626,26 @@ def validate_async_module_state() -> None:
     )
     require(
         load_body,
-        'game != NULL && idStr::Icmp( gameModuleBaseName, "game_sp" ) == 0,',
-        "game module ready transition",
-    )
-    require(
-        load_body,
         "openQ4_NormalizeGameTypeForModule( gameModuleBaseName );",
-        "multiplayer game type normalization before module load",
+        "game type normalization before module load",
     )
     if load_body.index("openQ4_NormalizeGameTypeForModule") > load_body.index("sys->DLL_Load"):
-        raise AssertionError("multiplayer game type is normalized after the module starts loading")
+        raise AssertionError("game type is normalized after the module starts loading")
 
     init_start = common.index("void idCommonLocal::InitGame( void ) {")
     init_end = common.index("void idCommonLocal::ShutdownGame( bool reloading ) {", init_start)
     init_body = common[init_start:init_end]
     for token in (
-        "const idStr pendingGameModule = openQ4_SelectGameModuleBaseName();",
+        "const idStr pendingGameModule = openPREY_SelectGameModuleBaseName();",
         "openQ4_NormalizeGameTypeForModule( pendingGameModule.c_str() );",
     ):
-        require(init_body, token, "multiplayer game type normalization before declaration initialization")
+        require(init_body, token, "game type normalization before declaration initialization")
     if not (
         init_body.index("const idStr pendingGameModule")
         < init_body.index("openQ4_NormalizeGameTypeForModule( pendingGameModule.c_str() );")
         < init_body.index("declManager->Init")
     ):
-        raise AssertionError("multiplayer game type is normalized after declarations initialize")
+        raise AssertionError("game type is normalized after declarations initialize")
 
     reject(common, "openQ4_StartupRequiresMultiplayerModule", "startup command preselection")
     common_init_start = common.index("void idCommonLocal::Init( int argc")
@@ -939,246 +671,59 @@ def validate_async_module_state() -> None:
     validate_ttf_level_load_restore_contract()
 
 
-def validate_lifecycle_mutation_sensitivity() -> None:
-    common = read(ROOT / "src" / "framework" / "Common.cpp")
-
-    shutdown_call = "\t\tgame->Shutdown();\n"
-    ui_shutdown = "\tuiManager->Shutdown();"
-    if common.count(shutdown_call) != 1 or common.count(ui_shutdown) != 1:
-        raise AssertionError("Game shutdown lifecycle mutation anchors are not unique")
-    game_after_ui = common.replace(shutdown_call, "", 1).replace(
-        ui_shutdown,
-        ui_shutdown + "\n\tgame->Shutdown();",
-        1,
+def validate_decl_source_scanner_contract() -> None:
+    source = read(ROOT / "src" / "framework" / "DeclManager.cpp")
+    require(
+        source,
+        "declDefinition = finalPreprocessedBuffer.Mid( startMarker, sourceSize );",
+        "loose decl exact-source scanner",
     )
-    expect_contract_rejection(
-        validate_shutdown_lifecycle_contract,
-        game_after_ui,
-        "game object shuts down after UI destruction",
+    require(
+        source,
+        "declDefinition = packedText.Mid( startMarker, sourceSize );",
+        "packed decl exact-source scanner",
     )
-
-    late_call = "\t\tgame->ShutdownAfterDecls();\n"
-    decl_shutdown = "\tdeclManager->Shutdown();"
-    if common.count(late_call) != 1 or common.count(decl_shutdown) != 1:
-        raise AssertionError("Late game/decl shutdown mutation anchors are not unique")
-    late_before_decls = common.replace(late_call, "", 1).replace(
-        decl_shutdown,
-        "\tgame->ShutdownAfterDecls();\n" + decl_shutdown,
-        1,
-    )
-    expect_contract_rejection(
-        validate_shutdown_lifecycle_contract,
-        late_before_decls,
-        "late module finalization destroys animation/idLib before module-owned declarations",
+    reject(
+        source,
+        "src.ParseBracedSectionExact( declDefinition, -1 );",
+        "comment-safe decl source scanners",
     )
 
-    unload_phase = "\tCom_SetGameModuleLoadPhase( GAME_MODULE_PHASE_BINARY_UNLOAD );"
-    if common.count(unload_phase) != 1:
-        raise AssertionError("Game DLL unload phase mutation anchor is not unique")
-    duplicate_shutdown = common.replace(
-        unload_phase,
-        unload_phase + "\n\tgame->Shutdown();",
-        1,
+
+def validate_renderer_module_fail_closed_contract() -> None:
+    api = read(ROOT / "src" / "renderer" / "RenderModuleAPI.h")
+    require(api, "#define RENDER_API_VERSION\t\t\t34", "current renderer ABI")
+
+    loader = read(ROOT / "src" / "renderer" / "RendererModule.cpp")
+    require(
+        loader,
+        "moduleExport->version != RENDER_API_VERSION",
+        "stale renderer-module rejection",
     )
-    expect_contract_rejection(
-        validate_shutdown_lifecycle_contract,
-        duplicate_shutdown,
-        "binary unload invokes game shutdown a second time",
+    require(
+        loader,
+        '"module render API version mismatch"',
+        "stale renderer-module diagnostic",
     )
 
-    font_source = read(ROOT / "src" / "renderer" / "tr_font.cpp")
-    font_header = read(ROOT / "src" / "renderer" / "tr_local.h")
-    if font_source.count("R_ShutdownTrueTypeFonts( preserveAtlasImages );") != 1:
-        raise AssertionError("TrueType shutdown mutation anchor is not unique")
-    expect_contract_rejection(
-        lambda candidate: validate_font_resource_reset_contract(candidate, font_header),
-        font_source.replace("R_ShutdownTrueTypeFonts( preserveAtlasImages );", "", 1),
-        "renderer shutdown keeps stale TrueType faces and console guard state",
+    session = read(ROOT / "src" / "framework" / "Session.cpp")
+    unload = cxx_function_body(session, "void idSessionLocal::UnloadMap()")
+    require(
+        unload,
+        "if ( soundSystem && sw )",
+        "renderer-ABI early-fatal sound-world guard",
     )
-
-    renderer = read(ROOT / "src" / "renderer" / "RenderSystem_init.cpp")
-    if renderer.count("\tR_DoneFreeType( true );") != 1:
-        raise AssertionError("Full vid_restart font-release mutation anchor is not unique")
-    expect_contract_rejection(
-        validate_full_vid_restart_font_contract,
-        renderer.replace("\tR_DoneFreeType( true );", "", 1),
-        "full vid_restart purges images without releasing font state",
-    )
-    restart_device = "\ttr.InitOpenGL();\n\tcvarSystem->SetCVarBool( \"r_fullscreen\", latchedFullscreen );"
-    if renderer.count(restart_device) != 1:
-        raise AssertionError("Full vid_restart device-startup mutation anchor is not unique")
-    expect_contract_rejection(
-        validate_full_vid_restart_font_contract,
-        renderer.replace(
-            restart_device,
-            "\tR_RefreshConsoleFontAtlas();\n" + restart_device,
-            1,
-        ),
-        "console atlas refresh runs before persistent image allocation",
-    )
-    expect_contract_rejection(
-        validate_full_vid_restart_font_contract,
-        renderer.replace(restart_device, restart_device.replace("tr.InitOpenGL();", "R_InitOpenGL();"), 1),
-        "full vid_restart bypasses native Vulkan device startup",
-    )
-    expect_contract_rejection(
-        validate_full_vid_restart_font_contract,
-        renderer.replace(restart_device, "\tglobalImages->ReloadImages( true );\n" + restart_device, 1),
-        "full vid_restart reloads images outside backend device startup",
-    )
-
-    partial_refresh = "\t\t\tR_RefreshConsoleFontAtlas();"
-    legacy_restart = function_body(renderer, "void R_VidRestart_f", "legacy restart mutation")
-    if legacy_restart.count(partial_refresh) != 1:
-        raise AssertionError("Partial vid_restart console-refresh mutation anchor is not unique")
-    expect_contract_rejection(
-        validate_full_vid_restart_font_contract,
-        renderer.replace(legacy_restart, legacy_restart.replace(partial_refresh, "", 1), 1),
-        "successful partial vid_restart leaves resolution-dependent console glyphs stale",
-    )
-
-    device_source = read(ROOT / "src" / "ui" / "DeviceContext.cpp")
-    device_header = read(ROOT / "src" / "ui" / "DeviceContext.h")
-    public_header = read(ROOT / "src" / "ui" / "UserInterface.h")
-    generation_before_reload = (
-        "\tfontsVideoRestartCount = currentRestartCount;\n"
-        "\tfontsCodePageGeneration = currentCodePageGeneration;\n"
-        "\tif ( !ReloadFonts() )"
-    )
-    generation_after_reload = (
-        "\tif ( !ReloadFonts() )"
-        "\n\tfontsVideoRestartCount = currentRestartCount;"
-        "\n\tfontsCodePageGeneration = currentCodePageGeneration;"
-    )
-    if device_source.count(generation_before_reload) != 1:
-        raise AssertionError("Lazy font-generation mutation anchor is not unique")
-    expect_contract_rejection(
-        lambda candidate: validate_ui_font_reload_contract(
-            candidate,
-            device_header,
-            public_header,
-        ),
-        device_source.replace(generation_before_reload, generation_after_reload, 1),
-        "lazy UI font refresh records generation after recursive registration",
-    )
-
-    ttf_source = read(ROOT / "src" / "renderer" / "tr_fontTTF.cpp")
-    if ttf_source.count("\n\t\topts.isPersistant = true;\n") != 1:
-        raise AssertionError("TrueType persistent-atlas mutation anchors are not exact")
-    expect_contract_rejection(
-        validate_ttf_persistent_atlas_contract,
-        ttf_source.replace("\n\t\topts.isPersistant = true;\n", "\n", 1),
-        "GUI TrueType atlas is not recreated across full vid_restart",
-    )
-
-    atlas_identity = "\tconst idStr materialName = imageName;"
-    if ttf_source.count(atlas_identity) != 2:
-        raise AssertionError("TrueType atlas identity mutation anchors are not exact")
-    expect_contract_rejection(
-        validate_ttf_persistent_atlas_contract,
-        ttf_source.replace(atlas_identity, '\tconst idStr materialName = "detached-atlas-material";', 1),
-        "generated TrueType material probes a nonexistent image identity on first parse",
-    )
-
-    create_install = "\tR_TTFInstallAtlasStage( material, source );"
-    if ttf_source.count(create_install) != 1:
-        raise AssertionError("TrueType atlas source-install mutation anchor is not exact")
-    conditional_install = (
-        "\tif ( !R_TTFMaterialSamplesAtlas( material, imageName ) ) {\n"
-        "\t\tR_TTFInstallAtlasStage( material, source );\n"
-        "\t}"
-    )
-    expect_contract_rejection(
-        validate_ttf_persistent_atlas_contract,
-        ttf_source.replace(create_install, conditional_install, 1),
-        "generated TrueType material keeps an implicit or restart-stale stage",
-    )
-
-    for label, source_path, header_path in (
-        (
-            "SP",
-            GAME_LIBS_ROOT / "src" / "game" / "Game_local.cpp",
-            GAME_LIBS_ROOT / "src" / "game" / "Game_local.h",
-        ),
-        (
-            "MP",
-            GAME_LIBS_ROOT / "src" / "mpgame" / "Game_local.cpp",
-            GAME_LIBS_ROOT / "src" / "mpgame" / "Game_local.h",
-        ),
-    ):
-        if not source_path.is_file() or not header_path.is_file():
-            continue
-        module_source = read(source_path)
-        module_header = read(header_path)
-        early_guard = "\tmoduleShutdownStarted = true;"
-        if module_source.count(early_guard) != 1:
-            raise AssertionError(f"{label} early-shutdown mutation anchor is not unique")
-        expect_contract_rejection(
-            lambda candidate, header=module_header, name=label: validate_game_module_two_phase_lifecycle(
-                candidate,
-                header,
-                name,
-            ),
-            module_source.replace(
-                early_guard,
-                early_guard + "\n\tanimationLib->Shutdown();",
-                1,
-            ),
-            f"{label} early shutdown destroys animation state before declarations",
-        )
-        if module_source.count("\t\tidLib::ShutDown();") != 1:
-            raise AssertionError(f"{label} idLib finalization mutation anchor is not unique")
-        expect_contract_rejection(
-            lambda candidate, header=module_header, name=label: validate_game_module_two_phase_lifecycle(
-                candidate,
-                header,
-                name,
-            ),
-            module_source.replace("\t\tidLib::ShutDown();\n", "", 1),
-            f"{label} late shutdown leaves module idLib initialized",
-        )
-
-        for flag, call, subsystem in (
-            ("moduleEventInitStarted", "idEvent::Init();", "event system"),
-            ("moduleClassInitStarted", "idClass::Init();", "class system"),
-            ("moduleProgramInitStarted", "program.Startup( SCRIPT_DEFAULT );", "script program"),
-        ):
-            tracked_init = f"\t{flag} = true;\n\t{call}"
-            late_tracking = f"\t{call}\n\t{flag} = true;"
-            if module_source.count(tracked_init) != 1:
-                raise AssertionError(f"{label} {subsystem} init-tracking mutation anchor is not unique")
-            expect_contract_rejection(
-                lambda candidate, header=module_header, name=label: validate_game_module_two_phase_lifecycle(
-                    candidate,
-                    header,
-                    name,
-                ),
-                module_source.replace(tracked_init, late_tracking, 1),
-                f"{label} records {subsystem} initialization only after the fallible call",
-            )
-
-        partial_aas = "\t\taasList.DeleteContents( true );\n"
-        if module_source.count(partial_aas) != 1:
-            raise AssertionError(f"{label} partial AAS cleanup mutation anchor is not unique")
-        expect_contract_rejection(
-            lambda candidate, header=module_header, name=label: validate_game_module_two_phase_lifecycle(
-                candidate,
-                header,
-                name,
-            ),
-            module_source.replace(partial_aas, "", 1),
-            f"{label} partial initialization leaks allocated AAS instances",
-        )
 
 
 def main() -> int:
-    validate_engine_mirror()
-    validate_two_phase_game_api_contract()
+    validate_unified_module_selection()
+    validate_game_type_default()
+    validate_unified_build_contract()
     validate_font_restart_documentation()
-    validate_default_cfg()
     validate_swap_guard()
     validate_async_module_state()
-    validate_lifecycle_mutation_sensitivity()
+    validate_decl_source_scanner_contract()
+    validate_renderer_module_fail_closed_contract()
     print("game_type_module_selection: ok")
     return 0
 

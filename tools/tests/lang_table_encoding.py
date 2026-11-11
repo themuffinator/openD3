@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Regression checks for text encoding and the code-point font path.
 
-openQ4 text is UTF-8 end to end.  String tables are authored in it, the loader
+openPREY text is UTF-8 end to end.  String tables are authored in it, the loader
 normalises a legacy 8-bit table *up* to it (idLangDict::Load), and the GUI draws
 by Unicode code point rather than by byte, so a language is limited by what the
 fonts have art for rather than by what one 8-bit codepage can express.
@@ -28,8 +28,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-STRINGS_DIR = ROOT / "content" / "baseoq4" / "pak0" / "strings"
-FONTS_DIR = ROOT / "content" / "baseoq4" / "pak0" / "fonts"
+STRINGS_DIR = ROOT / "content" / "basepr" / "pak0" / "strings"
+FONTS_DIR = ROOT / "content" / "basepr" / "pak0" / "fonts"
 
 # sys_lang values whose legacy 8-bit tables and retail atlases are not
 # Windows-1252.  Keep in step with LangDict_CodePageForLanguage.
@@ -47,7 +47,7 @@ CODEPAGE_LANGUAGES = {
 # Polish had a retail release with atlases for its own codepage.
 SCALABLE_ONLY_LANGUAGES = ("czech", "hungarian", "russian", "turkish", "ukrainian")
 
-# Languages whose five non-dialogue tables (code, guis, maps, mappack, openq4)
+# Languages whose five non-dialogue tables (code, guis, maps, mappack, openprey)
 # translate every English entry, with the endonym the language chooser shows
 # for each.  Campaign dialogue (lips) falls back to English or to retail media.
 FULL_TABLE_LANGUAGES = {
@@ -105,7 +105,7 @@ LANGUAGE_RANGES = {
 # string, so it needs no coverage of its own here.
 LATIN_ONLY_FACES = {"strogg"}
 
-# Codes that land on a .notdef cell in every stock Quake 4 font.  The engine
+# Codes that land on a .notdef cell in every stock Prey font.  The engine
 # folds these to ASCII rather than drawing nothing; U+00A0 in particular has a
 # zero advance, so leaving it alone would delete the word gap entirely.  All
 # three Windows codepages put this punctuation at the same byte values, so one
@@ -507,11 +507,11 @@ def validate_codepage_selection() -> None:
 
 def validate_language_menu() -> None:
     """Every sys_lang the language chooser offers needs string tables to load."""
-    game_gui = read("content/baseoq4/pak0/guis/menu/settings/game.gui")
+    game_gui = read("content/basepr/pak0/guis/menu/settings/game.gui")
     match = re.search(r'values\s+"([a-z;]+)"', game_gui)
     if match is None:
         raise AssertionError(
-            "content/baseoq4/pak0/guis/menu/settings/game.gui: could not find the "
+            "content/basepr/pak0/guis/menu/settings/game.gui: could not find the "
             "language chooser 'values' list"
         )
     offered = match.group(1).split(";")
@@ -563,11 +563,11 @@ def validate_language_menu() -> None:
                 f"{len(offered)} values; a choiceDef silently mismatches when they disagree"
             )
         lists.setdefault(path.stem.split("_", 1)[0], set()).add(names.group(1))
-    # Both the guis and the openq4 table of a language define the list, and
+    # Both the guis and the openprey table of a language define the list, and
     # whichever loads last wins; they must not disagree.
     for language, variants in sorted(lists.items()):
         if len(variants) != 1:
-            raise AssertionError(f"{language}: the guis and openq4 tables carry different #str_229908 lists")
+            raise AssertionError(f"{language}: the guis and openprey tables carry different #str_229908 lists")
 
 
 def validate_translated_tables() -> None:
@@ -584,7 +584,7 @@ def validate_translated_tables() -> None:
     english = {}
     tables = {language: {} for language in FULL_TABLE_LANGUAGES}
     defined = {language: {} for language in FULL_TABLE_LANGUAGES}
-    for category in ("code", "guis", "maps", "mappack", "openq4"):
+    for category in ("code", "guis", "maps", "mappack", "openprey"):
         source = entry.findall((STRINGS_DIR / f"english_{category}.lang").read_text(encoding="utf-8"))
         source_keys = [key for key, _ in source]
         english.update(source)
@@ -613,7 +613,7 @@ def validate_translated_tables() -> None:
 
     # The chooser appends: Spanish/French layout fixes and every archived
     # sys_lang depend on the existing indices.
-    game_gui = read("content/baseoq4/pak0/guis/menu/settings/game.gui")
+    game_gui = read("content/basepr/pak0/guis/menu/settings/game.gui")
     chooser = game_gui[game_gui.index("choiceDef set_game_language_value"):]
     values = re.search(r'values\s+"([a-z;]+)"', chooser).group(1).split(";")
     assert tuple(values) == SHIPPED_LANGUAGE_ORDER, \
@@ -622,7 +622,7 @@ def validate_translated_tables() -> None:
         shown = tables[language]["#str_229908"].split(";")[values.index(language)]
         assert shown == endonym, f"{language}: the chooser names its own language {shown!r}, expected {endonym!r}"
     for path in ("guis/mainmenu.gui", "guis/menu/settings/game.gui"):
-        commands = re.findall(r'CVarStrcmp sys_lang curr_lang ([A-Za-z ]+)"', read("content/baseoq4/pak0/" + path))
+        commands = re.findall(r'CVarStrcmp sys_lang curr_lang ([A-Za-z ]+)"', read("content/basepr/pak0/" + path))
         assert commands, f"{path}: missing language-index command"
         for command in commands:
             assert command.lower().split() == values, f"{path}: language indices differ from chooser"
@@ -639,13 +639,13 @@ def validate_translated_tables() -> None:
 
 
 def validate_openq4_placeholders() -> None:
-    """Every language's openQ4 table keeps the English printf placeholders in
+    """Every language's openPREY table keeps the English printf placeholders in
     order, so a format the engine fills (the SYSTEM display lists) never reads
     the wrong argument. Partly translated tables are checked for their keys."""
     entry = re.compile(r'^\s*"(#str_\w+)"\s+"((?:\\.|[^"\\])*)"', re.MULTILINE)
     formats = re.compile(r'%(?:[-+0#]*\d*(?:\.\d+)?(?:hh|ll|[hljztL])?[diuoxXfFeEgGaAcsp]|%)')
-    english = dict(entry.findall((STRINGS_DIR / "english_openq4.lang").read_text(encoding="utf-8")))
-    for path in sorted(STRINGS_DIR.glob("*_openq4.lang")):
+    english = dict(entry.findall((STRINGS_DIR / "english_openprey.lang").read_text(encoding="utf-8")))
+    for path in sorted(STRINGS_DIR.glob("*_openprey.lang")):
         for key, translated in entry.findall(path.read_text(encoding="utf-8")):
             original = english.get(key)
             if original is not None:

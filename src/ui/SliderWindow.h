@@ -67,6 +67,7 @@ private:
 	float				ClampAndSnapValue( float newValue ) const;
 	float				GetPageStep( void ) const;
 	void				CommitValue( void );
+	void				UpdateThumbMetrics( const idRectangle& sliderRect );
 						// true: read the updated cvar from cvar system
 						// false: write to the cvar system
 						// force == true overrides liveUpdate 0
@@ -87,6 +88,7 @@ public:
 	bool				IsVertical() const { return vertical; }
 private:
 	bool				verticalFlip;
+	bool				volumeSlider;
 	bool				scrollbar;
 	idWindow *			buddyWin;
 	idStr				thumbShader;

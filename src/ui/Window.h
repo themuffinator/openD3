@@ -70,6 +70,24 @@ const int WIN_CHATWINDOW	= 0x40000000;	// retail Q4 used 0x20000000; openQ4 keep
 
 const int WIN_DESKTOP		= 0x10000000;
 
+static constexpr unsigned int WIN_ALL_FLAGS_MASK =
+	WIN_CHILD | WIN_CAPTION | WIN_BORDER | WIN_SIZABLE | WIN_MOVABLE | WIN_FOCUS |
+	WIN_CAPTURE | WIN_HCENTER | WIN_VCENTER | WIN_MODAL | WIN_INTRANSITION |
+	WIN_CANFOCUS | WIN_SELECTED | WIN_TRANSFORM | WIN_HOLDCAPTURE | WIN_NOWRAP |
+	WIN_NOCLIP | WIN_INVERTRECT | WIN_NATURALMAT | WIN_NOCURSOR | WIN_MENUGUI |
+	WIN_ACTIVE | WIN_SHOWCOORDS | WIN_SHOWTIME | WIN_WANTENTER | WIN_MATCOVER |
+	WIN_MATFIT | WIN_MATCANVASFILL | WIN_DESKTOP | WIN_NATIVESCREENOVERLAY |
+	WIN_CHATWINDOW;
+static constexpr unsigned long long WIN_ALL_FLAGS_SUM =
+	WIN_CHILD + WIN_CAPTION + WIN_BORDER + WIN_SIZABLE + WIN_MOVABLE + WIN_FOCUS +
+	WIN_CAPTURE + WIN_HCENTER + WIN_VCENTER + WIN_MODAL + WIN_INTRANSITION +
+	WIN_CANFOCUS + WIN_SELECTED + WIN_TRANSFORM + WIN_HOLDCAPTURE + WIN_NOWRAP +
+	WIN_NOCLIP + WIN_INVERTRECT + WIN_NATURALMAT + WIN_NOCURSOR + WIN_MENUGUI +
+	WIN_ACTIVE + WIN_SHOWCOORDS + WIN_SHOWTIME + WIN_WANTENTER + WIN_MATCOVER +
+	WIN_MATFIT + WIN_MATCANVASFILL + WIN_DESKTOP + WIN_NATIVESCREENOVERLAY +
+	WIN_CHATWINDOW;
+static_assert( WIN_ALL_FLAGS_SUM == WIN_ALL_FLAGS_MASK, "GUI window flag bits overlap" );
+
 const char CAPTION_HEIGHT[] = "16.0";
 const char SCROLLER_SIZE[] = "16.0";
 const int SCROLLBAR_SIZE = 16;
@@ -207,6 +225,10 @@ public:
 		ON_JOYBUTTON2,
 		ON_JOYBACKBUTTON,
 // jmarshall end
+		ON_TABACTIVATE,
+		ON_SLIDERCHANGE,
+		ON_STARTUP,
+		ON_MAXCHARS,
 		SCRIPT_COUNT
 	};
 
@@ -246,6 +268,7 @@ public:
 	idWindow *SetFocus(idWindow *w, bool scripts = true);
 
 	idWindow *SetCapture(idWindow *w);
+	void ResetCapture();
 	void SetParent(idWindow *w);
 	void SetFlag(unsigned int f);
 	void ClearFlag(unsigned int f);
@@ -279,7 +302,9 @@ public:
 	float GetMaxCharWidth();
 	void SetFont();
 	void SetInitialState(const char *_name);
+	void SetWindowDefType( const char *defType );
 	void AddChild(idWindow *win);
+	void AddChildWindow(idWindow *win);
 	void DebugDraw(int time, float x, float y);
 	void CalcClientRect(float xofs, float yofs);
 	void CommonInit();
@@ -366,6 +391,7 @@ public:
 	idRegisterList *RegList() { return &regList; }
 	void AddCommand(const char *cmd);
 	void AddUpdateVar(idWinVar *var);
+	bool SetInternalVarValue( const char* name, const char* value );
 	bool Interactive();
 	bool ContainsStateVars();
 	void SetChildWinVarVal(const char *name, const char *var, const char *val);
@@ -441,6 +467,24 @@ protected:
 	void ParseString(idParser *src, idStr &out);
 	void ParseVec4(idParser *src, idVec4 &out);
 	void ConvertRegEntry(const char *name, idParser *src, idStr &out, int tabs);
+	bool IsTabContainerDef() const;
+	bool IsTabDef() const;
+	bool IsCreditDef() const;
+	bool IsSplineDef() const;
+	bool IsRetailSplineWindow() const;
+	idWinVar *CreateRetailGuiVar( const char *name );
+	idWinVar *FindDefinedVarByNameNoCreate( const char *name );
+	int GetTabContainerTabCount() const;
+	idWindow *GetTabContainerTabWindow( int tabIndex ) const;
+	int GetTabContainerRequestedTabIndex() const;
+	int GetTabContainerTabAt( float x, float y ) const;
+	void UpdateTabContainerState( bool runActivateScript );
+	void DrawTabContainerTabs();
+	int GetWinVarIntValue( const char *name, int defaultValue );
+	float GetWinVarFloatValue( const char *name, float defaultValue );
+	void HandleRetailSpecialVars();
+	void UpdateRetailCreditActivation();
+	bool DrawRetailTextEffect( const idVec4 &color );
 
 	float actualX;					// physical coords
 	float actualY;					// ''
@@ -478,10 +522,16 @@ protected:
 	int HudGroupAnchorY() const;
 	idStr	name;
 	idStr	comment;
-	idVec2	shear;
+	idStr	windowDefType;
+	int		activeTabIndex;
+	bool	tabContainerInitialized;
+	idWinVec2	shear;
 
 	signed char	textShadow;
 	unsigned char fontNum;
+	// Prey's "notranslation": alien text that never turns English (11.4).
+	// Fixed at parse, like retail's window flag; never serialized.
+	bool	noTranslation;
 	unsigned char cursor;					//
 	signed char	textAlign;
 
@@ -545,6 +595,10 @@ protected:
 	bool		measuredShortened = false;
 	void		MeasureText();
 	idWinBackground	backGroundName;			// 
+	idWinBackground	backgroundLeft;
+	idWinBackground	backgroundRight;
+	idWinBackground	backgroundTop;
+	idWinBackground	backgroundBottom;
 	idWinFloat textspacing;
 	idWinFloat textstyle;
 	idWinInt itemheight;
@@ -602,6 +656,8 @@ protected:
 	idRegisterList regList;
 
 	idWinBool	hideCursor;
+	bool		retailCreditArmed;
+	int			retailTextEffectStartTime;
 };
 
 ID_INLINE void idWindow::AddDefinedVar( idWinVar* var ) {

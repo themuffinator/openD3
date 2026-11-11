@@ -509,8 +509,7 @@ static void R_ViewStatistics( viewDef_t *parms ) {
 		if ( surf->material->IsPortalSky() ) {
 			portalSkySurfs++;
 		}
-		const texgen_t texgen = surf->material->Texgen();
-		if ( texgen == TG_SKYBOX_CUBE || texgen == TG_WOBBLESKY_CUBE ) {
+		if ( surf->material->HasTexgen( TG_SKYBOX_CUBE ) || surf->material->HasTexgen( TG_WOBBLESKY_CUBE ) ) {
 			skyboxSurfs++;
 		}
 		if ( surf->material->GetSort() >= SS_POST_PROCESS ) {
@@ -1158,6 +1157,30 @@ bool idRenderSystemLocal::GetUseUIViewportFor2D( void ) const {
 	return useUIViewportFor2D;
 }
 
+bool idRenderSystemLocal::IsScopeView( void ) {
+	return scopeViewEnabled;
+}
+
+void idRenderSystemLocal::SetScopeView( bool view ) {
+	scopeViewEnabled = view;
+}
+
+bool idRenderSystemLocal::IsSpiritWalkView( void ) {
+	return spiritWalkViewEnabled;
+}
+
+void idRenderSystemLocal::SetSpiritWalkView( bool view ) {
+	spiritWalkViewEnabled = view;
+}
+
+bool idRenderSystemLocal::IsShuttleView( void ) {
+	return shuttleViewEnabled;
+}
+
+void idRenderSystemLocal::SetShuttleView( bool view ) {
+	shuttleViewEnabled = view;
+}
+
 /*
 =============
 DrawStretchTri
@@ -1445,7 +1468,7 @@ void idRenderSystemLocal::SetBackEndRenderer() {
 		if ( R_IsLegacyBackEndRequest( requestedRendererName ) ) {
 			selection.fallback = RENDER_SELECTION_LEGACY;
 			common->Warning(
-				"r_renderer \"%s\" requested, but openQ4 only ships the ARB2 backend; using %s instead",
+				"r_renderer \"%s\" requested, but openPREY only ships the ARB2 backend; using %s instead",
 				requestedRendererName,
 				r_actualRenderer.GetString() );
 		} else if ( idStr::Icmp( requestedRendererName, "best" ) != 0 && idStr::Icmp( requestedRendererName, r_actualRenderer.GetString() ) != 0 ) {

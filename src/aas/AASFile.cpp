@@ -778,9 +778,17 @@ bool idAASFileLocal::Write( const idStr &fileName, unsigned int mapFileCRC ) {
 		for ( num = 0, reach = areas[i].reach; reach; reach = reach->next ) {
 			num++;
 		}
+		// Retail Prey uses the Doom 3-era 1.07 area record.  Quake 4's 1.08
+		// extension adds numFeatures/firstFeature, so emitting those fields while
+		// labelling a file 1.07 would produce an unreadable AAS.
+#ifdef HUMANHEAD
+		aasFile->WriteFloatString( "\t%d ( %d %d %d %d %d %d ) %d {\n", i, areas[i].flags, areas[i].contents,
+						areas[i].firstFace, areas[i].numFaces, areas[i].cluster, areas[i].clusterAreaNum, num );
+#else
 		// AAS 1.08 areas carry their span of the tactical feature index
 		aasFile->WriteFloatString( "\t%d ( %d %d %d %d %d %d %d %d ) %d {\n", i, areas[i].flags, areas[i].contents,
 						areas[i].firstFace, areas[i].numFaces, areas[i].cluster, areas[i].clusterAreaNum, areas[i].numFeatures, areas[i].firstFeature, num );
+#endif
 		for ( reach = areas[i].reach; reach; reach = reach->next ) {
 			Reachability_Write( aasFile, reach );
 			switch( reach->travelType ) {
@@ -1413,7 +1421,7 @@ bool idAASFileLocal::Load( const idStr &fileName, unsigned int mapFileCRC ) {
 
 	c = token.GetUnsignedLongValue();
 	if ( mapFileCRC && c != mapFileCRC ) {
-		common->Warning( "AAS file '%s' is out of date", name.c_str() );
+		common->Warning( "AAS file '%s' is out of date (file CRC %u, map CRC %u)", name.c_str(), c, mapFileCRC );
 		console->SetAASFileOutOfDate( true );
 		if ( !cvarSystem->GetCVarBool( "ai_allowOldAAS" ) ) {
 			return false;

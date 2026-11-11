@@ -259,8 +259,9 @@ void R_ShutdownTriSurfData( void ) {
 	silTraceVertexAllocator.Shutdown();
 	skinToModelTransformAllocator.Shutdown();
 #endif
-}
 
+	triSurfDataInitialized = false;
+}
 
 /*
 ===============

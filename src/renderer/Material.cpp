@@ -72,6 +72,13 @@ typedef struct mtrParsingData_s {
 	materialQualityInputs_t qualityInputs;
 } mtrParsingData_t;
 
+idCVar r_useFragmentProgramMaterials(
+	"r_useFragmentProgramMaterials",
+	"1",
+	CVAR_RENDERER | CVAR_ARCHIVE | CVAR_BOOL,
+	"enable fragment-program material conditions and Prey interaction stages"
+);
+
 static void R_ResetSpecularProbeMaterialInfo( specularProbeMaterialInfo_t &info ) {
 	memset( &info, 0, sizeof( info ) );
 	info.cubeConvention = SPECULAR_PROBE_CUBE_NONE;
@@ -99,6 +106,9 @@ static bool R_MaterialGLSLProgramsAvailable() {
 // families, so declarations must select their programmable branch even
 // though no OpenGL ARB program capability is advertised by this backend.
 static bool R_MaterialFragmentProgramsAvailable() {
+	if ( !r_useFragmentProgramMaterials.GetBool() ) {
+		return false;
+	}
 #ifdef OPENQ4_RENDERER_VK_MODULE
 	return true;
 #else
@@ -314,6 +324,8 @@ void idMaterial::CommonInit() {
 	spectrum = 0;
 	polygonOffset = 0;
 	suppressInSubview = false;
+	subviewClass = SC_MIRROR;
+	directPortalDistance = -1;
 	refCount = 0;
 	portalSky = false;
 // jmarshall - quake 4
@@ -340,6 +352,15 @@ void idMaterial::CommonInit() {
 	R_ResetSpecularProbeMaterialInfo( specularProbeInfo );
 
 	decalInfo.stayTime = 10000;
+	decalInfo.fadeTime = 4000;
+	decalInfo.start[0] = 1.0f;
+	decalInfo.start[1] = 1.0f;
+	decalInfo.start[2] = 1.0f;
+	decalInfo.start[3] = 1.0f;
+	decalInfo.end[0] = 0.0f;
+	decalInfo.end[1] = 0.0f;
+	decalInfo.end[2] = 0.0f;
+	decalInfo.end[3] = 0.0f;
 	decalInfo.maxAngle = 0.1f;
 }
 
@@ -524,18 +545,47 @@ static infoParm_t	infoParms[] = {
 	// game relevant attributes
 	{"solid",		0,	0,	CONTENTS_SOLID },		// may need to override a clearSolid
 	{"water",		1,	0,	CONTENTS_WATER },		// used for water
+#ifndef HUMANHEAD
+	// openQ4 liquids; Prey's contents have no lava/slime bits (BIT(26..27) are
+	// CONTENTS_SHOOTABLEBYARROW and CONTENTS_HUNTERCLIP there).
 	{"lava",		1,	0,	CONTENTS_LAVA },		// used for lava, damages what swims in it
 	{"slime",		1,	0,	CONTENTS_SLIME },		// used for slime, damages what swims in it
+#endif
 	{"playerclip",	0,	0,	CONTENTS_PLAYERCLIP },	// solid to players
 	{"monsterclip",	0,	0,	CONTENTS_MONSTERCLIP },	// solid to monsters
 	{"moveableclip",0,	0,	CONTENTS_MOVEABLECLIP },// solid to moveable entities
 	{"ikclip",		0,	0,	CONTENTS_IKCLIP },		// solid to IK
 	{"blood",		0,	0,	CONTENTS_BLOOD },		// used to detect blood decals
 	{"trigger",		0,	0,	CONTENTS_TRIGGER },		// used for triggers
-	{"projectileclip",	0,	0,	CONTENTS_PROJECTILECLIP },	// projectiles only
 	{"aassolid",	0,	0,	CONTENTS_AAS_SOLID },	// solid for AAS
 	{"aasobstacle",	0,	0,	CONTENTS_AAS_OBSTACLE },// used to compile an obstacle into AAS that can be enabled/disabled
 	{"flashlight_trigger",	0,	0,	CONTENTS_FLASHLIGHT_TRIGGER }, // used for triggers that are activated by the flashlight
+#ifdef HUMANHEAD
+	// Retail Prey's forcefield is non-solid, shootable, blocks splash damage and
+	// carries the forcefield surface type; the bullet-proof variant has no type.
+	{"forcefield",	CONTENTS_SOLID,	SURFTYPE_FORCEFIELD,	CONTENTS_FORCEFIELD | CONTENTS_BLOCK_RADIUSDAMAGE | CONTENTS_SHOOTABLE },
+	{"forcefield_nobullets",	CONTENTS_SOLID,	0,	CONTENTS_FORCEFIELD },
+	// clearSolid is a contents mask in retail Prey: seeThru removes
+	// CONTENTS_OPAQUE and noSeeThru adds it. Opaque coverage still re-adds
+	// CONTENTS_OPAQUE once parsing finishes, exactly as retail does.
+	{"seeThru",		CONTENTS_OPAQUE,	0,	0 },
+	{"noSeeThru",	0,	0,	CONTENTS_OPAQUE },
+	{"spiritbridge",0,	0,	CONTENTS_SPIRITBRIDGE },	// spirit-walk-only collision
+	{"blockradiusdamage",	0,	0,	CONTENTS_BLOCK_RADIUSDAMAGE },	// blocks splash damage
+	{"block_radiusdamage",	0,	0,	CONTENTS_BLOCK_RADIUSDAMAGE },	// compatibility alias
+	{"shootable",	0,	0,	CONTENTS_SHOOTABLE },	// bullets collide with but players can pass
+	{"deathvolume",	0,	0,	CONTENTS_DEATHVOLUME },	// instant-death zones
+	{"vehicleclip",	0,	0,	CONTENTS_VEHICLECLIP },	// solid to vehicles
+	{"ownertoowner",0,	0,	CONTENTS_OWNER_TO_OWNER },	// owner-to-owner collision override
+	{"owner_to_owner",0,	0,	CONTENTS_OWNER_TO_OWNER },	// compatibility alias
+	{"gameportal",	0,	0,	CONTENTS_GAME_PORTAL },	// game portal clipping
+	{"game_portal",0,	0,	CONTENTS_GAME_PORTAL },	// compatibility alias
+	{"shootablebyarrow",	0,	0,	CONTENTS_SHOOTABLEBYARROW },	// spirit-arrow-only collision
+	{"hunterclip",	0,	0,	CONTENTS_HUNTERCLIP },	// hunter-specific collision
+	{"shotclip",	0,	0,	CONTENTS_PROJECTILE },	// blocks hitscan shots
+	{"projectileclip",	0,	0,	CONTENTS_PROJECTILE },	// compatibility alias
+#else
+	{"projectileclip",	0,	0,	CONTENTS_PROJECTILECLIP },	// projectiles only
 	{"sightclip",	0,	0,	CONTENTS_SIGHTCLIP },	// blocks sight for actors and cameras
 	{"shotclip",	0,	0,	CONTENTS_PROJECTILE },	// blocks hitscan shots
 	{"largeshotclip",	0,	0,	CONTENTS_LARGESHOTCLIP },	// blocks large shots
@@ -543,6 +593,7 @@ static infoParm_t	infoParms[] = {
 	{"vehicleclip",	0,	0,	CONTENTS_VEHICLECLIP },	// solid to vehicles
 	{"flyclip",	0,	0,	CONTENTS_FLYCLIP },		// solid to vehicles
 	{"itemclip",	0,	0,	CONTENTS_ITEMCLIP },	// item collision
+#endif
 	{"nonsolid",	1,	0,	0 },					// clears the solid flag
 	{"nullNormal",	0,	SURF_NULLNORMAL,0 },		// renderbump will draw as 0x80 0x80 0x80
 
@@ -572,6 +623,14 @@ static infoParm_t	infoParms[] = {
 	{"cardboard",	0,	SURFTYPE_CARDBOARD,	0 },	// cardboard
 	{"liquid",		0,	SURFTYPE_LIQUID,	0 },	// liquid
 	{"glass",		0,	SURFTYPE_GLASS,		0 },	// glass
+#ifdef HUMANHEAD
+	{"tile",		0,	SURFTYPE_TILE,		0 },	// tile
+	{"wallwalk",	0,	SURFTYPE_WALLWALK,	0 },	// wallwalk
+	{"altmetal",	0,	SURFTYPE_ALTMETAL,	0 },	// alternate metal
+	{"pipe",		0,	SURFTYPE_PIPE,		0 },	// pipe
+	{"spirit",		0,	SURFTYPE_SPIRIT,	0 },	// spirit
+	{"chaff",		0,	SURFTYPE_CHAFF,		0 },	// chaff
+#else
 	{"plastic",		0,	SURFTYPE_PLASTIC,	0 },	// plastic
 	{"ricochet",	0,	SURFTYPE_RICOCHET,	0 },	// behaves like metal but causes a ricochet sound
 
@@ -582,6 +641,7 @@ static infoParm_t	infoParms[] = {
 	{"surftype13",	0,	SURFTYPE_13,	0 },
 	{"surftype14",	0,	SURFTYPE_14,	0 },
 	{"surftype15",	0,	SURFTYPE_15,	0 },
+#endif
 };
 
 static const int numInfoParms = sizeof(infoParms) / sizeof (infoParms[0]);
@@ -604,9 +664,9 @@ bool idMaterial::CheckSurfaceParm( idToken *token ) {
 			}
 			surfaceFlags |= infoParms[i].surfaceFlags;
 			contentFlags |= infoParms[i].contents;
-			if ( infoParms[i].clearSolid ) {
-				contentFlags &= ~CONTENTS_SOLID;
-			}
+			// clearSolid is the mask of contents bits the parm removes; the
+			// 1 used by most entries is CONTENTS_SOLID
+			contentFlags &= ~infoParms[i].clearSolid;
 			return true;
 		}
 	}
@@ -685,20 +745,17 @@ void idMaterial::ParseDecalInfo( idLexer &src ) {
 
 	// Quake 4 syntax: "decalInfo <staySeconds>, <maxAngle>".
 	if ( token == "," ) {
+		decalInfo.fadeTime = 0;
 		decalInfo.maxAngle = src.ParseFloat();
 		return;
 	}
 
-	// Legacy Doom 3 syntax compatibility:
+	// Retail Prey retains the Doom 3 syntax:
 	// "decalInfo <staySeconds> <fadeSeconds> ( <start rgba> ) ( <end rgba> )".
-	if ( token.type == TT_NUMBER || token == "." || token == "-" ) {
-		float dummy[4];
-		src.Parse1DMatrix( 4, dummy );
-		src.Parse1DMatrix( 4, dummy );
-		return;
-	}
-
 	src.UnreadToken( &token );
+	decalInfo.fadeTime = src.ParseFloat() * 1000;
+	src.Parse1DMatrix( 4, decalInfo.start );
+	src.Parse1DMatrix( 4, decalInfo.end );
 }
 
 /*
@@ -899,6 +956,10 @@ int idMaterial::ParseTerm( idLexer &src ) {
 		pd->registersAreConstant = false;
 		return EXP_REG_PARM11;
 	}
+	if ( !token.Icmp( "parm12" ) || !token.Icmp( "distance" ) ) {
+		pd->registersAreConstant = false;
+		return EXP_REG_PARM12;
+	}
 	if ( !token.Icmp( "global0" ) ) {
 		pd->registersAreConstant = false;
 		return EXP_REG_GLOBAL0;
@@ -932,7 +993,8 @@ int idMaterial::ParseTerm( idLexer &src ) {
 		return EXP_REG_GLOBAL7;
 	}
 	if ( !token.Icmp( "fragmentPrograms" ) ) {
-		return GetExpressionConstant( R_MaterialFragmentProgramsAvailable() ? 1.0f : 0.0f );
+		pd->registersAreConstant = false;
+		return EXP_REG_FRAGMENT_PROGRAMS;
 	}
 	if ( !token.Icmp( "glslPrograms" ) ) {
 		// Retail Quake 4 keeps glslPrograms as a runtime capability opcode so
@@ -940,6 +1002,18 @@ int idMaterial::ParseTerm( idLexer &src ) {
 		// being folded to a parse-time constant.
 		pd->registersAreConstant = false;
 		return EmitOp( 0, 0, OP_TYPE_GLSL_ENABLED );
+	}
+	if ( !token.Icmp( "scopeView" ) ) {
+		pd->registersAreConstant = false;
+		return EXP_REG_SCOPE_VIEW;
+	}
+	if ( !token.Icmp( "spiritWalk" ) ) {
+		pd->registersAreConstant = false;
+		return EXP_REG_SPIRIT_WALK;
+	}
+	if ( !token.Icmp( "shuttleView" ) ) {
+		pd->registersAreConstant = false;
+		return EXP_REG_SHUTTLE_VIEW;
 	}
 	if ( !token.Icmp( "POTCorrectionX" ) ) {
 		const int width = Max( 1, glConfig.vidWidth );
@@ -1099,6 +1173,8 @@ void idMaterial::ClearStage( shaderStage_t *ss ) {
 	ss->conditionRegister = GetExpressionConstant( 1 );
 	ss->alphaTestMode = GL_GREATER;
 	ss->alphaTestRegister = GetExpressionConstant( 0.5f );
+	ss->specularExponent = MATERIAL_DEFAULT_SPECULAR_EXPONENT;
+	ss->specularBrightness = MATERIAL_DEFAULT_SPECULAR_BRIGHTNESS;
 	ss->color.registers[0] =
 	ss->color.registers[1] =
 	ss->color.registers[2] =
@@ -1187,6 +1263,11 @@ void idMaterial::ParseBlend( idLexer &src, shaderStage_t *stage ) {
 	// blending combinations
 	if ( !token.Icmp( "blend" ) ) {
 		stage->drawStateBits = GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
+		return;
+	}
+	if ( !token.Icmp( "shader" ) ) {
+		// Prey programmable shader stages accumulate their per-mask contribution.
+		stage->drawStateBits = GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE;
 		return;
 	}
 	if ( !token.Icmp( "add" ) ) {
@@ -1434,6 +1515,10 @@ void idMaterial::ParseFragmentMap( idLexer &src, newShaderStage_t *newStage ) {
 		}
 		if ( !token.Icmp( "nomips" ) ) {
 			imageFlags = R_ResolveMaterialNoMipFlags( pd->qualityInputs, imageFlags );
+			continue;
+		}
+		if ( !token.Icmp( "highres" ) ) {
+			imageFlags |= IMAGEFLAG_HIGHRES;
 			continue;
 		}
 
@@ -1787,6 +1872,10 @@ void idMaterial::ParseShaderTexture( idLexer &src, newShaderStage_t *newStage ) 
 			imageFlags = R_ResolveMaterialNoMipFlags( pd->qualityInputs, imageFlags );
 			continue;
 		}
+		if ( !token.Icmp( "highres" ) ) {
+			imageFlags |= IMAGEFLAG_HIGHRES;
+			continue;
+		}
 
 		if ( !token.Icmp( "lightfalloffImage" ) ) {
 			newStage->shaderTextureBindings[slot] = GLSL_SHADERTEXTURE_LIGHT_FALLOFF;
@@ -2071,6 +2160,31 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			ts->cinematic->InitFromFile( token.c_str(), true );
 			continue;
 		}
+		if ( !token.Icmp( "portalRenderMap" ) ) {
+			ts->dynamic = DI_PORTAL_RENDER;
+			ts->width = src.ParseInt();
+			ts->height = src.ParseInt();
+			ts->texgen = TG_SCREEN;
+			continue;
+		}
+		if ( !token.Icmp( "skyboxRenderMap" ) ) {
+			ts->dynamic = DI_SKYBOX_RENDER;
+			ts->width = src.ParseInt();
+			ts->height = src.ParseInt();
+			ts->texgen = TG_SCREEN;
+			continue;
+		}
+
+		if ( !token.Icmp( "profilemap" ) ) {
+			if ( !src.ReadToken( &token ) ) {
+				common->Warning( "missing parameter for 'profilemap' keyword in material '%s'", GetName() );
+				continue;
+			}
+			// Profile graphs use the same dynamic sound-window path as sound maps.
+			ts->cinematic = new idSndWindow();
+			ts->cinematic->InitFromFile( token.c_str(), true );
+			continue;
+		}
 
 		if ( !token.Icmp( "cubeMap" ) ) {
 			str = R_ParsePastImageProgram( src );
@@ -2126,6 +2240,10 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			td = R_ResolveMaterialHighQualityUsage( pd->qualityInputs, td, true );
 			continue;
 		}
+		if ( !token.Icmp( "highres" ) ) {
+			imageFlags |= IMAGEFLAG_HIGHRES;
+			continue;
+		}
 		if ( !token.Icmp( "nopicmip" ) ) {
 			allowPicmip = false;
 			continue;
@@ -2165,6 +2283,12 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 				texGenRegisters[0] = ParseExpression( src );
 				texGenRegisters[1] = ParseExpression( src );
 				texGenRegisters[2] = ParseExpression( src );
+			} else if ( !token.Icmp( "screen" ) ) {
+				ts->texgen = TG_SCREEN;
+			} else if ( !token.Icmp( "screen2" ) ) {
+				ts->texgen = TG_SCREEN2;
+			} else if ( !token.Icmp( "glassWarp" ) ) {
+				ts->texgen = TG_GLASSWARP;
 			} else if ( !token.Icmp( "potCorrection" ) ) {
 				// Retail Quake 4 only needs explicit POT correction on hardware
 				// without NPOT textures; otherwise the stage stays on base coords.
@@ -2385,12 +2509,14 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 				newStage.vertexProgram = R_FindARBProgram( GL_VERTEX_PROGRAM_ARB, token.c_str() );
 				newStage.fragmentProgram = R_FindARBProgram( GL_FRAGMENT_PROGRAM_ARB, token.c_str() );
 				newStage.md5rVertexProgram = R_FindMD5RVertexProgramForStageProgram( token.c_str() );
+				newStage.interactionProgram |= R_ARBProgramUsesInteractionInputs( GL_FRAGMENT_PROGRAM_ARB, token.c_str() );
 			}
 			continue;
 		}
 		if ( !token.Icmp( "fragmentProgram" ) ) {
 			if ( src.ReadTokenOnLine( &token ) ) {
 				newStage.fragmentProgram = R_FindARBProgram( GL_FRAGMENT_PROGRAM_ARB, token.c_str() );
+				newStage.interactionProgram |= R_ARBProgramUsesInteractionInputs( GL_FRAGMENT_PROGRAM_ARB, token.c_str() );
 			}
 			continue;
 		}
@@ -2400,6 +2526,7 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 		if ( !token.Icmp( "fp20Program" ) ) {
 			if ( src.ReadTokenOnLine( &token ) ) {
 				newStage.fragmentProgram = R_FindARBProgram( GL_FRAGMENT_PROGRAM_ARB, token.c_str() );
+				newStage.interactionProgram |= R_ARBProgramUsesInteractionInputs( GL_FRAGMENT_PROGRAM_ARB, token.c_str() );
 			}
 			continue;
 		}
@@ -2468,6 +2595,69 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 			ParseShaderTexture( src, &newStage );
 			continue;
 		}
+		if ( !token.Icmp( "glowStage" ) ) {
+			ss->glowStage = true;
+			continue;
+		}
+		if ( !token.Icmpn( "shaderlevel", 11 ) ) {
+			const char *suffix = token.c_str() + 11;
+			if ( suffix[0] < '1' || suffix[0] > '3' || suffix[1] != '\0' ) {
+				src.Warning( "bad shader level token '%s' in material '%s'", token.c_str(), GetName() );
+				SetMaterialFlag( MF_DEFAULTED );
+				return;
+			}
+			const int requestedLevel = suffix[0] - '0';
+			if ( r_shaderLevel.GetInteger() < requestedLevel || r_skipNewAmbient.GetBool() ) {
+				src.SkipBracedSection( false );
+				return;
+			}
+			continue;
+		}
+		if ( !token.Icmpn( "shaderfallback", 14 ) ) {
+			const char *suffix = token.c_str() + 14;
+			if ( suffix[0] < '1' || suffix[0] > '3' || suffix[1] != '\0' ) {
+				src.Warning( "bad shader fallback token '%s' in material '%s'", token.c_str(), GetName() );
+				SetMaterialFlag( MF_DEFAULTED );
+				return;
+			}
+			const int requestedLevel = suffix[0] - '0';
+			if ( r_shaderLevel.GetInteger() >= requestedLevel && !r_skipNewAmbient.GetBool() ) {
+				src.SkipBracedSection( false );
+				return;
+			}
+			continue;
+		}
+		if ( !token.Icmp( "specularExp" ) ) {
+			// Retail Prey: "specularExp <exponent>, <brightness>", a missing
+			// comma defaults the material.
+			ss->specularExponent = src.ParseFloat();
+			if ( !src.ExpectTokenString( "," ) ) {
+				SetMaterialFlag( MF_DEFAULTED );
+				return;
+			}
+			ss->specularBrightness = src.ParseFloat();
+			continue;
+		}
+		if ( !token.Icmp( "scopeView" ) || !token.Icmp( "notScopeView" ) ||
+				!token.Icmp( "spiritWalk" ) || !token.Icmp( "notSpiritWalk" ) || !token.Icmp( "shuttleView" ) ) {
+			int viewRegister;
+			bool invert = false;
+			if ( !token.Icmp( "scopeView" ) || !token.Icmp( "notScopeView" ) ) {
+				viewRegister = EXP_REG_SCOPE_VIEW;
+				invert = !token.Icmp( "notScopeView" );
+			} else if ( !token.Icmp( "spiritWalk" ) || !token.Icmp( "notSpiritWalk" ) ) {
+				viewRegister = EXP_REG_SPIRIT_WALK;
+				invert = !token.Icmp( "notSpiritWalk" );
+			} else {
+				viewRegister = EXP_REG_SHUTTLE_VIEW;
+			}
+			pd->registersAreConstant = false;
+			if ( invert ) {
+				viewRegister = EmitOp( viewRegister, GetExpressionConstant( 0.0f ), OP_TYPE_EQ );
+			}
+			ss->conditionRegister = EmitOp( ss->conditionRegister, viewRegister, OP_TYPE_AND );
+			continue;
+		}
 		if ( !token.Icmp( "customLighting" ) ) {
 			stageHasShaderTokens = true;
 			newStage.customLighting = true;
@@ -2486,6 +2676,9 @@ void idMaterial::ParseStage( idLexer &src, const textureRepeat_t trpDefault ) {
 	if ( newStage.fragmentProgram || newStage.vertexProgram || newStage.glslProgram ) {
 		ss->newStage = (newShaderStage_t *)Mem_Alloc( sizeof( newStage ) );
 		*(ss->newStage) = newStage;
+		if ( ss->newStage->interactionProgram ) {
+			ss->lighting = SL_INTERACTION;
+		}
 	}
 
 	ss->mNumStageRegisters = numRegisters - ss->mStageRegisterStart;
@@ -3340,6 +3533,31 @@ void idMaterial::ParseDeform( idLexer &src ) {
 		SetMaterialFlag( MF_NOSHADOWS );
 		return;
 	}
+	if ( !token.Icmp( "beam" ) ) {
+		// Retail Prey's own deform, distinct from tube: it changes neither the
+		// cull type nor shadowing (beam materials say noShadows themselves).
+		deform = DFRM_BEAM;
+		return;
+	}
+	if ( !token.Icmp( "jitter" ) ) {
+		// Retail Prey evaluates one expression whose integer bits select the
+		// offsets and scales applied by R_JitterDeform.
+		deform = DFRM_JITTER;
+		deformRegisters[0] = ParseExpression( src );
+		return;
+	}
+	if ( !token.Icmp( "corona" ) ) {
+		deform = DFRM_CORONA;
+		cullType = CT_TWO_SIDED;
+		if ( src.ReadTokenOnLine( &token ) ) {
+			src.UnreadToken( &token );
+			deformRegisters[0] = ParseExpression( src );
+		} else {
+			deformRegisters[0] = GetExpressionConstant( 1.0f );
+		}
+		SetMaterialFlag( MF_NOSHADOWS );
+		return;
+	}
 	if ( !token.Icmp( "expand" ) ) {
 		deform = DFRM_EXPAND;
 		deformRegisters[0] = ParseExpression( src );
@@ -3367,6 +3585,26 @@ void idMaterial::ParseDeform( idLexer &src ) {
 	}
 	if ( !token.Icmp( "eyeBall" ) ) {
 		deform = DFRM_EYEBALL;
+		return;
+	}
+	if ( !token.Icmp( "particle" ) ) {
+		deform = DFRM_PARTICLE;
+		if ( !src.ExpectAnyToken( &token ) ) {
+			src.Warning( "deform particle missing particle name" );
+			SetMaterialFlag( MF_DEFAULTED );
+			return;
+		}
+		deformDecl = declManager->FindType( DECL_PARTICLE, token.c_str(), true );
+		return;
+	}
+	if ( !token.Icmp( "particle2" ) ) {
+		deform = DFRM_PARTICLE2;
+		if ( !src.ExpectAnyToken( &token ) ) {
+			src.Warning( "deform particle2 missing particle name" );
+			SetMaterialFlag( MF_DEFAULTED );
+			return;
+		}
+		deformDecl = declManager->FindType( DECL_PARTICLE, token.c_str(), true );
 		return;
 	}
 	
@@ -3559,6 +3797,15 @@ void idMaterial::ParseMaterial( idLexer &src ) {
 		else if ( CheckSurfaceParm( &token ) ) {
 			continue;
 		}
+		// Prey content metadata: "matter_*" aliases to surface type names.
+		else if ( !token.Icmpn( "matter_", 7 ) ) {
+			idToken matterToken;
+			matterToken = token.c_str() + 7;
+			if ( matterToken.Length() > 0 ) {
+				CheckSurfaceParm( &matterToken );
+			}
+			continue;
+		}
 
 
 		// polygonOffset
@@ -3594,9 +3841,36 @@ void idMaterial::ParseMaterial( idLexer &src ) {
 			SetMaterialFlag( MF_NEED_CURRENT_RENDER );
 			continue;
 		}
+		else if ( !token.Icmp( "skipClip" ) || !token.Icmp( "lightWholeMesh" ) ) {
+			// Retail Prey records these as MF_SKIPCLIP / MF_LIGHT_WHOLE_MESH, but
+			// neither PREY.exe nor the game library ever tests either flag.
+			continue;
+		}
 // jmarshall end
 		else if ( !token.Icmp( "suppressInSubview" ) ) {
 			suppressInSubview = true;
+			continue;
+		}
+		else if ( !token.Icmp( "directportal" ) ) {
+			directPortalDistance = ParseExpression( src );
+			sort = SS_SUBVIEW;
+			subviewClass = SC_PORTAL;
+			coverage = MC_OPAQUE;
+			SetMaterialFlag( MF_NOSHADOWS );
+			idToken discreteToken;
+			discreteToken = "discrete";
+			CheckSurfaceParm( &discreteToken );
+			continue;
+		}
+		else if ( !token.Icmp( "skyboxportal" ) ) {
+			src.SkipRestOfLine();
+			sort = SS_SUBVIEW;
+			subviewClass = SC_PORTAL_SKYBOX;
+			coverage = MC_OPAQUE;
+			SetMaterialFlag( MF_NOSHADOWS );
+			idToken discreteToken;
+			discreteToken = "discrete";
+			CheckSurfaceParm( &discreteToken );
 			continue;
 		}
 // jmarshall
@@ -3858,21 +4132,60 @@ void idMaterial::ParseMaterial( idLexer &src ) {
 			newSrc.FreeSource();
 			continue;
 		}
-		// DECAL_MACRO for backwards compatibility with the preprocessor macros
-		else if ( !token.Icmp( "DECAL_MACRO" ) ) {
-			// polygonOffset
-			SetMaterialFlag( MF_POLYGONOFFSET );
-			polygonOffset = 1;
+		// Retail Prey's built-in material macros, matched case-insensitively and
+		// with the exact state PREY.exe applies for each one.
+		else if ( !token.Icmp( "DECAL_MACRO" ) || !token.Icmp( "DECAL_ALPHATEST_MACRO" ) ||
+				!token.Icmp( "SCORCH_MACRO" ) || !token.Icmp( "OVERLAY_MACRO" ) ) {
+			// the alpha-tested decal is the only one without a polygon offset
+			if ( token.Icmp( "DECAL_ALPHATEST_MACRO" ) ) {
+				SetMaterialFlag( MF_POLYGONOFFSET );
+				polygonOffset = 1;
+			}
 
-			// notfix
-			surfaceFlags |= SURF_NO_T_FIX;
+			// keep separately clipped decal geometry that never spawns impacts
+			surfaceFlags |= SURF_DISCRETE | SURF_NOIMPACT;
 			contentFlags &= ~CONTENTS_SOLID;
 
-			// sort decal
 			sort = SS_DECAL;
-
-			// noShadows
 			SetMaterialFlag( MF_NOSHADOWS | MF_NOSHADOWS_EXPLICIT );
+			coverage = MC_TRANSLUCENT;
+			allowOverlays = false;
+			continue;
+		}
+		else if ( !token.Icmp( "GLASS_MACRO" ) ) {
+			SetMaterialFlag( MF_NOSHADOWS | MF_NOSHADOWS_EXPLICIT );
+			coverage = MC_TRANSLUCENT;
+			pd->forceOverlays = true;
+			sort = SS_MEDIUM;
+			contentFlags &= ~CONTENTS_OPAQUE;
+			surfaceFlags = ( surfaceFlags & ~SURF_TYPE_MASK ) | SURFTYPE_GLASS;
+			continue;
+		}
+		else if ( !token.Icmp( "SKYBOX_MACRO" ) ) {
+			SetMaterialFlag( MF_NOSHADOWS | MF_NOSHADOWS_EXPLICIT | MF_NOSELFSHADOW );
+			surfaceFlags |= SURF_NOIMPACT | SURF_NOFRAGMENT;
+			allowOverlays = false;
+			coverage = MC_OPAQUE;
+			continue;
+		}
+		else if ( !token.Icmp( "SPRITE_MACRO" ) ) {
+			surfaceFlags |= SURF_DISCRETE;
+			contentFlags &= ~CONTENTS_SOLID;
+			SetMaterialFlag( MF_NOSHADOWS | MF_NOSHADOWS_EXPLICIT );
+			coverage = MC_TRANSLUCENT;
+			deform = DFRM_SPRITE;
+			cullType = CT_TWO_SIDED;
+			continue;
+		}
+		else if ( !token.Icmp( "EFFECT_MACRO" ) || !token.Icmp( "ALPHA_MACRO" ) ) {
+			// the effect macro is also non-solid; the alpha macro keeps its contents
+			if ( !token.Icmp( "EFFECT_MACRO" ) ) {
+				contentFlags &= ~CONTENTS_SOLID;
+			}
+			SetMaterialFlag( MF_NOSHADOWS | MF_NOSHADOWS_EXPLICIT );
+			surfaceFlags |= SURF_NOIMPACT;
+			coverage = MC_TRANSLUCENT;
+			cullType = CT_TWO_SIDED;
 			continue;
 		}
 		else if ( token == "{" ) {
@@ -3944,16 +4257,21 @@ void idMaterial::ParseMaterial( idLexer &src ) {
 		}
 	}
 
-	// currently a surface can only have one unique texgen for all the stages on old hardware
-	texgen_t firstGen = TG_EXPLICIT;
+	// Reflect/screen texgen is evaluated per stage, and retail Prey intentionally
+	// combines those modes in mutually exclusive stages.  Sky, wobble-sky, and
+	// POT correction instead share one surface-generated coordinate stream, so
+	// only conflicting combinations of those modes are unsupported.
+	texgen_t surfaceTexgen = TG_EXPLICIT;
 	for ( i = 0; i < numStages; i++ ) {
-		if ( pd->parseStages[i].texture.texgen != TG_EXPLICIT ) {
-			if ( firstGen == TG_EXPLICIT ) {
-				firstGen = pd->parseStages[i].texture.texgen;
-			} else if ( firstGen != pd->parseStages[i].texture.texgen ) {
-				common->Warning( "material '%s' has multiple stages with a texgen", GetName() );
-				break;
-			}
+		const texgen_t stageTexgen = pd->parseStages[i].texture.texgen;
+		if ( stageTexgen != TG_SKYBOX_CUBE && stageTexgen != TG_WOBBLESKY_CUBE && stageTexgen != TG_POT_CORRECTION ) {
+			continue;
+		}
+		if ( surfaceTexgen == TG_EXPLICIT ) {
+			surfaceTexgen = stageTexgen;
+		} else if ( surfaceTexgen != stageTexgen ) {
+			common->Warning( "material '%s' combines incompatible surface-wide texgen modes", GetName() );
+			break;
 		}
 	}
 }
@@ -4446,6 +4764,7 @@ void idMaterial::EvaluateRegisters( float *registers, const float shaderParms[MA
 	registers[EXP_REG_PARM9] = shaderParms[9];
 	registers[EXP_REG_PARM10] = shaderParms[10];
 	registers[EXP_REG_PARM11] = shaderParms[11];
+	registers[EXP_REG_PARM12] = shaderParms[12];
 	registers[EXP_REG_GLOBAL0] = view->renderView.shaderParms[0];
 	registers[EXP_REG_GLOBAL1] = view->renderView.shaderParms[1];
 	registers[EXP_REG_GLOBAL2] = view->renderView.shaderParms[2];
@@ -4455,6 +4774,10 @@ void idMaterial::EvaluateRegisters( float *registers, const float shaderParms[MA
 	registers[EXP_REG_GLOBAL6] = view->renderView.shaderParms[6];
 	registers[EXP_REG_GLOBAL7] = view->renderView.shaderParms[7];
 	registers[EXP_REG_VERTEX_RANDOM] = shaderParms[SHADERPARM_DIVERSITY];
+	registers[EXP_REG_FRAGMENT_PROGRAMS] = R_MaterialFragmentProgramsAvailable() ? 1.0f : 0.0f;
+	registers[EXP_REG_SCOPE_VIEW] = renderSystem->IsScopeView() ? 1.0f : 0.0f;
+	registers[EXP_REG_SPIRIT_WALK] = renderSystem->IsSpiritWalkView() ? 1.0f : 0.0f;
+	registers[EXP_REG_SHUTTLE_VIEW] = renderSystem->IsShuttleView() ? 1.0f : 0.0f;
 
 	op = ops;
 	for ( i = 0 ; i < numOps ; i++, op++ ) {
@@ -4563,6 +4886,7 @@ void idMaterial::EvaluateStageRegisters( int stageIndex, float *registers,
 	registers[EXP_REG_PARM9] = shaderParms[9];
 	registers[EXP_REG_PARM10] = shaderParms[10];
 	registers[EXP_REG_PARM11] = shaderParms[11];
+	registers[EXP_REG_PARM12] = shaderParms[12];
 	registers[EXP_REG_GLOBAL0] = 0.0f;
 	registers[EXP_REG_GLOBAL1] = 0.0f;
 	registers[EXP_REG_GLOBAL2] = 0.0f;
@@ -4572,6 +4896,10 @@ void idMaterial::EvaluateStageRegisters( int stageIndex, float *registers,
 	registers[EXP_REG_GLOBAL6] = 0.0f;
 	registers[EXP_REG_GLOBAL7] = 0.0f;
 	registers[EXP_REG_VERTEX_RANDOM] = shaderParms[SHADERPARM_DIVERSITY];
+	registers[EXP_REG_FRAGMENT_PROGRAMS] = R_MaterialFragmentProgramsAvailable() ? 1.0f : 0.0f;
+	registers[EXP_REG_SCOPE_VIEW] = 0.0f;
+	registers[EXP_REG_SPIRIT_WALK] = 0.0f;
+	registers[EXP_REG_SHUTTLE_VIEW] = 0.0f;
 
 	op = ops + stage->mStageOpsStart;
 	for ( i = 0 ; i < stage->mNumStageOps ; i++, op++ ) {
@@ -4650,6 +4978,42 @@ texgen_t idMaterial::Texgen() const {
 		}
 	}
 	
+	return TG_EXPLICIT;
+}
+
+/*
+=============
+idMaterial::HasTexgen
+=============
+*/
+bool idMaterial::HasTexgen( texgen_t texgen ) const {
+	if ( stages ) {
+		for ( int i = 0; i < numStages; i++ ) {
+			if ( stages[i].texture.texgen == texgen ) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+/*
+=============
+idMaterial::GetSurfaceTexgen
+
+Returns the first mode that requires surface-generated texture coordinates.
+ParseMaterial diagnoses declarations that combine incompatible such modes.
+=============
+*/
+texgen_t idMaterial::GetSurfaceTexgen() const {
+	if ( stages ) {
+		for ( int i = 0; i < numStages; i++ ) {
+			const texgen_t texgen = stages[i].texture.texgen;
+			if ( texgen == TG_SKYBOX_CUBE || texgen == TG_WOBBLESKY_CUBE || texgen == TG_POT_CORRECTION ) {
+				return texgen;
+			}
+		}
+	}
 	return TG_EXPLICIT;
 }
 

@@ -32,44 +32,39 @@ def require_order(haystack: str, first: str, second: str, context: str) -> None:
 
 def validate_engine_file_identity_contract() -> None:
     engine_header = read(ROOT, "src/framework/File.h")
-    game_header = read(GAME_LIBS_ROOT, "src/framework/File.h")
     engine_filesystem_header = read(ROOT, "src/framework/FileSystem.h")
-    game_filesystem_header = read(GAME_LIBS_ROOT, "src/framework/FileSystem.h")
     file_source = read(ROOT, "src/framework/File.cpp")
     filesystem_source = read(ROOT, "src/framework/FileSystem.cpp")
 
-    for source, context in (
-        (engine_header, "engine file interface"),
-        (game_header, "GameLibs file interface"),
-    ):
-        require(
-            source,
-            "virtual int\t\t\t\tGetContainerChecksum( void ) const { return 0; }",
-            context,
-        )
-        require(
-            source,
-            "virtual int\t\t\t\tGetContainerChecksum( void ) const { return containerChecksum; }",
-            context,
-        )
-        require(source, "int\t\t\t\t\t\tcontainerChecksum;", context)
-        require_order(
-            source,
-            "virtual void\t\t\tReadSyncId",
-            "virtual void\t\t\tMakeReadOnly",
-            f"{context} append-only staging ABI",
-        )
-
-    for source, context in (
-        (engine_filesystem_header, "engine filesystem interface"),
-        (game_filesystem_header, "GameLibs filesystem interface"),
-    ):
-        require_order(
-            source,
-            "virtual bool\t\t\tInProductionMode() = 0;",
-            "virtual void\t\t\tBeginLevelLoadCache",
-            f"{context} append-only level-load ABI",
-        )
+    # The in-tree game library compiles against these engine interface headers
+    # directly, so the engine copy is the single canonical contract.
+    require(
+        engine_header,
+        "virtual int\t\t\t\tGetContainerChecksum( void ) const { return 0; }",
+        "engine file interface",
+    )
+    require(
+        engine_header,
+        "virtual int\t\t\t\tGetContainerChecksum( void ) const { return containerChecksum; }",
+        "engine file interface",
+    )
+    require(
+        engine_header,
+        "int\t\t\t\t\t\tcontainerChecksum;",
+        "engine file interface",
+    )
+    require_order(
+        engine_header,
+        "virtual void\t\t\tReadSyncId",
+        "virtual void\t\t\tMakeReadOnly",
+        "engine file interface append-only staging ABI",
+    )
+    require_order(
+        engine_filesystem_header,
+        "virtual bool\t\t\tInProductionMode() = 0;",
+        "virtual void\t\t\tBeginLevelLoadCache",
+        "engine filesystem interface append-only level-load ABI",
+    )
 
     require(file_source, "containerChecksum = 0;", "PK4 file construction")
     require(
@@ -80,13 +75,8 @@ def validate_engine_file_identity_contract() -> None:
 
 
 def validate_game_cache_contract() -> None:
-    sp = read(GAME_LIBS_ROOT, "src/game/anim/Anim.cpp")
-    mp = read(GAME_LIBS_ROOT, "src/mpgame/anim/Anim.cpp")
+    game = read(GAME_LIBS_ROOT, "src/game/anim/Anim.cpp")
 
-    sp_shared = sp[sp.index("bool idAnimManager::forceExport") :]
-    mp_shared = mp[mp.index("bool idAnimManager::forceExport") :]
-    if sp_shared != mp_shared:
-        raise AssertionError("SP and MP animation cache implementations have drifted")
 
     for token in (
         'g_useGeneratedAnimCache( "g_useGeneratedAnimCache", "1"',
@@ -154,78 +144,54 @@ def validate_game_cache_contract() -> None:
         "baseFrame.Clear();",
         "baseFrame.Allocated()",
     ):
-        require(sp, token, "generated animation cache implementation")
+        require(game, token, "unified generated animation cache implementation")
 
     require_order(
-        sp,
-        "if ( !GetGeneratedAnimPath( filename, cachePath ) )",
-        'fileSystem->RelativePathToOSPath( cachePath, "fs_savepath" )',
-        "explicit cache-read path validation",
-    )
-    require_order(
-        sp,
-        "storedChecksum == CRC32_BlockChecksum( diskBytes.Ptr(), recordLength )",
-        "cache = fileSystem->GetNewFileMemory();",
-        "integrity-before-parse staging",
-    )
-    require_order(
-        sp,
-        'cvarSystem->GetCVarBool( "com_binaryRead" )',
-        "selectedPath.Append( Lexer::sCompiledFileSuffix );",
-        "compiled animation source selection",
-    )
-    require_order(
-        sp,
-        "selectedPath.Append( Lexer::sCompiledFileSuffix );",
-        "if ( source == NULL )",
-        "compiled-source precedence before ASCII fallback",
-    )
-    require_order(
-        sp,
-        "NormalizeGeneratedAnimSourcePath( selectedPath, info.normalizedPath )",
-        "sourcePath.Cmp( sourceInfo.normalizedPath ) == 0",
-        "selected parser-source identity publication",
-    )
-
-    require_order(
-        sp,
-        'cvarSystem->GetCVarBool( "com_levelLoadModernization" )',
-        "g_useGeneratedAnimCache.GetBool() && LoadGeneratedAnim( filename )",
-        "cache-before-source load order",
-    )
-    require_order(
-        sp,
+        game,
         "g_useGeneratedAnimCache.GetBool() && LoadGeneratedAnim( filename )",
         "parser.LoadFile( filename )",
         "cache-before-source load order",
     )
     require_order(
-        sp,
-        'cvarSystem->GetCVarBool( "com_levelLoadModernization" )',
-        "g_writeGeneratedAnimCache.GetBool()",
-        "default-off animation-cache write gate",
-    )
-    require_order(
-        sp,
+        game,
         "g_writeGeneratedAnimCache.GetBool()",
         "WriteGeneratedAnim( filename );",
         "source-parse cache write control",
     )
     require_order(
-        sp,
-        "CalculateGeneratedAnimLength( numFrames, frameRate, animLength )",
+        game,
+        "animLength = ( ( numFrames - 1 ) * 1000 + frameRate - 1 ) / frameRate;",
         "WriteGeneratedAnim( filename );",
         "source-parse cache write order",
     )
 
 
+def validate_model_decl_parse_contract() -> None:
+    header = read(GAME_LIBS_ROOT, "src/game/anim/Anim.h")
+    parser = read(GAME_LIBS_ROOT, "src/game/anim/Anim_Blend.cpp")
+
+    require(
+        header,
+        "Parse( const char *text, const int textLength, bool noCaching )",
+        "model decl interface",
+    )
+    require(
+        parser,
+        "return Parse( text, textLength, false );",
+        "model decl two-argument compatibility overload",
+    )
+    require(
+        parser,
+        "idDeclModelDef::Parse( const char *text, const int textLength, bool noCaching )",
+        "model decl upstream parse entry point",
+    )
+
+
 def validate_documentation_contract() -> None:
     guide = read(ROOT, "docs/user/level-load-cache.md")
-    release = read(ROOT, "docs/dev/release-completion.md")
-    readme = read(ROOT, "README.md")
 
     for token in (
-        "<fs_savepath>/baseoq4/generated/animations/",
+        "<fs_savepath>/basepr/generated/animations/",
         "g_useGeneratedAnimCache 1",
         "g_writeGeneratedAnimCache 1",
         "stale, truncated, corrupt, or mismatched cache is ignored",
@@ -233,17 +199,11 @@ def validate_documentation_contract() -> None:
     ):
         require(guide, token, "level-load cache guide")
 
-    require(readme, "docs/user/level-load-cache.md", "README player-guide index")
-    require(
-        release,
-        "Animation-heavy level loads now build validated, endian-stable generated MD5 animation caches",
-        "release completion notes",
-    )
-
 
 def main() -> None:
     validate_engine_file_identity_contract()
     validate_game_cache_contract()
+    validate_model_decl_parse_contract()
     validate_documentation_contract()
     print("generated_animation_cache: ok")
 

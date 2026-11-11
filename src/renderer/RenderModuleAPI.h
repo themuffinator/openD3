@@ -102,7 +102,12 @@
 //      ReloadGeneratedCacheImages, which the client must run once the lock is
 //      in place (a stale module would leave derived pixels on the GPU of a
 //      pure session).
-#define RENDER_API_VERSION			33
+// 34 - openPREY: the Prey render-entity ABI and a late-bound game time-group
+//      query, so renderer modules do not import the engine's mutable
+//      `game` global; glyphInfo_t carries the per-glyph material retail
+//      Doom 3/Prey bitmap fonts need, whose glyphs span several atlases.
+//      (openPREY's own pre-sync numbering called these 8 and 9.)
+#define RENDER_API_VERSION			34
 #define RENDER_API_ENTRY_POINT		"GetRenderAPI"
 
 class idSys;
@@ -143,6 +148,9 @@ typedef struct renderModuleServices_s {
 	// --- version 5: the loader owns request/active/disposition status; the
 	// module's gfxInfo routes here so the report stays truthful ---
 	void			( *PrintRendererApiStatus )( void );
+	// --- version 8: game libraries load after the renderer module, so this
+	// callback resolves the active game interface at call time ---
+	int				( *GetTimeGroupTime )( int timeGroup, int fallbackTime );
 	// worker-thread creation intentionally not carried yet: the light-grid
 	// bake pool's Sys_CreateThread signature (thread registry, priority,
 	// threadInfo_t) is resolved by the module-side forwarder design in

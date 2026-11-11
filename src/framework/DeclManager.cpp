@@ -79,7 +79,7 @@ static idDecl *openQ4_AllocEffectDecl( void ) {
 		common->FatalError( "DECL_EFFECT allocator returned NULL." );
 	}
 
-	if ( !openQ4_IsIntegratedBSEDeclEffect( decl ) ) {
+	if ( !openPREY_IsIntegratedBSEDeclEffect( decl ) ) {
 		delete decl;
 		common->FatalError( "DECL_EFFECT allocator returned a non-BSE decl instance." );
 	}
@@ -292,6 +292,8 @@ public:
 
 	virtual void				BeginLevelLoad();
 	virtual void				EndLevelLoad();
+	virtual void				SetInsideLevelLoad( bool inside );
+	virtual bool				GetInsideLevelLoad( void ) const;
 	virtual void				RegisterDeclType( const char *typeName, declType_t type, idDecl *(*allocator)( void ) );
 	virtual void				StartLoadingDecls();
 	virtual void				FinishLoadingDecls();
@@ -1089,7 +1091,21 @@ int idDeclFile::LoadAndParse( bool unique ) {
 		if ( guide ) {
 			declManagerLocal.EvaluateGuide( name, &src, declDefinition );
 		} else {
-			src.ParseBracedSectionExact( declDefinition, -1 );
+			// Walk the braces through the lexer so braces inside comments and
+			// quoted strings do not terminate the declaration.  Slice the exact
+			// source bytes afterwards to retain formatting for editors/reloads.
+			if ( !src.ReadToken( &token ) ) {
+				src.Warning( "Type without definition at end of file" );
+				break;
+			}
+			if ( token != "{" ) {
+				src.Warning( "Expecting '{' but found '%s'", token.c_str() );
+				continue;
+			}
+			src.UnreadToken( &token );
+			src.SkipBracedSection();
+			const int sourceSize = src.GetFileOffset() - startMarker;
+			declDefinition = finalPreprocessedBuffer.Mid( startMarker, sourceSize );
 		}
 		declManagerLocal.EvaluateInlineGuide( name, declDefinition );
 		size = src.GetFileOffset() - startMarker;
@@ -1315,7 +1331,18 @@ int idDeclFile::LoadAndParse( idFile *file ) {
 		if ( guide ) {
 			declManagerLocal.EvaluateGuide( name, &src, declDefinition );
 		} else {
-			src.ParseBracedSectionExact( declDefinition, -1 );
+			if ( !src.ReadToken( &token ) ) {
+				src.Warning( "Type without definition at end of packed decl" );
+				break;
+			}
+			if ( token != "{" ) {
+				src.Warning( "Expecting '{' but found '%s'", token.c_str() );
+				continue;
+			}
+			src.UnreadToken( &token );
+			src.SkipBracedSection();
+			const int sourceSize = src.GetFileOffset() - startMarker;
+			declDefinition = packedText.Mid( startMarker, sourceSize );
 		}
 		declManagerLocal.EvaluateInlineGuide( name, declDefinition );
 		int sourceTextLength = src.GetFileOffset() - startMarker;
@@ -1416,6 +1443,10 @@ void idDeclManagerLocal::Init( void ) {
 	RegisterDeclType( "sound",				DECL_SOUND,			idDeclAllocator<idSoundShader> );
 	RegisterDeclType( "entityDef",			DECL_ENTITYDEF,		idDeclAllocator<idDeclEntityDef> );
 	RegisterDeclType( "mapDef",				DECL_MAPDEF,		idDeclAllocator<idDeclEntityDef> );
+	// Prey retail .def files embed Maya export blocks. Prey's original engine
+	// registers this engine-owned type before the game scans the def folder so
+	// the declaration loader can skip those tool-only blocks cleanly.
+	RegisterDeclType( "export",				DECL_MODELEXPORT,	idDeclAllocator<idDecl> );
 
 // jmarshall: Raven Decl Support
 	RegisterDeclType(  "materialType",		DECL_MATERIALTYPE,  idDeclAllocator<rvDeclMatType>);
@@ -1426,8 +1457,9 @@ void idDeclManagerLocal::Init( void ) {
 // jmarshall end
 
 // jmarshall: Raven Decl Support
-	//RegisterDeclType( "fx",					DECL_FX,			idDeclAllocator<idDeclFX> );
-	//RegisterDeclType( "particle",			DECL_PARTICLE,		idDeclAllocator<idDeclParticle> );
+	RegisterDeclType( "fx",					DECL_FX,			idDeclAllocator<idDeclFX> );
+	RegisterDeclType( "particle",			DECL_PARTICLE,		idDeclAllocator<idDeclParticle> );
+	RegisterDeclType( "beam",				DECL_BEAM,			idDeclAllocator<hhDeclBeam> );
 // jmarshall end
 	RegisterDeclType( "articulatedFigure",	DECL_AF,			idDeclAllocator<idDeclAF> );
 	RegisterDeclType( "pda",				DECL_PDA,			idDeclAllocator<idDeclPDA> );
@@ -1440,7 +1472,6 @@ void idDeclManagerLocal::Init( void ) {
 		StartLoadingDecls();
 		LoadDeclsFromFile();
 		cmdSystem->AddCommand( "flushDecls", FlushDecls_f, CMD_FL_SYSTEM, "deallocates current decl data" );
-		cmdSystem->AddCommand( "checkDecls", CheckDecls_f, CMD_FL_SYSTEM, "parses every loaded decl" );
 	} else {
 		cmdSystem->AddCommand( "writeDeclFile", WriteDeclFile_f, CMD_FL_SYSTEM, "writes parsed decls to a packed .decls file (optional mode: openq4 or retail)" );
 
@@ -1453,10 +1484,16 @@ void idDeclManagerLocal::Init( void ) {
 		RegisterDeclFolderWrapper( "lipsync",			".lipsync",		DECL_LIPSYNC );
 		RegisterDeclFolderWrapper( "playbacks",			".playback",	DECL_PLAYBACK, true );
 		RegisterDeclFolderWrapper( "effects",			".fx",			DECL_EFFECT, true );
+		RegisterDeclFolderWrapper( "fx",					".fx",			DECL_FX );
+		RegisterDeclFolderWrapper( "particles",			".prt",			DECL_PARTICLE );
+		RegisterDeclFolderWrapper( "beams",				".beam",		DECL_BEAM );
 // jmarshall end
 	}
 
 	// add console commands
+	// parses every loaded decl from either a packed .decls file or loose folders,
+	// so retail decl coverage can be audited without loading every map
+	cmdSystem->AddCommand( "checkDecls", CheckDecls_f, CMD_FL_SYSTEM, "parses every loaded decl" );
 	cmdSystem->AddCommand( "listDecls", ListDecls_f, CMD_FL_SYSTEM, "lists all decls" );
 	cmdSystem->AddCommand( "listAllDecls", ListAllDecls_f, CMD_FL_SYSTEM, "lists every decl name grouped by type" );
 
@@ -1471,8 +1508,9 @@ void idDeclManagerLocal::Init( void ) {
 	cmdSystem->AddCommand( "listSoundShaders", idListDecls_f<DECL_SOUND>, CMD_FL_SYSTEM, "lists sound shaders", idCmdSystem::ArgCompletion_String<listDeclStrings> );
 
 	cmdSystem->AddCommand( "listEntityDefs", idListDecls_f<DECL_ENTITYDEF>, CMD_FL_SYSTEM, "lists entity defs", idCmdSystem::ArgCompletion_String<listDeclStrings> );
-	//cmdSystem->AddCommand( "listFX", idListDecls_f<DECL_FX>, CMD_FL_SYSTEM, "lists FX systems", idCmdSystem::ArgCompletion_String<listDeclStrings> );
-	//cmdSystem->AddCommand( "listParticles", idListDecls_f<DECL_PARTICLE>, CMD_FL_SYSTEM, "lists particle systems", idCmdSystem::ArgCompletion_String<listDeclStrings> //);
+	cmdSystem->AddCommand( "listFX", idListDecls_f<DECL_FX>, CMD_FL_SYSTEM, "lists FX systems", idCmdSystem::ArgCompletion_String<listDeclStrings> );
+	cmdSystem->AddCommand( "listParticles", idListDecls_f<DECL_PARTICLE>, CMD_FL_SYSTEM, "lists particle systems", idCmdSystem::ArgCompletion_String<listDeclStrings> );
+	cmdSystem->AddCommand( "listBeams", idListDecls_f<DECL_BEAM>, CMD_FL_SYSTEM, "lists beam systems", idCmdSystem::ArgCompletion_String<listDeclStrings> );
 	cmdSystem->AddCommand( "listAF", idListDecls_f<DECL_AF>, CMD_FL_SYSTEM, "lists articulated figures", idCmdSystem::ArgCompletion_String<listDeclStrings>);
 	cmdSystem->AddCommand( "listPDAs", idListDecls_f<DECL_PDA>, CMD_FL_SYSTEM, "lists PDAs", idCmdSystem::ArgCompletion_String<listDeclStrings> );
 	cmdSystem->AddCommand( "listEmails", idListDecls_f<DECL_EMAIL>, CMD_FL_SYSTEM, "lists Emails", idCmdSystem::ArgCompletion_String<listDeclStrings> );
@@ -1489,8 +1527,9 @@ void idDeclManagerLocal::Init( void ) {
 	cmdSystem->AddCommand( "printSoundShader", idPrintDecls_f<DECL_SOUND>, CMD_FL_SYSTEM, "prints a sound shader", idCmdSystem::ArgCompletion_Decl<DECL_SOUND> );
 
 	cmdSystem->AddCommand( "printEntityDef", idPrintDecls_f<DECL_ENTITYDEF>, CMD_FL_SYSTEM, "prints an entity def", idCmdSystem::ArgCompletion_Decl<DECL_ENTITYDEF> );
-	//cmdSystem->AddCommand( "printFX", idPrintDecls_f<DECL_FX>, CMD_FL_SYSTEM, "prints an FX system", idCmdSystem::ArgCompletion_Decl<DECL_FX> );
-//	cmdSystem->AddCommand( "printParticle", idPrintDecls_f<DECL_PARTICLE>, CMD_FL_SYSTEM, "prints a particle system", idCmdSystem::ArgCompletion_Decl<DECL_PARTICLE> );
+	cmdSystem->AddCommand( "printFX", idPrintDecls_f<DECL_FX>, CMD_FL_SYSTEM, "prints an FX system", idCmdSystem::ArgCompletion_Decl<DECL_FX> );
+	cmdSystem->AddCommand( "printParticle", idPrintDecls_f<DECL_PARTICLE>, CMD_FL_SYSTEM, "prints a particle system", idCmdSystem::ArgCompletion_Decl<DECL_PARTICLE> );
+	cmdSystem->AddCommand( "printBeam", idPrintDecls_f<DECL_BEAM>, CMD_FL_SYSTEM, "prints a beam", idCmdSystem::ArgCompletion_Decl<DECL_BEAM> );
 	cmdSystem->AddCommand( "printAF", idPrintDecls_f<DECL_AF>, CMD_FL_SYSTEM, "prints an articulated figure", idCmdSystem::ArgCompletion_Decl<DECL_AF> );
 	cmdSystem->AddCommand( "printPDA", idPrintDecls_f<DECL_PDA>, CMD_FL_SYSTEM, "prints an PDA", idCmdSystem::ArgCompletion_Decl<DECL_PDA> );
 	cmdSystem->AddCommand( "printEmail", idPrintDecls_f<DECL_EMAIL>, CMD_FL_SYSTEM, "prints an Email", idCmdSystem::ArgCompletion_Decl<DECL_EMAIL> );
@@ -1857,6 +1896,24 @@ idDeclManagerLocal::GetInsideLoad
 ===================
 */
 bool idDeclManagerLocal::GetInsideLoad( void ) {
+	return insideLevelLoad;
+}
+
+/*
+===================
+idDeclManagerLocal::SetInsideLevelLoad
+===================
+*/
+void idDeclManagerLocal::SetInsideLevelLoad( bool inside ) {
+	insideLevelLoad = inside;
+}
+
+/*
+===================
+idDeclManagerLocal::GetInsideLevelLoad
+===================
+*/
+bool idDeclManagerLocal::GetInsideLevelLoad( void ) const {
 	return insideLevelLoad;
 }
 
@@ -2948,6 +3005,16 @@ const idDeclSkin *idDeclManagerLocal::SkinByIndex( int index, bool forceParse ) 
 /********************************************************************/
 
 const idSoundShader *idDeclManagerLocal::FindSound( const char *name, bool makeDefault ) {
+	// Retail Prey ships "<shader>_nogore" variants (the possessed children on
+	// the feeding tower maps) and its engine prefers them whenever the game's
+	// g_nogore cvar is set. The cvar is game-owned, so it reads false before the
+	// game library registers it.
+	if ( name != NULL && name[0] != '\0' && cvarSystem->GetCVarBool( "g_nogore" ) ) {
+		const idDecl *nogore = FindType( DECL_SOUND, va( "%s_nogore", name ), false );
+		if ( nogore != NULL ) {
+			return static_cast<const idSoundShader *>( nogore );
+		}
+	}
 	return static_cast<const idSoundShader *>( FindType( DECL_SOUND, name, makeDefault ) );
 }
 

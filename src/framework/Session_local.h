@@ -594,16 +594,19 @@ public:
 	void				ClearWipe();
 
 	void				ShowLoadingGui();
+	void				ShowSubtitle( const idStrList& lines );
+	void				HideSubtitle() const;
 
 	void				ScrubSaveGameFileName( idStr &saveFileName ) const;
 	idStr				GetAutoSaveName( const char *mapName ) const;
 
-	bool				LoadGame(const char *saveName);
+	bool				LoadGame(const char *saveName, const char *preferredGameDir = NULL);
 	// restarts the running single-player level from its beginning at a difficulty
 	bool				RestartLevelAtSkill( int skill );
 	bool				SaveGame(const char *saveName = NULL, saveType_t saveType = ST_REGULAR);
 	bool FinishPendingSave( bool wait );
-	bool				DeleteGame(const char *saveName);
+	bool				DeleteGame(const char *saveName, const char *preferredGameDir = NULL);
+	bool				HandleQuickLoad( void );
 
 	const char			*GetAuthMsg( void );
 
@@ -905,6 +908,8 @@ public:
 	idUserInterface *	guiGameOver;
 	idUserInterface *	guiTest;
 	idUserInterface *	guiTakeNotes;
+	idUserInterface *	guiSubtitles;
+	idUserInterface *	guiSave;
 	
 	idUserInterface *	guiMsg;
 	idUserInterface *	guiMsgRestore;				// store the calling GUI for restore
@@ -918,6 +923,8 @@ public:
 	int					fallbackMenuStartTime;
 	
 	bool				waitingOnBind;
+	int					saveGuiExpireTime;
+	int					quickLoadConfirmTime;
 
 	const idMaterial *	whiteMaterial;
 
@@ -938,6 +945,9 @@ public:
 
 	void				DrawCmdGraph();
 	void				Draw();
+	void				DrawSaveGui();
+	void				HideSaveGuiMessage();
+	void				ShowSaveGuiMessage( int messageType, int durationMsec, const char *saveKey = NULL, const char *keyMaterial = NULL, bool keyWide = false );
 
 	void				WriteCmdDemo( const char *name, bool save = false);
 	void				StartPlayingCmdDemo( const char *demoName);
@@ -1000,6 +1010,7 @@ public:
 	// Session_menu.cpp
 
 	idStrList			loadGameList;
+	idStrList			loadGameListGameDirs;
 	idList<idModInfo>	modsList;
 	idList<demoLibraryEntry_t> demoLibrary;
 	idStr				demoLibraryFilter;
@@ -1092,9 +1103,10 @@ public:
 	void				HandleRestartMenuCommands( const char *menuCommand );
 	void				HandleMsgCommands( const char *menuCommand );
 	void				HandleNoteCommands( const char *menuCommand );
-	void				GetSaveGameList( idStrList &fileList, idList<fileTIME_T> &fileTimes );
+	void				GetSaveGameList( idStrList &fileList, idList<fileTIME_T> &fileTimes, idStrList *gameDirs = NULL );
 	void				TakeNotes( const char * p, bool extended = false );
 	void				UpdateMPLevelShot( void );
+	void				RescanMaps( void );
 
 	void				SetSaveGameGuiVars( void );
 	void				SetMainMenuGuiVars( bool refreshCatalogs );

@@ -34,7 +34,7 @@ If you have questions concerning this license or the applicable additional terms
 #import <mach/vm_map.h>
 
 
-#define CD_MOUNT_NAME "openQ4"
+#define CD_MOUNT_NAME "openPREY"
 
 #include "macos_local.h"
 #include "macos_sys.h"
@@ -44,7 +44,7 @@ If you have questions concerning this license or the applicable additional terms
 
 const char *macosx_scanForLibraryDirectory(void)
 {
-    return "/Library/openQ4";
+    return "/Library/openPREY";
 }
 
 // EEEK!

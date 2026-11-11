@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build every openQ4 runtime pack in the content pack table and the generated integrity header.
+"""Build every openPREY runtime pack in the content pack table and the generated integrity header.
 
 Meson builds each pack as its own target; this standalone builder does the same
 work in one process for scripts and tests that run without a Meson build.
@@ -22,7 +22,7 @@ from openq4_pak import (
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Build the openQ4 runtime packs listed in tools/build/content_packs.json and the generated checksum header."
+        description="Build the openPREY runtime packs listed in tools/build/content_packs.json and the generated checksum header."
     )
     parser.add_argument("--source-root", required=True, help="Repository root holding each pack's source directory.")
     parser.add_argument("--out-dir", required=True, help="Directory that receives the built packs.")
@@ -30,7 +30,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument(
         "--stage-dir",
         default="",
-        help="Optional baseoq4 directory that also receives a copy of every pack, for direct builddir launches.",
+        help="Optional basepr directory that also receives a copy of every pack, for direct builddir launches.",
     )
     return parser.parse_args(argv[1:])
 

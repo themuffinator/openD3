@@ -955,9 +955,14 @@ void idAsyncClient::AnswerRconVerify( bool success ) {
 	rconVerifyRefused = false;
 	memset( &rconVerifyAddress, 0, sizeof( rconVerifyAddress ) );
 	rconVerifyTime = 0;
+#if !defined( HUMANHEAD )
+	// OPENPREY-GATED(D9): Prey's v7 idGame has no rcon admin page callback.
 	if ( game != NULL ) {
 		game->ProcessRconReturn( success );
 	}
+#else
+	(void)success;
+#endif
 }
 
 /*
@@ -1368,7 +1373,10 @@ void idAsyncClient::ProcessUnreliableServerMessage( const idBitMsg &msg ) {
 					frame.Init( batch + offset, length );
 					frame.SetSize( length );
 					frame.BeginReading();
+#if !defined( HUMANHEAD )
+					// OPENPREY-GATED(D9): Prey's v7 idGame has no voice recipients.
 					game->ClientReceiveVoice( frame );
+#endif
 					offset += length;
 				}
 			}
@@ -1472,15 +1480,11 @@ void idAsyncClient::ProcessUnreliableServerMessage( const idBitMsg &msg ) {
 			snapshotGameFrame = receivedSnapshotGameFrame;
 			snapshotGameTime = receivedSnapshotGameTime;
 
-			// read the game snapshot
-			if ( !game->ClientReadSnapshot(
-					clientNum, snapshotSequence, snapshotGameFrame, snapshotGameTime,
-					numDuplicatedUsercmds, aheadOfServer, msg ) ) {
-				common->Warning( "server sent malformed snapshot %d; disconnecting safely",
-					snapshotSequence );
-				AsyncClient_StopAfterMalformedSnapshot();
-				return;
-			}
+			// Prey API v7 has a void snapshot reader; malformed-message handling
+			// remains inside the game/bit-message readers rather than a v40 result.
+			game->ClientReadSnapshot(
+				clientNum, snapshotSequence, snapshotGameFrame, snapshotGameTime,
+				numDuplicatedUsercmds, aheadOfServer, msg );
 
 			// read user commands of other clients from the snapshot
 			last = NULL;
@@ -1730,7 +1734,7 @@ void idAsyncClient::ProcessReliableServerMessages( void ) {
 					cvarSystem->SetCVarsFromDictByFlags( info, CVAR_USERINFO );
 					cvarSystem->ClearModifiedFlags( CVAR_USERINFO ); // don't emit back
 				}
-				game->SetUserInfo( clientNum, info, true );
+				game->SetUserInfo( clientNum, info, true, false );
 				break;
 			}
 			case SERVER_RELIABLE_MESSAGE_SYNCEDCVARS: {
@@ -1801,7 +1805,7 @@ void idAsyncClient::ProcessReliableServerMessages( void ) {
 			}
 			case SERVER_RELIABLE_MESSAGE_ENTERGAME: {
 				SendUserInfoToServer();
-				game->SetUserInfo( clientNum, sessLocal.mapSpawnData.userInfo[ clientNum ], true );
+				game->SetUserInfo( clientNum, sessLocal.mapSpawnData.userInfo[ clientNum ], true, false );
 				cvarSystem->ClearModifiedFlags( CVAR_USERINFO );
 				break;
 			}
@@ -2129,9 +2133,12 @@ void idAsyncClient::ProcessPrintMessage( const netadr_t from, const idBitMsg &ms
 	// look up localized string. if the message is not an #str_ format, we'll just get it back unchanged
 	idStr::Copynz( string, common->GetLanguageDict()->GetString( raw ), sizeof( string ) );
 	common->Printf( "%s\n", string );
+#if !defined( HUMANHEAD )
+	// OPENPREY-GATED(D9): Prey's v7 idGame has no rcon admin page callback.
 	if ( opcode == SERVER_PRINT_RCON && game != NULL ) {
 		game->ReceiveRemoteConsoleOutput( string );
 	}
+#endif
 	// The server's answer to the Admin page's password check: "rcon
 	// verified", or the bad password reply, by Doom 3's id from openQ4
 	// servers or Quake 4's from retail ones.
@@ -2885,13 +2892,16 @@ void idAsyncClient::RunFrame( bool allowBlocking ) {
 	if ( cvarSystem->GetModifiedFlags() & CVAR_USERINFO ) {
 		game->ThrottleUserInfo( );
 		SendUserInfoToServer( );
-		game->SetUserInfo( clientNum, sessLocal.mapSpawnData.userInfo[ clientNum ], true );
+		game->SetUserInfo( clientNum, sessLocal.mapSpawnData.userInfo[ clientNum ], true, false );
 		cvarSystem->ClearModifiedFlags( CVAR_USERINFO );
 	}
 
+#if !defined( HUMANHEAD )
 	// Quake 4 services client work once per presentation frame, including
 	// reliable referee challenges and UI updates, even without a prediction tic.
+	// Prey's v7 idGame does its client work inside ClientPrediction.
 	game->ClientRun();
+#endif
 
 	if ( gameTimeResidual + clientPredictTime >= AsyncClient_NextGameFrameMsec( gameFrame ) ) {
 		lastFrameDelta = 0;
@@ -2920,11 +2930,8 @@ void idAsyncClient::RunFrame( bool allowBlocking ) {
 			// duplicate usercmds for clients if no new ones are available
 			DuplicateUsercmds( snapshotGameFrame, snapshotGameTime );
 
-			// indicate the last prediction frame before a render
-			bool lastPredictFrame = ( snapshotGameFrame + 1 >= gameFrame && gameTimeResidual + clientPredictTime < AsyncClient_NextGameFrameMsec( gameFrame ) );
-
 			// run client prediction
-			gameReturn_t ret = game->ClientPrediction( clientNum, userCmds[ snapshotGameFrame & ( MAX_USERCMD_BACKUP - 1 ) ], lastPredictFrame );
+			gameReturn_t ret = game->ClientPrediction( clientNum, userCmds[ snapshotGameFrame & ( MAX_USERCMD_BACKUP - 1 ) ] );
 
 			idAsyncNetwork::ExecuteSessionCommand( ret.sessionCommand );
 
@@ -2932,7 +2939,9 @@ void idAsyncClient::RunFrame( bool allowBlocking ) {
 			snapshotGameTime = snapshotGameFrame * common->GetUserCmdMSec();
 		}
 	}
+#if !defined( HUMANHEAD )
 	game->ClientEndFrame();
+#endif
 }
 
 /*
@@ -2995,7 +3004,7 @@ void idAsyncClient::HandleDownloads( void ) {
 		// timing out on no reply
 		updateState = UPDATE_DONE;
 		if ( showUpdateMessage ) {
-			session->MessageBox( MSG_OK, common->GetLanguageDict()->GetString ( "#str_104839" ), common->GetLanguageDict()->GetString ( "#str_104837" ), true );
+			session->MessageBox( MSG_OK, common->GetLanguageDict()->GetString ( "#str_04839" ), common->GetLanguageDict()->GetString ( "#str_04837" ), true );
 			showUpdateMessage = false;
 		}
 		common->DPrintf( "No update available\n" );

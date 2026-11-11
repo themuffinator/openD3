@@ -1261,6 +1261,8 @@ typedef struct vkMaterialProgramRecord_s {
 	char			name[ MAX_OSPATH ];		// extension stripped, for matching
 	char			fileName[ MAX_OSPATH ];	// as declared, for loading
 	vkMaterialProgramFamily_t family;
+	bool			interactionProgram;
+	bool			interactionScanned;
 	bool			supported;
 } vkMaterialProgramRecord_t;
 static vkMaterialProgramRecord_t vkMaterialPrograms[ VK_MAX_MATERIAL_PROGRAMS ];
@@ -1329,6 +1331,50 @@ static bool VK_MaterialProgramHasNativeImplementation( unsigned int target, cons
 	}
 }
 
+static bool VK_ARBProgramSourceUsesInteractionInputs( unsigned int target, const char *program ) {
+	if ( target != GL_FRAGMENT_PROGRAM_ARB || program == NULL || program[ 0 ] == '\0' ) {
+		return false;
+	}
+
+	idStr fullPath = "glprogs/";
+	fullPath += program;
+	fullPath.BackSlashesToSlashes();
+
+	char *fileBuffer = NULL;
+	if ( fileSystem->ReadFile( fullPath.c_str(), reinterpret_cast<void **>( &fileBuffer ), NULL ) < 0 || fileBuffer == NULL ) {
+		return false;
+	}
+
+	const char *start = strstr( fileBuffer, "!!ARBfp" );
+	const char *end = start != NULL ? strstr( start, "END" ) : NULL;
+	idStr normalizedSource;
+	if ( start != NULL && end != NULL ) {
+		bool inComment = false;
+		for ( const char *cursor = start; cursor < end + 3; cursor++ ) {
+			const char c = *cursor;
+			if ( c == '\r' || c == '\n' ) {
+				inComment = false;
+				continue;
+			}
+			if ( inComment ) {
+				continue;
+			}
+			if ( c == '#' ) {
+				inComment = true;
+				continue;
+			}
+			if ( c == ' ' || c == '\t' ) {
+				continue;
+			}
+			normalizedSource.Append( static_cast<char>( tolower( static_cast<unsigned char>( c ) ) ) );
+		}
+	}
+	fileSystem->FreeFile( fileBuffer );
+
+	return strstr( normalizedSource.c_str(), "texture[2]" ) != NULL
+		&& strstr( normalizedSource.c_str(), "texture[3]" ) != NULL;
+}
+
 int R_FindARBProgram( unsigned int target, const char *program ) {
 	if ( program == NULL || program[ 0 ] == '\0' ) {
 		return 0;
@@ -1363,6 +1409,27 @@ int R_FindARBProgram( unsigned int target, const char *program ) {
 	// A stable nonzero identity preserves newShaderStage_t in the material
 	// parser; programs without a native implementation are translated.
 	return vkNumMaterialPrograms;
+}
+
+bool R_ARBProgramUsesInteractionInputs( unsigned int target, const char *program ) {
+	const int handle = R_FindARBProgram( target, program );
+	if ( handle <= 0 || handle > vkNumMaterialPrograms ) {
+		return false;
+	}
+
+	vkMaterialProgramRecord_t &record = vkMaterialPrograms[ handle - 1 ];
+	if ( !record.interactionScanned ) {
+		record.interactionProgram = VK_ARBProgramSourceUsesInteractionInputs( target, program );
+		record.interactionScanned = true;
+		if ( record.interactionProgram ) {
+			// Vulkan has no native executor for retail Prey ARB interaction
+			// programs. Mark the record unsupported even if its filename happens
+			// to alias a stock program family, and let the interaction pass fail
+			// closed below.
+			record.supported = false;
+		}
+	}
+	return record.interactionProgram;
 }
 
 const char *VK_MaterialProgramFileName( unsigned int target, unsigned int handle ) {
@@ -1622,6 +1689,9 @@ void R_ReloadARBPrograms_f( const idCmdArgs &args ) {
 void R_ReloadGLSLPrograms_f( const idCmdArgs &args ) {
 	(void)args;
 	VK_MaterialPrograms_Reload();
+}
+
+void R_LoadARBProgramsForStartup( void ) {
 }
 
 void R_ReportShaderPrograms_f( const idCmdArgs &args ) {

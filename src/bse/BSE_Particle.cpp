@@ -608,11 +608,13 @@ void rvDebrisParticle::FinishSpawn(rvBSE* effect, rvSegment* segment, float birt
 	}
 	ScaleRotation(idMath::TWO_PI);
 
+#if !defined(HUMANHEAD)
 	// The end rotation is the spin; a zero lifetime lets the entityDef's duration apply.
 	const idVec3 origin = effect->GetOriginalOrigin() + effect->GetOriginalAxis() * mInitPos;
 	const idVec3 velocity = effect->GetCurrentAxis() * mVelocity;
 	const idVec3 angularVelocity(destRotate[0], destRotate[1], destRotate[2]);
 	game->SpawnClientMoveable(pt->GetEntityDefName(), 0, origin, effect->GetCurrentAxis(), velocity, angularVelocity);
+#endif
 }
 
 void rvLineParticle::Refresh(rvBSE* effect, rvSegmentTemplate* st, rvParticleTemplate* pt) {
@@ -702,6 +704,10 @@ void rvParticle::EvaluatePosition(const rvBSE* effect, rvParticleTemplate* pt, i
 }
 
 bool rvParticle::RunPhysics(rvBSE* effect, rvSegmentTemplate* st, float time) {
+#if defined(HUMANHEAD)
+	// OPENPREY-GATED(D3): collision/effect callbacks are absent from Prey's v7 ABI.
+	return false;
+#else
 	if (!effect || !st || !bse_physics.GetBool() || session->readDemo) {
 		return false;
 	}
@@ -767,6 +773,7 @@ bool rvParticle::RunPhysics(rvBSE* effect, rvSegmentTemplate* st, float time) {
 	}
 
 	return pt->GetDeleteOnImpact();
+#endif
 }
 
 void rvParticle::Bounce(rvBSE* effect, rvParticleTemplate* pt, idVec3 endPos, idVec3 normal, float time) {
@@ -794,6 +801,9 @@ void rvParticle::Bounce(rvBSE* effect, rvParticleTemplate* pt, idVec3 endPos, id
 }
 
 void rvParticle::CheckTimeoutEffect(rvBSE* effect, rvSegmentTemplate* st, float time) {
+#if defined(HUMANHEAD)
+	return;
+#else
 	if (!effect || !st || !game) {
 		return;
 	}
@@ -832,6 +842,7 @@ void rvParticle::CheckTimeoutEffect(rvBSE* effect, rvSegmentTemplate* st, float 
 		false,
 		EC_IGNORE,
 		vec4_one);
+#endif
 }
 
 void rvParticle::CalcImpactPoint(idVec3& endPos, const idVec3& origin, const idVec3& motion, const idBounds& bounds, const idVec3& normal) {

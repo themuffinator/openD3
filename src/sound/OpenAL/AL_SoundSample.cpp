@@ -37,6 +37,8 @@ If you have questions concerning this license or the applicable additional terms
 #include "../SoundVorbisStream.h"
 #include "../SoundMemoryBudget.h"
 #include "../SoundQueue.h"
+// openPREY: libvorbisfile recovers retail Prey Oggs that stb_vorbis stops on.
+#include <vorbis/vorbisfile.h>
 static_assert( SoundVorbisStream::ChunkFrames == SOUND_QUEUE_DECODE_FRAMES,
 	"voice queues fill a buffer in decoder-sized reads" );
 static_assert( SoundVorbisStream::ChunkFrames * 6 * sizeof( short ) == SOUND_QUEUE_BUFFER_BYTES,
@@ -68,6 +70,175 @@ static const int ROQ_AUDIO_MAX_SAMPLE = 32767;
 static std::atomic<bool> openQ4_openALBufferAllocationWarningIssued( false );
 
 extern idCVar sys_lang;
+
+// openPREY: bounded resynchronisation past damaged Ogg pages, as libvorbisfile
+// reports them (OV_HOLE). Retail Prey ships a few such files.
+static const int OGG_MAX_HOLE_RETRIES = 16;
+
+struct oggMemoryStream_t
+{
+	const byte*	data;
+	size_t		length;
+	size_t		offset;
+};
+
+static size_t OggMemoryRead( void* output, size_t itemSize, size_t itemCount, void* dataSource )
+{
+	oggMemoryStream_t* stream = static_cast<oggMemoryStream_t*>( dataSource );
+	if( stream == NULL || output == NULL || itemSize == 0 || itemCount == 0 || stream->offset > stream->length )
+	{
+		return 0;
+	}
+
+	const size_t availableItems = ( stream->length - stream->offset ) / itemSize;
+	const size_t readItems = Min( itemCount, availableItems );
+	const size_t readBytes = readItems * itemSize;
+	memcpy( output, stream->data + stream->offset, readBytes );
+	stream->offset += readBytes;
+	return readItems;
+}
+
+static int OggMemorySeek( void* dataSource, ogg_int64_t offset, int origin )
+{
+	oggMemoryStream_t* stream = static_cast<oggMemoryStream_t*>( dataSource );
+	if( stream == NULL || stream->offset > stream->length )
+	{
+		return -1;
+	}
+
+	size_t base;
+	switch( origin )
+	{
+		case SEEK_SET:
+			base = 0;
+			break;
+		case SEEK_CUR:
+			base = stream->offset;
+			break;
+		case SEEK_END:
+			base = stream->length;
+			break;
+		default:
+			return -1;
+	}
+
+	if( offset < 0 )
+	{
+		// Avoid negating INT64_MIN while validating the backwards seek.
+		const uint64_t magnitude = static_cast<uint64_t>( -( offset + 1 ) ) + 1;
+		if( magnitude > base )
+		{
+			return -1;
+		}
+		stream->offset = base - static_cast<size_t>( magnitude );
+	}
+	else
+	{
+		const uint64_t forward = static_cast<uint64_t>( offset );
+		if( forward > stream->length - base )
+		{
+			return -1;
+		}
+		stream->offset = base + static_cast<size_t>( forward );
+	}
+
+	return 0;
+}
+
+static long OggMemoryTell( void* dataSource )
+{
+	const oggMemoryStream_t* stream = static_cast<const oggMemoryStream_t*>( dataSource );
+	return stream != NULL ? static_cast<long>( stream->offset ) : -1L;
+}
+
+static int OggMemoryClose( void* dataSource )
+{
+	( void )dataSource;
+	return 0;
+}
+
+/*
+========================
+SoundSample_RecoverOggWithVorbisFile
+
+stb_vorbis stops at the first page it cannot decode. libvorbisfile resumes after
+a hole, so re-decode a short or failed file through it into the sample's PCM
+buffer. A clean end of stream short of the stream's declared length is padded
+with silence so the PCM matches the sample's timeline. Returns the frames now
+valid in pcm.
+========================
+*/
+static unsigned int SoundSample_RecoverOggWithVorbisFile( const char* filename, short* pcm, const int channels, const int sampleRate, const unsigned int capacityFrames )
+{
+	if( pcm == NULL || channels < 1 || channels > 2 || sampleRate <= 0 || capacityFrames == 0 )
+	{
+		return 0;
+	}
+	void* fileData = NULL;
+	const int fileLen = fileSystem->ReadFile( filename, &fileData, NULL );
+	if( fileLen <= 0 || fileData == NULL )
+	{
+		if( fileData != NULL )
+		{
+			fileSystem->FreeFile( fileData );
+		}
+		return 0;
+	}
+
+	oggMemoryStream_t memoryStream = { static_cast<const byte*>( fileData ), static_cast<size_t>( fileLen ), 0 };
+	const ov_callbacks callbacks = { OggMemoryRead, OggMemorySeek, OggMemoryClose, OggMemoryTell };
+	OggVorbis_File vorbisFile;
+	memset( &vorbisFile, 0, sizeof( vorbisFile ) );
+	unsigned int frames = 0;
+	if( ov_open_callbacks( &memoryStream, &vorbisFile, NULL, 0, callbacks ) == 0 )
+	{
+		const uint64 bytesPerFrame = static_cast<uint64>( channels ) * sizeof( short );
+		const uint64 capacityBytes = static_cast<uint64>( capacityFrames ) * bytesPerFrame;
+		uint64 offset = 0;
+		int holeRetries = 0;
+		bool reachedEof = false;
+		while( offset < capacityBytes )
+		{
+			int logicalBitstream = -1;
+			const uint64 request = Min( capacityBytes - offset, static_cast<uint64>( idMath::INT_MAX ) );
+			const long chunk = ov_read( &vorbisFile, reinterpret_cast<char*>( pcm ) + offset, static_cast<int>( request ),
+				Swap_IsBigEndian() ? 1 : 0, 2, 1, &logicalBitstream );
+			if( chunk == OV_HOLE )
+			{
+				if( ++holeRetries > OGG_MAX_HOLE_RETRIES )
+				{
+					break;
+				}
+				continue;
+			}
+			if( chunk == 0 )
+			{
+				reachedEof = true;
+				break;
+			}
+			if( chunk < 0 )
+			{
+				break;
+			}
+			const vorbis_info* chunkInfo = ov_info( &vorbisFile, logicalBitstream );
+			if( chunkInfo == NULL || chunkInfo->channels != channels || chunkInfo->rate != sampleRate ||
+				static_cast<uint64>( chunk ) % bytesPerFrame != 0 )
+			{
+				break;
+			}
+			offset += static_cast<uint64>( chunk );
+		}
+		if( reachedEof && offset > 0 && offset < capacityBytes )
+		{
+			memset( reinterpret_cast<byte*>( pcm ) + offset, 0, static_cast<size_t>( capacityBytes - offset ) );
+			offset = capacityBytes;
+		}
+		frames = static_cast<unsigned int>( offset / bytesPerFrame );
+		ov_clear( &vorbisFile );
+	}
+	fileSystem->FreeFile( fileData );
+	return frames;
+}
 
 idCVar s_audioMemoryMB( "s_audioMemoryMB", "256", CVAR_SOUND | CVAR_ARCHIVE | CVAR_INTEGER,
 	"MiB cap for managed audio payloads, decoders and conservative queue/scratch reservations; excludes provider internals and metadata", 32, 2048 );
@@ -2135,8 +2306,24 @@ idSoundSample_OpenAL::FinishOggDecode
 The stream's PCM is in buffers[0]. A stream that decodes short keeps what it had.
 ========================
 */
-bool idSoundSample_OpenAL::FinishOggDecode( const idStr& filename, const unsigned int decodedFrames )
+bool idSoundSample_OpenAL::FinishOggDecode( const idStr& filename, const unsigned int decodedFramesIn )
 {
+	unsigned int decodedFrames = decodedFramesIn;
+	if( decodedFrames < static_cast<unsigned int>( playLength ) && buffers.Num() > 0 && buffers[0].buffer != NULL )
+	{
+		// openPREY: give a damaged file to libvorbisfile before accepting it short.
+		const unsigned int recovered = SoundSample_RecoverOggWithVorbisFile( filename.c_str(),
+			static_cast<short*>( buffers[0].buffer ), NumChannels(), SampleRate(), static_cast<unsigned int>( playLength ) );
+		if( recovered > decodedFrames )
+		{
+			if( s_debugHardware.GetBool() )
+			{
+				idLib::Printf( "LoadOgg( %s ) : libvorbisfile recovered %u of %d frames after stb_vorbis stopped at %u\n",
+					filename.c_str(), recovered, playLength, decodedFrames );
+			}
+			decodedFrames = recovered;
+		}
+	}
 	if( decodedFrames == 0 )
 	{
 		idLib::Warning( "LoadOgg( %s ) : failed to decode Ogg Vorbis", filename.c_str() );

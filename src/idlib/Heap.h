@@ -503,7 +503,7 @@ enclosing scope; unlike _alloca16, an oversized count is not fatal.
 
 // RAVEN BEGIN
 // jnewquist: Mark memory tags for idBlockAlloc
-template<class type, int blockSize, byte memoryTag>
+template<class type, int blockSize, byte memoryTag = MA_DEFAULT>
 class idBlockAlloc {
 public:
 							idBlockAlloc( void );
@@ -604,7 +604,7 @@ void idBlockAlloc<type,blockSize,memoryTag>::Shutdown( void ) {
 ==============================================================================
 */
 
-template<class type, int baseBlockSize, int minBlockSize, byte memoryTag>
+template<class type, int baseBlockSize, int minBlockSize, byte memoryTag = MA_DEFAULT>
 class idDynamicAlloc {
 public:
 									idDynamicAlloc( void );
@@ -794,7 +794,7 @@ static_assert( sizeof( idDynamicBlock<byte> ) == 64, "64-bit idDynamicBlock layo
 static_assert( sizeof( idDynamicBlock<byte> ) == 32, "32-bit idDynamicBlock layout changed" );
 #endif
 
-template<class type, int baseBlockSize, int minBlockSize, byte memoryTag>
+template<class type, int baseBlockSize, int minBlockSize, byte memoryTag = MA_DEFAULT>
 class idDynamicBlockAlloc {
 public:
 									idDynamicBlockAlloc( void );

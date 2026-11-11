@@ -30,6 +30,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "../snd_local.h"
 #include "../VoiceChat.h"
+#include "AL_LoadingMusic.h"
 #include "../SoundSettings.h"
 #if defined(USE_DOOMCLASSIC)
 	#include "../../../doomclassic/doom/i_sound.h"
@@ -708,15 +709,30 @@ idSoundHardware_OpenAL::idSoundHardware_OpenAL()
 }
 
 bool idSoundHardware_OpenAL::IsDefaultDeviceChoiceValue( const char* deviceName ) {
-	return deviceName != NULL && idStr::Icmp( deviceName, OPENQ4_AUDIO_DEVICE_DEFAULT_CHOICE ) == 0;
+	if( deviceName == NULL )
+	{
+		return true;
+	}
+
+	idStr choice = deviceName;
+	choice.StripLeading( ' ' );
+	choice.StripTrailingWhitespace();
+	return choice.IsEmpty() ||
+		idStr::Icmp( choice.c_str(), OPENQ4_AUDIO_DEVICE_DEFAULT_CHOICE ) == 0 ||
+		idStr::Icmp( choice.c_str(), "default" ) == 0 ||
+		idStr::Icmp( choice.c_str(), "system default" ) == 0 ||
+		idStr::Icmp( choice.c_str(), "<system default>" ) == 0;
 }
 
 idStr idSoundHardware_OpenAL::NormalizeRequestedDeviceName( const char* deviceName ) {
-	if( deviceName == NULL || IsDefaultDeviceChoiceValue( deviceName ) ) {
+	if( IsDefaultDeviceChoiceValue( deviceName ) ) {
 		return "";
 	}
 
-	return deviceName;
+	idStr normalized = deviceName;
+	normalized.StripLeading( ' ' );
+	normalized.StripTrailingWhitespace();
+	return normalized;
 }
 
 idStr idSoundHardware_OpenAL::SanitizeDeviceLabel( const char* deviceName ) {
@@ -2103,6 +2119,8 @@ void idSoundHardware_OpenAL::Shutdown()
 {
 	// Closing a paused device releases it; never reuse its extension pointer.
 	deviceResume = NULL;
+	// Its thread queues buffers on a source of this context.
+	SoundLoadingMusic_Stop();
 	SoundVoiceChat_Shutdown();
 	SoundSettings_DeviceDestroyed();
 	EndDeferredUpdates();

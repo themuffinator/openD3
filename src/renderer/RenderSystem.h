@@ -191,6 +191,10 @@ typedef struct {
 	float				t;				// y offset in image where glyph starts
 	float				s2;
 	float				t2;
+	// Doom 3/Prey bitmap fonts can span several atlas materials at one point
+	// size.  Quake 4 and generated TrueType fonts leave this NULL and use the
+	// font-wide material below.
+	const idMaterial *	material;
 } glyphInfo_t;
 
 /*
@@ -256,6 +260,62 @@ typedef struct {
 // than depending on that ordering; LangDict.h itself cannot be included from
 // here, because it is built on idStr and idList.
 bool LangDict_ByteForCodePoint( unsigned int codePoint, unsigned char &out );
+
+/*
+================
+R_CanonicalFontName
+
+Prey (2006) ships three GUI faces - the default face, 'menu' and 'alien' - and
+the .ttf replacements cover exactly those. Engine code inherited from Quake 4
+still names Quake 4's faces: the multiplayer chat window, the HUD text capture,
+the level editor labels and the retained interface ask for 'lowpixel', 'chain',
+'marine' or 'strogg'. Prey has no such files, so every one of those requests
+failed: the GUI layer fell back to font 0 without the scalable face ever being
+asked for, logged a warning, and - because a failed lookup is not cached -
+repeated the whole registration attempt on the next call, which for the editor
+labels is every frame.
+
+Fold those names onto the Prey face that plays the same role. The Latin text
+faces become the default face, and the Strogg rune faces become 'alien', Prey's
+own unreadable-script face. Prey content never names a Quake 4 face, so this
+cannot shadow a real font. Both "fonts/<face>" and the language-resolved
+"fonts/<lang>/<face>" spellings are handled; any other name passes through.
+
+Inline because the GUI layer and the renderer module both need it and the
+renderer is a separate module.
+================
+*/
+ID_INLINE void R_CanonicalFontName( const char *fontName, idStr &canonical ) {
+	canonical = ( fontName != NULL ) ? fontName : "";
+	canonical.BackSlashesToSlashes();
+	if ( idStr::Icmpn( canonical.c_str(), "fonts/", 6 ) != 0 ) {
+		return;
+	}
+
+	static const char * const aliases[][2] = {
+		// Quake 4 face, Prey face ("" is the default face)
+		{ "chain", "" },
+		{ "lowpixel", "" },
+		{ "marine", "" },
+		{ "profont", "" },
+		{ "strogg", "alien" },
+		{ "r_strogg", "alien" },
+	};
+
+	const int lastSlash = canonical.Last( '/' );
+	const char *face = canonical.c_str() + lastSlash + 1;
+	for ( int i = 0; i < static_cast<int>( sizeof( aliases ) / sizeof( aliases[0] ) ); ++i ) {
+		if ( idStr::Icmp( face, aliases[i][0] ) != 0 ) {
+			continue;
+		}
+		canonical = canonical.Left( lastSlash );
+		if ( aliases[i][1][0] != '\0' ) {
+			canonical += "/";
+			canonical += aliases[i][1];
+		}
+		return;
+	}
+}
 
 /*
 ================
@@ -641,6 +701,20 @@ public:
 	virtual void			DrawSmallStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material ) = 0;
 	virtual void			DrawBigChar( int x, int y, int ch, const idMaterial *material ) = 0;
 	virtual void			DrawBigStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material ) = 0;
+
+	// Prey view-state and diagnostics compatibility surface. Renderer backends
+	// override stateful methods where supported; conservative defaults are valid
+	// for Vulkan and other backends while parity work remains deferred.
+	virtual void			SetEntireSceneMaterial( idMaterial *material ) { (void)material; }
+	virtual bool			IsScopeView( void ) { return false; }
+	virtual void			SetScopeView( bool view ) { (void)view; }
+	virtual bool			IsSpiritWalkView( void ) { return false; }
+	virtual void			SetSpiritWalkView( bool view ) { (void)view; }
+	virtual bool			IsShuttleView( void ) { return false; }
+	virtual void			SetShuttleView( bool view ) { (void)view; }
+	virtual bool			SupportsFragmentPrograms( void ) { return true; }
+	virtual int				VideoCardNumber( void ) { return 0; }
+	virtual void			LogViewRender( const struct renderView_s *view ) { (void)view; }
 
 	// dump all 2D drawing so far this frame to the demo file
 	virtual void			WriteDemoPics() = 0;

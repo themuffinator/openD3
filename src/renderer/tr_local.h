@@ -412,6 +412,7 @@ typedef struct viewDef_s {
 	bool				isSubview;				// true if this view is not the main view
 	bool				isMirror;				// the portal is a mirror, invert the face culling
 	bool				isXraySubview;
+	bool				isGlowView;
 
 	bool				isEditor;
 
@@ -483,10 +484,16 @@ typedef struct {
 	idImage *			bumpImage;
 	idImage *			diffuseImage;
 	idImage *			specularImage;
+	float				alphaTestThreshold;	// negative disables interaction alpha clipping
 
 	idVec4				diffuseColor;	// may have a light color baked into it, will be < tr.backEndRendererMaxLight
 	idVec4				specularColor;	// may have a light color baked into it, will be < tr.backEndRendererMaxLight
 	idVec4				flatDiffuseParams;	// sweep strength, local min Z, inverse height, upward phase
+	// the specular stage's "specularExp <exponent>, <brightness>" (retail
+	// defaults 22, 1.4); drives the corrected specular term, see
+	// R_InteractionSpecularParms
+	float				specularExponent;
+	float				specularBrightness;
 	stageVertexColor_t	vertexColor;	// applies to both diffuse and specular
 
 	int					ambientLight;	// use tr.ambientNormalMap instead of normalization cube map 
@@ -977,6 +984,12 @@ public:
 	virtual void			DrawSmallStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material );
 	virtual void			DrawBigChar( int x, int y, int ch, const idMaterial *material );
 	virtual void			DrawBigStringExt( int x, int y, const char *string, const idVec4 &setColor, bool forceColor, const idMaterial *material );
+	virtual bool			IsScopeView( void );
+	virtual void			SetScopeView( bool view );
+	virtual bool			IsSpiritWalkView( void );
+	virtual void			SetSpiritWalkView( bool view );
+	virtual bool			IsShuttleView( void );
+	virtual void			SetShuttleView( bool view );
 	virtual void			WriteDemoPics();
 	virtual void			WriteDemoEndFrame();
 	virtual void			DrawDemoPics();
@@ -1074,6 +1087,9 @@ public:
 	idVec4					postProcessSMAAQuality;	// x = edge mode, y = threshold, z = search steps, w = local contrast
 	float					deltaTime;		// seconds since the previous top-level RenderScene call
 	int						lastRenderTimeMsec;	// host milliseconds of the previous top-level RenderScene call
+	bool					scopeViewEnabled;
+	bool					spiritWalkViewEnabled;
+	bool					shuttleViewEnabled;
 
 	int						viewportOffset[2];	// for doing larger-than-window tiled renderings
 	int						tiledViewport[2];
@@ -1267,6 +1283,20 @@ bool R_ViewFovTangentsValid( const renderView_t &renderView );
 extern float				tr_levelshotProjectionShiftX;
 extern float				tr_levelshotProjectionShiftY;
 
+#ifdef OPENQ4_RENDERER_MODULE
+int R_RendererGetTimeGroupTime( int timeGroup, int fallbackTime );
+#endif
+
+// Retail Prey treats mirrors and remote-camera subviews as the neutral view.
+// View-scoped allow/suppress fields therefore only match the primary view ID.
+static ID_INLINE int R_EffectiveViewIDForSubview( const viewDef_t *viewDef ) {
+	return ( viewDef == NULL || viewDef->isSubview ) ? 0 : viewDef->renderView.viewID;
+}
+
+static ID_INLINE int R_EffectiveViewIDForSubview( void ) {
+	return R_EffectiveViewIDForSubview( tr.viewDef );
+}
+
 static ID_INLINE bool R_IsPortalSkyView( void ) {
 	return tr.viewDef != NULL && ( tr.viewDef->renderFlags & RF_PORTAL_SKY ) != 0;
 }
@@ -1325,6 +1355,10 @@ extern idCVar r_bloomSoftKnee;			// relative bloom soft threshold knee
 extern idCVar r_bloomIntensity;			// bloom contribution scale
 extern idCVar r_bloomRadius;			// bloom sample radius scale
 extern idCVar r_bloomMipCount;			// number of bloom pyramid levels
+extern idCVar r_glowAlpha;
+extern idCVar r_glowAlphaChange;
+extern idCVar r_glowSteps;
+extern idCVar r_glowStrength;
 extern idCVar r_ssao;					// enable SSAO post-process
 extern idCVar r_ssaoRadius;			// SSAO sampling radius in view-space units
 extern idCVar r_ssaoBias;				// SSAO horizon bias in view-space units
@@ -1418,6 +1452,7 @@ extern idCVar r_logFile;				// number of frames to emit GL logs
 extern idCVar r_clear;					// force screen clear every frame
 extern idCVar r_shadows;				// enable shadows
 extern idCVar r_subviewOnly;			// 1 = don't render main view, allowing subviews to be debugged
+extern idCVar r_shaderLevel;			// Prey shaderLevel*/shaderFallback* stage gate
 extern idCVar r_lightScale;				// all light intensities are multiplied by this, which is normally 2
 extern idCVar r_lightDetailLevel;		// minimum light detailLevel to include in view lists
 extern idCVar r_flareSize;				// scale the flare deforms from the material def
@@ -1900,6 +1935,14 @@ void R_DoneFreeType( bool preserveAtlasImages = false );
 // resolution instead of scaling up the fixed 12/24/48 point retail atlases.
 // Returns false when no usable face exists, leaving the bitmap path in charge.
 bool R_RegisterTrueTypeFont( const char *fontName, fontInfoEx_t &font );
+// Vertical layout of one retail Prey font slot, read from its .dat. The
+// scalable path fits its slots to it (see R_ReadLegacyFontSlotMetrics).
+struct legacyFontSlotMetrics_t {
+	float				top[GLYPHS_PER_FONT];		// image rect top, units above the baseline
+	float				height[GLYPHS_PER_FONT];	// image rect height; 0 for an empty slot
+	float				maxHeight;					// line height the bitmap path uses
+};
+bool R_ReadLegacyFontSlotMetrics( const char *fontName, int pointSize, legacyFontSlotMetrics_t &out );
 // Rebuilds the fixed-cell 'bigchars' console sheet at display resolution and
 // retargets its material, so the console and loading screen sharpen too.
 bool R_BuildConsoleFontAtlas( void );
@@ -2220,6 +2263,34 @@ void RB_CreateSingleDrawInteractions( const drawSurf_t *surf, void (*DrawInterac
 void RB_CreateSingleDrawInteractionsFiltered( const drawSurf_t *surf, void (*DrawInteraction)(const drawInteraction_t *), drawInteractionStageFilter_t StageFilter );
 void R_SetDrawInteraction( const shaderStage_t *surfaceStage, const float *surfaceRegs,
 						  idImage **image, idVec4 matrix[2], float color[4] );
+
+/*
+Retail Prey's stock interaction programs, selected by r_correctspecular and
+r_normalizebumpmap (both default 1 in PREY.exe):
+
+  normalize  correct  retail program            specular term
+  0          0        interaction.vfp           _specularTable ramp of N.H
+  1          0        interactionNormBump.vfp   ramp, renormalized bump normal
+  0          1        interactionUpdate.vfp     pow( N.H, exponent ) * brightness
+  1          1        interactionNormBumpH.vfp  pow, renormalized bump normal
+
+With correct specular, H is rebuilt per pixel from the light direction and
+the normalized vector to the viewer, and exponent/brightness come from the
+interaction's specular stage. Every backend's stock interaction consumes the
+same packed parameters:
+
+  parms[0] = exponent, parms[1] = brightness,
+  parms[2] = 1 for the corrected pow() term, 0 for the table ramp,
+  parms[3] = 1 to renormalize the decoded bump normal.
+
+r_enhancedMaterials and native PBR keep their own specular models and ignore
+these parameters.
+*/
+extern idCVar r_correctspecular;
+extern idCVar r_normalizebumpmap;
+void R_ResetInteractionSpecular( drawInteraction_t *din );
+void R_SetInteractionSpecularStage( drawInteraction_t *din, const shaderStage_t *surfaceStage );
+void R_InteractionSpecularParms( float specularExponent, float specularBrightness, float parms[4] );
 bool RB_FlatDiffuseSurfaceActive( const drawSurf_t *surf );
 // representability of a surface's baked indirect contribution for the modern
 // light-grid pipeline; sets *reason to a stable blocker token when false
@@ -2290,6 +2361,8 @@ DRAW_*
 
 void	R_ARB2_Init( void );
 void	RB_ARB2_DrawInteractions( void );
+void	RB_ARB2_DrawShaderInteraction( const drawInteraction_t *din, const shaderStage_t *surfaceStage,
+			const float *surfaceRegs, const float lightColor[4] );
 void	RB_ResetARB2InteractionHandoffBreadcrumb( void );
 void	RB_ResetAppleGL21RouteCounters( void );
 void	RB_ReportAppleGL21RouteCounters( void );
@@ -2310,6 +2383,7 @@ void	RB_ARB2_ClearPreparedPackedMD5RDraw( void );
 bool	RB_ARB2_DrawPreparedPackedMD5RStageBatches( const srfTriangles_t *tri );
 bool	RB_ARB2_DrawPreparedPackedMD5RDirectBatches( const srfTriangles_t *tri );
 void	R_ReloadARBPrograms_f( const idCmdArgs &args );
+void	R_LoadARBProgramsForStartup( void );
 void	R_ReportShaderPrograms_f( const idCmdArgs &args );
 
 // Stable identities for the stock ARB newStage program families.  Vulkan
@@ -2328,6 +2402,7 @@ typedef enum {
 } vkMaterialProgramFamily_t;
 
 int		R_FindARBProgram( unsigned int target, const char *program );
+bool	R_ARBProgramUsesInteractionInputs( unsigned int target, const char *program );
 bool	R_IsARBProgramValid( unsigned int target, unsigned int ident );
 vkMaterialProgramFamily_t R_GetARBProgramFamily( unsigned int target, unsigned int ident );
 bool	R_BindARBProgram( unsigned int target, unsigned int ident, const char *usage, bool required );
@@ -2669,6 +2744,54 @@ TR_DEFORM
 
 =============================================================
 */
+
+typedef struct particleGeometryCounts_s {
+	int			numVerts;
+	int			numIndexes;
+	int			vertexBytes;
+	int			indexBytes;
+} particleGeometryCounts_t;
+
+ID_INLINE int R_ParticleCycleSeed( int stageCycle, bool previousCycle, int diversitySeed ) {
+	const unsigned int cycleBits = static_cast<unsigned int>( stageCycle ) - ( previousCycle ? 1u : 0u );
+	const unsigned int randomMask = static_cast<unsigned int>( idRandom::MAX_RAND );
+	const unsigned int seedBits = ( ( cycleBits << 10 ) & randomMask ) ^ static_cast<unsigned int>( diversitySeed );
+	return ( seedBits & 0x80000000u )
+		? -1 - static_cast<int>( ~seedBits )
+		: static_cast<int>( seedBits );
+}
+
+ID_INLINE bool R_GetParticleGeometryCounts( int totalParticles, int quadsPerParticle,
+											int maxAllocationBytes, particleGeometryCounts_t &counts ) {
+	counts.numVerts = 0;
+	counts.numIndexes = 0;
+	counts.vertexBytes = 0;
+	counts.indexBytes = 0;
+
+	if ( totalParticles <= 0 || quadsPerParticle <= 0 || maxAllocationBytes <= 0 ) {
+		return false;
+	}
+
+	// Multiplying two positive ints fits in int64. Bound that result before the
+	// per-quad vertex/index multiplications so every later conversion remains safe.
+	const int64 totalQuads = static_cast<int64>( totalParticles ) * static_cast<int64>( quadsPerParticle );
+	const int64 vertexBytesPerQuad = 4 * static_cast<int64>( sizeof( idDrawVert ) );
+	const int64 indexBytesPerQuad = 6 * static_cast<int64>( sizeof( glIndex_t ) );
+	const int64 planeBytesPerQuad = 2 * static_cast<int64>( sizeof( idPlane ) );
+	const int64 allocationLimit = static_cast<int64>( maxAllocationBytes );
+	if ( totalQuads <= 0 ||
+		totalQuads > allocationLimit / vertexBytesPerQuad ||
+		totalQuads > allocationLimit / indexBytesPerQuad ||
+		totalQuads > allocationLimit / planeBytesPerQuad ) {
+		return false;
+	}
+
+	counts.numVerts = static_cast<int>( totalQuads * 4 );
+	counts.numIndexes = static_cast<int>( totalQuads * 6 );
+	counts.vertexBytes = static_cast<int>( totalQuads * vertexBytesPerQuad );
+	counts.indexBytes = static_cast<int>( totalQuads * indexBytesPerQuad );
+	return true;
+}
 
 void R_DeformDrawSurf( drawSurf_t *drawSurf );
 

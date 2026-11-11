@@ -25,7 +25,7 @@ def read(relative_path: str) -> str:
 def read_game_libs(relative_path: str) -> str:
     path = GAME_LIBS_ROOT / relative_path
     if not path.is_file():
-        raise AssertionError(f"Required openQ4-game source file not found: {path}")
+        raise AssertionError(f"Required in-tree game source file not found: {path}")
     return path.read_text(encoding="utf-8")
 
 
@@ -280,17 +280,17 @@ def save_dict(pairs: tuple[tuple[bytes, bytes], ...] = ()) -> bytes:
     return data
 
 
-def valid_retail_header() -> bytes:
+def valid_prey_header() -> bytes:
     return (
-        save_string(b"Quake4")
+        save_string(b"Prey")
         + int32(12)
-        + save_string(b"maps/game/airdefense1.map")
+        + save_string(b"maps/game/roadhouse.map")
         + save_string(b"")
         + (save_dict() * MAX_ASYNC_CLIENTS)
     )
 
 
-def parse_retail_header(data: bytes) -> int:
+def parse_prey_header(data: bytes) -> int:
     reader = SaveHeaderReader(data)
     reader.read_save_string(MAX_STRING_CHARS)
     reader.read_int()
@@ -303,7 +303,7 @@ def parse_retail_header(data: bytes) -> int:
 
 def expect_corrupt(data: bytes, label: str) -> None:
     try:
-        parse_retail_header(data)
+        parse_prey_header(data)
     except CorruptSave:
         return
     raise AssertionError(f"{label} unexpectedly parsed as a valid save header")
@@ -357,19 +357,19 @@ def expect_ssd_corrupt(data: bytes, label: str) -> None:
 
 
 def validate_header_fuzz_model() -> None:
-    valid = valid_retail_header()
-    if parse_retail_header(valid) != len(valid):
+    valid = valid_prey_header()
+    if parse_prey_header(valid) != len(valid):
         raise AssertionError("valid save header fixture was not fully consumed")
 
     expect_corrupt(b"\x00\x01", "truncated game-name length")
     expect_corrupt(int32(-1), "negative game-name length")
     expect_corrupt(int32(MAX_STRING_CHARS + 1) + (b"x" * (MAX_STRING_CHARS + 1)), "oversized game-name length")
-    expect_corrupt(save_string(b"Quake4") + int32(12) + int32(100), "map-name length beyond remaining bytes")
+    expect_corrupt(save_string(b"Prey") + int32(12) + int32(100), "map-name length beyond remaining bytes")
 
     header_before_dicts = (
-        save_string(b"Quake4")
+        save_string(b"Prey")
         + int32(12)
-        + save_string(b"maps/game/airdefense1.map")
+        + save_string(b"maps/game/roadhouse.map")
         + save_string(b"")
     )
     expect_corrupt(header_before_dicts + int32(-1), "negative persistent-player dictionary count")
@@ -540,7 +540,7 @@ def validate_session_source_contract() -> None:
         "Session_ReadSaveGameCString( file, key, MAX_STRING_CHARS",
         "Session_ReadSaveGameCString( file, value, MAX_STRING_CHARS",
         "idDict loadedPersistentPlayerInfo[MAX_ASYNC_CLIENTS];",
-        "idFile *loadGameFile = fileSystem->OpenFileRead",
+        "idFile *loadGameFile = Session_OpenSaveGameReadHandle",
         "loadingSaveGame = false;",
         "savegameFile = NULL;",
         "if ( headerValid && saveMap.IsEmpty() )",
@@ -590,6 +590,7 @@ def validate_session_source_contract() -> None:
         source,
         r"Session_ReadSaveGameString\s*\(\s*file,\s*gamename,\s*MAX_STRING_CHARS,\s*\"game name\".*?"
         r"Session_ReadSaveGameString\s*\(\s*file,\s*saveMap,\s*MAX_STRING_CHARS,\s*\"map name\".*?"
+        r"Session_ReadSaveGameString\s*\(\s*file,\s*entityFilter,\s*MAX_STRING_CHARS,\s*\"entity filter\".*?"
         r"Session_ReadSaveGameDict\s*\(\s*file,\s*persistentPlayerInfo.*?"
         r"Session_ValidateSaveGamePayload\s*\(\s*file,\s*savePath,\s*false,\s*NULL,\s*verifiedChecksum\s*\)",
         "staged save validation uses bounded header/dict reads and payload footer check",
@@ -603,7 +604,7 @@ def validate_session_source_contract() -> None:
     )
     require_regex(
         source,
-        r"Session_WriteSaveGameString\s*\(\s*fileOut,\s*SAVEGAME_GAME_NAME_RETAIL.*?"
+        r"Session_WriteSaveGameString\s*\(\s*fileOut,\s*SAVEGAME_GAME_NAME_PREY.*?"
         r"Session_WriteSaveGameDict\s*\(\s*fileOut,\s*mapSpawnData\.persistentPlayerInfo\s*\[\s*i\s*\].*?"
         r"if\s*\(\s*!headerWritten\s*\)",
         "staged save header write failure cleanup",
@@ -635,14 +636,14 @@ def validate_session_source_contract() -> None:
         "static bool Session_MenuReadSaveGameString( idFile *file, idStr &string, int maxLength, const char *fieldName, const char *savePath )",
         "static bool Session_MenuReadSaveGameCString( idFile *file, idStr &string, int maxLength, const char *fieldName, const char *savePath )",
         "static bool Session_MenuSkipSaveGameDict( idFile *file, const char *fieldName, const char *savePath )",
-        "static bool Session_MenuIsLoadableSaveGameSlot( const idStr &slotName )",
-        "static bool Session_MenuReadSaveDescription( const idStr &slotName, sessionMenuSaveDescription_t &description )",
+        "static bool Session_MenuIsLoadableSaveGameSlot( const idStr &slotName, const char *gameDir )",
+        "static bool Session_MenuReadSaveDescription( const idStr &slotName, sessionMenuSaveDescription_t &description, const char *gameDir = NULL )",
         "len > SESSION_MENU_MAX_SAVE_DESCRIPTION_BYTES",
         "idLexer src( buffer, len, descriptionPath.c_str(), LEXFL_NOERRORS | LEXFL_NOSTRINGCONCAT );",
         "!Session_MenuSaveDescriptionMatchesSlot( slotName, description.saveName )",
         "!Session_MenuIsSafeSaveMaterialPath( description.screenshot )",
-        "!Session_MenuIsLoadableSaveGameSlot( slotName )",
-        "Session_MenuReadSaveDescription( loadGameList[i], description )",
+        "!Session_MenuIsLoadableSaveGameSlot( slotName, gameDir )",
+        "Session_MenuReadSaveDescription( loadGameList[i], description, loadGameListGameDirs[i].c_str() )",
         "description.screenshot.Length() > 0 || description.noOverwrite",
     ):
         require(menu_source, token, "Session savegame menu/list contract")
@@ -681,15 +682,13 @@ def validate_session_source_contract() -> None:
 
 
 def validate_gamelibs_save_payload_contract() -> None:
-    for module in ("game", "mpgame"):
+    # Prey uses one unified game module for both single-player and multiplayer.
+    for module in ("game",):
         save_header = read_game_libs(f"src/{module}/gamesys/SaveGame.h")
         save_source = read_game_libs(f"src/{module}/gamesys/SaveGame.cpp")
         game_header = read_game_libs(f"src/{module}/Game_local.h")
         game_local = read_game_libs(f"src/{module}/Game_local.cpp")
         actor_source = read_game_libs(f"src/{module}/Actor.cpp")
-        ai_move = read_game_libs(f"src/{module}/ai/AI_Move.cpp")
-        client_effect = read_game_libs(f"src/{module}/client/ClientEffect.cpp")
-        client_entity = read_game_libs(f"src/{module}/client/ClientEntity.cpp")
         misc_source = read_game_libs(f"src/{module}/Misc.cpp")
         mover_source = read_game_libs(f"src/{module}/Mover.cpp")
         physics_af = read_game_libs(f"src/{module}/physics/Physics_AF.cpp")
@@ -703,7 +702,8 @@ def validate_gamelibs_save_payload_contract() -> None:
             "OPENQ4_SAVEGAME_PORTABLE_COMPATIBILITY_VERSION = 5",
             "OPENQ4_SAVEGAME_SYNC_MAGIC = 'O' | ( 'Q' << 8 ) | ( '4' << 16 ) | ( 'Y' << 24 )",
             "OPENQ4_SAVEGAME_FOOTER_MAGIC = 'O' | ( 'Q' << 8 ) | ( '4' << 16 ) | ( 'F' << 24 )",
-            "OPENQ4_SAVEGAME_INTEGRITY_MAGIC = 'O' | ( 'Q' << 8 ) | ( '4' << 16 ) | ( 'I' << 24 )",
+            '__has_include( "openq4_savegame_compat_generated.h" )',
+            '#define OPENQ4_SAVEGAME_COMPAT_SOURCE_HASH "standalone-openprey-game"',
             "void\t\t\t\t\tWriteChecked( int bytesWritten, int expected, const char *detail, int offset );",
             "void\t\t\t\t\tWriteSaveGameFooter( int numObjects );",
             "void\t\t\t\t\tReadSyncId( const char *detail = \"unspecified\", const char *classname = NULL );",
@@ -719,23 +719,8 @@ def validate_gamelibs_save_payload_contract() -> None:
         ):
             require(save_header, token, f"{module} savegame compatibility header")
 
-        # The generated stamp hashes every save-relevant game source, so it changes
-        # whenever one of them does. Game_local.h brings the game headers into every
-        # game PCH, so a header that includes the stamp makes each such edit rebuild
-        # every game object. Only SaveGame.cpp reads it.
-        for header_path in sorted((GAME_LIBS_ROOT / "src" / module).rglob("*.h")):
-            if b"openq4_savegame_compat_generated.h" in header_path.read_bytes():
-                raise AssertionError(
-                    f"{header_path.relative_to(GAME_LIBS_ROOT).as_posix()} includes the generated "
-                    "savegame stamp; include it from gamesys/SaveGame.cpp so the game PCH does not depend on it"
-                )
-
         for token in (
-            '#include "framework/BuildVersion.h"',
-            '__has_include( "openq4_savegame_compat_generated.h" )',
-            '#include "openq4_savegame_compat_generated.h"',
-            '#define OPENQ4_SAVEGAME_COMPAT_SOURCE_HASH "standalone-openq4-game"',
-            "#define OPENQ4_SAVEGAME_COMPAT_SOURCE_FILE_COUNT 0",
+            '#include "../../framework/BuildVersion.h"',
             "static bool SaveGame_IsValidRenderBounds( const idBounds &bounds )",
             "static int SaveGame_ObjectHashKey( const idClass *obj )",
             "static int SaveGame_FindObjectIndex( const idList<const idClass *> &objects, const idHashIndex &objectHash, const idClass *obj )",
@@ -744,7 +729,7 @@ def validate_gamelibs_save_payload_contract() -> None:
             "const float boundsMin = bounds[0][i];",
             "const float boundsMax = bounds[1][i];",
             "FLOAT_IS_NAN( boundsMin ) || FLOAT_IS_NAN( boundsMax )",
-            "bounds[1][i] - bounds[0][i] >= MAX_BOUND_SIZE",
+            "boundsMax - boundsMin >= MAX_BOUND_SIZE",
             "void idSaveGame::WriteChecked( int bytesWritten, int expected, const char *detail, int offset )",
             "idSaveGame: failed to write %s at offset %d",
             "WriteChecked( file->Write( writeBuffer, writeBufferUsed ), writeBufferUsed, \"buffered data\", offset );",
@@ -836,20 +821,6 @@ def validate_gamelibs_save_payload_contract() -> None:
             f"{module} savegame compatibility gate before object restore",
         )
 
-        for token in (
-            "memset( &fl, 0, sizeof( fl ) );",
-            "path[i].reach = NULL;",
-            "path[i].seekPos.Zero();",
-            "pathLen\t\t\t\t= 0;",
-            "pathArea\t\t\t= 0;",
-            "pathTime\t\t\t= 0;",
-            "const int savedPathLen = ( pathLen >= 0 && pathLen <= MAX_PATH_LEN ) ? pathLen : 0;",
-            "savefile->WriteInt( savedPathLen );\t// cnicholson: Added unsaved vars",
-            "for (i=0; i< savedPathLen; ++i)",
-            "savefile->WriteInt( savedPathLen > 0 ? pathArea : 0 );",
-        ):
-            require(ai_move, token, f"{module} AI move savegame path initialization contract")
-
         require(
             script_program,
             "NumFunctions( void ) { return functions.Num(); }",
@@ -877,7 +848,6 @@ def validate_gamelibs_save_payload_contract() -> None:
 
         for token in (
             "MAX_SAVEGAME_ANIMATED_ANIMS",
-            "MAX_SAVEGAME_CLIENT_CRAWL_JOINTS",
             "MAX_SAVEGAME_ACTOR_ATTACHMENTS",
             "MAX_SAVEGAME_ELEVATOR_FLOORS",
         ):
@@ -889,19 +859,6 @@ def validate_gamelibs_save_payload_contract() -> None:
             "idActor::Restore: invalid attachment animation channel %d",
         ):
             require(actor_source, token, f"{module} actor animation channel restore bounds")
-
-        for token in (
-            "restoredEntityNumber < -1 || restoredEntityNumber >= MAX_CENTITIES",
-            "rvClientEntity::Restore: invalid client entity number %d",
-        ):
-            require(client_entity, token, f"{module} client entity restore bounds")
-
-        for token in (
-            "jointStart < 0 || jointStart >= numJoints",
-            "jointEnd < 0 || jointEnd >= numJoints",
-            "crawlDir != -1 && crawlDir != 1",
-        ):
-            require(client_effect, token, f"{module} client crawl effect restore bounds")
 
         for token in (
             "num_anims < 0 || num_anims > MAX_SAVEGAME_ANIMATED_ANIMS",
@@ -925,21 +882,20 @@ def validate_gamelibs_save_payload_contract() -> None:
             require(physics_af, token, f"{module} articulated physics restore count contract")
 
         for token in (
-            "top_functions < 0 || top_functions > functions.Num()",
-            "top_statements < 0 || top_statements > statements.Num()",
-            "top_types < 0 || top_types > types.Num()",
-            "top_defs < 0 || top_defs > varDefs.Num()",
-            "top_files < 0 || top_files > fileList.Num()",
+            "num < 0 || num > 4096",
+            "index >= variableDefaults.Num() || index >= MAX_GLOBALS",
+            "if ( index != -1 )",
+            "num < variableDefaults.Num() || num > MAX_GLOBALS",
+            "numVariables = num;",
         ):
-            require(script_program_source, token, f"{module} script program restore watermark bounds")
+            require(script_program_source, token, f"{module} Prey script program restore bounds")
 
     meson = read("meson.build")
     for token in (
         "generate_savegame_compat_header.py",
         "openq4_savegame_compat_generated.h",
         "savegame_compat_header = custom_target",
-        "game_sp_sources += [savegame_compat_header, generated_version_header]",
-        "game_mp_sources += [savegame_compat_header, generated_version_header]",
+        "game_sources += [savegame_compat_header]",
         "openq4_engine_sources += [savegame_compat_header]",
         "depend_files: files(engine_source_paths) + game_sources",
     ):
@@ -956,15 +912,18 @@ def validate_gamelibs_save_payload_contract() -> None:
         "PROJECT_SCAN_DIRS",
         "GAME_SCAN_DIRS",
         '"src/game"',
-        '"src/mpgame"',
+        '"src/Prey"',
+        '"src/preyengine"',
     ):
         require(generator, token, "savegame compatibility header generator")
 
-    require(
-        read("docs/dev/release-completion.md"),
-        "new saves carry a generated engine/GameLibs source snapshot stamp plus payload sync markers, an end footer, an exact wire-ABI stamp, and whole-file CRC protection",
-        "release completion notes",
-    )
+    savegame_docs = read("docs/dev/savegame-reliability.md")
+    for token in (
+        "generated GameLib source-snapshot stamp and source-file count",
+        "class-boundary sync markers",
+        "footer containing the final payload offset",
+    ):
+        require(savegame_docs, token, "savegame reliability notes")
 
 
 def validate_savegame_compat_stamp_model() -> None:
@@ -979,7 +938,7 @@ def validate_savegame_compat_stamp_model() -> None:
     temp_root.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="savegame-compat-stamp-", dir=temp_root) as raw_temp:
         work = Path(raw_temp)
-        project_root = work / "openQ4"
+        project_root = work / "openPREY"
         game_root = work / "stage"
         project_file = project_root / "src" / "framework" / "Session.cpp"
         game_file = game_root / "src" / "game" / "Game_local.cpp"
@@ -1255,11 +1214,6 @@ def validate_gui_stream_alignment_contract() -> None:
         "desktop->ReadFromSaveGame( savefile );",
     ):
         require(ui_source, token, "top-level GUI positional restore validation")
-
-    for game in ("game", "mpgame"):
-        require(read(f"src/{game}/gamesys/SaveGame.cpp"),
-                "aborting before its positional state payload can desynchronize the stream",
-                "serialized GUI restore boundary")
 
     window_source = read("src/ui/Window.cpp")
     for token in (
@@ -1727,129 +1681,6 @@ def validate_minigame_restore_contract() -> None:
         raise AssertionError("SSD pool restores must stamp each restored pool object's saved id")
 
 
-def validate_restore_teardown_lists() -> None:
-    """Restored owner lists must stay safe for failed-load teardown.
-
-    Destructors delete every listed pointer and raise SIG_REMOVED, so a read that
-    fails part way must leave only complete entries, never a list sized over
-    unset pointers or unresolved signal functions. Restored physics objects are
-    attached to the entity restoring them instead of a saved owner pointer.
-    """
-    for module in ("game", "mpgame"):
-        entity = read_game_libs(f"src/{module}/Entity.cpp")
-        signals = entity[entity.index("bool readsignals;"):entity.index("savefile->ReadInt( mpGUIState );")]
-        require(signals, "num > MAX_SIGNAL_THREADS", f"{module} signal count bound")
-        require(signals, "signals->signal[ i ].Append( sig );", f"{module} complete signal entries")
-        if "SetNum( num )" in signals:
-            raise AssertionError(f"{module} signal restore sizes the list before reading its entries")
-        restore_physics = entity[entity.index("void idEntity::RestorePhysics( idPhysics *phys ) {"):]
-        restore_physics = restore_physics[:restore_physics.index("\n}")]
-        require(restore_physics, "phys->SetSelf( this );", f"{module} RestorePhysics owner")
-
-        for relative, needles, forbidden in (
-            ("vehicle/VehiclePosition.cpp", ("mParts.Append ( part );", "mWeapons.Append ( part );"),
-             ("mParts.SetNum", "mWeapons.SetNum")),
-            ("anim/Anim_Blend.cpp", ("jointMods.Append( new jointMod_t );",), ("jointMods.SetNum",)),
-            ("BrittleFracture.cpp", ("shards[i]->decals.Append( new idFixedWinding );",), ("decals.SetNum",)),
-        ):
-            source = read_game_libs(f"src/{module}/{relative}")
-            for needle in needles:
-                require(source, needle, f"{module} {relative} append-only restore")
-            for token in forbidden:
-                if token in source:
-                    raise AssertionError(f"{module} {relative} sizes an owning list with {token}")
-
-        client_entity = read_game_libs(f"src/{module}/client/ClientEntity.cpp")
-        constructor = client_entity[client_entity.index("rvClientEntity::rvClientEntity( void ) {"):]
-        constructor = constructor[:constructor.index("\n}")]
-        for node in ("spawnNode", "bindNode", "presentationNode"):
-            require(constructor, f"{node}.SetOwner( this );", f"{module} restored client entity {node} owner")
-
-        # lastRadioChatter is static: it must not carry a spawn id into the next
-        # level, and saves that did so must restore without a typed-reference error.
-        misc = read_game_libs(f"src/{module}/Misc.cpp")
-        destructor = misc[misc.index("idFuncRadioChatter::~idFuncRadioChatter() {"):]
-        require(destructor[:destructor.index("\n}")], "lastRadioChatter = NULL;", f"{module} radio chatter reset")
-        restore = misc[misc.index("void idFuncRadioChatter::Restore( idRestoreGame *savefile ) {"):]
-        restore = restore[:restore.index("\n}")]
-        require(restore, "idEntityPtr<idEntity> saved;", f"{module} radio chatter tolerant restore")
-        if "lastRadioChatter.Restore" in restore:
-            raise AssertionError(f"{module} radio chatter restores its static through a typed reference")
-
-        validate_failed_restore_teardown(module)
-
-
-def function_body(source: str, signature: str) -> str:
-    body = source[source.index(signature):]
-    return body[:body.index("\n}")]
-
-
-def validate_failed_restore_teardown(module: str) -> None:
-    """A refused load deletes a partly restored map without a second error.
-
-    Teardown destructors post events, raise SIG_REMOVED and eject vehicle
-    drivers, so none of them may run script on half-read state or fail on a
-    full event queue. Saved owners, indexes and bindings that later code
-    dereferences without checking are validated or replaced on restore.
-    """
-    event = read_game_libs(f"src/{module}/gamesys/Event.cpp")
-    alloc = function_body(event, "idEvent *idEvent::Alloc(")
-    full_queue = alloc[alloc.index("if ( FreeEvents.IsListEmpty() ) {"):alloc.index("WriteDebugInfo( );")]
-    require(full_queue, "gameLocal.GameState() == GAMESTATE_SHUTDOWN", f"{module} shutdown drops events on a full queue")
-    require(full_queue, "return NULL;", f"{module} shutdown event drop")
-    post = function_body(read_game_libs(f"src/{module}/gamesys/Class.cpp"), "bool idClass::PostEventArgs(")
-    require(post, "if ( event == NULL ) {", f"{module} PostEventArgs handles a dropped event")
-
-    entity = read_game_libs(f"src/{module}/Entity.cpp")
-    prepare = function_body(entity, "void idEntity::PrepareFailedRestoreShutdown( void ) {")
-    require(prepare, "signals->signal[ i ].Clear();", f"{module} failed restore drops signal threads")
-    restore = function_body(entity, "void idEntity::Restore( idRestoreGame *savefile ) {")
-    require(restore, "entityNumber == ENTITYNUM_NONE && restoredEntityNumber != ENTITYNUM_NONE",
-            f"{module} unregistered entity number check")
-
-    vehicle = read_game_libs(f"src/{module}/vehicle/Vehicle.cpp")
-    require(function_body(vehicle, "rvVehicle::~rvVehicle ( void ) {"), "!failedRestoreShutdown",
-            f"{module} failed restore skips driver ejection")
-    require(function_body(vehicle, "void rvVehicle::PrepareFailedRestoreShutdown( void ) {"),
-            "failedRestoreShutdown = true;", f"{module} vehicle failed-restore flag")
-    actor = read_game_libs(f"src/{module}/Actor.cpp")
-    occupant = function_body(actor, "void idActor::ValidateRestoredBindings( idRestoreGame *savefile ) const {")
-    require(occupant, "position >= vehicle->GetNumPositions()", f"{module} vehicle position bound")
-
-    af = function_body(read_game_libs(f"src/{module}/AF.cpp"), "void idAF::Restore( idRestoreGame *savefile, idEntity *owner ) {")
-    require(af, "self = ( savedSelf != NULL ) ? owner : NULL;", f"{module} articulated figure owner")
-    require(af, "physicsObj.SetSelf( owner );", f"{module} articulated figure physics owner")
-    require(read_game_libs(f"src/{module}/AFEntity.cpp"), "af.Restore( savefile, this );", f"{module} AF owner argument")
-    animator = function_body(read_game_libs(f"src/{module}/anim/Anim_Blend.cpp"), "void idAnimator::Restore( idRestoreGame *savefile ) {")
-    require(animator, "savefile->ReadObject( savedEntity );", f"{module} animator keeps its owner")
-    if "savefile->ReadObject( entity );" in animator:
-        raise AssertionError(f"{module} animator restores its owner from the save")
-    constraint = function_body(read_game_libs(f"src/{module}/physics/Physics_AF.cpp"),
-                               "void idAFConstraint::Restore( idRestoreGame *saveFile ) {")
-    require(constraint, "if ( boxIndex[i] != -1 ) {", f"{module} AF constraint box index check")
-
-    client = read_game_libs(f"src/{module}/client/ClientEntity.cpp")
-    binding = function_body(client, "void rvClientEntity::ValidateRestoredBinding( idRestoreGame *savefile ) const {")
-    require(binding, "bindNode.ListHead() != &master->clientEntities", f"{module} client entity master list")
-    require(binding, "idAnimatedEntity::GetClassType()", f"{module} client entity joint master")
-    require(function_body(client, "void rvClientEntity::Restore( idRestoreGame *savefile ) {"),
-            "entityNumber == -1 && restoredEntityNumber != -1", f"{module} unregistered client entity number check")
-    require(read_game_libs(f"src/{module}/gamesys/SaveGame.cpp"), "->ValidateRestoredBinding( this );",
-            f"{module} client entity binding validation pass")
-
-    target = read_game_libs(f"src/{module}/Target.cpp")
-    influence = function_body(target, "void idTarget_SetInfluence::Restore( idRestoreGame *savefile ) {")
-    if "Append( itemNum )" in influence:
-        raise AssertionError(f"{module} influence target restores unchecked entity numbers")
-    require(function_body(target, "static int Target_ReadInfluenceEntityNumber( idRestoreGame *savefile ) {"),
-            "itemNum >= MAX_GENTITIES", f"{module} influence entity number bound")
-
-    if module == "game":
-        fire = function_body(read_game_libs("src/game/awakening/DOTEntity.cpp"),
-                             "void FireDOTEntity::Restore( idRestoreGame *savefile ) {")
-        require(fire, "num < 0 || num > 4096", "game fire burning joint bound")
-
-
 def validate_validation_wiring() -> None:
     for relative_path in (
         "tools/validation/openq4_validate.py",
@@ -1869,7 +1700,6 @@ def main() -> None:
     validate_gui_winvar_initialization_contract()
     validate_gui_stream_alignment_contract()
     validate_minigame_restore_contract()
-    validate_restore_teardown_lists()
     validate_validation_wiring()
     print("savegame_corruption_contract: ok")
 

@@ -20,8 +20,8 @@ configure_macos_deployment_target() {
     [[ "${host_name}" == "Darwin" ]] || return 0
 
     if [[ -z "${MACOSX_DEPLOYMENT_TARGET:-}" ]]; then
-        # Keep Meson subprojects and companion GameLibs on the same floor as
-        # the main project's -mmacosx-version-min setting.
+        # Keep Meson subprojects on the same floor as the main project's
+        # -mmacosx-version-min setting.
         export MACOSX_DEPLOYMENT_TARGET=11.0
     elif [[ ! "${MACOSX_DEPLOYMENT_TARGET}" =~ ^[0-9]+([.][0-9]+){1,2}$ ]]; then
         echo "MACOSX_DEPLOYMENT_TARGET must be a dotted macOS version, got '${MACOSX_DEPLOYMENT_TARGET}'." >&2
@@ -35,16 +35,17 @@ resolve_meson_cmd() {
     local candidate=""
     local python_cmd=""
 
-    if [[ -n "${OPENQ4_MESON:-}" ]]; then
-        if [[ ! -x "${OPENQ4_MESON}" ]]; then
-            echo "OPENQ4_MESON points to a missing or non-executable Meson: '${OPENQ4_MESON}'." >&2
+    local configured_meson="${OPENPREY_MESON:-${OPENQ4_MESON:-}}"
+    if [[ -n "${configured_meson}" ]]; then
+        if [[ ! -x "${configured_meson}" ]]; then
+            echo "OPENPREY_MESON points to a missing or non-executable Meson: '${configured_meson}'." >&2
             exit 1
         fi
 
         for candidate in python python3; do
             if python_cmd="$(command -v "${candidate}" 2>/dev/null)"; then
                 PYTHON_CMD="${python_cmd}"
-                MESON_CMD=("${OPENQ4_MESON}")
+                MESON_CMD=("${configured_meson}")
                 return
             fi
         done
@@ -204,12 +205,6 @@ load_build_dir_info() {
     BUILD_DIR_HAS_EXPLICIT="${READ_ARRAY_RESULT[1]}"
 }
 
-test_obsolete_bse_build_option_present() {
-    local build_dir="$1"
-    [[ -n "${build_dir}" && -d "${build_dir}" ]] || return 1
-    get_meson_build_option_value "${build_dir}" build_libbse >/dev/null 2>&1
-}
-
 declare -a SETUP_ARGS_RESULT=()
 
 build_setup_args_for_existing_build_dir() {
@@ -266,20 +261,6 @@ remove_build_directory() {
     rm -rf -- "${resolved_build_dir}"
 }
 
-remove_stale_bse_artifacts() {
-    local directory_path="$1"
-    [[ -n "${directory_path}" && -d "${directory_path}" ]] || return 0
-
-    find "${directory_path}" -maxdepth 1 -type f \
-        \( -name 'openQ4-BSE_*.dll' -o -name 'openQ4-BSE_*.dylib' -o -name 'openQ4-BSE_*.so' -o -name 'openQ4-BSE_*.lib' -o -name 'openQ4-BSE_*.pdb' -o \
-           -name 'openQ4-BSE_*.dll' -o -name 'openQ4-BSE_*.dylib' -o -name 'openQ4-BSE_*.so' -o -name 'openQ4-BSE_*.lib' -o -name 'openQ4-BSE_*.pdb' \) \
-        -print | while IFS= read -r match; do
-            [[ -n "${match}" ]] || continue
-            echo "Removing stale BSE artifact '${match}'"
-            rm -f -- "${match}"
-        done
-}
-
 remove_non_runtime_install_artifacts() {
     local install_root="$1"
     [[ -n "${install_root}" && -d "${install_root}" ]] || return 0
@@ -292,7 +273,7 @@ remove_non_runtime_install_artifacts() {
             rm -f -- "${match}"
         done
 
-    local install_game_dir="${install_root}/baseoq4"
+    local install_game_dir="${install_root}/basepr"
     [[ -d "${install_game_dir}" ]] || return 0
 
     find "${install_game_dir}" -maxdepth 1 -type f \
@@ -315,7 +296,7 @@ if [[ -z "${command_name}" ]]; then
     exit 1
 fi
 
-if [[ ( "${command_name}" == "setup" || "${command_name}" == "compile" || "${command_name}" == "install" ) && "${OPENQ4_SKIP_ICON_SYNC:-0}" != "1" ]]; then
+if [[ ( "${command_name}" == "setup" || "${command_name}" == "compile" || "${command_name}" == "install" ) && "${OPENPREY_SKIP_ICON_SYNC:-${OPENQ4_SKIP_ICON_SYNC:-0}}" != "1" ]]; then
     if [[ ! -f "${sync_icons_script}" ]]; then
         echo "Icon sync script not found: '${sync_icons_script}'." >&2
         exit 1
@@ -333,55 +314,22 @@ if [[ "${command_name}" == "install" ]]; then
     "${PYTHON_CMD}" "${check_staged_content_script}" --source-root "${repo_root}"
 fi
 
-if [[ "${command_name}" == "setup" ]]; then
-    for (( i = 0; i < ${#effective_args[@]}; ++i )); do
-        if [[ "${effective_args[$i]}" == "--reconfigure" && $((i + 1)) -lt ${#effective_args[@]} ]]; then
-            candidate_builddir="$(cd -- "${effective_args[$((i + 1))]}" 2>/dev/null && pwd || true)"
-            if [[ -n "${candidate_builddir}" ]] && test_obsolete_bse_build_option_present "${candidate_builddir}"; then
-                echo "Meson build directory '${candidate_builddir}' still uses the removed build_libbse option. Recreating it..."
-                remove_build_directory "${candidate_builddir}"
-                declare -a rewritten_args=()
-                for arg in "${effective_args[@]}"; do
-                    if [[ "${arg}" == "--reconfigure" ]]; then
-                        continue
-                    fi
-                    rewritten_args+=("${arg}")
-                done
-                effective_args=("${rewritten_args[@]}")
-            fi
-            break
-        fi
-    done
-fi
 
 if [[ "${command_name}" == "compile" || "${command_name}" == "install" ]]; then
     load_build_dir_info "${effective_args[@]}"
 
     if [[ "${command_name}" == "compile" ]] && ! test_meson_build_directory "${BUILD_DIR}"; then
         echo "Meson build directory '${BUILD_DIR}' is missing or invalid. Running meson setup..."
-        declare -a setup_args=()
-        if test_obsolete_bse_build_option_present "${BUILD_DIR}"; then
-            echo "Meson build directory '${BUILD_DIR}' still uses the removed build_libbse option. Recreating it..."
-            build_setup_args_for_existing_build_dir "${BUILD_DIR}"
-            setup_args=("${SETUP_ARGS_RESULT[@]}")
-            remove_build_directory "${BUILD_DIR}"
-        else
-            setup_args=(
-                setup
-                "${BUILD_DIR}"
-                "${repo_root}"
-                --backend
-                ninja
-                --buildtype=debug
-                --wrap-mode=forcefallback
-            )
-        fi
+        declare -a setup_args=(
+            setup
+            "${BUILD_DIR}"
+            "${repo_root}"
+            --backend
+            ninja
+            --buildtype=debug
+            --wrap-mode=forcefallback
+        )
         run_meson "${setup_args[@]}"
-    elif test_obsolete_bse_build_option_present "${BUILD_DIR}"; then
-        echo "Meson build directory '${BUILD_DIR}' still uses the removed build_libbse option. Recreating it..."
-        build_setup_args_for_existing_build_dir "${BUILD_DIR}"
-        remove_build_directory "${BUILD_DIR}"
-        run_meson "${SETUP_ARGS_RESULT[@]}"
     fi
 
     if test_game_sources_refresh_needed "${BUILD_DIR}"; then
@@ -418,11 +366,7 @@ else
 fi
 
 if [[ "${exit_code}" == "0" && ( "${command_name}" == "compile" || "${command_name}" == "install" ) ]]; then
-    remove_stale_bse_artifacts "${BUILD_DIR}"
     remove_non_runtime_install_artifacts "${repo_root}/.install"
-    if [[ "${command_name}" == "install" ]]; then
-        remove_stale_bse_artifacts "${repo_root}/.install"
-    fi
 fi
 
 exit "${exit_code}"

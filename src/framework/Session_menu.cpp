@@ -34,6 +34,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "NativeInputDispatch.h"
 #include "Session_local.h"
+#include "PreyGameCompat.h"
 #include "NativeInputPublications.h"
 #include "../ui/Rectangle.h"
 #include "ArenaCampaign.h"
@@ -49,6 +50,7 @@ If you have questions concerning this license or the applicable additional terms
 #if defined( USE_SDL3 )
 #include <SDL3/SDL.h>
 #endif
+static const int LISTEN_SERVER_MAX_PLAYERS = MAX_ASYNC_CLIENTS;
 
 static bool Session_AndroidSetupAvailable() {
 #if defined( __ANDROID__ ) && !defined( OPENQ4_SIGMATOUCH )
@@ -97,7 +99,9 @@ idCVar ui_retainedMultiplayer( "ui_retainedMultiplayer", "0", CVAR_GUI | CVAR_BO
 // to (see idSessionLocal::FindRetainedGui). While it is 0 no session route
 // creates a retained view and the stock GUIs present every screen. Archived,
 // so an explicit player preference persists across launches.
-idCVar ui_retained( "ui_retained", "1", CVAR_GUI | CVAR_BOOL | CVAR_ARCHIVE, "use the retained interface by default; 0 selects the stock interface" );
+// openPREY: the retained screens are authored for Quake 4 (content/baseoq4 in openQ4);
+// Prey presents its retail GUIs, so the stock interface is the default.
+idCVar ui_retained( "ui_retained", "0", CVAR_GUI | CVAR_BOOL | CVAR_ARCHIVE, "use the retained interface by default; 0 selects the stock interface" );
 idCVar ui_hudScale( "ui_hudScale", "1", CVAR_GUI | CVAR_FLOAT | CVAR_ARCHIVE, "retained status bar scale, independent of menus", .5f, 2.0f );
 idCVar ui_hudSafeInset( "ui_hudSafeInset", "0", CVAR_GUI | CVAR_FLOAT | CVAR_ARCHIVE, "retained status bar safe inset in percent of viewport", 0.0f, 10.0f );
 idCVar ui_retainedCaptureLoadFade( "ui_retainedCaptureLoadFade", "0", CVAR_GUI | CVAR_BOOL | CVAR_NOCHEAT, "diagnostic: use the engine screenshot command to capture the middle and end of the retained loading fade" );
@@ -740,6 +744,98 @@ static void BuildMainMenuAudioDeviceChoices( idStr &choiceNames, idStr &choiceVa
 	choiceNames = common->GetLanguageDict()->GetString( "#str_229913" );
 	choiceValues = "";
 #endif
+}
+
+/*
+=================
+Session_RefreshMainMenuAudioState
+
+Publish the retail Prey GUI audio states through the sound system's public
+queries.  Device enumeration remains owned by the OpenAL backend helper above.
+=================
+*/
+static void Session_RefreshMainMenuAudioState( idUserInterface *gui ) {
+	if ( gui == NULL ) {
+		return;
+	}
+
+	idStr deviceNames;
+	idStr deviceValues;
+	BuildMainMenuAudioDeviceChoices( deviceNames, deviceValues );
+
+	bool openAL = false;
+#if defined( USE_OPENAL )
+	openAL = cvarSystem->GetCVarBool( "s_useOpenAL" ) && soundSystem->GetOpenALDevice() != NULL;
+#endif
+	const bool supportsEax = soundSystem->IsEAXAvailable() == 1;
+	const bool eax = supportsEax && cvarSystem->GetCVarBool( "s_useEAXReverb" );
+
+	gui->SetStateString( "device_name", deviceNames.c_str() );
+	gui->SetStateString( "device_value", deviceValues.c_str() );
+	gui->SetStateInt( "openAL", openAL ? 1 : 0 );
+	gui->SetStateInt( "openal", openAL ? 1 : 0 );
+	gui->SetStateInt( "supportsEax", supportsEax ? 1 : 0 );
+	gui->SetStateInt( "eax", eax ? 1 : 0 );
+	gui->SetStateInt( "mixeroption", 0 );
+	gui->SetStateInt( "oldAudioDriver", 0 );
+	gui->HandleNamedEvent( "UpdateOptions" );
+	gui->StateChanged( common->GetPresentationTime() );
+}
+
+/*
+=================
+Session_ScanPlayerModels
+=================
+*/
+static void Session_ScanPlayerModels( idUserInterface *gui, const int time ) {
+	if ( gui == NULL ) {
+		return;
+	}
+
+	const bool oldPrecache = cvarSystem->GetCVarBool( "com_precache" );
+	cvarSystem->SetCVarBool( "com_precache", false );
+	const idDecl *playerDef = declManager->FindType( DECL_ENTITYDEF, GAME_PLAYERDEFNAME_MP, false );
+	cvarSystem->SetCVarBool( "com_precache", oldPrecache );
+	if ( playerDef == NULL ) {
+		return;
+	}
+
+	const idDict &playerDict = static_cast<const idDeclEntityDef *>( playerDef )->dict;
+	for ( const idKeyValue *kv = playerDict.MatchPrefix( "model_mp", NULL ); kv != NULL; kv = playerDict.MatchPrefix( "model_mp", kv ) ) {
+		idStr suffix = kv->GetKey();
+		suffix.StripLeading( "model_mp" );
+		const int index = atoi( suffix.c_str() );
+
+		gui->SetStateString( va( "mp_modelportrait%d", index ), playerDict.GetString( va( "mtr_modelPortrait%d", index ), "guis/assets/menu/questionmark" ) );
+		const char *modelName = playerDict.GetString( va( "text_modelname%d", index ) );
+		gui->SetStateString( va( "mp_modelname%d", index ), common->GetLanguageDict()->GetString( modelName ) );
+	}
+
+	const int currentModel = cvarSystem->GetCVarInteger( "ui_modelNum" );
+	gui->SetStateString( "mp_currentmodelportrait", gui->GetStateString( va( "mp_modelportrait%d", currentModel ) ) );
+	gui->SetStateString( "mp_currentmodelname", gui->GetStateString( va( "mp_modelname%d", currentModel ) ) );
+	gui->StateChanged( time );
+}
+
+/*
+=================
+Session_SelectPlayerModel
+=================
+*/
+static void Session_SelectPlayerModel( idUserInterface *gui, const int time, const int modelNum ) {
+	if ( gui == NULL ) {
+		return;
+	}
+
+	const idStr modelPortrait = gui->GetStateString( va( "mp_modelportrait%d", modelNum ) );
+	if ( modelPortrait.IsEmpty() ) {
+		return;
+	}
+
+	cvarSystem->SetCVarInteger( "ui_modelNum", modelNum );
+	gui->SetStateString( "mp_currentmodelportrait", modelPortrait.c_str() );
+	gui->SetStateString( "mp_currentmodelname", gui->GetStateString( va( "mp_modelname%d", modelNum ) ) );
+	gui->StateChanged( time );
 }
 
 /*
@@ -1485,8 +1581,9 @@ static bool MapSupportsStartServerGameType( const idDict *dict, const char *game
 	}
 
 	// Match the multiplayer vote/admin behavior so DM and Team DM can use any standard MP map type.
-	if ( !idStr::Icmp( gameType, "DM" ) || !idStr::Icmp( gameType, "Team DM" ) ) {
-		return MapDeclSupports( dict, "DM" ) ||
+	if ( !idStr::Icmp( gameType, "Deathmatch" ) || !idStr::Icmp( gameType, "DM" ) || !idStr::Icmp( gameType, "Team DM" ) ) {
+		return MapDeclSupports( dict, "Deathmatch" ) ||
+			MapDeclSupports( dict, "DM" ) ||
 			MapDeclSupports( dict, "Team DM" ) ||
 			MapDeclSupports( dict, "CTF" ) ||
 			MapDeclSupports( dict, "Tourney" ) ||
@@ -1520,7 +1617,8 @@ static bool MapSupportsAnyMPGameType( const idDict *dict ) {
 		return false;
 	}
 
-	return dict->GetBool( "DM" ) ||
+	return dict->GetBool( "Deathmatch" ) ||
+		dict->GetBool( "DM" ) ||
 		dict->GetBool( "Team DM" ) ||
 		dict->GetBool( "CTF" ) ||
 		dict->GetBool( "Tourney" ) ||
@@ -1547,22 +1645,22 @@ static int GetListenServerPlayerWarningLimit( const int serverRatePreset, const 
 		case 4:
 		case 5:
 			// Fiber/Modern and LAN presets should not trigger the legacy 4-player listen warning.
-			return 16;
+			return LISTEN_SERVER_MAX_PLAYERS;
 		default:
 			break;
 	}
 
 	// Manual mode: infer a safe listen target from net_serverMaxClientRate.
-	if ( maxClientRate <= 8000 ) {
+	if ( maxClientRate <= 12000 ) {
 		return 3;
 	}
-	if ( maxClientRate <= 9500 ) {
+	if ( maxClientRate <= 16000 ) {
 		return 4;
 	}
-	if ( maxClientRate <= 10500 ) {
+	if ( maxClientRate <= 24000 ) {
 		return 5;
 	}
-	return 16;
+	return LISTEN_SERVER_MAX_PLAYERS;
 }
 
 /*
@@ -1640,7 +1738,7 @@ static idStr MainMenuModelCVarName( const int menuModelTeam ) {
 
 static int MainMenuMPSettingsGameTypeState( void ) {
 	const char *gameType = cvarSystem->GetCVarString( "si_gameType" );
-	if ( gameType == NULL || gameType[0] == '\0' || !idStr::Icmp( gameType, "singleplayer" ) || !idStr::Icmp( gameType, "DM" ) ) {
+	if ( gameType == NULL || gameType[0] == '\0' || !idStr::Icmp( gameType, "singleplayer" ) || !idStr::Icmp( gameType, "Deathmatch" ) || !idStr::Icmp( gameType, "DM" ) ) {
 		return 1;
 	}
 	if ( !idStr::Icmp( gameType, "Tourney" ) ) {
@@ -2216,9 +2314,18 @@ void idSessionLocal::StartMenu( bool playIntro ) {
 	if ( sw != NULL && !sw->IsPaused() ) {
 		sw->Pause();
 	}
+	if ( menuSoundWorld != NULL && menuSoundWorld->IsPaused() ) {
+		menuSoundWorld->UnPause();
+	}
+
+	// Menu entry should always be audible unless explicitly muted elsewhere.
+	soundSystem->SetMute( false );
 
 	// start playing the menu sounds
 	SetPlayingSoundWorld( menuSoundWorld );
+	if ( menuSoundWorld != NULL ) {
+		menuSoundWorld->PlayShaderDirectly( "guisounds_menu_music", 3 );
+	}
 
 	const int menuProfileStart = Sys_Milliseconds();
 	menuProfileSaveVarsMsec = 0;
@@ -2244,7 +2351,7 @@ void idSessionLocal::StartMenu( bool playIntro ) {
 	if(fileSystem->HasD3XP()) {
 		guiMainMenu->SetStateString("game_list", common->GetLanguageDict()->GetString( "#str_07202" ));
 	} else {
-		guiMainMenu->SetStateString("game_list", common->GetLanguageDict()->GetString( "#str_107212" ));
+		guiMainMenu->SetStateString("game_list", common->GetLanguageDict()->GetString( "#str_07212" ));
 	}
 
 	console->Close();
@@ -2331,6 +2438,8 @@ void idSessionLocal::SetGUI( idUserInterface *gui, HandleGuiCommand_t handle ) {
 
 	cmd = guiActive->HandleEvent( &ev, common->GetPresentationTime() );
 	guiActive->Activate( true, common->GetPresentationTime() );
+	// Prey GUIs run their onStartup scripts once the session activates them.
+	guiActive->CallStartup();
 	PumpApplicationActions( guiActive );
 }
 
@@ -3283,6 +3392,46 @@ static const float SESSION_MENU_SAVE_PREVIEW_MAX_WIDTH = 183.0f;
 static const float SESSION_MENU_SAVE_PREVIEW_MAX_HEIGHT = 137.0f;
 static const float SESSION_MENU_GUI_ASPECT = 640.0f / 480.0f;
 
+static void Session_MenuAddUniqueSaveGameSearchDir( idStrList &gameDirs, const char *gameDir ) {
+	if ( gameDir == NULL || gameDir[0] == '\0' ) {
+		return;
+	}
+	for ( int i = 0; i < gameDirs.Num(); i++ ) {
+		if ( !gameDirs[i].Icmp( gameDir ) ) {
+			return;
+		}
+	}
+	gameDirs.Append( gameDir );
+}
+
+static void Session_MenuBuildSaveGameSearchDirs( idStrList &gameDirs, const char *preferredGameDir = NULL ) {
+	gameDirs.Clear();
+	Session_MenuAddUniqueSaveGameSearchDir( gameDirs, preferredGameDir );
+	Session_MenuAddUniqueSaveGameSearchDir( gameDirs, cvarSystem->GetCVarString( "fs_game" ) );
+	Session_MenuAddUniqueSaveGameSearchDir( gameDirs, OPENPREY_GAMEDIR );
+	Session_MenuAddUniqueSaveGameSearchDir( gameDirs, BASE_GAMEDIR );
+}
+
+static int Session_MenuFindSaveSlotIndex( const idStrList &saveSlots, const idStr &slotName ) {
+	for ( int i = 0; i < saveSlots.Num(); i++ ) {
+		if ( !saveSlots[i].Icmp( slotName ) ) {
+			return i;
+		}
+	}
+	return -1;
+}
+
+static ID_TIME_T Session_MenuGetSaveGameTimestamp( const idStr &slotName, const char *gameDir ) {
+	const idStr savePath = va( "savegames/%s.save", slotName.c_str() );
+	idFile *file = fileSystem->OpenFileRead( savePath.c_str(), true, gameDir != NULL && gameDir[0] != '\0' ? gameDir : NULL );
+	if ( file == NULL ) {
+		return FILE_NOT_FOUND_TIMESTAMP;
+	}
+	const ID_TIME_T timestamp = file->Timestamp();
+	fileSystem->CloseFile( file );
+	return timestamp;
+}
+
 typedef struct sessionMenuSaveDescription_s {
 	idStr	saveName;
 	idStr	description;
@@ -3501,12 +3650,14 @@ static bool Session_MenuSkipSaveGameDict( idFile *file, const char *fieldName, c
 }
 
 static bool Session_MenuIsSupportedSaveGameName( const idStr &gameName ) {
-	return gameName.Icmp( SAVEGAME_GAME_NAME_RETAIL ) == 0 ||
+	return gameName.Icmp( SAVEGAME_GAME_NAME_PREY ) == 0 ||
+		gameName.Icmp( SAVEGAME_GAME_NAME_RETAIL ) == 0 ||
 		gameName.Icmp( SAVEGAME_GAME_NAME_LEGACY_OPENQ4 ) == 0;
 }
 
 static bool Session_MenuSaveGameHeaderUsesEntityFilter( const idStr &gameName ) {
-	return gameName.Icmp( SAVEGAME_GAME_NAME_RETAIL ) == 0;
+	return gameName.Icmp( SAVEGAME_GAME_NAME_PREY ) == 0 ||
+		gameName.Icmp( SAVEGAME_GAME_NAME_RETAIL ) == 0;
 }
 
 static bool Session_MenuIsCompatibleSaveGameVersion( const int version ) {
@@ -3518,7 +3669,7 @@ static bool Session_MenuIsCompatibleSaveGameVersion( const int version ) {
 // A save's header: its game name, version, map, entity filter and each
 // client's persistent player info. Whether this build loads the save; with
 // `player`, the first client's persistent info.
-static bool Session_MenuReadSaveGameHeader( const idStr &slotName, idDict *player ) {
+static bool Session_MenuReadSaveGameHeader( const idStr &slotName, idDict *player, const char *gameDir = NULL ) {
 	if ( !sessLocal.FinishPendingSave( true ) ) return false;
 	if ( !Session_MenuIsSafeSaveSlotName( slotName ) ) {
 		common->Warning( "Ignoring savegame slot with unsafe filename '%s'", slotName.c_str() );
@@ -3526,7 +3677,8 @@ static bool Session_MenuReadSaveGameHeader( const idStr &slotName, idDict *playe
 	}
 
 	idStr savePath = va( "savegames/%s.save", slotName.c_str() );
-	idStr game = cvarSystem->GetCVarString( "fs_game" );
+	// openPREY lists saves from several game directories; read each from its own.
+	idStr game = ( gameDir != NULL && gameDir[0] != '\0' ) ? idStr( gameDir ) : idStr( cvarSystem->GetCVarString( "fs_game" ) );
 	idFile *file = fileSystem->OpenFileRead( savePath.c_str(), true, game.Length() ? game.c_str() : NULL );
 	if ( file == NULL ) {
 		return false;
@@ -3559,8 +3711,8 @@ static bool Session_MenuReadSaveGameHeader( const idStr &slotName, idDict *playe
 	return valid;
 }
 
-static bool Session_MenuIsLoadableSaveGameSlot( const idStr &slotName ) {
-	return Session_MenuReadSaveGameHeader( slotName, NULL );
+static bool Session_MenuIsLoadableSaveGameSlot( const idStr &slotName, const char *gameDir ) {
+	return Session_MenuReadSaveGameHeader( slotName, NULL, gameDir );
 }
 
 #ifndef ID_DEDICATED
@@ -3582,7 +3734,7 @@ static bool Session_MenuReadSaveDetails( const idStr &slotName, sessionMenuSaveD
 }
 #endif
 
-static bool Session_MenuReadSaveDescription( const idStr &slotName, sessionMenuSaveDescription_t &description ) {
+static bool Session_MenuReadSaveDescription( const idStr &slotName, sessionMenuSaveDescription_t &description, const char *gameDir = NULL ) {
 	description.saveName.Clear();
 	description.description.Clear();
 	description.screenshot.Clear();
@@ -3595,8 +3747,7 @@ static bool Session_MenuReadSaveDescription( const idStr &slotName, sessionMenuS
 	}
 
 	idStr descriptionPath = va( "savegames/%s.txt", slotName.c_str() );
-	idStr game = cvarSystem->GetCVarString( "fs_game" );
-	idFile *file = fileSystem->OpenFileRead( descriptionPath.c_str(), true, game.Length() ? game.c_str() : NULL );
+	idFile *file = fileSystem->OpenFileRead( descriptionPath.c_str(), true, gameDir != NULL && gameDir[0] != '\0' ? gameDir : NULL );
 	if ( file == NULL ) {
 		return false;
 	}
@@ -3688,45 +3839,47 @@ static sessionMenuSaveSlot_t Session_MenuSaveSlotState( const char *saveName ) {
 idSessionLocal::GetSaveGameList
 ===============
 */
-void idSessionLocal::GetSaveGameList( idStrList &fileList, idList<fileTIME_T> &fileTimes ) {
-	if ( !FinishPendingSave( true ) ) { fileList.Clear(); fileTimes.Clear(); return; }
-	int i;
-	idFileList *files;
-	idStrList rawFileList;
-
-	// NOTE: no fs_game_base for savegames
-	idStr game = cvarSystem->GetCVarString( "fs_game" );
-	if( game.Length() ) {
-		files = fileSystem->ListFiles( "savegames", ".save", false, false, game );
-	} else {
-		files = fileSystem->ListFiles( "savegames", ".save" );
-	}
-	
-	rawFileList = files->GetList();
-	fileSystem->FreeFileList( files );
-	// Alphabetical, so saves written in the same second always list in one
-	// order (idListSaveGameCompare keeps it).
-	rawFileList.Sort();
-
+void idSessionLocal::GetSaveGameList( idStrList &fileList, idList<fileTIME_T> &fileTimes, idStrList *gameDirs ) {
 	fileList.Clear();
 	fileTimes.Clear();
+	if ( gameDirs != NULL ) {
+		gameDirs->Clear();
+	}
+	if ( !FinishPendingSave( true ) ) {
+		return;
+	}
 
-	for ( i = 0; i < rawFileList.Num(); i++ ) {
-		ID_TIME_T timeStamp;
-		idStr slotName = rawFileList[i];
-		slotName.StripLeading( '/' );
-		slotName.StripFileExtension();
-		if ( slotName.IsEmpty() || !Session_MenuIsLoadableSaveGameSlot( slotName ) ) {
+	idStrList searchGameDirs;
+	Session_MenuBuildSaveGameSearchDirs( searchGameDirs );
+	for ( int dirIndex = 0; dirIndex < searchGameDirs.Num(); dirIndex++ ) {
+		const char *gameDir = searchGameDirs[dirIndex].c_str();
+		idFileList *files = fileSystem->ListFiles( "savegames", ".save", false, false, gameDir );
+		if ( files == NULL ) {
 			continue;
 		}
 
-		fileSystem->ReadFile( va( "savegames/%s.save", slotName.c_str() ), NULL, &timeStamp );
+		// Alphabetical, so saves written in the same second always list in one
+		// order (idListSaveGameCompare keeps it).
+		idStrList dirFiles = files->GetList();
+		fileSystem->FreeFileList( files );
+		dirFiles.Sort();
+		for ( int i = 0; i < dirFiles.Num(); i++ ) {
+			idStr slotName = dirFiles[i];
+			slotName.StripLeading( '/' );
+			slotName.StripFileExtension();
+			if ( slotName.IsEmpty() || Session_MenuFindSaveSlotIndex( fileList, slotName ) != -1 ||
+				!Session_MenuIsLoadableSaveGameSlot( slotName, gameDir ) ) {
+				continue;
+			}
 
-		fileTIME_T ft;
-		ft.index = fileList.Num();
-		ft.timeStamp = timeStamp;
-		fileList.Append( slotName );
-		fileTimes.Append( ft );
+			fileTIME_T ft;
+			ft.index = fileList.Append( slotName );
+			ft.timeStamp = Session_MenuGetSaveGameTimestamp( slotName, gameDir );
+			fileTimes.Append( ft );
+			if ( gameDirs != NULL ) {
+				gameDirs->Append( gameDir );
+			}
+		}
 	}
 
 	fileTimes.Sort( idListSaveGameCompare );
@@ -3742,8 +3895,10 @@ void idSessionLocal::SetSaveGameGuiVars( void ) {
 	idStr name;
 	idStrList fileList;
 	idList<fileTIME_T> fileTimes;
+	idStrList sourceGameDirs;
 
 	loadGameList.Clear();
+	loadGameListGameDirs.Clear();
 	fileList.Clear();
 	fileTimes.Clear();
 
@@ -3756,14 +3911,21 @@ void idSessionLocal::SetSaveGameGuiVars( void ) {
 	guiActive->SetStateString( "saveGameDate", "" );
 	guiActive->SetStateString( "saveGameTime", "" );
 
-	GetSaveGameList( fileList, fileTimes );
+	GetSaveGameList( fileList, fileTimes, &sourceGameDirs );
 
 	loadGameList.SetNum( fileList.Num() );
+	loadGameListGameDirs.SetNum( fileList.Num() );
 	for ( i = 0; i < fileList.Num(); i++ ) {
-		loadGameList[i] = fileList[fileTimes[i].index];
+		const int fileIndex = fileTimes[i].index;
+		loadGameList[i] = fileList[fileIndex];
+		if ( fileIndex >= 0 && fileIndex < sourceGameDirs.Num() ) {
+			loadGameListGameDirs[i] = sourceGameDirs[fileIndex];
+		} else {
+			loadGameListGameDirs[i].Clear();
+		}
 
 		sessionMenuSaveDescription_t description;
-		if ( Session_MenuReadSaveDescription( loadGameList[i], description ) && description.description.Length() > 0 ) {
+		if ( Session_MenuReadSaveDescription( loadGameList[i], description, loadGameListGameDirs[i].c_str() ) && description.description.Length() > 0 ) {
 			name = description.description;
 		} else {
 			name = loadGameList[i];
@@ -3924,7 +4086,11 @@ void idSessionLocal::SetMainMenuGuiVars( bool refreshCatalogs ) {
 #else
 	guiMainMenu->SetStateString( "nightmare", cvarSystem->GetCVarBool( "g_nightmare" ) ? "1" : "0" );
 #endif
-	guiMainMenu->SetStateString( "browser_levelshot", "gfx/guis/loadscreens/generic" );
+	guiMainMenu->SetStateString( "roadhouseCompleted", cvarSystem->GetCVarBool( "g_roadhouseCompleted" ) ? "1" : "0" );
+	guiMainMenu->SetStateString( "wicked", cvarSystem->GetCVarBool( "g_wicked" ) ? "1" : "0" );
+	guiMainMenu->SetStateString( "casino", cvarSystem->GetCVarBool( "g_casino" ) ? "1" : "0" );
+	guiMainMenu->SetStateString( "browser_levelshot", "guis/assets/loading/thumbs/nothing" );
+	Session_RefreshMainMenuAudioState( guiMainMenu );
 	SetMainMenuQualityGuiVars( guiMainMenu );
 	SyncMainMenuAspectVisibility( guiMainMenu );
 	guiMainMenu->SetStateInt( "gui_set_sys_scroll", 0 );
@@ -3947,6 +4113,7 @@ void idSessionLocal::SetMainMenuGuiVars( bool refreshCatalogs ) {
 	guiMainMenu->SetStateString( "driver_prompt", "0" );
 #endif
 
+	RescanMaps();
 	if ( refreshCatalogs ) {
 		SetMainMenuMPModelVars( guiMainMenu );
 	}
@@ -3975,7 +4142,8 @@ bool idSessionLocal::HandleSaveGameMenuCommand( idCmdArgs &args, int &icmd ) {
 	if ( !idStr::Icmp( cmd, "loadGame" ) ) {
 		int choice = guiActive->State().GetInt("loadgame_sel_0");
 		if ( choice >= 0 && choice < loadGameList.Num() ) {
-			sessLocal.LoadGame( loadGameList[choice] );
+			const char *gameDir = choice < loadGameListGameDirs.Num() ? loadGameListGameDirs[choice].c_str() : NULL;
+			sessLocal.LoadGame( loadGameList[choice], gameDir );
 		}
 		return true;
 	}
@@ -4008,7 +4176,8 @@ bool idSessionLocal::HandleSaveGameMenuCommand( idCmdArgs &args, int &icmd ) {
 	if ( !idStr::Icmp( cmd, "deleteGame" ) ) {
 		int choice = guiActive->State().GetInt( "loadgame_sel_0" );
 		if ( choice >= 0 && choice < loadGameList.Num() ) {
-			DeleteGame( loadGameList[choice] );
+			const char *gameDir = choice < loadGameListGameDirs.Num() ? loadGameListGameDirs[choice].c_str() : NULL;
+			DeleteGame( loadGameList[choice], gameDir );
 			SetSaveGameGuiVars( );
 			guiActive->StateChanged( common->GetPresentationTime() );
 		}
@@ -4019,10 +4188,11 @@ bool idSessionLocal::HandleSaveGameMenuCommand( idCmdArgs &args, int &icmd ) {
 		int choice = guiActive->State().GetInt( "loadgame_sel_0" );
 		if ( choice >= 0 && choice < loadGameList.Num() ) {
 			const idMaterial *material;
+			const char *gameDir = choice < loadGameListGameDirs.Num() ? loadGameListGameDirs[choice].c_str() : NULL;
 
 			idStr saveName, description, screenshot;
 			sessionMenuSaveDescription_t saveDescription;
-			if ( Session_MenuReadSaveDescription( loadGameList[choice], saveDescription ) ) {
+			if ( Session_MenuReadSaveDescription( loadGameList[choice], saveDescription, gameDir ) ) {
 				saveName = saveDescription.saveName;
 				description = saveDescription.description;
 				screenshot = saveDescription.screenshot;
@@ -4046,8 +4216,7 @@ bool idSessionLocal::HandleSaveGameMenuCommand( idCmdArgs &args, int &icmd ) {
 			guiActive->SetStateString( "saveGameName", saveName );
 			guiActive->SetStateString( "saveGameDescription", description );
 
-			ID_TIME_T timeStamp;
-			fileSystem->ReadFile( va("savegames/%s.save", loadGameList[choice].c_str()), NULL, &timeStamp );
+			const ID_TIME_T timeStamp = Session_MenuGetSaveGameTimestamp( loadGameList[choice], gameDir );
 			idStr date = Sys_TimeStampToStr(timeStamp);
 			int tab = date.Find( '\t' );
 			idStr time = date.Right( date.Length() - tab - 1);
@@ -4093,6 +4262,21 @@ void idSessionLocal::HandleRestartMenuCommands( const char *menuCommand ) {
 				// If we can't load the retail restart slot then just restart the map
 				MoveToNewMap( mapSpawnData.serverInfo.GetString("si_map") );
 			}
+			continue;
+		}
+
+		if ( !idStr::Icmp( cmd, "loadlastsave" ) ) {
+			const char *gameDir = loadGameListGameDirs.Num() > 0 ? loadGameListGameDirs[0].c_str() : NULL;
+			if ( loadGameList.Num() > 0 && LoadGame( loadGameList[0], gameDir ) ) {
+				continue;
+			}
+			MoveToNewMap( mapSpawnData.serverInfo.GetString( "si_map" ) );
+			continue;
+		}
+
+		if ( !idStr::Icmp( cmd, "mainmenu" ) ) {
+			SetGUI( guiMainMenu, NULL );
+			guiMainMenu->HandleNamedEvent( "noIntro" );
 			continue;
 		}
 
@@ -4184,6 +4368,87 @@ void idSessionLocal::UpdateMPLevelShot( void ) {
 	declManager->FindMaterial( screenshot )->SetSort( SS_GUI );
 }
 
+/*
+==============
+idSessionLocal::RescanMaps
+==============
+*/
+void idSessionLocal::RescanMaps( void ) {
+	if ( guiMainMenu == NULL || guiMainMenu_MapList == NULL ) {
+		return;
+	}
+
+	const char *gametype = cvarSystem->GetCVarString( "si_gameType" );
+	if ( gametype == NULL || gametype[0] == '\0' || !idStr::Icmp( gametype, "singleplayer" ) ) {
+		gametype = "Deathmatch";
+	}
+
+	idListGUILocal *const mapList = static_cast<idListGUILocal *>( guiMainMenu_MapList );
+	const idStr selectedMap = cvarSystem->GetCVarString( "si_map" );
+	const idDict *selectedMapDef = NULL;
+	int selectedIndex = -1;
+	int numMapsAdded = 0;
+
+	mapList->SetStateChanges( false );
+	mapList->Clear();
+	const int numMaps = fileSystem->GetNumMaps();
+	for ( int i = 0; i < numMaps; i++ ) {
+		const idDict *dict = fileSystem->GetMapDecl( i );
+		if ( !MapSupportsStartServerGameType( dict, gametype ) ) {
+			continue;
+		}
+
+		const char *mapName = dict->GetString( "name" );
+		if ( mapName[0] == '\0' ) {
+			mapName = dict->GetString( "path" );
+		}
+		mapList->Add( i, common->GetLanguageDict()->GetString( mapName ) );
+		if ( !selectedMap.Icmp( dict->GetString( "path" ) ) ) {
+			selectedIndex = numMapsAdded;
+		}
+		numMapsAdded++;
+	}
+
+	// Some legacy map decls only advertise a generic MP mode. Preserve the
+	// upstream fallback so the create-server list never becomes unusable.
+	if ( numMapsAdded == 0 ) {
+		for ( int i = 0; i < numMaps; i++ ) {
+			const idDict *dict = fileSystem->GetMapDecl( i );
+			if ( !MapSupportsAnyMPGameType( dict ) ) {
+				continue;
+			}
+
+			const char *mapName = dict->GetString( "name" );
+			if ( mapName[0] == '\0' ) {
+				mapName = dict->GetString( "path" );
+			}
+			mapList->Add( i, common->GetLanguageDict()->GetString( mapName ) );
+			if ( !selectedMap.Icmp( dict->GetString( "path" ) ) ) {
+				selectedIndex = numMapsAdded;
+			}
+			numMapsAdded++;
+		}
+	}
+
+	if ( numMapsAdded > 0 ) {
+		selectedIndex = selectedIndex >= 0 ? selectedIndex : 0;
+		guiMainMenu->SetStateInt( "mapList_top", -1 );
+		mapList->SetSelection( selectedIndex );
+		mapList->SetStateChanges( true );
+		const int mapNum = mapList->GetSelection( NULL, 0 );
+		selectedMapDef = mapNum >= 0 ? fileSystem->GetMapDecl( mapNum ) : NULL;
+	} else {
+		guiMainMenu->SetStateInt( "mapList_sel_0", -1 );
+		guiMainMenu->SetStateInt( "mapList_top", 0 );
+		mapList->SetStateChanges( true );
+	}
+
+	cvarSystem->SetCVarString( "si_map", selectedMapDef != NULL ? selectedMapDef->GetString( "path" ) : "" );
+	guiMainMenu->SetStateInt( "mapList_num", numMapsAdded );
+	UpdateMPLevelShot();
+	guiMainMenu->StateChanged( common->GetPresentationTime() );
+}
+
 static int MainMenuGetNewGameOption( idUserInterface *gui, const char *desktopStateName, const char *stateName, int defaultValue ) {
 	if ( gui == NULL ) {
 		return defaultValue;
@@ -4209,9 +4474,13 @@ static int MainMenuGetNewGameOption( idUserInterface *gui, const char *desktopSt
 static void MainMenuApplyNewGameOptions( idUserInterface *gui ) {
 	const int skill = idMath::ClampInt( 0, 4, MainMenuGetNewGameOption( gui, "desktop::skill", "skill", cvarSystem->GetCVarInteger( "g_skill" ) ) );
 	const int turboMode = MainMenuGetNewGameOption( gui, "desktop::turboMode", "turboMode", 0 ) != 0 ? 1 : 0;
+	const bool casinoMode = gui != NULL && gui->State().GetBool( "casino" );
+	const bool wickedMode = !casinoMode && gui != NULL && gui->State().GetBool( "wicked" );
 
 	cvarSystem->SetCVarInteger( "g_skill", skill );
 	cvarSystem->SetCVarInteger( "g_turboMode", turboMode );
+	cvarSystem->SetCVarBool( "g_casino", casinoMode );
+	cvarSystem->SetCVarBool( "g_wicked", wickedMode );
 	common->DPrintf( "Main menu new game options: g_skill=%d g_turboMode=%d\n", skill, turboMode );
 }
 
@@ -4323,6 +4592,18 @@ void idSessionLocal::HandleMainMenuCommands( const char *menuCommand ) {
 		const char *cmd = args.Argv( icmd++ );
 
 		if ( HandleSaveGameMenuCommand( args, icmd ) ) {
+			continue;
+		}
+
+		if ( !idStr::Icmp( cmd, "modelscan" ) ) {
+			Session_ScanPlayerModels( guiActive ? guiActive : guiMainMenu, common->GetPresentationTime() );
+			continue;
+		}
+
+		if ( !idStr::Icmp( cmd, "click_modelList" ) ) {
+			if ( icmd < args.Argc() && idStr::Cmp( args.Argv( icmd ), ";" ) != 0 ) {
+				Session_SelectPlayerModel( guiActive ? guiActive : guiMainMenu, common->GetPresentationTime(), atoi( args.Argv( icmd++ ) ) );
+			}
 			continue;
 		}
 
@@ -4505,7 +4786,7 @@ void idSessionLocal::HandleMainMenuCommands( const char *menuCommand ) {
 
 		// always let the game know the command is being run
 		if ( game ) {
-			game->HandleMainMenuCommands( cmd, guiActive );
+			(void)game->HandleGuiCommands( cmd );
 		}
 
 		if ( !idStr::Icmp( cmd, "restartLevel" ) ) {
@@ -4670,82 +4951,7 @@ void idSessionLocal::HandleMainMenuCommands( const char *menuCommand ) {
 		}
 
 		if ( !idStr::Icmp( cmd, "MAPScan" ) || !idStr::Icmp( cmd, "initCreateServerSettings" ) ) {
-			const char *gametype = cvarSystem->GetCVarString( "si_gameType" );
-			if ( gametype == NULL || *gametype == 0 || idStr::Icmp( gametype, "singleplayer" ) == 0 ) {
-				gametype = "DM";
-			}
-
-			int i, num;
-			idListGUILocal *const mainMenuMapList = static_cast<idListGUILocal *>( guiMainMenu_MapList );
-			int numMapsAdded = 0;
-			int selectedIndex = -1;
-			idStr si_map = cvarSystem->GetCVarString( "si_map" );
-			const idDict *dict = NULL;
-
-			mainMenuMapList->SetStateChanges( false );
-			mainMenuMapList->Clear();
-
-			num = fileSystem->GetNumMaps();
-			for ( i = 0; i < num; i++ ) {
-				dict = fileSystem->GetMapDecl( i );
-				if ( !MapSupportsStartServerGameType( dict, gametype ) ) {
-					continue;
-				}
-
-				const char *mapName = dict->GetString( "name" );
-				if ( mapName[ 0 ] == '\0' ) {
-					mapName = dict->GetString( "path" );
-				}
-				mapName = common->GetLanguageDict()->GetString( mapName );
-				mainMenuMapList->Add( i, mapName );
-				if ( !si_map.Icmp( dict->GetString( "path" ) ) ) {
-					selectedIndex = numMapsAdded;
-				}
-				numMapsAdded++;
-			}
-
-			// If the requested gametype has no explicit flags in current content, keep the list usable.
-			if ( numMapsAdded == 0 ) {
-				for ( i = 0; i < num; i++ ) {
-					dict = fileSystem->GetMapDecl( i );
-					if ( !MapSupportsAnyMPGameType( dict ) ) {
-						continue;
-					}
-
-					const char *mapName = dict->GetString( "name" );
-					if ( mapName[ 0 ] == '\0' ) {
-						mapName = dict->GetString( "path" );
-					}
-					mapName = common->GetLanguageDict()->GetString( mapName );
-					mainMenuMapList->Add( i, mapName );
-					if ( !si_map.Icmp( dict->GetString( "path" ) ) ) {
-						selectedIndex = numMapsAdded;
-					}
-					numMapsAdded++;
-				}
-			}
-
-			if ( numMapsAdded > 0 ) {
-				if ( selectedIndex < 0 ) {
-					selectedIndex = 0;
-				}
-				guiMainMenu->SetStateInt( "mapList_top", -1 );
-				mainMenuMapList->SetSelection( selectedIndex );
-				mainMenuMapList->SetStateChanges( true );
-				int mapNum = mainMenuMapList->GetSelection( NULL, 0 );
-				dict = fileSystem->GetMapDecl( mapNum );
-			} else {
-				guiMainMenu->SetStateInt( "mapList_sel_0", -1 );
-				guiMainMenu->SetStateInt( "mapList_top", 0 );
-				mainMenuMapList->SetStateChanges( true );
-				dict = NULL;
-			}
-			cvarSystem->SetCVarString( "si_map", ( dict ? dict->GetString( "path" ) : "" ) );
-			guiMainMenu->SetStateInt( "mapList_num", numMapsAdded );
-
-			// set the current level shot
-			UpdateMPLevelShot();
-			guiMainMenu->StateChanged( common->GetPresentationTime() );
+			RescanMaps();
 			continue;
 		}
 
@@ -4806,7 +5012,7 @@ void idSessionLocal::HandleMainMenuCommands( const char *menuCommand ) {
 		}
 		if ( !idStr::Icmp( cmd, "populateBanList" ) ) {
 			if ( game != NULL && guiActive != NULL ) {
-				game->PopulateBanList( guiActive );
+				PreyGame_PopulateBanList( guiActive );
 			}
 			continue;
 		}
@@ -4815,9 +5021,9 @@ void idSessionLocal::HandleMainMenuCommands( const char *menuCommand ) {
 			if ( selected >= 0 && game != NULL ) {
 				idStr name, guid;
 				if ( Session_BanListRow( guiActive->State().GetString( va( "sa_banList_item_%d", selected ) ), name, guid ) ) {
-					game->RemoveGuidFromBanList( guid.c_str() );
+					PreyGame_RemoveGuidFromBanList( guid.c_str() );
 				}
-				game->PopulateBanList( guiActive );
+				PreyGame_PopulateBanList( guiActive );
 			}
 			continue;
 		}
@@ -4901,7 +5107,26 @@ void idSessionLocal::HandleMainMenuCommands( const char *menuCommand ) {
 			if ( args.Argc() - icmd >= 1 ) {
 				vcmd = args.Argv( icmd++ );
 			}
-			if ( !vcmd.Length() || !vcmd.Icmp( "speakers" ) ) {
+			if ( !vcmd.Length() || !vcmd.Icmp( "init" ) ) {
+				Session_RefreshMainMenuAudioState( guiActive ? guiActive : guiMainMenu );
+				continue;
+			}
+			if ( !vcmd.Icmp( "system" ) ) {
+#if defined( USE_OPENAL )
+				cvarSystem->SetCVarBool( "s_useOpenAL", true );
+#endif
+				Session_RefreshMainMenuAudioState( guiActive ? guiActive : guiMainMenu );
+				continue;
+			}
+			if ( !vcmd.Icmp( "device" ) ) {
+				if ( idSoundHardware_OpenAL::IsDefaultDeviceChoiceValue( cvarSystem->GetCVarString( "s_deviceName" ) ) ) {
+					cvarSystem->SetCVarString( "s_deviceName", "" );
+				}
+				cmdSystem->BufferCommandText( CMD_EXEC_NOW, "s_restart\n" );
+				Session_RefreshMainMenuAudioState( guiActive ? guiActive : guiMainMenu );
+				continue;
+			}
+			if ( !vcmd.Icmp( "speakers" ) ) {
 				int old = cvarSystem->GetCVarInteger( "s_numberOfSpeakers" );
 				cmdSystem->BufferCommandText( CMD_EXEC_NOW, "s_restart\n" );
 				if ( old != cvarSystem->GetCVarInteger( "s_numberOfSpeakers" ) ) {
@@ -4950,12 +5175,14 @@ void idSessionLocal::HandleMainMenuCommands( const char *menuCommand ) {
 					MessageBox( MSG_OK, common->GetLanguageDict()->GetString( "#str_04137" ), common->GetLanguageDict()->GetString( "#str_07231" ), true );
 				}
 			}
-			if ( !vcmd.Icmp( "drivar" ) ) {
+			if ( !vcmd.Icmp( "drivar" ) || !vcmd.Icmp( "driver" ) ) {
 				if ( idSoundHardware_OpenAL::IsDefaultDeviceChoiceValue( cvarSystem->GetCVarString( "s_deviceName" ) ) ) {
 					cvarSystem->SetCVarString( "s_deviceName", "" );
 				}
 				cmdSystem->BufferCommandText( CMD_EXEC_NOW, "s_restart\n" );				
 			}
+			idUserInterface *audioGui = guiActive ? guiActive : guiMainMenu;
+			Session_RefreshMainMenuAudioState( audioGui );
 			continue;
 		}
 
@@ -5210,33 +5437,29 @@ bool idSessionLocal::StartMenuServer() {
 			int maxclients = 0;
 			switch ( gui_configServerRate.GetInteger() ) {
 				case 1:
-					// 128 kbits
-					cvarSystem->SetCVarInteger( "net_serverMaxClientRate", 8000 );
+					cvarSystem->SetCVarInteger( "net_serverMaxClientRate", 12000 );
 					maxclients = 2;
 					break;
 				case 2:
-					// 256 kbits
-					cvarSystem->SetCVarInteger( "net_serverMaxClientRate", 9500 );
+					cvarSystem->SetCVarInteger( "net_serverMaxClientRate", 16000 );
 					maxclients = 3;
 					break;
 				case 3:
-					// 384 kbits
-					cvarSystem->SetCVarInteger( "net_serverMaxClientRate", 10500 );
+					cvarSystem->SetCVarInteger( "net_serverMaxClientRate", 24000 );
 					maxclients = 4;
 					break;
 				case 4:
-					// highest internet preset: treat as modern high-bandwidth connection
-					cvarSystem->SetCVarInteger( "net_serverMaxClientRate", 25600 );
-					maxclients = 16;
+					cvarSystem->SetCVarInteger( "net_serverMaxClientRate", 32000 );
+					maxclients = LISTEN_SERVER_MAX_PLAYERS;
 					break;
 				default:
 					// unknown preset: fall back to modern defaults
-					cvarSystem->SetCVarInteger( "net_serverMaxClientRate", 16000 );
-					maxclients = 16;
+					cvarSystem->SetCVarInteger( "net_serverMaxClientRate", 32000 );
+					maxclients = LISTEN_SERVER_MAX_PLAYERS;
 					break;
 			}
 			if ( n_clients > maxclients ) {
-				const int adjustedMaxClients = dedicated ? maxclients : Min( 16, maxclients + 1 );
+				const int adjustedMaxClients = dedicated ? maxclients : Min( LISTEN_SERVER_MAX_PLAYERS, maxclients + 1 );
 				if ( MessageBox( MSG_OKCANCEL, va( common->GetLanguageDict()->GetString( "#str_04315" ), adjustedMaxClients ), common->GetLanguageDict()->GetString( "#str_04316" ), true, "OK" )[ 0 ] == '\0' ) {
 					return false;
 				}
@@ -5251,7 +5474,7 @@ bool idSessionLocal::StartMenuServer() {
 
 	if ( !dedicated &&
 		!cvarSystem->GetCVarBool( "net_LANServer" ) &&
-		listenWarningLimit < 16 &&
+		listenWarningLimit < LISTEN_SERVER_MAX_PLAYERS &&
 		cvarSystem->GetCVarInteger( "si_maxPlayers" ) > listenWarningLimit ) {
 		// "Dedicated server mode is recommended for internet servers with more than 4 players. Continue in listen mode?"
 		if ( !MessageBox( MSG_YESNO, va( common->GetLanguageDict()->GetString( "#str_100625" ), listenWarningLimit ), common->GetLanguageDict()->GetString ( "#str_100626" ), true, "yes" )[ 0 ] ) {
@@ -6146,34 +6369,34 @@ const char* idSessionLocal::MessageBox( msgBoxType_t type, const char *message, 
 			guiMsg->SetStateString( "visible_right", "0" );
 			break;
 		case MSG_OK:
-			guiMsg->SetStateString( "mid", common->GetLanguageDict()->GetString( "#str_104339" ) );
+			guiMsg->SetStateString( "mid", common->GetLanguageDict()->GetString( "#str_04339" ) );
 			guiMsg->SetStateString( "visible_mid", "1" );
 			guiMsg->SetStateString( "visible_left", "0" );
 			guiMsg->SetStateString( "visible_right", "0" );
 			break;
 		case MSG_ABORT:
-			guiMsg->SetStateString( "mid", common->GetLanguageDict()->GetString( "#str_104340" ) );
+			guiMsg->SetStateString( "mid", common->GetLanguageDict()->GetString( "#str_04340" ) );
 			guiMsg->SetStateString( "visible_mid", "1" );
 			guiMsg->SetStateString( "visible_left", "0" );
 			guiMsg->SetStateString( "visible_right", "0" );
 			break;
 		case MSG_OKCANCEL:
-			guiMsg->SetStateString( "left", common->GetLanguageDict()->GetString( "#str_104339" ) );
-			guiMsg->SetStateString( "right", common->GetLanguageDict()->GetString( "#str_104340" ) );
+			guiMsg->SetStateString( "left", common->GetLanguageDict()->GetString( "#str_04339" ) );
+			guiMsg->SetStateString( "right", common->GetLanguageDict()->GetString( "#str_04340" ) );
 			guiMsg->SetStateString( "visible_mid", "0" );
 			guiMsg->SetStateString( "visible_left", "1" );
 			guiMsg->SetStateString( "visible_right", "1" );
 			break;
 		case MSG_YESNO:
-			guiMsg->SetStateString( "left", common->GetLanguageDict()->GetString( "#str_104341" ) );
-			guiMsg->SetStateString( "right", common->GetLanguageDict()->GetString( "#str_104342" ) );
+			guiMsg->SetStateString( "left", common->GetLanguageDict()->GetString( "#str_04341" ) );
+			guiMsg->SetStateString( "right", common->GetLanguageDict()->GetString( "#str_04342" ) );
 			guiMsg->SetStateString( "visible_mid", "0" );
 			guiMsg->SetStateString( "visible_left", "1" );
 			guiMsg->SetStateString( "visible_right", "1" );
 			break;
 		case MSG_PROMPT:
-			guiMsg->SetStateString( "left", common->GetLanguageDict()->GetString( "#str_104339" ) );
-			guiMsg->SetStateString( "right", common->GetLanguageDict()->GetString( "#str_104340" ) );
+			guiMsg->SetStateString( "left", common->GetLanguageDict()->GetString( "#str_04339" ) );
+			guiMsg->SetStateString( "right", common->GetLanguageDict()->GetString( "#str_04340" ) );
 			guiMsg->SetStateString( "visible_mid", "0" );
 			guiMsg->SetStateString( "visible_left", "1" );
 			guiMsg->SetStateString( "visible_right", "1" );
@@ -7363,7 +7586,7 @@ idUserInterface *idSessionLocal::RetainedHomeDocument( idUserInterface *&home, c
 bool idSessionLocal::RetainedPauseIsStrogg() {
 	if ( retainedPauseStrogg < 0 && game != NULL && mapSpawned && guiMainMenu != NULL ) {
 		guiMainMenu->SetStateBool( "pause_strogg", false );
-		game->HandleMainMenuCommands( "retainedPauseFamily", guiMainMenu );
+		PreyGame_HandleMainMenuCommands( "retainedPauseFamily", guiMainMenu );
 		retainedPauseStrogg = guiMainMenu->State().GetBool( "pause_strogg" ) ? 1 : 0;
 #ifndef ID_DEDICATED
 		if ( retainedPauseStrogg > 0 ) {
@@ -7425,7 +7648,8 @@ void idSessionLocal::DrawRetainedHome( int presentationTime ) {
 	if ( ( guiRetainedHome == guiRetainedPause || guiRetainedHome == guiRetainedPauseStrogg ) && mapSpawned &&
 		!com_skipGameDraw.GetBool() && GetLocalClientNum() >= 0 ) {
 		// The paused view stays behind the pause screen, under its scrim.
-		if ( !game->Draw( GetLocalClientNum(), true ) ) {
+		// Prey's v7 idGame::Draw takes no menu-pause flag.
+		if ( !game->Draw( GetLocalClientNum() ) ) {
 			renderSystem->SetColor( colorBlack );
 			renderSystem->DrawStretchPic( 0, 0, 640, 480, 0, 0, 1, 1, declManager->FindMaterial( "_white" ) );
 		}
@@ -8463,7 +8687,7 @@ saved game takes the list's top row, selected.
 bool idSessionLocal::RetainedSaveGame( idUserInterface *gui, const char *name ) {
 #ifndef ID_DEDICATED
 	const char *refusal = NULL;
-	if ( !mapSpawned || IsMultiplayer() || game->InCinematic() ) {
+	if ( !mapSpawned || IsMultiplayer() || PreyGame_InCinematic() ) {
 		refusal = "#str_231110";
 	} else if ( game->GetPersistentPlayerInfo( 0 ).GetInt( "health" ) <= 0 ) {
 		refusal = "#str_231111";
@@ -9301,7 +9525,7 @@ void idSessionLocal::PublishRetainedCreateBans( idUserInterface *gui ) {
 	retainedCreateBanGuids.Clear();
 	retainedCreateBanSelected = -1;
 	if ( game != NULL && guiMainMenu != NULL ) {
-		game->PopulateBanList( guiMainMenu );
+		PreyGame_PopulateBanList( guiMainMenu );
 		for ( int row = 0; row < RETAINED_CREATE_BAN_ROWS; ++row ) {
 			const idKeyValue *item = guiMainMenu->State().FindKey( va( "sa_banList_item_%d", row ) );
 			idStr name, guid;
@@ -9390,7 +9614,7 @@ void idSessionLocal::HandleRetainedCreateServerRequest( idUserInterface *gui, co
 		// The chosen row's GUID as the session published it, never the page's.
 		if ( retainedCreateBanSelected >= 0 && retainedCreateBanSelected < retainedCreateBanGuids.Num() && game != NULL ) {
 			HandleMainMenuCommands( "play main_menu_selection" );
-			game->RemoveGuidFromBanList( retainedCreateBanGuids[ retainedCreateBanSelected ].c_str() );
+			PreyGame_RemoveGuidFromBanList( retainedCreateBanGuids[ retainedCreateBanSelected ].c_str() );
 			PublishRetainedCreateBans( gui );
 		}
 		return;
@@ -11006,7 +11230,7 @@ void idSessionLocal::UpdateRetainedMultiplayer() {
 		bool welcome = false;
 		if ( !summary && !arena ) {
 			guiActive->SetStateBool( "mp.welcome", false );
-			game->HandleMainMenuCommands( "retainedMultiplayerVariant", guiActive );
+			PreyGame_HandleMainMenuCommands( "retainedMultiplayerVariant", guiActive );
 			welcome = guiActive->State().GetBool( "mp.welcome" );
 		}
 		const char *path = arena ? RETAINED_ARENA_PAUSE_GUI : summary ? RETAINED_MP_SUMMARY_GUI :
@@ -11041,7 +11265,7 @@ void idSessionLocal::UpdateRetainedMultiplayer() {
 		}
 		card->SetStateInt( "mp.protocol", 0 );
 		card->SetStateBool( "mp.cover_allowed", false );
-		game->HandleMainMenuCommands( "retainedMultiplayerCover", card );
+		PreyGame_HandleMainMenuCommands( "retainedMultiplayerCover", card );
 		if ( card->State().GetInt( "mp.protocol" ) != RETAINED_MP_PROTOCOL ) {
 			common->DPrintf( "retained UI: the game module does not answer the multiplayer card's protocol %d; the stock menu presents\n",
 				RETAINED_MP_PROTOCOL );
@@ -11084,7 +11308,7 @@ void idSessionLocal::UpdateRetainedMultiplayer() {
 		return;
 	}
 	// The game writes only what changed, under a new revision.
-	game->HandleMainMenuCommands( "retainedMultiplayerState", guiRetainedMultiplayer );
+	PreyGame_HandleMainMenuCommands( "retainedMultiplayerState", guiRetainedMultiplayer );
 	const int revision = guiRetainedMultiplayer->State().GetInt( "mp.revision" );
 	if ( revision != retainedMultiplayerRevision ) {
 		retainedMultiplayerRevision = revision;
@@ -11115,7 +11339,7 @@ void idSessionLocal::RetireRetainedMultiplayer( bool release ) {
 	retainedSummaryTyping = false;
 	retainedMultiplayerSummary = false;
 	if ( game != NULL ) {
-		game->HandleMainMenuCommands( "retainedMultiplayerUncover", card );
+		PreyGame_HandleMainMenuCommands( "retainedMultiplayerUncover", card );
 	}
 	card->Activate( false, now );
 	if ( release && mapSpawned && guiActive == NULL ) {

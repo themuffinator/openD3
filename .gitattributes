@@ -7,4 +7,12 @@
 # Runtime pack sources are packed byte for byte and every platform must build
 # identical packs, so their checkout keeps the repository bytes: no end-of-line
 # conversion, whatever core.autocrlf says.
-content/baseoq4/** -text
+content/baseod3/** -text
+
+# Preserve byte-stable legacy and generated idTech content. These authoring formats
+# commonly emit trailing spaces and mixed indentation as part of their source data.
+content/baseod3/pak0/** -whitespace
+
+
+# Licence texts shipped as RTF are retained byte-for-byte, CRLF included.
+LICENSES/*.rtf -text

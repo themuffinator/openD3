@@ -51,9 +51,10 @@ If you have questions concerning this license or the applicable additional terms
 
 #define CM_FILE_EXT			"cm"
 #define CM_FILEID			"CM"
-// "4" is openQ4's; it differs from Quake 4's "3" only in naming contents by
-// their own flags (see cm_retailContents in CollisionModel_debug.cpp).
-#define CM_FILEVERSION		"4"
+// Prey's retail collision models carry "1.00" and name contents by their own
+// flags. Quake 4's "3" (and the Awakening's "2") name them through the shifted
+// cm_retailContents table in CollisionModel_debug.cpp.
+#define CM_FILEVERSION		"1.00"
 
 
 /*
@@ -770,7 +771,7 @@ bool idCollisionModelManagerLocal::LoadCollisionModelFile( const char *name, uns
 
 	crc = token.GetUnsignedLongValue();
 	if ( mapFileCRC && crc != mapFileCRC ) {
-		common->Printf( "%s is out of date\n", fileName.c_str() );
+		common->Printf( "%s is out of date (file CRC %u, map CRC %u)\n", fileName.c_str(), crc, mapFileCRC );
 		delete src;
 		return false;
 	}

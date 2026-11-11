@@ -11,10 +11,6 @@ def read(relative_path: str) -> str:
     return (ROOT / relative_path).read_text(encoding="utf-8")
 
 
-def read_companion(relative_path: str) -> str:
-    return (ROOT / relative_path).read_text(encoding="utf-8")
-
-
 def require(haystack: str, needle: str, context: str) -> None:
     if needle not in haystack:
         raise AssertionError(f"Missing {needle!r} in {context}")
@@ -122,22 +118,20 @@ def validate_game_relative_include_paths() -> None:
     filesystem = read("src/framework/FileSystem.cpp")
     os_to_relative = function_body(filesystem, "const char *idFileSystemLocal::OSPathToRelativePath(")
     engine_parser = read("src/idlib/Parser.cpp")
-    game_parser = read_companion("src/idlib/Parser.cpp")
 
     require(os_to_relative, "base == OSPath || c1 == '/' || c1 == '\\\\'", "qpath-at-byte-zero recognition")
     require(os_to_relative, "c2 == '\\0' || c2 == '/' || c2 == '\\\\'", "complete game-directory segment recognition")
 
-    for parser, context in (
-        (engine_parser, "engine parser include normalization"),
-        (game_parser, "GameLibs parser include normalization"),
-    ):
-        normalize = function_body(parser, "static void Parser_NormalizeIncludeBase(")
-        require(normalize, 'GetCVarString( "fs_game" )', context)
-        require(normalize, 'GetCVarString( "fs_game_base" )', context)
-        require(normalize, "Parser_StripLeadingGameDirectory( basePath, OPENQ4_GAMEDIR )", context)
-        require(normalize, "Parser_StripLeadingGameDirectory( basePath, BASE_MPGAMEDIR )", context)
-        require(normalize, "if ( Parser_IsAbsolutePath( basePath ) )", context)
-        require_order(normalize, "if ( Parser_IsAbsolutePath( basePath ) )", "OSPathToRelativePath( basePath )", context)
+    # OpenPrey-game stages gameplay sources only; engine/idlib copies are
+    # deliberately excluded, so include normalization has one canonical owner.
+    context = "engine parser include normalization"
+    normalize = function_body(engine_parser, "static void Parser_NormalizeIncludeBase(")
+    require(normalize, 'GetCVarString( "fs_game" )', context)
+    require(normalize, 'GetCVarString( "fs_game_base" )', context)
+    require(normalize, "Parser_StripLeadingGameDirectory( basePath, OPENQ4_GAMEDIR )", context)
+    require(normalize, "Parser_StripLeadingGameDirectory( basePath, BASE_MPGAMEDIR )", context)
+    require(normalize, "if ( Parser_IsAbsolutePath( basePath ) )", context)
+    require_order(normalize, "if ( Parser_IsAbsolutePath( basePath ) )", "OSPathToRelativePath( basePath )", context)
 
     require(filesystem, '"Filesystem paths: fs_basepath=', "normal-verbosity filesystem support diagnostics")
     common = read("src/framework/Common.cpp")
@@ -150,21 +144,26 @@ def validate_linux_build_path_casing() -> None:
     commit = read(".github/workflows/commit-validation.yml")
 
     require(root_meson, 'game_libs_repo_root = meson.project_source_root()', "canonical game source path")
+    reject(root_meson, "../OpenPrey-game", "retired companion source input")
+    reject(root_meson, 'root / ".." / "OpenPrey-game"', "retired companion source input")
     reject(root_meson, "../openQ4-game", "retired companion source input")
     reject(root_meson, 'root / ".." / "OpenQ4-game"', "default GameLibs repository path")
     reject(root_meson, "../OpenQ4-game", "GameLibs repository diagnostics")
 
-    require(root_meson, "assets/linux/openQ4-steamdeck.in", "Steam Deck launcher template input")
-    require(root_meson, "assets/linux/openq4-steamdeck.desktop.in", "Steam Deck desktop template input")
-    reject(root_meson, "assets/linux/OpenQ4-steamdeck.in", "Steam Deck launcher template input")
-    reject(root_meson, "assets/linux/openQ4-steamdeck.desktop.in", "Steam Deck desktop template input")
-    require_exact_child("assets/linux", "openQ4-steamdeck.in", "Steam Deck launcher template")
-    require_exact_child("assets/linux", "openq4-steamdeck.desktop.in", "Steam Deck desktop template")
+    require(root_meson, "assets/linux/openPREY-steamdeck.in", "Steam Deck launcher template input")
+    require(root_meson, "assets/linux/openprey-steamdeck.desktop.in", "Steam Deck desktop template input")
+    reject(root_meson, "assets/linux/openQ4-steamdeck.in", "Steam Deck launcher template input")
+    reject(root_meson, "assets/linux/openq4-steamdeck.desktop.in", "Steam Deck desktop template input")
+    require_exact_child("assets/linux", "openPREY-steamdeck.in", "Steam Deck launcher template")
+    require_exact_child("assets/linux", "openprey-steamdeck.desktop.in", "Steam Deck desktop template")
 
     for workflow, context in (
         (push, "push verification workflow"),
         (commit, "commit validation workflow"),
     ):
+        reject(workflow, "OPENPREY_GAMELIBS_REPO", context)
+        reject(workflow, "../OpenPrey-game", context)
+        reject(workflow, "OpenPrey-game.git", context)
         reject(workflow, "../openQ4-game", context)
         reject(workflow, "openQ4-game.git", context)
         reject(workflow, "../OpenQ4-game", context)
@@ -173,8 +172,8 @@ def validate_linux_build_path_casing() -> None:
 def validate_release_note() -> None:
     source = read("docs/dev/release-completion.md")
 
-    require(source, "Loose-file lookups on case-sensitive Linux and macOS filesystems now resolve existing mixed-case directory segments", "release completion notes")
-    require(source, "instead of assuming lowercase paths", "release completion notes")
+    require(source, "Canonical companion game sources now stage directly from `OpenPrey-game`", "release completion notes")
+    require(source, "`basepr/game_<arch>`", "release completion notes")
 
 
 def validate_validation_coverage() -> None:

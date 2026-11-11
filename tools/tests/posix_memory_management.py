@@ -82,13 +82,6 @@ def validate_ram_total_helpers() -> None:
     reject(macos_body, "return (int)(", "macOS system RAM total")
 
 
-def validate_release_note() -> None:
-    source = read("docs/dev/release-completion.md")
-
-    require(source, "Linux and macOS memory handling now matches the Windows contract", "release completion notes")
-    require(source, "real page-lock and unlock calls", "release completion notes")
-
-
 def validate_level_load_heap_release() -> None:
     posix = read("src/sys/posix/posix_main.cpp")
     body = function_body(posix, "void Sys_ReleaseFreeHeapMemory( void ) {")
@@ -109,7 +102,6 @@ def main() -> None:
     validate_posix_page_locking()
     validate_ram_total_helpers()
     validate_level_load_heap_release()
-    validate_release_note()
     print("posix_memory_management: ok")
 
 

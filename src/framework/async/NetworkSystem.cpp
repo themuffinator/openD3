@@ -81,6 +81,9 @@ void idNetworkSystem::ServerSendReliableMessageExcluding( int clientNum, const i
 	}
 }
 
+#if OPENPREY_ENABLE_MVD
+// OPENPREY-GATED(D9): MVD-only reliable-message routing is not part of the
+// Prey v7 idNetworkSystem interface.
 /*
 ==================
 idNetworkSystem::ServerSendReliableMessageNoDemo
@@ -114,6 +117,7 @@ void idNetworkSystem::ServerRecordInstanceReliableMessage( int instance, int exc
 			msg, DEMO_RECORD_INSTANCE, excludeClient, instance );
 	}
 }
+#endif
 
 /*
 ==================
@@ -361,6 +365,8 @@ float idNetworkSystem::ClientGetIncomingPacketLoss( void ) {
 	return 0.0f;
 }
 
+#if OPENPREY_ENABLE_BOTS
+// OPENPREY-GATED(D9): bot allocation is outside the Prey v7 game contract.
 /*
 ==================
 idNetworkSystem::AllocateClientSlotForBot
@@ -387,6 +393,7 @@ idNetworkSystem::ServerSetBotUserName
 int idNetworkSystem::ServerSetBotUserName(int clientNum, const char* playerName) {
 	return 0;
 }
+#endif
 
 /*
 ==================

@@ -76,10 +76,28 @@ static const int QUAKE4_FONTDAT_SIZE =
 	Q4_FONTDAT_SCALAR_FLOAT_COUNT * sizeof( float ) +
 	Q4_FONTDAT_SERIALIZED_MATERIAL_PTR_BYTES;
 
+// Doom 3 and retail Prey serialize the original glyphInfo_t layout.  The
+// material pointer in each record is process-local junk, but the following
+// shader name identifies the atlas page used by that glyph.
+static const int PREY_FONTDAT_GLYPH_INT_COUNT = 7;
+static const int PREY_FONTDAT_GLYPH_UV_FLOAT_COUNT = 4;
+static const int PREY_FONTDAT_SERIALIZED_MATERIAL_PTR_BYTES = 4;
+static const int PREY_FONTDAT_SHADER_NAME_BYTES = 32;
+static const int PREY_FONTDAT_FONT_NAME_BYTES = 64;
+static const int PREY_FONTDAT_GLYPH_SIZE =
+	PREY_FONTDAT_GLYPH_INT_COUNT * sizeof( int ) +
+	PREY_FONTDAT_GLYPH_UV_FLOAT_COUNT * sizeof( float ) +
+	PREY_FONTDAT_SERIALIZED_MATERIAL_PTR_BYTES +
+	PREY_FONTDAT_SHADER_NAME_BYTES;
+static const int PREY_FONTDAT_SIZE =
+	GLYPHS_PER_FONT * PREY_FONTDAT_GLYPH_SIZE + sizeof( float ) + PREY_FONTDAT_FONT_NAME_BYTES;
+static_assert( PREY_FONTDAT_SIZE == 20548, "unexpected retail Prey font data layout" );
+
 // Renderer reloads keep this module mapped, so the console-atlas lifecycle
 // guard must be reset explicitly when FreeType/font resources are released.
 static bool consoleFontChecked = false;
 static int consoleFontCodePageGeneration = -1;
+
 
 static fontInfo_t *R_FontSlotForIndex( fontInfoEx_t &font, q4FontSlotIndex_t slot ) {
 	if ( slot == Q4_FONT_SLOT_SMALL ) {
@@ -199,7 +217,7 @@ static void R_PropagateMissingFontSizes( fontInfoEx_t &font, int foundMask ) {
 	}
 }
 
-static bool R_LoadFontSlot( fontInfoEx_t &font, const char *fontName, const q4FontSlotSpec_t &slotSpec ) {
+static bool R_LoadQuake4FontSlot( fontInfoEx_t &font, const char *fontName, const q4FontSlotSpec_t &slotSpec ) {
 	idStr fontDataName = va( "%s_%i.fontdat", fontName, slotSpec.pointSize );
 	if ( fileSystem->ReadFile( fontDataName.c_str(), NULL, NULL ) != QUAKE4_FONTDAT_SIZE ) {
 		return false;
@@ -210,9 +228,9 @@ static bool R_LoadFontSlot( fontInfoEx_t &font, const char *fontName, const q4Fo
 		return false;
 	}
 
-	fontInfo_t *fontSlot = R_FontSlotForIndex( font, slotSpec.slot );
+	fontInfo_t loadedSlot = {};
 	q4FontSlotExtents_t extents;
-	const bool readMetrics = R_ReadFontSlotMetrics( fontFile, *fontSlot, extents );
+	const bool readMetrics = R_ReadFontSlotMetrics( fontFile, loadedSlot, extents );
 
 	int serializedMaterialPointer = 0;
 	const bool readPointer = fontFile->ReadInt( serializedMaterialPointer ) == sizeof( int );
@@ -222,20 +240,204 @@ static bool R_LoadFontSlot( fontInfoEx_t &font, const char *fontName, const q4Fo
 		return false;
 	}
 
-	idStr::Copynz( fontSlot->name, fontDataName.c_str(), sizeof( fontSlot->name ) );
+	idStr::Copynz( loadedSlot.name, fontDataName.c_str(), sizeof( loadedSlot.name ) );
 	// A .fontdat is 256 slots of art for one 8-bit codepage - which one is
 	// whatever language the atlas shipped with, and the text layer maps code
 	// points onto it. There is no room for anything above U+00FF, so no
 	// extended pages either; the memset in RegisterFont already left them NULL.
-	fontSlot->glyphIndexing = GLYPH_INDEX_CODEPAGE;
-	fontSlot->material = declManager->FindMaterial( fontDataName.c_str() );
-	if ( fontSlot->material != NULL ) {
-		fontSlot->material->SetSort( SS_GUI );
+	loadedSlot.glyphIndexing = GLYPH_INDEX_CODEPAGE;
+	loadedSlot.material = declManager->FindMaterial( fontDataName.c_str() );
+	if ( loadedSlot.material != NULL ) {
+		loadedSlot.material->SetSort( SS_GUI );
 	}
+	*R_FontSlotForIndex( font, slotSpec.slot ) = loadedSlot;
 	R_SetFontSlotMaxExtents( font, slotSpec.slot, extents );
 	return true;
 }
 
+static bool R_ReadPreyFontGlyph( idFile *fontFile, glyphInfo_t &glyph,
+		char shaderName[PREY_FONTDAT_SHADER_NAME_BYTES + 1] ) {
+	int height = 0;
+	int top = 0;
+	int bottom = 0;
+	int pitch = 0;
+	int xSkip = 0;
+	int imageWidth = 0;
+	int imageHeight = 0;
+	float s = 0.0f;
+	float t = 0.0f;
+	float s2 = 0.0f;
+	float t2 = 0.0f;
+	int serializedMaterialPointer = 0;
+
+	if ( fontFile->ReadInt( height ) != sizeof( int ) ||
+			fontFile->ReadInt( top ) != sizeof( int ) ||
+			fontFile->ReadInt( bottom ) != sizeof( int ) ||
+			fontFile->ReadInt( pitch ) != sizeof( int ) ||
+			fontFile->ReadInt( xSkip ) != sizeof( int ) ||
+			fontFile->ReadInt( imageWidth ) != sizeof( int ) ||
+			fontFile->ReadInt( imageHeight ) != sizeof( int ) ||
+			fontFile->ReadFloat( s ) != sizeof( float ) ||
+			fontFile->ReadFloat( t ) != sizeof( float ) ||
+			fontFile->ReadFloat( s2 ) != sizeof( float ) ||
+			fontFile->ReadFloat( t2 ) != sizeof( float ) ||
+			fontFile->ReadInt( serializedMaterialPointer ) != sizeof( int ) ||
+			fontFile->Read( shaderName, PREY_FONTDAT_SHADER_NAME_BYTES ) != PREY_FONTDAT_SHADER_NAME_BYTES ) {
+		return false;
+	}
+
+	shaderName[PREY_FONTDAT_SHADER_NAME_BYTES] = '\0';
+	glyph.width = static_cast<float>( imageWidth );
+	glyph.height = static_cast<float>( imageHeight );
+	glyph.horiAdvance = static_cast<float>( xSkip );
+	glyph.horiBearingX = 0.0f;
+	glyph.horiBearingY = static_cast<float>( top );
+	glyph.s = s;
+	glyph.t = t;
+	glyph.s2 = s2;
+	glyph.t2 = t2;
+	glyph.material = NULL;
+
+	// Retained in the file for the original renderer's upload path.  The modern
+	// metric representation does not need these values once translated above.
+	(void)height;
+	(void)bottom;
+	(void)pitch;
+	(void)serializedMaterialPointer;
+	return true;
+}
+
+static const idMaterial *R_FindPreyGlyphMaterial( const char *fontName, const char *serializedShaderName ) {
+	idStr normalizedShaderName = serializedShaderName;
+	normalizedShaderName.BackSlashesToSlashes();
+
+	const char *relativeShaderName = normalizedShaderName.c_str();
+	static const char serializedFontPrefix[] = "fonts/";
+	if ( idStr::Icmpn( relativeShaderName, serializedFontPrefix, sizeof( serializedFontPrefix ) - 1 ) == 0 ) {
+		relativeShaderName += sizeof( serializedFontPrefix ) - 1;
+	}
+	if ( relativeShaderName[0] == '\0' ) {
+		return NULL;
+	}
+
+	idStr materialName = fontName;
+	materialName.BackSlashesToSlashes();
+	materialName.StripTrailing( '/' );
+	materialName += "/";
+	materialName += relativeShaderName;
+
+	const idMaterial *material = declManager->FindMaterial( materialName.c_str() );
+	if ( material != NULL ) {
+		material->SetSort( SS_GUI );
+	}
+	return material;
+}
+
+static bool R_LoadPreyFontSlot( fontInfoEx_t &font, const char *fontName, const q4FontSlotSpec_t &slotSpec ) {
+	idStr fontDataName = va( "%s/fontImage_%i.dat", fontName, slotSpec.pointSize );
+	if ( fileSystem->ReadFile( fontDataName.c_str(), NULL, NULL ) != PREY_FONTDAT_SIZE ) {
+		return false;
+	}
+
+	idFile *fontFile = fileSystem->OpenFileRead( fontDataName.c_str(), true );
+	if ( fontFile == NULL ) {
+		return false;
+	}
+
+	fontInfo_t loadedSlot = {};
+	char shaderNames[GLYPHS_PER_FONT][PREY_FONTDAT_SHADER_NAME_BYTES + 1] = {};
+	q4FontSlotExtents_t extents;
+	R_ClearFontSlotExtents( extents );
+	bool valid = true;
+
+	for ( int glyphIndex = 0; glyphIndex < GLYPHS_PER_FONT; ++glyphIndex ) {
+		glyphInfo_t &glyph = loadedSlot.glyphs[glyphIndex];
+		if ( !R_ReadPreyFontGlyph( fontFile, glyph, shaderNames[glyphIndex] ) ) {
+			valid = false;
+			break;
+		}
+		// Match the original Prey GUI extents: horizontal layout is based on
+		// xSkip/advance, while vertical layout uses the uploaded image height.
+		extents.maxWidth = Max( extents.maxWidth, glyph.horiAdvance );
+		extents.maxHeight = Max( extents.maxHeight, glyph.height );
+		loadedSlot.ascender = Max( loadedSlot.ascender, glyph.horiBearingY );
+		loadedSlot.descender = Max( loadedSlot.descender, glyph.height - glyph.horiBearingY );
+	}
+
+	float serializedGlyphScale = 0.0f;
+	char serializedFontName[PREY_FONTDAT_FONT_NAME_BYTES];
+	if ( valid ) {
+		valid = fontFile->ReadFloat( serializedGlyphScale ) == sizeof( float ) &&
+			fontFile->Read( serializedFontName, sizeof( serializedFontName ) ) == sizeof( serializedFontName );
+	}
+	fileSystem->CloseFile( fontFile );
+	if ( !valid ) {
+		return false;
+	}
+
+	loadedSlot.pointSize = static_cast<float>( slotSpec.pointSize );
+	loadedSlot.fontHeight = loadedSlot.ascender + loadedSlot.descender;
+	idStr::Copynz( loadedSlot.name, fontDataName.c_str(), sizeof( loadedSlot.name ) );
+	for ( int glyphIndex = 0; glyphIndex < GLYPHS_PER_FONT; ++glyphIndex ) {
+		loadedSlot.glyphs[glyphIndex].material = R_FindPreyGlyphMaterial( fontName, shaderNames[glyphIndex] );
+		if ( loadedSlot.material == NULL && loadedSlot.glyphs[glyphIndex].material != NULL ) {
+			// Preserve the font-wide fallback expected by generic/Q4 UI code.
+			loadedSlot.material = loadedSlot.glyphs[glyphIndex].material;
+		}
+	}
+
+	(void)serializedGlyphScale;
+	(void)serializedFontName;
+	*R_FontSlotForIndex( font, slotSpec.slot ) = loadedSlot;
+	R_SetFontSlotMaxExtents( font, slotSpec.slot, extents );
+	return true;
+}
+
+static bool R_LoadFontSlot( fontInfoEx_t &font, const char *fontName, const q4FontSlotSpec_t &slotSpec ) {
+	if ( R_LoadQuake4FontSlot( font, fontName, slotSpec ) ) {
+		return true;
+	}
+	return R_LoadPreyFontSlot( font, fontName, slotSpec );
+}
+
+}
+
+/*
+============
+R_ReadLegacyFontSlotMetrics
+
+The vertical metrics the bitmap path lays one retail Prey slot out with, read
+straight from its .dat without touching materials or atlas pages: each glyph's
+top (units above the baseline) and image height, and the slot's line height,
+which is the tallest image rect. The scalable path fits its slots to these so
+TrueType text sits where the bitmap text did.
+============
+*/
+bool R_ReadLegacyFontSlotMetrics( const char *fontName, int pointSize, legacyFontSlotMetrics_t &out ) {
+	memset( &out, 0, sizeof( out ) );
+	idStr fontDataName = va( "%s/fontImage_%i.dat", fontName, pointSize );
+	if ( fileSystem->ReadFile( fontDataName.c_str(), NULL, NULL ) != PREY_FONTDAT_SIZE ) {
+		return false;
+	}
+	idFile *fontFile = fileSystem->OpenFileRead( fontDataName.c_str(), true );
+	if ( fontFile == NULL ) {
+		return false;
+	}
+
+	bool valid = true;
+	for ( int glyphIndex = 0; glyphIndex < GLYPHS_PER_FONT; ++glyphIndex ) {
+		glyphInfo_t glyph;
+		char shaderName[PREY_FONTDAT_SHADER_NAME_BYTES + 1];
+		if ( !R_ReadPreyFontGlyph( fontFile, glyph, shaderName ) ) {
+			valid = false;
+			break;
+		}
+		out.top[glyphIndex] = glyph.horiBearingY;
+		out.height[glyphIndex] = glyph.height;
+		out.maxHeight = Max( out.maxHeight, glyph.height );
+	}
+	fileSystem->CloseFile( fontFile );
+	return valid && out.maxHeight > 0.0f;
 }
 
 /*
@@ -272,8 +474,12 @@ RegisterFont
 Loads 3 point sizes, 12, 24, and 48
 ============
 */
-bool idRenderSystemLocal::RegisterFont( const char *fontName, fontInfoEx_t &font ) {
+bool idRenderSystemLocal::RegisterFont( const char *requestedFontName, fontInfoEx_t &font ) {
 	memset( &font, 0, sizeof( font ) );
+
+	idStr canonicalFontName;
+	R_CanonicalFontName( requestedFontName, canonicalFontName );
+	const char *fontName = canonicalFontName.c_str();
 
 	// Every atlas below is rasterised through the active codepage, so this
 	// module's copy of it has to agree with the string tables before any glyph

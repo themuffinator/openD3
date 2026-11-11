@@ -174,6 +174,8 @@ def validate_shared_backend_contract() -> None:
     require(window_event, "case SDL_EVENT_WINDOW_MOVED:", "window move handling")
     require(window_event, "case SDL_EVENT_WINDOW_DISPLAY_CHANGED:", "display migration handling")
     require(window_event, "case SDL_EVENT_WINDOW_DISPLAY_SCALE_CHANGED:", "display scale handling")
+    require(window_event, "SDL3_ResolveTargetDisplay(false).id", "explicit-display window constraint")
+    require(window_event, "case SDL_EVENT_WINDOW_MAXIMIZED:", "maximized drawable refresh handling")
     require(window_event, "case SDL_EVENT_WINDOW_RESIZED:", "window resize handling")
 
     for token in (
@@ -188,6 +190,7 @@ def validate_shared_backend_contract() -> None:
     ):
         require(display_event_name, token, "SDL3 process-wide display event naming")
     require(display_event, "SDL3_InitDesktopMode();", "SDL3 display-event desktop refresh")
+    require(display_event, "SDL3_ResolveTargetDisplay(false).id", "SDL3 display-event target selection")
     require(display_event, "SDL3_RefreshWindowPlacement();", "SDL3 display-event framebuffer refresh")
     require(display_event, "SDL3_InvalidateMenuMouseRouting();", "SDL3 display-event mouse transform invalidation")
     require(display_event, "SDL3_UpdateTextInputState();", "SDL3 display-event IME placement refresh")
@@ -252,7 +255,7 @@ def validate_ci_hooks() -> None:
 
     require(renderer, '"id": "sdl3-wayland-display-diagnostics"', "Wayland display diagnostics runtime case")
     require(renderer, '"id": "sdl3-wayland-window-stress"', "Wayland window stress runtime case")
-    require(renderer, "native Wayland SDL3 repeated window/fullscreen transition stress", "Wayland window stress runtime case")
+    require(renderer, "native Wayland SDL3 repeated windowed-resize stress", "Wayland window stress runtime case")
     require(renderer, '"id": "sdl3-x11-display-diagnostics"', "X11 display diagnostics runtime case")
     require(renderer, '"+listDisplays"', "Wayland display diagnostics runtime command")
     require(renderer, '"r_windowWidth",\n                "1280"', "Wayland window stress size change")

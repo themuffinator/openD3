@@ -10,7 +10,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-from stage_gamelibs import validate_stage_manifest
 from game_source_inventory import inventory
 
 
@@ -126,21 +125,20 @@ def verify_layer_provenance(
     layer_root = require_repository(layer_root, "game-library layer repository")
     verify_repository_commit(layer_root, expected_layer_commit, "layer")
 
-    validate_stage_manifest(layer_stage_manifest.parent)
     manifest = read_stage_manifest(layer_stage_manifest)
     verify_manifest_commit(
         manifest,
         commit_key="projectGitCommit",
         dirty_key="projectGitDirty",
         expected_commit=expected_project_commit,
-        label="openQ4 (layer stage)",
+        label="openPREY (layer stage)",
     )
     verify_manifest_commit(
         manifest,
         commit_key="gameLibsGitCommit",
         dirty_key="gameLibsGitDirty",
         expected_commit=expected_gamelibs_commit,
-        label="openQ4-game (layer stage)",
+        label="OpenPrey-game (layer stage)",
     )
     layer = manifest.get("layer")
     if not isinstance(layer, dict):
@@ -166,13 +164,20 @@ def verify_release_source_provenance(
     layer_stage_manifest: Path | None = None,
     expected_layer_commit: str | None = None,
 ) -> None:
-    # Canonical releases have one source commit and compile these files in
-    # place. Keep the historical staged verifier for old evidence fixtures.
+    # Canonical releases have one source commit and compile the Prey game
+    # library (src/game, src/Prey, src/preyengine) in place. Keep the historical
+    # staged OpenPrey-game verifier for old evidence fixtures.
     if gamelibs_root is None and stage_manifest is None and expected_gamelibs_commit is None:
-        commit = require_full_git_sha(expected_project_commit or "", "expected openQ4 commit")
-        project_root = require_repository(project_root, "openQ4 repository")
-        verify_repository_commit(project_root, commit, "openQ4")
-        for relative in ("src/game/LICENSE", "src/mpgame/LICENSE", "LICENSES/QUAKE-4-SDK-EULA.rtf", "LICENSING.md"):
+        commit = require_full_git_sha(expected_project_commit or "", "expected openPREY commit")
+        project_root = require_repository(project_root, "openPREY repository")
+        verify_repository_commit(project_root, commit, "openPREY")
+        for relative in (
+            "src/game/LICENSE",
+            "src/Prey/LICENSE",
+            "src/preyengine/LICENSE",
+            "LICENSES/PREY-SDK-EULA.rtf",
+            "LICENSING.md",
+        ):
             path = project_root / relative
             if path.is_symlink() or not path.is_file():
                 raise RuntimeError(f"missing canonical game licensing: {relative}")
@@ -180,38 +185,40 @@ def verify_release_source_provenance(
         if configured != inventory(project_root):
             raise RuntimeError("configured in-tree game source inventory differs from the clean release checkout; reconfigure and rebuild")
         if any(arg is not None for arg in (layer_root, layer_stage_manifest, expected_layer_commit)):
-            raise RuntimeError("in-tree releases cannot select a separate Awakening source revision")
+            raise RuntimeError("in-tree releases cannot select a separate game-library layer revision")
         return
     layer_args = (layer_root, layer_stage_manifest, expected_layer_commit)
     if any(arg is not None for arg in layer_args) and not all(arg is not None for arg in layer_args):
         raise RuntimeError("layer provenance needs the layer root, its stage manifest and the expected layer commit")
     expected_project_commit = require_full_git_sha(
-        expected_project_commit, "expected openQ4 commit"
+        expected_project_commit, "expected openPREY commit"
     )
     expected_gamelibs_commit = require_full_git_sha(
-        expected_gamelibs_commit, "expected openQ4-game commit"
+        expected_gamelibs_commit, "expected OpenPrey-game commit"
     )
-    project_root = require_repository(project_root, "openQ4 repository")
-    gamelibs_root = require_repository(gamelibs_root, "openQ4-game repository")
+    project_root = require_repository(project_root, "openPREY repository")
+    gamelibs_root = require_repository(gamelibs_root, "OpenPrey-game repository")
 
-    verify_repository_commit(project_root, expected_project_commit, "openQ4")
-    verify_repository_commit(gamelibs_root, expected_gamelibs_commit, "openQ4-game")
+    verify_repository_commit(project_root, expected_project_commit, "openPREY")
+    verify_repository_commit(gamelibs_root, expected_gamelibs_commit, "OpenPrey-game")
 
-    validate_stage_manifest(stage_manifest.parent)
+    # The companion staging tool (stage_gamelibs.py) was removed with the
+    # in-tree import, so historical manifests are checked for their recorded
+    # commits only.
     manifest = read_stage_manifest(stage_manifest)
     verify_manifest_commit(
         manifest,
         commit_key="projectGitCommit",
         dirty_key="projectGitDirty",
         expected_commit=expected_project_commit,
-        label="openQ4",
+        label="openPREY",
     )
     verify_manifest_commit(
         manifest,
         commit_key="gameLibsGitCommit",
         dirty_key="gameLibsGitDirty",
         expected_commit=expected_gamelibs_commit,
-        label="openQ4-game",
+        label="OpenPrey-game",
     )
 
     if layer_root is not None:
@@ -232,7 +239,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--build-dir", type=Path)
     parser.add_argument("--expected-project-commit", required=True)
     parser.add_argument("--expected-gamelibs-commit", help=argparse.SUPPRESS)
-    parser.add_argument("--layer-root", type=Path, help="a game-library layer checkout (openQ4-game-awakening)")
+    parser.add_argument("--layer-root", type=Path, help="a game-library layer checkout")
     parser.add_argument("--layer-stage-manifest", type=Path, help="that layer's stage manifest")
     parser.add_argument("--expected-layer-commit", help="the approved layer commit")
     return parser.parse_args(argv)
@@ -258,7 +265,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(
         "release source provenance verified: "
-        f"openQ4={args.expected_project_commit.lower()} "
+        f"openPREY={args.expected_project_commit.lower()} "
         f"game sources={(args.expected_gamelibs_commit or args.expected_project_commit).lower()}"
         + (f" layer={args.expected_layer_commit.lower()}" if args.expected_layer_commit else "")
     )

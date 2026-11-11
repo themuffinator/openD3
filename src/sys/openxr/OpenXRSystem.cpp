@@ -929,9 +929,9 @@ bool idVRSystemOpenXR::CreateInstance( void ) {
 	XrInstanceCreateInfo createInfo;
 	memset( &createInfo, 0, sizeof( createInfo ) );
 	createInfo.type = XR_TYPE_INSTANCE_CREATE_INFO;
-	idStr::Copynz( createInfo.applicationInfo.applicationName, "openQ4", sizeof( createInfo.applicationInfo.applicationName ) );
+	idStr::Copynz( createInfo.applicationInfo.applicationName, "openPREY", sizeof( createInfo.applicationInfo.applicationName ) );
 	createInfo.applicationInfo.applicationVersion = 1;
-	idStr::Copynz( createInfo.applicationInfo.engineName, "openQ4", sizeof( createInfo.applicationInfo.engineName ) );
+	idStr::Copynz( createInfo.applicationInfo.engineName, "openPREY", sizeof( createInfo.applicationInfo.engineName ) );
 	createInfo.applicationInfo.engineVersion = 1;
 	createInfo.applicationInfo.apiVersion = XR_API_VERSION_1_0;
 	createInfo.enabledExtensionCount = enabledCount;

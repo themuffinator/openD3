@@ -32,10 +32,13 @@ static const char *r_renderApiArgs[] = { "best", "gl", "vulkan", "gl-module", "g
 #define OPENQ4_DEFAULT_RENDER_API	"gles"
 static const rendererModuleApi_t rm_platformDefaultApi = RENDER_MODULE_API_GLES;
 #else
+// openPREY: retail Prey interaction stages are ARB programs that only the
+// OpenGL ARB2 path executes; Vulkan fails them closed. "best" therefore means
+// OpenGL on desktop until Vulkan parity lands (docs/dev/prey-rebase/plan.md, D2).
 #define OPENQ4_DEFAULT_RENDER_API	"best"
-static const rendererModuleApi_t rm_platformDefaultApi = RENDER_MODULE_API_VULKAN;
+static const rendererModuleApi_t rm_platformDefaultApi = RENDER_MODULE_API_GL;
 #endif
-idCVar r_renderApi( "r_renderApi", OPENQ4_DEFAULT_RENDER_API, CVAR_RENDERER | CVAR_ARCHIVE, "rendering API: best = Vulkan with OpenGL fallback on desktop, OpenGL ES on Android; gl = OpenGL; vulkan = Vulkan module; gl-module = OpenGL module alias; gles = OpenGL ES module. Changes take effect on engine restart.", r_renderApiArgs, idCmdSystem::ArgCompletion_String<r_renderApiArgs> );
+idCVar r_renderApi( "r_renderApi", OPENQ4_DEFAULT_RENDER_API, CVAR_RENDERER | CVAR_ARCHIVE, "rendering API: best = OpenGL on desktop (Prey's ARB interaction stages), OpenGL ES on Android; gl = OpenGL; vulkan = Vulkan module; gl-module = OpenGL module alias; gles = OpenGL ES module. Changes take effect on engine restart.", r_renderApiArgs, idCmdSystem::ArgCompletion_String<r_renderApiArgs> );
 idCVar r_renderDevice("r_renderDevice","auto",CVAR_RENDERER | CVAR_ARCHIVE,
 	"rendering GPU: auto prefers compatible high-performance hardware; otherwise a Vulkan device UUID (32 lowercase hex digits). Explicit GPU selection requires Vulkan and engine restart; r_vkDevice is a temporary diagnostic override.");
 idCVar r_actualRenderApi( "r_actualRenderApi", "UNINITIALIZED", CVAR_RENDERER | CVAR_ROM, "rendering API actually active after request/fallback selection" );
@@ -216,6 +219,10 @@ static void RM_Services_PrintRendererApiStatus( void ) {
 	RendererModule_PrintGfxInfo();
 }
 
+static int RM_Services_GetTimeGroupTime( int timeGroup, int fallbackTime ) {
+	return game != NULL ? game->GetTimeGroupTime( timeGroup ) : fallbackTime;
+}
+
 static bool RM_Services_ResetRenderApiAfterDeviceFailure( void ) {
 	return R_RendererModule_ResetApiAfterDeviceFailure();
 }
@@ -266,6 +273,7 @@ static const renderModuleServices_t rm_services = {
 	RM_Services_LeaveCriticalSection,
 	RM_Services_IsRenderDocInjected,
 	RM_Services_PrintRendererApiStatus,
+	RM_Services_GetTimeGroupTime,
 	RM_Services_ResetRenderApiAfterDeviceFailure,
 	RM_Services_PublishRendererSelection,
 	RM_Services_GetLightGridLoadPolicy,

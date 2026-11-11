@@ -100,6 +100,10 @@ void BSESpawnTrace(const char* fmt, ...) {
 }
 
 void rvSegment::PlayEffect(rvBSE* effect, rvSegmentTemplate* st, float depthOffset) {
+#if defined(HUMANHEAD)
+	// OPENPREY-GATED(D3): nested BSE effects require Quake 4 idGame callbacks.
+	return;
+#else
 	// A child effect only starts while its owner is in an area connected to the
 	// player, and it never inherits the parent's end origin.
 	if (!effect || !st || st->mNumEffects <= 0 || !game || !effect->GetInConnectedArea()) {
@@ -112,6 +116,7 @@ void rvSegment::PlayEffect(rvBSE* effect, rvSegmentTemplate* st, float depthOffs
 	}
 
 	game->PlayEffect(nested, effect->GetCurrentOrigin(), effect->GetCurrentAxis(), false, vec3_origin, false, false, EC_IGNORE, vec4_one);
+#endif
 }
 
 rvParticle* rvSegment::InitParticleArray(rvBSE* effect) {

@@ -710,7 +710,7 @@ build_openq4() {
     require_repo
     cd "${repo}"
     export OPENQ4_GAMELIBS_REPO="${gamelibs}"
-    # Keep Meson subprojects (SDL3, GLEW, stb_vorbis) on the same macOS 11.0
+    # Keep Meson subprojects (SDL3, GLEW, libogg, libvorbis) on the same macOS 11.0
     # floor as the main project's -mmacosx-version-min=11.0 flags.
     export MACOSX_DEPLOYMENT_TARGET=11.0
 

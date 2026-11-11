@@ -592,6 +592,7 @@ bool rvSegment::Check(rvBSE* effect, float time, float offset) {
 	case SEG_TUNNEL:
 	case SEG_DOUBLEVISION:
 		if (game) {
+#if !defined(HUMANHEAD)
 			int viewEffect = VIEWEFFECT_SHAKE;
 			if (st->mSegType == SEG_TUNNEL) {
 				viewEffect = VIEWEFFECT_TUNNEL;
@@ -602,6 +603,7 @@ bool rvSegment::Check(rvBSE* effect, float time, float offset) {
 			const float finishTime = mSegStartTime + AttenuateDuration(effect, st);
 			const float scale = Max(0.0f, effect->GetOriginAttenuation(st));
 			game->StartViewEffect(viewEffect, finishTime, scale);
+#endif
 		}
 		SetExpired(true);
 		return true;

@@ -51,7 +51,7 @@ function Quote-CmdArg([string]$Value) {
     return $Value
 }
 
-function Get-openQ4VsProcessArch {
+function Get-openPREYVsProcessArch {
     $arch = [System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString().ToLowerInvariant()
     switch ($arch) {
         "x64" { return "x64" }
@@ -61,20 +61,26 @@ function Get-openQ4VsProcessArch {
     }
 }
 
-function Get-openQ4VsTargetArch {
+function Get-openPREYVsTargetArch {
+    if (-not [string]::IsNullOrWhiteSpace($env:OPENPREY_VS_TARGET_ARCH)) {
+        return $env:OPENPREY_VS_TARGET_ARCH.Trim().ToLowerInvariant()
+    }
     if (-not [string]::IsNullOrWhiteSpace($env:OPENQ4_VS_TARGET_ARCH)) {
         return $env:OPENQ4_VS_TARGET_ARCH.Trim().ToLowerInvariant()
     }
 
-    return Get-openQ4VsProcessArch
+    return Get-openPREYVsProcessArch
 }
 
-function Get-openQ4VsHostArch {
+function Get-openPREYVsHostArch {
+    if (-not [string]::IsNullOrWhiteSpace($env:OPENPREY_VS_HOST_ARCH)) {
+        return $env:OPENPREY_VS_HOST_ARCH.Trim().ToLowerInvariant()
+    }
     if (-not [string]::IsNullOrWhiteSpace($env:OPENQ4_VS_HOST_ARCH)) {
         return $env:OPENQ4_VS_HOST_ARCH.Trim().ToLowerInvariant()
     }
 
-    return Get-openQ4VsProcessArch
+    return Get-openPREYVsProcessArch
 }
 
 function Get-MesonCommand {
@@ -250,7 +256,7 @@ function Ensure-WindowsStaticCRTSetupArgs {
         if ($arg -like "-Db_vscrt=*") {
             $found = $true
             if ($arg -ne $requiredArg) {
-                Write-Host "Overriding Meson b_vscrt option to '$requiredValue' to satisfy openQ4 Windows static CRT policy."
+                Write-Host "Overriding Meson b_vscrt option to '$requiredValue' to satisfy openPREY Windows static CRT policy."
             }
             $updatedArgs += $requiredArg
             continue
@@ -278,100 +284,6 @@ function Test-WindowsStaticCRTReconfigureNeeded {
     return [string]$configuredValue -ne $requiredValue
 }
 
-function Test-ObsoleteBSEBuildOptionPresent {
-    param([string]$BuildDir)
-
-    if ([string]::IsNullOrWhiteSpace($BuildDir) -or -not (Test-Path $BuildDir)) {
-        return $false
-    }
-
-    return $null -ne (Get-MesonBuildOptionValue -BuildDir $BuildDir -OptionName "build_libbse")
-}
-
-function Format-MesonOptionValue {
-    param([object]$Value)
-
-    if ($Value -is [bool]) {
-        return $Value.ToString().ToLowerInvariant()
-    }
-
-    return [string]$Value
-}
-
-function Get-SetupArgsForExistingBuildDir {
-    param(
-        [string]$BuildDir,
-        [string]$RepoRoot
-    )
-
-    $setupArgs = @(
-        "setup",
-        $BuildDir,
-        $RepoRoot,
-        "--backend",
-        "ninja"
-    )
-
-    $buildtype = Get-MesonBuildOptionValue -BuildDir $BuildDir -OptionName "buildtype"
-    if (-not [string]::IsNullOrWhiteSpace([string]$buildtype)) {
-        $setupArgs += "--buildtype=$(Format-MesonOptionValue -Value $buildtype)"
-    }
-
-    $wrapMode = Get-MesonBuildOptionValue -BuildDir $BuildDir -OptionName "wrap_mode"
-    if (-not [string]::IsNullOrWhiteSpace([string]$wrapMode)) {
-        $setupArgs += "--wrap-mode=$(Format-MesonOptionValue -Value $wrapMode)"
-    }
-
-    $optionNames = @(
-        "platform_backend",
-        "linux_x11",
-        "macos_graphics_bridge",
-        "macos_openal_provider",
-        "version_track",
-        "version_iteration",
-        "version_base_override",
-        "openal_root_override",
-        "use_pch",
-        "build_engine",
-        "build_games",
-        "build_game_sp",
-        "build_game_mp",
-        "enforce_msvc_2026"
-    )
-
-    foreach ($optionName in $optionNames) {
-        $value = Get-MesonBuildOptionValue -BuildDir $BuildDir -OptionName $optionName
-        if ($null -eq $value) {
-            continue
-        }
-
-        $formattedValue = Format-MesonOptionValue -Value $value
-        if ([string]::IsNullOrWhiteSpace($formattedValue)) {
-            continue
-        }
-
-        $setupArgs += "-D$optionName=$formattedValue"
-    }
-
-    return @(Ensure-WindowsStaticCRTSetupArgs -MesonArgs $setupArgs)
-}
-
-function Recreate-MesonBuildDirectory {
-    param(
-        [string]$BuildDir,
-        [string[]]$SetupArgs,
-        [string]$VsDevCmdPath,
-        [pscustomobject]$MesonCommand
-    )
-
-    if (Test-Path $BuildDir) {
-        Remove-Item -LiteralPath $BuildDir -Recurse -Force
-    }
-
-    Invoke-Meson -MesonArgs $SetupArgs -VsDevCmdPath $VsDevCmdPath -MesonCommand $MesonCommand -VsTargetArch $vsTargetArch -VsHostArch $vsHostArch
-    return [int]$LASTEXITCODE
-}
-
 function Test-GameSourcesRefreshNeeded {
     param([string]$BuildDir, [string]$RepoRoot)
     if (-not (Test-MesonBuildDirectory $BuildDir)) { return $false }
@@ -383,35 +295,6 @@ function Test-GameSourcesRefreshNeeded {
     # Content and git-state drift only refresh the snapshot; a membership change reconfigures.
     & $python.Source (Join-Path $RepoRoot "tools\build\game_source_inventory.py") $RepoRoot --refresh (Join-Path $BuildDir "openq4_game_sources.json") | Out-Null
     return ($LASTEXITCODE -ne 0)
-}
-
-function Remove-BSEArtifacts {
-    param([string]$DirectoryPath)
-
-    if ([string]::IsNullOrWhiteSpace($DirectoryPath) -or -not (Test-Path $DirectoryPath)) {
-        return
-    }
-
-    $patterns = @(
-        "openQ4-BSE_*.dll",
-        "openQ4-BSE_*.dylib",
-        "openQ4-BSE_*.so",
-        "openQ4-BSE_*.lib",
-        "openQ4-BSE_*.pdb",
-        "openQ4-BSE_*.dll",
-        "openQ4-BSE_*.dylib",
-        "openQ4-BSE_*.so",
-        "openQ4-BSE_*.lib",
-        "openQ4-BSE_*.pdb"
-    )
-
-    foreach ($pattern in $patterns) {
-        $matches = @(Get-ChildItem -Path $DirectoryPath -Filter $pattern -File -ErrorAction SilentlyContinue)
-        foreach ($match in $matches) {
-            Write-Host "Removing stale BSE artifact '$($match.FullName)'"
-            Remove-Item -LiteralPath $match.FullName -Force
-        }
-    }
 }
 
 function Remove-NonRuntimeInstallArtifacts {
@@ -446,14 +329,13 @@ function Remove-NonRuntimeInstallArtifacts {
         "*.map",
         "*.so",
         "*.dylib",
-        "game-sp_x86.dll",
-        "game-mp_x86.dll"
+        "game_x86.dll"
     )
 
-    # baseoq4 and every staged mod game directory (such as q4xbase) that
+    # basepr and every staged mod game directory that
     # carries game modules
     $installGameDirs = @(Get-ChildItem -Path $InstallRoot -Directory -ErrorAction SilentlyContinue |
-        Where-Object { $_.Name -eq "baseoq4" -or (Test-Path -LiteralPath (Join-Path $_.FullName "mod.json") -PathType Leaf) })
+        Where-Object { $_.Name -eq "basepr" -or (Test-Path -LiteralPath (Join-Path $_.FullName "mod.json") -PathType Leaf) })
     foreach ($installGameDir in $installGameDirs) {
         foreach ($pattern in $gameDirPatterns) {
             $matches = @(Get-ChildItem -Path $installGameDir.FullName -Filter $pattern -File -ErrorAction SilentlyContinue)
@@ -484,8 +366,8 @@ function Copy-WindowsDiagnosticSymbols {
     }
 
     $rootPatterns = @(
-        "openQ4-client_*.pdb",
-        "openQ4-ded_*.pdb"
+        "openPREY-client_*.pdb",
+        "openPREY-ded_*.pdb"
     )
 
     foreach ($pattern in $rootPatterns) {
@@ -497,17 +379,16 @@ function Copy-WindowsDiagnosticSymbols {
         }
     }
 
-    $installGameDir = Join-Path $InstallRoot "baseoq4"
+    $installGameDir = Join-Path $InstallRoot "basepr"
     New-Item -Path $installGameDir -ItemType Directory -Force | Out-Null
     $stagedGameSymbols = @{}
 
     $gameBuildDirs = @(
-        (Join-Path $BuildDir "content\baseoq4"),
-        (Join-Path $BuildDir "baseoq4")
+        (Join-Path $BuildDir "content\basepr"),
+        (Join-Path $BuildDir "basepr")
     )
     $gamePatterns = @(
-        "game-sp_*.pdb",
-        "game-mp_*.pdb"
+        "game_*.pdb"
     )
 
     foreach ($gameBuildDir in $gameBuildDirs) {
@@ -530,19 +411,19 @@ function Copy-WindowsDiagnosticSymbols {
     }
 }
 
-function Stop-openQ4RuntimeProcesses {
+function Stop-openPREYRuntimeProcesses {
     [OutputType([bool])]
     param([Parameter(Mandatory = $true)][string]$InstallRoot)
 
     $targetDirectory = [System.IO.Path]::GetFullPath($InstallRoot).TrimEnd('\', '/')
 
     $processNames = @(
-        "openQ4-client_x64",
-        "openQ4-client_x86",
-        "openQ4-client_arm64",
-        "openQ4-ded_x64",
-        "openQ4-ded_x86",
-        "openQ4-ded_arm64"
+        "openPREY-client_x64",
+        "openPREY-client_x86",
+        "openPREY-client_arm64",
+        "openPREY-ded_x64",
+        "openPREY-ded_x86",
+        "openPREY-ded_arm64"
     )
 
     $running = @(Get-Process -Name $processNames -ErrorAction SilentlyContinue | Where-Object {
@@ -562,7 +443,7 @@ function Stop-openQ4RuntimeProcesses {
         return $false
     }
 
-    Write-Host "Stopping openQ4 processes in '$targetDirectory' before install: $($running.ProcessName -join ', ')"
+    Write-Host "Stopping openPREY processes in '$targetDirectory' before install: $($running.ProcessName -join ', ')"
 
     foreach ($proc in $running) {
         try {
@@ -590,7 +471,7 @@ function Stop-openQ4RuntimeProcesses {
         } catch {
             # A process can finish between Refresh and Kill.
             if (-not $proc.HasExited) {
-                throw "Failed to stop openQ4 in '$targetDirectory'. Close it manually and retry install. Details: $($_.Exception.Message)"
+                throw "Failed to stop openPREY in '$targetDirectory'. Close it manually and retry install. Details: $($_.Exception.Message)"
             }
         }
     }
@@ -659,8 +540,8 @@ if (-not (Test-Path $rcWrapper)) {
 
 $env:WINDRES = $rcWrapper
 
-$vsTargetArch = Get-openQ4VsTargetArch
-$vsHostArch = Get-openQ4VsHostArch
+$vsTargetArch = Get-openPREYVsTargetArch
+$vsHostArch = Get-openPREYVsHostArch
 $vsDevCmd = $null
 if (Test-WindowsHost) {
     $vsDevCmd = Get-VsDevCmdPath -TargetArch $vsTargetArch
@@ -681,19 +562,6 @@ if ($commandName -eq "setup") {
     $effectiveArgs = Ensure-WindowsStaticCRTSetupArgs -MesonArgs $effectiveArgs
 }
 
-if ($commandName -eq "setup" -and ($effectiveArgs -contains "--reconfigure")) {
-    $reconfigureIndex = [Array]::IndexOf($effectiveArgs, "--reconfigure")
-    if ($reconfigureIndex -ge 0 -and ($reconfigureIndex + 1) -lt $effectiveArgs.Length) {
-        $candidateBuildDir = [System.IO.Path]::GetFullPath($effectiveArgs[$reconfigureIndex + 1])
-        if (Test-ObsoleteBSEBuildOptionPresent -BuildDir $candidateBuildDir) {
-            Write-Host "Meson build directory '$candidateBuildDir' still uses the removed build_libbse option. Recreating it..."
-            $effectiveArgs = @($effectiveArgs | Where-Object { $_ -ne "--reconfigure" })
-            if (Test-Path $candidateBuildDir) {
-                Remove-Item -LiteralPath $candidateBuildDir -Recurse -Force
-            }
-        }
-    }
-}
 
 
 
@@ -704,37 +572,19 @@ if ($effectiveArgs.Length -gt 0 -and ($effectiveArgs[0] -eq "compile" -or $effec
 
     if ($isCompile -and -not (Test-MesonBuildDirectory $buildInfo.BuildDir)) {
         Write-Host "Meson build directory '$($buildInfo.BuildDir)' is missing or invalid. Running meson setup..."
-        $setupArgs = if (Test-ObsoleteBSEBuildOptionPresent -BuildDir $buildInfo.BuildDir) {
-            Write-Host "Meson build directory '$($buildInfo.BuildDir)' still uses the removed build_libbse option. Recreating it..."
-            Get-SetupArgsForExistingBuildDir -BuildDir $buildInfo.BuildDir -RepoRoot $repoRoot
-        } else {
-            @(
-                "setup",
-                $buildInfo.BuildDir,
-                $repoRoot,
-                "--backend",
-                "ninja",
-                "--buildtype=debug",
-                "--wrap-mode=forcefallback"
-            )
-        }
+        $setupArgs = @(
+            "setup",
+            $buildInfo.BuildDir,
+            $repoRoot,
+            "--backend",
+            "ninja",
+            "--buildtype=debug",
+            "--wrap-mode=forcefallback"
+        )
         $setupArgs = Ensure-WindowsStaticCRTSetupArgs -MesonArgs $setupArgs
 
-        if (Test-ObsoleteBSEBuildOptionPresent -BuildDir $buildInfo.BuildDir) {
-            $setupCode = Recreate-MesonBuildDirectory -BuildDir $buildInfo.BuildDir -SetupArgs $setupArgs -VsDevCmdPath $vsDevCmd -MesonCommand $mesonCommand
-        } else {
-            Invoke-Meson -MesonArgs $setupArgs -VsDevCmdPath $vsDevCmd -MesonCommand $mesonCommand -VsTargetArch $vsTargetArch -VsHostArch $vsHostArch
-            $setupCode = [int]$LASTEXITCODE
-        }
+        Invoke-Meson -MesonArgs $setupArgs -VsDevCmdPath $vsDevCmd -MesonCommand $mesonCommand -VsTargetArch $vsTargetArch -VsHostArch $vsHostArch
         $setupCode = [int]$LASTEXITCODE
-        if ($setupCode -ne 0) {
-            exit $setupCode
-        }
-    }
-    elseif (Test-ObsoleteBSEBuildOptionPresent -BuildDir $buildInfo.BuildDir) {
-        Write-Host "Meson build directory '$($buildInfo.BuildDir)' still uses the removed build_libbse option. Recreating it..."
-        $setupArgs = Get-SetupArgsForExistingBuildDir -BuildDir $buildInfo.BuildDir -RepoRoot $repoRoot
-        $setupCode = Recreate-MesonBuildDirectory -BuildDir $buildInfo.BuildDir -SetupArgs $setupArgs -VsDevCmdPath $vsDevCmd -MesonCommand $mesonCommand
         if ($setupCode -ne 0) {
             exit $setupCode
         }
@@ -747,7 +597,7 @@ if ($effectiveArgs.Length -gt 0 -and ($effectiveArgs[0] -eq "compile" -or $effec
         if ([string]::IsNullOrWhiteSpace([string]$configuredCRT)) {
             $configuredCRT = "unset"
         }
-        Write-Host "Meson build directory '$($buildInfo.BuildDir)' uses b_vscrt='$configuredCRT'. Reconfiguring for openQ4's required Windows static CRT policy..."
+        Write-Host "Meson build directory '$($buildInfo.BuildDir)' uses b_vscrt='$configuredCRT'. Reconfiguring for openPREY's required Windows static CRT policy..."
         $reconfigureReasons += "Windows static CRT policy"
     }
 
@@ -786,7 +636,7 @@ if ($effectiveArgs.Length -gt 0 -and ($effectiveArgs[0] -eq "compile" -or $effec
 }
 
 if ($commandName -eq "install" -and $env:OPENQ4_INSTALL_CLOSE_RUNNING -ne "0") {
-    Stop-openQ4RuntimeProcesses -InstallRoot (Join-Path $repoRoot ".install") | Out-Null
+    Stop-openPREYRuntimeProcesses -InstallRoot (Join-Path $repoRoot ".install") | Out-Null
 }
 
 if (@("setup", "compile", "install").Contains($commandName) -and $env:OPENQ4_SKIP_ICON_SYNC -ne "1") {
@@ -819,7 +669,7 @@ $exitCode = [int]$LASTEXITCODE
 if ($commandName -eq "install" -and $exitCode -ne 0 -and $env:OPENQ4_INSTALL_RETRY_ON_FAILURE -ne "0") {
     Write-Host "Meson install failed; retrying once..."
     if ($env:OPENQ4_INSTALL_CLOSE_RUNNING -ne "0") {
-        Stop-openQ4RuntimeProcesses -InstallRoot (Join-Path $repoRoot ".install") | Out-Null
+        Stop-openPREYRuntimeProcesses -InstallRoot (Join-Path $repoRoot ".install") | Out-Null
     }
     Start-Sleep -Milliseconds 500
     Invoke-Meson -MesonArgs $effectiveArgs -VsDevCmdPath $vsDevCmd -MesonCommand $mesonCommand -VsTargetArch $vsTargetArch -VsHostArch $vsHostArch
@@ -829,12 +679,8 @@ if ($commandName -eq "install" -and $exitCode -ne 0 -and $env:OPENQ4_INSTALL_RET
 if ($exitCode -eq 0 -and ($commandName -eq "compile" -or $commandName -eq "install")) {
     $includeInstallRoot = $commandName -eq "install"
     $buildInfo = Get-CompileBuildDirInfo -MesonArgs $effectiveArgs -DefaultBuildDir $defaultBuildDir
-    Remove-BSEArtifacts -DirectoryPath $buildInfo.BuildDir
     $installRootPath = Join-Path $repoRoot ".install"
     Remove-NonRuntimeInstallArtifacts -InstallRoot $installRootPath
-    if ($includeInstallRoot) {
-        Remove-BSEArtifacts -DirectoryPath $installRootPath
-    }
 
     if (-not (Test-Path $stageWindowsRuntimeScript)) {
         throw "Windows runtime staging script not found: '$stageWindowsRuntimeScript'."

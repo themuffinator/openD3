@@ -71,8 +71,8 @@ idCVar Win32Vars_t::in_mouse("in_mouse", "1", CVAR_SYSTEM | CVAR_BOOL, "enable m
 idCVar Win32Vars_t::win_allowAltTab("win_allowAltTab", "0", CVAR_SYSTEM | CVAR_BOOL, "allow Alt-Tab when fullscreen");
 idCVar Win32Vars_t::win_notaskkeys("win_notaskkeys", "0", CVAR_SYSTEM | CVAR_INTEGER, "disable windows task keys");
 idCVar Win32Vars_t::win_username("win_username", "", CVAR_SYSTEM | CVAR_INIT, "windows user name");
-idCVar Win32Vars_t::win_xpos("win_xpos", "3", CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_INTEGER, "horizontal position of window");
-idCVar Win32Vars_t::win_ypos("win_ypos", "22", CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_INTEGER, "vertical position of window");
+idCVar Win32Vars_t::win_xpos("win_xpos", "3", CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_INTEGER, "horizontal position of the window's outer frame");
+idCVar Win32Vars_t::win_ypos("win_ypos", "22", CVAR_SYSTEM | CVAR_ARCHIVE | CVAR_INTEGER, "vertical position of the window's outer frame");
 idCVar Win32Vars_t::win_outputDebugString("win_outputDebugString", "1", CVAR_SYSTEM | CVAR_BOOL, "");
 idCVar Win32Vars_t::win_outputEditString("win_outputEditString", "1", CVAR_SYSTEM | CVAR_BOOL, "");
 idCVar Win32Vars_t::win_viewlog("win_viewlog", "0", CVAR_SYSTEM | CVAR_INTEGER, "");
@@ -426,12 +426,12 @@ static bool Sys_TryTranslateopenQ4ProtocolCommandLine( const char *rawCmdLine, i
 		return false;
 	}
 
-	if ( idStr::Icmpn( args.Argv( 0 ), "openq4://", 9 ) != 0 ) {
+	if ( idStr::Icmpn( args.Argv( 0 ), "openprey://", 11 ) != 0 ) {
 		return false;
 	}
 
 	uriPayload = args.Argv( 0 );
-	uriPayload = uriPayload.Mid( 9, uriPayload.Length() - 9 );
+	uriPayload = uriPayload.Mid( 11, uriPayload.Length() - 11 );
 	uriPayload.StripLeading( '/' );
 
 	if ( uriPayload.Length() == 0 ) {
@@ -582,7 +582,7 @@ static bool Sys_BuildWindowsProductSavePath( const char *root, idStr &savePath )
 		return false;
 	}
 	savePath.StripTrailing( '\\' );
-	savePath.AppendPath( "openQ4" );
+	savePath.AppendPath( "openPREY" );
 	savePath.SlashesToBackSlashes();
 	return true;
 }
@@ -849,6 +849,10 @@ Sys_IsGameWindowFocused
 ================
 */
 bool Sys_IsGameWindowFocused(void) {
+	if ( !win32.activeApp || win32.hWnd == NULL ) {
+		return false;
+	}
+
 	if (!IsWindowVisible(win32.hWnd))
 		return false;
 
@@ -1855,13 +1859,13 @@ static HANDLE win_instanceMutex = NULL;
 ================
 Sys_AlreadyRunning
 
-returns true if there is a copy of openQ4 running already
+returns true if there is a copy of openPREY running already
 ================
 */
 bool Sys_AlreadyRunning(void) {
 #ifndef DEBUG
 	if (!win32.win_allowMultipleInstances.GetBool()) {
-		win_instanceMutex = ::CreateMutex(NULL, FALSE, "openQ4");
+		win_instanceMutex = ::CreateMutex(NULL, FALSE, "openPREY");
 		if (::GetLastError() == ERROR_ALREADY_EXISTS || ::GetLastError() == ERROR_ACCESS_DENIED) {
 			return true;
 		}
@@ -1971,7 +1975,7 @@ void Sys_Init(void) {
 	win32.sys_arch.SetString( Sys_FormatWindowsVersion( win32.osversion ) );
 	if ( !Sys_IsWindowsVersionOrGreater( win32.osversion, OPENQ4_VALIDATED_WINDOWS_MAJOR_VERSION, OPENQ4_VALIDATED_WINDOWS_MINOR_VERSION ) ) {
 		common->Printf(
-			"WARNING: %s is outside openQ4's actively validated Windows support matrix.\n",
+			"WARNING: %s is outside openPREY's actively validated Windows support matrix.\n",
 			win32.sys_arch.GetString() );
 	}
 

@@ -1,10 +1,10 @@
 {
   "schema": 1,
-  "comment": "openQ4 runtime content packs. This table drives the Meson pack targets, the generated engine pack table (openq4_paks_generated.h), the packagers, the archive verifiers and Android packaging. See docs/dev/content-pack-distribution.md.",
+  "comment": "openPREY runtime content packs. This table drives the Meson pack targets, the generated engine pack table (openq4_paks_generated.h), the packagers and the archive verifiers. Retail Prey content is never packed here; users supply it. See docs/dev/content-pack-distribution.md.",
   "packs": [
     {
       "name": "pak0.pk4",
-      "source": "content/baseoq4/pak0",
+      "source": "content/basepr/pak0",
       "contents": "core runtime content",
       "contents_string": "#str_231701",
       "client_only": false,
@@ -21,37 +21,15 @@
     },
     {
       "name": "pak1.pk4",
-      "source": "content/baseoq4/pak1",
-      "contents": "light grids",
+      "source": "content/basepr/pak1",
+      "contents": "interface artwork",
       "contents_string": "#str_231702",
       "client_only": true,
-      "bulk": true,
-      "rules": [
-        "light-grid-trim"
-      ],
+      "bulk": false,
       "required_files": [
-        "maps/mp/q4dm1.lightgridpack"
-      ],
-      "generation": {
-        "number": 1,
-        "commit": "3677866d62dd9d4f47be54c860e7f7dd0c8fe16c"
-      }
-    },
-    {
-      "name": "pak2.pk4",
-      "source": "content/baseoq4/pak2",
-      "contents": "loadscreens",
-      "contents_string": "#str_231703",
-      "client_only": true,
-      "bulk": true,
-      "required_files": [
-        "gfx/guis/loadscreens/generic.dds",
-        "gfx/guis/loadscreens/generic.tga"
-      ],
-      "generation": {
-        "number": 1,
-        "commit": "849a65032b97be8c0635e2889e90da0773b388aa"
-      }
+        "guis/assets/guicursor_arrow.tga",
+        "guis/assets/guicursor_menu.tga"
+      ]
     }
   ]
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression checks for openQ4 pure-pack and download handling."""
+"""Regression checks for openPREY pure-pack and download handling (legacy filename)."""
 
 from __future__ import annotations
 
@@ -250,8 +250,8 @@ def validate_filesystem_pure_pack_contract() -> None:
     require(checksum_validator, "const bool optional = expected.clientOnly;", "dedicated optional client-only packs")
     require(checksum_validator, "onlyClientPacks = onlyClientPacks && expected.clientOnly;", "client-only failures can wait for localization")
     require(startup, "ValidateOpenQ4Paks( openQ4PakErrors, onlyClientPacks )", "startup pack checksum validation")
-    require(startup, "openQ4 runtime content packs in '%s' are missing or modified", "startup pack checksum fatal")
-    require_order(startup, "if ( !onlyClientPacks ) {", "openQ4 runtime content packs in '%s' are missing or modified", "core pack failures stay fatal at once")
+    require(startup, "openPREY runtime content packs in '%s' are missing or modified", "startup pack checksum fatal")
+    require_order(startup, "if ( !onlyClientPacks ) {", "openPREY runtime content packs in '%s' are missing or modified", "core pack failures stay fatal at once")
     require(startup, "FS_RaiseDeferredContentPackFailure();", "a client-only pack failure after startup is reported at once")
     deferred = function_body(source, "void FS_RaiseDeferredContentPackFailure(")
     report = function_body(source, "static idStr FS_FormatOpenQ4PackProblems(")
@@ -263,9 +263,10 @@ def validate_filesystem_pure_pack_contract() -> None:
     require(report, "PROJECT_RELEASES_URL", "pack report says where to get the pack")
     common_source = read("src/framework/Common.cpp")
     require_order(common_source, "InitLanguageDict( false, false );", "FS_RaiseDeferredContentPackFailure();", "client-only pack report after the language load")
-    require(startup, "openQ4 runtime directory '%s' is missing a compatible mod.json", "startup mod manifest fatal")
-    require(startup, "Retail Quake 4 media pk4 files must be installed in '%s', not '%s'.", "startup misplaced retail pk4 fatal")
-    require(startup, "Put pak001.pk4 through pak022.pk4 in that folder", "startup retail pk4 location guidance")
+    require(startup, "openPREY runtime directory '%s' is missing a compatible mod.json", "startup mod manifest fatal")
+    require(startup, "Retail Prey media pk4 files must be installed in '%s', not '%s'.", "startup misplaced retail pk4 fatal")
+    require(startup, "pak000.pk4 through pak004.pk4", "startup classic retail pk4 guidance")
+    require(startup, "pak_data.pk4, pak_sound.pk4, pak_en_v.pk4, and pak_en_t.pk4", "startup digital retail pk4 guidance")
     require(startup, "Do not put retail pk4 files in '%s'", "startup baseoq4 retail pk4 warning")
     require(misplaced_validator, "FindGamePackByName( info->name, OPENQ4_GAMEDIR )", "misplaced retail pk4 baseoq4 lookup")
     require(misplaced_validator, "with checksum 0x%08x but belongs in %s", "misplaced retail pk4 checksum diagnostic")
@@ -1078,7 +1079,7 @@ def validate_packager_pure_pack_contract() -> None:
         for pak_name in ("pak0.pk4", "pak1.pk4", "pak2.pk4"):
             for marker in ("binary.conf", "addon.conf"):
                 shutil.rmtree(work, ignore_errors=True)
-                install_game_dir = work / "baseoq4"
+                install_game_dir = work / "basepr"
                 destination_pk4 = work / pak_name
                 write_test_file(install_game_dir / marker, b"marker\n")
                 expect_runtime_error(
@@ -1092,7 +1093,7 @@ def validate_packager_pure_pack_contract() -> None:
 
 def validate_build_pak0_contract() -> None:
     meson = read("meson.build")
-    baseoq4_meson = read("content/baseoq4/meson.build")
+    basepr_meson = read("content/basepr/meson.build")
     build_pak0 = read("tools/build/build_pak0.py")
     build_openq4_pack = read("tools/build/build_openq4_pack.py")
     generate_pak_header = read("tools/build/generate_pak_header.py")
@@ -1128,10 +1129,10 @@ def validate_build_pak0_contract() -> None:
     require_order(meson, "'openq4_' + openq4_pack_stem,", "'openq4_paks_generated_header'", "packs before checksum header")
     require_order(meson, "'openq4_paks_generated_header'", engine_generated_headers, "checksum header before engine sources")
 
-    require(baseoq4_meson, "baseoq4_manifest", "loose mod.json install")
-    reject(baseoq4_meson, "install_subdir(", "baseoq4 content should be inside openQ4 PK4s")
-    reject(baseoq4_meson, "'openq4_defaults.cfg'", "baseoq4 loose config install")
-    reject(baseoq4_meson, "'default.cfg'", "baseoq4 loose default config install")
+    require(basepr_meson, "basepr_manifest", "loose mod.json install")
+    reject(basepr_meson, "install_subdir(", "basepr content should be inside openPREY PK4s")
+    reject(basepr_meson, "'openq4_defaults.cfg'", "basepr loose config install")
+    reject(basepr_meson, "'default.cfg'", "basepr loose default config install")
 
     require(pak_helper, 'f"#define {stem}_MD5', "generated per-pack checksum macro")
     require(pak_helper, "OPENQ4_PACK_TABLE_ENTRIES", "generated pack table macro")
@@ -1161,7 +1162,7 @@ def validate_build_pak0_contract() -> None:
     require(validator, "content_packs.json", "staged payload requires every table pack")
     require(validator, "STAGED_FORBIDDEN_LOOSE_GAME_PATHS", "staged payload forbids stale loose content")
     require(validator, '"openq4_defaults.cfg"', "staged payload forbids loose defaults")
-    require(validator, "must live inside openQ4 PK4s", "staged payload stale loose diagnostic")
+    require(validator, "must live inside openPREY PK4s", "staged payload stale loose diagnostic")
 
     shutil.rmtree(work, ignore_errors=True)
     try:
@@ -1175,7 +1176,7 @@ def validate_build_pak0_contract() -> None:
                 write_test_file(source_root / spec.source / relative_path, f"{relative_path}\n".encode("utf-8"))
 
         out_dir = work / "out"
-        stage_dir = work / "stage" / "baseoq4"
+        stage_dir = work / "stage" / "basepr"
         header_out = work / "openq4_paks_generated.h"
         subprocess.run(
             [
@@ -1208,8 +1209,7 @@ def validate_build_pak0_contract() -> None:
             require(header, f'{{ "{spec.name}", {stem}_MD5,', f"generated {spec.name} table entry")
             if built.read_bytes() != (stage_dir / spec.name).read_bytes():
                 raise AssertionError(f"Staged {spec.name} does not match the generated pack")
-        require(header, "#define OPENQ4_PAK1_CLIENT_ONLY 1", "light grids are client-only")
-        require(header, "#define OPENQ4_PAK2_CLIENT_ONLY 1", "loadscreens are client-only")
+        require(header, "#define OPENQ4_PAK1_CLIENT_ONLY 1", "pak1 is client-only")
         require(header, "#define OPENQ4_PAK0_CLIENT_ONLY 0", "core pack is for every runtime")
     finally:
         shutil.rmtree(work, ignore_errors=True)
@@ -1884,26 +1884,15 @@ def validate_verified_pack_record() -> None:
 
 def validate_validation_coverage() -> None:
     validator = read("tools/validation/openq4_validate.py")
-    push = read(".github/workflows/push-verification.yml")
-    commit = read(".github/workflows/commit-validation.yml")
+    workflow = read(".github/workflows/openprey-validation.yml")
 
-    for haystack, context in (
-        (validator, "validation runner"),
-        (push, "push verification workflow"),
-        (commit, "commit validation workflow"),
-    ):
-        require(haystack, "openq4_pure_pack.py", context)
+    require(validator, "openq4_pure_pack.py", "validation runner")
 
-    for haystack, context in (
-        (push, "push verification workflow"),
-        (commit, "commit validation workflow"),
-    ):
-        require(haystack, "build_pak0.py", context)
-        require(haystack, "build_openq4_pack.py", context)
-        require(haystack, "generate_pak_header.py", context)
-        require(haystack, "list_pak_sources.py", context)
-        require(haystack, "write_pak_manifest.py", context)
-        require(haystack, "openq4_pak.py", context)
+    require(workflow, "content/basepr/${pak}", "openPREY pak source roots")
+    require(workflow, "build_openq4_pack.py", "openPREY pak build workflow")
+    require(workflow, "write_pak_manifest.py", "openPREY pak manifest workflow")
+    require(workflow, ".install/basepr/pak0.pk4", "staged pak0 verification")
+    require(workflow, ".install/basepr/pak1.pk4", "staged pak1 verification")
 
 
 def main() -> None:

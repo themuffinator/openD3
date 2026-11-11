@@ -1330,11 +1330,40 @@ bool idUserInterfaceLocal::InitFromFile( const char *qpath, bool rebuild, bool c
 		while( src.ReadToken( &token ) ) {
 			if ( idStr::Icmp( token, "windowDef" ) == 0 ) {
 				desktop->SetDC( &uiManagerLocal.dc );
+				desktop->SetWindowDefType( token.c_str() );
 				if ( desktop->Parse( &src, rebuild ) ) {
 					desktop->SetFlag( WIN_DESKTOP );
 					desktop->FixupParms();
 				} else {
 					parseOk = false;
+				}
+				continue;
+			}
+			else if ( idStr::Icmp( token, "animationDef" ) == 0 ||
+					  idStr::Icmp( token, "buttonDef" ) == 0 ||
+					  idStr::Icmp( token, "superWindowDef" ) == 0 ||
+					  idStr::Icmp( token, "tabContainerDef" ) == 0 ||
+					  idStr::Icmp( token, "tabDef" ) == 0 ||
+					  idStr::Icmp( token, "keyDef" ) == 0 ||
+					  idStr::Icmp( token, "creditDef" ) == 0 ||
+					  idStr::Icmp( token, "splineDef" ) == 0 ||
+					  idStr::Icmp( token, "bindDef" ) == 0 ||
+					  idStr::Icmp( token, "bindKeyDef" ) == 0 ) {
+				const idStr childDefType = token;
+				idToken childName;
+				desktop->SetDC( &uiManagerLocal.dc );
+				if ( !src.ExpectTokenType( TT_NAME, 0, &childName ) ) {
+					continue;
+				}
+				src.UnreadToken( &childName );
+				idWindow *child = new idWindow( &uiManagerLocal.dc, this );
+				child->SetWindowDefType( childDefType.c_str() );
+				if ( child->Parse( &src, rebuild ) ) {
+					desktop->SetFlag( WIN_DESKTOP );
+					desktop->AddChildWindow( child );
+					child->FixupParms();
+				} else {
+					delete child;
 				}
 				continue;
 			}
@@ -1502,6 +1531,9 @@ void idUserInterfaceLocal::Redraw( int _time, bool useAspectCorrection ) {
 	}
 	if ( !loading && desktop ) {
 		time = _time;
+		// Consoles and vehicle HUDs ramp this while Talon translates them; the
+		// alien-face windows read it as they draw (idWindow::Draw).
+		translationAlpha = idMath::ClampFloat( 0.0f, 1.0f, state.GetFloat( "translationAlpha", "0" ) );
 		renderSystem->SetFrameShaderTime( _time );
 		if ( !initialized ) {
 			initialized = true;
@@ -1605,7 +1637,7 @@ void idUserInterfaceLocal::DrawCursor() {
 		return;
 	}
 	if ( !desktop || desktop->GetFlags() & WIN_MENUGUI ) {
-		uiManagerLocal.dc.DrawCursor(&cursorX, &cursorY, 32.0f );
+		uiManagerLocal.dc.DrawCursor(&cursorX, &cursorY, 15.0f );
 	} else {
 		uiManagerLocal.dc.DrawCursor(&cursorX, &cursorY, 64.0f );
 	}
@@ -1788,6 +1820,17 @@ void idUserInterfaceLocal::Trigger(int _time) {
 	}
 }
 
+void idUserInterfaceLocal::CallStartup() {
+	if ( desktop ) {
+		desktop->RunScript( idWindow::ON_STARTUP );
+		desktop->RunNamedEvent( "onStartup" );
+	}
+}
+
+const char* idUserInterfaceLocal::Translate( const char* text ) {
+	return common->GetLanguageDict()->GetString( text != NULL ? text : "" );
+}
+
 void idUserInterfaceLocal::ReadFromDemoFile( class idDemoFile *f ) {
 	ResetHudPresentation( true );
 	evaluatedHudState.Clear();
@@ -1827,6 +1870,12 @@ void idUserInterfaceLocal::WriteToDemoFile( class idDemoFile *f ) {
 	f->WriteFloat( cursorX );
 	f->WriteFloat( cursorY );
 }
+
+// openPREY: a stream marker and version lead the GUI state, so a stream from
+// another build fails closed instead of misreading the window tree. Version 2
+// follows upstream's checked encoding (one-byte bools, bounded strings).
+static const int OPENPREY_GUI_SAVE_MAGIC = 'P' | ( 'G' << 8 ) | ( 'U' << 16 ) | ( 'I' << 24 );
+static const int OPENPREY_GUI_SAVE_VERSION = 2;
 
 static const int UI_MAX_SAVEGAME_STATE_ENTRIES = 16384;
 static const int UI_MAX_SAVEGAME_STRING_LENGTH = 64 * 1024;
@@ -1891,6 +1940,11 @@ bool idUserInterfaceLocal::WriteToSaveGame( idFile *savefile ) const {
 	if ( savefile == NULL || desktop == NULL ) {
 		common->Warning( "idUserInterfaceLocal::WriteToSaveGame: gui '%s' has no valid output file/desktop",
 			source.c_str() );
+		return false;
+	}
+
+	if ( !UI_WriteSaveGameInt( savefile, OPENPREY_GUI_SAVE_MAGIC, "GUI save magic" ) ||
+		 !UI_WriteSaveGameInt( savefile, OPENPREY_GUI_SAVE_VERSION, "GUI save version" ) ) {
 		return false;
 	}
 
@@ -2026,9 +2080,21 @@ bool idUserInterfaceLocal::ReadFromSaveGame( idFile *savefile ) {
 	delete essentialHud; essentialHud = nullptr;
 	remastered = NULL;
 
+	int magic = 0;
+	int version = 0;
 	int num = 0;
 	idStr key;
 	idStr value;
+
+	if ( !UI_ReadSaveGameInt( savefile, magic, "GUI save magic" ) ||
+		!UI_ReadSaveGameInt( savefile, version, "GUI save version" ) ) {
+		return false;
+	}
+	if ( magic != OPENPREY_GUI_SAVE_MAGIC || version != OPENPREY_GUI_SAVE_VERSION ) {
+		common->Warning( "idUserInterfaceLocal::ReadFromSaveGame: unsupported GUI stream marker 0x%08x version %d",
+			magic, version );
+		return false;
+	}
 
 	if ( !UI_ReadSaveGameInt( savefile, num, "state count" ) ) {
 		return false;

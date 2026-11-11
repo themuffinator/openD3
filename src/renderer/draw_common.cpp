@@ -208,6 +208,15 @@ static bool RB_DrawSurfIsPostFogMaterialPass( const drawSurf_t *surf ) {
 	return material->GetSort() >= SS_MEDIUM && material->GetSort() < SS_POST_PROCESS;
 }
 
+// A fullscreen 2D view has no lights or fog, and the GUI model emits its
+// surfaces in submission order without sorting them. Draw both material
+// ranges in that order in one walk, as the retail renderer did: splitting them
+// around fog drew every SS_GUI label and fill before any SS_MEDIUM image, so a
+// plate drawn under its text (a stock tab, say) covered it.
+static bool RB_DrawSurfIsOrdered2DMaterialPass( const drawSurf_t *surf ) {
+	return RB_DrawSurfIsPreFogMaterialPass( surf ) || RB_DrawSurfIsPostFogMaterialPass( surf );
+}
+
 static bool RB_DrawSurfNeedsPreFogLegacyFeedback( const drawSurf_t *surf ) {
 	return RB_DrawSurfNeedsLegacyFeedback( surf ) && RB_DrawSurfIsPreFogMaterialPass( surf );
 }
@@ -1649,34 +1658,50 @@ static bool RB_ViewRequestsSceneRenderTarget( const viewDef_t *viewDef ) {
 		|| scaledSceneRequested;
 }
 
-static bool RB_IsInlineSubviewOfScenePostProcessView( const viewDef_t *viewDef ) {
-	if ( viewDef == NULL || viewDef->superView == NULL || viewDef->subviewSurface == NULL ) {
-		return false;
-	}
-	if ( !viewDef->isSubview || viewDef->isXraySubview ) {
-		return false;
-	}
-	if ( viewDef->subviewSurface->material == NULL || viewDef->subviewSurface->material->GetSort() != SS_SUBVIEW ) {
-		return false;
+/*
+=============
+RB_InlineSubviewSceneRoot
+
+A direct SS_SUBVIEW subview (a mirror, a Prey portal or skybox portal) draws
+straight into its parent's viewport, so it has to draw into whatever target
+the root of its chain draws into. Returns that root when it is a main scene
+view, NULL for a view that keeps its own target.
+
+The whole chain is walked. A sky seen through a portal is a direct subview of
+a direct subview; testing only the immediate parent left it in the window
+while the portal view around it went to the scene target.
+=============
+*/
+static const viewDef_t *RB_InlineSubviewSceneRoot( const viewDef_t *viewDef ) {
+	if ( viewDef == NULL || !viewDef->isSubview ) {
+		return NULL;
 	}
 
-	const viewDef_t *superView = viewDef->superView;
-	if ( !RB_IsMainScenePostProcessView( superView ) ) {
-		return false;
+	const viewDef_t *candidate = viewDef;
+	while ( candidate->isSubview ) {
+		const viewDef_t *superView = candidate->superView;
+		if ( superView == NULL || candidate->subviewSurface == NULL || candidate->isXraySubview ) {
+			return NULL;
+		}
+		if ( candidate->subviewSurface->material == NULL
+			|| candidate->subviewSurface->material->GetSort() != SS_SUBVIEW ) {
+			return NULL;
+		}
+
+		// Inline subviews inherit the parent viewport and render directly into
+		// it. Dynamic render-map subviews are cropped to scratch images and
+		// must stay isolated from the parent scene target.
+		if ( !candidate->viewport.Equals( superView->viewport ) ) {
+			return NULL;
+		}
+		if ( candidate->renderView.width != superView->renderView.width
+			|| candidate->renderView.height != superView->renderView.height ) {
+			return NULL;
+		}
+		candidate = superView;
 	}
 
-	// Inline portal-sky subviews inherit the parent viewport and render
-	// directly into it. Dynamic render-map subviews are cropped to scratch
-	// images and must stay isolated from the parent scene target.
-	if ( !viewDef->viewport.Equals( superView->viewport ) ) {
-		return false;
-	}
-	if ( viewDef->renderView.width != superView->renderView.width
-		|| viewDef->renderView.height != superView->renderView.height ) {
-		return false;
-	}
-
-	return true;
+	return RB_IsMainScenePostProcessView( candidate ) ? candidate : NULL;
 }
 
 static bool RB_IsPortalSkyView( const viewDef_t *viewDef ) {
@@ -1709,8 +1734,7 @@ static bool RB_ViewHasSkyBackdropSurfaces( const viewDef_t *viewDef ) {
 		if ( surf == NULL || surf->material == NULL ) {
 			continue;
 		}
-		const texgen_t texgen = surf->material->Texgen();
-		if ( texgen == TG_SKYBOX_CUBE || texgen == TG_WOBBLESKY_CUBE ) {
+		if ( surf->material->HasTexgen( TG_SKYBOX_CUBE ) || surf->material->HasTexgen( TG_WOBBLESKY_CUBE ) ) {
 			return true;
 		}
 	}
@@ -1991,14 +2015,47 @@ static bool RB_SceneRenderTargetRequested( void ) {
 	return RB_ViewRequestsSceneRenderTarget( backEnd.viewDef );
 }
 
-static bool RB_InlineSubviewSceneRenderTargetRequested( void ) {
+// The root whose scene target the current direct subview draws into, or NULL.
+static const viewDef_t *RB_InlineSubviewSceneRenderTargetRoot( void ) {
 	if ( backEnd.renderTexture != NULL ) {
-		return false;
+		return NULL;
 	}
-	if ( !RB_IsInlineSubviewOfScenePostProcessView( backEnd.viewDef ) ) {
-		return false;
+	const viewDef_t *rootView = RB_InlineSubviewSceneRoot( backEnd.viewDef );
+	return rootView != NULL && RB_ViewRequestsSceneRenderTarget( rootView ) ? rootView : NULL;
+}
+
+/*
+=============
+RB_ClearSceneRenderTargetForInlineSubviews
+
+The window is cleared as a frame starts (r_clear). The scene target is not,
+and a root view never clears colour: its opaque surfaces cover the view. A sky
+scene does not cover its view (nothing lies below its horizon), so the first
+direct subview of a root left last frame's finished image in those gaps, where
+it was post-processed again every frame until it burned out to white. Start
+the root's part of the target from black instead, as the window and Vulkan do.
+Called with the scene target bound and the view's rectangles scaled to it.
+=============
+*/
+static int rbSceneRenderTargetInlineClearFrame = -1;
+static const viewDef_t *rbSceneRenderTargetInlineClearRoot = NULL;
+
+static void RB_ClearSceneRenderTargetForInlineSubviews( const viewDef_t *rootView ) {
+	if ( rbSceneRenderTargetInlineClearFrame == backEnd.frameCount
+			&& rbSceneRenderTargetInlineClearRoot == rootView ) {
+		return;
 	}
-	return RB_ViewRequestsSceneRenderTarget( backEnd.viewDef->superView );
+	rbSceneRenderTargetInlineClearFrame = backEnd.frameCount;
+	rbSceneRenderTargetInlineClearRoot = rootView;
+
+	// a direct subview shares its root's viewport
+	const idScreenRect &viewport = backEnd.viewDef->viewport;
+	glEnable( GL_SCISSOR_TEST );
+	glScissor( RB_TileOffsetX() + viewport.x1, RB_TileOffsetY() + viewport.y1,
+		viewport.x2 + 1 - viewport.x1, viewport.y2 + 1 - viewport.y1 );
+	GL_State( GLS_DEFAULT );
+	glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
+	glClear( GL_COLOR_BUFFER_BIT );
 }
 
 static void RB_BeginFullscreenPostProcessPass( int scissorX, int scissorY, int scissorWidth, int scissorHeight ) {
@@ -8134,6 +8191,8 @@ void RB_ShutdownScenePostProcess( void ) {
 	rbSceneRenderTargetPreserveFarDepthView = NULL;
 	rbSceneRenderTargetBackdropImportedFrame = -1;
 	rbSceneRenderTargetBackdropImportedView = NULL;
+	rbSceneRenderTargetInlineClearFrame = -1;
+	rbSceneRenderTargetInlineClearRoot = NULL;
 	rbPortalSkyBackdropFrame = -1;
 	rbPortalSkyBackdropImage = NULL;
 	rbSceneRenderTargetPortalSkyFrame = -1;
@@ -9106,8 +9165,8 @@ static bool RB_MaterialIsSkyForSSAODepth( const idMaterial *material ) {
 		return true;
 	}
 
-	const texgen_t texgen = material->Texgen();
-	return texgen == TG_SKYBOX_CUBE || texgen == TG_WOBBLESKY_CUBE;
+	// Prey skies can carry the cube texgen on any stage, not just the first.
+	return material->HasTexgen( TG_SKYBOX_CUBE ) || material->HasTexgen( TG_WOBBLESKY_CUBE );
 }
 
 static bool RB_SSAOWorldDepthSurfFilter( const drawSurf_t *surf ) {
@@ -11324,6 +11383,9 @@ void RB_STD_T_RenderShaderPasses( const drawSurf_t *surf ) {
 	const int stageCount = shader->GetNumStages();
 	for ( stage = 0; stage < stageCount ; stage++ ) {
 		pStage = shader->GetStage(stage);
+		if ( backEnd.viewDef->isGlowView && !pStage->glowStage ) {
+			continue;
+		}
 
 		// check the enable condition
 		if ( regs[ pStage->conditionRegister ] == 0 ) {
@@ -11994,6 +12056,173 @@ int RB_STD_DrawShaderPasses( drawSurf_t **drawSurfs, int numDrawSurfs, rbShaderP
 	glColor3f( 1, 1, 1 );
 
 	return i;
+}
+
+static bool RB_GlowEnabledForCurrentView( void ) {
+	return backEnd.viewDef != NULL
+		&& !backEnd.viewDef->isSubview
+		&& !backEnd.viewDef->isEditor
+		&& !backEnd.viewDef->isGlowView
+		&& backEnd.viewDef->viewEntitys != NULL
+		&& !r_skipGlowOverlay.GetBool()
+		&& r_glowStrength.GetFloat() > 0.0f
+		&& globalImages->accumImage != NULL
+		&& globalImages->glowScreenImage != NULL
+		&& globalImages->glowCompositeImage != NULL;
+}
+
+static void RB_GlowSetScreenRect( void ) {
+	const int viewportWidth = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
+	const int viewportHeight = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
+	const int viewportX = tr.viewportOffset[0] + backEnd.viewDef->viewport.x1;
+	const int viewportY = tr.viewportOffset[1] + backEnd.viewDef->viewport.y1;
+	glViewport( viewportX, viewportY, viewportWidth, viewportHeight );
+	glScissor(
+		viewportX + backEnd.viewDef->scissor.x1,
+		viewportY + backEnd.viewDef->scissor.y1,
+		backEnd.viewDef->scissor.x2 - backEnd.viewDef->scissor.x1 + 1,
+		backEnd.viewDef->scissor.y2 - backEnd.viewDef->scissor.y1 + 1 );
+	backEnd.currentScissor = backEnd.viewDef->scissor;
+}
+
+static void RB_GlowBeginScreenPass( void ) {
+	RB_GlowSetScreenRect();
+	glMatrixMode( GL_MODELVIEW );
+	glPushMatrix();
+	glLoadIdentity();
+	glMatrixMode( GL_PROJECTION );
+	glPushMatrix();
+	glLoadIdentity();
+	glOrtho( 0, 1, 0, 1, -4, 1 );
+	GL_Cull( CT_TWO_SIDED );
+	glDisableClientState( GL_COLOR_ARRAY );
+	glDisable( GL_DEPTH_TEST );
+	glDisable( GL_STENCIL_TEST );
+	GL_SelectTexture( 1 );
+	globalImages->BindNull();
+	GL_SelectTexture( 0 );
+	GL_TexEnv( GL_MODULATE );
+}
+
+static void RB_GlowEndScreenPass( void ) {
+	glMatrixMode( GL_PROJECTION );
+	glPopMatrix();
+	glMatrixMode( GL_MODELVIEW );
+	glPopMatrix();
+	glEnable( GL_DEPTH_TEST );
+	glEnable( GL_STENCIL_TEST );
+	GL_Cull( CT_FRONT_SIDED );
+}
+
+static void RB_GlowDrawScreenQuad( float offsetX, float offsetY ) {
+	glBegin( GL_QUADS );
+	glTexCoord2f( 0.0f, 0.0f ); glVertex2f( offsetX, offsetY );
+	glTexCoord2f( 1.0f, 0.0f ); glVertex2f( 1.0f + offsetX, offsetY );
+	glTexCoord2f( 1.0f, 1.0f ); glVertex2f( 1.0f + offsetX, 1.0f + offsetY );
+	glTexCoord2f( 0.0f, 1.0f ); glVertex2f( offsetX, 1.0f + offsetY );
+	glEnd();
+}
+
+static void RB_GlowCopyViewToImage( idImage *image ) {
+	if ( image == NULL ) {
+		return;
+	}
+	const int width = backEnd.viewDef->viewport.x2 - backEnd.viewDef->viewport.x1 + 1;
+	const int height = backEnd.viewDef->viewport.y2 - backEnd.viewDef->viewport.y1 + 1;
+	if ( width > 0 && height > 0 ) {
+		image->CopyFramebuffer(
+			tr.viewportOffset[0] + backEnd.viewDef->viewport.x1,
+			tr.viewportOffset[1] + backEnd.viewDef->viewport.y1,
+			width, height );
+	}
+}
+
+static void RB_GlowDrawImage( idImage *image, int stateBits, float colorScale ) {
+	if ( image == NULL ) {
+		return;
+	}
+	GL_State( stateBits );
+	GL_SelectTexture( 0 );
+	image->Bind();
+	glColor4f( colorScale, colorScale, colorScale, colorScale );
+	RB_GlowDrawScreenQuad( 0.0f, 0.0f );
+}
+
+static void RB_GlowBlurPass( idImage *sourceImage, idImage *captureImage, bool horizontal ) {
+	if ( sourceImage == NULL || captureImage == NULL ) {
+		return;
+	}
+	const int steps = idMath::ClampInt( 0, 256, r_glowSteps.GetInteger() );
+	const float startAlpha = idMath::ClampFloat( 0.0f, 8.0f, r_glowAlpha.GetFloat() );
+	const float alphaChange = idMath::ClampFloat( 0.0f, 8.0f, r_glowAlphaChange.GetFloat() );
+	const int blurExtent = horizontal ? sourceImage->GetUploadWidth() : sourceImage->GetUploadHeight();
+	const float blurStep = 1.0f / (float)Max( 1, blurExtent );
+
+	RB_GlowBeginScreenPass();
+	GL_SelectTexture( 0 );
+	sourceImage->Bind();
+	GL_State( GLS_DEPTHFUNC_ALWAYS | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ZERO );
+	glColor4f( 1, 1, 1, 1 );
+	RB_GlowDrawScreenQuad( 0, 0 );
+	if ( steps > 1 && startAlpha > 0.0f ) {
+		float alpha = startAlpha;
+		GL_State( GLS_DEPTHFUNC_ALWAYS | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE );
+		for ( int step = 1; step < steps && alpha > 0.001f; step++ ) {
+			const float offset = blurStep * (float)step;
+			const float x = horizontal ? offset : 0.0f;
+			const float y = horizontal ? 0.0f : offset;
+			glColor4f( 1, 1, 1, alpha );
+			RB_GlowDrawScreenQuad( x, y );
+			RB_GlowDrawScreenQuad( -x, -y );
+			alpha *= alphaChange;
+		}
+	}
+	glColor4f( 1, 1, 1, 1 );
+	RB_GlowCopyViewToImage( captureImage );
+	RB_GlowEndScreenPass();
+}
+
+static void RB_STD_DrawGlowView( void ) {
+	drawSurf_t **drawSurfs = (drawSurf_t **)&backEnd.viewDef->drawSurfs[0];
+	const int numDrawSurfs = backEnd.viewDef->numDrawSurfs;
+	if ( drawSurfs == NULL || numDrawSurfs <= 0 ) {
+		return;
+	}
+	backEnd.depthFunc = GLS_DEPTHFUNC_EQUAL;
+	RB_BeginDrawingView();
+	glClearColor( 0, 0, 0, 1 );
+	glClear( GL_COLOR_BUFFER_BIT );
+	RB_STD_FillDepthBuffer( drawSurfs, numDrawSurfs );
+	glStencilFunc( GL_ALWAYS, 128, 255 );
+	RB_STD_DrawShaderPasses( drawSurfs, numDrawSurfs );
+}
+
+static void RB_STD_GlowOverlay( void ) {
+	if ( !RB_GlowEnabledForCurrentView() ) {
+		return;
+	}
+	RB_LogComment( "---------- RB_STD_GlowOverlay ----------\n" );
+	RB_GlowCopyViewToImage( globalImages->accumImage );
+
+	viewDef_t glowView = *backEnd.viewDef;
+	glowView.isGlowView = true;
+	const viewDef_t *savedView = backEnd.viewDef;
+	const int savedDepthFunc = backEnd.depthFunc;
+	backEnd.viewDef = &glowView;
+	RB_STD_DrawGlowView();
+	backEnd.viewDef = savedView;
+	backEnd.depthFunc = savedDepthFunc;
+
+	RB_GlowCopyViewToImage( globalImages->glowScreenImage );
+	RB_GlowBlurPass( globalImages->glowScreenImage, globalImages->glowCompositeImage, true );
+	RB_GlowBlurPass( globalImages->glowCompositeImage, globalImages->glowCompositeImage, false );
+	RB_GlowBeginScreenPass();
+	RB_GlowDrawImage( globalImages->accumImage, GLS_DEPTHFUNC_ALWAYS | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ZERO, 1.0f );
+	RB_GlowDrawImage( globalImages->glowCompositeImage, GLS_DEPTHFUNC_ALWAYS | GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE, r_glowStrength.GetFloat() );
+	glColor4f( 1, 1, 1, 1 );
+	RB_GlowEndScreenPass();
+	backEnd.currentRenderCopied = false;
+	backEnd.currentDepthCopied = false;
 }
 
 
@@ -16389,7 +16618,8 @@ void	RB_STD_DrawView( void ) {
 	rbSceneScaleState_t &sceneScaleState = g_sceneScaleState;
 	RB_ClearSceneScaleState( sceneScaleState );
 	const bool rootSceneRenderTargetRequested = RB_SceneRenderTargetRequested();
-	const bool inlineSubviewSceneRenderTargetRequested = RB_InlineSubviewSceneRenderTargetRequested();
+	const viewDef_t *inlineSubviewSceneRoot = RB_InlineSubviewSceneRenderTargetRoot();
+	const bool inlineSubviewSceneRenderTargetRequested = inlineSubviewSceneRoot != NULL;
 	int feedbackTargetWidth = 0;
 	int feedbackTargetHeight = 0;
 	int feedbackEffectivePercent = RB_SCREEN_FRACTION_NATIVE;
@@ -16402,7 +16632,7 @@ void	RB_STD_DrawView( void ) {
 		RB_MarkSceneRenderTargetPreserveFarDepth( portalSkySceneTargetView );
 	}
 	const viewDef_t *sceneTargetView = inlineSubviewSceneRenderTargetRequested
-		? backEnd.viewDef->superView
+		? inlineSubviewSceneRoot
 		: backEnd.viewDef;
 	const bool sceneRenderTargetReady =
 		( rootSceneRenderTargetRequested || inlineSubviewSceneRenderTargetRequested )
@@ -16431,6 +16661,9 @@ void	RB_STD_DrawView( void ) {
 	if (backEnd.renderTexture)
 	{
 		backEnd.renderTexture->MakeCurrent();
+	}
+	if ( inlineSubviewSceneRenderTargetRequested && sceneRenderTargetReady ) {
+		RB_ClearSceneRenderTargetForInlineSubviews( inlineSubviewSceneRoot );
 	}
 	RB_DrawPortalSkyBackdrop( portalSkyBackdrop );
 
@@ -16527,6 +16760,7 @@ void	RB_STD_DrawView( void ) {
 	// surfaces are held until after fog so additive BSE layers are not painted
 	// over by fog volumes that only owned the opaque scene depth.
 	const int processed = RB_STD_FindPostProcessStart( drawSurfs, numDrawSurfs );
+	const bool ordered2DView = backEnd.viewDef->viewEntitys == NULL;
 	const bool ambientLegacySkipped = !sharedWorldAmbientOwned
 		&& R_ModernGLExecutor_LegacyPassCanSkipForView(
 			RENDER_PASS_AMBIENT, backEnd.viewDef );
@@ -16550,7 +16784,8 @@ void	RB_STD_DrawView( void ) {
 		// Some pre-post materials legitimately populate _currentRender; if the
 		// full list is submitted here, SS_POST_PROCESS surfaces can consume that
 		// stale pre-light-grid copy before the indirect overlay has been added.
-		RB_STD_DrawShaderPasses( drawSurfs, processed, RB_DrawSurfIsPreFogMaterialPass );
+		RB_STD_DrawShaderPasses( drawSurfs, processed, ordered2DView
+			? RB_DrawSurfIsOrdered2DMaterialPass : RB_DrawSurfIsPreFogMaterialPass );
 	}
 
 	// Modern visible color/depth must be handed back before legacy overlay
@@ -16609,7 +16844,7 @@ void	RB_STD_DrawView( void ) {
 			backEnd.currentDepthCopied = false;
 			RB_STD_DrawShaderPasses( drawSurfs, processed, RB_DrawSurfNeedsPostFogLegacyFeedback );
 		}
-	} else if ( processed > 0 ) {
+	} else if ( processed > 0 && !ordered2DView ) {
 		RB_STD_DrawShaderPasses( drawSurfs, processed, RB_DrawSurfIsPostFogMaterialPass );
 	}
 
@@ -16649,12 +16884,14 @@ void	RB_STD_DrawView( void ) {
 		}
 	}
 
+	// Isolate and blur authored glowStage passes while the complete scene is
+	// still in the active scene target; presentation happens below.
+	RB_STD_GlowOverlay();
 // openQ4 BEGIN
 	// Last thing that touches the world, so everything in it is seen through the water - but still
 	// inside the 3D view, so the HUD, menus and debug tools stay dry.
 	RB_STD_Underwater();
 // openQ4 END
-
 	RB_RenderDebugTools( drawSurfs, numDrawSurfs );
 
 	// Restore frontend-native view and packet scissors before the temporal pass

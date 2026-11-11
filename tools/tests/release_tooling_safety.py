@@ -227,7 +227,7 @@ def validate_changelog_input_and_markdown_safety() -> None:
         raise AssertionError(f"release header lost escaped text:\n{rendered}")
 
     release_notes_body = CHANGELOG.sanitize_release_notes_override(
-        "# openQ4 0.9.0 Release Notes\n\n## Highlights\n\n- Item\n",
+        "# openPREY 0.9.0 Release Notes\n\n## Highlights\n\n- Item\n",
         "0.9.0",
         "v0.9.0",
     )
@@ -446,10 +446,10 @@ def validate_release_version_floor_and_docs_classification() -> None:
     category, weight, is_major = RELEASE_VERSION.classify_path("assets/docs/img/banner.png")
     if (category, weight, is_major) != ("docs", 0, False):
         raise AssertionError(f"docs asset path was not classified as docs-only: {(category, weight, is_major)!r}")
-    category, weight, is_major = RELEASE_VERSION.classify_path("assets/icons/quake4.ico")
+    category, weight, is_major = RELEASE_VERSION.classify_path("assets/icons/prey.ico")
     if (category, weight, is_major) != ("packaging", 2, False):
         raise AssertionError(f"packaged icon path was not classified as packaging: {(category, weight, is_major)!r}")
-    category, weight, is_major = RELEASE_VERSION.classify_path("assets/linux/openQ4-steamdeck.in")
+    category, weight, is_major = RELEASE_VERSION.classify_path("assets/linux/openPREY-steamdeck.in")
     if (category, weight, is_major) != ("platform", 2, False):
         raise AssertionError(f"Linux launcher asset path was not classified as platform: {(category, weight, is_major)!r}")
 
@@ -699,7 +699,7 @@ def validate_docs_link_integrity_local_link_guards() -> None:
 def validate_icon_sync_symlink_guards() -> None:
     icon_root = WORK / "icon-sync"
     target = icon_root / "real.ico"
-    link = icon_root / "quake4.ico"
+    link = icon_root / "prey.ico"
     write_file(target, "ico\n")
     if make_symlink(target, link):
         expect_file_not_found(
@@ -709,7 +709,7 @@ def validate_icon_sync_symlink_guards() -> None:
         )
 
     png_target = icon_root / "real.png"
-    png_link = icon_root / "quake4_1024.png"
+    png_link = icon_root / "prey_1024.png"
     write_file(png_target, "png\n")
     if make_symlink(png_target, png_link):
         expect_file_not_found(
@@ -719,7 +719,7 @@ def validate_icon_sync_symlink_guards() -> None:
         )
 
     output_target = icon_root / "output-target.png"
-    output_link = icon_root / "quake4_16.png"
+    output_link = icon_root / "prey_16.png"
     write_file(output_target, "outside\n")
     if make_symlink(output_target, output_link):
         expect_runtime_error(
@@ -732,21 +732,19 @@ def validate_icon_sync_symlink_guards() -> None:
 def validate_windows_installer_payload_requirements() -> None:
     package_dir = WORK / "installer-package"
     required = [
-        "openQ4-client_x64.exe",
-        "openQ4-client_x64.pdb",
-        "openQ4-ded_x64.exe",
-        "openQ4-ded_x64.pdb",
+        "openPREY-client_x64.exe",
+        "openPREY-client_x64.pdb",
+        "openPREY-ded_x64.exe",
+        "openPREY-ded_x64.pdb",
         "README.html",
         "LICENSE",
         "LICENSING.md",
-        "LICENSES/QUAKE-4-SDK-EULA.rtf",
+        "LICENSES/PREY-SDK-EULA.rtf",
         "docs/index.html",
-        "baseoq4/mod.json",
-        "baseoq4/pak0.pk4",
-        "baseoq4/pak1.pk4",
-        "baseoq4/pak2.pk4",
-        "baseoq4/game-sp_x64.pdb",
-        "baseoq4/game-mp_x64.pdb",
+        "basepr/mod.json",
+        "basepr/pak0.pk4",
+        "basepr/pak1.pk4",
+        "basepr/game_x64.pdb",
     ]
     for relative in required:
         write_file(package_dir / relative)
@@ -759,48 +757,39 @@ def validate_windows_installer_payload_requirements() -> None:
     write_file(package_dir / "OpenAL32.dll")
     expect_file_not_found(
         lambda: INSTALLER.validate_package_dir(package_dir, "x64"),
-        "game-sp_x64.dll",
+        "game_x64.dll",
         "installer missing game module DLLs",
     )
-    write_file(package_dir / "baseoq4" / "game-sp_x64.dll")
-    expect_file_not_found(
-        lambda: INSTALLER.validate_package_dir(package_dir, "x64"),
-        "game-mp_x64.dll",
-        "installer missing multiplayer module DLL",
-    )
-    write_file(package_dir / "baseoq4" / "game-mp_x64.dll")
+    write_file(package_dir / "basepr" / "game_x64.dll")
     INSTALLER.validate_package_dir(package_dir, "x64")
 
 
 def validate_windows_installer_symlink_guards() -> None:
     package_dir = WORK / "installer-symlink-package"
     required = [
-        "openQ4-client_x64.exe",
-        "openQ4-client_x64.pdb",
-        "openQ4-ded_x64.exe",
-        "openQ4-ded_x64.pdb",
+        "openPREY-client_x64.exe",
+        "openPREY-client_x64.pdb",
+        "openPREY-ded_x64.exe",
+        "openPREY-ded_x64.pdb",
         "OpenAL32.dll",
         "README.html",
         "LICENSE",
         "LICENSING.md",
-        "LICENSES/QUAKE-4-SDK-EULA.rtf",
+        "LICENSES/PREY-SDK-EULA.rtf",
         "docs/index.html",
-        "baseoq4/mod.json",
-        "baseoq4/pak0.pk4",
-        "baseoq4/pak1.pk4",
-        "baseoq4/pak2.pk4",
-        "baseoq4/game-sp_x64.dll",
-        "baseoq4/game-sp_x64.pdb",
-        "baseoq4/game-mp_x64.dll",
-        "baseoq4/game-mp_x64.pdb",
+        "basepr/mod.json",
+        "basepr/pak0.pk4",
+        "basepr/pak1.pk4",
+        "basepr/game_x64.dll",
+        "basepr/game_x64.pdb",
     ]
     for relative in required:
         write_file(package_dir / relative)
 
     real_client = package_dir / "real-client.exe"
     write_file(real_client, "client\n")
-    (package_dir / "openQ4-client_x64.exe").unlink()
-    if make_symlink(real_client, package_dir / "openQ4-client_x64.exe"):
+    (package_dir / "openPREY-client_x64.exe").unlink()
+    if make_symlink(real_client, package_dir / "openPREY-client_x64.exe"):
         expect_file_not_found(
             lambda: INSTALLER.validate_package_dir(package_dir, "x64"),
             "must not be symlinks",
@@ -808,8 +797,8 @@ def validate_windows_installer_symlink_guards() -> None:
         )
 
     output_dir = WORK / "installer-output"
-    script_path = output_dir / "openq4-0.1.010-windows-x64-setup.iss"
-    installer_path = output_dir / "openq4-0.1.010-windows-x64-setup.exe"
+    script_path = output_dir / "openprey-0.1.010-windows-x64-setup.iss"
+    installer_path = output_dir / "openprey-0.1.010-windows-x64-setup.exe"
     outside = WORK / "installer-output-outside.iss"
     write_file(outside, "outside\n")
     script_path.parent.mkdir(parents=True, exist_ok=True)
@@ -871,14 +860,14 @@ def validate_windows_installer_input_escaping() -> None:
 
     rendered = INSTALLER.render_installer_script(
         '#define PackageSource "@@PACKAGE_SOURCE@@"\n@@OUTPUT_BASENAME@@\n',
-        package_dir=Path('C:/release/openq4 "quoted"'),
+        package_dir=Path('C:/release/openprey "quoted"'),
         output_dir=Path("C:/out"),
         version="0.1.010",
         version_tag="0.1.010",
         arch="x64",
-        setup_icon_file=Path("C:/icons/openQ4.ico"),
+        setup_icon_file=Path("C:/icons/prey.ico"),
     )
-    expected_source = INSTALLER.inno_string_contents(Path('C:/release/openq4 "quoted"'))
+    expected_source = INSTALLER.inno_string_contents(Path('C:/release/openprey "quoted"'))
     if f'#define PackageSource "{expected_source}"' not in rendered:
         raise AssertionError(f"installer PackageSource was not escaped for Inno Setup:\n{rendered}")
 
@@ -1023,10 +1012,10 @@ def validate_manual_release_optimized_builds() -> None:
 
     gamelibs = (ROOT / "tools" / "build" / "build_gamelibs.ps1").read_text(encoding="utf-8")
     for token in (
-        "[ValidateSet(\"plain\", \"debug\", \"debugoptimized\", \"release\", \"minsize\", \"custom\")]",
-        "OPENQ4_GAMELIBS_BUILDTYPE",
-        "\"release\"",
-        "--buildtype=$BuildType",
+        "OPENPREY_GAMELIBS_REPO",
+        '"src\\game", "src\\Prey", "src\\preyengine"',
+        "OpenPrey-game is consumed directly by the openPREY Meson build.",
+        "meson_setup.ps1 compile -C builddir",
     ):
         if token not in gamelibs:
             raise AssertionError(f"GameLibs helper is missing optimized-build token: {token}")
@@ -1487,13 +1476,13 @@ def validate_manual_release_companion_checkout() -> None:
 
 def validate_release_source_provenance_verifier() -> None:
     root = WORK / "source-provenance"
-    project = make_git_repo(root / "openQ4")
-    gamelibs = make_git_repo(root / "openQ4-game")
+    project = make_git_repo(root / "openPREY")
+    gamelibs = make_git_repo(root / "OpenPrey-game")
     commit_file(project, ".gitignore", ".tmp/\n", "project source")
     commit_file(gamelibs, "game-source.txt", "game\n", "game source")
     project_sha = git(project, "rev-parse", "HEAD")
     gamelibs_sha = git(gamelibs, "rev-parse", "HEAD")
-    manifest_path = project / ".tmp" / "gamelibs_stage" / "openq4_gamelibs_stage_manifest.json"
+    manifest_path = project / "builddir" / ".tmp" / "openprey_gamelibs_stage" / "openprey_gamelibs_stage_manifest.json"
     manifest = {
         "format": 1,
         "projectGitCommit": project_sha,
@@ -1534,7 +1523,7 @@ def validate_release_source_provenance_verifier() -> None:
             project_sha,
             gamelibs_sha,
         ),
-        "staged openQ4-game commit",
+        "staged OpenPrey-game commit",
         "mismatched staged GameLibs SHA",
     )
 

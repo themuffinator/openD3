@@ -49,10 +49,10 @@ OPENQ4_PAK = load_module("openq4_pak_safety_test", BUILD_DIR / "openq4_pak.py")
 BUILD_PAK0 = load_module("build_pak0_safety_test", BUILD_DIR / "build_pak0.py")
 CHECK_STAGED_CONTENT = load_module("check_staged_content_safety_test", BUILD_DIR / "check_staged_content_edits.py")
 PACKAGE = load_module("package_nightly_safety_test", BUILD_DIR / "package_nightly.py")
-STAGE_GAMELIBS = load_module("stage_gamelibs_safety_test", BUILD_DIR / "stage_gamelibs.py")
 VERSION = load_module("openq4_version_safety_test", BUILD_DIR / "openq4_version.py")
 WINDOWS_RUNTIME = load_module("windows_runtime_safety_test", BUILD_DIR / "windows_runtime.py")
 MESON_SOURCES = load_module("meson_sources_safety_test", BUILD_DIR / "meson_sources.py")
+CLEAN_RUNTIME_INSTALL = BUILD_DIR / "clean_runtime_install.py"
 FAST_STAGE = load_module("stage_fast_install_safety_test", BUILD_DIR / "stage_fast_install.py")
 
 
@@ -127,7 +127,7 @@ def validate_pk4_cross_host_identity() -> None:
 
 def validate_pk4_source_containment() -> None:
     source_root = WORK / "pak-source-root"
-    inside = source_root / "content" / "baseoq4" / "pak0"
+    inside = source_root / "content" / "basepr" / "pak0"
     outside = WORK / "outside-pack"
     write_file(inside / "materials" / "ok.mtr")
     write_file(outside / "materials" / "bad.mtr")
@@ -146,7 +146,7 @@ def validate_pk4_source_containment() -> None:
         "source directory not found",
         "missing pack source",
     )
-    linked_source = source_root / "content" / "baseoq4" / "linked-pak0"
+    linked_source = source_root / "content" / "basepr" / "linked-pak0"
     if make_symlink(inside, linked_source, target_is_directory=True):
         expect_runtime_error(
             lambda: OPENQ4_PAK.create_game_pk4(linked_source, WORK / "linked.pk4", required_files=set()),
@@ -160,26 +160,26 @@ def validate_pk4_source_containment() -> None:
 
     linked_source_root = WORK / "linked-pak-source-root"
     if make_symlink(source_root, linked_source_root, target_is_directory=True):
-        result = run_script(BUILD_DIR / "list_pak_sources.py", linked_source_root, "pak0.pk4", "content/baseoq4/pak0")
+        result = run_script(BUILD_DIR / "list_pak_sources.py", linked_source_root, "pak0.pk4", "content/basepr/pak0")
         if result.returncode == 0 or "source root must not be a symlink" not in result.stderr:
             raise AssertionError(f"list_pak_sources.py accepted a symlinked source root: {result.stderr}")
         result = run_script(
             BUILD_DIR / "write_pak_manifest.py",
             linked_source_root,
             "pak0.pk4",
-            "content/baseoq4/pak0",
+            "content/basepr/pak0",
             WORK / "linked.sources",
         )
         if result.returncode == 0 or "source root must not be a symlink" not in result.stderr:
             raise AssertionError(f"write_pak_manifest.py accepted a symlinked source root: {result.stderr}")
 
-    linked_content_root = source_root / "content" / "baseoq4" / "linked-manifest"
+    linked_content_root = source_root / "content" / "basepr" / "linked-manifest"
     if make_symlink(inside, linked_content_root, target_is_directory=True):
         result = run_script(
             BUILD_DIR / "write_pak_manifest.py",
             source_root,
             "pak0.pk4",
-            "content/baseoq4/linked-manifest",
+            "content/basepr/linked-manifest",
             WORK / "linked-content.sources",
         )
         if result.returncode == 0 or "directory must not be a symlink" not in result.stderr:
@@ -233,6 +233,14 @@ def validate_pk4_archive_member_guards() -> None:
         lambda: OPENQ4_PAK.inspect_game_pk4(symlink_path, required_files=set()),
         "non-regular archive entry",
         "PK4 symlink member",
+    )
+
+    fixture_path = WORK / "bad-archives" / "roadhouse-quick-fixture.pk4"
+    write_zip(fixture_path, [(zip_info("script/map_roadhouse_quick.script"), b"dev fixture\n")])
+    expect_runtime_error(
+        lambda: OPENQ4_PAK.inspect_game_pk4(fixture_path, required_files=set()),
+        "pure runtime pack",
+        "roadhouse_quick fixture must stay out of runtime PK4s",
     )
 
 
@@ -400,9 +408,9 @@ def validate_list_sources_guards() -> None:
 # guard/copy fixture must use the host platform's artifact names; explicit
 # per-platform policy output is pinned by validate_fast_stage_cross_platform_policy.
 FAST_STAGE_HOST_FIXTURES = {
-    "win32": ("openQ4-client_x64.exe", "renderer-gl_x64.dll", "game-sp_x64.dll"),
-    "linux": ("openQ4-client_x64", "renderer-gl_x64.so", "game-sp_x64.so"),
-    "darwin": ("openQ4-client_x64", "renderer-vk_x64.dylib", "game-sp_x64.dylib"),
+    "win32": ("openPREY-client_x64.exe", "renderer-gl_x64.dll", "game_x64.dll"),
+    "linux": ("openPREY-client_x64", "renderer-gl_x64.so", "game_x64.so"),
+    "darwin": ("openPREY-client_x64", "renderer-vk_x64.dylib", "game_x64.dylib"),
 }
 
 
@@ -410,13 +418,13 @@ def validate_fast_stage_guards_and_copy() -> None:
     if sys.platform not in FAST_STAGE_HOST_FIXTURES:
         raise AssertionError(f"unsupported fast-stage host platform: {sys.platform}")
     client_name, renderer_name, game_name = FAST_STAGE_HOST_FIXTURES[sys.platform]
-    source_root = WORK / "fast-stage" / "openQ4"
+    source_root = WORK / "fast-stage" / "openPREY"
     build_dir = source_root / "builddir"
     install_dir = source_root / ".install"
     write_file(build_dir / client_name, b"client\n")
     write_file(build_dir / renderer_name, b"renderer\n")
-    write_file(build_dir / "baseoq4" / game_name, b"game\n")
-    write_file(build_dir / "baseoq4" / "pak0.pk4", b"pak0\n")
+    write_file(build_dir / "basepr" / game_name, b"game\n")
+    write_file(build_dir / "basepr" / "pak0.pk4", b"pak0\n")
 
     bad_result = run_script(
         BUILD_DIR / "stage_fast_install.py",
@@ -443,7 +451,7 @@ def validate_fast_stage_guards_and_copy() -> None:
         raise AssertionError(f"stage_fast_install.py accepted build dir under install dir: {overlap_result.stderr}")
 
     symlink_root = WORK / "fast-stage-symlink"
-    symlink_source_root = symlink_root / "openQ4"
+    symlink_source_root = symlink_root / "openPREY"
     symlink_build_dir = symlink_source_root / "builddir"
     symlink_install_dir = symlink_source_root / ".install"
     symlink_build_target = symlink_root / "real-builddir"
@@ -475,7 +483,7 @@ def validate_fast_stage_guards_and_copy() -> None:
         raise AssertionError(f"stage_fast_install.py failed safe staging: {result.stderr}")
     if not (install_dir / client_name).is_file():
         raise AssertionError("fast stage did not copy root runtime binary")
-    if not (install_dir / "baseoq4" / game_name).is_file():
+    if not (install_dir / "basepr" / game_name).is_file():
         raise AssertionError("fast stage did not copy game runtime binary")
     if not (install_dir / renderer_name).is_file():
         raise AssertionError("fast stage did not copy renderer runtime binary")
@@ -533,14 +541,14 @@ def validate_fast_stage_guards_and_copy() -> None:
 
 def validate_fast_stage_cross_platform_policy() -> None:
     source_root = WORK / "fast-stage-platform-policy" / "builddir"
-    source_game = source_root / "baseoq4"
+    source_game = source_root / "basepr"
     root_files = (
-        "openQ4-client_x64",
-        "openQ4-ded_x64",
-        "openQ4-client_x64.exe",
-        "openQ4-client_x64.pdb",
-        "openQ4-ded_x64.exe",
-        "openQ4-ded_x64.pdb",
+        "openPREY-client_x64",
+        "openPREY-ded_x64",
+        "openPREY-client_x64.exe",
+        "openPREY-client_x64.pdb",
+        "openPREY-ded_x64.exe",
+        "openPREY-ded_x64.pdb",
         "renderer-gl_x64.dll",
         "renderer-gl_x64.pdb",
         "renderer-vk_x64.dll",
@@ -555,18 +563,13 @@ def validate_fast_stage_cross_platform_policy() -> None:
         "OpenAL32.dll",
     )
     game_files = (
-        "game-sp_x64.dll",
-        "game-sp_x64.pdb",
-        "game-mp_x64.dll",
-        "game-mp_x64.pdb",
-        "game-sp_x64.so",
-        "game-mp_x64.so",
-        "game-sp_x64.dylib",
-        "game-mp_x64.dylib",
+        "game_x64.dll",
+        "game_x64.pdb",
+        "game_x64.so",
+        "game_x64.dylib",
         "mod.json",
         "pak0.pk4",
         "pak1.pk4",
-        "pak2.pk4",
     )
     for filename in root_files:
         write_file(source_root / filename, filename.encode("utf-8"))
@@ -576,10 +579,10 @@ def validate_fast_stage_cross_platform_policy() -> None:
     expected = {
         "win32": (
             {
-                "openQ4-client_x64.exe",
-                "openQ4-client_x64.pdb",
-                "openQ4-ded_x64.exe",
-                "openQ4-ded_x64.pdb",
+                "openPREY-client_x64.exe",
+                "openPREY-client_x64.pdb",
+                "openPREY-ded_x64.exe",
+                "openPREY-ded_x64.pdb",
                 "renderer-gl_x64.dll",
                 "renderer-gl_x64.pdb",
                 "renderer-vk_x64.dll",
@@ -587,52 +590,45 @@ def validate_fast_stage_cross_platform_policy() -> None:
                 "OpenAL32.dll",
             },
             {
-                "game-sp_x64.dll",
-                "game-sp_x64.pdb",
-                "game-mp_x64.dll",
-                "game-mp_x64.pdb",
+                "game_x64.dll",
+                "game_x64.pdb",
                 "mod.json",
                 "pak0.pk4",
                 "pak1.pk4",
-                "pak2.pk4",
             },
         ),
         "linux": (
             {
-                "openQ4-client_x64",
-                "openQ4-ded_x64",
+                "openPREY-client_x64",
+                "openPREY-ded_x64",
                 "renderer-gl_x64.so",
                 "renderer-vk_x64.so",
             },
             {
-                "game-sp_x64.so",
-                "game-mp_x64.so",
+                "game_x64.so",
                 "mod.json",
                 "pak0.pk4",
                 "pak1.pk4",
-                "pak2.pk4",
             },
         ),
         "darwin": (
             {
-                "openQ4-client_x64",
-                "openQ4-ded_x64",
+                "openPREY-client_x64",
+                "openPREY-ded_x64",
                 "renderer-vk_x64.dylib",
             },
             {
-                "game-sp_x64.dylib",
-                "game-mp_x64.dylib",
+                "game_x64.dylib",
                 "mod.json",
                 "pak0.pk4",
                 "pak1.pk4",
-                "pak2.pk4",
             },
         ),
     }
     for platform_name, (expected_root, expected_game) in expected.items():
         policy = FAST_STAGE.runtime_stage_policy(platform_name)
         destination = WORK / "fast-stage-platform-policy" / platform_name
-        destination_game = destination / "baseoq4"
+        destination_game = destination / "basepr"
         FAST_STAGE.copy_matches(
             source_root,
             destination,
@@ -660,14 +656,14 @@ def validate_fast_stage_cross_platform_policy() -> None:
             )
 
     cleanup_root = WORK / "fast-stage-platform-policy" / "windows-cleanup"
-    cleanup_game = cleanup_root / "baseoq4"
+    cleanup_game = cleanup_root / "basepr"
     retained_root = cleanup_root / "renderer-gl_x64.dll"
-    retained_game = cleanup_game / "game-sp_x64.dll"
+    retained_game = cleanup_game / "game_x64.dll"
     foreign_paths = (
         cleanup_root / "renderer-gl_x64.so",
         cleanup_root / "renderer-vk_x64.dylib",
-        cleanup_game / "game-sp_x64.so",
-        cleanup_game / "game-mp_x64.dylib",
+        cleanup_game / "game_x64.so",
+        cleanup_game / "game_x64.dylib",
     )
     for path in (*foreign_paths, retained_root, retained_game):
         write_file(path)
@@ -686,9 +682,92 @@ def validate_fast_stage_cross_platform_policy() -> None:
         raise AssertionError("Windows fast-stage cleanup removed native DLL payloads")
 
 
+def validate_dev_only_fixtures_not_in_pak_sources() -> None:
+    pak0 = ROOT / "content" / "basepr" / "pak0"
+    dev = ROOT / "content" / "basepr" / "dev"
+    required_dev_fixture_paths = (
+        dev / "maps" / "game" / "roadhouse_quick.map",
+        dev / "maps" / "game" / "roadhouse_quick.cm",
+        dev / "maps" / "game" / "roadhouse_quick.proc",
+        dev / "maps" / "game" / "roadhouse_quick.aas48",
+        dev / "script" / "map_roadhouse_quick.script",
+        dev / "script" / "openprey_vm_conformance.script",
+    )
+    for fixture_path in required_dev_fixture_paths:
+        if not fixture_path.is_file():
+            raise AssertionError(f"development-only fixture is missing: {fixture_path}")
+
+    shipped_fixture_sources = sorted(
+        path
+        for pattern in ("*roadhouse_quick*", "*openprey_vm_conformance*")
+        for path in pak0.rglob(pattern)
+        if path.is_file()
+    )
+    if shipped_fixture_sources:
+        formatted = "\n".join(str(path) for path in shipped_fixture_sources)
+        raise AssertionError(f"development-only fixture leaked into pak0 sources:\n{formatted}")
+
+
+def validate_plain_install_cleanup() -> None:
+    install_root = WORK / "plain-install-cleanup" / ".install"
+    game_dir = install_root / "basepr"
+    for artifact in (
+        install_root / "renderer-gl_x64.lib",
+        install_root / "renderer-vk_x64.exp",
+        game_dir / "game_x64.lib",
+        game_dir / "game_x64.map",
+        game_dir / "stale_renderer.so",
+    ):
+        write_file(artifact)
+    for runtime in (
+        install_root / "openPREY-client_x64.exe",
+        install_root / "renderer-gl_x64.dll",
+        game_dir / "game_x64.dll",
+    ):
+        write_file(runtime)
+
+    result = run_script(
+        CLEAN_RUNTIME_INSTALL,
+        "--install-root",
+        install_root,
+        "--game-dir",
+        game_dir,
+        "--host-system",
+        "windows",
+    )
+    if result.returncode != 0:
+        raise AssertionError(f"clean_runtime_install.py failed: {result.stderr}")
+    for artifact in (
+        install_root / "renderer-gl_x64.lib",
+        install_root / "renderer-vk_x64.exp",
+        game_dir / "game_x64.lib",
+        game_dir / "game_x64.map",
+        game_dir / "stale_renderer.so",
+    ):
+        if artifact.exists():
+            raise AssertionError(f"clean_runtime_install.py left non-runtime artifact staged: {artifact}")
+    for runtime in (
+        install_root / "openPREY-client_x64.exe",
+        install_root / "renderer-gl_x64.dll",
+        game_dir / "game_x64.dll",
+    ):
+        if not runtime.is_file():
+            raise AssertionError(f"clean_runtime_install.py removed runtime artifact: {runtime}")
+
+    meson_build = (ROOT / "meson.build").read_text(encoding="utf-8")
+    for token in (
+        "clean_runtime_install.py",
+        "--install-root",
+        "--game-dir",
+        "--host-system",
+    ):
+        if token not in meson_build:
+            raise AssertionError(f"meson.build is missing install cleanup token {token!r}")
+
+
 def validate_stale_content_prune_symlink_handling() -> None:
-    source_root = WORK / "stale-content" / "openQ4"
-    staged_game_dir = source_root / ".install" / "baseoq4"
+    source_root = WORK / "stale-content" / "openPREY"
+    staged_game_dir = source_root / ".install" / "basepr"
     outside = WORK / "stale-content-outside.cfg"
     write_file(outside, b"outside\n")
     staged_game_dir.mkdir(parents=True, exist_ok=True)
@@ -703,9 +782,9 @@ def validate_stale_content_prune_symlink_handling() -> None:
         if stale_link.exists() or stale_link.is_symlink():
             raise AssertionError("stale-content prune did not unlink the stale symlink")
 
-    linked_game_root = WORK / "stale-content-linked" / "openQ4"
+    linked_game_root = WORK / "stale-content-linked" / "openPREY"
     linked_target = WORK / "stale-content-linked-target"
-    linked_game_dir = linked_game_root / ".install" / "baseoq4"
+    linked_game_dir = linked_game_root / ".install" / "basepr"
     linked_game_dir.parent.mkdir(parents=True, exist_ok=True)
     linked_target.mkdir(parents=True, exist_ok=True)
     if make_symlink(linked_target, linked_game_dir):
@@ -811,14 +890,14 @@ def validate_package_name_and_copy_guards() -> None:
             "release archive output symlink",
         )
 
-    executable = archive_root / "bin" / "openQ4-client_x64"
+    executable = archive_root / "bin" / "openPREY-client_x64"
     write_file(executable, b"#!/bin/sh\n")
     zip_path = WORK / "package-archive-metadata.zip"
     PACKAGE.create_release_archive(
         archive_root,
         zip_path,
         "zip",
-        {Path("bin") / "openQ4-client_x64"},
+        {Path("bin") / "openPREY-client_x64"},
     )
     with ZipFile(zip_path, "r") as archive:
         for info in archive.infolist():
@@ -828,7 +907,7 @@ def validate_package_name_and_copy_guards() -> None:
                 raise AssertionError(f"zip entry kept host mtime: {info.filename} {info.date_time}")
             if info.create_system != 3:
                 raise AssertionError(f"zip entry did not use portable Unix mode metadata: {info.filename}")
-        executable_info = archive.getinfo(f"{archive_root.name}/bin/openQ4-client_x64")
+        executable_info = archive.getinfo(f"{archive_root.name}/bin/openPREY-client_x64")
         if ((executable_info.external_attr >> 16) & 0o777) != 0o755:
             raise AssertionError("zip executable mode was not normalized to 0755")
 
@@ -837,7 +916,7 @@ def validate_package_name_and_copy_guards() -> None:
         archive_root,
         tar_path,
         "tar.gz",
-        {Path("bin") / "openQ4-client_x64"},
+        {Path("bin") / "openPREY-client_x64"},
     )
     with tarfile.open(tar_path, "r:gz") as archive:
         for member in archive.getmembers():
@@ -845,7 +924,7 @@ def validate_package_name_and_copy_guards() -> None:
                 raise AssertionError(f"tar entry kept host ownership metadata: {member.name}")
             if member.mtime != PACKAGE.DETERMINISTIC_TAR_MTIME:
                 raise AssertionError(f"tar entry kept host mtime: {member.name}")
-        executable_member = archive.getmember(f"{archive_root.name}/bin/openQ4-client_x64")
+        executable_member = archive.getmember(f"{archive_root.name}/bin/openPREY-client_x64")
         if executable_member.mode != 0o755:
             raise AssertionError("tar executable mode was not normalized to 0755")
 
@@ -981,7 +1060,7 @@ def validate_unchanged_pack_rebuild_stays_current() -> None:
             "--out",
             root / "out" / pak_name,
             "--stage-out",
-            root / "stage" / "baseoq4" / pak_name,
+            root / "stage" / "basepr" / pak_name,
         )
         result = run_script(BUILD_DIR / "build_openq4_pack.py", *pack_args[pak_name])
         if result.returncode != 0:
@@ -1001,7 +1080,7 @@ def validate_unchanged_pack_rebuild_stays_current() -> None:
 
     for pak_name, args in pack_args.items():
         pak_out = root / "out" / pak_name
-        stage_out = root / "stage" / "baseoq4" / pak_name
+        stage_out = root / "stage" / "basepr" / pak_name
         pak_bytes = pak_out.read_bytes()
         for path in (pak_out, stage_out):
             os.utime(path, ns=(OLD_MTIME_NS, OLD_MTIME_NS))
@@ -1035,7 +1114,7 @@ def validate_unchanged_pack_rebuild_stays_current() -> None:
 def validate_version_manifest_integrity() -> None:
     expect_runtime_error(
         lambda: PACKAGE.parse_version_manifest_bytes(
-            b"openQ4\nversion=1\nversion=2\nversion_tag=1\nplatform=linux\narch=x64\n",
+            b"openPREY\nversion=1\nversion=2\nversion_tag=1\nplatform=linux\narch=x64\n",
             "test",
         ),
         "duplicate key",
@@ -1043,7 +1122,7 @@ def validate_version_manifest_integrity() -> None:
     )
     expect_runtime_error(
         lambda: PACKAGE.parse_version_manifest_bytes(
-            b"openQ4\n=1\nversion_tag=1\nplatform=linux\narch=x64\n",
+            b"openPREY\n=1\nversion_tag=1\nplatform=linux\narch=x64\n",
             "test",
         ),
         "empty key",
@@ -1117,114 +1196,6 @@ def validate_macos_signing_input_guards() -> None:
     )
 
 
-def validate_stage_manifest_rejects_unsafe_paths() -> None:
-    stage_root = WORK / "stage-manifest"
-    write_file(stage_root / "src" / "game" / "Game_local.cpp")
-    manifest_path = stage_root / STAGE_GAMELIBS.MANIFEST_NAME
-    manifest_path.write_text(
-        json.dumps(
-            {
-                "format": 1,
-                "fileCount": 1,
-                "files": [{"path": "../escape.cpp", "sha256": "0" * 64}],
-            }
-        ),
-        encoding="utf-8",
-    )
-    expect_runtime_error(
-        lambda: STAGE_GAMELIBS.validate_stage_manifest(stage_root),
-        "unsafe path",
-        "unsafe staged manifest path",
-    )
-
-    manifest_link_root = WORK / "stage-manifest-link"
-    manifest_link_root.mkdir(parents=True, exist_ok=True)
-    manifest_target = WORK / "external-stage-manifest.json"
-    write_file(manifest_target, b'{"format": 1, "fileCount": 0, "files": []}\n')
-    if make_symlink(manifest_target, manifest_link_root / STAGE_GAMELIBS.MANIFEST_NAME):
-        expect_runtime_error(
-            lambda: STAGE_GAMELIBS.validate_stage_manifest(manifest_link_root),
-            "manifest must not be a symlink",
-            "symlinked staged manifest",
-        )
-
-    bad_format_root = WORK / "stage-manifest-format"
-    write_file(bad_format_root / "src" / "game" / "Game_local.cpp")
-    (bad_format_root / STAGE_GAMELIBS.MANIFEST_NAME).write_text(
-        json.dumps(
-            {
-                "format": 999,
-                "fileCount": 1,
-                "files": [{"path": "src/game/Game_local.cpp", "sha256": "0" * 64}],
-            }
-        ),
-        encoding="utf-8",
-    )
-    expect_runtime_error(
-        lambda: STAGE_GAMELIBS.validate_stage_manifest(bad_format_root),
-        "unsupported format",
-        "unsupported staged manifest format",
-    )
-
-    bad_hash_root = WORK / "stage-manifest-hash"
-    write_file(bad_hash_root / "src" / "game" / "Game_local.cpp")
-    (bad_hash_root / STAGE_GAMELIBS.MANIFEST_NAME).write_text(
-        json.dumps(
-            {
-                "format": 1,
-                "fileCount": 1,
-                "files": [{"path": "src/game/Game_local.cpp", "sha256": "not-a-sha"}],
-            }
-        ),
-        encoding="utf-8",
-    )
-    expect_runtime_error(
-        lambda: STAGE_GAMELIBS.validate_stage_manifest(bad_hash_root),
-        "malformed sha256",
-        "malformed staged manifest hash",
-    )
-
-
-def validate_stage_gamelibs_raw_stage_root_symlink_guard() -> None:
-    root = WORK / "gamelibs-stage-root-symlink"
-    project_root = root / "openQ4"
-    gamelibs_root = root / "openQ4-game"
-    stage_target = project_root / ".tmp" / "real-stage"
-    stage_link = project_root / ".tmp" / "linked-stage"
-
-    write_file(project_root / "meson.build", b"project('openQ4')\n")
-    write_file(gamelibs_root / "src" / "game" / "Game_local.cpp", b"// game\n")
-    stage_target.mkdir(parents=True, exist_ok=True)
-    stage_link.parent.mkdir(parents=True, exist_ok=True)
-    if not make_symlink(stage_target, stage_link):
-        return
-
-    result = run_script(BUILD_DIR / "stage_gamelibs.py", project_root, gamelibs_root, stage_link)
-    if result.returncode == 0 or "refusing to stage into symlink" not in result.stderr:
-        raise AssertionError(f"stage_gamelibs.py accepted a symlinked stage root: {result.stderr}")
-
-
-def validate_stage_gamelibs_raw_source_root_symlink_guards() -> None:
-    root = WORK / "gamelibs-source-root-symlink"
-    project_root = root / "openQ4"
-    gamelibs_root = root / "openQ4-game"
-    stage_root = project_root / ".tmp" / "stage"
-    write_file(project_root / "meson.build", b"project('openQ4')\n")
-    write_file(gamelibs_root / "src" / "game" / "Game_local.cpp", b"// game\n")
-
-    project_link = root / "openQ4-link"
-    if make_symlink(project_root, project_link, target_is_directory=True):
-        result = run_script(BUILD_DIR / "stage_gamelibs.py", project_link, gamelibs_root, stage_root)
-        if result.returncode == 0 or "openQ4 root must not be a symlink" not in result.stderr:
-            raise AssertionError(f"stage_gamelibs.py accepted a symlinked project root: {result.stderr}")
-
-    gamelibs_link = root / "openQ4-game-link"
-    if make_symlink(gamelibs_root, gamelibs_link, target_is_directory=True):
-        result = run_script(BUILD_DIR / "stage_gamelibs.py", project_root, gamelibs_link, stage_root)
-        if result.returncode == 0 or "GameLibs root must not be a symlink" not in result.stderr:
-            raise AssertionError(f"stage_gamelibs.py accepted a symlinked GameLibs root: {result.stderr}")
-
-
 def validate_meson_source_symlink_guards() -> None:
     source_root = WORK / "meson-source-symlinks" / "src"
     outside = WORK / "meson-source-symlinks" / "outside.cpp"
@@ -1251,7 +1222,7 @@ def validate_meson_source_symlink_guards() -> None:
 
 def validate_windows_runtime_staging_guards() -> None:
     expected_stale_stage_files = {
-        f"openQ4-{kind}_{arch}"
+        f"openPREY-{kind}_{arch}"
         for kind in ("client", "ded")
         for arch in ("x86", "x64", "arm64")
     } | {
@@ -1261,29 +1232,29 @@ def validate_windows_runtime_staging_guards() -> None:
     }
     if set(WINDOWS_RUNTIME.WINDOWS_STALE_STAGE_FILE_MANIFEST) != expected_stale_stage_files:
         raise AssertionError("Windows stage cleanup must remain an exact stale-file allowlist")
-    if WINDOWS_RUNTIME.WINDOWS_EMPTY_STAGE_DIRECTORY_MANIFEST != ("baseoq4/skins",):
+    if WINDOWS_RUNTIME.WINDOWS_EMPTY_STAGE_DIRECTORY_MANIFEST != ("basepr/skins",):
         raise AssertionError("Windows stage cleanup must only prune the known empty skins directory")
 
     hygiene_root = WORK / "windows-runtime" / "stage-hygiene"
-    stale_client = hygiene_root / "openQ4-client_x64"
-    stale_dedicated = hygiene_root / "openQ4-ded_x64"
+    stale_client = hygiene_root / "openPREY-client_x64"
+    stale_dedicated = hygiene_root / "openPREY-ded_x64"
     stale_backup = hygiene_root / "renderer-vk_x64.dll.mainbak"
-    current_client = hygiene_root / "openQ4-client_x64.exe"
+    current_client = hygiene_root / "openPREY-client_x64.exe"
     current_renderer = hygiene_root / "renderer-vk_x64.dll"
-    unlisted_extensionless = hygiene_root / "openQ4-client_custom"
-    empty_skins = hygiene_root / "baseoq4" / "skins"
+    unlisted_extensionless = hygiene_root / "openPREY-client_custom"
+    empty_skins = hygiene_root / "basepr" / "skins"
     for path in (stale_client, stale_dedicated, stale_backup, current_client, current_renderer, unlisted_extensionless):
         write_file(path)
     empty_skins.mkdir(parents=True)
 
     hygiene_result = WINDOWS_RUNTIME.cleanup_windows_stage_target(hygiene_root)
     if set(hygiene_result["removed_stale_files"]) != {
-        "openQ4-client_x64",
-        "openQ4-ded_x64",
+        "openPREY-client_x64",
+        "openPREY-ded_x64",
         "renderer-vk_x64.dll.mainbak",
     }:
         raise AssertionError(f"unexpected Windows stale-stage cleanup result: {hygiene_result!r}")
-    if hygiene_result["removed_empty_directories"] != ["baseoq4/skins"]:
+    if hygiene_result["removed_empty_directories"] != ["basepr/skins"]:
         raise AssertionError(f"empty Windows stage directory was not pruned: {hygiene_result!r}")
     for removed_path in (stale_client, stale_dedicated, stale_backup, empty_skins):
         if removed_path.exists() or removed_path.is_symlink():
@@ -1293,14 +1264,14 @@ def validate_windows_runtime_staging_guards() -> None:
             raise AssertionError(f"Windows stage cleanup removed an unlisted runtime entry: {preserved_path}")
 
     populated_root = WORK / "windows-runtime" / "stage-hygiene-populated"
-    populated_skin = populated_root / "baseoq4" / "skins" / "custom.skin"
+    populated_skin = populated_root / "basepr" / "skins" / "custom.skin"
     write_file(populated_skin)
     populated_result = WINDOWS_RUNTIME.cleanup_windows_stage_target(populated_root)
     if populated_result["removed_empty_directories"] or not populated_skin.is_file():
-        raise AssertionError("Windows stage cleanup must preserve a populated baseoq4/skins directory")
+        raise AssertionError("Windows stage cleanup must preserve a populated basepr/skins directory")
 
     stale_directory_root = WORK / "windows-runtime" / "stage-hygiene-stale-directory"
-    (stale_directory_root / "openQ4-client_x64").mkdir(parents=True)
+    (stale_directory_root / "openPREY-client_x64").mkdir(parents=True)
     expect_runtime_error(
         lambda: WINDOWS_RUNTIME.cleanup_windows_stage_target(stale_directory_root),
         "not a regular file",
@@ -1308,7 +1279,7 @@ def validate_windows_runtime_staging_guards() -> None:
     )
 
     empty_path_file_root = WORK / "windows-runtime" / "stage-hygiene-empty-path-file"
-    write_file(empty_path_file_root / "baseoq4" / "skins")
+    write_file(empty_path_file_root / "basepr" / "skins")
     expect_runtime_error(
         lambda: WINDOWS_RUNTIME.cleanup_windows_stage_target(empty_path_file_root),
         "is not a directory",
@@ -1333,14 +1304,14 @@ def validate_windows_runtime_staging_guards() -> None:
     linked_game_target = WORK / "windows-runtime" / "stage-hygiene-linked-game-target"
     linked_game_root.mkdir(parents=True)
     (linked_game_target / "skins").mkdir(parents=True)
-    if make_symlink(linked_game_target, linked_game_root / "baseoq4", target_is_directory=True):
+    if make_symlink(linked_game_target, linked_game_root / "basepr", target_is_directory=True):
         expect_runtime_error(
             lambda: WINDOWS_RUNTIME.cleanup_windows_stage_target(linked_game_root),
             "cleanup parent is a link or junction",
             "Windows stage cleanup linked game-root guard",
         )
         if not (linked_game_target / "skins").is_dir():
-            raise AssertionError("Windows stage cleanup followed a linked baseoq4 directory")
+            raise AssertionError("Windows stage cleanup followed a linked basepr directory")
 
     malformed_pe = WORK / "windows-runtime" / "truncated.exe"
     malformed_pe.parent.mkdir(parents=True, exist_ok=True)
@@ -1353,18 +1324,18 @@ def validate_windows_runtime_staging_guards() -> None:
         raise AssertionError("malformed PE should not report runtime imports")
 
     mixed_root = WORK / "windows-runtime" / "mixed"
-    write_file(mixed_root / "openQ4-client_x64.exe", b"MZ\n")
-    write_file(mixed_root / "baseoq4" / "game-sp_arm64.dll", b"MZ\n")
+    write_file(mixed_root / "openPREY-client_x64.exe", b"MZ\n")
+    write_file(mixed_root / "basepr" / "game_arm64.dll", b"MZ\n")
     expect_runtime_error(
         lambda: WINDOWS_RUNTIME.detect_binary_arch(mixed_root),
-        "Mixed openQ4 binary architectures",
+        "Mixed openPREY binary architectures",
         "mixed Windows runtime architecture detection",
     )
 
     missing_openal_source = WORK / "windows-runtime" / "missing-openal-source"
     missing_openal_build = WORK / "windows-runtime" / "missing-openal-build"
-    write_file(missing_openal_build / "openQ4-client_x64.exe", b"MZ\n")
-    original_openal_root = os.environ.pop("OPENQ4_OPENAL_ROOT", None)
+    write_file(missing_openal_build / "openPREY-client_x64.exe", b"MZ\n")
+    original_openal_root = os.environ.pop("OPENPREY_OPENAL_ROOT", None)
     try:
         expect_runtime_error(
             lambda: WINDOWS_RUNTIME.stage_runtime_payloads(
@@ -1377,11 +1348,11 @@ def validate_windows_runtime_staging_guards() -> None:
         )
     finally:
         if original_openal_root is not None:
-            os.environ["OPENQ4_OPENAL_ROOT"] = original_openal_root
+            os.environ["OPENPREY_OPENAL_ROOT"] = original_openal_root
 
     symlink_binary_root = WORK / "windows-runtime" / "symlink-binary"
     real_binary = symlink_binary_root / "real.exe"
-    link_binary = symlink_binary_root / "openQ4-client_x64.exe"
+    link_binary = symlink_binary_root / "openPREY-client_x64.exe"
     write_file(real_binary, b"MZ\n")
     if make_symlink(real_binary, link_binary):
         expect_runtime_error(
@@ -1429,22 +1400,22 @@ def validate_windows_runtime_staging_guards() -> None:
     # Static game-core targets live beside the generated modules. Their
     # intermediates may be locked by a compiler and never belong in a runtime.
     generated_build = WORK / "windows-runtime" / "generated-build"
-    generated = generated_build / "content/baseoq4"
-    write_file(generated / "game-mp_x64.dll", b"runtime\n")
+    generated = generated_build / "content/basepr"
+    write_file(generated / "game_x64.dll", b"runtime\n")
     write_file(generated / "mod.json", b"{}\n")
-    for artifact in ("game-mp_x64.dll.p/module.obj", "libopenq4_game_mp_core.a.p/Game.obj",
-                     "game_core.lib.p/Game.obj", "libopenq4_game_mp_core.a", "game-mp_x64.lib",
-                     "game-mp_x64.exp", "stray.obj", "stray.o"):
+    for artifact in ("game_x64.dll.p/module.obj", "libopenprey_game_core.a.p/Game.obj",
+                     "game_core.lib.p/Game.obj", "libopenprey_game_core.a", "game_x64.lib",
+                     "game_x64.exp", "stray.obj", "stray.o"):
         write_file(generated / artifact, b"build-only\n")
     WINDOWS_RUNTIME.stage_build_game_directory(runtime_source, generated_build)
-    staged = {p.relative_to(generated_build / "baseoq4").as_posix()
-              for p in (generated_build / "baseoq4").rglob("*") if p.is_file()}
-    if staged != {"game-mp_x64.dll", "mod.json"}:
+    staged = {p.relative_to(generated_build / "basepr").as_posix()
+              for p in (generated_build / "basepr").rglob("*") if p.is_file()}
+    if staged != {"game_x64.dll", "mod.json"}:
         raise AssertionError(f"build-only game-core artifacts entered the direct-run runtime: {staged}")
 
     symlink_tree_source = WORK / "windows-runtime" / "symlink-tree-source"
     symlink_tree_build = WORK / "windows-runtime" / "symlink-tree-build"
-    generated_game = symlink_tree_build / "content" / "baseoq4"
+    generated_game = symlink_tree_build / "content" / "basepr"
     write_file(generated_game / "mod.json", b"{}\n")
     link_payload = generated_game / "leak.txt"
     if make_symlink(real_binary, link_payload):
@@ -1454,13 +1425,13 @@ def validate_windows_runtime_staging_guards() -> None:
             "symlinked generated runtime tree payload",
         )
 
-    original_openal_root = os.environ.get("OPENQ4_OPENAL_ROOT")
+    original_openal_root = os.environ.get("OPENPREY_OPENAL_ROOT")
     try:
         override_root = WORK / "windows-runtime" / "openal-override"
         override_root_link = WORK / "windows-runtime" / "openal-override-link"
         write_file(override_root / "bin" / "OpenAL32.dll", b"dll\n")
         if make_symlink(override_root, override_root_link, target_is_directory=True):
-            os.environ["OPENQ4_OPENAL_ROOT"] = str(override_root_link)
+            os.environ["OPENPREY_OPENAL_ROOT"] = str(override_root_link)
             expect_runtime_error(
                 lambda: WINDOWS_RUNTIME.resolve_openal_runtime_path(runtime_source, "x64"),
                 "OpenAL override root must not be a symlink",
@@ -1472,7 +1443,7 @@ def validate_windows_runtime_staging_guards() -> None:
         write_file(outside_runtime, b"dll\n")
         (override_runtime_link_root / "bin").mkdir(parents=True, exist_ok=True)
         if make_symlink(outside_runtime, override_runtime_link_root / "bin" / "OpenAL32.dll"):
-            os.environ["OPENQ4_OPENAL_ROOT"] = str(override_runtime_link_root)
+            os.environ["OPENPREY_OPENAL_ROOT"] = str(override_runtime_link_root)
             expect_runtime_error(
                 lambda: WINDOWS_RUNTIME.resolve_openal_runtime_path(runtime_source, "x64"),
                 "OpenAL override runtime must not be a symlink",
@@ -1481,7 +1452,7 @@ def validate_windows_runtime_staging_guards() -> None:
 
         missing_override = WORK / "windows-runtime" / "openal-missing"
         missing_override.mkdir(parents=True, exist_ok=True)
-        os.environ["OPENQ4_OPENAL_ROOT"] = str(missing_override)
+        os.environ["OPENPREY_OPENAL_ROOT"] = str(missing_override)
         expect_runtime_error(
             lambda: WINDOWS_RUNTIME.resolve_openal_runtime_path(runtime_source, "x64"),
             "OpenAL override runtime not found",
@@ -1489,9 +1460,9 @@ def validate_windows_runtime_staging_guards() -> None:
         )
     finally:
         if original_openal_root is None:
-            os.environ.pop("OPENQ4_OPENAL_ROOT", None)
+            os.environ.pop("OPENPREY_OPENAL_ROOT", None)
         else:
-            os.environ["OPENQ4_OPENAL_ROOT"] = original_openal_root
+            os.environ["OPENPREY_OPENAL_ROOT"] = original_openal_root
 
 
 def validate_prepare_windows_openal_path_boundary_guard() -> None:
@@ -1503,6 +1474,37 @@ def validate_prepare_windows_openal_path_boundary_guard() -> None:
     ):
         if token not in script:
             raise AssertionError(f"prepare_windows_openal.ps1 is missing strict path boundary token {token!r}")
+
+
+def validate_repository_metadata_manifest() -> None:
+    manifest_path = WORK / "repository-metadata" / "assembly-manifest.json"
+    manifest = {
+        "format": 1,
+        "projectGitCommit": "1" * 40,
+        "projectGitDirty": False,
+        "gameLibsGitCommit": "2" * 40,
+        "gameLibsGitDirty": False,
+    }
+    write_file(manifest_path, (json.dumps(manifest) + "\n").encode("utf-8"))
+
+    metadata = PACKAGE.read_staged_repository_metadata(
+        WORK,
+        repository_manifest=manifest_path,
+    )
+    expected = {
+        "openq4_commit": "1" * 40,
+        "openq4_dirty": "false",
+        "openq4_game_commit": "2" * 40,
+        "openq4_game_dirty": "false",
+    }
+    if metadata != expected:
+        raise AssertionError(f"explicit repository metadata manifest was not consumed: {metadata!r}")
+
+    default_build_dir = WORK / "repository-metadata" / "builddir"
+    default_manifest = default_build_dir / PACKAGE.GAMELIBS_STAGE_MANIFEST_PATH
+    write_file(default_manifest, (json.dumps(manifest) + "\n").encode("utf-8"))
+    if PACKAGE.read_staged_repository_metadata(WORK, default_build_dir) != expected:
+        raise AssertionError("build-local GameLibs metadata manifest was not consumed")
 
 
 def validate_validation_wiring() -> None:
@@ -1614,6 +1616,8 @@ def main() -> None:
         validate_legacy_build_pak0_cli_guards()
         validate_list_sources_guards()
         validate_fast_stage_guards_and_copy()
+        validate_dev_only_fixtures_not_in_pak_sources()
+        validate_plain_install_cleanup()
         validate_fast_stage_cross_platform_policy()
         validate_stale_content_prune_symlink_handling()
         validate_package_name_and_copy_guards()
@@ -1624,12 +1628,10 @@ def main() -> None:
         validate_unchanged_pack_rebuild_stays_current()
         validate_version_manifest_integrity()
         validate_macos_signing_input_guards()
-        validate_stage_manifest_rejects_unsafe_paths()
-        validate_stage_gamelibs_raw_stage_root_symlink_guard()
-        validate_stage_gamelibs_raw_source_root_symlink_guards()
         validate_meson_source_symlink_guards()
         validate_windows_runtime_staging_guards()
         validate_prepare_windows_openal_path_boundary_guard()
+        validate_repository_metadata_manifest()
         validate_validation_wiring()
     finally:
         shutil.rmtree(WORK, ignore_errors=True)

@@ -24,7 +24,8 @@ def inventory(root: Path) -> dict:
     root = root.resolve(strict=True)
     paths = []
     digest = hashlib.sha256()
-    for tree in ("src/game", "src/mpgame"):
+    # openPREY's Prey SDK-derived game library (see LICENSING.md).
+    for tree in ("src/game", "src/Prey", "src/preyengine"):
         directory = root / tree
         if directory.is_symlink() or (directory.exists() and getattr(directory.stat(follow_symlinks=False), "st_file_attributes", 0) & 0x400):
             raise ValueError(f"game source directory is a link: {directory}")
