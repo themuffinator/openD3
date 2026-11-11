@@ -331,6 +331,8 @@ public:
 	virtual size_t				Size( void ) const;
 	virtual const char *		DefaultDefinition( void ) const;
 	virtual bool				Parse( const char *text, const int textLength );
+	// The engine parses decls through this overload; model defs have no cached form.
+	virtual bool				Parse( const char *text, const int textLength, bool noCaching ) { (void)noCaching; return Parse( text, textLength ); }
 	virtual void				FreeData( void );
 
 	void						Touch( void ) const;

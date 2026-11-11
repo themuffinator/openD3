@@ -2661,7 +2661,7 @@ static bool Common_SettingsSaveDirectory( std::string& directory, std::string& e
 		return false;
 	}
 	if ( root.back() != '/' ) root += '/';
-	directory = root + "baseoq4/";
+	directory = root + OPENQ4_GAMEDIR "/";
 	error.clear();
 	return true;
 }
@@ -4658,7 +4658,7 @@ static void Com_NetIPv4SelfTest_f( const idCmdArgs &args ) {
 		if ( !Sys_StringToNetAdr( va( "127.0.0.1:%d", receiverPort ), &destination, false ) ) {
 			Common_NetIPv4SelfTestFailure( passed, "could not create the loopback destination" );
 		} else {
-			static const char payload[] = "openQ4 IPv4 loopback";
+			static const char payload[] = "openD3 IPv4 loopback";
 			sender.SendPacket( destination, payload, static_cast<int>( sizeof( payload ) ) );
 
 			char received[sizeof( payload )];
@@ -4670,7 +4670,7 @@ static void Com_NetIPv4SelfTest_f( const idCmdArgs &args ) {
 				Common_NetIPv4SelfTestFailure( passed, "UDP loopback payload did not round-trip" );
 			}
 
-			static const char reply[] = "openQ4 IPv4 reply";
+			static const char reply[] = "openD3 IPv4 reply";
 			receiver.SendPacket( source, reply, static_cast<int>( sizeof( reply ) ) );
 			netadr_t replySource;
 			receivedSize = 0;
@@ -4837,7 +4837,7 @@ static void Com_NetIPv6SelfTest_f( const idCmdArgs &args ) {
 		if ( !Sys_StringToNetAdr( va( "[::1]:%d", receiverPort ), &destination, false ) || destination.type != NA_IP6 ) {
 			Common_NetIPv6SelfTestFailure( passed, "could not create the IPv6 loopback destination" );
 		} else {
-			static const char payload[] = "openQ4 IPv6 loopback";
+			static const char payload[] = "openD3 IPv6 loopback";
 			sender.SendPacket( destination, payload, static_cast<int>( sizeof( payload ) ) );
 
 			char received[sizeof( payload )];
@@ -4849,7 +4849,7 @@ static void Com_NetIPv6SelfTest_f( const idCmdArgs &args ) {
 				Common_NetIPv6SelfTestFailure( passed, "IPv6 UDP loopback payload did not round-trip" );
 			}
 
-			static const char reply[] = "openQ4 IPv6 reply";
+			static const char reply[] = "openD3 IPv6 reply";
 			receiver.SendPacket( source, reply, static_cast<int>( sizeof( reply ) ) );
 			netadr_t replySource;
 			receivedSize = 0;
@@ -4901,7 +4901,7 @@ static void Com_NetIPv6SelfTest_f( const idCmdArgs &args ) {
 			Common_NetIPv6SelfTestFailure( passed, "dual-stack port did not bind" );
 		} else {
 			netadr_t dualDestination;
-			static const char dualPayload[] = "openQ4 dual stack";
+			static const char dualPayload[] = "openD3 dual stack";
 			char dualReceived[sizeof( dualPayload )];
 			int dualSize = 0;
 			netadr_t dualSource;
@@ -6663,7 +6663,7 @@ void idCommonLocal::PrintLoadingMessage( const char *msg ) {
 	renderSystem->DrawStretchPic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 1, 1, declManager->FindMaterial( "_white" ) );
 	renderSystem->SetColor( colorWhite );
 	static const char *splashMaterialCandidates[] = {
-		"guis/assets/loading/loading",
+		"splashScreen",
 		"gfx/guis/loadscreens/generic",
 		"gfx/splashScreen",
 		"gfx/splashscreen"

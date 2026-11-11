@@ -1403,6 +1403,14 @@ void idArenaCampaign::Init() {
 		state = new arenaCampaignState_t;
 	}
 
+	// The Arena ladder is optional content. A package without its campaign
+	// file (openD3 ships none) has no Arena menu to load either.
+	if ( fileSystem->ReadFile( ARENA_CAMPAIGN_FILE, NULL, NULL ) < 0 ) {
+		state->gui = NULL;
+		state->returnGui = NULL;
+		return;
+	}
+
 	state->gui = uiManager->FindGui( "guis/arena_menu.gui", true, false, true );
 	state->returnGui = NULL;
 	LoadCampaign();

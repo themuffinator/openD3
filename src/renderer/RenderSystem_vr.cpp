@@ -37,9 +37,9 @@ static const char *const vrTargetImageNames[3][2] = {
 };
 
 static const char *const vrTargetLabels[3] = {
-	"openQ4 VR virtual screen",
-	"openQ4 VR left eye",
-	"openQ4 VR right eye",
+	"openD3 VR virtual screen",
+	"openD3 VR left eye",
+	"openD3 VR right eye",
 };
 
 static bool R_VR_TargetSizeValid( int width, int height ) {

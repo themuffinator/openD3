@@ -1071,8 +1071,17 @@ static bool Session_ValidateSaveGamePayload( idFile *file, const idStr &savePath
 	}
 
 	if ( marker != SESSION_OPENQ4_SAVEGAME_COMPATIBILITY_MAGIC ) {
+#if defined( OPEND3 )
+		// Doom 3's game library does not write the stamped payload yet: its
+		// payload starts with the build number and carries no footer or
+		// integrity trailer, as the original game's did. Accept it for the
+		// build that wrote it (docs/dev/doom3-rebase.md, savegames).
+		(void)allowLegacyPayload;
+		const bool legacyCompatible = marker == BUILD_NUMBER;
+#else
 		const bool legacyCompatible = allowLegacyPayload && marker == BUILD_NUMBER &&
 			idStr::Icmp( Session_GetSaveGameWireABI(), SESSION_LEGACY_SAVEGAME_WIRE_ABI ) == 0;
+#endif
 		if ( !legacyCompatible ) {
 			common->Warning( "Savegame '%s' has unsupported legacy payload build/marker %d (expected build %d or marker 0x%08x)",
 				savePath.c_str(), marker, BUILD_NUMBER, SESSION_OPENQ4_SAVEGAME_COMPATIBILITY_MAGIC );
@@ -1145,11 +1154,11 @@ static bool Session_ValidateSaveGamePayload( idFile *file, const idStr &savePath
 			}
 			valid = false;
 		} else if ( layoutBuild < minimumBuild ) {
-			common->Warning( "Savegame '%s' was written by an older openQ4 (build %d, below build %d, the oldest this build can restore)",
+			common->Warning( "Savegame '%s' was written by an older openD3 (build %d, below build %d, the oldest this build can restore)",
 				savePath.c_str(), layoutBuild, minimumBuild );
 			valid = false;
 		} else if ( release != NULL ) {
-			common->DPrintf( "Savegame '%s' was written by openQ4 %s; reading it as build %d\n",
+			common->DPrintf( "Savegame '%s' was written by openD3 %s; reading it as build %d\n",
 				savePath.c_str(), release->version, release->build );
 		} else if ( payloadBuild != BUILD_NUMBER ||
 				OPENQ4_SAVEGAME_COMPAT_SOURCE_FILE_COUNT < 0 ||
@@ -3031,7 +3040,9 @@ void idSessionLocal::PrimeMainMenuGuiResources( void ) {
 
 	// The GUI buffers this command when it activates. Resolve the shader during
 	// startup/level load so the first in-game menu never parses it on demand.
+#if !defined( OPEND3 )
 	declManager->FindSound( "main_menu_gameplay" );
+#endif
 }
 
 static void Session_DrawFallbackLoadingScreen() {
@@ -3083,7 +3094,7 @@ static void Session_DrawFallbackLoadingScreen() {
 	renderSystem->DrawStretchPic( 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, 0, 0, 1, 1, declManager->FindMaterial( "_white" ) );
 
 	static const char *splashMaterialCandidates[] = {
-		"guis/assets/loading/loading",
+		"splashScreen",
 		"gfx/guis/loadscreens/generic",
 		"gfx/splashScreen",
 		"gfx/splashscreen"

@@ -72,7 +72,7 @@ Vulkan implementation, term for term.
 */
 
 static const char *glPBRVertexLibrary =
-	"\n// openQ4 native PBR vertex frame (draw_pbr.cpp)\n"
+	"\n// openD3 native PBR vertex frame (draw_pbr.cpp)\n"
 	"varying vec3 vPBRTangent0;\n"
 	"varying vec3 vPBRTangent1;\n"
 	"varying vec3 vPBRNormal;\n"
@@ -186,7 +186,7 @@ static void RB_GLPBR_BuildFragmentLibrary( void ) {
 	if ( glPBRFragmentLibrary.Length() > 0 ) {
 		return;
 	}
-	glPBRFragmentLibrary = "\n// openQ4 native PBR shading (draw_pbr.cpp)\n";
+	glPBRFragmentLibrary = "\n// openD3 native PBR shading (draw_pbr.cpp)\n";
 	glPBRFragmentLibrary += OPENQ4_PBR_SCALAR_GLSL;
 	glPBRFragmentLibrary += "\n";
 	glPBRFragmentLibrary += GL_PBR_MATERIAL_GLSL;

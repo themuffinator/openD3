@@ -123,7 +123,7 @@ int main( int argc, char **argv ) {
 		flags |= SDL_WINDOW_HIDDEN;
 	}
 
-	SDL_Window *window = SDL_CreateWindow( "openQ4 GLES clear probe", 640, 360, flags );
+	SDL_Window *window = SDL_CreateWindow( "openD3 GLES clear probe", 640, 360, flags );
 	if ( window == NULL ) {
 		printf( "FAIL: SDL_CreateWindow: %s\n", SDL_GetError() );
 		SDL_Quit();

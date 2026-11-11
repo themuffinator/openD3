@@ -426,21 +426,22 @@ static void openD3_RemapLegacyImageName( idStr &name ) {
 		const char *legacyName;
 		const char *replacementName;
 	};
+	// Names the inherited engine asks for, mapped to the stock Doom 3 image.
 	static const legacyImageRemap_t remaps[] = {
 		{ "_menushot", "_currentRender" },
-		{ "gfx/guis/loadscreens/generic", "guis/assets/loading/loading" },
-		{ "gfx/splashscreen", "guis/assets/loading/loading" },
+		{ "gfx/guis/loadscreens/generic", "guis/assets/splash/launch" },
+		{ "gfx/splashscreen", "guis/assets/splash/launch" },
 		{ "gfx/guis/white", "guis/assets/white" },
-		{ "gfx/guis/guicursor_arrow", "guis/assets/guicursor_arrow" },
-		{ "gfx/guis/guicursor_hand", "guis/assets/guicursor_hand" },
-		{ "gfx/guis/guicursor_menu", "guis/assets/guicursor_menu" },
-		{ "gfx/guis/scrollbarh", "guis/assets/scrollbarv" },
-		{ "gfx/guis/scrollbarv", "guis/assets/scrollbarv" },
-		{ "gfx/guis/scrollbar_thumb", "guis/assets/scrollbar_thumb" },
-		{ "gfx/guis/scrollbar_right", "guis/assets/scrollbarv_cap" },
-		{ "gfx/guis/scrollbar_left", "guis/assets/scrollbarv_cap" },
-		{ "gfx/guis/scrollbar_up", "guis/assets/scrollbarv_cap" },
-		{ "gfx/guis/scrollbar_down", "guis/assets/scrollbarv_cap" }
+		{ "gfx/guis/guicursor_arrow", "ui/assets/guicursor_arrow" },
+		{ "gfx/guis/guicursor_hand", "ui/assets/guicursor_hand" },
+		{ "gfx/guis/guicursor_menu", "ui/assets/guicursor_arrow" },
+		{ "gfx/guis/scrollbarh", "ui/assets/scrollbarh" },
+		{ "gfx/guis/scrollbarv", "ui/assets/scrollbarv" },
+		{ "gfx/guis/scrollbar_thumb", "ui/assets/scrollbar_thumb" },
+		{ "gfx/guis/scrollbar_right", "ui/assets/scrollbar_right" },
+		{ "gfx/guis/scrollbar_left", "ui/assets/scrollbar_left" },
+		{ "gfx/guis/scrollbar_up", "ui/assets/scrollbar_up" },
+		{ "gfx/guis/scrollbar_down", "ui/assets/scrollbar_down" }
 	};
 
 	for ( int i = 0; i < (int)( sizeof( remaps ) / sizeof( remaps[0] ) ); i++ ) {
@@ -450,15 +451,15 @@ static void openD3_RemapLegacyImageName( idStr &name ) {
 		}
 	}
 
+	// Quake 4 names its loading pictures gfx/guis/loadscreens/<map>; Doom 3's
+	// are guis/assets/splash/<map>.
 	static const char legacyLoadscreenPrefix[] = "gfx/guis/loadscreens/";
 	const int prefixLength = (int)strlen( legacyLoadscreenPrefix );
 	if ( idStr::Icmpn( name.c_str(), legacyLoadscreenPrefix, prefixLength ) == 0 ) {
 		idStr mapName = name.c_str() + prefixLength;
-		if ( mapName.Icmp( "generic" ) == 0 ) {
-			name = "guis/assets/loading/loading";
-		} else if ( mapName.Icmp( "roadhouse" ) == 0 || mapName.Icmp( "game/roadhouse" ) == 0 ) {
-			name = "guis/assets/loading/roadhouse";
-		}
+		mapName.StripPath();
+		name = "guis/assets/splash/";
+		name += mapName;
 	}
 }
 

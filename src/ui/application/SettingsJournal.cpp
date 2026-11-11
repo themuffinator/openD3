@@ -7,7 +7,7 @@
 
 namespace openq4::ui {
 namespace {
-constexpr const char* Magic = "openQ4 settings recovery 1\n";
+constexpr const char* Magic = "openD3 settings recovery 1\n";
 bool Fail(std::string& error, const char* message) { error = message; return false; }
 std::string Quote(const std::string& text) {
 	constexpr char hex[] = "0123456789abcdef";
@@ -137,7 +137,7 @@ bool DecodeSettingsJournal(const std::string& bytes,
 }
 
 namespace {
-constexpr const char* EffectMagic = "openQ4 settings recovery 2\n";
+constexpr const char* EffectMagic = "openD3 settings recovery 2\n";
 bool EffectFail(std::string& error,const char* message) noexcept {
  try { error=message; } catch (...) { error.clear(); } return false;
 }

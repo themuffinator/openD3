@@ -1942,7 +1942,7 @@ void idDeviceContext::RegisterIcon( const char *code, const char *shader, int x,
 }
 
 void idDeviceContext::RegisterBuiltinIcons() {
-#if !defined(HUMANHEAD)
+#if !defined(OPEND3)
 	static const struct {
 		const char *code;
 		const char *shader;
@@ -1966,8 +1966,8 @@ void idDeviceContext::RegisterBuiltinIcons() {
 		RegisterIcon( builtinIcons[i].code, builtinIcons[i].shader );
 	}
 #else
-	// These escape codes name Quake 4 HUD and server-browser images.  Prey
-	// registers its authored GUI icons through the normal RegisterIcon path.
+	// These escape codes name Quake 4 HUD and server-browser images, which
+	// Doom 3 does not ship.
 #endif
 }
 
@@ -1997,9 +1997,10 @@ void idDeviceContext::Init() {
 	colorWhite = idVec4(1, 1, 1, 1);
 	colorBlack = idVec4(0, 0, 0, 1);
 	colorNone = idVec4(0, 0, 0, 0);
-	cursorImages[CURSOR_ARROW] = declManager->FindMaterial("guis/assets/guicursor_arrow.tga");
-	cursorImages[CURSOR_HAND] = declManager->FindMaterial("guis/assets/guicursor_hand.tga");
-	cursorImages[CURSOR_MENU] = declManager->FindMaterial("guis/assets/guicursor_menu.tga");
+	// Doom 3 has an arrow and a hand; the menu cursor shares the arrow.
+	cursorImages[CURSOR_ARROW] = declManager->FindMaterial("ui/assets/guicursor_arrow.tga");
+	cursorImages[CURSOR_HAND] = declManager->FindMaterial("ui/assets/guicursor_hand.tga");
+	cursorImages[CURSOR_MENU] = declManager->FindMaterial("ui/assets/guicursor_arrow.tga");
 	scrollBarImages[SCROLLBAR_HBACK] = declManager->FindMaterial("gfx/guis/scrollbarh");
 	scrollBarImages[SCROLLBAR_VBACK] = declManager->FindMaterial("gfx/guis/scrollbarv");
 	scrollBarImages[SCROLLBAR_THUMB] = declManager->FindMaterial("gfx/guis/scrollbar_thumb");

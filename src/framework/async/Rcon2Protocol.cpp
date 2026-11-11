@@ -47,7 +47,7 @@ void ComputeProof( const std::uint8_t verifier[ VERIFIER_BYTES ],
 		const std::uint8_t endpointBinding[ ENDPOINT_BINDING_BYTES ],
 		const std::uint8_t requestDigest[ REQUEST_DIGEST_BYTES ],
 		std::uint8_t proof[ PROOF_BYTES ] ) {
-	static constexpr char PROOF_DOMAIN[] = "openQ4-rcon2-proof-v1";
+	static constexpr char PROOF_DOMAIN[] = "openD3-rcon2-proof-v1";
 	static constexpr std::size_t PROOF_DOMAIN_BYTES = sizeof( PROOF_DOMAIN ) - 1;
 	std::uint8_t message[ PROOF_DOMAIN_BYTES + 1 + NONCE_BYTES + NONCE_BYTES +
 		ENDPOINT_BINDING_BYTES + REQUEST_DIGEST_BYTES ];

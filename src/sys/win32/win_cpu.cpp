@@ -343,7 +343,9 @@ Sys_FPU_StackIsEmpty
 ===============
 */
 bool Sys_FPU_StackIsEmpty(void) {
-	return false;
+	// x64 code keeps no values on the x87 register stack, so it is always empty.
+	// Doom 3's game code treats a false answer here as a fatal error.
+	return true;
 }
 
 /*

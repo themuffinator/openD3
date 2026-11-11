@@ -90,7 +90,7 @@ static idStr ServerBrowserText( const char *text, int limit = 96 ) {
 // Reject malformed folder identifiers rather than inventing a sanitized token.
 static idStr ServerBrowserMod( const char *mod ) {
 	if ( !mod || !mod[0] ) {
-		return "baseoq4";
+		return OPENQ4_GAMEDIR;
 	}
 	if ( strlen( mod ) > 64 || !strcmp( mod, "." ) || !strcmp( mod, ".." ) ) {
 		return "";
@@ -745,7 +745,7 @@ void idServerScan::AddFavoriteServers() {
 void idServerScan::UpdateFilterByMod( int direction ) {
 	idStrList mods;
 	mods.Append( "" );
-	mods.Append( "baseoq4" );
+	mods.Append( OPENQ4_GAMEDIR );
 	for ( int i = 0; i < Num(); ++i ) {
 		const idStr mod = ServerBrowserMod( (*this)[i].serverInfo.GetString( "fs_game" ) );
 		if ( mod.Length() ) {

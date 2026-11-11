@@ -2322,10 +2322,8 @@ void idSessionLocal::StartMenu( bool playIntro ) {
 	soundSystem->SetMute( false );
 
 	// start playing the menu sounds
+	// Doom 3's menu GUI starts its own music ("music guisounds_menu").
 	SetPlayingSoundWorld( menuSoundWorld );
-	if ( menuSoundWorld != NULL ) {
-		menuSoundWorld->PlayShaderDirectly( "guisounds_menu_music", 3 );
-	}
 
 	const int menuProfileStart = Sys_Milliseconds();
 	menuProfileSaveVarsMsec = 0;

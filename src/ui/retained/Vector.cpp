@@ -12,7 +12,7 @@
 #include <sstream>
 
 namespace openq4::ui {
-static_assert(sizeof(TESSreal) == sizeof(double), "Refresh libtess2 with Meson subprojects update --reset libtess2; openQ4 requires the precision patch");
+static_assert(sizeof(TESSreal) == sizeof(double), "Refresh libtess2 with Meson subprojects update --reset libtess2; openD3 requires the precision patch");
 namespace {
 constexpr double Pi = 3.14159265358979323846;
 VectorPoint operator+(VectorPoint a, VectorPoint b) { return {a.x+b.x,a.y+b.y}; }

@@ -33,7 +33,7 @@ openQ4 Android platform layer: engine console output -> logcat.
 #include "LogWritter.h"
 #endif
 
-static const char *ANDROID_LOG_TAG = "openQ4";
+static const char *ANDROID_LOG_TAG = "openD3";
 
 // liblog truncates a record at roughly 4076 bytes including the tag and
 // priority byte; stay well inside that rather than discover the exact limit.
@@ -61,7 +61,7 @@ static thread_local androidLogLine_t androidLogLine = { { '\0' }, 0 };
 Sys_AndroidLogLinePriority
 
 idCommonLocal::Warning and ::Error route through the same Sys_Printf as every
-other print, so without this "adb logcat openQ4:E" would show nothing at all.
+other print, so without this "adb logcat openD3:E" would show nothing at all.
 The prefixes are the ones those two write; colour escapes have already been
 stripped by the time a line gets here.
 ================

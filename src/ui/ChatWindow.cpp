@@ -39,7 +39,7 @@ idChatWindow::idChatWindow(idDeviceContext *context, idUserInterfaceLocal *owner
         "font \"fonts/lowpixel\" textscale 0.25 textspacing -1 textstyle 1 "
         "forecolor 1,1,1,1 hovercolor 1,1,1,1 nocursor 1 noclip 1 "
         "onEnter { set \"cmd\" \"chatmessage\"; } onESC { set \"cmd\" \"close\"; } }";
-    idParser parser(definition, idStr::Length(definition), "<openQ4 chat>",
+    idParser parser(definition, idStr::Length(definition), "<openD3 chat>",
         LEXFL_NOFATALERRORS | LEXFL_NOSTRINGCONCAT | LEXFL_ALLOWMULTICHARLITERALS);
     Parse(&parser);
     noEvents = !input;

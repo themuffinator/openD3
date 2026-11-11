@@ -418,7 +418,7 @@ idCVar idDeclManagerLocal::decl_show( "decl_show", "0", CVAR_SYSTEM, "set to 1 t
 static idCVar decl_layerModFiles( "decl_layerModFiles", "1", CVAR_SYSTEM | CVAR_BOOL | CVAR_INIT, "when a mod ships a decl file under the same name as a file of the game beneath it, keep the game's decls the mod's copy does not define" );
 idCVar com_SingleDeclFile( "com_SingleDeclFile", "0", CVAR_SYSTEM | CVAR_BOOL, "load decls from a packed single .decls file instead of scanning loose decl folders" );
 static idCVar com_singleDeclFileName( "com_singleDeclFileName", "", CVAR_SYSTEM, "override packed decl file used by com_SingleDeclFile and writeDeclFile" );
-static idCVar com_singleDeclFileWriteMode( "com_singleDeclFileWriteMode", "0", CVAR_SYSTEM | CVAR_INTEGER, "packed .decls writer policy: 0 = openQ4 extended game types, 1 = exact retail game types", 0, 1, idCmdSystem::ArgCompletion_Integer<0,1> );
+static idCVar com_singleDeclFileWriteMode( "com_singleDeclFileWriteMode", "0", CVAR_SYSTEM | CVAR_INTEGER, "packed .decls writer policy: 0 = openD3 extended game types, 1 = exact retail game types", 0, 1, idCmdSystem::ArgCompletion_Integer<0,1> );
 
 static const declType_t declSingleFileFrameworkTypes[] = {
 	DECL_TABLE,
@@ -1443,10 +1443,7 @@ void idDeclManagerLocal::Init( void ) {
 	RegisterDeclType( "sound",				DECL_SOUND,			idDeclAllocator<idSoundShader> );
 	RegisterDeclType( "entityDef",			DECL_ENTITYDEF,		idDeclAllocator<idDeclEntityDef> );
 	RegisterDeclType( "mapDef",				DECL_MAPDEF,		idDeclAllocator<idDeclEntityDef> );
-	// Prey retail .def files embed Maya export blocks. Prey's original engine
-	// registers this engine-owned type before the game scans the def folder so
-	// the declaration loader can skip those tool-only blocks cleanly.
-	RegisterDeclType( "export",				DECL_MODELEXPORT,	idDeclAllocator<idDecl> );
+	// Doom 3's game library registers the "export" type itself (idGameLocal::Init).
 
 // jmarshall: Raven Decl Support
 	RegisterDeclType(  "materialType",		DECL_MATERIALTYPE,  idDeclAllocator<rvDeclMatType>);
@@ -3001,16 +2998,6 @@ const idDeclSkin *idDeclManagerLocal::SkinByIndex( int index, bool forceParse ) 
 /********************************************************************/
 
 const idSoundShader *idDeclManagerLocal::FindSound( const char *name, bool makeDefault ) {
-	// Retail Prey ships "<shader>_nogore" variants (the possessed children on
-	// the feeding tower maps) and its engine prefers them whenever the game's
-	// g_nogore cvar is set. The cvar is game-owned, so it reads false before the
-	// game library registers it.
-	if ( name != NULL && name[0] != '\0' && cvarSystem->GetCVarBool( "g_nogore" ) ) {
-		const idDecl *nogore = FindType( DECL_SOUND, va( "%s_nogore", name ), false );
-		if ( nogore != NULL ) {
-			return static_cast<const idSoundShader *>( nogore );
-		}
-	}
 	return static_cast<const idSoundShader *>( FindType( DECL_SOUND, name, makeDefault ) );
 }
 

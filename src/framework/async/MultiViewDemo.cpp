@@ -1132,7 +1132,7 @@ bool idMultiViewDemo::ReadHeader( idFile *source, header_t &outHeader ) {
 		return false;
 	}
 	if ( memcmp( prefix, MVD_MAGIC, sizeof( MVD_MAGIC ) ) != 0 ) {
-		lastError = "not an openQ4 MVD file";
+		lastError = "not an openD3 MVD file";
 		return false;
 	}
 
@@ -1394,7 +1394,7 @@ idMultiViewDemo::WriteMetadataRecord
 */
 bool idMultiViewDemo::WriteMetadataRecord() {
 	idDict metadata;
-	metadata.Set( "format", "openQ4 MVD" );
+	metadata.Set( "format", "openD3 MVD" );
 	metadata.Set( "engineVersion", cvarSystem->GetCVarString( "si_version" ) );
 	metadata.Set( "gameModule", cvarSystem->GetCVarString( "com_activeGameModule" ) );
 	metadata.Set( "map", sessLocal.mapSpawnData.serverInfo.GetString( "si_map" ) );

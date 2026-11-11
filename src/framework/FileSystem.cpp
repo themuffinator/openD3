@@ -441,49 +441,28 @@ typedef struct {
 } officialPk4Info_t;
 
 static officialPk4Info_t officialPk4s[] = {
-	// Prey CD/DVD layout. Checksums remain presence-only until clean retail
-	// samples for every disc/patch variant have been catalogued.
-	{ "pak000.pk4",				0,			false,	true },
-	{ "pak001.pk4",				0,			false,	true },
-	{ "pak002.pk4",				0,			false,	true },
-	{ "pak003.pk4",				0,			false,	true },
-	{ "pak004.pk4",				0,			false,	true },
+	// Retail Doom 3 base media. Every distribution carries the same five packs.
+	{ "pak000.pk4",				0x28d208f1,	true,	true },
+	{ "pak001.pk4",				0x40244be0,	true,	true },
+	{ "pak002.pk4",				0xc51ecdcd,	true,	true },
+	{ "pak003.pk4",				0xcd79d028,	true,	true },
+	{ "pak004.pk4",				0x765e4f8b,	true,	true },
 
-	// Consolidated layout used by legacy digital distributions.
-	{ "pak_data.pk4",			0xbe295ead,	false,	true },
-	{ "pak_sound.pk4",			0xe0c27ee2,	false,	true },
-	{ "pak_en_v.pk4",			0x952b910e,	false,	true },
-	{ "pak_en_t.pk4",			0x6625f12d,	false,	true },
-
-	// Known optional patch and game media. The gameXX packs are not assumed to
-	// be binary-only: unlike Quake 4's game000 family, their contents have not
-	// yet been verified across all Prey releases.
-	{ "pak005.pk4",				0,			false,	true },
-	{ "pak006.pk4",				0,			false,	true },
-	{ "pak020.pk4",				0,			false,	true },
-	{ "pak040.pk4",				0,			false,	true },
-	{ "game00.pk4",				0,			false,	false },
-	{ "game01.pk4",				0,			false,	false },
-	{ "game02.pk4",				0,			false,	false },
-	{ "game03.pk4",				0,			false,	false },
+	// Official patch media through 1.3.1, present on current distributions.
+	{ "pak005.pk4",				0x8ffc3621,	false,	true },
+	{ "pak006.pk4",				0x095b65ab,	false,	true },
+	{ "pak007.pk4",				0x666bdb3c,	false,	true },
+	{ "pak008.pk4",				0x23ae5993,	false,	true },
 
 	{ NULL,						0,			false,	false }
 };
 
-static const char *requiredClassicPk4s[] = {
+static const char *requiredBasePk4s[] = {
 	"pak000.pk4",
 	"pak001.pk4",
 	"pak002.pk4",
 	"pak003.pk4",
 	"pak004.pk4",
-	NULL
-};
-
-static const char *requiredDigitalPk4s[] = {
-	"pak_data.pk4",
-	"pak_sound.pk4",
-	"pak_en_v.pk4",
-	"pak_en_t.pk4",
 	NULL
 };
 
@@ -497,16 +476,10 @@ static bool FS_IsIgnoredOfficialGameBinaryPk4( const char *pakName ) {
 	name = pakName;
 	name.StripPath();
 
-	// Preserve upstream's fail-safe for the inherited Quake 4 binary-pack
-	// names. No Prey gameXX pack is ignored until its contents are verified.
-	if ( !name.Icmp( "game000.pk4" ) ||
-		 !name.Icmp( "game100.pk4" ) ||
-		 !name.Icmp( "game200.pk4" ) ||
-		 !name.Icmp( "game300.pk4" ) ) {
-		return true;
-	}
-
-	return idStr::Filter( "gamex*.pk4", name.c_str(), false );
+	// Retail game00.pk4 through game03.pk4 hold only the original game
+	// binaries for each platform. openD3 ships its own game module, so they
+	// are left out of the search path.
+	return idStr::Filter( "game0?.pk4", name.c_str(), false );
 }
 
 static const officialPk4Info_t *FindOfficialPk4Info( const char *pakName ) {
@@ -824,16 +797,11 @@ static void FS_LogPathList( const char *label, const idStrList &paths ) {
 
 static bool FS_HasGameFilesAtGameDirPath( const char *gameDirPath ) {
 	idStr pakPath;
-	static const char *preyPackProbes[] = {
-		// Either complete required layout is accepted later by
-		// ValidateRequiredOfficialPaks. A single hit is enough for discovery so
-		// that startup can report the exact missing members of a partial install.
+	static const char *doom3PackProbes[] = {
+		// A single hit is enough for discovery, so that startup can report the
+		// exact missing members of a partial install.
 		"pak000.pk4",
 		"pak001.pk4",
-		"pak_data.pk4",
-		"pak_sound.pk4",
-		"pak_en_v.pk4",
-		"pak_en_t.pk4",
 		NULL
 	};
 
@@ -841,9 +809,9 @@ static bool FS_HasGameFilesAtGameDirPath( const char *gameDirPath ) {
 		return false;
 	}
 
-	for ( int i = 0; preyPackProbes[ i ] != NULL; i++ ) {
+	for ( int i = 0; doom3PackProbes[ i ] != NULL; i++ ) {
 		pakPath = gameDirPath;
-		pakPath.AppendPath( preyPackProbes[ i ] );
+		pakPath.AppendPath( doom3PackProbes[ i ] );
 		if ( FS_FileExists( pakPath.c_str() ) ) {
 			return true;
 		}
@@ -1057,11 +1025,10 @@ static bool FS_ExtractExecutableDirectoryFromCommand( const char *commandLine, i
 
 static void FS_AddKnownInstallCandidatesFromRoot( idStrList &candidates, const char *rootPath ) {
 	static const char *relativePaths[] = {
-		"Human Head Studios/Prey",
-		"2K Games/Prey",
-		"3D Realms/Prey",
-		"Games/Prey",
-		"Prey",
+		"Activision/Doom 3",
+		"id Software/Doom 3",
+		"Games/Doom 3",
+		"Doom 3",
 		NULL
 	};
 	idStr candidate;
@@ -1168,7 +1135,7 @@ static void FS_AppendGogPathsFromRegistryGamesBranch( HKEY root, const char *bra
 	RegCloseKey( hKey );
 }
 
-static void FS_AppendPreyPathsFromRegistryUninstallBranch( HKEY root, const char *branch, idStrList &candidates, REGSAM accessFlags ) {
+static void FS_AppendDoom3PathsFromRegistryUninstallBranch( HKEY root, const char *branch, idStrList &candidates, REGSAM accessFlags ) {
 	HKEY	hKey;
 	LONG	status;
 	DWORD	index;
@@ -1203,7 +1170,7 @@ static void FS_AppendPreyPathsFromRegistryUninstallBranch( HKEY root, const char
 		subKeyPath += subKeyName;
 		displayName.Clear();
 		if ( !FS_ReadRegistryString( root, subKeyPath.c_str(), "DisplayName", accessFlags, displayName ) ||
-			 displayName.Find( "prey", false ) < 0 ) {
+			 displayName.Find( "doom 3", false ) < 0 || displayName.Find( "bfg", false ) >= 0 ) {
 			index++;
 			continue;
 		}
@@ -1235,12 +1202,10 @@ static void FS_BuildRegistryInstallCandidates( idStrList &candidates ) {
 		KEY_WOW64_32KEY
 	};
 	static const char *installKeys[] = {
-		"SOFTWARE\\Human Head Studios\\Prey",
-		"SOFTWARE\\2K Games\\Prey",
-		"SOFTWARE\\3D Realms\\Prey",
-		"SOFTWARE\\WOW6432Node\\Human Head Studios\\Prey",
-		"SOFTWARE\\WOW6432Node\\2K Games\\Prey",
-		"SOFTWARE\\WOW6432Node\\3D Realms\\Prey",
+		"SOFTWARE\\id\\Doom 3",
+		"SOFTWARE\\Activision\\Doom 3",
+		"SOFTWARE\\WOW6432Node\\id\\Doom 3",
+		"SOFTWARE\\WOW6432Node\\Activision\\Doom 3",
 		NULL
 	};
 	static const char *installValueNames[] = {
@@ -1251,8 +1216,8 @@ static void FS_BuildRegistryInstallCandidates( idStrList &candidates ) {
 		NULL
 	};
 	static const char *appPathKeys[] = {
-		"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\prey.exe",
-		"SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\App Paths\\prey.exe",
+		"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Doom3.exe",
+		"SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\App Paths\\Doom3.exe",
 		NULL
 	};
 	static const char *uninstallRoots[] = {
@@ -1278,7 +1243,7 @@ static void FS_BuildRegistryInstallCandidates( idStrList &candidates ) {
 			}
 
 			for ( int uninstallIndex = 0; uninstallRoots[ uninstallIndex ] != NULL; uninstallIndex++ ) {
-				FS_AppendPreyPathsFromRegistryUninstallBranch( rootKeys[ rootIndex ], uninstallRoots[ uninstallIndex ], candidates, accessFlags );
+				FS_AppendDoom3PathsFromRegistryUninstallBranch( rootKeys[ rootIndex ], uninstallRoots[ uninstallIndex ], candidates, accessFlags );
 			}
 		}
 	}
@@ -1291,10 +1256,10 @@ static void FS_AppendGogInstallCandidatesFromRegistry( idStrList &candidates ) {
 	FS_AppendGogPathsFromRegistryGamesBranch( HKEY_CURRENT_USER, "SOFTWARE\\GOG.com\\Games", candidates, KEY_WOW64_64KEY );
 	FS_AppendGogPathsFromRegistryGamesBranch( HKEY_CURRENT_USER, "SOFTWARE\\GOG.com\\Games", candidates, KEY_WOW64_32KEY );
 
-	FS_AppendPreyPathsFromRegistryUninstallBranch( HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall", candidates, KEY_WOW64_64KEY );
-	FS_AppendPreyPathsFromRegistryUninstallBranch( HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall", candidates, KEY_WOW64_32KEY );
-	FS_AppendPreyPathsFromRegistryUninstallBranch( HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall", candidates, KEY_WOW64_64KEY );
-	FS_AppendPreyPathsFromRegistryUninstallBranch( HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall", candidates, KEY_WOW64_32KEY );
+	FS_AppendDoom3PathsFromRegistryUninstallBranch( HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall", candidates, KEY_WOW64_64KEY );
+	FS_AppendDoom3PathsFromRegistryUninstallBranch( HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall", candidates, KEY_WOW64_32KEY );
+	FS_AppendDoom3PathsFromRegistryUninstallBranch( HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall", candidates, KEY_WOW64_64KEY );
+	FS_AppendDoom3PathsFromRegistryUninstallBranch( HKEY_CURRENT_USER, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall", candidates, KEY_WOW64_32KEY );
 }
 #endif
 
@@ -1302,15 +1267,10 @@ static void FS_BuildKnownInstallCandidates( idStrList &candidates ) {
 	const char *envPath;
 
 #ifdef WIN32
-	FS_AddUniquePath( candidates, "C:/Program Files (x86)/Human Head Studios/Prey" );
-	FS_AddUniquePath( candidates, "C:/Program Files/Human Head Studios/Prey" );
-	FS_AddUniquePath( candidates, "C:/Program Files (x86)/2K Games/Prey" );
-	FS_AddUniquePath( candidates, "C:/Program Files/2K Games/Prey" );
-	FS_AddUniquePath( candidates, "C:/Program Files (x86)/3D Realms/Prey" );
-	FS_AddUniquePath( candidates, "C:/Program Files/3D Realms/Prey" );
-	FS_AddUniquePath( candidates, "C:/Program Files (x86)/Prey" );
-	FS_AddUniquePath( candidates, "C:/Program Files/Prey" );
-	FS_AddUniquePath( candidates, "C:/Games/Prey" );
+	FS_AddUniquePath( candidates, "C:/Program Files (x86)/Doom 3" );
+	FS_AddUniquePath( candidates, "C:/Program Files/Doom 3" );
+	FS_AddUniquePath( candidates, "C:/Games/Doom 3" );
+	FS_AddUniquePath( candidates, "C:/Doom 3" );
 
 	envPath = getenv( "ProgramFiles(x86)" );
 	FS_AddKnownInstallCandidatesFromRoot( candidates, envPath );
@@ -1329,7 +1289,7 @@ static void FS_BuildKnownInstallCandidates( idStrList &candidates ) {
 	if ( envPath && envPath[ 0 ] ) {
 		idStr path = envPath;
 		path.AppendPath( "Games" );
-		path.AppendPath( "Prey" );
+		path.AppendPath( "Doom 3" );
 		FS_AddUniquePath( candidates, path.c_str() );
 	}
 #endif
@@ -1389,8 +1349,8 @@ static void FS_BuildSteamInstallCandidates( idStrList &candidates ) {
 
 	candidates.Clear();
 
-	FS_AppendEnvPathList( candidates, "OPEND3_PREY_PATH" );
-	FS_AppendEnvPathList( candidates, "OPEND3_PREY_ROOT" );
+	FS_AppendEnvPathList( candidates, "OPEND3_DOOM3_PATH" );
+	FS_AppendEnvPathList( candidates, "OPEND3_DOOM3_ROOT" );
 	FS_AppendEnvPathList( steamRoots, "OPEND3_STEAM_ROOT" );
 	FS_AppendEnvPathList( steamRoots, "OPEND3_STEAM_ROOTS" );
 	FS_AppendEnvPathList( steamRoots, "STEAM_COMPAT_CLIENT_INSTALL_PATH" );
@@ -1399,8 +1359,6 @@ static void FS_BuildSteamInstallCandidates( idStrList &candidates ) {
 
 	// Temporary migration aliases. New documentation and diagnostics use only
 	// OPEND3_* names.
-	FS_AppendEnvPathList( candidates, "OPENQ4_PREY_PATH" );
-	FS_AppendEnvPathList( candidates, "OPENQ4_PREY_ROOT" );
 	FS_AppendEnvPathList( steamRoots, "OPENQ4_STEAM_ROOT" );
 	FS_AppendEnvPathList( steamRoots, "OPENQ4_STEAM_ROOTS" );
 	FS_AppendEnvPathList( explicitLibraryRoots, "OPENQ4_STEAM_LIBRARY" );
@@ -1484,7 +1442,7 @@ static void FS_BuildSteamInstallCandidates( idStrList &candidates ) {
 		path = explicitLibraryRoots[ i ];
 		path.AppendPath( "steamapps" );
 		path.AppendPath( "common" );
-		path.AppendPath( "Prey" );
+		path.AppendPath( "Doom 3" );
 		FS_AddUniquePath( candidates, path.c_str() );
 	}
 
@@ -1497,7 +1455,7 @@ static void FS_BuildSteamInstallCandidates( idStrList &candidates ) {
 			path = libraryRoots[ j ];
 			path.AppendPath( "steamapps" );
 			path.AppendPath( "common" );
-			path.AppendPath( "Prey" );
+			path.AppendPath( "Doom 3" );
 			FS_AddUniquePath( candidates, path.c_str() );
 		}
 	}
@@ -1505,7 +1463,7 @@ static void FS_BuildSteamInstallCandidates( idStrList &candidates ) {
 	FS_LogPathList( "Steam install discovery roots", steamRoots );
 	FS_LogPathList( "Steam explicit library roots", explicitLibraryRoots );
 	FS_LogPathList( "Steam library roots to probe", discoveryLibraryRoots );
-	FS_LogPathList( "Steam Prey install candidates", candidates );
+	FS_LogPathList( "Steam Doom 3 install candidates", candidates );
 }
 
 static void FS_BuildGogInstallCandidates( idStrList &candidates ) {
@@ -1522,16 +1480,16 @@ static void FS_BuildGogInstallCandidates( idStrList &candidates ) {
 	FS_AppendEnvPathList( candidates, "OPENQ4_GOG_PATH" );
 	FS_AppendEnvPathList( candidates, "OPENQ4_GOG_ROOT" );
 
-	FS_AddUniquePath( candidates, "C:/Program Files (x86)/GOG Galaxy/Games/Prey" );
-	FS_AddUniquePath( candidates, "C:/Program Files/GOG Galaxy/Games/Prey" );
-	FS_AddUniquePath( candidates, "C:/GOG Games/Prey" );
+	FS_AddUniquePath( candidates, "C:/Program Files (x86)/GOG Galaxy/Games/Doom 3" );
+	FS_AddUniquePath( candidates, "C:/Program Files/GOG Galaxy/Games/Doom 3" );
+	FS_AddUniquePath( candidates, "C:/GOG Games/Doom 3" );
 
 	envPath = getenv( "ProgramFiles(x86)" );
 	if ( envPath && envPath[ 0 ] ) {
 		path = envPath;
 		path.AppendPath( "GOG Galaxy" );
 		path.AppendPath( "Games" );
-		path.AppendPath( "Prey" );
+		path.AppendPath( "Doom 3" );
 		FS_AddUniquePath( candidates, path.c_str() );
 	}
 	envPath = getenv( "ProgramFiles" );
@@ -1539,14 +1497,14 @@ static void FS_BuildGogInstallCandidates( idStrList &candidates ) {
 		path = envPath;
 		path.AppendPath( "GOG Galaxy" );
 		path.AppendPath( "Games" );
-		path.AppendPath( "Prey" );
+		path.AppendPath( "Doom 3" );
 		FS_AddUniquePath( candidates, path.c_str() );
 	}
 	envPath = getenv( "SystemDrive" );
 	if ( envPath && envPath[ 0 ] ) {
 		path = envPath;
 		path.AppendPath( "GOG Games" );
-		path.AppendPath( "Prey" );
+		path.AppendPath( "Doom 3" );
 		FS_AddUniquePath( candidates, path.c_str() );
 	}
 #else
@@ -1554,17 +1512,17 @@ static void FS_BuildGogInstallCandidates( idStrList &candidates ) {
 	if ( envPath && envPath[ 0 ] ) {
 		path = envPath;
 		path.AppendPath( "GOG Games" );
-		path.AppendPath( "Prey" );
+		path.AppendPath( "Doom 3" );
 		FS_AddUniquePath( candidates, path.c_str() );
 
 		path = envPath;
 		path.AppendPath( "Games" );
 		path.AppendPath( "GOG Games" );
-		path.AppendPath( "Prey" );
+		path.AppendPath( "Doom 3" );
 		FS_AddUniquePath( candidates, path.c_str() );
 	}
 #endif
-	FS_LogPathList( "GOG Prey install candidates", candidates );
+	FS_LogPathList( "GOG Doom 3 install candidates", candidates );
 }
 
 static bool FS_FindFirstValidInstallPath( const idStrList &candidates, idStr &result ) {
@@ -1592,7 +1550,7 @@ static bool FS_AutoDiscoverBasePath( idStr &basePath ) {
 #ifdef WIN32
 	candidates.Clear();
 	FS_BuildRegistryInstallCandidates( candidates );
-	FS_LogPathList( "Windows registry Prey install candidates", candidates );
+	FS_LogPathList( "Windows registry Doom 3 install candidates", candidates );
 	if ( FS_FindFirstValidInstallPath( candidates, basePath ) ) {
 		return true;
 	}
@@ -1600,7 +1558,7 @@ static bool FS_AutoDiscoverBasePath( idStr &basePath ) {
 
 	candidates.Clear();
 	FS_BuildKnownInstallCandidates( candidates );
-	FS_LogPathList( "Known Prey install candidates", candidates );
+	FS_LogPathList( "Known Doom 3 install candidates", candidates );
 	if ( FS_FindFirstValidInstallPath( candidates, basePath ) ) {
 		return true;
 	}
@@ -2049,7 +2007,7 @@ idCVar	idFileSystemLocal::fs_caseSensitiveOS( "fs_caseSensitiveOS", "0", CVAR_SY
 idCVar	idFileSystemLocal::fs_caseSensitiveOS( "fs_caseSensitiveOS", "1", CVAR_SYSTEM | CVAR_BOOL, "" );
 #endif
 idCVar	idFileSystemLocal::fs_searchAddons( "fs_searchAddons", "0", CVAR_SYSTEM | CVAR_BOOL, "search all addon pk4s ( disables addon functionality )" );
-idCVar	idFileSystemLocal::fs_validateOfficialPaks( "fs_validateOfficialPaks", "1", CVAR_SYSTEM | CVAR_INIT | CVAR_BOOL, "verify required official Prey media pk4 files on startup" );
+idCVar	idFileSystemLocal::fs_validateOfficialPaks( "fs_validateOfficialPaks", "1", CVAR_SYSTEM | CVAR_INIT | CVAR_BOOL, "verify required official Doom 3 media pk4 files on startup" );
 idCVar	idFileSystemLocal::fs_cacheVerifiedPaks( "fs_cacheVerifiedPaks", "1", CVAR_SYSTEM | CVAR_INIT | CVAR_BOOL, "skip re-hashing an openD3 runtime pack whose size, times, file id and zip directory are unchanged since it passed its checksum check; 0 hashes every pack at every startup" );
 idCVar	idFileSystemLocal::fs_cacheLooseDirectories( "fs_cacheLooseDirectories", "1", CVAR_SYSTEM | CVAR_BOOL, "during a level load, remember which loose search-path directories do not exist, so a lookup skips them instead of failing an open in each (case-insensitive filesystems only)" );
 
@@ -5705,7 +5663,7 @@ void idFileSystemLocal::AddGameDirectory( const char *path, const char *dir ) {
 		numberedPakName_t numberedPak;
 		if ( !idStr::Icmp( dir, OPENQ4_GAMEDIR ) && FS_ParseNumberedPakName( pakfiles[ i ].c_str(), numberedPak ) &&
 			 numberedPak.digitCount == 1 && FS_FindOpenQ4PackTableEntry( pakfiles[ i ].c_str() ) == NULL ) {
-			common->Warning( "Ignoring %s: this version of openQ4 does not use it. It was left by another release and can be deleted.",
+			common->Warning( "Ignoring %s: this version of openD3 does not use it. It was left by another release and can be deleted.",
 				BuildOSPath( path, dir, pakfiles[ i ] ) );
 			continue;
 		}
@@ -6155,7 +6113,7 @@ startup.
 ================
 */
 static const char * const	FS_VERIFIED_PAKS_FILE = "generated/packs/verified.txt";
-static const char * const	FS_VERIFIED_PAKS_HEADER = "openQ4 verified runtime packs 1";
+static const char * const	FS_VERIFIED_PAKS_HEADER = "openD3 verified runtime packs 1";
 static const size_t			FS_VERIFIED_PAKS_MAX = 16;
 static const int			FS_VERIFIED_PAKS_MAX_BYTES = 64 * 1024;
 
@@ -6464,7 +6422,7 @@ then where to get it. The English checksum details follow for support.
 */
 static idStr FS_FormatOpenQ4PackProblems( void ) {
 	idStr message = FS_LocalizedOr( "#str_231700",
-		"openQ4 cannot start because a content pack is missing or does not match this version." );
+		"openD3 cannot start because a content pack is missing or does not match this version." );
 	message += "\n\n";
 	for ( int i = 0; i < fs_openQ4PackProblems.Num(); i++ ) {
 		const openQ4PackProblem_t &problem = fs_openQ4PackProblems[ i ];
@@ -6473,14 +6431,14 @@ static idStr FS_FormatOpenQ4PackProblems( void ) {
 			message += va( FS_LocalizedOr( "#str_231704", "%s (%s) is missing from the %s folder." ),
 				problem.pack->name, contents, OPENQ4_GAMEDIR );
 		} else {
-			message += va( FS_LocalizedOr( "#str_231705", "%s (%s) in the %s folder does not match this version of openQ4." ),
+			message += va( FS_LocalizedOr( "#str_231705", "%s (%s) in the %s folder does not match this version of openD3." ),
 				problem.pack->name, contents, OPENQ4_GAMEDIR );
 		}
 		message += "\n";
 	}
 	message += "\n";
 	message += va( FS_LocalizedOr( "#str_231706",
-		"Install the full openQ4 %s package, or download each listed pack for that version from %s and save it in the %s folder under the same name." ),
+		"Install the full openD3 %s package, or download each listed pack for that version from %s and save it in the %s folder under the same name." ),
 		PROJECT_VERSION, PROJECT_RELEASES_URL, OPENQ4_GAMEDIR );
 	if ( fs_openQ4PackProblemDetails.Length() ) {
 		message += "\n\n";
@@ -6638,66 +6596,19 @@ idFileSystemLocal::ValidateRequiredOfficialPaks
 ================
 */
 bool idFileSystemLocal::ValidateRequiredOfficialPaks( idStr &errors ) const {
-	const officialPk4Info_t	*info;
-	const char *const		*requiredSet;
-	const char *const		*setProbe;
-	pack_t					*pack;
-	unsigned int			expectedChecksum;
-	int					classicFoundCount = 0;
-	int					digitalFoundCount = 0;
-
 	errors.Clear();
 
-	// Detect the distribution layout first. Requiring every known filename at
-	// once would incorrectly reject both valid retail layouts.
-	for ( setProbe = requiredClassicPk4s; *setProbe != NULL; setProbe++ ) {
-		if ( FindBaseGamePackByName( *setProbe ) != NULL ) {
-			classicFoundCount++;
-		}
-	}
-	for ( setProbe = requiredDigitalPk4s; *setProbe != NULL; setProbe++ ) {
-		if ( FindBaseGamePackByName( *setProbe ) != NULL ) {
-			digitalFoundCount++;
-		}
-	}
-
-	if ( classicFoundCount == 0 && digitalFoundCount == 0 ) {
-		errors += "no known official Prey retail pack layout detected\n";
-		errors += "expected either classic CD/DVD packs:\n";
-		for ( setProbe = requiredClassicPk4s; *setProbe != NULL; setProbe++ ) {
-			errors += va( "  - %s\n", *setProbe );
-		}
-		errors += "or consolidated digital packs:\n";
-		for ( setProbe = requiredDigitalPk4s; *setProbe != NULL; setProbe++ ) {
-			errors += va( "  - %s\n", *setProbe );
-		}
-		return false;
-	}
-
-	// Prefer a complete layout. For two partial layouts choose the one with the
-	// most members so diagnostics identify the smallest actionable repair.
-	if ( digitalFoundCount == 4 || ( classicFoundCount != 5 && digitalFoundCount > classicFoundCount ) ) {
-		requiredSet = requiredDigitalPk4s;
-	} else {
-		requiredSet = requiredClassicPk4s;
-	}
-
-	for ( ; *requiredSet != NULL; requiredSet++ ) {
-		info = FindOfficialPk4Info( *requiredSet );
-		expectedChecksum = info ? info->checksum : 0;
-		pack = FindBaseGamePackByName( *requiredSet );
+	for ( const char *const *required = requiredBasePk4s; *required != NULL; required++ ) {
+		const officialPk4Info_t *info = FindOfficialPk4Info( *required );
+		const unsigned int expectedChecksum = info ? info->checksum : 0;
+		const pack_t *pack = FindBaseGamePackByName( *required );
 		if ( !pack ) {
-			if ( expectedChecksum != 0 ) {
-				errors += va( "missing %s (expected 0x%08x)\n", *requiredSet, expectedChecksum );
-			} else {
-				errors += va( "missing %s\n", *requiredSet );
-			}
+			errors += va( "missing %s (expected 0x%08x)\n", *required, expectedChecksum );
 			continue;
 		}
-		// A zero catalog checksum intentionally means presence-only validation.
 		if ( expectedChecksum != 0 && (unsigned int)pack->checksum != expectedChecksum ) {
 			errors += va( "checksum mismatch for %s (expected 0x%08x, got 0x%08x from %s)\n",
-				*requiredSet, expectedChecksum, (unsigned int)pack->checksum, pack->pakFilename.c_str() );
+				*required, expectedChecksum, (unsigned int)pack->checksum, pack->pakFilename.c_str() );
 		}
 	}
 	return ( errors.Length() == 0 );
@@ -6849,7 +6760,7 @@ void idFileSystemLocal::Startup( void ) {
 			PrintContentSearchDiagnostics();
 			common->FatalError(
 				"openD3 runtime directory '%s' is missing a compatible mod.json.\n\n%s\n"
-				"Rebuild or reinstall openD3 so '<openD3 package root>/%s/mod.json' is present and matches this engine version. Do not replace '%s' with retail Prey assets.",
+				"Rebuild or reinstall openD3 so '<openD3 package root>/%s/mod.json' is present and matches this engine version. Do not replace '%s' with retail Doom 3 assets.",
 				fs_game.GetString(), invalidReason.c_str(), OPENQ4_GAMEDIR, OPENQ4_GAMEDIR );
 		}
 
@@ -6907,7 +6818,7 @@ void idFileSystemLocal::Startup( void ) {
 			}
 			common->FatalError(
 				"openD3 runtime content packs in '%s' are missing or modified.\n\n%s\n"
-				"Rebuild or reinstall openD3 %s so %s match this engine; packages are at %s. Retail Prey PK4s belong in '%s', not '%s'.",
+				"Rebuild or reinstall openD3 %s so %s match this engine; packages are at %s. Retail Doom 3 PK4s belong in '%s', not '%s'.",
 				OPENQ4_GAMEDIR, openQ4PakErrors.c_str(), PROJECT_VERSION, expectedPacks.c_str(), PROJECT_RELEASES_URL, BASE_GAMEDIR, OPENQ4_GAMEDIR );
 		}
 		common->Printf( "openD3 client content packs are missing or modified:\n%s", openQ4PakErrors.c_str() );
@@ -6921,8 +6832,8 @@ void idFileSystemLocal::Startup( void ) {
 		if ( FindMisplacedOfficialPaks( misplacedErrors ) ) {
 			PrintContentSearchDiagnostics();
 			common->FatalError(
-				"Retail Prey media pk4 files must be installed in '%s', not '%s'.\n\n%s\n"
-				"Move the listed files into '<Prey install root>/%s', or remove them from '%s' and launch with +set fs_basepath pointing at a Prey install root that contains '%s'. "
+				"Retail Doom 3 media pk4 files must be installed in '%s', not '%s'.\n\n%s\n"
+				"Move the listed files into '<Doom 3 install root>/%s', or remove them from '%s' and launch with +set fs_basepath pointing at a Doom 3 install root that contains '%s'. "
 				"The '%s' directory is reserved for openD3 runtime files such as pak0.pk4, pak1.pk4, mod.json, and game modules.",
 				BASE_GAMEDIR, OPENQ4_GAMEDIR, misplacedErrors.c_str(), BASE_GAMEDIR, OPENQ4_GAMEDIR, BASE_GAMEDIR, OPENQ4_GAMEDIR );
 		}
@@ -6931,15 +6842,15 @@ void idFileSystemLocal::Startup( void ) {
 		if ( !ValidateRequiredOfficialPaks( validationErrors ) ) {
 			PrintContentSearchDiagnostics();
 			common->FatalError(
-				"Required official Prey media pk4 files are missing from '%s' or modified.\n\n%s\n"
-				"openD3 reads retail Prey assets from '<Prey install root>/%s'. Keep either pak000.pk4 through pak004.pk4, or pak_data.pk4, pak_sound.pk4, pak_en_v.pk4, and pak_en_t.pk4 in that folder; alternatively launch with +set fs_basepath pointing at the install root that contains it. "
+				"Required official Doom 3 media pk4 files are missing from '%s' or modified.\n\n%s\n"
+				"openD3 reads retail Doom 3 assets from '<Doom 3 install root>/%s'. Keep pak000.pk4 through pak004.pk4 in that folder, or launch with +set fs_basepath pointing at the install root that contains it. "
 				"Do not put retail pk4 files in '%s'; that directory is reserved for openD3 runtime files.",
 				BASE_GAMEDIR, validationErrors.c_str(), BASE_GAMEDIR, OPENQ4_GAMEDIR );
 		}
 
-// Quake 4 only: Prey keeps character VO in its own retail packs (pak000-pak004,
-// or pak_en_v.pk4/pak_en_t.pk4), which ValidateRequiredOfficialPaks covers.
-#if !defined( ID_DEDICATED ) && !defined( HUMANHEAD )
+// Quake 4 only: Doom 3 keeps character VO in the base packs that
+// ValidateRequiredOfficialPaks already covers.
+#if !defined( ID_DEDICATED ) && !defined( OPEND3 )
 		// The core pak001-pak022 media set is shared by every retail language and
 		// deliberately remains the only fatal validation baseline. Character VO is
 		// different: it lives in the edition-specific zpak_<language>.pk4 archives,
@@ -7175,7 +7086,7 @@ bool idFileSystemLocal::UpdateGamePakChecksums( void ) {
 	memset( gamePakForOS, 0, sizeof( gamePakForOS ) );
 	if ( gameDLLChecksum == 0 || gamePakChecksum != OPENQ4_Q4_142_GAME300_PAK_CHECKSUM ||
 		 gameModuleOrigin == GAME_MODULE_ORIGIN_NONE ) {
-		common->Warning( "No trusted openQ4 game module is loaded for pure-server startup" );
+		common->Warning( "No trusted openD3 game module is loaded for pure-server startup" );
 		return false;
 	}
 	if ( gameModuleOrigin == GAME_MODULE_ORIGIN_ACTIVE_MOD &&
@@ -7616,7 +7527,7 @@ void idFileSystemLocal::Init( void ) {
 	if ( ReadFile( "default.cfg", NULL, NULL ) <= 0 ) {
 		common->FatalError(
 			"openD3 startup config 'default.cfg' could not be loaded.\n\n"
-			"Rebuild or reinstall openD3 so '%s/pak0.pk4' contains the runtime config files, and keep retail Prey media PK4s in '%s'.",
+			"Rebuild or reinstall openD3 so '%s/pak0.pk4' contains the runtime config files, and keep retail Doom 3 media PK4s in '%s'.",
 			OPENQ4_GAMEDIR, BASE_GAMEDIR );
 	}
 }
@@ -7648,7 +7559,7 @@ void idFileSystemLocal::Restart( void ) {
 	if ( ReadFile( "default.cfg", NULL, NULL ) <= 0 ) {
 		common->FatalError(
 			"openD3 startup config 'default.cfg' could not be loaded after filesystem restart.\n\n"
-			"Rebuild or reinstall openD3 so '%s/pak0.pk4' contains the runtime config files, and keep retail Prey media PK4s in '%s'.",
+			"Rebuild or reinstall openD3 so '%s/pak0.pk4' contains the runtime config files, and keep retail Doom 3 media PK4s in '%s'.",
 			OPENQ4_GAMEDIR, BASE_GAMEDIR );
 	}
 }
@@ -7914,7 +7825,7 @@ pureStatus_t idFileSystemLocal::GetPackStatus( pack_t *pak ) {
 		return PURE_NEVER;
 	}
 
-	// Keep stock Prey base media in the pure list no matter its contents.
+	// Keep stock Doom 3 base media in the pure list no matter its contents.
 	officialInfo = FindOfficialPk4Info( name.c_str() );
 	if ( officialInfo && officialInfo->pureBase ) {
 		pak->pureStatus = PURE_ALWAYS;
