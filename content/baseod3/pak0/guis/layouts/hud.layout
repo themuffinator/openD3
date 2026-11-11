@@ -1,0 +1,49 @@
+// openD3 wide and tall screen layout for Doom 3's player HUD.
+// See src/ui/GuiLayoutPatch.h for the format and docs/dev/widescreen-layout.md
+// for the rules each GUI follows. Names only: no retail script text.
+
+gui "guis/hud.gui" {
+	// Health, armour and stamina at the bottom-left corner, with the air and
+	// radio meters, the death notice, pickups and new-item notices beside it.
+	window AudioWin, AirWin, RadioWin, ScanLineL, BorderBottom, Border, Border_?, Stamina, StaminaHell,
+			BgL, Lines1, Lines1_?, ArmorFlash, Lines2, Lines2_?, HealthFlash,
+			MPHealth*, MPArmor*, DEAD, LocationText, NewPDAVis, NewVidVis, ItemPickup? {
+		screenalignx left
+		screenaligny bottom
+	}
+
+	// Ammunition, the weapon strip and name, and the soul cube's pulse at the
+	// bottom-right corner.
+	window ScanLineLA*, BorderLA*, WeaponFlash, AmmoFlash?, BgLA, Lines1A, Lines1B, Lines2A,
+			ammovalue*, ammoicon4, Weapon?, Weapon1?, WeapReload, WeapName, WeapIcon?, WeapIcon1?,
+			CubePulseParent, CubePulse {
+		screenalignx right
+		screenaligny bottom
+	}
+
+	// The PDA and video download notices under the crosshair.
+	window PDABox*, PDAName*, PDANameDone, PDANewMail, VidBox*, VidName*, VidNameDone {
+		screenaligny bottom
+	}
+
+	// Objective updates slide in on the right, inventory items and tips on the left.
+	window ObjPopBox, ObjPopBoxC {
+		screenalignx right
+	}
+	window InvItem {
+		screenalignx left
+	}
+	window TipPopBox {
+		screenalignx left
+		screenaligny top
+	}
+
+	// Developer read-outs in the top-left corner.
+	window BgSOUND, OverlaySOUND {
+		screenalignx left
+		screenaligny top
+	}
+	window ViewComments, Hits {
+		screenaligny top
+	}
+}

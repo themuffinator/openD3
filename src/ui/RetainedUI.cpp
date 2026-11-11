@@ -583,6 +583,10 @@ public:
 		if (!CanSoftenBackdropDirect(sigma,saturation,region)) return false;
 		return DrawSoftenedBackdrop(nullptr,sigma,saturation,region);
 	}
+	// The whole window into itself (RetainedUI_SoftenScreen).
+	bool SoftenBackdropDirectWindow(float sigma, float saturation) {
+		return DrawSoftenedBackdrop(nullptr,sigma,saturation,{0,0,static_cast<float>(viewportWidth),static_cast<float>(viewportHeight)});
+	}
 	bool DrawSoftenedBackdrop(idRenderTexture* destination, float sigma, float saturation, const opend3::ui::Bounds& region) {
 		if (!softFocus || !(sigma>=0 && sigma<=256) || !(saturation>=0 && saturation<=1)) return false;
 		const float right = static_cast<float>(viewportWidth), bottom = static_cast<float>(viewportHeight);
@@ -1915,6 +1919,29 @@ bool RetainedUI_DrawInitialization(const char* message) {
 			(unsigned long long)s.vectorPathsCompiled,
 			(unsigned long long)s.submittedVertices,(unsigned long long)s.drawCalls,(unsigned long long)s.layerComposites);
 	}
+	return drawn;
+}
+bool RetainedUI_SoftenScreen(float sigma, float saturation) {
+	if (!renderSystem || !renderSystem->IsOpenGLRunning() || !SoftFocusSupported()) return false;
+	const int width = renderSystem->GetScreenWidth(), height = renderSystem->GetScreenHeight();
+	if (width <= 0 || height <= 0) return false;
+	const int oldWidth = host.viewportWidth, oldHeight = host.viewportHeight;
+	const int oldCaptureWidth = host.captureWidth, oldCaptureHeight = host.captureHeight;
+	const float oldX = host.viewportX, oldY = host.viewportY;
+	const bool oldSoftFocus = host.softFocus;
+	const bool oldViewport = renderSystem->GetUseUIViewportFor2D();
+	// The passes draw in 640x480 virtual units over the whole window.
+	renderSystem->SetUseUIViewportFor2D(false);
+	host.viewportWidth = host.captureWidth = width;
+	host.viewportHeight = host.captureHeight = height;
+	host.viewportX = host.viewportY = 0;
+	host.softFocus = true;
+	const bool drawn = host.SoftenBackdropDirectWindow(Min(Max(sigma,0.f),256.f),Min(Max(saturation,0.f),1.f));
+	host.viewportWidth = oldWidth; host.viewportHeight = oldHeight;
+	host.captureWidth = oldCaptureWidth; host.captureHeight = oldCaptureHeight;
+	host.viewportX = oldX; host.viewportY = oldY;
+	host.softFocus = oldSoftFocus;
+	renderSystem->SetUseUIViewportFor2D(oldViewport);
 	return drawn;
 }
 bool RetainedUI_DrawViewRoot(retainedUIView_t* view, const opend3::ui::Viewport& viewport) {

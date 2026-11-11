@@ -57,6 +57,13 @@ The choice is read when openD3 starts, so set it on the command line or restart 
 
 openD3 uses Doom 3's original menus, HUD and in-world screens. The engine also carries the newer interface openQ4 built, switched by `ui_retained`, but that interface has no Doom 3 pages. Launch with `+set ui_retained 0` every time.
 
+On a widescreen or tall display the menus, HUD and loading screens use the whole screen: the HUD sits in the corners and the menu frame reaches the edges, without stretching the artwork. The PDA keeps its 4:3 screen, with a softened view of the game beside it.
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `ui_widescreenLayouts` | `1` | `0` draws the stock menus and HUD as a centred 4:3 picture instead. Takes effect when the menu or map next loads |
+| `ui_aspectCorrection` | `1` | `0` stretches all 2D interface to the screen shape instead of keeping its proportions |
+
 ## Where Settings Are Saved
 
 Settings are written to `openD3Config.cfg` in your save folder, together with saves, screenshots and logs:

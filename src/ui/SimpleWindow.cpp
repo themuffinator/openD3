@@ -129,29 +129,6 @@ static void DrawNativeScreenOverlay( const idMaterial *background, const idVec4 
 	renderSystem->SetUseUIViewportFor2D( previousUIViewportMode );
 }
 
-static void AdjustTournamentWarmupLayout( const idUserInterfaceLocal *gui, const char *windowName, const char *parentName, float xofs, float xExpand, idRectangle &drawRect ) {
-	if ( gui == NULL || windowName == NULL || xExpand <= 0.0f ) {
-		return;
-	}
-
-	if ( idStr::Icmp( gui->GetSourceFile(), "guis/mphud.gui" ) != 0 ) {
-		return;
-	}
-
-	// Stretch the tournament pre-game bar across the native render width while
-	// keeping its title centered in the middle 640-wide virtual HUD canvas.
-	if ( idStr::Icmp( windowName, "tourn_warmupbar" ) == 0 || idStr::Icmp( windowName, "d_tourn_warmupbar" ) == 0 ) {
-		drawRect.x = xofs - xExpand;
-		drawRect.w = 640.0f + ( xExpand * 2.0f );
-		return;
-	}
-
-	if ( parentName != NULL && idStr::Icmp( parentName, "tourn_warmupbar" ) == 0 &&
-		 idStr::Icmp( windowName, "tourn_warmup_title" ) == 0 ) {
-		drawRect.x = xofs + xExpand;
-		drawRect.w = 640.0f;
-	}
-}
 }
 
 
@@ -176,6 +153,8 @@ idSimpleWindow::idSimpleWindow(idWindow *win) {
 	textStyle = static_cast<signed char>( static_cast<int>( win->textstyle ) );
 	screenAlignX = win->screenAlignX;
 	screenAlignY = win->screenAlignY;
+	screenStretchX = win->screenStretchX;
+	screenStretchY = win->screenStretchY;
 	background = win->background;
 	flags = win->flags;
 	textShadow = win->textShadow;
@@ -489,9 +468,12 @@ void idSimpleWindow::CalcClientRect(float xofs, float yofs) {
 			}
 		}
 
-		AdjustTournamentWarmupLayout( gui, name.c_str(), mParent != NULL ? mParent->GetName() : NULL, xofs, xExpand, drawRect );
-		openD3_ExpandLegacyMessageBackdrop( gui != NULL ? gui->GetSourceFile() : NULL,
-			name.c_str(), xExpand, yExpand, drawRect );
+		if ( ( legacyEdges || xExpand > 0.0f ) && applyScreenAlignX ) {
+			openD3_ApplyScreenStretchAxis( screenStretchX, edges[0], edges[2], drawRect.x, drawRect.w );
+		}
+		if ( ( legacyEdges || yExpand > 0.0f ) && applyScreenAlignY ) {
+			openD3_ApplyScreenStretchAxis( screenStretchY, edges[1], edges[3], drawRect.y, drawRect.h );
+		}
 	}
 
 	clientRect = drawRect;

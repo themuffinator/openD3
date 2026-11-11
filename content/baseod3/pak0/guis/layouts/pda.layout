@@ -1,0 +1,17 @@
+// openD3 wide and tall screen layout for the PDA. See src/ui/GuiLayoutPatch.h
+// for the format and docs/dev/widescreen-layout.md for the rules. Names only:
+// no retail script text.
+//
+// The PDA keeps its 4:3 canvas, as the PDA model in the player's hand has a
+// 4:3 screen. The game draws the view behind it, and the screen beside the
+// canvas shows that view softened and dimmed instead of black.
+
+gui "guis/pda.gui" {
+	// Its panels wait beyond the canvas edges until they slide in.
+	window Desktop {
+		canvasclip both
+		softfocus 4
+		softfocussaturation 0.6
+		softfocusdim 0.35
+	}
+}

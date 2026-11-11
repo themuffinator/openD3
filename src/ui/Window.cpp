@@ -151,30 +151,6 @@ static void DrawNativeScreenOverlay( const idMaterial *background, const idVec4 
 	renderSystem->SetUseUIViewportFor2D( previousUIViewportMode );
 }
 
-static void AdjustTournamentWarmupLayout( const idUserInterfaceLocal *gui, const char *windowName, const char *parentName, float xofs, float xExpand, idRectangle &drawRect ) {
-	if ( gui == NULL || windowName == NULL || xExpand <= 0.0f ) {
-		return;
-	}
-
-	if ( idStr::Icmp( gui->GetSourceFile(), "guis/mphud.gui" ) != 0 ) {
-		return;
-	}
-
-	// Stretch the tournament pre-game bar across the native render width while
-	// keeping its title centered in the middle 640-wide virtual HUD canvas.
-	if ( idStr::Icmp( windowName, "tourn_warmupbar" ) == 0 || idStr::Icmp( windowName, "d_tourn_warmupbar" ) == 0 ) {
-		drawRect.x = xofs - xExpand;
-		drawRect.w = 640.0f + ( xExpand * 2.0f );
-		return;
-	}
-
-	if ( parentName != NULL && idStr::Icmp( parentName, "tourn_warmupbar" ) == 0 &&
-		 idStr::Icmp( windowName, "tourn_warmup_title" ) == 0 ) {
-		drawRect.x = xofs + xExpand;
-		drawRect.w = 640.0f;
-	}
-}
-
 static rvNamedEvent *openD3_CreateLegacyCinematicNamedEvent( idWindow *window, const char *eventName ) {
 	if ( window == NULL || window->GetGui() == NULL ) {
 		return NULL;
@@ -973,6 +949,13 @@ void idWindow::CommonInit() {
 	textAligny = 0;
 	screenAlignX = SCREEN_ALIGN_X_MIDDLE;
 	screenAlignY = SCREEN_ALIGN_Y_MIDDLE;
+	screenStretchX = SCREEN_STRETCH_NONE;
+	screenStretchY = SCREEN_STRETCH_NONE;
+	stretchShiftX = stretchShiftY = 0.0f;
+	canvasClip = 0;
+	softFocus = 0.0f;
+	softFocusSaturation = 1.0f;
+	softFocusDim = 0.0f;
 	noEvents = false;
 	rotate = 0;
 	shear.Zero();
@@ -1817,6 +1800,12 @@ bool idWindow::SetInternalVarValue( const char* name, const char* value ) {
 	}
 	if ( key.Icmp( "screenaligny" ) == 0 || key.Icmp( "screenalignv" ) == 0 ) {
 		return ParseScreenAlignYToken( token, screenAlignY );
+	}
+	if ( key.Icmp( "screenstretchx" ) == 0 ) {
+		return openD3_ParseScreenStretchToken( token.c_str(), false, screenStretchX );
+	}
+	if ( key.Icmp( "screenstretchy" ) == 0 ) {
+		return openD3_ParseScreenStretchToken( token.c_str(), true, screenStretchY );
 	}
 	return false;
 }
@@ -2862,20 +2851,33 @@ void idWindow::Redraw(float x, float y) {
 	DrawBackground(drawRect);
 	DrawBorderAndCaption(drawRect);
 
-	const bool pushWindowClip = !( flags & WIN_NOCLIP ) && !UsesSimpleWindowClipBehavior();
+	const bool pushWindowClip = ( !( flags & WIN_NOCLIP ) && !UsesSimpleWindowClipBehavior() ) || canvasClip != 0;
 	if ( pushWindowClip ) {
-		idRectangle clipRect = clientRect;
+		// A noclip window clips only to the canvas its canvasclip names.
+		idRectangle clipRect = ( flags & WIN_NOCLIP ) ? idRectangle( -65536.0f, -65536.0f, 131072.0f, 131072.0f ) : clientRect;
 		if ( flags & WIN_DESKTOP ) {
 			float xExpand = 0.0f;
 			float yExpand = 0.0f;
 			dc->GetVirtualScreenExpansion( forceAspectWidth, forceAspectHeight, xExpand, yExpand );
-			if ( xExpand > 0.0f ) {
+			if ( xExpand > 0.0f && !( canvasClip & 1 ) ) {
 				clipRect.x -= xExpand;
 				clipRect.w += xExpand * 2.0f;
 			}
-			if ( yExpand > 0.0f ) {
+			if ( yExpand > 0.0f && !( canvasClip & 2 ) ) {
 				clipRect.y -= yExpand;
 				clipRect.h += yExpand * 2.0f;
+			}
+		} else if ( canvasClip ) {
+			// openD3: canvasclip, in the desktop's coordinates.
+			if ( canvasClip & 1 ) {
+				const float right = Min( clipRect.x + clipRect.w, forceAspectWidth );
+				clipRect.x = Max( clipRect.x, 0.0f );
+				clipRect.w = Max( right - clipRect.x, 0.0f );
+			}
+			if ( canvasClip & 2 ) {
+				const float bottom = Min( clipRect.y + clipRect.h, forceAspectHeight );
+				clipRect.y = Max( clipRect.y, 0.0f );
+				clipRect.h = Max( bottom - clipRect.y, 0.0f );
 			}
 		}
 		dc->PushClipRect( clipRect );
@@ -2903,9 +2905,9 @@ void idWindow::Redraw(float x, float y) {
 					continue;
 				}
 			}
-			drawWindows[i].win->Redraw( clientRect.x + xOffset, clientRect.y + yOffset );
+			drawWindows[i].win->Redraw( clientRect.x + xOffset - stretchShiftX, clientRect.y + yOffset - stretchShiftY );
 		} else {
-			drawWindows[i].simp->Redraw( clientRect.x + xOffset, clientRect.y + yOffset );
+			drawWindows[i].simp->Redraw( clientRect.x + xOffset - stretchShiftX, clientRect.y + yOffset - stretchShiftY );
 		}
 	}
 
@@ -3008,6 +3010,7 @@ idWindow::CalcClientRect
 */
 void idWindow::CalcClientRect(float xofs, float yofs) {
 	drawRect = rect;
+	stretchShiftX = stretchShiftY = 0.0f;
 
 	if ( flags & WIN_INVERTRECT ) {
 		drawRect.x = rect.x() - rect.w();
@@ -3057,9 +3060,12 @@ void idWindow::CalcClientRect(float xofs, float yofs) {
 			}
 		}
 
-		AdjustTournamentWarmupLayout( gui, GetName(), parent != NULL ? parent->GetName() : NULL, xofs, xExpand, drawRect );
-		openD3_ExpandLegacyMessageBackdrop( gui != NULL ? gui->GetSourceFile() : NULL,
-			GetName(), xExpand, yExpand, drawRect );
+		if ( ( legacyEdges || xExpand > 0.0f ) && applyScreenAlignX ) {
+			stretchShiftX = openD3_ApplyScreenStretchAxis( screenStretchX, edges[0], edges[2], drawRect.x, drawRect.w );
+		}
+		if ( ( legacyEdges || yExpand > 0.0f ) && applyScreenAlignY ) {
+			stretchShiftY = openD3_ApplyScreenStretchAxis( screenStretchY, edges[1], edges[3], drawRect.y, drawRect.h );
+		}
 	}
 
 	clientRect = drawRect;
@@ -4110,6 +4116,48 @@ bool idWindow::ParseInternalVar(const char *_name, idParser *src) {
 		}
 		return true;
 	}
+	if ( idStr::Icmp( _name, "canvasclip" ) == 0 ) {
+		idToken token;
+		if ( !src->ReadToken( &token ) ) {
+			return false;
+		}
+		if ( token.Icmp( "x" ) == 0 ) {
+			canvasClip = 1;
+		} else if ( token.Icmp( "y" ) == 0 ) {
+			canvasClip = 2;
+		} else if ( token.Icmp( "both" ) == 0 || token.Icmp( "1" ) == 0 ) {
+			canvasClip = 3;
+		} else if ( token.Icmp( "none" ) == 0 || token.Icmp( "0" ) == 0 ) {
+			canvasClip = 0;
+		} else {
+			src->Warning( "Unknown canvasclip value '%s' in window '%s' (expected: none|x|y|both)", token.c_str(), GetName() );
+		}
+		return true;
+	}
+	if ( idStr::Icmp( _name, "softfocus" ) == 0 ) {
+		softFocus = Max( src->ParseFloat(), 0.0f );
+		return true;
+	}
+	if ( idStr::Icmp( _name, "softfocussaturation" ) == 0 ) {
+		softFocusSaturation = idMath::ClampFloat( 0.0f, 1.0f, src->ParseFloat() );
+		return true;
+	}
+	if ( idStr::Icmp( _name, "softfocusdim" ) == 0 ) {
+		softFocusDim = idMath::ClampFloat( 0.0f, 1.0f, src->ParseFloat() );
+		return true;
+	}
+	if ( idStr::Icmp( _name, "screenstretchx" ) == 0 || idStr::Icmp( _name, "screenstretchy" ) == 0 ) {
+		const bool vertical = idStr::Icmp( _name, "screenstretchy" ) == 0;
+		idToken token;
+		if ( !src->ReadToken( &token ) ) {
+			return false;
+		}
+		if ( !openD3_ParseScreenStretchToken( token.c_str(), vertical, vertical ? screenStretchY : screenStretchX ) ) {
+			src->Warning( "Unknown %s value '%s' in window '%s' (expected: none|fill|%s)", _name, token.c_str(), GetName(),
+				vertical ? "top|bottom" : "left|right" );
+		}
+		return true;
+	}
 	if ( idStr::Icmp( _name, "hudanchorx" ) == 0 ) {
 		idToken token;
 		if ( !src->ReadToken( &token ) ) {
@@ -5146,6 +5194,12 @@ bool idWindow::Parse( idParser *src, bool rebuild) {
 		}
 	}
 
+	// openD3: the GUI's layout patches (GuiLayoutPatch.h) add to what the
+	// window's own definition said.
+	if ( ret && gui != NULL ) {
+		gui->LayoutPatches().Apply( this );
+	}
+
 	if (ret) {
 		EvalRegs(-1, true);
 	}
@@ -5164,6 +5218,27 @@ bool idWindow::Parse( idParser *src, bool rebuild) {
 
 	UI_LegacyObservationParse(this,false,ret);
 	return ret;
+}
+
+/*
+================
+idWindow::ApplyLayoutProperties
+
+openD3: the properties of a layout patch (GuiLayoutPatch.h), read as the
+window's own definition reads them: an internal variable, else a registered
+or user variable.
+================
+*/
+void idWindow::ApplyLayoutProperties( idParser *src ) {
+	idToken token;
+	while ( src->ReadToken( &token ) ) {
+		if ( token == ";" ) {
+			continue;
+		}
+		if ( !ParseInternalVar( token, src ) ) {
+			ParseRegEntry( token, src );
+		}
+	}
 }
 
 /*
@@ -7627,6 +7702,13 @@ void idWindow::SetDefaults ( void ) {
 	textAligny = 0;
 	screenAlignX = SCREEN_ALIGN_X_MIDDLE;
 	screenAlignY = SCREEN_ALIGN_Y_MIDDLE;
+	screenStretchX = SCREEN_STRETCH_NONE;
+	screenStretchY = SCREEN_STRETCH_NONE;
+	stretchShiftX = stretchShiftY = 0.0f;
+	canvasClip = 0;
+	softFocus = 0.0f;
+	softFocusSaturation = 1.0f;
+	softFocusDim = 0.0f;
 	noEvents = false;
 	rotate = 0;
 	shear.Zero();

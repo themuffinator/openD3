@@ -439,6 +439,11 @@ void idPlayerView::SingleView( idUserInterface *hud, const renderView_t *view ) 
 
 	// if the objective system is up, don't do normal drawing
 	if ( player->objectiveSystemOpen ) {
+		// openD3: the PDA keeps its 4:3 canvas, so a wider (or taller) screen
+		// shows the view beside it, softened by the PDA's layout (softfocus).
+		if ( renderSystem->GetScreenWidth() * 3 != renderSystem->GetScreenHeight() * 4 ) {
+			gameRenderWorld->RenderScene( view );
+		}
 		player->objectiveSystem->Redraw( gameLocal.time );
 		return;
 	}

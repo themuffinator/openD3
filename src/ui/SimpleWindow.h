@@ -87,6 +87,8 @@ protected:
 	signed char		textStyle;
 	unsigned char	screenAlignX;
 	unsigned char	screenAlignY;
+	unsigned char	screenStretchX = 0;
+	unsigned char	screenStretchY = 0;
 	int				textShadow;
 
 	idWinStr		text;

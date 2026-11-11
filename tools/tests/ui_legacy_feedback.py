@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise production GUI batch boundaries and stock message expansion."""
+"""Exercise production GUI batch boundaries and the screen stretch of GUI layouts."""
 from pathlib import Path
 import shutil
 import subprocess
@@ -10,6 +10,7 @@ from filesystem_case_segments import function_body
 ROOT = Path(__file__).resolve().parents[2]
 SUPPORT = r'''
 #include <cassert>
+#include <cstdlib>
 #include <cstring>
 #include <vector>
 enum { SS_GUI=1, SS_POST_PROCESS=2, MF_NEED_CURRENT_RENDER=1 };
@@ -36,6 +37,8 @@ struct idStr { static int Icmp(const char*a,const char*b) {
         if(x!=y)return x-y; ++a;++b; } return *a-*b;
 } };
 struct idRectangle { float x,y,w,h; };
+struct idMath { static int ClampInt(int lo,int hi,int v) { return v<lo?lo:(v>hi?hi:v); } };
+struct idWindow { enum { SCREEN_STRETCH_NONE=0, SCREEN_STRETCH_FILL, SCREEN_STRETCH_LEADING, SCREEN_STRETCH_TRAILING }; };
 '''
 CHECKS = r'''
 int main() {
@@ -61,24 +64,27 @@ int main() {
     glConfig.uiViewportX=100; glConfig.uiViewportWidth=1080;
     r.SetUseUIViewportFor2D(true); assert(r.flushes==2*captureFlush+1);
     r.SetUseUIViewportFor2D(true); assert(r.flushes==2*captureFlush+1);
-    for (auto expansion : {idRectangle{106,0,0,0},idRectangle{0,329,0,0},idRectangle{0,0,0,0}}) {
-        idRectangle rect{0,0,640,480};
-        openD3_ExpandLegacyMessageBackdrop("guis/msg.gui","msg_black",expansion.x,expansion.y,rect);
-        assert(rect.x==-expansion.x && rect.y==-expansion.y);
-        assert(rect.w==640+2*expansion.x && rect.h==480+2*expansion.y);
-    }
-    // Furniture, unrelated documents and custom-sized mod backings are untouched.
-    for (const char* name : {"msg_bg","msg_top","msg_text"}) {
-        idRectangle rect{0,0,640,480};
-        openD3_ExpandLegacyMessageBackdrop("guis/msg.gui",name,100,100,rect);
-        assert(rect.x==0 && rect.w==640);
-    }
-    idRectangle custom{10,0,620,480};
-    openD3_ExpandLegacyMessageBackdrop("guis/msg.gui","msg_black",100,100,custom);
-    assert(custom.x==10 && custom.w==620);
-    idRectangle other{0,0,640,480};
-    openD3_ExpandLegacyMessageBackdrop("guis/mainmenu.gui","msg_black",100,100,other);
-    assert(other.x==0 && other.w==640);
+    // screenstretchx/y (GUI layout patches): fill moves both edges out, left
+    // and right one each; children are told how far the origin moved.
+    float x=0,w=640;
+    assert(openD3_ApplyScreenStretchAxis(idWindow::SCREEN_STRETCH_FILL,106,106,x,w)==-106 && x==-106 && w==852);
+    x=0; w=365;
+    assert(openD3_ApplyScreenStretchAxis(idWindow::SCREEN_STRETCH_LEADING,106,106,x,w)==-106 && x==-106 && w==471);
+    x=397; w=243;
+    assert(openD3_ApplyScreenStretchAxis(idWindow::SCREEN_STRETCH_TRAILING,106,106,x,w)==0 && x==397 && w==349);
+    // A negative extent mirrors the material; the rectangle still runs x..x+|w|.
+    x=384; w=-256;
+    assert(openD3_ApplyScreenStretchAxis(idWindow::SCREEN_STRETCH_TRAILING,106,106,x,w)==0 && x==384 && w==-362);
+    // A collapsed window (a closed dialog) stays collapsed; none leaves it.
+    x=0; w=0;
+    assert(openD3_ApplyScreenStretchAxis(idWindow::SCREEN_STRETCH_FILL,106,106,x,w)==0 && x==0 && w==0);
+    x=10; w=20;
+    assert(openD3_ApplyScreenStretchAxis(idWindow::SCREEN_STRETCH_NONE,106,106,x,w)==0 && x==10 && w==20);
+    unsigned char stretch=0;
+    assert(openD3_ParseScreenStretchToken("right",false,stretch) && stretch==idWindow::SCREEN_STRETCH_TRAILING);
+    assert(openD3_ParseScreenStretchToken("top",true,stretch) && stretch==idWindow::SCREEN_STRETCH_LEADING);
+    assert(!openD3_ParseScreenStretchToken("top",false,stretch));
+    assert(openD3_ParseScreenStretchToken("9",false,stretch) && stretch==idWindow::SCREEN_STRETCH_TRAILING);
 }
 '''
 
@@ -144,7 +150,7 @@ def main():
         ('src/renderer/RenderSystem.cpp', 'void idRenderSystemLocal::SetUseUIViewportFor2D( bool enable )'),
     ])
     for path in ('src/ui/Window.cpp', 'src/ui/SimpleWindow.cpp'):
-        assert 'openD3_ExpandLegacyMessageBackdrop(' in (ROOT / path).read_text(), path
+        assert 'openD3_ApplyScreenStretchAxis(' in (ROOT / path).read_text(), path
     with tempfile.TemporaryDirectory(prefix='legacy-feedback-', dir=ROOT / '.tmp') as temp:
         source = Path(temp) / 'check.cpp'
         binary = Path(temp) / 'check.exe'
@@ -160,7 +166,7 @@ def main():
         source.write_text(MASK_SUPPORT + mask + MASK_CHECKS)
         subprocess.run([compiler, '-std=c++17', str(source), '-o', str(binary)], cwd=ROOT, check=True)
         subprocess.run([str(binary)], cwd=ROOT, check=True)
-    print('legacy UI: feedback ordering, retained batching, wide/tall message geometry and mask source policy passed')
+    print('legacy UI: feedback ordering, retained batching, GUI layout screen stretch and mask source policy passed')
 
 
 if __name__ == '__main__':

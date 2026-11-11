@@ -15,7 +15,8 @@ from filesystem_case_segments import function_body
 
 ROOT = Path(__file__).resolve().parents[2]
 
-SUPPORT = r'''
+SUPPORT = r'''struct idGuiLayoutPatches { static void Invalidate() {} }; // GuiLayoutPatch.h: reloadGuis rereads the layouts
+
 #include "src/framework/NativeInputPublications.h"
 #include <algorithm>
 #include <cassert>

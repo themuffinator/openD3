@@ -1,0 +1,53 @@
+// openD3 wide and tall screen layout for the level loading screens. See
+// src/ui/GuiLayoutPatch.h for the format and docs/dev/widescreen-layout.md for
+// the rules. Names only: no retail script text.
+//
+// Each level's loading screen shares one layout: the level's picture fills the
+// screen (cropped, never stretched; the bars cover what a crop removes), the
+// black bars and their trim run edge to edge, the title, description and
+// loading meter keep to the left.
+
+gui "guis/map/*.gui" {
+	window BackgroundImage {
+		screenstretchx fill
+		screenstretchy fill
+		matcover 1
+	}
+	window Scanlines2, BlackFade {
+		screenstretchx fill
+		screenstretchy fill
+	}
+
+	// The black bars: containers and fills span the width, the trim's ends
+	// stretch to the edges and its notch stays put.
+	window bgBlackTop, bgBlackBottom, bgBlackTopFill, bgBlackBottomFill, bgBlackBottomFade {
+		screenstretchx fill
+	}
+	window bgBlackTop1, bgBlackBottom1 {
+		screenstretchx left
+	}
+	window bgBlackTop3, bgBlackBottom3 {
+		screenstretchx right
+	}
+	window bgBlackTop {
+		screenaligny top
+	}
+	window bgBlackBottom {
+		screenaligny bottom
+	}
+
+	// The title, its bar and the description on the bottom left; the loading
+	// meter on the top left.
+	window TitleBar {
+		screenstretchx left
+		screenaligny bottom
+	}
+	window TextTitle, TextSubTitle, TextDescription {
+		screenalignx left
+		screenaligny bottom
+	}
+	window LoadingFillClip, LoadingLine, TextLoading, FlareBox, Text {
+		screenalignx left
+		screenaligny top
+	}
+}

@@ -1,0 +1,62 @@
+// openD3 wide and tall screen layout for the full-screen GUIs other than the
+// main menu, PDA and HUDs: message boxes, the death screen, the end of the
+// game, the credits and the intro. See src/ui/GuiLayoutPatch.h for the format
+// and docs/dev/widescreen-layout.md for the rules. Names only: no retail
+// script text.
+
+// Message boxes dim the whole screen; the box stays centred.
+gui "guis/msg.gui" {
+	window MsgBox, WaitBox, CDKeyMain {
+		screenstretchx fill
+		screenstretchy fill
+	}
+}
+gui "guis/netmenu.gui" {
+	window MsgBox {
+		screenstretchx fill
+		screenstretchy fill
+	}
+}
+
+// The death screen: its fire, blood, static and grime cover the screen; the
+// pentagram, logo and choices stay centred.
+gui "guis/restart.gui" {
+	window FireRoq, faceTest, Background?, Scanlines, Scanlines2, staticTest, Addhighlight, Mask,
+			Outershadow, Dirt, BlackFade {
+		screenstretchx fill
+		screenstretchy fill
+	}
+	window Overlay2 {
+		screenstretchx fill
+		screenstretchy bottom
+	}
+	window Overlay3 {
+		screenstretchx fill
+		screenstretchy top
+	}
+	window LoadGameBG {
+		screenstretchx fill
+	}
+}
+
+gui "guis/gameover.gui" {
+	window EndLevel {
+		screenstretchx fill
+		screenstretchy fill
+	}
+}
+
+gui "guis/credits.gui" {
+	window BootBlackBG, Black, CreditsParent {
+		screenstretchx fill
+		screenstretchy fill
+	}
+}
+
+// The intro's films keep their 4:3 frame; its fade covers the screen.
+gui "guis/intro.gui" {
+	window RoqCover {
+		screenstretchx fill
+		screenstretchy fill
+	}
+}

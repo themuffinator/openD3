@@ -28,6 +28,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include <thread>
 #include "UserInterfaceManaged.h"
+#include "GuiLayoutPatch.h"
 
 class idWindow;
 class idWinVec4;
@@ -173,7 +174,11 @@ public:
 	float                       LegacyScale() const { return legacyScale; }
 	// The same for the centre column on the bottom edge, which narrow views limit.
 	float                       LegacyCenterScale() const { return legacyCenterScale; }
+	// The layout patches this GUI's windows take as they parse (GuiLayoutPatch.h).
+	const idGuiLayoutPatchSet & LayoutPatches() const { return layoutPatches; }
 private:
+	idGuiLayoutPatchSet         layoutPatches;
+	void                        DrawSoftFocusBackdrop();
 	friend class idLegacyHudGroup;
 	// What this GUI is to the HUD presentations, resolved once per source: its
 	// Remastered document and Classic air overlay, whether the coverage bridge

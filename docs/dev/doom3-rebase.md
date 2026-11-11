@@ -122,6 +122,19 @@ release of Doom 3 (1.3.1 packs):
   retail `.dat` metrics and rebuilds the console sheet. Captured at 2560x1440
   on OpenGL: the main menu, and the HUD on `game/alphalabs1` (loaded with
   `devmap`, 2,106 entities). `tools/tests/ttf_font_integrity.py` passes.
+- Wide and tall screens ([layout](widescreen-layout.md)): with the layout
+  patches in `baseod3/pak0.pk4`, captured on OpenGL at 4:3 (1280x960, unchanged
+  from the stock layout), 16:9 (2560x1440), 21:9 (2400x1028) and 4:5
+  (1024x1280). The main menu and its Options, New Game, Load Game,
+  Multiplayer (Create Server), Credits and Exit screens (driven with
+  `opend3_guiAction`) reach both screen edges at 21:9 and stay centred
+  vertically at 4:5 with no parked panel in view. The HUD on
+  `game/alphalabs1` sits in the screen corners at 16:9 and 21:9. The PDA,
+  opened there with `give pda` and `impulse 19`, keeps its 4:3 canvas over the
+  softened view, also on Vulkan at 1920x1080. The loading screens
+  (`alphalabs1`, `generic`), the death screen, the multiplayer HUD, the
+  scoreboard and the game-over screen were shown with `testGUI` at 21:9 and,
+  for the loading screen and multiplayer HUD, at 4:5.
 - The dedicated server spawns `game/mp/d3dm1` (887 entities).
 - The VS Code tasks and launches. The default build task compiles `builddir`
   and fast-stages `.install`. Run with their own arguments and an isolated
@@ -141,11 +154,15 @@ release of Doom 3 (1.3.1 packs):
   expansion's `guis/mainmenu.gui`.
 
 That is all that has been run. In particular, nothing here is evidence for:
-playing past the first cinematic, combat, AI, PDA and video playback, level
-transitions, loading a savegame, a multiplayer client joining a server,
+playing past the first cinematic, combat, AI, the PDA beyond its first page,
+video playback, level transitions, loading a savegame, a multiplayer client
+joining a server,
 Linux, macOS, Android, ARM64 or VR. The TrueType text was not compared
 screen by screen with the bitmap path, and was not checked on Vulkan, in the
-PDA, on in-world screens or in a language other than English.
+PDA, on in-world screens or in a language other than English. The wide and
+tall layouts were not checked in a multiplayer match, with the HUD's
+objective, inventory and pickup notices showing, on the message boxes, intro
+and credits as the game raises them, or in Resurrection of Evil.
 
 ## Open items
 
@@ -174,8 +191,9 @@ Listed roughly by how much they block a player.
    fallback). Many of their comments still describe Quake 4 or Prey content.
    Handling tied to one retail product was removed: the Awakening expansion's
    campaign, content checks and substitutions, the Quake 4 savegame names and
-   the Prey data blocks formerly behind `HUMANHEAD`. The chapter list and the
-   campaign commands now name Doom 3's maps. Still to go through: the Quake 4
+   the Prey data blocks formerly behind `HUMANHEAD`, and the stretching of
+   Quake 4's message dimmer and Tourney warm-up bar, which layout patches
+   replace. The chapter list and the campaign commands now name Doom 3's maps. Still to go through: the Quake 4
    HUD routes in the retained HUD, the Quake 4 language-pack listing, and
    Quake 4 image and font fallbacks.
 4. **Startup warnings still to clear** (Procedure 1 in `AGENTS.md`): the

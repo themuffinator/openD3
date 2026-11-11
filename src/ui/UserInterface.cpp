@@ -1007,6 +1007,8 @@ void idUserInterfaceManagerLocal::RegisterIcon( const char *code, const char *sh
 // RAVEN END
 
 void idUserInterfaceManagerLocal::Reload( bool all ) {
+	// reloadGuis also rereads the layout patches.
+	idGuiLayoutPatches::Invalidate();
 	ReloadGuis( all, false );
 }
 
@@ -1311,6 +1313,9 @@ bool idUserInterfaceLocal::InitFromFile( const char *qpath, bool rebuild, bool c
 
 	source = qpath;
 	definition = literalDefinition ? qpath : idLegacyHudLayout::DefinitionFor( qpath );
+	// openD3: the wide and tall screen layout of a stock GUI, unless a mod
+	// ships its own copy of it.
+	idGuiLayoutPatches::Collect( idLegacyHudLayout::ModOwns( qpath ) ? NULL : qpath, layoutPatches );
 	state.Set( "text", "Test Text!" );
 
 	bool parseOk = true;
@@ -1371,6 +1376,7 @@ bool idUserInterfaceLocal::InitFromFile( const char *qpath, bool rebuild, bool c
 		}
 
 		state.Set( "name", qpath );
+		layoutPatches.ReportUnmatched( qpath );
 	} else {
 		desktop->SetDC( &uiManagerLocal.dc );
 		desktop->SetFlag( WIN_DESKTOP );
@@ -1383,6 +1389,7 @@ bool idUserInterfaceLocal::InitFromFile( const char *qpath, bool rebuild, bool c
 		desktop->SetupFromState();
 		common->Warning( "Couldn't load gui: '%s'", qpath );
 	}
+	layoutPatches.Clear();
 
 	// Replace only the two stock chat surfaces. Installing the native control
 	// here also supports retail PK4 GUIs without shipping replacement GUI art
@@ -1614,6 +1621,11 @@ void idUserInterfaceLocal::Redraw( int _time, bool useAspectCorrection ) {
 		if ( !useAspectCorrection || !DrawRetainedHud() ) {
 			// The stock interface's HUD opacity and scale (idLegacyHudLayout):
 			// the windows start their scale groups from the centre.
+			// openD3: a GUI that keeps its canvas over the view ("softfocus",
+			// the PDA) softens and dims what shows beside it.
+			if ( useAspectCorrection && desktop->softFocus > 0.0f && ( xExpand > 0.0f || yExpand > 0.0f ) ) {
+				DrawSoftFocusBackdrop();
+			}
 			uiManagerLocal.dc.SetDrawOpacity( useAspectCorrection ? legacyOpacity : 1.0f );
 			legacyGroupX = legacyGroupY = 0;
 			uiManagerLocal.dc.PushClipRect( uiManagerLocal.screenRect );
@@ -1623,6 +1635,33 @@ void idUserInterfaceLocal::Redraw( int _time, bool useAspectCorrection ) {
 			uiManagerLocal.dc.SetGroupScale( 0.0f, 0.0f, 1.0f );
 		}
 		if ( useAspectCorrection ) DrawEssentialHud( _time );
+	}
+}
+
+/*
+================
+idUserInterfaceLocal::DrawSoftFocusBackdrop
+
+openD3: the desktop's "softfocus": blur what is on screen (in virtual units of
+the canvas height) and dim it, over the whole window. Without soft focus (the
+GLES renderer) only the dim draws.
+================
+*/
+void idUserInterfaceLocal::DrawSoftFocusBackdrop() {
+	const float pixelsPerUnit = renderSystem->GetScreenHeight() / Max( desktop->forceAspectHeight, 1.0f );
+#ifndef ID_DEDICATED
+	RetainedUI_SoftenScreen( desktop->softFocus * pixelsPerUnit, desktop->softFocusSaturation );
+#else
+	(void)pixelsPerUnit;
+#endif
+	if ( desktop->softFocusDim > 0.0f ) {
+		const idMaterial *white = declManager->FindMaterial( "_white" );
+		const bool previousUIViewportMode = renderSystem->GetUseUIViewportFor2D();
+		renderSystem->SetUseUIViewportFor2D( false );
+		renderSystem->SetColor4( 0.0f, 0.0f, 0.0f, desktop->softFocusDim );
+		renderSystem->DrawStretchPic( 0.0f, 0.0f, SCREEN_WIDTH, SCREEN_HEIGHT, 0.0f, 0.0f, 1.0f, 1.0f, white );
+		renderSystem->SetColor4( 1.0f, 1.0f, 1.0f, 1.0f );
+		renderSystem->SetUseUIViewportFor2D( previousUIViewportMode );
 	}
 }
 

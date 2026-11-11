@@ -21,6 +21,11 @@ is limited to what the [rebase record](../doom3-rebase.md#verified) covers. See
   and on the native Vulkan renderer (`+set r_renderApi vulkan`).
 - **Doom 3's own menus and consoles.** The stock main menu starts and plays the
   intro video, and both consoles carry Doom 3's colours.
+- **Wide and tall screens.** The stock menus, HUDs and loading screens reach
+  the screen edges at any aspect: frames and bars stretch, docked pieces move
+  to the edges, panels stay centred. The PDA keeps its 4:3 screen over a
+  softened view of the world. No retail GUI script is shipped: small layout
+  patches name the windows ([layout](../widescreen-layout.md)).
 - **Dedicated server.** `openD3-ded_x64` spawns `game/mp/d3dm1`.
 - **Resurrection of Evil module.** `src/d3xp` builds `game-d3xp_<arch>`, which
   `+set fs_game d3xp` loads and initialises. No expansion map has been run.
@@ -50,3 +55,7 @@ is limited to what the [rebase record](../doom3-rebase.md#verified) covers. See
 - Document openD3: README, building and technical references, player guides,
   the rebase record and game source provenance, laid out like openQ4's.
 - Add the openD3 banner and the packaged HTML readmes.
+- Add GUI layout patches (`guis/layouts/*.layout`), the `screenstretchx`/`y`,
+  `canvasclip` and `softfocus` window properties, and wide and tall layouts for
+  the main menu, HUDs, PDA, loading screens and full-screen GUIs. Remove the
+  hard-coded Quake 4 message dimmer and Tourney bar stretching.

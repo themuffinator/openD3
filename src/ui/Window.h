@@ -256,6 +256,18 @@ public:
 		SCREEN_ALIGN_Y_BOTTOM
 	};
 
+	// openD3: "screenstretchx" and "screenstretchy" carry a window's edges out
+	// with the wide or tall screen expansion: both edges (fill), or only the
+	// left/top (leading) or right/bottom (trailing) one. Its children keep
+	// their authored place. Like screenalignx, it applies where the parent is
+	// the desktop or itself centered.
+	enum {
+		SCREEN_STRETCH_NONE = 0,
+		SCREEN_STRETCH_FILL,
+		SCREEN_STRETCH_LEADING,
+		SCREEN_STRETCH_TRAILING
+	};
+
 	static const char *ScriptNames[SCRIPT_COUNT];
 
 	static const idRegEntry RegisterVars[];
@@ -392,6 +404,9 @@ public:
 	void AddCommand(const char *cmd);
 	void AddUpdateVar(idWinVar *var);
 	bool SetInternalVarValue( const char* name, const char* value );
+	// openD3: reads extra properties into the window as its own definition
+	// would (GuiLayoutPatch.h). Called while the window parses.
+	void ApplyLayoutProperties( idParser *src );
 	bool Interactive();
 	bool ContainsStateVars();
 	void SetChildWinVarVal(const char *name, const char *var, const char *val);
@@ -507,6 +522,22 @@ protected:
 	float textAligny;
 	unsigned char screenAlignX;
 	unsigned char screenAlignY;
+	// openD3: a desktop's "softfocus" blurs what is already on screen before
+	// the GUI draws (in virtual units of the 480-unit height), with
+	// "softfocussaturation" and a black "softfocusdim" over it, wherever the
+	// screen shows more than the GUI's canvas. The PDA uses it.
+	// openD3: "canvasclip" (x, y or both) keeps what the window and its
+	// children draw inside the authored canvas on that axis, so a panel parked
+	// beyond the canvas edge stays hidden in the wide or tall expansion.
+	unsigned char canvasClip = 0;		// bit 0 x, bit 1 y
+	float softFocus = 0.0f;
+	float softFocusSaturation = 1.0f;
+	float softFocusDim = 0.0f;
+	unsigned char screenStretchX = SCREEN_STRETCH_NONE;
+	unsigned char screenStretchY = SCREEN_STRETCH_NONE;
+	// How far the stretch moved the client origin, which children undo.
+	float stretchShiftX = 0.0f;
+	float stretchShiftY = 0.0f;
 	// openD3: "hudanchorx" and "hudanchory" name the screen anchor a HUD
 	// window's group scales about (idLegacyHudGroup) where its alignment does
 	// not say: a window Remastered places on an edge through oq4_hudEdge* while

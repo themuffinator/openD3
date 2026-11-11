@@ -1,0 +1,131 @@
+// openD3 wide and tall screen layout for the main menu (Doom 3 and Resurrection
+// of Evil). See src/ui/GuiLayoutPatch.h for the format and
+// docs/dev/widescreen-layout.md for the rules. Names only: no retail script text.
+//
+// The menu is a frame docked to the canvas edges: the options and new game
+// clusters to the left, the multiplayer cluster to the right, with bars between
+// them. Docked pieces move to the screen edges, the bars that join them to the
+// centre stretch, and the panels and dialogs stay centred.
+
+gui "guis/mainmenu.gui" {
+	// ---------------------------------------------------------------- layers
+	// Starfield, scan lines, fades and the dimming behind panels and dialogs
+	// cover the whole screen.
+	window Stars, Stars1, Stars2, Scanlines2, scanpulse, StartBlackFade, BlackFade,
+			OptionsBackground, ModsMenuBackground, SaveGameBackground, LoadGameBackground, MPPSBackground,
+			OverwriteSaveGame, DeleteSaveGame, AdvancedOptionsWin, ResetDefaultGame, ResetDefaultSystem,
+			UltraQualityWarning, QuitToOS, QuitToMenu, ClickCatcher,
+			AutosaveOverwriteSaveGame, NoSurroundSound {
+		screenstretchx fill
+		screenstretchy fill
+	}
+	window GradientStarHighlight1, GradientStarHighlight2 {
+		screenstretchx fill
+	}
+	// The glowing rails just outside the 4:3 frame run down the screen edges.
+	window OuterGlowBar {
+		screenstretchx fill
+		screenstretchy fill
+	}
+
+	// ------------------------------------------------------------- top edge
+	window TopSmallBorder {
+		screenstretchx fill
+	}
+	window TopLargeBorder {
+		screenalignx right
+	}
+
+	// --------------------------------------------------------- containers
+	// The full-canvas containers clip what they hold, so they widen to let
+	// docked pieces reach the screen edges; what they hold keeps its place.
+	// The menus slide in from above and below, so the containers keep their
+	// height and clip to the canvas vertically: on a tall screen a parked menu
+	// would otherwise show in the expansion.
+	window PrimaryMenuParent, OptionsMenuParent, NewGameParent, ModsMenuParent, SaveGameParent,
+			LoadGameParent, MultiplayerNavParent, CreditsParent, CreditsAdditionalParent, CreditsIdParent,
+			MultiplayerParent, MultiplayerLANParent, UacText1Parent, DoomRoqParent {
+		screenstretchx fill
+	}
+	window PrimaryMenuParent, CreditsParent, MultiplayerParent, DoomRoqParent {
+		canvasclip y
+	}
+	window AdvancedNetWin {
+		screenstretchx fill
+		screenstretchy fill
+	}
+
+	// ------------------------------------------------------- bottom corners
+	window ToolTip2, CreditsTip {
+		screenaligny bottom
+	}
+	window ToolTip1 {
+		screenaligny top
+	}
+
+	// Left-docked: the frame's corner, the Options button with its list, the
+	// New Game difficulty list, the start of the New Game button and the tips.
+	window BottomLeftAngleBorder, MiddleLeftAngle#1, OptionsBtn*, ControlsBtnText, GameOptionsBtnText,
+			SystemOptionsBtnText, ResetDefaultsBtnText, NGBtn*, NewGameBtnLCorner,
+			ToolTip1, ToolTip2, CreditsTip {
+		screenalignx left
+	}
+	// Bars from a left-docked piece to the centre. A button's middle draws
+	// through its children, which stretch with it.
+	window BottomSmallBorder, MiddleTallBorder, NewGameBtnMiddle*, NewGameBtnText, SaveGameBtnText {
+		screenstretchx left
+	}
+
+	// Right-docked: the end of the Multiplayer button with its list, and the
+	// links on the bottom right.
+	window MultiplayerBtnRCorner, MPBtn*, MPNETBtnText, MPLANBtnText, MPDisBtnText, MPPlayerBtnText,
+			ReturntoGameBtnText, ModsBtnText, UpdatesBtnText, CreditsBtnText, ExitBtnText {
+		screenalignx right
+	}
+	// Bars from the centre to a right-docked piece.
+	window BottomTallBorder, MiddleSmallBorder, MultiplayerBtnMiddle*, MultiplayerBtnText, StopGameBtnText {
+		screenstretchx right
+	}
+
+	// --------------------------------------------------------------- credits
+	window CreditsText*, CreditsTextA*, CreditsTextFlash* {
+		screenalignx left
+	}
+	window bgBlackTop, bgBlackBottom, bgBlackTopFill, bgBlackBottomFill {
+		screenstretchx fill
+	}
+	window bgBlackTop1, bgBlackBottom1 {
+		screenstretchx left
+	}
+	window bgBlackTop3, bgBlackBottom3 {
+		screenstretchx right
+	}
+	window CreditsLBorder {
+		screenstretchx fill
+	}
+	window CreditsLLCorner, CreditsBtn*, CreditsBackBtn* {
+		screenalignx right
+	}
+
+	// ----------------------------------------------------------- multiplayer
+	// The multiplayer screens' frame: bars along the top, the bridge to the
+	// browser on the left, and the links on the top right.
+	window MPTopSmallBorder, MPMiddleTallBorder {
+		screenstretchx left
+	}
+	window MPTopTallBorder, MPMiddleSmallBorder {
+		screenstretchx right
+	}
+	window MPBottomSmallBorder {
+		screenstretchx fill
+	}
+	window MPTopLeftAngleBorder, MPBgBridge1 {
+		screenalignx left
+	}
+	window MPBgBridge2 {
+		screenstretchx left
+	}
+	window MPToMMBtnText, MPExitBtnText {
+		screenalignx right
+	}
+}

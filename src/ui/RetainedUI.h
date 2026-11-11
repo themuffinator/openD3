@@ -46,6 +46,10 @@ void RetainedUI_DestroyPreparedEdit(retainedUIPreparedEdit_t*);
 // callers to reuse layer zero as an arbitrary render texture.
 bool RetainedUI_DrawViewRoot(retainedUIView_t* view, const opend3::ui::Viewport& viewport);
 bool RetainedUI_DefaultViewport(opend3::ui::Viewport& viewport);
+// openD3: soft focus (REN-016) over the whole window as drawn so far, for a
+// stock GUI that draws over a blurred view (the PDA's "softfocus"). sigma is in
+// window pixels. False where the renderer cannot run it; nothing is drawn then.
+bool RetainedUI_SoftenScreen(float sigma, float saturation);
 double RetainedUI_PresentationTime();
 // Call immediately after renderSystem->EndFrame has consumed its front-end
 // command chain. Allows a deferred resource rebuild before the next draw; this

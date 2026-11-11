@@ -1,0 +1,69 @@
+// openD3 wide and tall screen layout for the multiplayer HUD and its overlays.
+// See src/ui/GuiLayoutPatch.h for the format and docs/dev/widescreen-layout.md
+// for the rules. Names only: no retail script text.
+
+gui "guis/mphud.gui" {
+	// Health and armour, and the item notice, on the bottom left.
+	window ScanLineL, BorderL, BorderL2, BgL, Lines1, Lines1_?, Lines2, Lines2_?, MPHealth, MPArmor, Object {
+		screenalignx left
+		screenaligny bottom
+	}
+
+	// Ammunition on the bottom right. AmmoParent spans the canvas and clips
+	// what it holds, so it widens and its pieces move.
+	window AmmoParent {
+		screenstretchx fill
+		screenstretchy fill
+	}
+	window ScanLineR, BorderR, BorderR_?, BgR, ammovalue2 {
+		screenalignx right
+		screenaligny bottom
+	}
+	window BorderItem?, BgItem?, LinesItem1, ObjectItem {
+		screenalignx right
+		screenaligny bottom
+	}
+
+	// The clock and the scores on the top right.
+	window MTime1, TimerWin, SBorder*, ScoreColor?, ScoreBorder*, scoreBox? {
+		screenalignx right
+		screenaligny top
+	}
+
+	// The lag meter on the top left, votes on the left.
+	window Lag {
+		screenalignx left
+		screenaligny top
+	}
+	window VoteWin {
+		screenalignx left
+	}
+
+	// The weapon name and the target's name stay centred near the bottom.
+	window WeapText, AimingRect?, AimingAt {
+		screenaligny bottom
+	}
+}
+
+gui "guis/chat.gui" {
+	// Chat lines on the left.
+	window history? {
+		screenalignx left
+	}
+}
+
+gui "guis/mpmsgmode.gui" {
+	// The chat line on the left.
+	window MainWindow {
+		screenalignx left
+	}
+}
+
+gui "guis/spectate.gui" {
+	window Spectate0, Spectate1 {
+		screenaligny bottom
+	}
+	window VoteWin {
+		screenalignx left
+	}
+}
