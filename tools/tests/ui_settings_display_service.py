@@ -161,6 +161,17 @@ static renderWindowRequest_t lastRequest{};
 static bool VulkanRefuses(const renderWindowRequest_t* r,char* error,int size){
     lastRequest=*r;return moduleStatus.activeApi==RENDER_MODULE_API_VULKAN && r->parms.multiSamples && !GeometryError(error,size,"Vulkan: strict framebuffer request is unsupported");
 }
+// The running device takes a request in place unless it needs another window
+// sample count, which it refuses before any change. A case can make it fail.
+static int transitions=0,fontRefreshes=0;static bool transitionOkay=true;
+// The classic GUI fonts rebuild for the display after a transition, which leaves the restart count alone.
+void UI_ClassicFontsDisplayChanged(){trace.push_back("classic-fonts");++fontRefreshes;}
+bool R_RendererModule_TryDisplayTransition(const renderWindowRequest_t* r,char* error,int size){
+    trace.push_back("transition");++transitions;
+    if(r->parms.multiSamples!=actual.presentation.samples)return GeometryError(error,size,"The requested window samples need a new device");
+    if(!transitionOkay)return GeometryError(error,size,"transition failed");
+    lastRequest=*r;ApplyActual(*r);return true;
+}
 bool R_RendererModule_TryDeviceRestart(const renderWindowRequest_t* r,char* error,int size){
     trace.push_back("restart");++restarts;if(!restartOkay)return GeometryError(error,size,"restart failed");if(VulkanRefuses(r,error,size))return false;ApplyActual(*r);PublishSelection();return true;
 }
@@ -177,13 +188,13 @@ CASES = r'''
 static std::string error;
 static StateValues Live(SystemSettingsHost& host){StateValues values;Check(host.Read(values,error),"read live catalog");return values;}
 static void ResetFixture(){
-    files.clear();leases.clear();geometryToken=0;readFailure=replaceFailure=replacePublishes=removeFailure=configFailure=changedSaveRoot=traceEnabled=false;
+    files.clear();leases.clear();geometryToken=0;readFailure=replaceFailure=replacePublishes=removeFailure=configFailure=changedSaveRoot=traceEnabled=false;windowMultisample=true;
     geometryFailure=geometryPartial=false;queryOkay=restartOkay=true;displayOrder={1,2};displayCount=2;primaryDisplay=1;currentDisplay=2;configWrites=restarts=initializations=0;archived.clear();
     Seed();localCVarSystem.variables.at("r_swapInterval").value="1";actual=Actual();actual.window.hidden=false;actual.window.focused=true;
     geometry={actual.window.windowX,actual.window.windowY,1280,720,actual.window.windowX,actual.window.windowY,1280,720,true};
     trace.clear();writes=0;moduleStatus.activeApi=RENDER_MODULE_API_GL;lastRequest={};
     selectionFault=0;selectionReportValid=true;selectionReport={};selectionReportSerial=0;PublishSelection();
-    soundState=SOUND_OUTPUT_READY;soundRestarts=0;
+    soundState=SOUND_OUTPUT_READY;soundRestarts=0;transitions=0;fontRefreshes=0;transitionOkay=true;
 }
 static void MultisamplingCapability(){
     ResetFixture();SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);
@@ -192,6 +203,11 @@ static void MultisamplingCapability(){
         const bool window=api==RENDER_MODULE_API_GL || api==RENDER_MODULE_API_GL_MODULE || api==RENDER_MODULE_API_GLES;
         Check(host.SupportsMultisampling()==(window || api==RENDER_MODULE_API_VULKAN),"every known ready renderer applies MSAA");
         Check(host.WindowMultisampling()==window,"only the OpenGL family multisamples its window");
+        // A desktop OpenGL window is single-sample by default; an OpenGL ES window always carries the samples.
+        windowMultisample=false;
+        Check(host.SupportsMultisampling()==(window || api==RENDER_MODULE_API_VULKAN),"MSAA does not depend on where the samples live");
+        Check(host.WindowMultisampling()==(api==RENDER_MODULE_API_GLES),"a single-sample desktop OpenGL window carries no samples");
+        windowMultisample=true;
     }
     moduleStatus.activeApi=RENDER_MODULE_API_GL;
     queryOkay=false;Check(!host.SupportsMultisampling(),"missing observation disables MSAA");queryOkay=true;
@@ -298,7 +314,7 @@ static void VulkanMultisampling(){
      auto a=Attempt(settings,dimensions);Check(host.Prepare(a,error),"prepare a Vulkan MSAA change");
      Check(Journal().displayTarget.at("samples")==StateValue(0.0) && a.target.at("r_multiSamples")==StateValue(4.0),"the Vulkan target window is single-sample");
      Check(settings.Write(a.patch,error),"write the Vulkan MSAA change");SettingsDisplayObservation seen;
-     Check(host.Restart(false,seen,error) && lastRequest.parms.multiSamples==0 && actual.presentation.samples==0,"the Vulkan restart asks for no window samples");
+     Check(host.Restart(false,seen,error) && lastRequest.parms.multiSamples==0 && actual.presentation.samples==0,"the Vulkan change asks for no window samples");
      Present();Check(host.PersistConfirmation(a,error) && configWrites==1,"the Vulkan MSAA change keeps");
      Check(host.Finish(false,error) && !files.contains(journalFile) && Live(settings).at("r_multiSamples")==StateValue(4.0),"the kept Vulkan change leaves r_multiSamples at the request");}
     {ResetFixture();moduleStatus.activeApi=RENDER_MODULE_API_VULKAN;localCVarSystem.variables.at("r_multiSamples").value="8";
@@ -306,7 +322,7 @@ static void VulkanMultisampling(){
      SettingsAttempt a{17,71,Live(settings),{},{}};a.target=a.baseline;a.target["r_windowWidth"]=960.0;a.target["r_windowHeight"]=540.0;
      for(const auto& [key,value]:a.target)if(value!=a.baseline.at(key))a.patch[key]=value;
      Check(settings.Validate(a.baseline,a.target,error) && host.Prepare(a,error) && settings.Write(a.patch,error),"prepare a window change under 8x on Vulkan");
-     SettingsDisplayObservation seen;Check(host.Restart(false,seen,error) && lastRequest.parms.multiSamples==0,"a window change under MSAA restarts Vulkan");
+     SettingsDisplayObservation seen;Check(host.Restart(false,seen,error) && lastRequest.parms.multiSamples==0,"a window change under MSAA keeps Vulkan's window single-sample");
      Present();Check(host.PersistConfirmation(a,error) && host.Finish(false,error),"the window change keeps under MSAA on Vulkan");
      Check(Live(settings).at("r_multiSamples")==StateValue(8.0),"the change leaves MSAA as it was");}
     {ResetFixture();SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);auto a=Attempt(settings);
@@ -754,7 +770,7 @@ static void CombinedCases(){
      auto wrong=a;wrong.completion=SettingsCompletion::UserConfirmation;auto shown=CombinedAttempt(settings,true);shown.completion=SettingsCompletion::Automatic;
      Check(!host.Prepare(wrong,error) && !host.Prepare(shown,error) && leases.empty() && files.empty() && !geometryToken && writes==0,
            "a combined attempt asks for confirmation exactly when it changes the display");}
-    // Without a display change: one restart on the same display, automatic.
+    // Without a display change: the running device takes the batch, automatic.
     {ResetFixture();SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);auto a=CombinedAttempt(settings,false);
      Check(host.Prepare(a,error),"prepare a combined attempt");
      Check(writes==0 && restarts==0 && soundRestarts==0 && configWrites==0 && leases.contains(lockFile) && geometryToken,
@@ -778,7 +794,7 @@ static void CombinedCases(){
      Check(j.imageRestore.size()==image && j.audioTarget.size()==audio && j.deferredRestore.size()==deferred && j.resourceTarget.size()==resource &&
            image==9 && audio==3 && deferred==3 && resource==4,"each domain holds exactly its catalog settings");
      Check(settings.Write(a.patch,error),"write the combined patch");SettingsDisplayObservation seen;
-     Check(host.Restart(false,seen,error) && restarts==1 && soundRestarts==1 && seen.ready,"one device restart and one sound restart apply the batch");
+     Check(host.Restart(false,seen,error) && restarts==0 && soundRestarts==1 && seen.ready,"no device restart and one sound restart apply the batch");
      Present();Check(host.Observe(false,seen,error) && !seen.effectsReady,"the attempt waits while the sound device restarts");
      soundState=SOUND_OUTPUT_READY;Check(host.Observe(false,seen,error) && seen.effectsReady,"a reopened sound device completes the effects");
      Check(host.PersistConfirmation(a,error) && EffectJournal().state==SettingsJournalState::Confirmed && configWrites==1,"Confirmed precedes the configuration");
@@ -788,11 +804,11 @@ static void CombinedCases(){
     // A sound device that does not come back fails the attempt.
     {ResetFixture();SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);auto a=CombinedAttempt(settings,false);
      Check(host.Prepare(a,error) && settings.Write(a.patch,error),"prepare a combined attempt whose sound device fails");SettingsDisplayObservation seen;
-     Check(host.Restart(false,seen,error),"the device restarts");soundState=SOUND_OUTPUT_FAILED;
+     Check(host.Restart(false,seen,error) && restarts==0,"the batch is taken in place");soundState=SOUND_OUTPUT_FAILED;
      Check(!host.Observe(false,seen,error),"a sound device that did not reopen fails the attempt");
      // The restore asks nothing of a device that is not open; the sound system retries on its own.
      StateValues back;for(const auto& [key,value]:a.patch)back[key]=a.baseline.at(key);
-     Check(settings.Write(back,error) && host.Restart(true,seen,error) && restarts==2 && soundRestarts==1,"restore restarts the device on the baseline");
+     Check(settings.Write(back,error) && host.Restart(true,seen,error) && restarts==0 && soundRestarts==1,"restore is taken in place on the baseline");
      Present();Check(host.Observe(true,seen,error) && seen.effectsReady && host.Finish(true,error) && configWrites==0 && !files.contains(journalFile) && !geometryToken,
            "a restored combined attempt never archives its candidate");}
     // A restore while the forward sound restart is still pending waits for it too.
@@ -888,6 +904,202 @@ static void CombinedCases(){
     {ResetFixture();SystemSettingsHost settings;CombinedForStartup(settings,false,false);
      localCVarSystem.variables.at("image_picmip").value="5";EngineSettingsDisplayHost host(settings);
      Check(!host.Startup(error) && writes==0 && files.contains(journalFile),"a divergent owned key blocks combined replay");host.Shutdown();}
+    // A texture batch needs no new device: the running one reloads its images.
+    // The record and both leases stay as its domains require; nothing restarts
+    // and the leased placement never moves.
+    for(const auto api:{RENDER_MODULE_API_GL,RENDER_MODULE_API_VULKAN})for(bool restore:{false,true}){ResetFixture();moduleStatus.activeApi=api;
+     SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);
+     SettingsAttempt a{53,149,Live(settings),{},{}};a.completion=SettingsCompletion::Automatic;a.target=a.baseline;
+     a.target["image_downSize"]=true;a.target["image_picmip"]=1.0;
+     a.target["r_rendererBenchmarkPreset"]=std::string(std::get<std::string>(a.baseline.at("r_rendererBenchmarkPreset"))=="low"?"modern":"low");
+     for(const auto& [key,value]:a.target)if(value!=a.baseline.at(key))a.patch[key]=value;
+     Check(host.Prepare(a,error) && geometryToken,"a texture batch keeps the record and leases of its domains");
+     const auto j=EffectJournal();
+     Check(j.plan.domainMask==(SystemSettingImageReload|SystemSettingRendererResources) && j.plan.rendererStrategy==SettingsRendererStrategy::CoalescedDevice &&
+           j.displayRestore==j.displayTarget && j.placement.size()==18,"its record still holds the captured display and its placement");
+     const auto generation=actual.presentation.generation;const auto leased=geometry;
+     traceEnabled=true;Check(settings.Write(a.patch,error),"write the texture patch");SettingsDisplayObservation seen;
+     Check(host.Restart(false,seen,error) && restarts==0 && soundRestarts==0 && seen.ready && actual.presentation.generation==generation,
+           "the running device takes a texture batch in place");
+     const auto inPlace=[](const char* line){return std::any_of(trace.begin(),trace.end(),[&](const std::string& entry){return entry.rfind(std::string("print:")+line,0)==0;});};
+     Check(inPlace("UI_SETTINGS_INPLACE restore=0 ") && !inPlace("UI_SETTINGS_DEVICE") && !inPlace("UI_SETTINGS_DEFERRED"),"the trace names the in-place route");
+     Present();Check(host.Observe(false,seen,error) && seen.effectsReady,"a later presented frame completes it");
+     if(restore){StateValues back;for(const auto& [key,value]:a.patch)back[key]=a.baseline.at(key);
+      Check(settings.Write(back,error) && host.Restart(true,seen,error) && restarts==0 && inPlace("UI_SETTINGS_INPLACE restore=1 "),"its restore is taken in place too");
+      Present();Check(host.Observe(true,seen,error) && seen.effectsReady && host.Finish(true,error) && configWrites==0,"a restored texture batch never archives its candidate");}
+     else Check(host.PersistConfirmation(a,error) && EffectJournal().state==SettingsJournalState::Confirmed && host.Finish(false,error) && configWrites==1,
+                "the texture batch commits");
+     Check(!files.contains(journalFile) && !geometryToken && leases.empty() && Same(geometry,leased) && !host.RecoveryActive(),
+           "both leases retire and the placement never moved");}
+    // Vulkan reads neither upload setting and OpenGL resizes its stream at the
+    // next frame, so a preset needs no new device. The sound device still
+    // reopens.
+    {ResetFixture();moduleStatus.activeApi=RENDER_MODULE_API_VULKAN;SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);
+     auto a=CombinedAttempt(settings,false);Check(a.patch.contains("r_rendererUploadMegs"),"the preset fixture changes the upload stream");
+     Check(host.Prepare(a,error) && settings.Write(a.patch,error),"prepare a preset batch on Vulkan");SettingsDisplayObservation seen;
+     Check(host.Restart(false,seen,error) && restarts==0 && soundRestarts==1,"Vulkan takes a preset without a new device");
+     Present();Check(host.Observe(false,seen,error) && !seen.effectsReady,"it still waits for the sound device");
+     soundState=SOUND_OUTPUT_READY;
+     Check(host.Observe(false,seen,error) && seen.effectsReady && host.PersistConfirmation(a,error) && host.Finish(false,error) &&
+           configWrites==1 && !geometryToken && leases.empty(),"the preset commits");}
+    // A swap interval is immediate and adds no domain. The running device
+    // applies it, so a batch taken in place does not hold the device to the
+    // interval it captured.
+    {ResetFixture();SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);
+     SettingsAttempt a{59,151,Live(settings),{},{}};a.completion=SettingsCompletion::Automatic;a.target=a.baseline;
+     a.target["image_downSize"]=true;a.target["r_swapInterval"]=0.0;
+     for(const auto& [key,value]:a.target)if(value!=a.baseline.at(key))a.patch[key]=value;
+     Check(SystemSettingsHost::ApplyClassOf(a.baseline,a.target)==SystemApplyClass::Combined && host.Prepare(a,error) && settings.Write(a.patch,error),
+           "prepare a texture batch that also turns V-Sync off");
+     Check(EffectJournal().plan.domainMask==SystemSettingImageReload,"V-Sync adds no display domain");SettingsDisplayObservation seen;
+     Check(host.Restart(false,seen,error) && restarts==0,"nothing restarts");
+     actual.presentation.swapInterval=0;Present();
+     Check(host.Observe(false,seen,error) && seen.effectsReady && host.PersistConfirmation(a,error) && host.Finish(false,error) && configWrites==1,
+           "the interval the running device applied does not contradict the attempt");}
+    // A restart names an interval in its request and then owns it, so one that
+    // keeps the display carries the batch's own, in both directions.
+    for(bool renderer:{false,true}){ResetFixture();SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);
+     // (A combined batch restarts only for the display or the renderer fallback, so this one names the fallback.)
+     auto a=renderer?RendererAttempt(settings):CombinedAttempt(settings,false,true);a.target["r_swapInterval"]=0.0;a.patch["r_swapInterval"]=0.0;
+     Check(SystemSettingsHost::ApplyClassOf(a.baseline,a.target)==(renderer?SystemApplyClass::Renderer:SystemApplyClass::Combined) && host.Prepare(a,error),
+           "prepare a restart that keeps the display and turns V-Sync off");
+     const auto j=EffectJournal();
+     Check(!(j.plan.domainMask & SystemSettingDisplayRestart) && j.plan.completion==SettingsEffectCompletion::Automatic,"V-Sync asks for no confirmation");
+     auto same=j.displayTarget;same["interval"]=1.0;
+     Check(j.displayRestore.at("interval")==StateValue(1.0) && j.displayTarget.at("interval")==StateValue(0.0) && same==j.displayRestore,
+           "the target record carries the new interval and nothing else differs");
+     Check(settings.Write(a.patch,error),"write the batch");SettingsDisplayObservation seen;
+     Check(host.Restart(false,seen,error) && restarts==1 && lastRequest.swapInterval==0 && actual.presentation.swapInterval==0,"the restart asks for the new interval");
+     soundState=SOUND_OUTPUT_READY;Present();Check(host.Observe(false,seen,error),"the restarted device matches it");
+     StateValues back;for(const auto& [key,value]:a.patch)back[key]=a.baseline.at(key);
+     Check(settings.Write(back,error) && host.Restart(true,seen,error) && restarts==2 && lastRequest.swapInterval==1,"the restore asks for the captured interval");
+     soundState=SOUND_OUTPUT_READY;Present();Check(host.Observe(true,seen,error) && host.Finish(true,error) && configWrites==0,"the restore completes");}
+    // Cold start: such a record is accepted, and a target interval the catalog
+    // did not change is refused.
+    {ResetFixture();SystemSettingsHost settings;
+     {EngineSettingsDisplayHost preparing(settings);auto a=CombinedAttempt(settings,false);a.target["r_swapInterval"]=0.0;a.patch["r_swapInterval"]=0.0;
+      Check(preparing.Prepare(a,error),"prepare a carried-interval startup fixture");preparing.Shutdown();}
+     {EngineSettingsDisplayHost host(settings);Check(host.Startup(error) && host.RecoveryActive(),"startup accepts a record whose target carries the interval");host.Shutdown();}}
+    {ResetFixture();SystemSettingsHost settings;CombinedForStartup(settings,false,false);auto j=EffectJournal();
+     j.displayTarget["interval"]=0.0;StoreEffect(j);EngineSettingsDisplayHost host(settings);
+     Check(!host.Startup(error) && writes==0 && files.contains(journalFile),"a target interval the catalog did not change is refused");host.Shutdown();}
+}
+
+// A display change that keeps the window's sample count is applied to the
+// running device's window: the device stays. Its journal, placement,
+// confirmation and restore are those of any display attempt, and a request the
+// device refuses or fails gets a new device on the same request.
+static bool TracedPrefix(const char* line){
+    return std::any_of(trace.begin(),trace.end(),[&](const std::string& entry){return entry.rfind(std::string("print:")+line,0)==0;});
+}
+static SettingsAttempt WindowAttempt(SystemSettingsHost& settings,bool textures=false,bool renderer=false,bool upload=false){
+    SettingsAttempt a{61,157,Live(settings),{},{}};a.target=a.baseline;a.target["r_windowWidth"]=960.0;a.target["r_windowHeight"]=540.0;
+    if(textures)a.target["image_downSize"]=true;
+    if(renderer)a.target["r_renderer"]=std::string("arb2");
+    if(upload)a.target["r_rendererUploadMegs"]=32.0;
+    for(const auto& [key,value]:a.target)if(value!=a.baseline.at(key))a.patch[key]=value;
+    const bool combined=textures||renderer||upload;
+    Check(settings.Validate(a.baseline,a.target,error) &&
+          SystemSettingsHost::ApplyClassOf(a.baseline,a.target)==(combined?SystemApplyClass::Combined:SystemApplyClass::Display),"validate window attempt fixture");
+    return a;
+}
+static void TransitionCases(){
+    for(const auto api:{RENDER_MODULE_API_GL,RENDER_MODULE_API_VULKAN})for(bool restore:{false,true}){ResetFixture();moduleStatus.activeApi=api;
+     SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);auto a=WindowAttempt(settings);
+     Check(host.Prepare(a,error) && geometryToken && settings.Write(a.patch,error),"prepare a window size change");
+     const auto generation=actual.presentation.generation;traceEnabled=true;SettingsDisplayObservation seen;
+     Check(host.Restart(false,seen,error) && transitions==1 && restarts==0 && seen.ready && actual.window.logicalWidth==960 &&
+           actual.presentation.generation>generation,"the running device takes a window size change in place");
+     Check(TracedPrefix("UI_SETTINGS_TRANSITION restore=0 ") && !TracedPrefix("UI_SETTINGS_DEVICE"),"the trace names the transition");
+     Check(fontRefreshes==1,"a transition asks the classic fonts to rebuild for the display");
+     Present();Check(host.Observe(false,seen,error),"the transitioned display matches its plan");
+     if(restore){StateValues back;for(const auto& [key,value]:a.patch)back[key]=a.baseline.at(key);
+      Check(settings.Write(back,error) && host.Restart(true,seen,error) && transitions==2 && restarts==0 && actual.window.logicalWidth==1280,
+            "Revert transitions back to the captured display");
+      Present();Check(host.Observe(true,seen,error) && host.Finish(true,error) && configWrites==0 && !files.contains(journalFile) && !geometryToken,
+                      "a reverted transition never archives its candidate");}
+     else{Check(host.PersistConfirmation(a,error) && configWrites==1 && Journal().state==SettingsJournalState::Confirmed,"Keep persists a transitioned display");
+      Check(host.Finish(false,error) && !files.contains(journalFile) && !geometryToken && leases.empty(),"Finish retires the transitioned attempt");}}
+    // A transition that fails part-way gets a new device on the same request.
+    {ResetFixture();SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);auto a=WindowAttempt(settings);
+     Check(host.Prepare(a,error) && settings.Write(a.patch,error),"prepare a window change whose transition fails");
+     transitionOkay=false;traceEnabled=true;SettingsDisplayObservation seen;
+     Check(host.Restart(false,seen,error) && transitions==1 && restarts==1 && actual.window.logicalWidth==960,"a failed transition falls back to a device restart");
+     Check(fontRefreshes==0,"a restarted device rebuilds the fonts itself");
+     Check(TracedPrefix("UI_SETTINGS_TRANSITION_REFUSED restore=0 detail=transition failed") && TracedPrefix("UI_SETTINGS_DEVICE restore=0 "),
+           "the trace names the refusal and the restart");
+     Present();Check(host.Observe(false,seen,error) && host.PersistConfirmation(a,error) && host.Finish(false,error),"the restarted attempt keeps");}
+    {ResetFixture();SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);auto a=WindowAttempt(settings);
+     Check(host.Prepare(a,error) && settings.Write(a.patch,error),"prepare a window change whose transition and restart fail");
+     transitionOkay=false;restartOkay=false;SettingsDisplayObservation seen;
+     Check(!host.Restart(false,seen,error) && transitions==1 && restarts==1 && host.RecoveryActive(),"a failed fallback fails the attempt");host.Shutdown();}
+    // A window's sample count is fixed when its device is created. Where an
+    // OpenGL window carries the samples (r_glWindowMultisample 1) an MSAA
+    // change is a change to that count and never tries a transition. Vulkan's
+    // window is single-sample and its scene targets follow r_multiSamples on
+    // the running device, so there the change is a transition that asks for
+    // the window it already has. A window whose actual count differs from the
+    // request restarts on either back end.
+    for(const auto api:{RENDER_MODULE_API_GL,RENDER_MODULE_API_VULKAN}){ResetFixture();moduleStatus.activeApi=api;
+     SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);auto a=Attempt(settings);
+     Check(a.patch.contains("r_multiSamples") && host.Prepare(a,error) && settings.Write(a.patch,error),"prepare an MSAA change");SettingsDisplayObservation seen;
+     const bool gl=api==RENDER_MODULE_API_GL;
+     Check(host.Restart(false,seen,error) && transitions==(gl?0:1) && restarts==(gl?1:0),"an MSAA change restarts an OpenGL device whose window carries the samples and transitions on Vulkan");
+     Check(gl || (lastRequest.parms.multiSamples==0 && actual.presentation.samples==0),"the Vulkan transition keeps the single-sample window");
+     Present();Check(host.Observe(false,seen,error) && host.PersistConfirmation(a,error) && host.Finish(false,error) && configWrites==1 &&
+                     Live(settings).at("r_multiSamples")==StateValue(4.0),"the MSAA change keeps");}
+    // Desktop OpenGL's default window is single-sample too (r_glWindowMultisample 0):
+    // its 3D views take their samples from render targets, so the change is a
+    // transition there as well, kept and restored, and the request names no samples.
+    for(bool restore:{false,true}){ResetFixture();moduleStatus.activeApi=RENDER_MODULE_API_GL;windowMultisample=false;
+     SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);auto a=Attempt(settings);
+     Check(a.patch.contains("r_multiSamples") && host.Prepare(a,error) && settings.Write(a.patch,error),"prepare an MSAA change on a single-sample OpenGL window");
+     SettingsDisplayObservation seen;
+     Check(host.Restart(false,seen,error) && transitions==1 && restarts==0 && lastRequest.parms.multiSamples==0 && actual.presentation.samples==0,
+           "an MSAA change is a transition on a single-sample OpenGL window");
+     Present();Check(host.Observe(false,seen,error),"the transition is observed");
+     if(restore){StateValues back;for(const auto& [key,value]:a.patch)back[key]=a.baseline.at(key);
+      Check(settings.Write(back,error) && host.Restart(true,seen,error) && transitions==2 && restarts==0,"its restore is a transition too");
+      Present();Check(host.Observe(true,seen,error) && host.Finish(true,error) && configWrites==0,"the restored MSAA change never archives");}
+     else Check(host.PersistConfirmation(a,error) && host.Finish(false,error) && configWrites==1 &&
+                Live(settings).at("r_multiSamples")==StateValue(4.0),"the MSAA change keeps");}
+    // An OpenGL preset that changes MSAA restarts nothing on such a window.
+    {ResetFixture();moduleStatus.activeApi=RENDER_MODULE_API_GL;windowMultisample=false;SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);
+     auto a=CombinedAttempt(settings,true);Check(a.patch.contains("r_multiSamples") && a.patch.contains("r_rendererUploadMegs"),"the fixture changes MSAA and the upload stream");
+     Check(host.Prepare(a,error) && settings.Write(a.patch,error),"prepare an OpenGL preset that changes MSAA");SettingsDisplayObservation seen;
+     Check(host.Restart(false,seen,error) && transitions==1 && restarts==0 && soundRestarts==1,"it transitions and reopens the sound device");host.Shutdown();}
+    // A Vulkan preset that changes MSAA and the upload stream needs no new device either.
+    {ResetFixture();moduleStatus.activeApi=RENDER_MODULE_API_VULKAN;SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);
+     auto a=CombinedAttempt(settings,true);Check(a.patch.contains("r_multiSamples") && a.patch.contains("r_rendererUploadMegs"),"the fixture changes MSAA and the upload stream");
+     Check(host.Prepare(a,error) && settings.Write(a.patch,error),"prepare a Vulkan preset that changes MSAA");SettingsDisplayObservation seen;
+     Check(host.Restart(false,seen,error) && transitions==1 && restarts==0 && soundRestarts==1,"it transitions and reopens the sound device");host.Shutdown();}
+    {ResetFixture();actual.presentation.samples=2;SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);auto a=WindowAttempt(settings);
+     Check(host.Prepare(a,error) && settings.Write(a.patch,error),"prepare a window change on a window whose samples differ from the setting");
+     SettingsDisplayObservation seen;
+     Check(host.Restart(false,seen,error) && transitions==0 && restarts==1 && actual.presentation.samples==0,"a request for another sample count restarts the device");
+     host.Shutdown();}
+    // Inside a combined batch: textures and the upload stream ride along; a
+    // renderer fallback still needs a new device.
+    for(const auto api:{RENDER_MODULE_API_GL,RENDER_MODULE_API_VULKAN}){ResetFixture();moduleStatus.activeApi=api;
+     SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);auto a=WindowAttempt(settings,true);
+     a.completion=SettingsCompletion::UserConfirmation;
+     Check(host.Prepare(a,error) && settings.Write(a.patch,error),"prepare a window and texture batch");SettingsDisplayObservation seen;
+     Check(host.Restart(false,seen,error) && transitions==1 && restarts==0 && actual.window.logicalWidth==960,"a window and texture batch transitions");
+     Present();Check(host.Observe(false,seen,error) && host.PersistConfirmation(a,error) && host.Finish(false,error) && configWrites==1,"the batch keeps");}
+    {ResetFixture();SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);auto a=WindowAttempt(settings,false,true);
+     a.completion=SettingsCompletion::UserConfirmation;
+     Check(host.Prepare(a,error) && settings.Write(a.patch,error),"prepare a window and renderer batch");SettingsDisplayObservation seen;
+     Check(host.Restart(false,seen,error) && transitions==0 && restarts==1,"a renderer fallback change restarts the device");host.Shutdown();}
+    for(const auto api:{RENDER_MODULE_API_GL,RENDER_MODULE_API_VULKAN}){ResetFixture();moduleStatus.activeApi=api;
+     SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);auto a=WindowAttempt(settings,false,false,true);
+     a.completion=SettingsCompletion::UserConfirmation;
+     Check(host.Prepare(a,error) && settings.Write(a.patch,error),"prepare a window and upload stream batch");SettingsDisplayObservation seen;
+     Check(host.Restart(false,seen,error) && transitions==1 && restarts==0,"an upload stream change rides along: OpenGL resizes its stream on the running device");host.Shutdown();}
+    // A preset that leaves the display alone restarts nothing on OpenGL either.
+    {ResetFixture();moduleStatus.activeApi=RENDER_MODULE_API_GL;SystemSettingsHost settings;EngineSettingsDisplayHost host(settings);
+     auto a=CombinedAttempt(settings,false);Check(a.patch.contains("r_rendererUploadMegs"),"the preset fixture changes the upload stream");
+     Check(host.Prepare(a,error) && settings.Write(a.patch,error),"prepare a preset batch on OpenGL");SettingsDisplayObservation seen;
+     Check(host.Restart(false,seen,error) && restarts==0 && transitions==0 && soundRestarts==1,"OpenGL takes a preset that keeps the display without a new device");host.Shutdown();}
 }
 
 // The display lists' inputs: the stamp, the topology, the window's display
@@ -952,7 +1164,7 @@ static void EmitDeferredJournals(const std::string& directory){
 
 int main(){
     if(const char* directory=std::getenv("OPEND3_EMIT_DEFERRED_JOURNALS")){EmitDeferredJournals(directory);std::printf("Deferred recovery journals emitted: %d checks\n",checks);return 0;}
-    MultisamplingCapability();VulkanMultisampling();ExactCatalogCases();RuntimeJournal();StartupCases();GeometryAndStartupFailures();StartupClockCases();CommitOwnershipCases();ReindexedStartupRetry();UnusedTopologyCases();DeferredCases();DeferredExactCases();RendererCases();RendererExactCases();CombinedCases();CatalogInputCases();std::printf("UI settings display service passed: %d checks\n",checks);}
+    MultisamplingCapability();VulkanMultisampling();ExactCatalogCases();RuntimeJournal();StartupCases();GeometryAndStartupFailures();StartupClockCases();CommitOwnershipCases();ReindexedStartupRetry();UnusedTopologyCases();DeferredCases();DeferredExactCases();RendererCases();RendererExactCases();TransitionCases();CombinedCases();CatalogInputCases();std::printf("UI settings display service passed: %d checks\n",checks);}
 
 '''
 
@@ -963,13 +1175,15 @@ def main(production_mutations=(), emit_directory=None):
     names = ("bool Identifier(", "std::string PointerPart(", "void Diagnose(", "bool Utf8(",
              "bool LexicalForms(", "bool Parse(", "bool ValidStateValue(", "bool ParseStateValues(")
     validation = '\n'.join(document[document.index(name):document.index('bool Parse(', document.index(name))] if name == 'bool LexicalForms(' else function_body(document, name) for name in names)
-    support = host_test.SUPPORT.replace("static int writes=0;", "static std::vector<std::string> trace;\nstatic bool traceEnabled=false;\nstatic int writes=0;")
+    support = host_test.SUPPORT.replace("static int writes=0;", "static std::vector<std::string> trace;\nstatic bool traceEnabled=false;\n"
+                                      "// r_glWindowMultisample: the OpenGL window carries the samples (the legacy policy most cases assume).\n"
+                                      "static bool windowMultisample=true;\nstatic int writes=0;")
     support = support.replace("struct idStr : std::string { using std::string::string; using std::string::operator=; };",
                               "#include <cstring>\n"
                               "struct idStr : std::string { using std::string::string; using std::string::operator=; "
                               "static int Cmp(const char* a,const char* b){return std::strcmp(a,b);} };")
     support = support.replace("++writes; if(key!=refuse)", '++writes;trace.push_back("cvar-write"); if(key!=refuse)')
-    support = support.replace('idCVar* Find(const char* name)', 'bool GetCVarBool(const char* name){return traceEnabled && std::string(name)=="ui_retainedTrace";}\n    int GetCVarInteger(const char* name){return std::atoi(FindInternal(name)->value.c_str());}\n    idCVar* Find(const char* name)')
+    support = support.replace('idCVar* Find(const char* name)', 'bool GetCVarBool(const char* name){const std::string key(name);return (traceEnabled && key=="ui_retainedTrace") || (windowMultisample && key=="r_glWindowMultisample");}\n    int GetCVarInteger(const char* name){return std::atoi(FindInternal(name)->value.c_str());}\n    idCVar* Find(const char* name)')
     support = support.replace("static int displayCount=2;", "static int displayCount=2;static std::vector<unsigned> displayOrder{1,2};")
     support = support.replace("result[i]=i+1;", "result[i]=displayOrder.at(i);")
     support = support.replace("services.RefreshNativeWindowHandles=", 'services.PrepareWindowSystem=+[]{return true;};\n    services.RefreshNativeWindowHandles=')

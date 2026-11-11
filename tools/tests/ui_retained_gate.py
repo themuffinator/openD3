@@ -268,6 +268,8 @@ struct Game {
     }
 } gameObject, *game = &gameObject;
 struct CVar { bool value = false; bool GetBool() const { return value; } } ui_retained, ui_retainedSystem, ui_retainedMultiplayer;
+// Join Game's list view (0 rows, 1 tiles).
+struct IntegerCVar { int value = 0; int GetInteger() const { return value; } } ui_browserView;
 // Key bindings: a bound command's key as the key lists name it ("^ikHH"),
 // and a key's name by number.
 struct idKeyInput {
@@ -598,6 +600,9 @@ public:
     bool retainedHomeReturning = false;
     // A stock message box (guiMsg) over the GUI it covers (guiMsgRestore).
     idUserInterface *guiMsg = nullptr, *guiMsgRestore = nullptr; bool retainedHomeUnderMessage = false;
+    // The retained message box and the command its buttons answer with.
+    idUserInterface *guiMsgRetained = nullptr; std::string messageCommand;
+    void HandleMsgCommands(const char *command) { messageCommand = command; }
     // A join from Join Game under way: a return to the menu finds its list.
     bool retainedJoinReturn = false;
     idStrList retainedStock;
@@ -3759,7 +3764,7 @@ def combined_effects() -> set[str]:
 # statement's behaviour). Any other form is a reason the control is incomplete.
 RENDERER_LIMITED_STATES = {'settings.msaaAvailable': ('src/ui/SettingsDisplayService.cpp',
                                                       'bool EngineSettingsDisplayHost::SupportsMultisampling() const {',
-                                                      'return WindowMultisampling() || R_RendererModule_GetStatus().activeApi == RENDER_MODULE_API_VULKAN;',
+                                                      'return api == RENDER_MODULE_API_GL || api == RENDER_MODULE_API_GL_MODULE || api == RENDER_MODULE_API_GLES || api == RENDER_MODULE_API_VULKAN;',
                                                       'Vulkan')}
 # The engine reaches a Number field's text through the native text owner;
 # while no engine code constructs one, typed characters never arrive.
@@ -4683,9 +4688,10 @@ def check_prompt_glyphs(compiler: str, directory: Path) -> None:
     # OPTIONS, DISPLAY (SYSTEM) and AUDIO sub-pages.
     assert documents == 28, documents
     # The cards' and the settings sub-pages' tab keys take the shoulders, as do
-    # the Escape and Welcome cards' Tabs prompts; every Accept and Back prompt
-    # follows Swap Confirm and Back.
-    assert shoulders == 16, shoulders
+    # the Escape and Welcome cards' Tabs prompts and Player Setup's tab strip
+    # on the Multiplayer page; every Accept and Back prompt follows Swap
+    # Confirm and Back.
+    assert shoulders == 18, shoulders
     assert swapping == 55, swapping
     print(f'ui_retained gate: prompt glyphs follow the active device in {documents} documents')
 
@@ -5489,8 +5495,16 @@ def main() -> int:
                        'guis/menu/demos.q4ui', 'guis/menu/restartmenu.q4ui', 'guis/menu/credits.q4ui', 'guis/menu/arena.q4ui',
                        'guis/menu/multiplayer.q4ui', 'guis/menu/createserver.q4ui', 'guis/menu/joingame.q4ui',
                        'guis/menu/arena_pause.q4ui', 'guis/menu/settings/audio.q4ui', 'guis/menu/settings/game.q4ui',
-                       'guis/menu/settings/controls.q4ui', 'guis/menu/settings.q4ui'}
+                       'guis/menu/settings/controls.q4ui', 'guis/menu/settings.q4ui', 'guis/menu/msgbox.q4ui'}
             assert path in allowed, f'{name} names an ungated retained document {path}'
+    # The message box presents the retained pop-up only behind the gate, found
+    # through FindRetainedGui; the download progress keeps the stock box.
+    select_box = function_body(menu, 'void idSessionLocal::SelectMessageBox(')
+    assert 'if ( retained && Session_RetainedScreensEnabled() && guiMsgRetained == NULL ) {' in select_box
+    assert 'guiMsgRetained = FindRetainedGui( RETAINED_MSGBOX_GUI, true, false );' in select_box
+    assert 'guiMsg = guiMsgStock;' in select_box
+    assert 'SelectMessageBox( true );' in function_body(menu, 'const char* idSessionLocal::MessageBox(')
+    assert 'SelectMessageBox( false );' in function_body(menu, 'void idSessionLocal::DownloadProgressBox(')
     # Every retained document loads through FindRetainedGui, which falls back to
     # the stock screen; the SYSTEM page and the campaign selectors fall back too.
     assert not re.search(r'uiManager->FindGui\(\s*(?:RETAINED_|"[^"]+\.q4ui")', menu + session), 'retained documents load only through FindRetainedGui'
@@ -5695,9 +5709,15 @@ def main() -> int:
     assert 'Session_HandleCampaignPageRequest( *this, gui, command, false );' in menu
     # The pause screens are named once more by PrefetchRetainedLevel, which
     # parses them on workers as a map change begins; their loads stay in
-    # PrepareRetainedLevel.
-    assert menu.count('RETAINED_TITLE_GUI') == 4 and menu.count('RETAINED_PAUSE_GUI') == 4 and menu.count('RETAINED_LOADING_GUI') == 2
-    assert menu.count('RETAINED_PAUSE_STROGG_GUI') == 4
+    # PrepareRetainedLevel. The title and the pauses are named once more by
+    # PrefetchRetainedNextPages, which loads nothing: it starts the parses of
+    # the pages each leads to and that load when first opened.
+    assert menu.count('RETAINED_TITLE_GUI') == 5 and menu.count('RETAINED_PAUSE_GUI') == 5 and menu.count('RETAINED_LOADING_GUI') == 2
+    assert menu.count('RETAINED_PAUSE_STROGG_GUI') == 5
+    next_pages = function_body(menu, 'void idSessionLocal::PrefetchRetainedNextPages(')
+    assert 'FindRetainedGui' not in next_pages and 'UI_RetainedPrefetchDocuments( pages, 4 );' in next_pages
+    assert 'retainedStock.FindIndex( page ) >= 0 || uiManager->FindGui( page, false, false, false ) != NULL' in next_pages
+    assert 'RETAINED_SETTINGSPAGE_GUI' not in function_body(menu, 'void idSessionLocal::PrefetchRetainedScreens(')
     assert 'documents.Append( RETAINED_PAUSE_GUI );' in function_body(menu, 'void idSessionLocal::PrefetchRetainedLevel(')
     check_retained_multiplayer(menu, session)
     check_create_server(menu)
@@ -5770,7 +5790,7 @@ def main() -> int:
     assert 'player->inventory.objectiveNames[ i ].screenshot' in images[:images.index('gui->SetStateInt( "level_image_count", images );')]
     draw = session[session.index('} else if ( mapSpawned ) {'):]
     draw = draw[:draw.index('} else {')]
-    assert draw.index('gameDraw = game->Draw( GetLocalClientNum() );') < draw.index('renderSystem->WriteDemoPics();') < \
+    assert draw.index('gameDraw = game->Draw( GetLocalClientNum() );') < draw.index('EndRenderDemoRecordFrame();') < \
         draw.index('guiRetainedReleasing->Redraw( presentationTime );')
     assert session.count('guiRetainedReleasing->Redraw(') == 1
     release_ms = int(re.search(r'static const int RETAINED_RELEASE_MSEC = (\d+);', menu).group(1))

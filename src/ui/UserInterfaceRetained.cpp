@@ -256,6 +256,7 @@ bool SessionMenuCommand(const std::string& command) {
         "joinSourceLan","joinClearSort","joinSortFavorite","joinSortLocked","joinSortName","joinSortPing","joinSortPlayers",
         "joinSortGameType","joinSortMap","joinSortDedicated","joinSortRepeater","joinFavorite","joinModPrevious","joinModNext",
         "joinFilterFull","joinFilterEmpty","joinFilterPassword","joinGameTypePrevious","joinGameTypeNext","joinClearFilters",
+        "msgLeft","msgRight","msgMid",
         "noticeAction0","noticeAction1","noticeAction2","audioBack","gameBack","controlsBind","controlsClear","controlsBack","controlsTouchLayout",
         "settingsBack","settingsControls","settingsGame","settingsDisplay","settingsAudio","settingsDefaults",
         "joinConnect","joinSearch","joinSearchClear","joinSortNext",
@@ -328,7 +329,7 @@ bool SessionMenuValueCommand(const std::string& command) {
 		"createGameType","createLan","createDedicated","createAutoBalance","createFragLimit","createCaptureLimit","createControlTime",
 		"createTimeLimit","createMaxPlayers","createMinPlayers","createVoting","createTeamDamage","createTourneyLimit","createUsePass",
 		"createServerMods","createWeaponStay","createPure","createRate","createReady","createSpectators","createWarmup","createVoice",
-		"createBuying","createBots","createBotSkill",
+		"createBuying","createBots","createBotSkill","createShuffle","createOvertime","createMercy","createRoundLimit",
 		"audioVolume","audioMusic","audioDialogue","audioBackend","audioDevice","audioEax","audioSpeakers","audioHrtf",
 		"audioSubtitles","audioSubtitleSize","audioSubtitleBackground","audioSubtitleSpeakers",
 		"gameGunPosition","gameForceModel","gameCrosshair","gameCorpseTime","gameLanguage"};
@@ -352,6 +353,8 @@ const PlayerSetting* FindPlayerSetting(const std::string& cvar) {
 		"1 0.1 0.85","1 1 1"};
 	static const std::map<std::string,PlayerSetting> settings = {
 		{"ui_handicap",{0,1,100,true}},
+		// Join Game's list view: rows or tiles.
+		{"ui_browserView",{0,0,1,true,{},{0,1}}},
 		{"cl_player_outline_enemy",{2,0,0,false,levels}},{"cl_player_outline_team",{2,0,0,false,levels}},
 		{"cl_player_rimlight_enemy",{2,0,0,false,levels}},{"cl_player_rimlight_team",{2,0,0,false,levels}},
 		{"cl_player_brightskin_enemy",{2,0,0,false,levels}},{"cl_player_brightskin_team",{2,0,0,false,levels}},
@@ -1235,7 +1238,9 @@ bool idUserInterfaceRetained::InitFromFile(const char* qpath, bool rebuild, bool
 	const std::string source(static_cast<const char*>(data),static_cast<size_t>(size));
 	fileSystem->FreeFile(data);
 	Document candidate; std::vector<Diagnostic> diagnostics; std::string error;
-	if (!UI_RetainedTakePrefetched(path,source,candidate) && !candidate.Load(source,diagnostics)) {
+	const int loadStarted = Sys_Milliseconds();
+	const bool prefetched = UI_RetainedTakePrefetched(path,source,candidate);
+	if (!prefetched && !candidate.Load(source,diagnostics)) {
 		for (const auto& diagnostic : diagnostics) common->Warning("retained GUI %s:%u:%u %s: %s",path.c_str(),
 			static_cast<unsigned>(diagnostic.line),static_cast<unsigned>(diagnostic.column),diagnostic.pointer.c_str(),diagnostic.message.c_str());
 		return false;
@@ -1281,6 +1286,9 @@ bool idUserInterfaceRetained::InitFromFile(const char* qpath, bool rebuild, bool
 	RegisterLoaded(); RefreshThinking();
 	PrecacheImages(impl->document.Model().root);
 	common->Printf("RETAINED_GUI_LOADED %s\n",path.c_str());
+	// How long the page kept the frame, and whether a worker had parsed it.
+	common->DPrintf("retained GUI %s loaded in %d ms (%s)\n",path.c_str(),Sys_Milliseconds()-loadStarted,
+		prefetched ? "parse prefetched" : "parsed here");
 	return true;
 }
 

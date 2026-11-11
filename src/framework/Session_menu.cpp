@@ -103,6 +103,7 @@ idCVar ui_retainedMultiplayer( "ui_retainedMultiplayer", "0", CVAR_GUI | CVAR_BO
 // Prey presents its retail GUIs, so the stock interface is the default.
 idCVar ui_retained( "ui_retained", "0", CVAR_GUI | CVAR_BOOL | CVAR_ARCHIVE, "use the retained interface by default; 0 selects the stock interface" );
 idCVar ui_hudScale( "ui_hudScale", "1", CVAR_GUI | CVAR_FLOAT | CVAR_ARCHIVE, "retained status bar scale, independent of menus", .5f, 2.0f );
+idCVar ui_browserView( "ui_browserView", "0", CVAR_GUI | CVAR_INTEGER | CVAR_ARCHIVE, "the server browser's list: 0 rows, 1 tiles with each map's levelshot", 0, 1 );
 idCVar ui_hudSafeInset( "ui_hudSafeInset", "0", CVAR_GUI | CVAR_FLOAT | CVAR_ARCHIVE, "retained status bar safe inset in percent of viewport", 0.0f, 10.0f );
 idCVar ui_retainedCaptureLoadFade( "ui_retainedCaptureLoadFade", "0", CVAR_GUI | CVAR_BOOL | CVAR_NOCHEAT, "diagnostic: use the engine screenshot command to capture the middle and end of the retained loading fade" );
 
@@ -142,6 +143,8 @@ static bool Session_RetainedSystemEnabled( void ) {
 // while it is open over a match: Escape, and Welcome while the player has not
 // answered the join offer.
 static const char *const RETAINED_MP_ESCAPE_GUI = "guis/menu/mp_escape.q4ui";
+// The session's message box (guis/msg.gui) as the retained pop-up.
+static const char *const RETAINED_MSGBOX_GUI = "guis/menu/msgbox.q4ui";
 static const char *const RETAINED_MP_WELCOME_GUI = "guis/menu/mp_welcome.q4ui";
 // The version of the game's answer to retainedMultiplayerCover that the card
 // relies on; a game module without it keeps its stock menu.
@@ -2071,6 +2074,31 @@ bool idSessionLocal::PublishRetainedPlayerSetup( idUserInterface *gui, bool rebu
 		gui->SetStateString( va("setup.observed_%s",field), value );
 	}
 	gui->SetStateString( "setup.observed_model", retainedSetupValue.c_str() );
+	// OPPONENTS' forced model: its row on this catalog page, or none.
+	const idStr forcedModel = cvarSystem->GetCVarString( "g_forceModel" );
+	const int forcedIndex = forcedModel.Length() ? retainedSetupModels.FindIndex( forcedModel ) : -1;
+	gui->SetStateInt( "setup.force_row", forcedIndex >= retainedSetupFirst && forcedIndex < retainedSetupFirst + int(PlayerSetupModelRows) ?
+		forcedIndex-retainedSetupFirst : -1 );
+	gui->SetStateString( "setup.observed_force", forcedModel.c_str() );
+	// Its parts and name, for OPPONENTS' preview: the forced model as the
+	// player's own is named, or none.
+	idStr forcedBody, forcedHead, forcedSkin, forcedDescription, forcedTeam, forcedHeadSkin;
+	if ( forcedIndex >= 0 && MainMenuExtractPlayerModelInfo( forcedModel.c_str(), forcedBody, forcedHead, forcedSkin, forcedDescription, forcedTeam ) ) {
+		if ( forcedHead.Length() ) {
+			const idDeclEntityDef *head = static_cast<const idDeclEntityDef *>( declManager->FindType( DECL_ENTITYDEF, forcedHead.c_str(), false ) );
+			if ( head != NULL ) {
+				forcedHeadSkin = head->dict.GetString( "skin" );
+			}
+		}
+	} else {
+		forcedBody.Clear(); forcedHead.Clear(); forcedSkin.Clear();
+	}
+	gui->SetStateString( "setup.force_body", forcedBody.c_str() );
+	gui->SetStateString( "setup.force_head", forcedHead.c_str() );
+	gui->SetStateString( "setup.force_skin", forcedSkin.c_str() );
+	gui->SetStateString( "setup.force_head_skin", forcedHeadSkin.c_str() );
+	gui->SetStateString( "setup.force_name", forcedIndex >= 0 && forcedBody.Length() ?
+		Session_RetainedPlayerText( retainedSetupNames[ forcedIndex ].c_str(), 256, 1 ).c_str() : "" );
 	const char *tint = cvarSystem->GetCVarString("ui_hitscanTint");
 	gui->SetStateString( "setup.observed_rail", tint );
 	float hue=0,saturation=0,brightness=0;
@@ -2122,6 +2150,17 @@ void idSessionLocal::HandleRetainedPlayerSetupRequest( idUserInterface *gui, con
 			if ( !MainMenuExtractPlayerModelInfo(wanted.c_str(),model,head,skin,description,team) ||
 				!MainMenuModelAllowedForTeam(team,MainMenuIsTeamGame(),MainMenuResolveModelTeam()) ) { notice("#str_231548"); return; }
 			cvar=retainedSetupCvar.c_str(); break;
+		}
+		case PlayerSetupField::ForceModel: {
+			// The model every other player shows outside team modes: a row of the
+			// catalog page, or none.
+			const int row = int(std::get<double>(request.value));
+			if ( row >= 0 ) {
+				const long long index = static_cast<long long>(retainedSetupFirst) + row;
+				if ( index >= retainedSetupModels.Num() ) { notice("#str_231548"); return; }
+				wanted=retainedSetupModels[int(index)];
+			}
+			cvar="g_forceModel"; break;
 		}
 		case PlayerSetupField::Rail: {
 			static const int hues[7] = {0,30,60,120,180,240,330};
@@ -4100,7 +4139,7 @@ void idSessionLocal::SetMainMenuGuiVars( bool refreshCatalogs ) {
 		SetModsMenuGuiVars();
 	}
 
-	guiMsg->SetStateString( "visible_hasxp", fileSystem->HasD3XP() ? "1" : "0" );
+	( guiMsgStock != NULL ? guiMsgStock : guiMsg )->SetStateString( "visible_hasxp", fileSystem->HasD3XP() ? "1" : "0" );
 
 #if defined( __linux__ )
 	guiMainMenu->SetStateString( "driver_prompt", "1" );
@@ -5683,6 +5722,8 @@ void idSessionLocal::DispatchCommand( idUserInterface *gui, const char *menuComm
 			// The death screen stays: closing it would leave a player with no
 			// level and no way back, and the stock screen took no Escape.
 			else if ( gui == guiRetainedRestartMenu ) {}
+			// A message box answers through its buttons alone.
+			else if ( gui == guiMsg ) {}
 			else if ( gui == guiActive ) ExitMenu();
 		}
 		return;
@@ -6258,6 +6299,7 @@ void idSessionLocal::GuiFrameEvents() {
 	UpdateRetainedMultiplayerPage();
 	UpdateRetainedJoinGame();
 	UpdateRetainedSettingsPage();
+	PrefetchRetainedNextPages();
 	UpdateRetainedNotices();
 	UpdateBrowserTooltip();
 	PrecacheRetainedLevelshots( false );
@@ -6302,6 +6344,40 @@ void idSessionLocal::GuiFrameEvents() {
 
 /*
 =================
+idSessionLocal::SelectMessageBox
+
+The box the next message presents. `retained` asks for the retained pop-up
+(guis/menu/msgbox.q4ui), which takes the stock box's state under the same
+names and answers with its commands (HandleRetainedSessionRequest); it
+presents where the retained screens do and its document loads and draws.
+Otherwise, and for the boxes it has no part for (the download progress), the
+stock guis/msg.gui presents. Only between boxes: a box that is up keeps its
+screen.
+=================
+*/
+void idSessionLocal::SelectMessageBox( bool retained ) {
+	if ( guiMsgStock == NULL ) {
+		guiMsgStock = guiMsg;
+	}
+#ifndef ID_DEDICATED
+	if ( guiMsgRetained != NULL && UI_RetainedViewFailed( guiMsgRetained ) ) {
+		common->Warning( "retained UI: '%s' stopped drawing; the stock screen presents instead", RETAINED_MSGBOX_GUI );
+		retainedStock.AddUnique( RETAINED_MSGBOX_GUI );
+		guiMsgRetained = NULL;
+	}
+	if ( retained && Session_RetainedScreensEnabled() && guiMsgRetained == NULL ) {
+		guiMsgRetained = FindRetainedGui( RETAINED_MSGBOX_GUI, true, false );
+	}
+	if ( retained && Session_RetainedScreensEnabled() && guiMsgRetained != NULL ) {
+		guiMsg = guiMsgRetained;
+		return;
+	}
+#endif
+	guiMsg = guiMsgStock;
+}
+
+/*
+=================
 idSessionLocal::BoxDialogSanityCheck
 =================
 */
@@ -6336,6 +6412,7 @@ const char* idSessionLocal::MessageBox( msgBoxType_t type, const char *message, 
 	if ( !BoxDialogSanityCheck() ) {
 		return NULL;
 	}
+	SelectMessageBox( true );
 
 	guiMsg->SetStateString( "title", title ? title : "" );
 	guiMsg->SetStateString( "message", message ? message : "" );
@@ -6518,6 +6595,7 @@ void idSessionLocal::DownloadProgressBox( backgroundDownload_t *bgl, const char 
 	if ( !BoxDialogSanityCheck() ) {
 		return;
 	}
+	SelectMessageBox( false );	// the progress bar is the stock box's
 
 	guiMsg->SetStateString( "visible_msgbox", "1" );
 	guiMsg->SetStateString( "visible_waitbox", "0" );
@@ -6897,6 +6975,11 @@ static const retainedCreateSetting_t RETAINED_CREATE_SETTINGS[] = {
 	{ "createBuying",		"buying",		"si_isBuyingEnabled",		0, 1,	true },
 	{ "createBots",			"bots",			"bot_minPlayers",			0, 16,	false },
 	{ "createBotSkill",		"botskill",		"bot_skill",				1, 5,	false },
+	// openD3's match rules, on the advanced dialog's MATCH and RULES tabs.
+	{ "createShuffle",		"shuffle",		"si_shuffle",				0, 1,	true },
+	{ "createOvertime",		"overtime",		"si_overtime",				0, 999,	false },
+	{ "createMercy",		"mercy",		"si_mercyLimit",			0, 999,	false },
+	{ "createRoundLimit",	"roundlimit",	"si_roundLimit",			0, 60,	false },
 };
 static const int RETAINED_CREATE_SETTING_COUNT = static_cast<int>( sizeof( RETAINED_CREATE_SETTINGS ) / sizeof( RETAINED_CREATE_SETTINGS[0] ) );
 // The page's text fields: the verb a field asks with once its text is in its
@@ -7866,6 +7949,14 @@ void idSessionLocal::ShowSaveRestoreFailure( const char *saveName ) {
 
 void idSessionLocal::HandleRetainedSessionRequest( idUserInterface *gui, const char *request ) {
 #ifndef ID_DEDICATED
+	// The retained message box's buttons answer as the stock box's commands.
+	if ( request != NULL && gui != NULL && gui == guiMsgRetained ) {
+		if ( gui == guiActive && gui == guiMsg ) {
+			HandleMsgCommands( !idStr::Icmp( request, "msgLeft" ) ? "left" : !idStr::Icmp( request, "msgRight" ) ? "right" :
+				!idStr::Icmp( request, "msgMid" ) ? "mid" : "" );
+		}
+		return;
+	}
 	// The retained AUDIO and GAME OPTIONS pages' verbs, while they present.
 	if ( request != NULL && gui != NULL && gui == guiRetainedAudio ) {
 		if ( gui == guiActive ) {
@@ -9816,6 +9907,11 @@ void idSessionLocal::PublishRetainedJoinGame( idUserInterface *gui ) {
 		gui->SetStateBool( va( "join.row%d.lock", row ), server != NULL && server->serverInfo.GetBool( "si_usePass" ) );
 		gui->SetStateBool( va( "join.row%d.ded", row ), server != NULL && server->serverInfo.GetInt( "net_serverDedicated" ) != 0 );
 		gui->SetStateBool( va( "join.row%d.rep", row ), server != NULL && server->serverInfo.GetBool( "si_repeater" ) );
+		// The row's levelshot, which the list's tiles show (ui_browserView 1);
+		// the rows look none up.
+		const char *rowMap = server != NULL ? server->serverInfo.GetString( "si_map" ) : "";
+		gui->SetStateString( va( "join.row%d.shot", row ), server == NULL || ui_browserView.GetInteger() != 1 ? "" :
+			idServerScan::ValidMapPath( rowMap ) ? RetainedPauseShot( rowMap ).c_str() : "gfx/guis/loadscreens/generic" );
 		gui->SetStateString( va( "join.row%d.name", row ), name.c_str() );
 		gui->SetStateString( va( "join.row%d.ping", row ), ping.c_str() );
 		// The browser hears no packet loss, so the ping alone sets the bars.
@@ -9888,7 +9984,11 @@ void idSessionLocal::UpdateRetainedJoinGame() {
 	if ( guiRetainedJoin == NULL || guiActive != guiRetainedJoin ) {
 		return;
 	}
-	if ( idAsyncNetwork::client.serverList.GetRevision() != retainedJoinRevision ) {
+	// The list's view changed: the tiles' levelshots are published with the rows.
+	static int viewPublished = -1;
+	const bool viewChanged = ui_browserView.GetInteger() != viewPublished;
+	viewPublished = ui_browserView.GetInteger();
+	if ( viewChanged || idAsyncNetwork::client.serverList.GetRevision() != retainedJoinRevision ) {
 		PublishRetainedJoinGame( guiRetainedJoin );
 	} else if ( guiRetainedJoin->State().GetInt( "join.detail", "-1" ) != retainedJoinDetailRow ) {
 		PublishRetainedJoinDetail( guiRetainedJoin );
@@ -10688,16 +10788,72 @@ idUserInterface *idSessionLocal::SelectRetainedLoadingGui( idUserInterface *lega
 void idSessionLocal::PrefetchRetainedScreens() {
 #ifndef ID_DEDICATED
 	// PreloadRetainedScreens' documents, in its order, the title first. The
-	// pages a gate or a missing page will refuse are parsed for nothing.
+	// pages a gate or a missing page will refuse are parsed for nothing. The
+	// pages that load when first opened parse later, while the page that
+	// leads to them shows (PrefetchRetainedNextPages).
 	if ( !Session_RetainedScreensEnabled() ) {
 		return;
 	}
 	const char *const documents[] = {
 		RETAINED_TITLE_GUI, RETAINED_LOADGAME_GUI, RETAINED_CREDITS_GUI, RETAINED_DEMOS_GUI, RETAINED_ARENA_GUI,
-		RETAINED_MPPAGE_GUI, RETAINED_SETTINGSPAGE_GUI, Session_RetainedCreateServerEnabled() ? RETAINED_CREATE_SERVER_GUI : NULL,
+		RETAINED_MPPAGE_GUI, Session_RetainedCreateServerEnabled() ? RETAINED_CREATE_SERVER_GUI : NULL,
 		Session_RetainedJoinGameEnabled() ? RETAINED_JOIN_GAME_GUI : NULL
 	};
 	UI_RetainedPrefetchDocuments( documents, static_cast<int>( sizeof( documents ) / sizeof( documents[0] ) ) );
+#endif
+}
+
+/*
+===============
+idSessionLocal::PrefetchRetainedNextPages
+
+The pages that load when first opened, parsed on the job workers while the
+page that leads to them shows. Most of a load is the document's parse and
+validation (about 180 of CONTROLS' 270 ms), so the page chosen then waits
+for its view alone: the title leads to the Single Player and SETTINGS
+pages, Single Player to Campaign, Campaign to its difficulty and CHAPTERS
+pages, the pauses to SETTINGS, and SETTINGS to CONTROLS, GAME OPTIONS,
+DISPLAY and AUDIO. Nothing parses for a page that is loaded, that the stock
+screen stands in for, or whose parse is already under way, and a parse no
+page takes goes with the next level's unload (UI_RetainedPrefetchClear).
+===============
+*/
+void idSessionLocal::PrefetchRetainedNextPages() {
+#ifndef ID_DEDICATED
+	static const char *const leads[][5] = {
+		{ RETAINED_TITLE_GUI, RETAINED_SINGLEPLAYER_GUI, RETAINED_SETTINGSPAGE_GUI, NULL, NULL },
+		{ RETAINED_PAUSE_GUI, RETAINED_SETTINGSPAGE_GUI, NULL, NULL, NULL },
+		{ RETAINED_PAUSE_STROGG_GUI, RETAINED_SETTINGSPAGE_GUI, NULL, NULL, NULL },
+		{ RETAINED_SINGLEPLAYER_GUI, RETAINED_CAMPAIGNS_GUI, NULL, NULL, NULL },
+		{ RETAINED_CAMPAIGNS_GUI, RETAINED_SKILL_GUI, RETAINED_CHAPTERS_GUI, NULL, NULL },
+		{ RETAINED_SETTINGSPAGE_GUI, RETAINED_CONTROLS_GUI, RETAINED_GAME_GUI, RETAINED_SYSTEM_GUI, RETAINED_AUDIO_GUI }
+	};
+	// The page on screen: a retained home stands over the legacy menu.
+	static const idUserInterface *seen = NULL;
+	const idUserInterface *shown = guiRetainedHome != NULL && guiActive == guiMainMenu ? guiRetainedHome : guiActive;
+	if ( shown == seen ) {
+		return;
+	}
+	seen = shown;
+	if ( shown == NULL || !Session_RetainedScreensEnabled() ) {
+		return;
+	}
+	for ( int i = 0; i < static_cast<int>( sizeof( leads ) / sizeof( leads[0] ) ); ++i ) {
+		if ( idStr::Icmp( shown->Name(), leads[ i ][ 0 ] ) != 0 ) {
+			continue;
+		}
+		const char *pages[4] = { NULL, NULL, NULL, NULL };
+		for ( int next = 0; next < 4; ++next ) {
+			const char *page = leads[ i ][ next + 1 ];
+			if ( page == NULL || retainedStock.FindIndex( page ) >= 0 || uiManager->FindGui( page, false, false, false ) != NULL ||
+					( page == RETAINED_SYSTEM_GUI && !RetainedSystemAvailable() ) ) {
+				continue;
+			}
+			pages[ next ] = page;
+		}
+		UI_RetainedPrefetchDocuments( pages, 4 );
+		return;
+	}
 #endif
 }
 

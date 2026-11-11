@@ -1158,6 +1158,18 @@ if get_option('build_native_tests')
     opend3_arb_color_zero_floor_test,
     timeout: 30,
   )
+
+  opend3_arb_heat_haze_depth_reject_test = executable(
+    'opend3-arb-heat-haze-depth-reject-test',
+    files('tools/tests/native/ARBHeatHazeDepthRejectTest.cpp'),
+    include_directories: root_include_dir,
+    install: false,
+  )
+  test(
+    'opend3-arb-heat-haze-depth-reject',
+    opend3_arb_heat_haze_depth_reject_test,
+    timeout: 30,
+  )
 endif
 
 # The retained runtime is isolated from engine PCH/platform/render headers.

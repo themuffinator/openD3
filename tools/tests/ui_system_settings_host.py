@@ -243,10 +243,14 @@ int main() {
     // Read and rollback preserve an unrelated externally changed custom value.
     live=original;live["r_screenFraction"]=93.0;candidate=live;candidate["r_brightness"]=1.4;
     assert(host.ValidateRollback(original,live,candidate,error));
-    for(const char* key:{"r_mode","r_multiSamples","r_displayRefresh","r_windowWidth","r_swapInterval"}) {
+    for(const char* key:{"r_mode","r_multiSamples","r_displayRefresh","r_windowWidth"}) {
         candidate=original;candidate[key]=std::get<double>(candidate.at(key))+1;
         assert(host.NeedsConfirmation(original,candidate) && host.RequiresDeviceWork(original,candidate));
     }
+    // The running device takes a swap interval: no confirmation, no device work.
+    candidate=original;candidate["r_swapInterval"]=std::get<double>(candidate.at("r_swapInterval"))+1;
+    assert(!host.NeedsConfirmation(original,candidate) && !host.RequiresDeviceWork(original,candidate));
+    assert(SystemSettingsHost::ApplyClassOf(original,candidate)==SystemApplyClass::Immediate);
     for(const char* key:{"r_lightGridPreload","image_downSize","s_useEAXReverb"}) {
         candidate=original;candidate[key]=true;assert(host.RequiresDeviceWork(original,candidate));
         assert(!host.NeedsConfirmation(original,candidate));
@@ -271,10 +275,11 @@ int main() {
     candidate=original;candidate["com_performancePreset"]=std::string("ultra");assert(classOf()==SystemApplyClass::Immediate);
     candidate["r_multiSamples"]=std::get<double>(original.at("r_multiSamples"))+1;assert(classOf()==SystemApplyClass::Display);
     candidate["image_picmip"]=std::get<double>(original.at("image_picmip"))+1;assert(classOf()==SystemApplyClass::Combined);
-    // Only these two wait for the next start: declarations already parsed keep the old value.
+    // Only the sound setting waits for the next start: shaders already parsed keep the old value.
     candidate=original;assert(!SystemSettingsHost::ChangedNeedsNextStart(original,candidate));
     candidate["image_downSize"]=!std::get<bool>(original.at("image_downSize"));assert(!SystemSettingsHost::ChangedNeedsNextStart(original,candidate));
-    candidate["image_ignoreHighQuality"]=!std::get<bool>(original.at("image_ignoreHighQuality"));assert(SystemSettingsHost::ChangedNeedsNextStart(original,candidate));
+    // The renderer re-parses the materials that read it, so it is finished in the session.
+    candidate["image_ignoreHighQuality"]=!std::get<bool>(original.at("image_ignoreHighQuality"));assert(!SystemSettingsHost::ChangedNeedsNextStart(original,candidate));
     candidate=original;candidate["s_maxSoundsPerShader"]=std::get<double>(original.at("s_maxSoundsPerShader"))+1;
     assert(SystemSettingsHost::ChangedNeedsNextStart(original,candidate));
     std::vector<std::string> deferredKeys,rendererKeys;
@@ -313,11 +318,13 @@ int main() {
     assert(host.ValidateDraft(original,incompleteSize,error) && !host.Validate(original,incompleteSize,error));
     candidate["r_displayRefresh"]=144.0;assert(!host.Validate(original,candidate,error));
     // A saved exclusive rate the display lacks refuses any later display
-    // restart (here V-Sync) before it is attempted; an immediate change applies.
-    auto restart=candidate;restart["r_swapInterval"]=std::get<double>(candidate.at("r_swapInterval"))==0?1.0:0.0;
+    // restart (here MSAA) before it is attempted; an immediate change applies,
+    // V-Sync included.
+    auto restart=candidate;restart["r_multiSamples"]=std::get<double>(candidate.at("r_multiSamples"))==0?2.0:0.0;
     assert(!host.Validate(candidate,restart,error));
     auto immediate=candidate;immediate["r_brightness"]=1.4;assert(host.Validate(candidate,immediate,error));
-    // Rolling that V-Sync change back keeps to the coupled keys: a rollback can
+    immediate["r_swapInterval"]=std::get<double>(candidate.at("r_swapInterval"))==0?1.0:0.0;assert(host.Validate(candidate,immediate,error));
+    // Rolling that MSAA change back keeps to the coupled keys: a rollback can
     // run with no window, when Auto would name the primary display.
     assert(host.ValidateRollback(candidate,restart,candidate,error));
     candidate["r_displayRefresh"]=60.0;restart["r_displayRefresh"]=60.0;assert(host.Validate(candidate,restart,error));

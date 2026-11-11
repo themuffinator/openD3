@@ -83,6 +83,54 @@ shadowMapPointReceiverSettings_t R_ShadowMapPointStorageAdjustedReceiverSettings
 // unreliable. Invalid/unknown inputs return true so AUTO culling can fall
 // back conservatively to two-sided depth.
 bool R_ShadowMapCasterTransformNeedsTwoSided( const float modelMatrix[ 16 ] );
+// 1 when the transform keeps the authored winding, -1 when it mirrors it, 0
+// when it is singular, non-finite or missing and no winding can be trusted.
+int R_ShadowMapCasterTransformWinding( const float modelMatrix[ 16 ] );
+
+// The triangles of a caster that a shadow map stores, named by the shell the
+// light sees. NEAR keeps the triangles whose front faces the light and FAR
+// the ones that face away from it. In a light's view the engine's winding
+// makes a front-facing triangle the rasterizer's back face, so NEAR discards
+// the rasterizer's front face and FAR its back face, on both renderers.
+enum shadowMapCasterFaces_t {
+	SHADOWMAP_CASTER_FACES_BOTH = 0,
+	SHADOWMAP_CASTER_FACES_NEAR,
+	SHADOWMAP_CASTER_FACES_FAR
+};
+
+// r_shadowMapCasterCulling:
+//   0  both sides of every caster
+//   1  the near shell of every caster, in the material's authored orientation
+//   2  automatic: the near shell of a sealed hull the light is outside of,
+//      and for every other caster the triangles that face away from the light
+//   3  the triangles that face away from the light, for every caster
+//   4  the automatic mode before this rule: the near shell of a sealed hull,
+//      both sides of every other caster. Kept for comparison.
+//
+// A stencil volume is built from the triangles that face away from the light
+// and from nothing else: R_CreateShadowVolume and the turbo path both skip a
+// facing triangle. A one-sided surface lit from its front therefore casts no
+// stencil shadow, and the levels are lit on that understanding: a lamp shines
+// through the floor panel it hangs over, the ceiling trim it sits against, the
+// catwalk between it and the room below. Drawn into a map, the same triangle
+// blocks its light. A sealed hull has the same silhouette from either shell,
+// so it keeps the near one, which holds a contact shadow against the bias a
+// far shell gives up; open geometry has no such choice and follows the
+// stencil rule.
+//
+// Which face the rasterizer reports for a triangle depends on more than the
+// triangle. A mirrored model transform swaps the faces, and so does a
+// mirrored projection (windingMirrored, from
+// R_ShadowMapLightMirrorsCasterWinding): the answer here is always the face
+// to discard, with both taken into account. A transform with no usable
+// winding stores both sides.
+static const int SHADOWMAP_CASTER_CULLING_MAX = 4;
+int R_ShadowMapCasterCullingMode( void );
+shadowMapCasterFaces_t R_ShadowMapCasterFaces( int cullingMode,
+	const viewLight_t *vLight, bool windingMirrored, bool haveGeometry,
+	bool perfectHull, const float modelMatrix[ 16 ],
+	const float boundsMin[ 3 ], const float boundsMax[ 3 ],
+	int materialCull );
 // A sealed hull is only safe for one-sided near-shell rendering when its
 // light is outside the caster. Invalid/unknown inputs return true so AUTO
 // culling fails conservatively to two-sided depth.
@@ -118,6 +166,16 @@ static const int SHADOWMAP_DYNAMIC_CASTER_MAX_FRAMES = 500;
 // Called once per rendered frame with a millisecond clock.
 void R_ShadowMapBeginFrame( int nowMsec );
 int R_ShadowMapDynamicCasterFrames( void );
+// The oldest frame a caster's last change may date from and still count as
+// live: the current frame less the window, except that it never moves back.
+// The window is counted in frames from a frame time that drops at once on a
+// fast frame, so it can grow by several frames from one frame to the next.
+// Taken afresh each frame, a caster that had just aged out of it was live
+// again for a frame or two, and each such visit took the caster out of its
+// lights' static maps and put it back: two renders of every one of them.
+int R_ShadowMapLiveCasterSinceFrame( void );
+// The pure form, for the self-test.
+int R_ShadowMapAdvanceLiveCasterSince( int liveSince, int updatedFrame, int frame, int windowFrames );
 // The light's shape changed within the last two game tics' worth of frames:
 // it is moving, and every view of it needs a new map.
 int R_ShadowMapMovingLightFramesFor( float frameMsec );
