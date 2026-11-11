@@ -17,6 +17,7 @@ On Windows x64, against the Steam release of Doom 3 with the 1.3.1 packs:
 - The same map loads and renders on the Vulkan renderer.
 - Doom 3's own main menu starts and plays the intro video.
 - The dedicated server starts the deathmatch map `game/mp/d3dm1`.
+- Shadow maps on OpenGL and Vulkan, compared with stencil shadows on the opening views of six campaign maps, and your own shadow in first person, in single player and in a `d3dm1` listen server. See [Client Settings](client-settings.md#shadows).
 
 ## What has not been run
 

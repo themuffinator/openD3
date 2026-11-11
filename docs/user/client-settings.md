@@ -64,6 +64,20 @@ On a widescreen or tall display the menus, HUD and loading screens use the whole
 | `ui_widescreenLayouts` | `1` | `0` draws the stock menus and HUD as a centred 4:3 picture instead. Takes effect when the menu or map next loads |
 | `ui_aspectCorrection` | `1` | `0` stretches all 2D interface to the screen shape instead of keeping its proportions |
 
+## Shadows
+
+Doom 3's stencil shadows are the default. Shadow maps replace them light by light: soft edges, and the same shapes as the stencil shadows. Both draw your own shadow: your body, head and held weapon throw a shadow you can see in first person, in single player and in multiplayer.
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `g_showPlayerShadow` | `1` | `0` hides your own shadow from your view in single player, as Doom 3 did. Other players always see it, and multiplayer always draws it |
+| `r_useShadowMap` | `0` | `1` draws shadow maps instead of stencil shadows. A light the shadow-map path cannot take that frame keeps its stencil shadows |
+| `r_shadowMapPointLights` | `1` | `0` keeps stencil shadows for point lights, which are most of Doom 3's lights, and shadow-maps only projected lights |
+
+The performance presets choose these for you. **Balanced** and below use stencil shadows only (**Minimum** and **Low Power** draw no shadows). **Enhanced** shadow-maps projected lights only and leaves point lights on stencil shadows. **Quality**, **Ultra** and **Maximum** shadow-map every light.
+
+These settings are saved like any other, so a settings file written by an earlier build keeps its old values: `g_showPlayerShadow 0`, and Prey's specular model in `r_correctspecular 1` and `r_normalizebumpmap 1`. Set them to `1`, `0` and `0` once for your shadow and Doom 3's lighting.
+
 ## Where Settings Are Saved
 
 Settings are written to `openD3Config.cfg` in your save folder, together with saves, screenshots and logs:
@@ -80,6 +94,6 @@ Settings are written to `openD3Config.cfg` in your save folder, together with sa
 
 ## Settings Inherited from openQ4
 
-The engine brings openQ4's display, input and rendering features with it: performance presets, shadow maps, light grids, post-processing, controller support and more. They are described in [openQ4's guides](https://github.com/themuffinator/openQ4/tree/main/docs/user). None has been checked with Doom 3 yet, and those guides describe menus openD3 does not have, so use their console variable names rather than their menu paths.
+The engine brings openQ4's display, input and rendering features with it: performance presets, shadow maps, light grids, post-processing, controller support and more. They are described in [openQ4's guides](https://github.com/themuffinator/openQ4/tree/main/docs/user). Apart from shadow maps (see "Shadows" above), none has been checked with Doom 3 yet, and those guides describe menus openD3 does not have, so use their console variable names rather than their menu paths.
 
 If you want deeper technical details or console-level configuration, see [TECHNICAL.md](../../TECHNICAL.md).

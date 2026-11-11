@@ -27,6 +27,10 @@ is limited to what the [rebase record](../doom3-rebase.md#verified) covers. See
   softened view of the world. No retail GUI script is shipped: small layout
   patches name the windows ([layout](../widescreen-layout.md)).
 - **Dedicated server.** `openD3-ded_x64` spawns `game/mp/d3dm1`.
+- **Your own shadow, and shadow maps that match.** In first person your body,
+  head and weapon cast a shadow, in single player (`g_showPlayerShadow`, now on
+  by default) and in multiplayer. Shadow maps (`r_useShadowMap 1`) draw the
+  same lighting as stencil shadows on OpenGL and Vulkan.
 - **Resurrection of Evil module.** `src/d3xp` builds `game-d3xp_<arch>`, which
   `+set fs_game d3xp` loads and initialises. No expansion map has been run.
 
@@ -38,6 +42,9 @@ is limited to what the [rebase record](../doom3-rebase.md#verified) covers. See
   tested.
 - Launch with `ui_retained 0`. openQ4's retained interface has no Doom 3 pages.
 - Only Windows x64 has been built and run.
+- A settings file written by an earlier build keeps `g_showPlayerShadow 0`,
+  `r_correctspecular 1` and `r_normalizebumpmap 1`. Set the new defaults
+  (1, 0, 0) by hand to get the player shadow and Doom 3's specular.
 
 ## Change Log
 
@@ -59,3 +66,8 @@ is limited to what the [rebase record](../doom3-rebase.md#verified) covers. See
   `canvasclip` and `softfocus` window properties, and wide and tall layouts for
   the main menu, HUDs, PDA, loading screens and full-screen GUIs. Remove the
   hard-coded Quake 4 message dimmer and Tourney bar stretching.
+- Merge openQ4 through `7c74cd712`, with its shadow-mapping fixes.
+- Default `g_showPlayerShadow` to 1 in both game modules.
+- Shade stock specular as Doom 3 does: `r_correctspecular` and
+  `r_normalizebumpmap` default to 0, and the OpenGL ARB path no longer doubles
+  the specular constant that Doom 3's `interaction.vfp` doubles itself.

@@ -27,7 +27,8 @@ The branch history, oldest first:
 
 1. **Merge openQ4** through `55bbe166a`, taking the upstream tree unchanged.
    openQ4's history is now part of openD3's, so later syncs are ordinary
-   merges of `openq4-upstream/main`.
+   merges of `openq4-upstream/main`. The latest sync merged upstream through
+   `7c74cd712` (2026-11-11), which brought its shadow-mapping fixes.
 2. **Remove the Quake 4 game library and content.** `src/game` and
    `src/mpgame` (Quake 4 SDK), the SDK licence and the Quake 4 runtime content
    leave the tree. The engine-side content moves to `content/baseod3`.
@@ -135,6 +136,30 @@ release of Doom 3 (1.3.1 packs):
   (`alphalabs1`, `generic`), the death screen, the multiplayer HUD, the
   scoreboard and the game-over screen were shown with `testGUI` at 21:9 and,
   for the loading screen and multiplayer HUD, at 4:5.
+- Shadow maps (`r_useShadowMap 1`, with `r_shadowMapPointLights 1`) on
+  OpenGL and Vulkan, after the `7c74cd712` sync. Captured from the starting
+  view of `mc_underground`, `alphalabs1`, `delta2a`, `hell1`, `recycling1` and
+  `site3` with shadow maps and with stencil shadows. The pictures match, and no
+  log reports a shadow-map error. Frozen with `g_stopTime 1` and measured, the
+  mapped and stencil pictures of `alphalabs1` differ in about 5,000 of 3.7
+  million pixels on both backends (the contact edges of the soft shadows),
+  `hell1` in 0 (OpenGL) and 182 (Vulkan), and no mapped pixel is brighter than
+  the unshadowed picture. Before the specular fix below, OpenGL differed in
+  311,739 pixels there. On `hell1` three lights with nothing to cast keep
+  entering and leaving the stencil fallback; see "Open items".
+- Stock specular follows Doom 3 on every path. `r_correctspecular` and
+  `r_normalizebumpmap` default to 0 (they came from Prey at 1), and the OpenGL
+  ARB path passes the specular constant unscaled, as id's `draw_arb2.cpp`
+  does, because Doom 3's `interaction.vfp` doubles the specular map itself.
+  This was measured against the shadow-map and Vulkan pictures above, not
+  against retail Doom 3.
+- The player's own shadow, in first person. With a light spawned behind the
+  player, the body, head and held weapon cast their shadow on the surface in
+  front: in single player on `mc_underground` (`g_showPlayerShadow` now
+  defaults to 1; 0 removes the shadow) and in a `d3dm1` deathmatch listen
+  server, each on OpenGL and Vulkan, with stencil shadows and with shadow
+  maps. The shadow-map report confirms that the test light was shadow-mapped
+  in each case, with the player's models among its casters.
 - The dedicated server spawns `game/mp/d3dm1` (887 entities).
 - The VS Code tasks and launches. The default build task compiles `builddir`
   and fast-stages `.install`. Run with their own arguments and an isolated
@@ -244,6 +269,28 @@ Listed roughly by how much they block a player.
    system to confirm that it will load. For a pack written into a directory
    the bake created, that read fails, and the bake reports that another copy
    comes first although the pack loads on the next start.
+10. **Shadow-map follow-ups.**
+    - The **Enhanced** performance preset (the one startup picked on the test
+      machine) sets `r_shadowMapPointLights 0`, so its shadow maps cover
+      projected lights only and Doom 3's point lights, most of its lighting,
+      keep stencil shadows. That split comes from upstream's measurements of
+      Quake 4 content. It has not been measured on Doom 3.
+    - A light whose pass has nothing to cast (three lights at the start of
+      `hell1`) is treated as a failed pass: the engine restores its stencil
+      volumes, which are empty too, lets it leave the fallback after 240 views
+      and repeats. Nothing changes on screen. The rule is upstream's.
+    - Stale profiles keep old values: a config written before these defaults
+      changed still holds `g_showPlayerShadow 0` and `r_correctspecular 1`,
+      `r_normalizebumpmap 1`. There is no config migration.
+    - On OpenGL, setting `r_correctspecular 1` or `r_normalizebumpmap 1`
+      changes only the GLSL and Vulkan paths: the ARB program cannot follow
+      them, so mapped and stencil pictures differ again.
+    - OpenGL draws `hell1`'s first view brighter than Vulkan (about 420,000
+      pixels), the same with shadow maps, stencil or no shadows. Not
+      investigated.
+    - Not covered: Resurrection of Evil, subviews (mirrors, remote cameras),
+      moving lights, cascaded shadow maps (`r_shadowMapCSM`), other players'
+      shadows as a client.
 
 ## Naming
 
@@ -255,10 +302,14 @@ runtime directory is `baseod3`. The only places upstream's name appears are
 prose about the upstream project, its repository URLs and the
 `openq4-upstream` remote.
 
-`tools/build/rebrand_upstream.py` performs the rename and is safe to re-run. It
+`tools/build/rebrand_upstream.py` performs the rename. It
 maps `openQ4`/`OpenQ4` to `openD3`, `OPENQ4` to `OPEND3`, `openq4` to `opend3`
 and `baseoq4` to `baseod3`, in file contents and in paths, and reports
-collisions with `--check`.
+collisions with `--check`. It also rewrites prose that is about the upstream
+project ("built on the openQ4 engine") outside its list of skipped files: in
+`assets/`, `docs/` and `tools/assets/` it did so on the `7c74cd712` sync.
+After running it, keep its changes only in the files the merge brought in and
+restore the rest.
 
 ## Syncing with upstream
 
