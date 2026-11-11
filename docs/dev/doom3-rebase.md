@@ -173,7 +173,12 @@ Listed roughly by how much they block a player.
    openD3; many still test Quake 4 maps and content. The optional native test
    suite (`-Dbuild_native_tests=true`) references Quake 4 interface files that
    are no longer in the tree and will not configure. The build helpers Meson
-   invokes are adapted and exercised.
+   invokes are adapted and exercised. Of the release tooling, only the
+   documentation side has been run: `generate_release_docs.py` builds the
+   offline documentation site and `tools/tests/docs_link_integrity.py` passes
+   over it, the source documents and the two HTML readmes. The packager,
+   installer and release verifiers still name Quake 4 and Prey layers and have
+   not been run.
 7. **No CI.** openQ4's GitHub workflows were removed rather than left to fail;
    they need rebuilding for openD3.
 8. **Player guides are a first pass.** openQ4's documentation was removed
@@ -182,7 +187,14 @@ Listed roughly by how much they block a player.
    and server setup). They state only what "Verified" covers and must follow
    it when it changes. openQ4's display, input, gameplay and rendering guides
    have no openD3 counterpart, because none of those features has been checked
-   with Doom 3. The README has no screenshots yet.
+   with Doom 3. The README has no screenshots yet. The rest of the
+   documentation follows openQ4's layout: `BUILDING.md` and `TECHNICAL.md`
+   take its sections, `docs/dev/` has the [source layout](source-layout.md)
+   and [unreleased release notes](releases/unreleased.md), and
+   `assets/release/README.html` (the package home page) and
+   `assets/docs/README.html` (the project overview) are drawn in Doom 3's
+   front-end menu style with openD3's TrueType faces, as is the generated
+   documentation site.
 
 ## Naming
 

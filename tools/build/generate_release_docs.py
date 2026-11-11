@@ -30,28 +30,52 @@ SAFE_LINK_SCHEMES = {
     "https",
     "mailto",
 }
-REPOSITORY_BLOB_BASE = "https://github.com/themuffinator/openQ4/blob/main/"
-REPOSITORY_TREE_BASE = "https://github.com/themuffinator/openQ4/tree/main/"
+REPOSITORY_BLOB_BASE = "https://github.com/themuffinator/openD3/blob/main/"
+REPOSITORY_TREE_BASE = "https://github.com/themuffinator/openD3/tree/main/"
 DEVELOPMENT_ROADMAP = Path("docs/dev/roadmap.md")
 
 
 SITE_CSS = r"""
+/* The look follows docs/dev/ui-visual-design.md: the Doom 3 front-end menu family.
+   Steel-blue transparency over space, chamfered slate plates without outlines,
+   glowing hairlines on controls, black wells for rows, pale cyan for anything that
+   acts, and console cyan on black for code. 1 u of the stock canvas = 1.5 px.
+   The faces are embedded from assets/release/README.html when the site is built. */
 :root {
-  --bg: #091019;
-  --panel: rgba(15, 22, 33, 0.9);
-  --panel-strong: rgba(18, 27, 39, 0.97);
-  --border: rgba(255, 139, 61, 0.2);
-  --border-strong: rgba(255, 139, 61, 0.46);
-  --text: #edf1f6;
-  --muted: #a8b6c7;
-  --accent: #ff8b3d;
-  --accent-soft: #ffc08d;
-  --link: #ffc08d;
-  --code-bg: #0d131b;
-  --code-border: rgba(255, 255, 255, 0.08);
-  --shadow: 0 28px 70px rgba(0, 0, 0, 0.34);
-  --radius: 18px;
-  --radius-sm: 13px;
+  color-scheme: dark;
+  --u: 1.5px;
+  --text-active: #ffffff;
+  --text-action: #99ffff;
+  --text-value: #99cccc;
+  --text-caption: #ccffff;
+  --text-dim: rgba(255, 255, 255, 0.5);
+  --chrome-line-hover: #8ca6bf;
+  --chrome-line-flash: #cce6ff;
+  --chrome-fill-hover: rgba(140, 166, 191, 0.5);
+  --chrome-bar: rgba(115, 153, 178, 0.2);
+  --plate-page: rgba(46, 64, 82, 0.8);
+  --plate-sheen: rgba(255, 255, 255, 0.14);
+  --rule-title: rgba(153, 204, 255, 0.2);
+  --rule-group: rgba(153, 204, 255, 0.1);
+  --rule-group-header: rgba(153, 204, 255, 0.22);
+  --well-row: rgba(0, 0, 0, 0.6);
+  --well-inset: rgba(0, 0, 0, 0.5);
+  --well-select: rgba(76, 133, 128, 0.5);
+  --notice-panel: rgba(0, 0, 0, 0.7);
+  --notice-title: #ff9933;
+  --danger: #ff1a00;
+  --console: #00ffff;
+  --face-default: "openD3 Default", "Eurostile", "Bahnschrift", "Segoe UI", sans-serif;
+  --face-bank: "openD3 Bank", "Bank Gothic", "Copperplate Gothic Light", "Bahnschrift", sans-serif;
+  --face-an: "openD3 AN", "Arial Narrow", "Roboto Condensed", "Segoe UI", sans-serif;
+  --face-micro: "openD3 Micro", "Microgramma", "Eurostile Extended", "Bahnschrift", sans-serif;
+  --face-console: "openD3 BigChars", "Cascadia Mono", Consolas, monospace;
+  --cut-control: calc(5 * var(--u));
+  --cut-near: calc(22 * var(--u));
+  --cut-far: calc(32 * var(--u));
+  --plate-shape: polygon(var(--cut-near) 0, calc(100% - var(--cut-far)) 0, 100% var(--cut-far), 100% calc(100% - var(--cut-near)), calc(100% - var(--cut-near)) 100%, var(--cut-far) 100%, 0 calc(100% - var(--cut-far)), 0 var(--cut-near));
+  --shell-shape: polygon(var(--cut-near) 0, 100% 0, 100% calc(100% - var(--cut-near)), calc(100% - var(--cut-near)) 100%, 0 100%, 0 var(--cut-near));
+  --control-shape: polygon(0 0, calc(100% - var(--cut-control)) 0, 100% var(--cut-control), 100% 100%, 0 100%);
 }
 
 * {
@@ -60,36 +84,64 @@ SITE_CSS = r"""
 
 html {
   scroll-behavior: smooth;
+  background: #000000;
 }
 
 body {
-  margin: 0;
-  color: var(--text);
-  font-family: "Bahnschrift", "Trebuchet MS", "Segoe UI", sans-serif;
-  line-height: 1.7;
-  background:
-    radial-gradient(circle at top, rgba(255, 139, 61, 0.14), transparent 30%),
-    radial-gradient(circle at 84% 14%, rgba(61, 133, 255, 0.12), transparent 18%),
-    linear-gradient(180deg, #091019 0%, #090d14 44%, #0b1017 100%);
+  position: relative;
   min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  color: var(--text-active);
+  font-family: var(--face-an);
+  font-size: 17px;
+  line-height: 1.55;
+  background:
+    radial-gradient(1px 1px at 12% 18%, rgba(226, 226, 226, 0.7), transparent 60%),
+    radial-gradient(1px 1px at 58% 9%, rgba(226, 226, 226, 0.8), transparent 60%),
+    radial-gradient(1px 1px at 88% 23%, rgba(226, 226, 226, 0.6), transparent 60%),
+    radial-gradient(1px 1px at 33% 72%, rgba(200, 200, 200, 0.5), transparent 60%),
+    radial-gradient(1px 1px at 71% 61%, rgba(180, 180, 180, 0.5), transparent 60%),
+    #000000;
+  background-size: 420px 420px, 420px 420px, 420px 420px, 420px 420px, 420px 420px, auto;
 }
 
+/* The planet low and right of centre with its limb halo, and the 15 u grid. */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
+  z-index: -1;
   pointer-events: none;
-  background: linear-gradient(rgba(255, 255, 255, 0.012), rgba(255, 255, 255, 0.012)) 0 0 / 100% 3px;
-  opacity: 0.18;
+  background:
+    radial-gradient(160vmax 160vmax at 62% calc(100% + 118vmax), rgba(0, 0, 0, 0) 66.5%, rgba(239, 137, 89, 0.26) 68.2%, rgba(239, 137, 89, 0.08) 69.4%, rgba(0, 0, 0, 0) 71%),
+    radial-gradient(160vmax 160vmax at 62% calc(100% + 118vmax), rgba(134, 95, 72, 0.28) 0%, rgba(40, 22, 14, 0.5) 50%, #0a0605 66%, rgba(0, 0, 0, 0) 66.8%),
+    linear-gradient(rgba(153, 255, 255, 0.025) 1px, transparent 1px) 0 0 / calc(15 * var(--u)) calc(15 * var(--u)),
+    linear-gradient(90deg, rgba(153, 255, 255, 0.025) 1px, transparent 1px) 0 0 / calc(15 * var(--u)) calc(15 * var(--u));
+}
+
+/* Scan lines at a 2 u pitch and the edge glow, over everything. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  background: repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0 1.5px, rgba(0, 0, 0, 0) 1.5px 3px);
+  box-shadow: inset 0 0 70px rgba(51, 59, 64, 0.9);
 }
 
 a {
-  color: var(--link);
+  color: var(--text-action);
   text-decoration: none;
+  transition: color 400ms linear;
 }
 
-a:hover {
-  text-decoration: underline;
+a:hover,
+a:focus-visible {
+  color: var(--text-active);
+  outline: none;
+  transition: none;
 }
 
 img {
@@ -100,14 +152,24 @@ code,
 pre,
 kbd,
 samp {
-  font-family: "Cascadia Code", Consolas, monospace;
+  font-family: var(--face-console);
 }
 
 .shell {
-  width: min(1400px, calc(100% - 28px));
-  margin: 24px auto 48px;
+  width: min(1400px, calc(100% - 32px));
+  margin: 0 auto 48px;
 }
 
+/* The top bar (section 6.8), full bleed above the page. */
+.shell::before {
+  content: "";
+  display: block;
+  height: calc(16 * var(--u));
+  margin: 0 calc(50% - 50vw) calc(10 * var(--u));
+  background: linear-gradient(180deg, rgba(115, 153, 178, 0.12) 0 75%, var(--chrome-bar) 75% 100%);
+}
+
+/* Page plates: slate at 80%, chamfered, no outline, a sheen from the top-leading corner. */
 .topbar,
 .sidebar,
 .article,
@@ -115,11 +177,16 @@ samp {
 .hero,
 .catalog,
 .footer {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--panel);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(10px);
+  background:
+    radial-gradient(calc(340 * var(--u)) calc(279 * var(--u)) at 0 0, var(--plate-sheen), rgba(255, 255, 255, 0) 50%),
+    var(--plate-page);
+  clip-path: var(--plate-shape);
+}
+
+.sidebar,
+.toc,
+.footer {
+  clip-path: var(--shell-shape);
 }
 
 .topbar {
@@ -127,38 +194,34 @@ samp {
   align-items: center;
   justify-content: space-between;
   gap: 18px;
-  padding: 18px 22px;
-  margin-bottom: 20px;
-  background:
-    linear-gradient(145deg, rgba(255, 139, 61, 0.1), rgba(15, 22, 33, 0.96) 42%, rgba(15, 22, 33, 0.95)),
-    var(--panel);
+  padding: 18px 34px;
+  margin-bottom: 16px;
 }
 
 .brand {
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
 .brand a {
-  color: var(--text);
+  color: var(--text-active);
 }
 
 .eyebrow {
   display: inline-block;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-size: 0.72rem;
-  color: var(--accent-soft);
+  color: var(--text-dim);
+  font-family: var(--face-bank);
+  font-size: calc(48 * 0.25 * var(--u));
 }
 
 .brand-title {
-  font-size: clamp(1.45rem, 3vw, 2rem);
-  font-weight: 700;
-  letter-spacing: 0.03em;
+  font-family: var(--face-default);
+  font-size: calc(48 * 0.32 * var(--u));
+  text-transform: uppercase;
 }
 
 .brand-subtitle {
-  color: var(--muted);
+  color: var(--text-value);
   font-size: 0.95rem;
 }
 
@@ -168,72 +231,112 @@ samp {
 .article-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
-.button,
-.chip {
+/* Small glow buttons (section 6.5): hairline frame, soft fill, 5 u chamfer top-trailing. */
+.button {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  border-radius: 999px;
-  padding: 10px 15px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text);
+  padding: 6px 18px 5px;
+  background: linear-gradient(180deg, rgba(128, 178, 204, 0.27), rgba(128, 178, 204, 0.2) 50%, rgba(128, 178, 204, 0.27));
+  clip-path: var(--control-shape);
+  color: var(--text-action);
+  font-family: var(--face-default);
+  font-size: calc(48 * 0.25 * var(--u));
+  text-transform: uppercase;
+  transition: background 400ms linear, color 400ms linear;
 }
 
-.button:hover {
-  text-decoration: none;
-  border-color: var(--border-strong);
-  background: rgba(255, 139, 61, 0.12);
+.button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(128, 178, 204, 0.5);
+  clip-path: polygon(evenodd, 0 0, calc(100% - var(--cut-control)) 0, 100% var(--cut-control), 100% 100%, 0 100%, 0 0, 1px 1px, 1px calc(100% - 1px), calc(100% - 1px) calc(100% - 1px), calc(100% - 1px) calc(var(--cut-control) + 0.5px), calc(100% - var(--cut-control) - 0.5px) 1px, 1px 1px);
+  transition: background 400ms linear;
+}
+
+.button:hover,
+.button:focus-visible {
+  background: linear-gradient(180deg, rgba(153, 204, 230, 0.53), rgba(153, 204, 230, 0.4) 50%, rgba(153, 204, 230, 0.53));
+  color: var(--text-active);
+  outline: none;
+  transition: none;
+}
+
+.button:hover::after,
+.button:focus-visible::after {
+  background: #99cce6;
+  animation: line-flash 250ms linear;
+  transition: none;
+}
+
+.button:active {
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .button.primary {
-  background: linear-gradient(180deg, #ff9a54, #d46522);
-  color: #111822;
-  border-color: rgba(255, 139, 61, 0.5);
-  font-weight: 700;
+  color: var(--text-active);
+  background: linear-gradient(180deg, rgba(140, 166, 191, 0.5), rgba(115, 140, 178, 0.4) 50%, rgba(140, 166, 191, 0.5));
 }
 
+@keyframes line-flash {
+  from { background: var(--chrome-line-flash); }
+}
+
+/* Chips are bare values on a black well (section 6.7). */
 .chip {
-  color: var(--muted);
-  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 12px;
+  background: var(--well-row);
+  clip-path: var(--control-shape);
+  color: var(--text-value);
+  font-family: var(--face-bank);
+  font-size: calc(48 * 0.25 * var(--u));
 }
 
 .layout {
   display: grid;
   grid-template-columns: 270px minmax(0, 1fr) 240px;
-  gap: 18px;
+  gap: 16px;
 }
 
 .sidebar,
 .toc {
   position: sticky;
-  top: 20px;
+  top: 16px;
   align-self: start;
-  padding: 18px;
+  padding: 18px 16px 26px;
 }
 
+/* Titles with the title rule under them (section 6.6). */
 .sidebar h2,
 .toc h2 {
-  margin: 0 0 14px;
-  font-size: 0.96rem;
-  letter-spacing: 0.08em;
+  margin: 0 -16px 12px;
+  padding: 0 16px 6px 34px;
+  border-bottom: calc(2 * var(--u)) solid var(--rule-title);
+  font-family: var(--face-default);
+  font-size: calc(48 * 0.26 * var(--u));
+  font-weight: 400;
   text-transform: uppercase;
-  color: var(--accent-soft);
 }
 
 .nav-group + .nav-group {
-  margin-top: 18px;
+  margin-top: 16px;
 }
 
+/* Group captions in Bank on a header band. */
 .nav-group h3 {
-  margin: 0 0 10px;
-  color: var(--muted);
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  margin: 0 0 6px;
+  padding: 2px 8px;
+  background: var(--rule-group-header);
+  color: var(--text-caption);
+  font-family: var(--face-bank);
+  font-size: calc(48 * 0.25 * var(--u));
+  font-weight: 400;
 }
 
 .nav-links,
@@ -242,67 +345,64 @@ samp {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 6px;
+  gap: calc(1 * var(--u));
 }
 
+/* Sub-menu items (section 6.4): no idle plate; a plate on hover; the current page selected. */
 .nav-links a,
 .toc-links a {
   display: block;
-  padding: 9px 11px;
-  border-radius: 12px;
-  color: var(--muted);
-  border: 1px solid transparent;
+  padding: 3px 10px;
+  clip-path: var(--control-shape);
+  color: var(--text-action);
+  line-height: 1.3;
+  transition: background 400ms linear, color 400ms linear;
 }
 
 .nav-links a:hover,
-.toc-links a:hover {
-  text-decoration: none;
-  color: var(--text);
-  border-color: rgba(255, 255, 255, 0.07);
-  background: rgba(255, 255, 255, 0.03);
+.toc-links a:hover,
+.nav-links a:focus-visible,
+.toc-links a:focus-visible {
+  background: var(--chrome-fill-hover);
+  color: var(--text-active);
+  transition: none;
 }
 
 .nav-links a.active,
 .toc-links a.active {
-  color: var(--text);
-  background: rgba(255, 139, 61, 0.12);
-  border-color: rgba(255, 139, 61, 0.35);
+  background: var(--well-select);
+  color: var(--text-active);
 }
 
 .toc-links ul {
   list-style: none;
-  margin: 6px 0 0 12px;
-  padding: 0 0 0 10px;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 2px 0 0 12px;
+  padding: 0 0 0 8px;
+  border-left: 1px solid var(--rule-title);
 }
 
 .article,
 .hero,
 .catalog,
 .footer {
-  padding: 26px;
-}
-
-.hero {
-  background:
-    linear-gradient(140deg, rgba(255, 139, 61, 0.12), rgba(17, 24, 33, 0.94) 44%, rgba(17, 24, 33, 0.98)),
-    var(--panel);
+  padding: 26px 34px 34px;
 }
 
 .hero-banner {
-  width: 100%;
   display: block;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 18px;
+  width: min(100%, 720px);
+  margin: 0 auto 18px;
 }
 
+/* Page titles: Default, capitals, white. */
 .hero h1,
 .article-header h1 {
-  margin: 0 0 12px;
-  font-size: clamp(2rem, 4.2vw, 3.2rem);
-  line-height: 1.08;
-  letter-spacing: 0.02em;
+  margin: 0 0 10px;
+  font-family: var(--face-default);
+  font-size: calc(48 * 0.42 * var(--u));
+  font-weight: 400;
+  line-height: 1.2;
+  text-transform: uppercase;
 }
 
 .hero p,
@@ -313,57 +413,62 @@ samp {
 .hero .lead,
 .article-header .lead {
   max-width: 820px;
-  color: var(--muted);
-  font-size: 1.04rem;
+  color: var(--text-value);
 }
 
 .catalog {
-  margin-top: 20px;
+  margin-top: 16px;
 }
 
 .catalog h2 {
   margin: 0 0 14px;
-  color: var(--accent-soft);
-  font-size: clamp(1.4rem, 2.5vw, 1.9rem);
+  padding-bottom: 6px;
+  border-bottom: calc(2 * var(--u)) solid var(--rule-title);
+  font-family: var(--face-default);
+  font-size: calc(48 * 0.32 * var(--u));
+  font-weight: 400;
+  text-transform: uppercase;
 }
 
 .card-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 14px;
 }
 
+/* Cards are group boxes: a faint body with a chamfered bottom-trailing corner. */
 .card {
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: var(--panel-strong);
-  padding: 18px;
+  padding: 14px 16px 16px;
+  background: var(--rule-group);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--cut-control)), calc(100% - var(--cut-control)) 100%, 0 100%);
 }
 
 .card h3 {
-  margin: 0 0 10px;
-  font-size: 1.08rem;
+  margin: 4px 0 8px;
+  font-family: var(--face-default);
+  font-size: calc(48 * 0.26 * var(--u));
+  font-weight: 400;
+  text-transform: uppercase;
 }
 
 .card p {
   margin: 0 0 10px;
-  color: var(--muted);
+  color: var(--text-value);
 }
 
 .card ul {
   margin: 0;
   padding-left: 18px;
-  color: var(--muted);
 }
 
 .card li + li {
-  margin-top: 7px;
+  margin-top: 5px;
 }
 
 .article-header {
-  padding-bottom: 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  margin-bottom: 20px;
+  margin: 0 -34px 20px;
+  padding: 0 34px 16px;
+  border-bottom: calc(2 * var(--u)) solid var(--rule-title);
 }
 
 .article-content {
@@ -377,159 +482,187 @@ samp {
 .article-content h5,
 .article-content h6 {
   margin: 28px 0 12px;
-  line-height: 1.2;
+  font-weight: 400;
+  line-height: 1.25;
 }
 
+.article-content h1,
 .article-content h2 {
-  font-size: 1.7rem;
-  color: var(--accent-soft);
+  padding: 3px 12px;
+  background: var(--rule-group-header);
+  font-family: var(--face-default);
+  font-size: calc(48 * 0.32 * var(--u));
+  text-transform: uppercase;
 }
 
 .article-content h3 {
-  font-size: 1.25rem;
+  color: var(--text-caption);
+  font-family: var(--face-bank);
+  font-size: calc(48 * 0.3 * var(--u));
 }
 
-.article-content h4 {
-  font-size: 1.05rem;
+.article-content h4,
+.article-content h5,
+.article-content h6 {
+  color: var(--text-caption);
+  font-family: var(--face-bank);
+  font-size: calc(48 * 0.25 * var(--u));
 }
 
 .article-content p {
-  margin: 0 0 16px;
+  margin: 0 0 14px;
 }
 
 .article-content ul,
 .article-content ol {
-  margin: 0 0 18px;
+  margin: 0 0 16px;
   padding-left: 24px;
 }
 
 .article-content li + li {
-  margin-top: 8px;
+  margin-top: 6px;
+}
+
+.article-content li::marker {
+  color: var(--chrome-line-hover);
+}
+
+.article-content strong {
+  color: var(--text-caption);
+  font-weight: 400;
 }
 
 .article-content hr {
-  border: 0;
-  height: 1px;
+  height: calc(2 * var(--u));
   margin: 26px 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+  border: 0;
+  background: var(--rule-title);
 }
 
+/* Callouts are notices (section 10.2): a dark panel, the kind as a Micro title. */
 .article-content blockquote,
 .article-content .admonition {
   margin: 18px 0;
-  padding: 16px 18px;
-  border-radius: 14px;
-  border-left: 4px solid var(--accent);
-  background: rgba(255, 255, 255, 0.04);
+  padding: 12px 16px;
+  background: var(--notice-panel);
+  clip-path: var(--control-shape);
+  color: var(--text-value);
 }
 
 .article-content .admonition-title {
-  margin: 0 0 8px;
-  font-weight: 700;
-  color: var(--text);
+  margin: 0 0 4px;
+  color: var(--text-action);
+  font-family: var(--face-micro);
+  font-size: calc(48 * 0.31 * var(--u));
+  text-transform: uppercase;
 }
 
-.article-content .admonition.tip {
-  border-left-color: #5ac98f;
+.article-content .admonition.tip .admonition-title {
+  color: #33cc99;
 }
 
-.article-content .admonition.important {
-  border-left-color: #6fb5ff;
+.article-content .admonition.warning .admonition-title {
+  color: var(--notice-title);
 }
 
-.article-content .admonition.warning,
-.article-content .admonition.caution {
-  border-left-color: #ff6f61;
+.article-content .admonition.caution .admonition-title {
+  color: var(--danger);
 }
 
+/* Code is console text (section 10.15): cyan on black in BigChars. Its square cells are
+   drawn at half width by the engine, so the advance is pulled in to match. */
 .article-content pre {
   margin: 16px 0;
-  padding: 16px;
+  padding: 14px 16px;
   overflow-x: auto;
-  border-radius: 14px;
-  border: 1px solid var(--code-border);
-  background: var(--code-bg);
-  color: #f6c59d;
-  font-size: 0.9rem;
-  line-height: 1.58;
+  background: rgba(0, 0, 0, 0.85);
+  border-top: calc(2 * var(--u)) solid rgba(0, 255, 255, 0.5);
+  color: var(--console);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  letter-spacing: -0.4em;
 }
 
 .article-content code {
-  padding: 0.14em 0.42em;
-  border-radius: 8px;
-  background: var(--code-bg);
-  color: #f6c59d;
-  font-size: 0.92em;
+  padding: 0 calc(3 * var(--u) + 0.4em) 0 calc(3 * var(--u));
+  background: var(--well-inset);
+  color: var(--console);
+  font-size: 0.95em;
+  letter-spacing: -0.4em;
 }
 
 .article-content pre code {
   padding: 0;
   background: transparent;
+  font-size: inherit;
 }
 
+.article-content a code {
+  color: inherit;
+}
+
+/* Tables are option rows: black wells under a header band. */
 .article-content table {
   width: 100%;
-  border-collapse: collapse;
   margin: 18px 0;
-  overflow: hidden;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-collapse: separate;
+  border-spacing: 0 calc(3 * var(--u));
 }
 
-.article-content thead {
-  background: rgba(255, 139, 61, 0.1);
-}
-
-.article-content th,
-.article-content td {
-  padding: 12px 14px;
+.article-content th {
+  padding: 4px 12px;
+  background: var(--rule-group-header);
+  color: var(--text-caption);
+  font-family: var(--face-bank);
+  font-size: calc(48 * 0.25 * var(--u));
+  font-weight: 400;
   text-align: left;
-  vertical-align: top;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.article-content tbody tr:nth-child(even) {
-  background: rgba(255, 255, 255, 0.02);
+.article-content td {
+  padding: 6px 12px;
+  background: var(--well-row);
+  color: var(--text-value);
+  vertical-align: top;
+}
+
+.article-content td:first-child {
+  color: var(--text-active);
 }
 
 .article-content details {
   margin: 18px 0;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  padding: 12px 16px;
+  padding: 10px 16px;
+  background: var(--rule-group);
+  clip-path: var(--control-shape);
 }
 
 .article-content summary {
   cursor: pointer;
-  color: var(--text);
-  font-weight: 700;
+  color: var(--text-action);
+  font-family: var(--face-default);
+  text-transform: uppercase;
 }
 
+/* Check boxes (section 6.6): an 8 u box, filled when set. */
 .article-content .task-box {
   display: inline-grid;
   place-items: center;
-  width: 1.1rem;
-  height: 1.1rem;
+  width: calc(8 * var(--u));
+  height: calc(8 * var(--u));
   margin-right: 0.45rem;
-  border-radius: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(128, 178, 178, 0.8);
   color: transparent;
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.7rem;
 }
 
 .article-content .task-box.done {
-  background: rgba(90, 201, 143, 0.14);
-  border-color: rgba(90, 201, 143, 0.4);
-  color: #7ee5a7;
+  border-color: rgba(153, 255, 255, 0.8);
+  background: rgba(153, 255, 255, 0.4);
 }
 
 .article-content img {
   display: block;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
   margin: 18px auto;
 }
 
@@ -539,17 +672,29 @@ samp {
 }
 
 .article-content sub {
-  color: var(--muted);
+  color: var(--text-value);
 }
 
 .footer {
-  margin-top: 20px;
-  color: var(--muted);
+  margin-top: 16px;
+  color: var(--text-dim);
   font-size: 0.92rem;
 }
 
 .footer p:last-child {
   margin-bottom: 0;
+}
+
+::selection {
+  background: var(--well-select);
+  color: #ffffff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button:hover::after,
+  .button:focus-visible::after {
+    animation: none;
+  }
 }
 
 @media (max-width: 1180px) {
@@ -563,9 +708,8 @@ samp {
 }
 
 @media (max-width: 860px) {
-  .shell {
-    width: min(100% - 18px, 1400px);
-    margin-top: 16px;
+  :root {
+    --u: 1.25px;
   }
 
   .topbar,
@@ -574,7 +718,12 @@ samp {
   .sidebar,
   .article,
   .footer {
-    padding: 18px;
+    padding: 18px 22px 24px;
+  }
+
+  .article-header {
+    margin: 0 -22px 18px;
+    padding: 0 22px 14px;
   }
 
   .topbar {
@@ -610,6 +759,29 @@ class GeneratedDocSite:
     output_root: Path
     index_path: Path
     page_count: int
+
+
+RELEASE_README = Path("assets") / "release" / "README.html"
+FONT_FACES_START = "/* opend3-atlas-fonts-start */"
+FONT_FACES_END = "/* opend3-atlas-fonts-end */"
+
+
+def site_font_faces(source_root: Path) -> str:
+    """Return the @font-face rules embedded in the release readme.
+
+    The readme carries openD3's reconstructed Doom 3 faces (written there by
+    tools/assets/fonts/embed_atlas_fonts.py), so the site draws the same type.
+    Without them the stylesheet falls back to system faces.
+    """
+    readme = source_root / RELEASE_README
+    if readme.is_symlink() or not readme.is_file():
+        return ""
+    text = readme.read_text(encoding="utf-8")
+    start = text.find(FONT_FACES_START)
+    end = text.find(FONT_FACES_END, start + 1)
+    if start < 0 or end < 0:
+        return ""
+    return text[start : end + len(FONT_FACES_END)] + "\n\n"
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -1247,11 +1419,11 @@ def render_index_page(
             '      <img class="hero-banner" src="assets/docs/img/banner.png" alt="openD3 banner">',
             '      <span class="eyebrow">openD3 Release Documentation</span>',
             '      <h1>Full offline HTML docs, shipped with the release package.</h1>',
-            '      <p class="lead">This package includes the project overview, build and technical references, user guides, developer notes, and proposal research converted into a browsable HTML site with internal links preserved.</p>',
+            '      <p class="lead">This package includes the project overview, build and technical references, player guides and developer notes, converted into a browsable HTML site with internal links preserved.</p>',
             '      <div class="hero-actions">',
             '        <a class="button primary" href="README.html">Open Project Overview</a>',
-            '        <a class="button" href="docs/user/light-grids.html">User Guide Example</a>',
-            '        <a class="button" href="docs/dev/roadmap.html">Development roadmap</a>',
+            '        <a class="button" href="docs/user/getting-started.html">Getting Started</a>',
+            '        <a class="button" href="docs/dev/doom3-rebase.html">Rebase Record</a>',
             '      </div>',
             '      <div class="hero-meta">',
             f'        <span class="chip">Release {html.escape(version)}</span>',
@@ -1299,7 +1471,7 @@ def generate_release_docs_site(
     output_root.mkdir(parents=True, exist_ok=True)
 
     (output_root / "_static").mkdir(parents=True, exist_ok=True)
-    (output_root / "_static" / "site.css").write_text(SITE_CSS, encoding="utf-8")
+    (output_root / "_static" / "site.css").write_text(site_font_faces(source_root) + SITE_CSS, encoding="utf-8")
 
     docs_assets_source = source_root / "assets" / "docs" / "img"
     if docs_assets_source.is_dir():
@@ -1308,11 +1480,8 @@ def generate_release_docs_site(
 
     for auxiliary in (
         Path("LICENSE"),
-        Path("LICENSES/QUAKE-4-SDK-EULA.rtf"),
         Path("LICENSES/DOOM-3-ADDITIONAL-TERMS.txt"),
         Path("LICENSES/DOOM-3-BFG-ADDITIONAL-TERMS.txt"),
-        Path("src/game/LICENSE"),
-        Path("src/mpgame/LICENSE"),
     ):
         copy_docs_auxiliary_file(source_root, auxiliary, output_root / auxiliary)
     khronos_notice = Path("LICENSES") / "KHRONOS-GLES-MIT.txt"
@@ -1322,6 +1491,7 @@ def generate_release_docs_site(
     # available offline. These are authored records/fixtures, not extracted art.
     for relative in (
         "LICENSES/RmlUi.txt", "LICENSES/JsonCpp.txt", "LICENSES/libtess2.txt",
+        "LICENSES/MD4.txt", "LICENSES/glslang.txt",
         "LICENSES/openxr-sdk.txt", "subprojects/openxr.wrap",
         "docs/dev/ui/migration-manifest.json",
         "docs/dev/ui/product-requirements.json",

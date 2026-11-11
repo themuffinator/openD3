@@ -2245,7 +2245,6 @@ def copy_release_collateral(source_root: Path, package_root: Path, platform: str
         (source_root / RELEASE_README_PATH, package_root / "README.html"),
         (source_root / LICENSE_PATH, package_root / "LICENSE"),
         (source_root / "LICENSING.md", package_root / "LICENSING.md"),
-        (source_root / "LICENSES" / "PREY-SDK-EULA.rtf", package_root / "licenses" / "PREY-SDK-EULA.rtf"),
         (source_root / "LICENSES" / "DOOM-3-ADDITIONAL-TERMS.txt", package_root / "licenses" / "DOOM-3-ADDITIONAL-TERMS.txt"),
         (source_root / "LICENSES" / "DOOM-3-BFG-ADDITIONAL-TERMS.txt", package_root / "licenses" / "DOOM-3-BFG-ADDITIONAL-TERMS.txt"),
         (source_root / "LICENSES" / "KHRONOS-GLES-MIT.txt", package_root / "licenses" / "KHRONOS-GLES-MIT.txt"),

@@ -167,7 +167,6 @@ def validate_package_dir(package_dir: Path, arch: str) -> None:
         package_dir / "README.html",
         package_dir / "LICENSE",
         package_dir / "LICENSING.md",
-        package_dir / "LICENSES" / "PREY-SDK-EULA.rtf",
         package_dir / "docs" / "index.html",
         package_dir / "baseod3" / "mod.json",
         *(package_dir / "baseod3" / pack_name for pack_name in OPEND3_PACK_NAMES),

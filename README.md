@@ -13,7 +13,7 @@ A GPL engine and game-code replacement that runs the original 2004 game from you
 [![Licensing](https://img.shields.io/badge/licence-GPLv3-blue.svg)](LICENSING.md)
 [![Proudly vibecoded](assets/docs/img/badge-proudly-vibecoded.svg)](AGENTS.md)
 
-<a href="BUILDING.md"><img src="https://img.shields.io/badge/Build-from%20source-c2410c?style=for-the-badge&logo=github" alt="Build openD3 from source"></a>
+[![Build openD3 from source](https://img.shields.io/badge/Build-from%20source-c2410c?style=for-the-badge&logo=github)](BUILDING.md)
 <a href="https://discord.gg/T32mFejwR4"><img src="https://img.shields.io/badge/Join%20the-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Join the DarkMatter Discord"></a>
 
 [Quick start](#quick-start) · [Features](#features) · [Platforms](#platforms-and-requirements) · [Guides](#player-guides) · [Help](#getting-help) · [Build from source](BUILDING.md)

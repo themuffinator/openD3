@@ -3,7 +3,7 @@
 Current build guidance: game sources are now in openQ4 under `src/game/` and
 `src/mpgame/`. No companion checkout, pin or source stage is required. The
 commit pairs and stage references below record the earlier port qualification;
-see [the current Android build guide](android-build.md) for today's workflow.
+see [the current Android build guide](https://github.com/themuffinator/openQ4/blob/main/docs/dev/android-build.md) for today's workflow.
 
 This is an adaptation of **[Emile Belanger (emileb)](https://github.com/emileb)'s work** to official openQ4 after 0.12.0. Emile is the original author of the Android port, SigmaTouch integration, GLES renderer and shader variants, ETC2/EAC encoder, and associated mobile loading and memory improvements. The official integration must not be represented as independently originating those features.
 
@@ -27,7 +27,7 @@ The final upstream sync preserves the tested renderer tree. Its map-compiler and
 
 Both pinned fork branches and official main have the identical GPLv3 `LICENSE` blob, `e62ec04cdeece724caeeeeaeb6ae1f6af1bb6b9a`. The port and renderer are incorporated under that existing licence, with upstream notices retained. Khronos GLES headers under `src/external/gles/` retain their MIT/SPDX notices and full permission text in `KHR/khrplatform.h`; their upstream sources are the [OpenGL Registry](https://github.com/KhronosGroup/OpenGL-Registry) and [EGL Registry](https://github.com/KhronosGroup/EGL-Registry). These permissive header terms are compatible with the engine's GPLv3 distribution.
 
-SigmaTouch/OpenTouch host libraries and their application-specific integration remain external dependencies, not supplied or relicensed by this repository. The included standalone SDLActivity host does not include those libraries. The optional bridge is Emile's contributed source; a SigmaTouch host must provide its own correctly licensed touch library. Retail game assets and the companion Quake 4 SDK-derived game modules keep their existing separate terms. See [source provenance](source-provenance.md).
+SigmaTouch/OpenTouch host libraries and their application-specific integration remain external dependencies, not supplied or relicensed by this repository. The included standalone SDLActivity host does not include those libraries. The optional bridge is Emile's contributed source; a SigmaTouch host must provide its own correctly licensed touch library. Retail game assets and the companion Quake 4 SDK-derived game modules keep their existing separate terms. See [source provenance](https://github.com/themuffinator/openQ4/blob/main/docs/dev/source-provenance.md).
 
 The public [MobileTouchControls licence](https://github.com/emileb/MobileTouchControls/blob/master/License.txt) specifies GPLv2 without an explicit later-version grant and invites contacting Emile about another licence. That text is not a compatible grant for linking it into this GPLv3 engine. The default Android build therefore excludes that library; distributing a combined SigmaTouch build requires an appropriate compatible grant from its author. No external touch-library source or binaries are imported here.
 
@@ -51,7 +51,7 @@ The public [MobileTouchControls licence](https://github.com/emileb/MobileTouchCo
 - Defer SigmaTouch label lookup until engine initialization and retain held actions until all overlapping control aliases are released. Optional hosts must supply the matching patched SDL callbacks.
 - Remove obsolete extracted Android packages only after the current package completes, preserving saves and retrying interrupted extraction. Existing OpenAL intro/loop queues keep using their uploaded buffers without unnecessary PCM restoration.
 
-Build instructions, host requirements and platform limitations are in [android-build.md](android-build.md). GLES and Android remain experimental; desktop modern-renderer features are not automatically promises of GLES feature parity.
+Build instructions, host requirements and platform limitations are in [android-build.md](https://github.com/themuffinator/openQ4/blob/main/docs/dev/android-build.md). GLES and Android remain experimental; desktop modern-renderer features are not automatically promises of GLES feature parity.
 
 ## Validation
 
@@ -114,4 +114,4 @@ attribution and host licensing limits remain in [the mobile guide](../../mobile/
 - **Existing diagnostics:** stock map starts still report non-precached declarations and MP stock-content/AAS warnings. The compiler also reports existing missing-return paths in `Polynomial.h`, mixed-case `declManager.h` includes, hidden overloads, float/enum comparisons and legacy class-memory operations; these are outside the port's runtime changes.
 - **SDL Android lint:** unfiltered SDL 3.4.10 lint reports 26 permission findings in optional Steam BLE paths, one API-29 pen-handler finding and one receiver-flag finding. Source and bytecode inspection confirms the version/permission guards; the standalone host does not enable Steam BLE without its required permission. These findings and the unfiltered report are retained locally rather than suppressed in upstream source. Physical-device qualification remains necessary.
 - **Local Linux environment:** the installed Wayland scanner's DTD predates SDL's `deprecated-since` XML attribute. Protocol generation continues, but the scanner emits a warning.
-- **Existing developer configuration:** `.vscode/meson-task.ps1` still selects `builddir-perf`, despite the agent guide naming `builddir` as standard. This integration's primary Windows build uses `builddir` and does not change the user's launch/build configuration.
+- **Developer configuration (resolved 11 November 2026):** `.vscode/meson-task.ps1` selected `builddir-perf`, despite the agent guide naming `builddir` as standard. The VS Code tasks now build `builddir`, as this integration's Windows build does.
